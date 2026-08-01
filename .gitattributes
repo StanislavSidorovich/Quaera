@@ -1,0 +1,7 @@
+# Разработка идёт на Windows, сборка на хостинге — на Linux.
+# Нормализуем переводы строк, чтобы не ловить расхождения в diff и в конфигах,
+# которые Cloudflare читает построчно.
+* text=auto eol=lf
+*.png binary
+*.sqlite binary
+*.dataset binary

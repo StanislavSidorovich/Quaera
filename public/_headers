@@ -1,0 +1,32 @@
+# Политика кеширования для Cloudflare Pages.
+#
+# Приложение офлайновое, и почти весь его вес — неизменяемые файлы: датасет,
+# рантайм SQLite, собранные бандлы с хешем в имени. Их кешируем максимально долго.
+# Точки входа (index.html и service worker) — наоборот, никогда: иначе обновление
+# приложения не доедет до устройства, на котором оно уже установлено.
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sqljs/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=2592000
+
+# Датасет пересобирается вместе с приложением, но меняется редко.
+# Неделя — компромисс между экономией трафика и доставкой обновлённых данных.
+/data/*
+  Cache-Control: public, max-age=604800
+
+# Service worker обязан проверяться при каждом запуске: он управляет всем
+# остальным кешем, и застрявшая старая версия замораживает приложение целиком.
+/sw.js
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
