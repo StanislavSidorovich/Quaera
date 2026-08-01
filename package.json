@@ -13,7 +13,7 @@
     "gen:icons": "node scripts/gen-icons.mjs",
     "prepare:assets": "npm run sync:sqljs && npm run gen:icons && npm run gen:data",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/postbuild-sw.mjs",
     "preview": "vite preview --host"
   },
   "dependencies": {

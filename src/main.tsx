@@ -12,7 +12,5 @@ createRoot(document.getElementById('root')!).render(
 // Офлайн — не опция, а условие сценария: заниматься в метро и в самолёте.
 // Регистрируем только в проде: в dev воркер кешировал бы модули Vite и мешал бы разработке.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => undefined);
-  });
+  navigator.serviceWorker.register('/sw.js').catch(() => undefined);
 }

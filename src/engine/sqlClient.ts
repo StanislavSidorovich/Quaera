@@ -69,11 +69,28 @@ function call<T>(type: string, payload?: unknown): Promise<T> {
   });
 }
 
+/**
+ * Датасет весит 3.5 МБ, и его запрос обязан пройти через service worker,
+ * иначе он не попадёт в офлайн-кеш и приложение без сети откроется пустым.
+ * На первом визите воркер берёт страницу под контроль не мгновенно, поэтому
+ * ждём — но с потолком: если его нет или он не поднялся, работа не должна встать.
+ */
+async function awaitServiceWorker(timeoutMs = 3000): Promise<void> {
+  if (!('serviceWorker' in navigator) || navigator.serviceWorker.controller) return;
+  await Promise.race([
+    new Promise<void>((resolve) =>
+      navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true })
+    ),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+}
+
 /** Идемпотентно: сколько бы компонентов ни позвало, загрузка происходит один раз. */
 export function initDatabase(): Promise<DatasetInfo> {
   if (readyPromise) return readyPromise;
   setState({ phase: 'loading' });
-  readyPromise = call<DatasetInfo>('init', { url: DATASET_URL })
+  readyPromise = awaitServiceWorker()
+    .then(() => call<DatasetInfo>('init', { url: DATASET_URL }))
     .then((info) => {
       setState({ phase: 'ready', info });
       return info;
