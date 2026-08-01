@@ -220,7 +220,8 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
             <SqlEditor
               value={sql}
               onChange={setSql}
-              suggestions={suggestions}
+              schema={schema}
+              level={task.level}
               disabled={solved}
               placeholder="Напишите запрос…"
             />

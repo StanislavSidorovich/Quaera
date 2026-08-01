@@ -310,6 +310,15 @@ textarea.sql:focus {
   display: none;
 }
 
+/* На широком экране места хватает: переносим по строкам вместо прокрутки.
+   Горизонтальная лента оправдана только там, где иначе не влезает — на телефоне. */
+@media (min-width: 640px) {
+  .accessory {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
 .accessory button {
   flex: none;
   min-height: 36px;
