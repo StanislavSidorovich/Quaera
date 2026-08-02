@@ -1311,6 +1311,322 @@
         "Смотрите, какой из множителей изменился сильнее."
       ],
       "explain": "Это стандартный приём разбора: любое изменение раскладывается на множители, и дальше вопрос сводится к тому, какой множитель поехал. Штуки = число точек × продажи на точку; выручка = штуки × цена; продажи на точку = число покупок × средний чек. Как только видно, что упала дистрибуция, а не спрос, меняется и владелец проблемы: это вопрос не к маркетингу и не к цене, а к полевой команде и переговорам с сетями. В FMCG этот показатель измеряют формально — численная дистрибуция (доля точек, где товар есть) и взвешенная дистрибуция (та же доля, но с весом по обороту точек). Падение только взвешенной означает, что бренд выпал именно из крупных точек, и это гораздо хуже."
+    },
+    {
+      "id": "sql-048",
+      "track": "sql",
+      "skill": "sql-order-limit",
+      "level": 2,
+      "mode": "predict",
+      "title": "Постраничный прайс-лист и одинаковая цена",
+      "brief": "Витрину прайс-листа выводят по 3 позиции на страницу, сортируя от дорогой к дешёвой. Менеджер листает список и не понимает, почему товар с ценой 98 ₽, который он только что видел, снова не находится на текущей странице.",
+      "goal": "Определить, сколько товаров с ценой 98 ₽ попадёт в результат этого запроса.",
+      "predictSql": "SELECT product_name, list_price\nFROM dim_product\nORDER BY list_price DESC\nLIMIT 3 OFFSET 33",
+      "predictQuestion": "Сколько товаров с ценой 98 ₽ окажется в результате, если всего таких товаров в прайсе три?",
+      "options": [
+        {
+          "label": "Два — третий остался на предыдущей странице",
+          "correct": true,
+          "why": "OFFSET 33 отсчитывает от начала отсортированного списка, а строки с ценой 98 распределились по двум соседним тройкам: одна ушла в предыдущую страницу, две попали в эту."
+        },
+        {
+          "label": "Все три — одинаковая цена гарантирует, что они окажутся рядом на одной странице",
+          "why": "Рядом в отсортированном списке — да, но «рядом» не значит «внутри одной тройки», если строк с этой ценой больше, чем помещается до конца текущего окна LIMIT."
+        },
+        {
+          "label": "Ни одного — OFFSET 33 уже пропустил все товары по 98 ₽",
+          "why": "OFFSET 33 пропускает первые 33 строки после сортировки, а группа товаров по 98 ₽ начинается как раз на этой границе, а не раньше."
+        },
+        {
+          "label": "Запрос упадёт с ошибкой — несколько строк с одинаковым list_price нельзя сортировать",
+          "why": "Сортировка по колонке с повторяющимися значениями — обычная операция, никакой ошибки здесь нет."
+        }
+      ],
+      "hints": [
+        "Начните с ROW_NUMBER() OVER (ORDER BY list_price DESC), чтобы увидеть, на каком месте в общем списке стоит каждый из трёх товаров с ценой 98.",
+        "OFFSET 33 значит «пропустить первые 33 строки» — посмотрите, какая по счёту строка идёт 34-й."
+      ],
+      "explain": "ORDER BY list_price DESC сортирует только по цене, а между строками с одинаковой ценой порядок ничем не закреплён явно — в этой конкретной базе он получается стабильным от запуска к запуску, но никаким контрактом не гарантирован. Из трёх товаров по 98 ₽ два оказываются в этом окне LIMIT, а третий — в предыдущем, просто потому что группа с одинаковой ценой не помещается целиком в тройку строк. Практический вывод для пагинации: LIMIT/OFFSET безопасны только с полностью уникальным порядком — добавьте вторичный ключ вроде product_id к ORDER BY, иначе при изменении данных строки на границе страниц могут задваиваться или пропадать."
+    },
+    {
+      "id": "sql-049",
+      "track": "sql",
+      "skill": "sql-having",
+      "alsoTrains": ["sql-join-inner"],
+      "level": 3,
+      "mode": "fill",
+      "title": "Бренды с высокой выручкой и широким покрытием",
+      "brief": "Категорийный менеджер расширяет полку под бренды-локомотивы: нужны те, что одновременно дают большую выручку и стоят в большом числе точек — только один из двух признаков ничего не доказывает.",
+      "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ₽ и не менее чем в 80 точках. По убыванию выручки.",
+      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT ___) >= 80\nORDER BY revenue ___",
+      "blanks": ["f.customer_id", "DESC"],
+      "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
+      "orderMatters": true,
+      "hints": [
+        "Считаем разных клиентов той же функцией, что и в SELECT — DISTINCT customer_id.",
+        "После HAVING сортировка идёт от большей выручки к меньшей — ключевое слово ставится после имени колонки."
+      ],
+      "explain": "Одно условие в HAVING проверяет выручку, второе — охват, и оба должны выполниться одновременно, поэтому связаны через AND: бренд с огромной выручкой в трёх крупных сетях эту фильтрацию не пройдёт, как и бренд с сотней точек и копеечными продажами в каждой. В отличие от sql-011, где было единственное пороговое условие, здесь видно, как комбинация метрик отсекает бренды, сильные только по одному параметру, — ровно то, что нужно категорийному менеджеру для решения о расширении полки."
+    },
+    {
+      "id": "sql-050",
+      "track": "sql",
+      "skill": "sql-fanout",
+      "alsoTrains": ["sql-join-inner"],
+      "level": 3,
+      "mode": "write",
+      "title": "Промо-выручка «Чистовъ» без задвоения",
+      "brief": "После разбора в sql-013 понятно, почему JOIN с dim_promo по бренду задвоил выручку. Трейд-маркетинг всё равно просит настоящую разбивку продаж бренда «Чистовъ» за 2025 год по механикам акций.",
+      "goal": "За 2025 год вернуть по бренду «Чистовъ»: mechanic и revenue — сумму выручки по этой механике, округлённую до целых. По убыванию выручки.",
+      "starter": "SELECT m.mechanic, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_promo m ON ",
+      "solution": "SELECT m.mechanic, ROUND(SUM(f.revenue)) AS revenue FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id JOIN dim_promo m ON m.promo_id = f.promo_id WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31' AND p.brand = 'Чистовъ' GROUP BY m.mechanic ORDER BY revenue DESC",
+      "orderMatters": true,
+      "hints": [
+        "Ключ, который однозначно связывает продажу с конкретной акцией, уже есть в самом факте — это promo_id, а не brand.",
+        "У каждой строки fact_sellout ровно одно значение promo_id (или NULL), поэтому такое соединение не может размножить строки — в отличие от соединения по бренду в sql-013."
+      ],
+      "explain": "Это и есть исправление ошибки из sql-013: соединять с dim_promo нужно по ключу, который есть в самом факте и однозначно определяет конкретную акцию, — promo_id. Соединение по бренду задваивало факты, потому что у бренда несколько акций одновременно; соединение по promo_id безопасно, потому что у каждой продажи есть максимум одна связанная акция. Тот же принцип решает любой fan-out: ищите в факте готовый внешний ключ на нужный справочник вместо соединения по описательному полю вроде названия или бренда."
+    },
+    {
+      "id": "sql-051",
+      "track": "sql",
+      "skill": "sql-window-rank",
+      "alsoTrains": ["sql-cte"],
+      "level": 4,
+      "mode": "fill",
+      "title": "Ведущий канал сбыта в каждом дивизионе",
+      "brief": "Коммерческий директор готовит защиту бюджета и хочет не полную разбивку по каналам, а только канал-лидер внутри каждого дивизиона — именно с ним будут сравнивать остальные.",
+      "goal": "За 2025 год вернуть по каждому дивизиону division, channel и revenue (округлить до целых) — канал с наибольшей выручкой внутри дивизиона.",
+      "template": "WITH div_channel AS (\n  SELECT p.division, c.channel, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.division, c.channel\n),\nranked AS (\n  SELECT division, channel, rev,\n         ROW_NUMBER() OVER (___ division ORDER BY rev DESC) AS rnk\n  FROM div_channel\n)\nSELECT division, channel, ROUND(rev) AS revenue\nFROM ranked\nWHERE rnk ___",
+      "blanks": ["PARTITION BY", "= 1"],
+      "solution": "WITH div_channel AS (\n  SELECT p.division, c.channel, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.division, c.channel\n),\nranked AS (\n  SELECT division, channel, rev,\n         ROW_NUMBER() OVER (PARTITION BY division ORDER BY rev DESC) AS rnk\n  FROM div_channel\n)\nSELECT division, channel, ROUND(rev) AS revenue\nFROM ranked\nWHERE rnk = 1",
+      "hints": [
+        "ROW_NUMBER здесь партиционируется по дивизиону — вставьте PARTITION BY перед division.",
+        "Фильтр «только первое место» — это rnk = 1, рейтинг внутри своей партиции уже посчитан в CTE ranked."
+      ],
+      "explain": "PARTITION BY division запускает отдельный счётчик ROW_NUMBER для каждого дивизиона: нумерация каналов FMCG не продолжает нумерацию каналов Pharma, а начинается заново с единицы — тот же принцип, что и в sql-018 с брендами, разница только в том, что там оставляли три первых места, а здесь достаточно одного. У Pharma в базе всего один канал сбыта — аптека, поэтому для него результат тривиален, но запрос остаётся верным: он ищет лидера, а не подразумевает конкуренцию каналов внутри дивизиона."
+    },
+    {
+      "id": "sql-052",
+      "track": "sql",
+      "skill": "sql-window-rank",
+      "alsoTrains": ["sql-cte"],
+      "level": 4,
+      "mode": "write",
+      "title": "Рейтинг представителей внутри команды",
+      "brief": "Руководитель отдела продаж готовит премирование по итогам 2025 года и хочет видеть место каждого торгового представителя внутри своей команды по выручке обслуживаемых точек — менеджеров в рейтинг включать не нужно.",
+      "goal": "За 2025 год вернуть team, rep_name, revenue — сумму выручки точек представителя, округлённую до целых, и rnk — место представителя внутри своей команды по убыванию выручки. Только role = 'rep'. Отсортировать по команде, затем по месту.",
+      "starter": "WITH rep_rev AS (\n  SELECT c.rep_id, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY c.rep_id\n)\n",
+      "solution": "WITH rep_rev AS (\n  SELECT c.rep_id, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY c.rep_id\n)\nSELECT r.team, r.rep_name, ROUND(rr.rev) AS revenue,\n       RANK() OVER (PARTITION BY r.team ORDER BY rr.rev DESC) AS rnk\nFROM rep_rev rr\nJOIN dim_rep r ON r.rep_id = rr.rep_id\nWHERE r.role = 'rep'\nORDER BY r.team, rnk",
+      "orderMatters": true,
+      "hints": [
+        "Выручка привязана к точкам через dim_customer.rep_id, а не напрямую к представителю — сначала агрегируйте по rep_id.",
+        "«Место внутри команды» — это RANK с PARTITION BY team, а не общий рейтинг по всей компании."
+      ],
+      "explain": "Здесь RANK, а не ROW_NUMBER: если бы два представителя одной команды набрали ровно одинаковую выручку, у них должно быть одно и то же место, а не случайно разделённые соседние номера — в этом году точных совпадений нет, но правило премирования обязано быть готово к ним. Соединение через dim_customer.rep_id — единственный способ связать выручку с представителем: сама fact_sellout о представителях ничего не знает, только о точках."
+    },
+    {
+      "id": "sql-053",
+      "track": "sql",
+      "skill": "sql-window-rank",
+      "level": 4,
+      "mode": "predict",
+      "title": "Нумерация внутри партиции против общей",
+      "brief": "Стажёр в первый раз использует PARTITION BY и ожидает, что нумерация будет сквозной по всей таблице, как в обычном списке.",
+      "goal": "Определить значения ROW_NUMBER для двух строк канала ecom.",
+      "predictSql": "-- outlet_revenue: channel, revenue\n-- retail   900\n-- retail   700\n-- retail   300\n-- ecom     500\n-- ecom     300\n\nSELECT channel, revenue,\n       ROW_NUMBER() OVER (PARTITION BY channel ORDER BY revenue DESC) AS rn\nFROM outlet_revenue",
+      "predictQuestion": "Какие значения rn получат две строки канала ecom (выручка 500 и 300), если в самой таблице они идут после трёх строк retail?",
+      "options": [
+        {
+          "label": "1 и 2 — нумерация в каждой партиции начинается заново, независимо от места строк в таблице",
+          "correct": true,
+          "why": "PARTITION BY делит набор строк на независимые группы, и внутри каждой ROW_NUMBER считает с единицы — физический порядок строк в исходной таблице на это не влияет."
+        },
+        {
+          "label": "4 и 5 — нумерация продолжается по всей таблице вслед за retail",
+          "why": "Так вела бы себя обычная нумерация без PARTITION BY. Его роль как раз в том, чтобы разбить единый счётчик на несколько — по одному на канал."
+        },
+        {
+          "label": "Не определено — PARTITION BY требует, чтобы строки заранее были отсортированы по каналу",
+          "why": "PARTITION BY сам группирует строки логически для расчёта, независимо от их физического порядка в исходной таблице."
+        },
+        {
+          "label": "1 и 1 — без сортировки внутри партиции ROW_NUMBER не различает строки",
+          "why": "ORDER BY revenue DESC внутри OVER здесь есть — именно он определяет, какая строка первая, а какая вторая внутри партиции ecom."
+        }
+      ],
+      "hints": [
+        "PARTITION BY — это не фильтр и не сортировка результата, а деление окна на независимые группы для расчёта.",
+        "У retail три строки, у ecom — две. Каждая партиция нумеруется от 1 сама по себе."
+      ],
+      "explain": "PARTITION BY channel запускает для каждого канала собственный, независимый счётчик ROW_NUMBER — как если бы вы выполнили запрос отдельно для retail и отдельно для ecom и просто объединили результаты. Порядок строк в исходной таблице не имеет значения: нумерация подчиняется только PARTITION BY и внутрипартиционному ORDER BY. Эта ошибка — зеркало той, что разбирается в sql-056: там забыли PARTITION BY и партиции слились в одну сплошную последовательность, здесь наоборот, боятся, что без общего сквозного счёта нумерация «потеряется» — но она устроена ровно так, как описано в определении окна, и никак иначе."
+    },
+    {
+      "id": "sql-054",
+      "track": "sql",
+      "skill": "sql-window-frame",
+      "alsoTrains": ["sql-cte"],
+      "level": 4,
+      "mode": "fill",
+      "title": "Накопительные отгрузки дистрибьютора за квартал",
+      "brief": "Финансы хотят видеть не только отгрузки за каждый месяц, но и нарастающий итог за квартал — сколько уже отгружено дистрибьютору «Волга-Трейд» на конец каждого месяца.",
+      "goal": "За октябрь–декабрь 2025 вернуть month_start, units — отгружено за месяц, и running_units — нарастающий итог с начала квартала. По возрастанию месяца.",
+      "template": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ___ UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
+      "blanks": ["ROWS BETWEEN"],
+      "solution": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
+      "orderMatters": true,
+      "hints": [
+        "Рамка окна для нарастающего итога — это ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, а не 3 PRECEDING, как в скользящем среднем sql-019.",
+        "distributor_id = 1 — это «Волга-Трейд», можно свериться по dim_customer."
+      ],
+      "explain": "UNBOUNDED PRECEDING значит «от самого начала окна», в отличие от 3 PRECEDING в sql-019, которое брало фиксированное число предыдущих строк. Разница в один аргумент рамки полностью меняет смысл расчёта: скользящее среднее сглаживает локальный шум, а накопительный итог с UNBOUNDED PRECEDING показывает рост показателя с начала периода — здесь именно то, что нужно для контроля отгрузок нарастающим итогом за квартал."
+    },
+    {
+      "id": "sql-055",
+      "track": "sql",
+      "skill": "sql-window-frame",
+      "alsoTrains": ["sql-cte"],
+      "level": 4,
+      "mode": "write",
+      "title": "Рост цены к началу года",
+      "brief": "Финансовый директор хочет видеть не абсолютную цену товара по месяцам, а насколько она выросла с начала года — и просит колонку с январской ценой рядом с текущей, без отдельного запроса за ней.",
+      "goal": "За 2025 год по товару «Ключевая негаз. 1.5 л» вернуть month_start, list_price, jan_price — цену в январе того же года, и growth_pct — рост к январю в процентах, округлённый до одного знака. По возрастанию месяца.",
+      "starter": "WITH prices AS (\n  SELECT month_start, list_price\n  FROM fact_price\n  WHERE product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 1.5 л')\n    AND month_start BETWEEN '2025-01-01' AND '2025-12-01'\n)\n",
+      "solution": "WITH prices AS (\n  SELECT month_start, list_price\n  FROM fact_price\n  WHERE product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 1.5 л')\n    AND month_start BETWEEN '2025-01-01' AND '2025-12-01'\n)\nSELECT month_start, list_price,\n       FIRST_VALUE(list_price) OVER (ORDER BY month_start) AS jan_price,\n       ROUND(100.0 * (list_price - FIRST_VALUE(list_price) OVER (ORDER BY month_start)) / FIRST_VALUE(list_price) OVER (ORDER BY month_start), 1) AS growth_pct\nFROM prices\nORDER BY month_start",
+      "orderMatters": true,
+      "hints": [
+        "FIRST_VALUE(list_price) OVER (ORDER BY month_start) возвращает цену самой первой строки окна для каждой строки результата — это и есть январская цена.",
+        "Функцию FIRST_VALUE можно вызвать несколько раз с одним и тем же OVER (...) — это не отдельные вычисления, а один и тот же результат."
+      ],
+      "explain": "У FIRST_VALUE рамка окна по умолчанию — от начала до текущей строки, но это не мешает функции: первая строка окна всегда одна и та же, январь, независимо от текущей позиции. В sql-019 этот же дефолт рамки был источником ошибки для AVG, потому что накопительное среднее — не то, что нужно для сглаживания; здесь дефолт как раз то, что нужно, потому что январская цена не должна меняться от строки к строке. Оба случая учат одному: прежде чем полагаться на дефолтную рамку, проверяйте, что она действительно даёт нужный смысл, а не просто «выглядит правильно»."
+    },
+    {
+      "id": "sql-056",
+      "track": "sql",
+      "skill": "sql-window-frame",
+      "level": 4,
+      "mode": "predict",
+      "title": "LAG без PARTITION BY между каналами",
+      "brief": "Аналитик считает изменение выручки месяц к месяцу для каждого канала сбыта одним запросом и не подозревает, что первая строка нового канала получит не пустое значение, а хвост предыдущего.",
+      "goal": "Определить, что окажется в prev_revenue у первой строки канала modern_trade.",
+      "predictSql": "WITH monthly AS (\n  SELECT c.channel, substr(f.week_start, 1, 7) AS month, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-03-31'\n  GROUP BY c.channel, month\n)\nSELECT channel, month, ROUND(revenue) AS revenue,\n       LAG(ROUND(revenue)) OVER (ORDER BY channel, month) AS prev_revenue\nFROM monthly\nORDER BY channel, month",
+      "predictQuestion": "Что окажется в prev_revenue для первой строки канала modern_trade (2025-01), если непосредственно перед ней в упорядоченном списке идёт строка ecom за март (2382221)?",
+      "options": [
+        {
+          "label": "2382221 — выручка канала ecom за март, а не NULL и не значение из modern_trade",
+          "correct": true,
+          "why": "LAG без PARTITION BY смотрит на предыдущую строку всего упорядоченного результата целиком. Раз строки идут подряд по channel, month, предыдущая перед первым месяцем modern_trade — это последний месяц ecom, а не пустое значение."
+        },
+        {
+          "label": "NULL, как и у первой строки ecom — оба канала начинаются с чистого листа",
+          "why": "Так было бы, если бы окно было разбито PARTITION BY channel. Без него граница между каналами для LAG ничем не отличается от границы между обычными соседними месяцами."
+        },
+        {
+          "label": "751734 — выручка modern_trade за январь продублируется как значение предыдущей строки для самой себя",
+          "why": "LAG никогда не смотрит на текущую строку саму на себя — только на предыдущую строку по заданному порядку, а предыдущая здесь принадлежит ecom."
+        },
+        {
+          "label": "0 — LAG подставляет ноль, когда предыдущая строка относится к другому каналу",
+          "why": "У LAG нет специальной логики на смену категории. Он честно берёт значение предыдущей строки, каким бы оно ни было, и в данном случае это не ноль, а реальная выручка ecom."
+        }
+      ],
+      "hints": [
+        "Сравните с sql-020: там LAG работал по одному сквозному временному ряду, и PARTITION BY не был нужен вообще.",
+        "Здесь рядов несколько — по одному на канал, — и без PARTITION BY они для LAG выглядят одним сплошным рядом."
+      ],
+      "explain": "LAG и LEAD видят не таблицу целиком с её смысловыми группами, а линейную последовательность строк, заданную ORDER BY внутри OVER. Один временной ряд, как в sql-020, эту проблему не проявляет — там нет других рядов, через границу которых можно перескочить. Как только рядов становится несколько (каналы, регионы, клиенты), LAG без PARTITION BY молча берёт последнюю строку предыдущей группы вместо NULL, и первый расчёт месяц-к-месяцу для каждой новой группы оказывается сравнением с чужими данными. Правило простое: везде, где ORDER BY внутри OVER идёт по нескольким сущностям сразу, PARTITION BY по этой сущности обязателен, а не опционален."
+    },
+    {
+      "id": "sql-057",
+      "track": "sql",
+      "skill": "sql-business-case",
+      "alsoTrains": ["sql-cte", "sql-join-inner"],
+      "level": 5,
+      "mode": "write",
+      "title": "Запас в неделях у дистрибьютора",
+      "brief": "Финансовый директор беспокоится о списаниях: у дистрибьютора «Волга-Трейд» видны большие остатки бренда «Ключевая» на складе. Нужно понять, на сколько недель продаж их хватит при текущем темпе продаж точек, которые он обслуживает.",
+      "goal": "Вернуть одну строку: units_on_hand — остаток товара «Ключевая негаз. 0.5 л» у дистрибьютора «Волга-Трейд» на конец декабря 2025, avg_weekly_units — средние недельные продажи этого товара в точках, которые обслуживает дистрибьютор, за октябрь–декабрь 2025 (округлить до одного знака), и weeks_cover — во сколько недель хватит остатка при таком темпе продаж (округлить до одного знака).",
+      "starter": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\n",
+      "solution": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\nSELECT\n  (SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')\n       AND month_start = '2025-12-01') AS units_on_hand,\n  ROUND(AVG(w.units), 1) AS avg_weekly_units,\n  ROUND((SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')\n       AND month_start = '2025-12-01') * 1.0 / AVG(w.units), 1) AS weeks_cover\nFROM weekly w",
+      "hints": [
+        "Остаток на складе лежит в отдельной таблице fact_stock, у неё нет прямой связи с fact_sellout: достаньте нужное число отдельным скалярным подзапросом, как в sql-014.",
+        "Недельный темп продаж считайте только по точкам этого дистрибьютора — фильтр c.served_by_distributor_id, а не по всем продажам товара в стране."
+      ],
+      "explain": "Запас в неделях — стандартный способ увидеть остаток не в штуках, а во времени: 1315 штук ничего не говорят сами по себе, а почти 22 недели запаса при среднем темпе продаж говорят о серьёзном затоваривании — на FMCG-товарах с ограниченным сроком годности это прямой риск списания. Здоровый уровень обычно 3–6 недель в зависимости от категории; всё, что заметно выше, означает либо ошибку в заказе, либо резкое замедление продаж в точках, которое склад ещё не отразил. Это тот же диагностический ход, что и sell-in/sell-out в sql-022, только для остатков, а не для потока отгрузок."
+    },
+    {
+      "id": "sql-058",
+      "track": "sql",
+      "skill": "sql-business-case",
+      "alsoTrains": ["sql-join-left", "sql-cte"],
+      "level": 5,
+      "mode": "write",
+      "title": "Кто не дотянул до плана в декабре",
+      "brief": "В начале января руководитель отдела продаж сверяет факт с планом за декабрь 2025 года и просит список представителей, которые не выполнили план по выручке в своём дивизионе, — только тех, у кого выполнение ниже 100%.",
+      "goal": "За декабрь 2025 вернуть rep_name, target_revenue (округлить до целых), actual_revenue (округлить до целых) — выручка по товарам своего дивизиона в точках представителя, и attainment_pct — процент выполнения плана, округлённый до одного знака. Только role = 'rep' и attainment_pct < 100. По возрастанию attainment_pct.",
+      "starter": "WITH actual AS (\n  SELECT c.rep_id, p.division, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'\n  GROUP BY c.rep_id, p.division\n)\n",
+      "solution": "WITH actual AS (\n  SELECT c.rep_id, p.division, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'\n  GROUP BY c.rep_id, p.division\n)\nSELECT r.rep_name, ROUND(t.target_revenue) AS target_revenue,\n       ROUND(COALESCE(a.revenue, 0)) AS actual_revenue,\n       ROUND(100.0 * COALESCE(a.revenue, 0) / t.target_revenue, 1) AS attainment_pct\nFROM fact_target t\nJOIN dim_rep r ON r.rep_id = t.rep_id\nLEFT JOIN actual a ON a.rep_id = t.rep_id AND a.division = t.division\nWHERE t.month_start = '2025-12-01' AND r.role = 'rep'\n  AND 100.0 * COALESCE(a.revenue, 0) / t.target_revenue < 100\nORDER BY attainment_pct",
+      "orderMatters": true,
+      "hints": [
+        "План привязан к представителю и дивизиону одновременно — соедините факт с планом по обоим ключам, rep_id и division.",
+        "LEFT JOIN нужен на случай, если у представителя в декабре вообще не было продаж по своему дивизиону: тогда actual должен стать 0, а не выпасть из отчёта — COALESCE(a.revenue, 0), как в sql-014."
+      ],
+      "explain": "План и факт лежат на разной гранулярности, которая на первый взгляд не видна: fact_target хранит одну строку на представителя и дивизион в месяц, а fact_sellout — россыпь продаж по точкам и товарам, из которой дивизион представителя ещё нужно собрать через два соединения. LEFT JOIN здесь принципиален по той же причине, что в sql-014: представитель без единой продажи в декабре не должен пропасть из отчёта — наоборот, именно он самый интересный случай, 0% выполнения. Фильтр attainment_pct < 100 стоит в WHERE, а не в HAVING, потому что расчёт делается над обычными колонками результата соединения: агрегаты уже посчитаны внутри CTE actual, и группировки на этом уровне запроса нет."
+    },
+    {
+      "id": "sql-059",
+      "track": "sql",
+      "skill": "sql-business-case",
+      "level": 5,
+      "mode": "predict",
+      "title": "Почему выручка «Ключевой» держится, хотя объём падает",
+      "brief": "У бренда «Ключевая» в первом квартале 2025 года объём продаж в штуках заметно просел по сравнению с первым кварталом 2024-го, но в презентации выручка выглядит почти не пострадавшей. Финансовый директор просит объяснить расхождение.",
+      "goal": "Определить причину по результатам декомпозиции.",
+      "predictSql": "-- Ключевая, Q1, по годам:\n--  год    штук    выручка    средняя_цена   точек\n--  2024   26531   1406408    53.0           88\n--  2025   20482   1298947    63.4           88\n\nSELECT d.year, SUM(f.units) AS units, ROUND(SUM(f.revenue)) AS revenue,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price,\n       COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Ключевая' AND d.quarter = 1 AND d.year IN (2024, 2025)\nGROUP BY d.year",
+      "predictQuestion": "Что произошло с брендом «Ключевая» между Q1 2024 и Q1 2025?",
+      "options": [
+        {
+          "label": "Цену подняли почти на 20%, и это компенсировало падение объёма почти на четверть — выручка держится за счёт цены, а не спроса",
+          "correct": true,
+          "why": "Штуки упали с 26531 до 20482 (−23%), а средняя цена выросла с 53 до 63.4 (+20%) — в итоге выручка просела всего на 7.6%, хотя реальный физический объём продаж сократился гораздо сильнее."
+        },
+        {
+          "label": "Спрос вырос, потому что выручка почти не изменилась",
+          "why": "Выручка — это произведение цены и объёма, и она может держаться даже при падающем спросе, если цена растёт быстрее, чем падает объём. Именно так здесь и произошло."
+        },
+        {
+          "label": "Бренд потерял дистрибуцию, как «Чистовъ» в sql-023",
+          "why": "Число точек не изменилось — 88 в оба года. Это ровно то отличие, которое отделяет этот случай от sql-023: там причиной была именно потеря полки, здесь полка на месте, а изменилась цена."
+        },
+        {
+          "label": "Показатели упали из-за сезонности первого квартала",
+          "why": "Сезонность исключена сравнением одного и того же квартала за разные годы — то же самое рассуждение, что и в sql-023."
+        }
+      ],
+      "hints": [
+        "Сравните темп изменения штук и темп изменения средней цены — какой из них больше по модулю?",
+        "Число точек продаж (outlets) одинаково в обоих годах — сразу исключает одну из типичных причин."
+      ],
+      "explain": "Выручка — обманчивая витрина: она может почти не измениться, пока под ней происходят два разнонаправленных сдвига, которые компенсируют друг друга. Здесь падение физического объёма на 23% почти полностью замаскировано ростом цены на 20% — итоговая просадка выручки всего 7.6% выглядит как «всё в порядке», хотя реальная проблема, потеря объёма продаж, никуда не делась. Отдельно стоит цифра outlets: она одинакова в оба года, и именно поэтому версия про потерю дистрибуции (как в sql-023) здесь не работает — там причиной было исчезновение полки, тут полка на месте, изменились цена и объём на ней. Практический вывод: любую стабильную выручку раскладывайте на цену и объём отдельно, прежде чем делать вывод об устойчивости бренда."
+    },
+    {
+      "id": "sql-060",
+      "track": "sql",
+      "skill": "sql-business-case",
+      "alsoTrains": ["sql-window-frame", "sql-cte"],
+      "level": 5,
+      "mode": "write",
+      "title": "Сколько товаров дают половину выручки",
+      "brief": "Перед пересмотром ассортимента категорийный менеджер хочет понять степень концентрации портфеля: если половину годовой выручки делает горстка SKU, вывод любого из них из ассортимента — серьёзный риск; если выручка размазана по всей линейке, риск ниже.",
+      "goal": "За 2025 год определить минимальный набор товаров-лидеров по выручке, которые в сумме дают не менее 50% годовой выручки. Вернуть product_name, revenue (округлить до целых) и cum_share_pct — нарастающую долю в общей выручке в процентах, округлённую до одного знака. По убыванию выручки.",
+      "starter": "WITH sku_rev AS (\n  SELECT p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.product_name\n),\ntotal AS (\n  SELECT SUM(rev) AS grand FROM sku_rev\n)\n",
+      "solution": "WITH sku_rev AS (\n  SELECT p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.product_name\n),\ntotal AS (\n  SELECT SUM(rev) AS grand FROM sku_rev\n),\nranked AS (\n  SELECT product_name, rev,\n         100.0 * SUM(rev) OVER (ORDER BY rev DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / (SELECT grand FROM total) AS cum_share_pct,\n         100.0 * (SUM(rev) OVER (ORDER BY rev DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - rev) / (SELECT grand FROM total) AS prev_share_pct\n  FROM sku_rev\n)\nSELECT product_name, ROUND(rev) AS revenue, ROUND(cum_share_pct, 1) AS cum_share_pct\nFROM ranked\nWHERE prev_share_pct < 50\nORDER BY revenue DESC",
+      "orderMatters": true,
+      "hints": [
+        "Нарастающая доля — тот же приём, что и накопительный итог в sql-054, только результат ещё делится на общую сумму и переводится в проценты.",
+        "Чтобы включить ровно те строки, которых не хватало до 50%, сравните долю ДО текущей строки (без неё) с порогом — если она уже была меньше 50%, эта строка нужна."
+      ],
+      "explain": "Идея в том, чтобы включить в отчёт минимальный набор лидеров, а не произвольные топ-N: сравнивается не сама накопленная доля текущей строки, а доля, накопленная ДО неё (prev_share_pct) — именно она решает, была ли эта строка обязательна для преодоления 50%. Результат: 15 из 47 товаров, то есть около трети линейки, вместе дают чуть больше половины выручки — умеренная, не экстремальная концентрация, не тот случай, когда пять хитов держат всю компанию, но и не идеально ровное распределение. Здесь легко ошибиться, ожидая классическое правило «20% товаров дают 80% выручки»: в этом портфеле оно не подтверждается, и подгонять вывод под чужую эвристику вместо того, чтобы прочитать собственные цифры, — типичная ошибка интерпретации."
     }
   ]
 }

@@ -304,5 +304,31 @@ for (const packId of draftPacks) {
   if (!failed) console.log('  ok   sql-023: цифры в тексте задания совпадают с датасетом');
 }
 
+// sql-059 цитирует конкретные цифры в тексте задания. Если данные поехали, текст соврёт.
+{
+  const r = runSql(`
+    SELECT d.year, SUM(f.units) AS units, ROUND(SUM(f.revenue)) AS revenue,
+           ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price,
+           COUNT(DISTINCT f.customer_id) AS outlets
+    FROM fact_sellout f
+    JOIN dim_product p ON p.product_id = f.product_id
+    JOIN dim_date d ON d.date_id = f.week_start
+    WHERE p.brand = 'Ключевая' AND d.quarter = 1 AND d.year IN (2024, 2025)
+    GROUP BY d.year ORDER BY d.year`);
+  const quoted = [
+    [2024, 26531, 1406408, 53.0, 88],
+    [2025, 20482, 1298947, 63.4, 88],
+  ];
+  const near = (a, b) => Math.abs(a - b) <= Math.max(0.15, Math.abs(b) * 0.005);
+  r.rows.forEach((row, i) => {
+    const q = quoted[i];
+    if (!q) return;
+    if (row[0] !== q[0] || row[1] !== q[1] || !near(row[2], q[2]) || !near(row[3], q[3]) || row[4] !== q[4]) {
+      fail('sql-059', `цифры в тексте задания разошлись с данными: в базе ${row.join(' / ')}, в тексте ${q.join(' / ')}`);
+    }
+  });
+  if (r.rows.length === 2 && !quoted.some((q, i) => !r.rows[i])) console.log('  ok   sql-059: цифры в тексте задания совпадают с датасетом');
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);
