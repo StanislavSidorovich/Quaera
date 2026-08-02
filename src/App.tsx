@@ -324,9 +324,18 @@ function Home({
   }, [activePack]);
 
   const ready = activePack.status !== 'draft' && activePack.tasks.length > 0;
+  // Показываем ровно один раз, до первой же решённой задачи или начатого навыка —
+  // дальше это уже не «что это такое», а лишняя строчка над картой навыков.
+  const isNewUser = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
 
   return (
     <>
+      {isNewUser && (
+        <div className="card">
+          <p className="brief" style={{ margin: 0 }}>{ru.welcome.body}</p>
+        </div>
+      )}
+
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
 
       {ready && (
