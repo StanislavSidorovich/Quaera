@@ -20,11 +20,67 @@ const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.
 const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'querium.sqlite'))));
 
 const packs = ['sql-core'];
+
+/**
+ * Черновые паки: граф навыков спроектирован, контента ещё нет.
+ *
+ * Они лежат в репозитории до наполнения намеренно. Карта треков на главной
+ * строится по ним, поэтому структура успевает поспорить сама с собой раньше,
+ * чем в неё вложены десятки заданий: цикл в предпосылках или предпосылка
+ * с более высоким уровнем стоит здесь минуты, а не переписывания пака.
+ * Проверяется у них только граф — заданий и карточек спрашивать не с чего.
+ */
+const draftPacks = ['model-core', 'python-core', 'domain-core'];
+
 let failed = 0;
 const fail = (id, msg) => {
   console.log(` FAIL  ${id}: ${msg}`);
   failed++;
 };
+
+const readPack = (id) =>
+  JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${id}.json`), 'utf8'));
+
+/**
+ * Граф навыков — общая проверка для готовых и черновых паков.
+ *
+ * Порядок выдачи заданий целиком выводится отсюда: планировщик разворачивает
+ * границу графа по предпосылкам, и цикл или предпосылка с более высоким tier
+ * означают не косметический дефект, а тему, которая либо не откроется никогда,
+ * либо откроется раньше того, на чём держится.
+ */
+function checkGraph(pack) {
+  const skillIds = new Set(pack.skills.map((s) => s.id));
+  if (skillIds.size !== pack.skills.length) fail(pack.id, 'дублирующиеся id скиллов');
+  for (const s of pack.skills) {
+    if (s.track !== pack.track) {
+      fail(s.id, `трек скилла «${s.track}» не совпадает с треком пака «${pack.track}»`);
+    }
+    // summary человек читает на карте навыков как проверку «умею или нет».
+    // Огрызок вроде «Понимаю JOIN» проверить на себе невозможно.
+    if (!s.summary || s.summary.length < 40) {
+      fail(s.id, 'summary пустой или слишком короткий — по нему человек проверяет себя');
+    }
+    for (const p of s.prereqs) {
+      if (!skillIds.has(p)) fail(s.id, `предпосылка «${p}» не существует`);
+      const parent = pack.skills.find((x) => x.id === p);
+      if (parent && parent.tier > s.tier) fail(s.id, `предпосылка «${p}» имеет более высокий tier`);
+    }
+  }
+  // граф обязан быть ацикличным, иначе порядок выдачи не определён
+  const seen = new Map();
+  const visit = (id, stack) => {
+    if (stack.includes(id)) return fail(id, `цикл в предпосылках: ${[...stack, id].join(' → ')}`);
+    if (seen.get(id)) return;
+    seen.set(id, true);
+    const s = pack.skills.find((x) => x.id === id);
+    s?.prereqs.forEach((p) => visit(p, [...stack, id]));
+  };
+  pack.skills.forEach((s) => visit(s.id, []));
+  if (!pack.skills.some((s) => s.tier === 1 && s.prereqs.length === 0)) {
+    fail(pack.id, 'нет ни одного скилла без предпосылок — треку не с чего начаться');
+  }
+}
 
 /** Имена колонок датасета — заодно проверяем, что задания не ссылаются на несуществующее. */
 const knownColumns = new Set();
@@ -49,29 +105,11 @@ function runSql(sql) {
 }
 
 for (const packId of packs) {
-  const pack = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${packId}.json`), 'utf8'));
+  const pack = readPack(packId);
   console.log(`\n=== Пак ${pack.id}: ${pack.tasks.length} заданий, ${pack.skills.length} скиллов`);
 
-  // --- граф скиллов
+  checkGraph(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
-  if (skillIds.size !== pack.skills.length) fail(pack.id, 'дублирующиеся id скиллов');
-  for (const s of pack.skills) {
-    for (const p of s.prereqs) {
-      if (!skillIds.has(p)) fail(s.id, `предпосылка «${p}» не существует`);
-      const parent = pack.skills.find((x) => x.id === p);
-      if (parent && parent.tier > s.tier) fail(s.id, `предпосылка «${p}» имеет более высокий tier`);
-    }
-  }
-  // граф обязан быть ацикличным, иначе порядок выдачи не определён
-  const seen = new Map();
-  const visit = (id, stack) => {
-    if (stack.includes(id)) return fail(id, `цикл в предпосылках: ${[...stack, id].join(' → ')}`);
-    if (seen.get(id)) return;
-    seen.set(id, true);
-    const s = pack.skills.find((x) => x.id === id);
-    s?.prereqs.forEach((p) => visit(p, [...stack, id]));
-  };
-  pack.skills.forEach((s) => visit(s.id, []));
 
   // --- задания
   const taskIds = new Set();
@@ -134,6 +172,28 @@ for (const packId of packs) {
     }
     console.log(`  ok   ${t.id} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length} — ${t.title}`);
   }
+}
+
+// --- Черновые треки: проверяем только структуру графа.
+for (const packId of draftPacks) {
+  const pack = readPack(packId);
+  console.log(`\n=== Черновик ${pack.id}: ${pack.skills.length} скиллов, контента пока нет`);
+
+  // Пак без явного признака черновика плеер подхватит как готовый и выдаст
+  // человеку тему, за которой нет ни одного задания.
+  if (pack.status !== 'draft') fail(pack.id, 'нет status: "draft" — пак выглядит как готовый к выдаче');
+  if ((pack.tasks ?? []).length) {
+    fail(pack.id, 'в черновом паке есть задания — их эталоны никто здесь не прогоняет');
+  }
+
+  checkGraph(pack);
+
+  const tiers = [...new Set(pack.skills.map((s) => s.tier))].sort();
+  for (const t of tiers) {
+    if (!pack.tierNames?.[t]) fail(pack.id, `у уровня ${t} нет названия в tierNames`);
+  }
+  const counts = tiers.map((t) => `${pack.tierNames?.[t] ?? t} — ${pack.skills.filter((s) => s.tier === t).length}`);
+  console.log(`  ok   ${pack.title}: ${counts.join(', ')}`);
 }
 
 // --- Карточки теории.

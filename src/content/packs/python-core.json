@@ -1,0 +1,137 @@
+{
+  "id": "python-core",
+  "track": "python",
+  "title": "pandas для аналитика",
+  "description": "Не «Python вообще», а тот его срез, которым разбирают данные. Каждый приём ставится рядом со своим SQL-аналогом — и отдельно разбирается то, чего в SQL нет вовсе: индекс, копии и типы колонок.",
+  "status": "draft",
+  "version": 0,
+  "tierNames": {
+    "1": "DataFrame и данные",
+    "2": "Агрегация",
+    "3": "Форма данных",
+    "4": "Рабочие привычки"
+  },
+  "skills": [
+    {
+      "id": "py-dataframe",
+      "track": "python",
+      "title": "DataFrame и Series",
+      "tier": 1,
+      "summary": "Читаю данные в DataFrame и различаю таблицу и отдельную колонку — Series, у которой свой собственный набор методов.",
+      "prereqs": []
+    },
+    {
+      "id": "py-index",
+      "track": "python",
+      "title": "Индекс, которого нет в SQL",
+      "tier": 1,
+      "summary": "Помню, что у DataFrame есть индекс, и не удивляюсь, когда после groupby колонка «пропадает» — она ушла в него.",
+      "prereqs": ["py-dataframe"]
+    },
+    {
+      "id": "py-select-filter",
+      "track": "python",
+      "title": "Выбор и фильтрация",
+      "tier": 1,
+      "summary": "Отбираю строки булевой маской, а колонки через loc, не путая обращение по метке с обращением по позиции.",
+      "prereqs": ["py-dataframe"]
+    },
+    {
+      "id": "py-dtypes",
+      "track": "python",
+      "title": "Типы колонок",
+      "tier": 1,
+      "summary": "Смотрю dtypes до расчётов и понимаю, почему «сумма чисел» склеила строки, а целые сами собой стали дробными.",
+      "prereqs": ["py-dataframe"]
+    },
+    {
+      "id": "py-groupby",
+      "track": "python",
+      "title": "groupby и agg",
+      "tier": 2,
+      "summary": "Собираю сводку через groupby и заранее знаю, что вернётся — Series или DataFrame — и что окажется в индексе.",
+      "prereqs": ["py-index", "py-select-filter"]
+    },
+    {
+      "id": "py-transform",
+      "track": "python",
+      "title": "transform против agg и apply",
+      "tier": 2,
+      "summary": "Возвращаю значение на исходной гранулярности через transform вместо того, чтобы считать сводку и приклеивать её обратно, — это pandas-версия оконной функции.",
+      "prereqs": ["py-groupby"]
+    },
+    {
+      "id": "py-nan",
+      "track": "python",
+      "title": "NaN и пропуски",
+      "tier": 2,
+      "summary": "Помню, что NaN не равен сам себе и что groupby по умолчанию молча выбрасывает строки с пропущенным ключом.",
+      "prereqs": ["py-dtypes", "py-select-filter"]
+    },
+    {
+      "id": "py-merge",
+      "track": "python",
+      "title": "merge и размножение строк",
+      "tier": 2,
+      "summary": "Соединяю таблицы, зная кардинальность ключа, и проверяю это через validate — а не после того, как сумма выросла вдвое.",
+      "prereqs": ["py-groupby", "py-index"]
+    },
+    {
+      "id": "py-reshape",
+      "track": "python",
+      "title": "pivot, pivot_table и melt",
+      "tier": 3,
+      "summary": "Перевожу таблицу между широким и длинным форматом и выбираю тот, который нужен следующему шагу расчёта.",
+      "prereqs": ["py-groupby"]
+    },
+    {
+      "id": "py-tidy",
+      "track": "python",
+      "title": "Опрятные данные",
+      "tier": 3,
+      "summary": "Привожу данные к виду «одна строка — одно наблюдение, одна колонка — одна переменная» и понимаю, что это экономит шаги, а не украшает код.",
+      "prereqs": ["py-reshape"]
+    },
+    {
+      "id": "py-timeseries",
+      "track": "python",
+      "title": "Даты и временные ряды",
+      "tier": 3,
+      "summary": "Перевожу колонку в datetime, меняю частоту ряда через resample и считаю скользящие окна через rolling.",
+      "prereqs": ["py-dtypes", "py-groupby"]
+    },
+    {
+      "id": "py-chaining",
+      "track": "python",
+      "title": "Цепочки, виды и копии",
+      "tier": 3,
+      "summary": "Пишу преобразования цепочкой через assign и не ловлю SettingWithCopyWarning, потому что понимаю, где возникает копия, а где вид на исходные данные.",
+      "prereqs": ["py-select-filter", "py-transform"]
+    },
+    {
+      "id": "py-viz",
+      "track": "python",
+      "title": "График как инструмент проверки",
+      "tier": 4,
+      "summary": "Строю график, чтобы увидеть форму распределения и поймать выброс, а не чтобы вставить картинку в отчёт.",
+      "prereqs": ["py-groupby", "py-timeseries"]
+    },
+    {
+      "id": "py-reproducibility",
+      "track": "python",
+      "title": "Воспроизводимость",
+      "tier": 4,
+      "summary": "Пишу расчёт так, что он даёт тот же результат завтра и на чужой машине: фиксирую версии, сид и порядок шагов.",
+      "prereqs": ["py-chaining"]
+    },
+    {
+      "id": "py-performance",
+      "track": "python",
+      "title": "Векторизация",
+      "tier": 4,
+      "summary": "Заменяю цикл по строкам и apply на векторную операцию и понимаю, что разница здесь не в стиле, а в порядке величины.",
+      "prereqs": ["py-transform", "py-chaining"]
+    }
+  ],
+  "tasks": []
+}
