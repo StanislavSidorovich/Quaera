@@ -57,11 +57,17 @@ function RunnableSql({ sql, tone, executor }: { sql: string; tone?: 'wrong'; exe
 interface Props {
   lesson: Lesson;
   executor: Executor;
+  /**
+   * Можно ли выполнить example/wrong как код. Ложь для треков без исполнителя
+   * (сейчас — domain): там example/wrong — иллюстративный текст или цифры
+   * из готового расчёта, а не запрос, который стоит запускать по кнопке.
+   */
+  runnable?: boolean;
   /** В занятии показываем кнопку перехода к задаче, в справочнике — нет. */
   onContinue?: () => void;
 }
 
-export function LessonCard({ lesson, executor, onContinue }: Props) {
+export function LessonCard({ lesson, executor, runnable = true, onContinue }: Props) {
   return (
     <>
       <div className="card">
@@ -77,7 +83,7 @@ export function LessonCard({ lesson, executor, onContinue }: Props) {
 
       <div className="card">
         <h2>{ru.lesson.exampleTitle}</h2>
-        <RunnableSql sql={lesson.example} executor={executor} />
+        {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="sql-block">{lesson.example}</pre>}
         <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
           {lesson.reads}
         </p>
@@ -85,7 +91,11 @@ export function LessonCard({ lesson, executor, onContinue }: Props) {
 
       <div className="card">
         <h2>{ru.lesson.wrongTitle}</h2>
-        <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
+        {runnable ? (
+          <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
+        ) : (
+          <pre className="sql-block">{lesson.wrong}</pre>
+        )}
         <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.wrongWhy}</p>
       </div>
 

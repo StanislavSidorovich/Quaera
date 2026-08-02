@@ -19,10 +19,17 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.resolve('sql.js')), f) });
 const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'querium.sqlite'))));
 
-const packs = ['sql-core'];
+/**
+ * Готовые паки — с исполнимым контентом (весь или частично). У domain-core
+ * пока наполнена только часть графа: скиллы без единого задания — это не
+ * дефект, а нормальное промежуточное состояние трека в процессе наполнения
+ * (см. checkLessons ниже — покрытие карточками требуется только там, где уже
+ * есть задания, а не на весь граф разом).
+ */
+const packs = ['sql-core', 'domain-core'];
 
 /**
- * Черновые паки: граф навыков спроектирован, контента ещё нет.
+ * Черновые паки: граф навыков спроектирован, контента ещё нет вообще.
  *
  * Они лежат в репозитории до наполнения намеренно. Карта треков на главной
  * строится по ним, поэтому структура успевает поспорить сама с собой раньше,
@@ -30,7 +37,7 @@ const packs = ['sql-core'];
  * с более высоким уровнем стоит здесь минуты, а не переписывания пака.
  * Проверяется у них только граф — заданий и карточек спрашивать не с чего.
  */
-const draftPacks = ['model-core', 'python-core', 'domain-core'];
+const draftPacks = ['model-core', 'python-core'];
 
 let failed = 0;
 const fail = (id, msg) => {
@@ -80,6 +87,10 @@ function checkGraph(pack) {
   if (!pack.skills.some((s) => s.tier === 1 && s.prereqs.length === 0)) {
     fail(pack.id, 'нет ни одного скилла без предпосылок — треку не с чего начаться');
   }
+  // Уровень без названия выводится на карте навыков голым числом.
+  for (const t of new Set(pack.skills.map((s) => s.tier))) {
+    if (!pack.tierNames?.[t]) fail(pack.id, `у уровня ${t} нет названия в tierNames`);
+  }
 }
 
 /** Имена колонок датасета — заодно проверяем, что задания не ссылаются на несуществующее. */
@@ -123,13 +134,24 @@ for (const packId of packs) {
     if (!t.brief || !t.goal) fail(t.id, 'нет бизнес-постановки или формулировки результата');
 
     if (t.mode === 'predict') {
-      if (!t.predictSql || !t.predictQuestion) fail(t.id, 'нет запроса или вопроса для режима predict');
+      // Предсказывать можно результат кода (predictSql) или последствие
+      // решения (scenario) — но не то и другое сразу: плеер рисует что-то одно.
+      if (!t.predictSql && !t.scenario) fail(t.id, 'нет ни запроса, ни ситуации для режима predict');
+      if (t.predictSql && t.scenario) fail(t.id, 'заданы и predictSql, и scenario — плеер покажет только одно');
+      if (!t.predictQuestion) fail(t.id, 'нет вопроса для режима predict');
       const correct = (t.options ?? []).filter((o) => o.correct);
       if (correct.length !== 1) fail(t.id, `должен быть ровно один верный вариант, найдено ${correct.length}`);
       if ((t.options ?? []).length < 3) fail(t.id, 'меньше трёх вариантов ответа');
       for (const o of t.options ?? []) {
         if (!o.why || o.why.length < 40) fail(t.id, `у варианта «${o.label}» нет содержательного разбора`);
       }
+      continue;
+    }
+
+    // Треки без исполнителя кода (domain) работают только в predict: там нечего
+    // выполнять, и write/fill означали бы поле ввода, которое некому проверить.
+    if (pack.track !== 'sql') {
+      fail(t.id, `трек «${pack.track}» без исполнителя кода, а задание в режиме «${t.mode}» — допустим только predict`);
       continue;
     }
 
@@ -189,23 +211,32 @@ for (const packId of draftPacks) {
   checkGraph(pack);
 
   const tiers = [...new Set(pack.skills.map((s) => s.tier))].sort();
-  for (const t of tiers) {
-    if (!pack.tierNames?.[t]) fail(pack.id, `у уровня ${t} нет названия в tierNames`);
-  }
   const counts = tiers.map((t) => `${pack.tierNames?.[t] ?? t} — ${pack.skills.filter((s) => s.tier === t).length}`);
   console.log(`  ok   ${pack.title}: ${counts.join(', ')}`);
 }
 
-// --- Карточки теории.
-{
-  const pack = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-core.json'), 'utf8'));
-  const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-lessons.json'), 'utf8'));
-  console.log(`\n=== Карточки теории: ${lessons.length}`);
+/**
+ * Карточки теории для пака.
+ *
+ * Покрытие требуется не на весь граф, а только на скиллы, у которых уже есть
+ * хотя бы одно задание: у domain-core большая часть скиллов ещё пустая, и это
+ * нормальное состояние трека в процессе наполнения, а не дефект. Для sql-core
+ * это условие эквивалентно старому «на все скиллы разом», потому что там
+ * пустых скиллов нет.
+ *
+ * example/wrong исполняются как SQL только в треке sql — в domain это
+ * иллюстративный текст или готовые цифры расчёта, а не запрос.
+ */
+function checkLessons(pack, lessonsFileId) {
+  const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.json`), 'utf8'));
+  console.log(`\n=== Карточки теории (${pack.id}): ${lessons.length}`);
 
+  const touchedSkills = new Set(pack.tasks.map((t) => t.skill));
   const covered = new Set(lessons.map((l) => l.skill));
-  for (const s of pack.skills) {
-    if (!covered.has(s.id)) fail('lessons', `у скилла «${s.id}» нет карточки — человек встретит задачу без объяснения приёма`);
+  for (const skillId of touchedSkills) {
+    if (!covered.has(skillId)) fail('lessons', `у скилла «${skillId}» есть задания, но нет карточки — человек встретит задачу без объяснения приёма`);
   }
+
   const seen = new Set();
   for (const l of lessons) {
     if (!pack.skills.some((s) => s.id === l.skill)) fail(l.skill, 'карточка ссылается на несуществующий скилл');
@@ -213,6 +244,11 @@ for (const packId of draftPacks) {
     seen.add(l.skill);
     for (const field of ['why', 'form', 'example', 'reads', 'wrong', 'wrongWhy', 'selfCheck']) {
       if (!l[field] || String(l[field]).trim().length < 20) fail(l.skill, `блок «${field}» пустой или слишком короткий`);
+    }
+
+    if (pack.track !== 'sql') {
+      console.log(`  ok   ${l.skill.padEnd(20)} карточка текстовая — не исполняется`);
+      continue;
     }
 
     let ok;
@@ -249,6 +285,9 @@ for (const packId of draftPacks) {
     console.log(`  ok   ${l.skill.padEnd(20)} пример ${String(ok.rows.length).padStart(4)} строк · антипример — ${verdict}`);
   }
 }
+
+checkLessons(readPack('sql-core'), 'sql-lessons');
+checkLessons(readPack('domain-core'), 'domain-lessons');
 
 // --- Проверки, специфичные для отдельных заданий: смысл, а не только исполнимость.
 
@@ -328,6 +367,72 @@ for (const packId of draftPacks) {
     }
   });
   if (r.rows.length === 2 && !quoted.some((q, i) => !r.rows[i])) console.log('  ok   sql-059: цифры в тексте задания совпадают с датасетом');
+}
+
+// Трек domain цитирует опорные числа бизнеса в тексте заданий и карточек.
+// Проверять их особенно важно: исполнимого эталона там нет вообще, и разойтись
+// с датасетом текст может совершенно молча.
+{
+  const year = runSql(`
+    SELECT ROUND(SUM(revenue)) AS total
+    FROM fact_sellout WHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'`);
+  // dom-010 (итог года), dom-011 («около 51.5 млн»), карточка dom-sanity-check
+  if (Math.abs(year.rows[0][0] - 51_533_887) > 51_533_887 * 0.005) {
+    fail('domain', `годовая выручка 2025 разошлась с текстом: в базе ${year.rows[0][0]}, в тексте 51 533 887`);
+  } else {
+    console.log(`\n  ok   domain: годовая выручка 2025 — ${year.rows[0][0]} ₽ (цифры в тексте совпадают)`);
+  }
+
+  // dom-010 показывает первые три месяца и декабрь конкретными числами.
+  const months = runSql(`
+    SELECT substr(week_start, 1, 7) AS month, ROUND(SUM(revenue) / 1000) AS th
+    FROM fact_sellout WHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'
+    GROUP BY 1 ORDER BY 1`);
+  if (months.rows.length !== 12) fail('dom-010', `в 2025 году ${months.rows.length} месяцев вместо 12`);
+  const quotedMonths = { '2025-01': 3717, '2025-02': 4155, '2025-03': 4694, '2025-12': 4408 };
+  for (const [m, th] of months.rows) {
+    if (quotedMonths[m] && Math.abs(th - quotedMonths[m]) > 1) {
+      fail('dom-010', `${m}: в базе ${th} тыс., в тексте задания ${quotedMonths[m]} тыс.`);
+    }
+  }
+
+  // dom-002 сверяет дашборд с учётной системой на мартовской цифре.
+  const march = months.rows.find((r) => r[0] === '2025-03');
+  if (march && Math.abs(march[1] * 1000 - 4_694_330) > 4_694_330 * 0.005) {
+    fail('dom-002', `март 2025 разошёлся с текстом: в базе ${march[1] * 1000}, в тексте 4 694 330`);
+  }
+
+  // dom-007 держится на том, что разница 144 − 132 равна числу дистрибьюторов.
+  const cust = runSql(`
+    SELECT COUNT(*) AS total,
+           SUM(CASE WHEN customer_type = 'distributor' THEN 1 ELSE 0 END) AS distributors
+    FROM dim_customer`);
+  const [total, distributors] = cust.rows[0];
+  if (total !== 144 || distributors !== 12) {
+    fail('dom-007', `в тексте 144 клиента и 12 дистрибьюторов, в базе ${total} и ${distributors}`);
+  } else {
+    console.log(`  ok   dom-007: ${total} клиентов, из них ${distributors} дистрибьюторов — разница ${total - distributors} совпадает с текстом`);
+  }
+
+  // dom-011 строит аномалию на реальных соседних регионах за декабрь.
+  const regions = runSql(`
+    SELECT r.region_name, ROUND(SUM(f.revenue)) AS rev
+    FROM fact_sellout f
+    JOIN dim_customer c ON c.customer_id = f.customer_id
+    JOIN dim_region r ON r.region_id = c.region_id
+    WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'
+    GROUP BY 1 ORDER BY rev DESC LIMIT 3`);
+  const quotedRegions = [['Ростовская область', 622299], ['Краснодарский край', 527583], ['Самарская область', 407593]];
+  regions.rows.forEach((row, i) => {
+    const q = quotedRegions[i];
+    if (!q) return;
+    if (row[0] !== q[0]) fail('dom-011', `регион на месте ${i + 1}: в базе «${row[0]}», в тексте «${q[0]}»`);
+    // Ростовская область в тексте задания намеренно искажена (в этом суть задания),
+    // поэтому сверяем только две строки-соседа, которые показаны как нормальные.
+    else if (i > 0 && Math.abs(row[1] - q[1]) > q[1] * 0.005) {
+      fail('dom-011', `${row[0]}: в базе ${row[1]}, в тексте ${q[1]}`);
+    }
+  });
 }
 
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');

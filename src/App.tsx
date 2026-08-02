@@ -222,7 +222,13 @@ export default function App() {
         )}
 
         {step?.kind === 'lesson' && executor && (
-          <LessonCard key={step.lesson.skill} lesson={step.lesson} executor={executor} onContinue={advance} />
+          <LessonCard
+            key={step.lesson.skill}
+            lesson={step.lesson}
+            executor={executor}
+            runnable={activeTrack === 'sql'}
+            onContinue={advance}
+          />
         )}
 
         {step?.kind === 'task' && executor && (
@@ -241,7 +247,11 @@ export default function App() {
         )}
 
         {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && executor && (
-          <LessonCard lesson={lessonBySkill.get(screen.skill)!} executor={executor} />
+          <LessonCard
+            lesson={lessonBySkill.get(screen.skill)!}
+            executor={executor}
+            runnable={activeTrack === 'sql'}
+          />
         )}
 
         {screen.name === 'done' && (
@@ -324,6 +334,13 @@ function Home({
   }, [activePack]);
 
   const ready = activePack.status !== 'draft' && activePack.tasks.length > 0;
+  /**
+   * Пишет ли человек код в этом треке. Выводится из самих заданий, а не из
+   * названия трека: пак, где всё в режиме predict, кода не требует, и обещать
+   * «запросы выполняются по-настоящему» там нельзя. Схема данных по той же
+   * причине не нужна — писать запрос к этим таблицам никто не будет.
+   */
+  const writesCode = activePack.tasks.some((t) => t.mode !== 'predict');
   // Показываем ровно один раз, до первой же решённой задачи или начатого навыка —
   // дальше это уже не «что это такое», а лишняя строчка над картой навыков.
   const isNewUser = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
@@ -358,7 +375,7 @@ function Home({
             {loading ? ru.home.loading : dueCount > 0 ? ru.home.startBtnResume : ru.home.startBtnBegin}
           </button>
           <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-            {ru.home.heroNote}
+            {writesCode ? ru.home.heroNote : ru.home.heroNoteNoCode}
           </p>
         </div>
       )}
@@ -408,9 +425,11 @@ function Home({
           <button className="btn secondary" onClick={onOpenReference}>
             {ru.home.referenceBtn}
           </button>
-          <button className="btn secondary" onClick={onOpenSchema}>
-            {ru.home.schemaBtn}
-          </button>
+          {writesCode && (
+            <button className="btn secondary" onClick={onOpenSchema}>
+              {ru.home.schemaBtn}
+            </button>
+          )}
         </div>
       )}
     </>
@@ -456,7 +475,7 @@ function Reference({
     <>
       <div className="card">
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-          {ru.reference.intro}
+          {activePack.tasks.some((t) => t.mode !== 'predict') ? ru.reference.intro : ru.reference.introNoCode}
         </p>
       </div>
       <div className="card">

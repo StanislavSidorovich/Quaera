@@ -3,6 +3,7 @@ import rawSqlLessons from './packs/sql-lessons.json';
 import rawModelCore from './packs/model-core.json';
 import rawPythonCore from './packs/python-core.json';
 import rawDomainCore from './packs/domain-core.json';
+import rawDomainLessons from './packs/domain-lessons.json';
 import type { Lesson, Pack, Task, Track } from './types';
 
 /**
@@ -65,11 +66,14 @@ export const packForTrack = (track: Track): Pack | undefined => packsByTrack.get
 
 /**
  * Карточки теории привязаны к скиллам, а не к паку: id скиллов уникальны
- * глобально (префикс sql-/model-/py-/dom-), поэтому один плоский файл
- * карточек может закрывать скиллы любого трека. Сейчас карточки есть
- * только у sql-core — у черновых паков лекций по определению ещё нет.
+ * глобально (префикс sql-/model-/py-/dom-), поэтому список карточек — плоский
+ * массив, собранный из файлов по одному на трек. У model-core и python-core
+ * лекций по определению ещё нет — они черновики без единого задания.
  */
-export const lessons: Lesson[] = (rawSqlLessons as { lessons: Lesson[] }).lessons;
+export const lessons: Lesson[] = [
+  ...(rawSqlLessons as { lessons: Lesson[] }).lessons,
+  ...(rawDomainLessons as { lessons: Lesson[] }).lessons,
+];
 export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 
 const allSkillIds = new Set(packs.flatMap((p) => p.skills.map((s) => s.id)));

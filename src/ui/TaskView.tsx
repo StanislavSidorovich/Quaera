@@ -180,9 +180,13 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
           <span className="pill">
             {task.mode === 'predict' ? ru.task.modePredict : task.mode === 'fill' ? ru.task.modeFill : ru.task.modeWrite}
           </span>
-          <button className="pill" onClick={onOpenSchema} style={{ marginLeft: 'auto' }}>
-            {ru.task.schemaBtn}
-          </button>
+          {/* Схема таблиц не нужна там, где запрос не пишут: задание про
+              разговор с заказчиком к dim_product отношения не имеет. */}
+          {!task.scenario && (
+            <button className="pill" onClick={onOpenSchema} style={{ marginLeft: 'auto' }}>
+              {ru.task.schemaBtn}
+            </button>
+          )}
         </div>
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
         <p className="brief">{task.brief}</p>
@@ -191,7 +195,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
 
       {task.mode === 'predict' ? (
         <div className="card">
-          <pre className="sql-block">{task.predictSql}</pre>
+          {task.scenario ? <pre className="scenario">{task.scenario}</pre> : <pre className="sql-block">{task.predictSql}</pre>}
           <p style={{ fontSize: 15, fontWeight: 600, margin: '14px 0 10px' }}>{task.predictQuestion}</p>
           {task.options?.map((o, i) => (
             <button
