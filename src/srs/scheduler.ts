@@ -107,6 +107,15 @@ export interface SelectionInput {
   solvedTaskIds: Set<string>;
   /** Сколько заданий в сессии. */
   size?: number;
+  /**
+   * Сколько новых навыков вводить за одно занятие.
+   *
+   * Ограничение не про длину сессии, а про усвоение: каждый новый навык — это
+   * ещё и карточка теории перед задачей, и пять незнакомых тем подряд
+   * превращают занятие в чтение. Лучше меньше тем с большей практикой:
+   * повторение всё равно вернёт их в следующие дни.
+   */
+  maxNewSkills?: number;
   now?: Date;
 }
 
@@ -117,7 +126,15 @@ export interface SelectionInput {
  * Внутри — перемешивание навыков: два задания подряд на один приём дают
  * иллюзию усвоения, потому что второе решается по образцу первого.
  */
-export function selectSession({ skills, tasks, states, solvedTaskIds, size = 5, now = new Date() }: SelectionInput): Task[] {
+export function selectSession({
+  skills,
+  tasks,
+  states,
+  solvedTaskIds,
+  size = 5,
+  maxNewSkills = 3,
+  now = new Date(),
+}: SelectionInput): Task[] {
   const unlocked = skills.filter((s) => isUnlocked(s, states));
   const due = unlocked.filter((s) => (states[s.id]?.reps ?? 0) > 0 && isDue(states[s.id], now));
 
@@ -155,7 +172,8 @@ export function selectSession({ skills, tasks, states, solvedTaskIds, size = 5, 
     skills.filter((s) => (states[s.id]?.reps ?? 0) > 0 && (states[s.id]?.lastGrade ?? 0) >= 2).map((s) => s.id)
   );
   const byTier = [...skills].sort((a, b) => a.tier - b.tier);
-  while (chosen.length < size) {
+  let introduced = 0;
+  while (chosen.length < size && introduced < maxNewSkills) {
     const next = byTier.find(
       (s) =>
         !usedSkills.includes(s.id) &&
@@ -164,14 +182,22 @@ export function selectSession({ skills, tasks, states, solvedTaskIds, size = 5, 
     );
     if (!next) break;
     usedSkills.push(next.id);
+    introduced += 1;
     const t = pickFor(next.id);
     if (t && !chosen.some((c) => c.id === t.id)) chosen.push(t);
   }
 
-  // Если материала не хватило, добираем любыми доступными заданиями.
+  // Добираем практикой по уже затронутым навыкам, а не новыми темами:
+  // добор не должен обходить ограничение на количество нового за занятие.
   if (chosen.length < size) {
+    const allowed = new Set([...satisfied, ...usedSkills]);
     const rest = tasks
-      .filter((t) => unlocked.some((s) => s.id === t.skill) && !chosen.some((c) => c.id === t.id))
+      .filter(
+        (t) =>
+          allowed.has(t.skill) &&
+          unlocked.some((s) => s.id === t.skill) &&
+          !chosen.some((c) => c.id === t.id)
+      )
       .sort((a, b) => Number(solvedTaskIds.has(a.id)) - Number(solvedTaskIds.has(b.id)) || a.level - b.level);
     for (const t of rest) {
       if (chosen.length >= size) break;

@@ -1,0 +1,183 @@
+{
+  "id": "sql-lessons",
+  "track": "sql",
+  "version": 1,
+  "lessons": [
+    {
+      "skill": "sql-select",
+      "title": "Выборка и алиасы",
+      "why": "Любой отчёт начинается с решения, какие колонки в нём нужны. Лишние — не безобидны: получатель тратит время, выясняя, что значит каждая, и теряет доверие к цифрам, которые не понимает. Имя колонки — часть ответа, а не техническая деталь.",
+      "form": "SELECT колонка, другая AS понятное_имя\nFROM таблица",
+      "example": "SELECT brand, product_name, list_price AS price_rub\nFROM dim_product\nWHERE brand = 'Гастрокалм'",
+      "reads": "Все позиции бренда «Гастрокалм» с полочной ценой. Колонка названа так, как её ждёт заказчик, а не так, как она лежит в базе.",
+      "wrong": "SELECT * FROM dim_product",
+      "wrongWhy": "Звёздочка тянет все колонки, включая служебные. В выгрузке появляются поля, которых никто не просил, а при изменении структуры таблицы отчёт молча меняет форму — и то, что строилось на нём дальше, ломается.",
+      "selfCheck": "Прочитайте заголовки результата вслух. Если хоть один нельзя объяснить заказчику без оговорок — переименуйте."
+    },
+    {
+      "skill": "sql-where",
+      "title": "Фильтрация строк",
+      "why": "Постановка задачи почти всегда содержит ограничения: за какой период, по какому дивизиону, в каком канале. Перевод этих слов в условия — половина работы, и здесь же кроется большинство расхождений между двумя отчётами об одном и том же.",
+      "form": "SELECT ...\nFROM таблица\nWHERE условие\n  AND другое_условие",
+      "example": "SELECT product_name, list_price\nFROM dim_product\nWHERE division = 'Pharma'\n  AND list_price > 500",
+      "reads": "Позиции фармацевтического дивизиона дороже 500 ₽. Оба условия должны выполниться одновременно — это задаёт AND.",
+      "wrong": "SELECT product_name FROM dim_product WHERE division = 'pharma'",
+      "wrongWhy": "Вернётся ноль строк: сравнение текста учитывает регистр, а в базе лежит «Pharma». Запрос при этом не падает — он честно отрабатывает и выдаёт пустоту. Самые дорогие ошибки в аналитике именно такие: не те, что падают, а те, что тихо занижают цифры.",
+      "selfCheck": "Прежде чем фильтровать по текстовой колонке, посмотрите, что в ней реально лежит: SELECT DISTINCT division FROM dim_product. Пять секунд против часа разбирательств."
+    },
+    {
+      "skill": "sql-order-limit",
+      "title": "Сортировка и топ-N",
+      "why": "«Покажи лучшие точки», «топ-10 позиций», «кто просел сильнее всех» — половина запросов от бизнеса про рейтинг. Порядок здесь не оформление, а сам ответ.",
+      "form": "SELECT ...\nFROM таблица\nORDER BY колонка DESC\nLIMIT 10",
+      "example": "SELECT product_name, brand, list_price\nFROM dim_product\nORDER BY list_price DESC\nLIMIT 5",
+      "reads": "Пять самых дорогих позиций прайса. Сначала строки упорядочиваются по цене от большей к меньшей, и только потом отсекаются первые пять.",
+      "wrong": "SELECT product_name, list_price FROM dim_product LIMIT 5",
+      "wrongWhy": "Это не «первые пять», а «какие-то пять». Без ORDER BY СУБД вправе вернуть строки в любом порядке, и на другом объёме данных или после переиндексации ответ изменится — а отчёт будет выглядеть так же убедительно.",
+      "selfCheck": "Если в постановке есть слова «топ», «самые», «лучшие», «худшие» — найдите в своём запросе ORDER BY. Нет его — ответа тоже нет."
+    },
+    {
+      "skill": "sql-null",
+      "title": "NULL и трёхзначная логика",
+      "why": "NULL означает «значение неизвестно», а не «ноль» и не «пусто». Это различие ежедневно съедает строки из отчётов: они не исчезают с ошибкой, они просто не приходят, и заметить недостачу можно только сверкой с источником.",
+      "form": "WHERE колонка IS NULL\nWHERE колонка IS NOT NULL\nCOALESCE(колонка, значение_по_умолчанию)",
+      "example": "SELECT COUNT(*) AS total,\n       COUNT(chain_name) AS in_chains,\n       COUNT(*) - COUNT(chain_name) AS standalone\nFROM dim_customer",
+      "reads": "Сколько всего клиентов, сколько из них сетевых и сколько несетевых. Разница между двумя счётчиками и есть количество пустых значений в колонке.",
+      "wrong": "SELECT COUNT(*) AS n FROM dim_customer WHERE chain_name <> 'Магнит'",
+      "wrongWhy": "Несетевые точки не попадут в ответ. Сравнение NULL с чем угодно даёт не истину и не ложь, а NULL, а WHERE пропускает только истину. По-человечески пустое значение — точно «не Магнит», по стандарту SQL — неизвестно.",
+      "selfCheck": "Если в колонке бывают пустые значения, любое условие с <>, NOT IN или > нужно сознательно дополнить: OR колонка IS NULL либо COALESCE."
+    },
+    {
+      "skill": "sql-aggregate",
+      "title": "Агрегатные функции",
+      "why": "За словом «количество» в постановке задачи может стоять три разных вопроса: сколько записей, по скольким есть данные и сколько разных объектов. Путаница между ними — самая частая причина, по которой два отчёта не сходятся.",
+      "form": "COUNT(*)              -- строк\nCOUNT(колонка)        -- строк, где значение заполнено\nCOUNT(DISTINCT кол.)  -- разных значений\nSUM / AVG / MIN / MAX",
+      "example": "SELECT COUNT(*) AS rows_cnt,\n       COUNT(DISTINCT brand) AS brands,\n       ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product",
+      "reads": "Сорок семь позиций, девять брендов, средняя цена по прайсу. Запрос без GROUP BY, но с агрегатами всегда возвращает ровно одну строку: вся таблица считается одной группой.",
+      "wrong": "SELECT COUNT(brand) AS brands FROM dim_product",
+      "wrongWhy": "Вернёт 47, а не 9. COUNT по колонке считает строки, где значение заполнено, а не разные значения. Число выглядит правдоподобно и спокойно доезжает до презентации.",
+      "selfCheck": "Услышав «количество», спросите: количество чего именно — записей или объектов? Это разные запросы и разные ответы."
+    },
+    {
+      "skill": "sql-group-by",
+      "title": "Группировка и гранулярность",
+      "why": "Гранулярность — это ответ на вопрос «что такое одна строка отчёта». Пока он не сформулирован словами, запрос писать рано: почти все ошибки в агрегации начинаются с того, что человек не проговорил этот ответ.",
+      "form": "SELECT разрез, SUM(мера) AS итог\nFROM таблица\nGROUP BY разрез",
+      "example": "SELECT division,\n       COUNT(*) AS sku_count,\n       ROUND(AVG(list_price)) AS avg_price\nFROM dim_product\nGROUP BY division",
+      "reads": "Одна строка — один дивизион. Список в GROUP BY и задаёт гранулярность: сколько там колонок, столько разрезов у результата.",
+      "wrong": "SELECT division, brand, COUNT(*) AS n FROM dim_product GROUP BY division",
+      "wrongWhy": "SQLite не ругается и подставит произвольный бренд к каждому дивизиону. PostgreSQL на таком запросе упал бы с ошибкой, и это было бы лучше: молчаливо неверный результат опаснее падения. Неагрегированная колонка в SELECT обязана быть в GROUP BY.",
+      "selfCheck": "Проговорите вслух: «одна строка результата — это один …». Не получается закончить фразу — задача ещё не понята."
+    },
+    {
+      "skill": "sql-having",
+      "title": "HAVING против WHERE",
+      "why": "Условие на группу и условие на строку — разные вещи, и путаница между ними даёт либо ошибку выполнения, либо неверный ответ. Разобравшись один раз с порядком выполнения запроса, вы перестаёте гадать, куда класть условие.",
+      "form": "FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY\n\nWHERE  — отбирает строки до группировки\nHAVING — отбирает группы после",
+      "example": "SELECT brand, COUNT(*) AS sku_count\nFROM dim_product\nGROUP BY brand\nHAVING COUNT(*) >= 6",
+      "reads": "Бренды, в линейке которых не меньше шести позиций. Условие проверяется для каждой группы уже после того, как она собрана.",
+      "wrong": "SELECT brand, COUNT(*) FROM dim_product WHERE COUNT(*) >= 6 GROUP BY brand",
+      "wrongWhy": "Ошибка «misuse of aggregate». WHERE выполняется до группировки, когда групп ещё нет и считать по ним нечего. Это как раз тот случай, когда СУБД честно падает — и это удача.",
+      "selfCheck": "Спросите себя, к чему относится условие: к отдельной строке исходных данных или к уже посчитанному итогу. Первое — WHERE, второе — HAVING."
+    },
+    {
+      "skill": "sql-join-inner",
+      "title": "Соединение факта со справочником",
+      "why": "Данные хранятся в звезде: числа — в таблицах фактов, названия и признаки — в справочниках. Любой отчёт с разрезами собирается одинаково: факт в центре, измерения подсоединяются по ключам.",
+      "form": "FROM fact_таблица f\nJOIN dim_таблица d ON d.ключ = f.ключ",
+      "example": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2026-01-01' AND '2026-06-30'\nGROUP BY p.brand",
+      "reads": "Выручка по брендам за первое полугодие 2026. Меры пришли из факта, разрез — из справочника, связал их product_id.",
+      "wrong": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.sellout_id\nGROUP BY p.brand",
+      "wrongWhy": "Соединение по неверному ключу не вызовет ошибки: типы совпадают, что-то совпадёт, запрос вернёт результат. Просто он будет бессмысленным — продажи припишутся случайным товарам.",
+      "selfCheck": "Пишите запрос в порядке FROM → JOIN → WHERE → GROUP BY → SELECT, а не с начала. И всегда проверяйте, что в ON стоят ключи, связывающие именно эти таблицы."
+    },
+    {
+      "skill": "sql-join-left",
+      "title": "LEFT JOIN и отсутствующие данные",
+      "why": "Отчёты о том, чего нет, — отдельный и самый ценный жанр: точки без продаж, регионы без покрытия, SKU без остатков. Обычное соединение такие строки просто не покажет, и проблема останется невидимой.",
+      "form": "FROM справочник s\nLEFT JOIN факт f ON f.ключ = s.ключ\n                AND дополнительное_условие",
+      "example": "SELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Витамакс Форте №30')\nGROUP BY r.region_name",
+      "reads": "Куда доехала новинка: все шестнадцать регионов, и в пяти из них ноль. Строить надо от справочника — от таблицы, все строки которой должны остаться. Условие на товар стоит в ON, поэтому оно отбирает строки продаж, но не выбрасывает регионы.",
+      "wrong": "SELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id\nWHERE f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Витамакс Форте №30')\nGROUP BY r.region_name",
+      "wrongWhy": "Вернётся одиннадцать регионов вместо шестнадцати. Условие на правую таблицу в WHERE превращает LEFT JOIN в обычный INNER: у строк без пары там NULL, а сравнение с NULL истиной не будет. Исчезнут ровно те пять регионов, ради которых отчёт и строился.",
+      "selfCheck": "Сравните число строк результата с числом строк справочника. Не совпало — внешнее соединение где-то выродилось во внутреннее. И помните: SUM по пустому набору даёт NULL, а не 0, — нужен COALESCE."
+    },
+    {
+      "skill": "sql-fanout",
+      "title": "Размножение строк соединением",
+      "why": "Соединение не добавляет фактов, но может посчитать один и тот же факт несколько раз. Суммы вырастают в разы, при этом запрос выглядит правильным и не выдаёт никаких признаков ошибки.",
+      "form": "На одну строку левой таблицы должна приходиться\nровно одна строка правой. Иначе меры задвоятся.",
+      "example": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand",
+      "reads": "Правильный вариант: product_id уникален в справочнике, каждая строка продаж находит ровно одну пару, число строк не меняется.",
+      "wrong": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_promo   m ON m.brand = p.brand\nGROUP BY p.brand",
+      "wrongWhy": "У бренда до одиннадцати акций, и каждая строка продаж совпадёт с каждой из них. Выручка вырастет ровно в одиннадцать раз. Ровный целый коэффициент — почти верный признак того, что соединение размножило факты.",
+      "selfCheck": "Сравните COUNT(*) до и после добавления JOIN. Изменилось, а вы этого не планировали — считать меры уже нельзя."
+    },
+    {
+      "skill": "sql-case",
+      "title": "CASE и условная агрегация",
+      "why": "Сравнение «с промо и без», «план и факт», «этот год и прошлый» нужно почти в каждом отчёте. Условная агрегация разворачивает показатель в колонки за один проход, вместо двух запросов, которые потом надо сводить.",
+      "form": "SUM(CASE WHEN условие THEN мера ELSE 0 END) AS колонка",
+      "example": "SELECT p.division,\n       ROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(CASE WHEN f.promo_id IS NULL     THEN f.revenue ELSE 0 END)) AS base_revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.division",
+      "reads": "Выручка в акциях и вне акций по каждому дивизиону, посчитанная одним проходом по данным. Тот же приём даёт долю: SUM(CASE ...) * 1.0 / SUM(мера).",
+      "wrong": "SELECT p.division,\n       COUNT(CASE WHEN f.promo_id IS NOT NULL THEN 1 ELSE 0 END) AS promo_rows\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.division",
+      "wrongWhy": "Посчитает вообще все строки. COUNT пропускает только NULL, а ноль — полноценное значение. Нужен либо SUM вместо COUNT, либо CASE без ветки ELSE, чтобы неподходящие строки давали NULL.",
+      "selfCheck": "После условной агрегации сложите колонки: сумма частей обязана сойтись с общим итогом. Не сошлась — какие-то строки не попали ни в одну ветку."
+    },
+    {
+      "skill": "sql-cte",
+      "title": "CTE и декомпозиция",
+      "why": "Ценность WITH не в краткости — с ним часто длиннее. Ценность в том, что каждый шаг можно выполнить отдельно и проверить. Запрос, написанный шагами, отлаживается за минуты, вложенный в четыре уровня подзапрос — за часы.",
+      "form": "WITH шаг1 AS (\n  ...\n),\nшаг2 AS (\n  SELECT ... FROM шаг1\n)\nSELECT ... FROM шаг2",
+      "example": "WITH brand_rev AS (\n  SELECT p.brand, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  GROUP BY p.brand\n)\nSELECT brand,\n       ROUND(rev) AS revenue,\n       ROUND(100.0 * rev / (SELECT SUM(rev) FROM brand_rev), 1) AS share_pct\nFROM brand_rev",
+      "reads": "Выручка бренда и его доля в общем итоге. Промежуточный результат посчитан один раз и переиспользован — и для строк, и для знаменателя.",
+      "wrong": "SELECT p.brand,\n       SUM(f.units) / (SELECT SUM(units) FROM fact_sellout) AS share\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand",
+      "wrongWhy": "Все доли окажутся нулями. Деление двух целых в SQL даёт целое, дробная часть отбрасывается. Лечится умножением числителя на 100.0 — литерал с точкой переводит вычисление в дробные числа.",
+      "selfCheck": "Выполните каждый CTE по отдельности, заменив финальный SELECT на «SELECT * FROM шаг1». Если промежуточный результат неверен, дальше можно не смотреть."
+    },
+    {
+      "skill": "sql-window-rank",
+      "title": "Оконные функции: рейтинги",
+      "why": "«Топ-3 позиции в каждом бренде», «последний заказ каждого клиента», «первая покупка» — вопросы, которые без окон решаются громоздкими самосоединениями. С окнами это четыре строки.",
+      "form": "ROW_NUMBER() OVER (PARTITION BY группа ORDER BY мера DESC)\n\nROW_NUMBER — подряд, связи разрывает произвольно\nRANK       — одинаковый ранг, следующий номер пропускается\nDENSE_RANK — одинаковый ранг, без пропусков",
+      "example": "WITH sku_rev AS (\n  SELECT p.brand, p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  GROUP BY p.brand, p.product_name\n),\nranked AS (\n  SELECT brand, product_name, rev,\n         ROW_NUMBER() OVER (PARTITION BY brand ORDER BY rev DESC) AS rnk\n  FROM sku_rev\n)\nSELECT brand, product_name, ROUND(rev) AS revenue, rnk\nFROM ranked\nWHERE rnk <= 3",
+      "reads": "Три самые продаваемые позиции внутри каждого бренда. PARTITION BY задаёт границы, внутри которых нумерация начинается заново.",
+      "wrong": "WITH sku_rev AS (\n  SELECT p.brand, p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  GROUP BY p.brand, p.product_name\n)\nSELECT brand, product_name,\n       ROW_NUMBER() OVER (PARTITION BY brand ORDER BY rev DESC) AS rnk\nFROM sku_rev\nWHERE rnk <= 3",
+      "wrongWhy": "Ошибка: колонки rnk на этом уровне ещё не существует. Оконная функция вычисляется после WHERE, поэтому отфильтровать по её результату можно только уровнем выше — в CTE или подзапросе.",
+      "selfCheck": "Выбираете по одной строке на группу — нужен ROW_NUMBER, он гарантирует ровно одну. И добавьте второй ключ в ORDER BY: при равных значениях результат иначе недетерминирован."
+    },
+    {
+      "skill": "sql-window-frame",
+      "title": "Оконные функции: рамки и сдвиги",
+      "why": "Одна цифра ничего не говорит: нужен тренд, динамика к прошлому периоду, накопительный итог. Рамка окна и функции сдвига закрывают почти все такие вопросы без самосоединений, которые вдобавок ломаются на пропущенных периодах.",
+      "form": "AVG(мера) OVER (ORDER BY период\n                ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)\n\nLAG(мера)  OVER (ORDER BY период)  -- предыдущее значение\nLEAD(мера) OVER (ORDER BY период)  -- следующее",
+      "example": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY 1\n)\nSELECT month, units,\n       LAG(units) OVER (ORDER BY month) AS prev_units,\n       ROUND(AVG(units) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)) AS ma3\nFROM monthly\nORDER BY month",
+      "reads": "Помесячные продажи, значение прошлого месяца и сглаженный ряд за три месяца. У первой строки предыдущего значения нет — LAG честно вернёт NULL.",
+      "wrong": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY 1\n)\nSELECT month, units,\n       ROUND(AVG(units) OVER (ORDER BY month)) AS ma3\nFROM monthly\nORDER BY month",
+      "wrongWhy": "Без указания рамки при наличии ORDER BY окно по умолчанию берёт всё от начала ряда до текущей строки. Получится не скользящее среднее, а накопительное — цифры выглядят правдоподобно и означают совсем другое.",
+      "selfCheck": "Написали ORDER BY внутри OVER — сознательно решите, нужна ли рамка. И отдельно про смысл: сравнение месяц к месяцу на сезонном товаре вводит в заблуждение, там сравнивают год к году."
+    },
+    {
+      "skill": "sql-data-quality",
+      "title": "Качество сырых данных",
+      "why": "Выгрузка из учётной системы почти никогда не готова к использованию: дубли от повторного запуска, даты в разных форматах, одна сеть в двух написаниях. Пять минут профилирования экономят день разбирательств, почему в дашборде выручка выше, чем в источнике.",
+      "form": "COUNT(*) против COUNT(DISTINCT ключ) -- дубли\nSUM(колонка IS NULL)                 -- пропуски\nTRIM / UPPER / COALESCE              -- нормализация",
+      "example": "SELECT COUNT(*) AS rows_total,\n       COUNT(DISTINCT sale_date || '|' || TRIM(customer_name) || '|' || UPPER(TRIM(sku_code))) AS unique_keys,\n       SUM(CASE WHEN units IS NULL THEN 1 ELSE 0 END) AS empty_units\nFROM staging_raw_sellout",
+      "reads": "Профиль сырого слоя: сколько строк, сколько из них уникальны после нормализации и где пропуски. Отсюда начинается работа с любой новой выгрузкой.",
+      "wrong": "SELECT COUNT(DISTINCT sale_date || customer_name || units) AS unique_keys\nFROM staging_raw_sellout",
+      "wrongWhy": "Строки с пустым units выпадут из подсчёта целиком: если хоть один операнд склейки равен NULL, результат тоже NULL. На этом тихо ломаются ключи дедупликации. Нужен COALESCE вокруг каждого поля, а между полями — разделитель, иначе «12» + «3» и «1» + «23» дадут одинаковый ключ.",
+      "selfCheck": "Любую новую выгрузку сначала профилируйте: число строк, дубли, доля пустых, диапазон дат, список уникальных значений в ключевых колонках."
+    },
+    {
+      "skill": "sql-business-case",
+      "title": "Разбор бизнес-ситуации",
+      "why": "«Продажи упали на 40%» — это не ответ, а начало работы. Заказчику нужно знать, что делать, а для этого надо понять, какой фактор поехал, и вместе с ним — кто владелец проблемы.",
+      "form": "Раскладывайте показатель на множители:\n  штуки  = число точек × продажи на точку\n  выручка = штуки × цена\n  продажи на точку = число покупок × средний чек\nПотом смотрите, какой множитель изменился.",
+      "example": "SELECT d.year,\n       SUM(f.units) AS units,\n       COUNT(DISTINCT f.customer_id) AS outlets,\n       ROUND(1.0 * SUM(f.units) / COUNT(DISTINCT f.customer_id), 1) AS units_per_outlet,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Чистовъ' AND d.quarter = 1\nGROUP BY d.year",
+      "reads": "Падение бренда разложено на факторы. Точек стало вдвое меньше, а продажи на точку держатся — значит, дело не в спросе и не в цене, а в потере полки. Это вопрос к полевой команде и переговорам с сетями, а не к маркетингу.",
+      "wrong": "SELECT d.year, SUM(f.units) AS units\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Чистовъ' AND d.quarter = 1\nGROUP BY d.year",
+      "wrongWhy": "Технически верно и совершенно бесполезно. Цифра «упало на 57%» не отвечает на вопрос «почему» и не указывает, кто должен что-то делать. Отчёт, после которого нельзя принять решение, работу не закрывает.",
+      "selfCheck": "Сравнивайте одноимённые периоды — квартал с тем же кварталом прошлого года. Сравнение с предыдущим кварталом смешивает сезонность с трендом и регулярно приводит к неверным выводам."
+    }
+  ]
+}

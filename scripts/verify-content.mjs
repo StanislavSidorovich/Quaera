@@ -136,6 +136,60 @@ for (const packId of packs) {
   }
 }
 
+// --- Карточки теории.
+{
+  const pack = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-core.json'), 'utf8'));
+  const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-lessons.json'), 'utf8'));
+  console.log(`\n=== Карточки теории: ${lessons.length}`);
+
+  const covered = new Set(lessons.map((l) => l.skill));
+  for (const s of pack.skills) {
+    if (!covered.has(s.id)) fail('lessons', `у скилла «${s.id}» нет карточки — человек встретит задачу без объяснения приёма`);
+  }
+  const seen = new Set();
+  for (const l of lessons) {
+    if (!pack.skills.some((s) => s.id === l.skill)) fail(l.skill, 'карточка ссылается на несуществующий скилл');
+    if (seen.has(l.skill)) fail(l.skill, 'две карточки на один скилл');
+    seen.add(l.skill);
+    for (const field of ['why', 'form', 'example', 'reads', 'wrong', 'wrongWhy', 'selfCheck']) {
+      if (!l[field] || String(l[field]).trim().length < 20) fail(l.skill, `блок «${field}» пустой или слишком короткий`);
+    }
+
+    let ok;
+    try {
+      ok = runSql(l.example);
+    } catch (e) {
+      fail(l.skill, `пример не выполняется — ${e.message}`);
+      continue;
+    }
+    if (!ok.rows.length) fail(l.skill, 'пример возвращает пустой результат — объяснять на нём нечего');
+
+    // Ошибочный вариант обязан отличаться от правильного: либо падать, либо давать
+    // другой результат. Иначе карточка учит различию, которого в данных нет.
+    let wrongRes = null;
+    let wrongErr = null;
+    try {
+      wrongRes = runSql(l.wrong);
+    } catch (e) {
+      wrongErr = e.message;
+    }
+    if (wrongRes) {
+      const same =
+        JSON.stringify(wrongRes.columns) === JSON.stringify(ok.columns) &&
+        JSON.stringify(wrongRes.rows) === JSON.stringify(ok.rows);
+      if (same) fail(l.skill, 'ошибочный вариант даёт тот же результат, что и правильный');
+    } else if (/syntax error/i.test(wrongErr)) {
+      // Синтаксическая ошибка означает, что антипример написан обрывком запроса.
+      // Тогда проверка проходит по неверной причине — она ловит незакрытый SELECT,
+      // а не ту ошибку, которой посвящена карточка. И скопировать такой антипример,
+      // чтобы увидеть последствия своими глазами, человек тоже не сможет.
+      fail(l.skill, `антипример не выполняется как запрос (${wrongErr}) — нужен целый запрос, а не фрагмент`);
+    }
+    const verdict = wrongErr ? `ошибка: ${wrongErr.slice(0, 40)}` : `${wrongRes.rows.length} строк, результат иной`;
+    console.log(`  ok   ${l.skill.padEnd(20)} пример ${String(ok.rows.length).padStart(4)} строк · антипример — ${verdict}`);
+  }
+}
+
 // --- Проверки, специфичные для отдельных заданий: смысл, а не только исполнимость.
 
 // sql-014 бессмысленно, если новинка доехала во все регионы: без нулевых строк

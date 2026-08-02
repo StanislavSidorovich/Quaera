@@ -1,5 +1,6 @@
 import raw from './packs/sql-core.json';
-import type { Pack, Skill, Task } from './types';
+import rawLessons from './packs/sql-lessons.json';
+import type { Lesson, Pack, Skill, Task } from './types';
 
 /**
  * Загрузка и валидация пака.
@@ -29,6 +30,15 @@ function validate(pack: Pack): Pack {
 }
 
 export const pack = validate(raw as Pack);
+
+export const lessons: Lesson[] = (rawLessons as { lessons: Lesson[] }).lessons;
+export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
+
+for (const l of lessons) {
+  if (!pack.skills.some((s) => s.id === l.skill)) {
+    throw new Error(`Карточка «${l.title}» ссылается на несуществующий скилл ${l.skill}`);
+  }
+}
 
 export const skills: Skill[] = pack.skills;
 export const tasks: Task[] = pack.tasks;

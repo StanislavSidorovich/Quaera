@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { pack, skills, tasks } from './content';
-import type { Task } from './content/types';
+import { lessonBySkill, lessons, pack, skills, tasks } from './content';
+import type { Lesson, Task } from './content/types';
 import { initDatabase, subscribeLoad, type LoadState } from './engine/sqlClient';
+import { LessonCard } from './ui/LessonCard';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { TaskView, type TaskOutcome } from './ui/TaskView';
 import {
@@ -23,7 +24,28 @@ import {
 
 const SESSION_SIZE = 5;
 
-type Screen = { name: 'home' } | { name: 'session'; queue: Task[]; index: number } | { name: 'done'; solved: number };
+/** Заголовки уровней графа навыков — общие для карты на главной и справочника. */
+const TIER_NAMES: Record<number, string> = {
+  1: 'Основа',
+  2: 'Агрегация и соединения',
+  3: 'Реальные данные',
+  4: 'Продвинутое',
+};
+
+/**
+ * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
+ * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
+ * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
+ * больше не показывается — только по запросу из справочника.
+ */
+type Step = { kind: 'lesson'; lesson: Lesson } | { kind: 'task'; task: Task };
+
+type Screen =
+  | { name: 'home' }
+  | { name: 'session'; queue: Step[]; index: number }
+  | { name: 'done'; solved: number }
+  | { name: 'reference' }
+  | { name: 'lesson'; skill: string };
 
 export default function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
@@ -54,15 +76,42 @@ export default function App() {
   );
 
   function startSession() {
-    const queue = selectSession({
+    const picked = selectSession({
       skills,
       tasks,
       states: progress.skills,
       solvedTaskIds: new Set(Object.entries(progress.taskRecords).filter(([, r]) => r.solved).map(([id]) => id)),
       size: SESSION_SIZE,
     });
-    if (!queue.length) return;
+    if (!picked.length) return;
+
+    // Перед первой задачей на навык вставляем карточку приёма. Признак «первой» —
+    // отсутствие повторений: как только задача решена, счётчик растёт и теория
+    // больше не всплывает.
+    const introduced = new Set<string>();
+    const queue: Step[] = [];
+    for (const task of picked) {
+      const lesson = lessonBySkill.get(task.skill);
+      const isNew = (progress.skills[task.skill]?.reps ?? 0) === 0;
+      if (lesson && isNew && !introduced.has(task.skill)) {
+        introduced.add(task.skill);
+        queue.push({ kind: 'lesson', lesson });
+      }
+      queue.push({ kind: 'task', task });
+    }
     setScreen({ name: 'session', queue, index: 0 });
+  }
+
+  function advance() {
+    setScreen((s) => {
+      if (s.name !== 'session') return s;
+      const next = s.index + 1;
+      if (next >= s.queue.length) {
+        return { name: 'done', solved: s.queue.filter((q) => q.kind === 'task').length };
+      }
+      return { ...s, index: next };
+    });
+    window.scrollTo({ top: 0 });
   }
 
   function handleDone(task: Task, outcome: TaskOutcome) {
@@ -81,31 +130,41 @@ export default function App() {
         review
       )
     );
-    setScreen((s) => {
-      if (s.name !== 'session') return s;
-      const next = s.index + 1;
-      if (next >= s.queue.length) return { name: 'done', solved: s.queue.length };
-      return { ...s, index: next };
-    });
-    window.scrollTo({ top: 0 });
+    advance();
   }
 
-  const current = screen.name === 'session' ? screen.queue[screen.index] : null;
+  const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
   return (
     <div className="app">
       <header className="topbar">
         {screen.name !== 'home' && (
-          <button className="icon-btn" onClick={() => setScreen({ name: 'home' })} aria-label="На главную">
+          <button
+            className="icon-btn"
+            // Из карточки возвращаемся в список приёмов, а не на главную:
+            // в справочнике их обычно листают подряд.
+            onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
+            aria-label="Назад"
+          >
             ←
           </button>
         )}
         <h1>
-          {screen.name === 'session' ? 'Занятие' : 'Querium'}
+          {screen.name === 'session'
+            ? 'Занятие'
+            : screen.name === 'reference'
+              ? 'Справочник'
+              : screen.name === 'lesson'
+                ? 'Приём'
+                : 'Querium'}
           <span className="sub">
             {screen.name === 'session'
               ? `${screen.index + 1} из ${screen.queue.length}`
-              : `${pack.title} · серия ${streak(progress.activeDays)} дн.`}
+              : screen.name === 'reference'
+                ? `${lessons.length} приёмов, можно листать вне занятий`
+                : screen.name === 'lesson'
+                  ? (lessonBySkill.get(screen.skill)?.title ?? '')
+                  : `${pack.title} · серия ${streak(progress.activeDays)} дн.`}
           </span>
         </h1>
         {screen.name === 'session' && (
@@ -136,17 +195,30 @@ export default function App() {
             loading={load.phase === 'loading' || load.phase === 'idle'}
             onStart={startSession}
             onOpenSchema={() => setSchemaOpen(true)}
+            onOpenReference={() => setScreen({ name: 'reference' })}
           />
         )}
 
-        {current && (
+        {step?.kind === 'lesson' && (
+          <LessonCard key={step.lesson.skill} lesson={step.lesson} onContinue={advance} />
+        )}
+
+        {step?.kind === 'task' && (
           <TaskView
-            key={current.id}
-            task={current}
+            key={step.task.id}
+            task={step.task}
             schema={schema}
             onOpenSchema={() => setSchemaOpen(true)}
-            onDone={(o) => handleDone(current, o)}
+            onDone={(o) => handleDone(step.task, o)}
           />
+        )}
+
+        {screen.name === 'reference' && (
+          <Reference progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
+        )}
+
+        {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && (
+          <LessonCard lesson={lessonBySkill.get(screen.skill)!} />
         )}
 
         {screen.name === 'done' && (
@@ -175,6 +247,7 @@ function Home({
   loading,
   onStart,
   onOpenSchema,
+  onOpenReference,
 }: {
   progress: Progress;
   dueCount: number;
@@ -182,6 +255,7 @@ function Home({
   loading: boolean;
   onStart: () => void;
   onOpenSchema: () => void;
+  onOpenReference: () => void;
 }) {
   const byTier = useMemo(() => {
     const groups = new Map<number, typeof skills>();
@@ -192,13 +266,6 @@ function Home({
     }
     return [...groups.entries()].sort((a, b) => a[0] - b[0]);
   }, []);
-
-  const TIER_NAMES: Record<number, string> = {
-    1: 'Основа',
-    2: 'Агрегация и соединения',
-    3: 'Реальные данные',
-    4: 'Продвинутое',
-  };
 
   return (
     <>
@@ -221,8 +288,9 @@ function Home({
           {loading ? 'Загружаю данные…' : dueCount > 0 ? 'Повторить и продолжить' : 'Начать занятие'}
         </button>
         <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-          {SESSION_SIZE} заданий, примерно 7 минут. Запросы выполняются по-настоящему — на данных
-          дистрибьютора FMCG и OTC-фармы за два с половиной года.
+          До {SESSION_SIZE} заданий, 7–10 минут. Новые приёмы объясняются карточкой перед первой
+          задачей. Запросы выполняются по-настоящему — на данных дистрибьютора FMCG и OTC-фармы
+          за два с половиной года.
         </p>
       </div>
 
@@ -257,9 +325,75 @@ function Home({
         ))}
       </div>
 
-      <button className="btn secondary" onClick={onOpenSchema}>
-        Посмотреть схему данных
-      </button>
+      <div className="row">
+        <button className="btn secondary" onClick={onOpenReference}>
+          Справочник
+        </button>
+        <button className="btn secondary" onClick={onOpenSchema}>
+          Схема данных
+        </button>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Справочник приёмов.
+ *
+ * Отдельный от занятий режим чтения — под сценарий «освежить перед задачей
+ * на работе или перед собеседованием». Без него теория существует только
+ * внутри занятия и добраться до неё второй раз невозможно.
+ */
+function Reference({ progress, onOpen }: { progress: Progress; onOpen: (skill: string) => void }) {
+  const byTier = useMemo(() => {
+    const groups = new Map<number, typeof skills>();
+    for (const s of skills) {
+      if (!lessonBySkill.has(s.id)) continue;
+      const list = groups.get(s.tier) ?? [];
+      list.push(s);
+      groups.set(s.tier, list);
+    }
+    return [...groups.entries()].sort((a, b) => a[0] - b[0]);
+  }, []);
+
+  return (
+    <>
+      <div className="card">
+        <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
+          Каждый приём — зачем он нужен в работе, минимальная форма записи, разобранный
+          пример и типичная ошибка. Оба запроса можно выполнить прямо в карточке.
+        </p>
+      </div>
+      <div className="card">
+        {byTier.map(([tier, list]) => (
+          <div key={tier} style={{ marginTop: tier === byTier[0][0] ? 0 : 14 }}>
+            <p
+              className="muted"
+              style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+            >
+              {TIER_NAMES[tier] ?? `Уровень ${tier}`}
+            </p>
+            {list.map((s) => {
+              const st = progress.skills[s.id];
+              const seen = (st?.reps ?? 0) > 0;
+              return (
+                <button
+                  key={s.id}
+                  className="skill-row"
+                  onClick={() => onOpen(s.id)}
+                  style={{ width: '100%', textAlign: 'left' }}
+                >
+                  <div className="name">
+                    {s.title}
+                    <small>{seen ? s.summary : 'Ещё не проходили'}</small>
+                  </div>
+                  <span className="pill">{seen ? 'открыть' : 'вперёд'}</span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </>
   );
 }
