@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '../content/types';
-import type { GradeResult, Preview, SchemaDoc } from '../engine/types';
-import { execSql, gradeSql } from '../engine/sqlClient';
+import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { diagnoseComparison, diagnoseSqlError, type Feedback } from '../engine/diagnose';
+import { ru } from '../i18n/ru';
 import { ResultTable } from './ResultTable';
 import { SqlEditor } from './SqlEditor';
 
@@ -26,12 +26,13 @@ export interface TaskOutcome {
 
 interface Props {
   task: Task;
+  executor: Executor;
   schema: SchemaDoc | null;
   onDone: (o: TaskOutcome) => void;
   onOpenSchema: () => void;
 }
 
-export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
+export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props) {
   const [sql, setSql] = useState('');
   const [blanks, setBlanks] = useState<string[]>([]);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -91,7 +92,7 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
     setRunning(true);
     setFeedback(null);
     try {
-      const r = await execSql(composedSql);
+      const r = await executor.exec(composedSql);
       setPreview(r);
     } catch (e) {
       setPreview(null);
@@ -108,8 +109,8 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
       setWasCorrect(correct);
       setFeedback(
         correct
-          ? { tone: 'warn', title: 'Верно', body: '', nudges: [] }
-          : { tone: 'warn', title: 'Не тот вариант', body: 'Разбор всех вариантов — ниже.', nudges: [] }
+          ? { tone: 'warn', title: ru.task.correctTitle, body: '', nudges: [] }
+          : { tone: 'warn', title: ru.task.wrongOptionTitle, body: ru.task.wrongOptionBody, nudges: [] }
       );
       if (!correct) setWrongAttempts((n) => n + 1);
       return;
@@ -117,7 +118,7 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
 
     setRunning(true);
     try {
-      const res: GradeResult = await gradeSql(composedSql, task.solution!, {
+      const res: GradeResult = await executor.grade(composedSql, task.solution!, {
         orderMatters: task.orderMatters,
       });
       if (res.status === 'sql_error') {
@@ -133,11 +134,11 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
         setExpected(null);
         setFeedback({
           tone: 'warn',
-          title: 'Верно',
+          title: ru.task.correctTitle,
           body: '',
           nudges: [],
           style: res.comparison.columnNamesDiffer
-            ? `Результат сходится, но имена колонок отличаются от ожидаемых (${res.comparison.expectedCols.join(', ')}). В рабочем отчёте это важно: колонка должна называться так, как её назвал бы заказчик.`
+            ? ru.task.columnNameNote(res.comparison.expectedCols.join(', '))
             : undefined,
         });
       } else {
@@ -165,8 +166,8 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
     setHintsShown(task.hints.length);
     setFeedback({
       tone: 'warn',
-      title: 'Разбираем вместе',
-      body: 'Ниже — разбор и эталонное решение. Навык вернётся на повторение уже сегодня, на другой задаче.',
+      title: ru.task.giveUpTitle,
+      body: ru.task.giveUpBody,
       nudges: [],
     });
   };
@@ -175,12 +176,12 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
     <>
       <div className="card">
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-          <span className="pill level">Уровень {task.level}</span>
+          <span className="pill level">{ru.task.levelLabel(task.level)}</span>
           <span className="pill">
-            {task.mode === 'predict' ? 'Предсказать результат' : task.mode === 'fill' ? 'Дописать запрос' : 'Написать запрос'}
+            {task.mode === 'predict' ? ru.task.modePredict : task.mode === 'fill' ? ru.task.modeFill : ru.task.modeWrite}
           </span>
           <button className="pill" onClick={onOpenSchema} style={{ marginLeft: 'auto' }}>
-            Схема данных
+            {ru.task.schemaBtn}
           </button>
         </div>
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
@@ -208,7 +209,7 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
           ))}
           {!solved && (
             <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
-              Проверить
+              {ru.task.checkBtn}
             </button>
           )}
         </div>
@@ -223,25 +224,25 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
               schema={schema}
               level={task.level}
               disabled={solved}
-              placeholder="Напишите запрос…"
+              placeholder={ru.task.placeholder}
             />
           )}
           <div className="row" style={{ marginTop: 12 }}>
             <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
-              Выполнить
+              {ru.task.runBtn}
             </button>
             <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
-              {running ? '…' : 'Проверить'}
+              {running ? '…' : ru.task.checkBtn}
             </button>
           </div>
           <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-            «Выполнить» просто покажет результат — пробуйте, ошибки здесь ничего не стоят.
+            {ru.task.runNote}
           </p>
         </div>
       )}
 
       {feedback && (
-        <div className={`feedback ${solved && feedback.title === 'Верно' ? 'ok' : feedback.tone}`}>
+        <div className={`feedback ${solved && feedback.title === ru.task.correctTitle ? 'ok' : feedback.tone}`}>
           <h3>{feedback.title}</h3>
           {feedback.body && <p>{feedback.body}</p>}
           {feedback.nudges.length > 0 && (
@@ -255,13 +256,13 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
         </div>
       )}
 
-      {preview && !solved && <div className="card"><ResultTable data={preview} caption="Ваш результат" /></div>}
+      {preview && !solved && <div className="card"><ResultTable data={preview} caption={ru.task.yourResult} /></div>}
 
       {expected && (
         <div className="card">
           <ResultTable
             data={expected}
-            caption={`Так выглядит эталон (первые ${expected.rows.length} из ${expected.totalRows.toLocaleString('ru-RU')})`}
+            caption={ru.task.expectedResult(expected.rows.length, expected.totalRows.toLocaleString('ru-RU'))}
           />
         </div>
       )}
@@ -280,8 +281,8 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
               onClick={() => setHintsShown((n) => n + 1)}
             >
               {waitLeft > 0 && hintsShown === 0
-                ? `Подсказка откроется через ${waitLeft} с — попробуйте сами`
-                : `Показать подсказку (${hintsShown + 1} из ${task.hints.length})`}
+                ? ru.task.hintWait(waitLeft)
+                : ru.task.hintShow(hintsShown + 1, task.hints.length)}
             </button>
           )}
         </div>
@@ -290,26 +291,26 @@ export function TaskView({ task, schema, onDone, onOpenSchema }: Props) {
       {solved && (
         <>
           <div className="card">
-            <h2>Разбор</h2>
+            <h2>{ru.task.explainTitle}</h2>
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{task.explain}</p>
           </div>
           {task.mode !== 'predict' && (
             <details className="table-doc">
-              <summary>Показать эталонное решение</summary>
+              <summary>{ru.task.solutionSummary}</summary>
               <pre className="sql-block" style={{ border: 'none', borderRadius: 0 }}>
                 {task.solution}
               </pre>
             </details>
           )}
           <button className="btn" onClick={finish}>
-            Дальше
+            {ru.task.nextBtn}
           </button>
         </>
       )}
 
       {!solved && (
         <button className="btn secondary" onClick={giveUp}>
-          Не получается — показать разбор
+          {ru.task.giveUpBtn}
         </button>
       )}
     </>
@@ -349,7 +350,7 @@ function FillTemplate({
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"
-              aria-label={`Пропуск ${i + 1}`}
+              aria-label={ru.task.blankAriaLabel(i + 1)}
               style={{
                 width: `${Math.max(4, (blanks[i] ?? '').length + 2)}ch`,
                 font: 'inherit',

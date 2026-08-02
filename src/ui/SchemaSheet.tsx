@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SchemaDoc } from '../engine/types';
+import { ru } from '../i18n/ru';
 
 /**
  * Шторка со схемой данных.
@@ -42,13 +43,13 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Схема данных">
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={ru.schema.ariaLabel}>
         <div className="grabber" />
         {!doc ? (
-          <p className="muted">Загружаю схему…</p>
+          <p className="muted">{ru.schema.loading}</p>
         ) : (
           <>
-            <h2>Схема данных</h2>
+            <h2>{ru.schema.title}</h2>
             <p className="muted" style={{ marginTop: 0 }}>
               {doc.company}. Период данных: {doc.period.from} — {doc.period.to}.
             </p>
@@ -56,9 +57,7 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
               <details key={t.table} className="table-doc">
                 <summary>
                   <code style={{ color: 'var(--code)' }}>{t.table}</code> — {t.title}
-                  <small>
-                    Одна строка = {t.grain} · {t.row_count.toLocaleString('ru-RU')} строк
-                  </small>
+                  <small>{ru.schema.grainLabel(t.grain, t.row_count.toLocaleString('ru-RU'))}</small>
                 </summary>
                 {t.columns.map((c) => (
                   <div className="col-doc" key={c.name}>
@@ -72,7 +71,7 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
           </>
         )}
         <button className="btn secondary" style={{ marginTop: 12 }} onClick={onClose}>
-          Закрыть
+          {ru.schema.closeBtn}
         </button>
       </div>
     </>

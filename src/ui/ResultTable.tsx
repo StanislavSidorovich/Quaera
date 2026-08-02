@@ -1,11 +1,12 @@
 import type { Preview } from '../engine/types';
+import { ru } from '../i18n/ru';
 
 /**
  * Таблица результата. Горизонтальный скролл живёт внутри контейнера:
  * страница целиком ездить вбок не должна, иначе на телефоне теряется навигация.
  */
 export function ResultTable({ data, caption }: { data: Preview; caption?: string }) {
-  if (!data.columns.length) return <p className="muted">Запрос не вернул колонок.</p>;
+  if (!data.columns.length) return <p className="muted">{ru.result.noColumns}</p>;
 
   return (
     <div>
@@ -33,8 +34,8 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
         </table>
       </div>
       <p className="muted" style={{ margin: '6px 0 0' }}>
-        {data.totalRows.toLocaleString('ru-RU')} строк
-        {data.truncated ? ` · показаны первые ${data.rows.length}` : ''}
+        {ru.result.rowsSuffix(data.totalRows.toLocaleString('ru-RU'))}
+        {data.truncated ? ru.result.truncatedSuffix(data.rows.length) : ''}
       </p>
     </div>
   );

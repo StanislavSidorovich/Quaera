@@ -1,13 +1,19 @@
-import raw from './packs/sql-core.json';
-import rawLessons from './packs/sql-lessons.json';
-import type { Lesson, Pack, Skill, Task } from './types';
+import rawSqlCore from './packs/sql-core.json';
+import rawSqlLessons from './packs/sql-lessons.json';
+import rawModelCore from './packs/model-core.json';
+import rawPythonCore from './packs/python-core.json';
+import rawDomainCore from './packs/domain-core.json';
+import type { Lesson, Pack, Task, Track } from './types';
 
 /**
- * Загрузка и валидация пака.
+ * Загрузка и валидация паков.
  *
  * Пак — внешние данные, даже когда он лежит в репозитории: его правят руками
  * и позже будут присылать пул-реквестами. Битое задание должно падать здесь,
  * на старте, с внятным сообщением, а не превращаться в пустой экран.
+ *
+ * Валидация одинаковая для готового пака и для черновика: у черновика просто
+ * пустой tasks, и цикл по заданиям не выполняется ни разу.
  */
 function validate(pack: Pack): Pack {
   const skillIds = new Set(pack.skills.map((s) => s.id));
@@ -29,29 +35,49 @@ function validate(pack: Pack): Pack {
   return pack;
 }
 
-export const pack = validate(raw as Pack);
+/**
+ * Реестр паков — вход в контент по треку, а не единственный синглтон.
+ *
+ * Черновые паки (model-core, python-core, domain-core) содержат только граф
+ * навыков: их держат в реестре наравне с готовыми, чтобы карта треков на
+ * главной строилась по настоящим данным, а не по заглушкам. `status: 'draft'`
+ * и пустой `tasks` — это то, чем плеер отличает «пока показать карту навыков»
+ * от «можно начать занятие».
+ */
+export const packs: Pack[] = [
+  rawSqlCore as Pack,
+  rawModelCore as Pack,
+  rawPythonCore as Pack,
+  rawDomainCore as Pack,
+].map(validate);
 
-export const lessons: Lesson[] = (rawLessons as { lessons: Lesson[] }).lessons;
+export const packById = new Map(packs.map((p) => [p.id, p]));
+
+const packsByTrack = new Map<Track, Pack[]>();
+for (const p of packs) {
+  const list = packsByTrack.get(p.track) ?? [];
+  list.push(p);
+  packsByTrack.set(p.track, list);
+}
+
+/** Пак трека. Берём первый — когда в треке появится больше одного пака, здесь появится выбор. */
+export const packForTrack = (track: Track): Pack | undefined => packsByTrack.get(track)?.[0];
+
+/**
+ * Карточки теории привязаны к скиллам, а не к паку: id скиллов уникальны
+ * глобально (префикс sql-/model-/py-/dom-), поэтому один плоский файл
+ * карточек может закрывать скиллы любого трека. Сейчас карточки есть
+ * только у sql-core — у черновых паков лекций по определению ещё нет.
+ */
+export const lessons: Lesson[] = (rawSqlLessons as { lessons: Lesson[] }).lessons;
 export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 
+const allSkillIds = new Set(packs.flatMap((p) => p.skills.map((s) => s.id)));
 for (const l of lessons) {
-  if (!pack.skills.some((s) => s.id === l.skill)) {
+  if (!allSkillIds.has(l.skill)) {
     throw new Error(`Карточка «${l.title}» ссылается на несуществующий скилл ${l.skill}`);
   }
 }
-
-export const skills: Skill[] = pack.skills;
-export const tasks: Task[] = pack.tasks;
-
-export const skillById = new Map(skills.map((s) => [s.id, s]));
-export const taskById = new Map(tasks.map((t) => [t.id, t]));
-
-export const tasksBySkill = tasks.reduce<Map<string, Task[]>>((acc, t) => {
-  const list = acc.get(t.skill) ?? [];
-  list.push(t);
-  acc.set(t.skill, list);
-  return acc;
-}, new Map());
 
 /** Все скиллы, которые тренирует задание: основной плюс сопутствующие. */
 export const trainedSkills = (t: Task): string[] => [t.skill, ...(t.alsoTrains ?? [])];

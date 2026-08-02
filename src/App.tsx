@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { lessonBySkill, lessons, pack, skills, tasks } from './content';
-import type { Lesson, Task } from './content/types';
-import { initDatabase, subscribeLoad, type LoadState } from './engine/sqlClient';
+import { lessonBySkill, packForTrack } from './content';
+import type { Lesson, Pack, Task, Track } from './content/types';
+import { getExecutor } from './engine/executors';
+import type { LoadState } from './engine/types';
+import { ru } from './i18n/ru';
 import { LessonCard } from './ui/LessonCard';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { TaskView, type TaskOutcome } from './ui/TaskView';
@@ -24,13 +26,12 @@ import {
 
 const SESSION_SIZE = 5;
 
-/** Заголовки уровней графа навыков — общие для карты на главной и справочника. */
-const TIER_NAMES: Record<number, string> = {
-  1: 'Основа',
-  2: 'Агрегация и соединения',
-  3: 'Реальные данные',
-  4: 'Продвинутое',
-};
+/**
+ * Порядок треков на главной — не алфавитный, а порядок дорожной карты:
+ * SQL → «аналитика как профессия» → модель данных → pandas. Карта навыков
+ * должна читаться как план, а не как список файлов.
+ */
+const TRACK_ORDER: Track[] = ['sql', 'domain', 'model', 'python'];
 
 /**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
@@ -50,35 +51,48 @@ type Screen =
 export default function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [activeTrack, setActiveTrack] = useState<Track>('sql');
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   const [schemaOpen, setSchemaOpen] = useState(false);
   const schema = useSchema();
 
-  useEffect(() => subscribeLoad(setLoad), []);
-  // База грузится сразу на главной: 3.5 МБ по сети один раз, дальше из кеша.
-  // Начинать загрузку в момент открытия задания — значит показать спиннер там,
-  // где человек уже настроился думать.
+  // Пак трека и его исполнитель — единственное место, где App знает,
+  // что треков четыре. Всё остальное работает с activePack, не с конкретным sql-core.
+  const activePack: Pack = packForTrack(activeTrack)!;
+  const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
+
   useEffect(() => {
-    initDatabase().catch(() => undefined);
-  }, []);
+    if (!executor) {
+      setLoad({ phase: 'idle' });
+      return;
+    }
+    const unsubscribe = executor.subscribeLoad(setLoad);
+    // База грузится сразу при выборе трека: 3.5 МБ по сети один раз, дальше из кеша.
+    // Начинать загрузку в момент открытия задания — значит показать спиннер там,
+    // где человек уже настроился думать.
+    executor.init().catch(() => undefined);
+    return unsubscribe;
+  }, [executor]);
+
   useEffect(() => saveProgress(progress), [progress]);
 
   const dueCount = useMemo(
-    () => skills.filter((s) => skillState(progress, s.id).reps > 0 && isDue(progress.skills[s.id])).length,
-    [progress]
+    () => activePack.skills.filter((s) => skillState(progress, s.id).reps > 0 && isDue(progress.skills[s.id])).length,
+    [progress, activePack]
   );
   // Показываем начатые темы, а не «открытые»: открытых на старте всего одна,
   // и цифра «1 из 16» читается как «почти всё закрыто», хотя первая же сессия
   // разворачивает границу графа на пять тем.
   const startedCount = useMemo(
-    () => skills.filter((s) => (progress.skills[s.id]?.reps ?? 0) > 0).length,
-    [progress]
+    () => activePack.skills.filter((s) => (progress.skills[s.id]?.reps ?? 0) > 0).length,
+    [progress, activePack]
   );
 
   function startSession() {
+    if (!activePack.tasks.length) return; // черновой трек — заданий ещё нет
     const picked = selectSession({
-      skills,
-      tasks,
+      skills: activePack.skills,
+      tasks: activePack.tasks,
       states: progress.skills,
       solvedTaskIds: new Set(Object.entries(progress.taskRecords).filter(([, r]) => r.solved).map(([id]) => id)),
       size: SESSION_SIZE,
@@ -133,6 +147,11 @@ export default function App() {
     advance();
   }
 
+  function switchTrack(track: Track) {
+    setActiveTrack(track);
+    setScreen({ name: 'home' });
+  }
+
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
   return (
@@ -144,27 +163,27 @@ export default function App() {
             // Из карточки возвращаемся в список приёмов, а не на главную:
             // в справочнике их обычно листают подряд.
             onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
-            aria-label="Назад"
+            aria-label={ru.app.back}
           >
             ←
           </button>
         )}
         <h1>
           {screen.name === 'session'
-            ? 'Занятие'
+            ? ru.session.title
             : screen.name === 'reference'
-              ? 'Справочник'
+              ? ru.reference.title
               : screen.name === 'lesson'
-                ? 'Приём'
-                : 'Querium'}
+                ? ru.lesson.pill
+                : ru.app.name}
           <span className="sub">
             {screen.name === 'session'
-              ? `${screen.index + 1} из ${screen.queue.length}`
+              ? ru.session.progressOf(screen.index + 1, screen.queue.length)
               : screen.name === 'reference'
-                ? `${lessons.length} приёмов, можно листать вне занятий`
+                ? activePack.title
                 : screen.name === 'lesson'
                   ? (lessonBySkill.get(screen.skill)?.title ?? '')
-                  : `${pack.title} · серия ${streak(progress.activeDays)} дн.`}
+                  : `${activePack.title} · серия ${streak(progress.activeDays)} дн.`}
           </span>
         </h1>
         {screen.name === 'session' && (
@@ -179,16 +198,18 @@ export default function App() {
       <main className="content">
         {load.phase === 'error' && (
           <div className="feedback error">
-            <h3>Не удалось загрузить данные</h3>
+            <h3>{ru.loadError.title}</h3>
             <p>{load.message}</p>
             <button className="btn secondary" onClick={() => location.reload()}>
-              Перезагрузить
+              {ru.loadError.reloadBtn}
             </button>
           </div>
         )}
 
         {screen.name === 'home' && (
           <Home
+            activeTrack={activeTrack}
+            activePack={activePack}
             progress={progress}
             dueCount={dueCount}
             startedCount={startedCount}
@@ -196,17 +217,19 @@ export default function App() {
             onStart={startSession}
             onOpenSchema={() => setSchemaOpen(true)}
             onOpenReference={() => setScreen({ name: 'reference' })}
+            onSwitchTrack={switchTrack}
           />
         )}
 
-        {step?.kind === 'lesson' && (
-          <LessonCard key={step.lesson.skill} lesson={step.lesson} onContinue={advance} />
+        {step?.kind === 'lesson' && executor && (
+          <LessonCard key={step.lesson.skill} lesson={step.lesson} executor={executor} onContinue={advance} />
         )}
 
-        {step?.kind === 'task' && (
+        {step?.kind === 'task' && executor && (
           <TaskView
             key={step.task.id}
             task={step.task}
+            executor={executor}
             schema={schema}
             onOpenSchema={() => setSchemaOpen(true)}
             onDone={(o) => handleDone(step.task, o)}
@@ -214,22 +237,19 @@ export default function App() {
         )}
 
         {screen.name === 'reference' && (
-          <Reference progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
+          <Reference activePack={activePack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
         )}
 
-        {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && (
-          <LessonCard lesson={lessonBySkill.get(screen.skill)!} />
+        {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && executor && (
+          <LessonCard lesson={lessonBySkill.get(screen.skill)!} executor={executor} />
         )}
 
         {screen.name === 'done' && (
           <div className="card">
-            <h2>Занятие закончено</h2>
-            <p className="muted">
-              Пройдено заданий: {screen.solved}. Навыки, которых они касались, вернутся на повторение —
-              интервал зависит от того, насколько уверенно вы их взяли.
-            </p>
+            <h2>{ru.session.doneTitle}</h2>
+            <p className="muted">{ru.session.doneBody(screen.solved)}</p>
             <button className="btn" style={{ marginTop: 12 }} onClick={() => setScreen({ name: 'home' })}>
-              На главную
+              {ru.session.homeBtn}
             </button>
           </div>
         )}
@@ -240,7 +260,39 @@ export default function App() {
   );
 }
 
+/**
+ * Переключатель треков — карта дорожной карты, а не просто навигация.
+ * Черновые треки видны и кликабельны (можно посмотреть граф навыков),
+ * но помечены статусом и не дают начать занятие — контента там пока нет.
+ */
+function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (t: Track) => void }) {
+  return (
+    <div className="tabs tracks" role="tablist" aria-label={ru.tracks.ariaLabel}>
+      {TRACK_ORDER.map((t) => {
+        const p = packForTrack(t);
+        if (!p) return null;
+        const ready = p.status !== 'draft' && p.tasks.length > 0;
+        return (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={active === t}
+            aria-pressed={active === t}
+            className={ready ? undefined : 'draft'}
+            onClick={() => onSelect(t)}
+          >
+            <span>{p.title}</span>
+            <small>{ready ? ru.tracks.readyBadge(p.tasks.length) : ru.tracks.draftBadge}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Home({
+  activeTrack,
+  activePack,
   progress,
   dueCount,
   startedCount,
@@ -248,7 +300,10 @@ function Home({
   onStart,
   onOpenSchema,
   onOpenReference,
+  onSwitchTrack,
 }: {
+  activeTrack: Track;
+  activePack: Pack;
   progress: Progress;
   dueCount: number;
   startedCount: number;
@@ -256,50 +311,62 @@ function Home({
   onStart: () => void;
   onOpenSchema: () => void;
   onOpenReference: () => void;
+  onSwitchTrack: (t: Track) => void;
 }) {
   const byTier = useMemo(() => {
-    const groups = new Map<number, typeof skills>();
-    for (const s of skills) {
+    const groups = new Map<number, typeof activePack.skills>();
+    for (const s of activePack.skills) {
       const list = groups.get(s.tier) ?? [];
       list.push(s);
       groups.set(s.tier, list);
     }
     return [...groups.entries()].sort((a, b) => a[0] - b[0]);
-  }, []);
+  }, [activePack]);
+
+  const ready = activePack.status !== 'draft' && activePack.tasks.length > 0;
 
   return (
     <>
-      <div className="card">
-        <div className="hero">
-          <div>
-            <div className="big">{dueCount}</div>
-            <div className="muted">на повторение</div>
+      <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
+
+      {ready && (
+        <div className="card">
+          <div className="hero">
+            <div>
+              <div className="big">{dueCount}</div>
+              <div className="muted">{ru.home.dueLabel}</div>
+            </div>
+            <div>
+              <div className="big">{progress.totalSolved}</div>
+              <div className="muted">{ru.home.solvedLabel}</div>
+            </div>
+            <div>
+              <div className="big">{startedCount}</div>
+              <div className="muted">{ru.home.startedOf(startedCount, activePack.skills.length)}</div>
+            </div>
           </div>
-          <div>
-            <div className="big">{progress.totalSolved}</div>
-            <div className="muted">решено</div>
-          </div>
-          <div>
-            <div className="big">{startedCount}</div>
-            <div className="muted">из {skills.length} тем начато</div>
-          </div>
+          <button className="btn" onClick={onStart} disabled={loading}>
+            {loading ? ru.home.loading : dueCount > 0 ? ru.home.startBtnResume : ru.home.startBtnBegin}
+          </button>
+          <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
+            {ru.home.heroNote}
+          </p>
         </div>
-        <button className="btn" onClick={onStart} disabled={loading}>
-          {loading ? 'Загружаю данные…' : dueCount > 0 ? 'Повторить и продолжить' : 'Начать занятие'}
-        </button>
-        <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-          До {SESSION_SIZE} заданий, 7–10 минут. Новые приёмы объясняются карточкой перед первой
-          задачей. Запросы выполняются по-настоящему — на данных дистрибьютора FMCG и OTC-фармы
-          за два с половиной года.
-        </p>
-      </div>
+      )}
+
+      {!ready && (
+        <div className="card">
+          <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{ru.home.draftNote}</p>
+        </div>
+      )}
 
       <div className="card">
-        <h2>Карта навыков</h2>
+        <h2>{ru.home.skillMapTitle}</h2>
         {byTier.map(([tier, list]) => (
           <div key={tier} style={{ marginTop: 12 }}>
             <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {TIER_NAMES[tier] ?? `Уровень ${tier}`}
+              {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
             </p>
             {list.map((s) => {
               const st = progress.skills[s.id];
@@ -313,11 +380,13 @@ function Home({
                 <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
                   <div className="name">
                     {s.title}
-                    <small>{unlocked ? s.summary : 'Откроется после предыдущих тем'}</small>
+                    <small>{unlocked ? s.summary : ru.home.lockedNote}</small>
                   </div>
-                  <div className={`bar${due ? ' due' : ''}`} title={`Освоено на ${Math.round(m * 100)}%`}>
-                    <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
-                  </div>
+                  {ready && (
+                    <div className={`bar${due ? ' due' : ''}`} title={`Освоено на ${Math.round(m * 100)}%`}>
+                      <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -325,14 +394,16 @@ function Home({
         ))}
       </div>
 
-      <div className="row">
-        <button className="btn secondary" onClick={onOpenReference}>
-          Справочник
-        </button>
-        <button className="btn secondary" onClick={onOpenSchema}>
-          Схема данных
-        </button>
-      </div>
+      {ready && (
+        <div className="row">
+          <button className="btn secondary" onClick={onOpenReference}>
+            {ru.home.referenceBtn}
+          </button>
+          <button className="btn secondary" onClick={onOpenSchema}>
+            {ru.home.schemaBtn}
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -344,24 +415,39 @@ function Home({
  * на работе или перед собеседованием». Без него теория существует только
  * внутри занятия и добраться до неё второй раз невозможно.
  */
-function Reference({ progress, onOpen }: { progress: Progress; onOpen: (skill: string) => void }) {
+function Reference({
+  activePack,
+  progress,
+  onOpen,
+}: {
+  activePack: Pack;
+  progress: Progress;
+  onOpen: (skill: string) => void;
+}) {
   const byTier = useMemo(() => {
-    const groups = new Map<number, typeof skills>();
-    for (const s of skills) {
+    const groups = new Map<number, typeof activePack.skills>();
+    for (const s of activePack.skills) {
       if (!lessonBySkill.has(s.id)) continue;
       const list = groups.get(s.tier) ?? [];
       list.push(s);
       groups.set(s.tier, list);
     }
     return [...groups.entries()].sort((a, b) => a[0] - b[0]);
-  }, []);
+  }, [activePack]);
+
+  if (!byTier.length) {
+    return (
+      <div className="card">
+        <p className="muted" style={{ margin: 0, fontSize: 14 }}>{ru.reference.emptyNote}</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="card">
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-          Каждый приём — зачем он нужен в работе, минимальная форма записи, разобранный
-          пример и типичная ошибка. Оба запроса можно выполнить прямо в карточке.
+          {ru.reference.intro}
         </p>
       </div>
       <div className="card">
@@ -371,7 +457,7 @@ function Reference({ progress, onOpen }: { progress: Progress; onOpen: (skill: s
               className="muted"
               style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
             >
-              {TIER_NAMES[tier] ?? `Уровень ${tier}`}
+              {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
             </p>
             {list.map((s) => {
               const st = progress.skills[s.id];
@@ -385,9 +471,9 @@ function Reference({ progress, onOpen }: { progress: Progress; onOpen: (skill: s
                 >
                   <div className="name">
                     {s.title}
-                    <small>{seen ? s.summary : 'Ещё не проходили'}</small>
+                    <small>{seen ? s.summary : ru.reference.notSeen}</small>
                   </div>
-                  <span className="pill">{seen ? 'открыть' : 'вперёд'}</span>
+                  <span className="pill">{seen ? ru.reference.openBtn : ru.reference.nextBtn}</span>
                 </button>
               );
             })}

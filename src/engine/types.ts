@@ -62,6 +62,30 @@ export interface DatasetInfo {
   bytes: number;
 }
 
+/**
+ * Интерфейс исполнителя кода — то, что запускает и оценивает решение человека.
+ *
+ * Сегодня единственная реализация — sql.js в воркере (см. sqlClient.ts).
+ * Абстракция здесь ради того, что появится позже: pandas-трек будет выполнять
+ * Python через Pyodide, но UI задания — ввод, подсказки, сравнение с эталоном,
+ * разбор — устроен одинаково для любого языка, если тот умеет вернуть
+ * табличный результат. TaskView и LessonCard получают Executor как проп
+ * и не знают, что конкретно исполняет код.
+ */
+export interface Executor {
+  subscribeLoad(listener: (s: LoadState) => void): () => void;
+  init(): Promise<DatasetInfo>;
+  exec(code: string): Promise<ExecResult>;
+  grade(userCode: string, solutionCode: string, options?: GradeOptions): Promise<GradeResult>;
+}
+
+/** Прогресс загрузки датасета — нужен, чтобы первый запуск не выглядел зависанием. */
+export type LoadState =
+  | { phase: 'idle' }
+  | { phase: 'loading' }
+  | { phase: 'ready'; info: DatasetInfo }
+  | { phase: 'error'; message: string };
+
 /** Описание схемы для шторки «Схема данных» — генерируется вместе с датасетом. */
 export interface SchemaDoc {
   dataset: string;

@@ -113,7 +113,11 @@ export interface Pack {
   track: Track;
   title: string;
   description: string;
+  /** 'draft' — граф навыков спроектирован, заданий и карточек ещё нет. Плеер не выдаёт по нему занятий. */
+  status?: 'draft' | 'ready';
   version: number;
+  /** Подписи уровней графа для карты навыков. Ключ — Skill.tier, приведённый к строке. */
+  tierNames?: Record<number, string>;
   skills: Skill[];
   tasks: Task[];
 }

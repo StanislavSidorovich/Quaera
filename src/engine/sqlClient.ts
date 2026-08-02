@@ -1,4 +1,4 @@
-import type { DatasetInfo, ExecResult, GradeOptions, GradeResult } from './types';
+import type { DatasetInfo, Executor, ExecResult, GradeOptions, GradeResult, LoadState } from './types';
 
 /**
  * Тонкий типизированный клиент к воркеру SQLite.
@@ -18,13 +18,6 @@ let worker: Worker | null = null;
 let seq = 0;
 const pending = new Map<number, Pending>();
 let readyPromise: Promise<DatasetInfo> | null = null;
-
-/** Прогресс загрузки датасета — нужен, чтобы первый запуск не выглядел зависанием. */
-export type LoadState =
-  | { phase: 'idle' }
-  | { phase: 'loading' }
-  | { phase: 'ready'; info: DatasetInfo }
-  | { phase: 'error'; message: string };
 
 const listeners = new Set<(s: LoadState) => void>();
 let state: LoadState = { phase: 'idle' };
@@ -116,3 +109,11 @@ export async function gradeSql(
   await initDatabase();
   return call<GradeResult>('grade', { userSql, solutionSql, options });
 }
+
+/** Реализация Executor поверх sql.js — см. пояснение к интерфейсу в engine/types.ts. */
+export const sqlExecutor: Executor = {
+  subscribeLoad,
+  init: initDatabase,
+  exec: execSql,
+  grade: gradeSql,
+};

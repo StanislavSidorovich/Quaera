@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import type { SchemaDoc } from '../engine/types';
+import { ru } from '../i18n/ru';
 
 /**
  * Редактор SQL для телефона.
@@ -100,14 +101,14 @@ export function SqlEditor({ value, onChange, schema, level, disabled, placeholde
         autoComplete="off"
         data-gramm="false"
       />
-      <div className="accessory" role="toolbar" aria-label="Символы SQL">
+      <div className="accessory" role="toolbar" aria-label={ru.editor.symbolsAria}>
         {SYMBOLS.map((s) => (
           <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
             {s}
           </button>
         ))}
       </div>
-      <div className="accessory" role="toolbar" aria-label="Ключевые слова SQL">
+      <div className="accessory" role="toolbar" aria-label={ru.editor.keywordsAria}>
         {keywords.map((k) => (
           <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
             {k}
@@ -115,7 +116,7 @@ export function SqlEditor({ value, onChange, schema, level, disabled, placeholde
         ))}
       </div>
       {chips.length > 0 && (
-        <div className="accessory" role="toolbar" aria-label="Таблицы и колонки">
+        <div className="accessory" role="toolbar" aria-label={ru.editor.chipsAria}>
           {chips.map((s) => (
             <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
               {s}
