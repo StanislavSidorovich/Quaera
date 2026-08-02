@@ -452,6 +452,60 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+/*
+ * На узком экране таблица результата с 4+ колонками не помещается без
+ * горизонтального скролла, а на телефоне он неудобен и легко теряется —
+ * человек не понимает, что строка обрезана. Ниже точки, где ещё есть смысл
+ * в классической таблице (см. .table-wrap ниже), строка результата
+ * превращается в карточку: колонки идут одна под другой с подписью слева,
+ * а скроллить приходится только вертикально, как весь остальной экран.
+ */
+@media (max-width: 479px) {
+  .table-wrap table,
+  .table-wrap thead,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-wrap thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .table-wrap tbody tr {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+  }
+
+  .table-wrap tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .table-wrap td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    border-bottom: none;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .table-wrap td::before {
+    content: attr(data-label);
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align: left;
+    white-space: normal;
+  }
+}
+
 /* ---------------------------------------------------------- обратная связь */
 
 .feedback {

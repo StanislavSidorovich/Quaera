@@ -24,7 +24,11 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
             {data.rows.map((row, ri) => (
               <tr key={ri}>
                 {row.map((v, ci) => (
-                  <td key={ci} className={v === null ? 'null' : typeof v === 'number' ? 'num' : ''}>
+                  <td
+                    key={ci}
+                    data-label={data.columns[ci]}
+                    className={v === null ? 'null' : typeof v === 'number' ? 'num' : ''}
+                  >
                     {v === null ? 'NULL' : typeof v === 'number' ? v.toLocaleString('ru-RU', { maximumFractionDigits: 4 }) : String(v)}
                   </td>
                 ))}
