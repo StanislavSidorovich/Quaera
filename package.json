@@ -13,7 +13,7 @@
     "test:scheduler": "node scripts/test-scheduler.mjs",
     "verify": "npm run verify:data && npm run verify:content && npm run test:scheduler",
     "gen:icons": "node scripts/gen-icons.mjs",
-    "prepare:assets": "npm run sync:sqljs && npm run gen:icons && npm run gen:data",
+    "prepare:assets": "npm run sync:sqljs && npm run sync:pyodide && npm run gen:icons && npm run gen:data",
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/postbuild-sw.mjs",
     "preview": "vite preview --host"
