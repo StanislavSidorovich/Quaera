@@ -1020,5 +1020,172 @@ checkLessons(readPack('domain-core'), 'domain-lessons');
   }
 }
 
+// --- Tier 4 трека domain: «Суждение и влияние».
+//
+// Уровень концептуальный, но половина заданий опирается на конкретные числа
+// датасета — и именно эти числа несут вывод. Если корреляция после снятия
+// сезона перестанет падать или e-com-склад перестанет быть аномалией портфеля,
+// задания начнут учить неверному, оставаясь безупречными на вид.
+{
+  const near = (a, b, tol = 0.005) => Math.abs(a - b) <= Math.max(0.05, Math.abs(b) * tol);
+
+  // dom-049: весь вывод держится на паре корреляций. Первая описывает общую
+  // сезонную волну, вторая — то, что от связи остаётся после её снятия.
+  const corr = (xa, xb) => {
+    const ma = xa.reduce((s, v) => s + v, 0) / xa.length;
+    const mb = xb.reduce((s, v) => s + v, 0) / xb.length;
+    let num = 0, da = 0, db = 0;
+    for (let i = 0; i < xa.length; i++) {
+      num += (xa[i] - ma) * (xb[i] - mb);
+      da += (xa[i] - ma) ** 2;
+      db += (xb[i] - mb) ** 2;
+    }
+    return num / Math.sqrt(da * db);
+  };
+  {
+    const all = runSql(`
+      SELECT substr(f.week_start, 1, 7) AS month,
+             SUM(CASE WHEN p.brand = 'Ключевая' THEN f.units ELSE 0 END) AS water,
+             SUM(CASE WHEN p.brand = 'Фрутта' THEN f.units ELSE 0 END) AS juice
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      GROUP BY 1 ORDER BY 1`);
+    const byMonth = Object.fromEntries(all.rows.map((r) => [r[0], { w: r[1], j: r[2] }]));
+    const y2025 = all.rows.filter((r) => r[0].startsWith('2025'));
+    const rLevels = corr(y2025.map((r) => r[1]), y2025.map((r) => r[2]));
+    const wYoY = [], jYoY = [];
+    for (const [month, v] of Object.entries(byMonth)) {
+      const [y, m] = month.split('-');
+      const prev = byMonth[`${+y - 1}-${m}`];
+      if (prev) { wYoY.push(v.w / prev.w); jYoY.push(v.j / prev.j); }
+    }
+    const rYoY = corr(wYoY, jYoY);
+    // Задание цитирует ещё и семь месяцев ряда — их читают глазами рядом с коэффициентом.
+    const quoted = { '2025-01': [6510, 5756], '2025-02': [5663, 4357], '2025-04': [17482, 10567], '2025-06': [21181, 9266], '2025-07': [15792, 8702], '2025-11': [6499, 4291], '2025-12': [8162, 5396] };
+    for (const [month, [w, j]] of Object.entries(quoted)) {
+      if (byMonth[month].w !== w || byMonth[month].j !== j) {
+        fail('dom-049', `${month}: в базе ${byMonth[month].w}/${byMonth[month].j}, в тексте ${w}/${j}`);
+      }
+    }
+    if (!near(rLevels, 0.84, 0.02)) fail('dom-049', `корреляция уровней в базе ${rLevels.toFixed(2)}, в тексте 0.84`);
+    else if (rYoY > 0.3) fail('dom-049', `после снятия сезона корреляция ${rYoY.toFixed(2)} — вывод задания «связь исчезает» больше не верен`);
+    else if (wYoY.length !== 18) fail('dom-049', `пар месяцев год к году ${wYoY.length}, в тексте 18`);
+    else console.log(`\n  ok   dom-049: корреляция вода/сок ${rLevels.toFixed(2)} по уровням против ${rYoY.toFixed(2)} год к году`);
+  }
+
+  // dom-050: задание живёт, только пока рейтинг по выручке ранжирует каналы,
+  // а не людей — то есть пока портфель из одного e-com-склада берёт второе место.
+  {
+    const reps = runSql(`
+      WITH rep_rev AS (
+        SELECT c.rep_id, COUNT(DISTINCT c.customer_id) AS outlets, SUM(f.revenue) AS rev
+        FROM dim_customer c JOIN fact_sellout f ON f.customer_id = c.customer_id
+        WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+        GROUP BY c.rep_id
+      )
+      SELECT r.rep_name, rr.outlets, ROUND(rr.rev) AS rev
+      FROM rep_rev rr JOIN dim_rep r ON r.rep_id = rr.rep_id
+      WHERE r.role = 'rep' ORDER BY rr.rev DESC LIMIT 3`);
+    const quotedTop = [['Анна Егоров', 8, 5042930], ['Юлия Ковалёв', 2, 4616915], ['Екатерина Дьякова', 7, 4335843]];
+    quotedTop.forEach((q, i) => {
+      const row = reps.rows[i];
+      if (!row || row[0] !== q[0] || row[1] !== q[1] || !near(row[2], q[2])) {
+        fail('dom-050', `место ${i + 1}: в базе ${row?.join(' / ')}, в тексте ${q.join(' / ')}`);
+      }
+    });
+    const portfolio = runSql(`
+      SELECT c.customer_name, ROUND(SUM(f.revenue)) AS rev
+      FROM dim_customer c JOIN fact_sellout f ON f.customer_id = c.customer_id
+      JOIN dim_rep r ON r.rep_id = c.rep_id
+      WHERE r.rep_name = 'Юлия Ковалёв' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      GROUP BY c.customer_id ORDER BY rev DESC`);
+    if (portfolio.rows.length !== 2 || !near(portfolio.rows[0][1], 4591844) || !near(portfolio.rows[1][1], 25071)) {
+      fail('dom-050', `портфель в базе ${JSON.stringify(portfolio.rows)}, в тексте 4591844 и 25071`);
+    }
+    const byChannel = runSql(`
+      SELECT c.channel, ROUND(SUM(f.revenue) / COUNT(DISTINCT c.customer_id)) AS per_outlet
+      FROM dim_customer c JOIN fact_sellout f ON f.customer_id = c.customer_id
+      WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      GROUP BY c.channel`);
+    const quotedChannels = { ecom: 3222912, pharmacy: 345636, modern_trade: 277651, traditional_trade: 21706 };
+    for (const [channel, per] of byChannel.rows) {
+      if (!near(per, quotedChannels[channel])) fail('dom-050', `${channel}: в базе ${per} на точку, в тексте ${quotedChannels[channel]}`);
+    }
+    const ratio = quotedChannels.ecom / quotedChannels.traditional_trade;
+    if (Math.round(ratio) !== 148) fail('dom-050', `разрыв между каналами в базе ×${ratio.toFixed(0)}, в тексте ×148`);
+    else if (!failed) console.log(`  ok   dom-050: один e-com-склад даёт 99.5% портфеля второго места, разрыв каналов ×${ratio.toFixed(0)}`);
+  }
+
+  // dom-051: доказательство эффекта акции держится на контрольных группах.
+  // Если хоть одна из них тоже вырастет, задание начнёт учить неверному выводу.
+  {
+    const period = (from, to) => `SUM(CASE WHEN f.week_start BETWEEN '${from}' AND '${to}' THEN f.units ELSE 0 END)`;
+    const r = runSql(`
+      SELECT CASE WHEN p.brand = 'Хрустик' THEN c.channel ELSE 'other_mt' END AS grp,
+             ${period('2025-07-07', '2025-08-04')} AS before,
+             ${period('2025-08-11', '2025-09-08')} AS during
+      FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id
+      JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE p.division = 'FMCG' AND (p.brand = 'Хрустик' OR c.channel = 'modern_trade')
+      GROUP BY 1`);
+    const got = Object.fromEntries(r.rows.map((row) => [row[0], [row[1], row[2]]]));
+    const quoted = { modern_trade: [1515, 4869], traditional_trade: [130, 127], ecom: [4262, 4486], other_mt: [13809, 11448] };
+    for (const [grp, [before, during]] of Object.entries(quoted)) {
+      if (!got[grp] || got[grp][0] !== before || got[grp][1] !== during) {
+        fail('dom-051', `${grp}: в базе ${got[grp]?.join(' → ')}, в тексте ${before} → ${during}`);
+      }
+    }
+    // Смысл задания: воздействие выросло, все контроли — нет.
+    const lift = got.modern_trade[1] / got.modern_trade[0];
+    const controlsFlat = ['traditional_trade', 'ecom', 'other_mt'].every((g) => got[g][1] / got[g][0] < 1.1);
+    if (lift < 3 || !controlsFlat) fail('dom-051', 'контрольные группы больше не «стоят на месте» — конструкция доказательства сломалась');
+    else console.log(`  ok   dom-051: акция ×${lift.toFixed(2)} в сетях, все три контрольные группы не выросли`);
+  }
+
+  // dom-052 и dom-053 пересказывают декомпозицию «Чистовъ» из dom-043 словами —
+  // те же четыре числа, но уже внутри текста письма, где их никто не пересчитает.
+  {
+    const r = runSql(`
+      SELECT d.year, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets
+      FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id
+      JOIN dim_date d ON d.date_id = f.week_start
+      WHERE p.brand = 'Чистовъ' AND d.quarter = 2 AND d.year IN (2024, 2026)
+      GROUP BY d.year ORDER BY d.year`);
+    const quoted = [[2024, 2121702, 79], [2026, 1079055, 33]];
+    quoted.forEach((q, i) => {
+      const row = r.rows[i];
+      if (!row || row[0] !== q[0] || !near(row[1], q[1]) || row[2] !== q[2]) {
+        fail('dom-052', `в базе ${row?.join(' / ')}, в письме ${q.join(' / ')}`);
+      }
+    });
+    const lost = quoted[0][2] - quoted[1][2];
+    if (lost !== 46) fail('dom-052', `в письме «46 точек из 79», в базе потеряно ${lost}`);
+    else if (!failed) console.log('  ok   dom-052: «46 точек из 79» и обе выручки в письме совпадают с датасетом');
+  }
+
+  // dom-058: три верные выручки — вся суть задания в том, что расходятся
+  // не расчёты, а вопросы. Разрыв обязан сохраняться и быть объяснимым.
+  {
+    const sellIn = runSql(`
+      SELECT ROUND(SUM(gross_amount)) AS gross, ROUND(SUM(discount_amount)) AS discount,
+             ROUND(SUM(net_amount)) AS net, ROUND(100.0 * SUM(discount_amount) / SUM(gross_amount), 1) AS pct
+      FROM fact_sellin WHERE month_start BETWEEN '2025-01-01' AND '2025-12-01'`).rows[0];
+    const sellOut = runSql(`
+      SELECT ROUND(SUM(revenue)) AS total FROM fact_sellout
+      WHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'`).rows[0][0];
+    const quoted = [42713947, 3609138, 39104808, 8.4];
+    if (quoted.some((q, i) => !near(sellIn[i], q))) {
+      fail('dom-058', `sell-in в базе ${sellIn.join(' / ')}, в тексте ${quoted.join(' / ')}`);
+    } else if (!near(sellOut, 51533887)) {
+      fail('dom-058', `sell-out в базе ${sellOut}, в тексте 51533887`);
+    } else if (!(sellOut > sellIn[0] && sellIn[0] > sellIn[2])) {
+      fail('dom-058', 'порядок трёх выручок изменился — объяснение разрывов в разборе больше не верно');
+    } else {
+      console.log(`  ok   dom-058: три выручки 2025 — ${sellOut} / ${sellIn[0]} / ${sellIn[2]} (скидки ${sellIn[3]}%)`);
+    }
+  }
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);
