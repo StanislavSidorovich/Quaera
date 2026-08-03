@@ -435,5 +435,95 @@ checkLessons(readPack('domain-core'), 'domain-lessons');
   });
 }
 
+// Tier 2 трека domain построен на реальных цифрах датасета: затоваривание
+// канала и сезонность двух брендов. Если генератор поедет, тексты соврут молча.
+{
+  const near = (a, b, tol = 0.005) => Math.abs(a - b) <= Math.abs(b) * tol;
+
+  // dom-019 и карточка dom-sellin-sellout: у одного дистрибьютора отношение
+  // резко выше, у остальных — узкий коридор около единицы. Задание держится
+  // именно на контрасте, а не на конкретном значении.
+  const ratios = runSql(`
+    WITH si AS (
+      SELECT distributor_id, SUM(units) AS u FROM fact_sellin
+      WHERE substr(month_start, 1, 7) IN ('2025-10', '2025-11', '2025-12') GROUP BY 1),
+    so AS (
+      SELECT c.served_by_distributor_id AS distributor_id, SUM(f.units) AS u
+      FROM fact_sellout f JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE substr(f.week_start, 1, 7) IN ('2025-10', '2025-11', '2025-12') GROUP BY 1)
+    SELECT d.customer_name, si.u AS sell_in, so.u AS sell_out, ROUND(1.0 * si.u / so.u, 2) AS ratio
+    FROM si JOIN so ON so.distributor_id = si.distributor_id
+    JOIN dim_customer d ON d.customer_id = si.distributor_id
+    ORDER BY ratio DESC`);
+  const top = ratios.rows[0];
+  const rest = ratios.rows.slice(1).map((r) => r[3]);
+  if (top[0] !== 'ООО «Волга-Трейд»' || !near(top[3], 2.44, 0.01) || !near(top[1], 28203) || !near(top[2], 11574)) {
+    fail('dom-019', `лидер по затовариванию разошёлся с текстом: в базе ${top.join(' / ')}, в тексте Волга-Трейд / 28203 / 11574 / 2.44`);
+  } else if (Math.max(...rest) > 1.06 || Math.min(...rest) < 1.03) {
+    fail('dom-019', `остальные дистрибьюторы вышли из коридора 1.03–1.06 (${Math.min(...rest)}–${Math.max(...rest)}) — контраст в задании пропал`);
+  } else {
+    console.log(`  ok   dom-019: Волга-Трейд ${top[3]} против коридора ${Math.min(...rest)}–${Math.max(...rest)} у остальных одиннадцати`);
+  }
+
+  // dom-021 держится на том, что поток вернулся к норме, а остатки — нет.
+  const stock = runSql(`
+    SELECT month_start, SUM(units_on_hand) AS on_hand FROM fact_stock
+    WHERE distributor_id = 1 AND month_start IN ('2025-08-01', '2025-12-01', '2026-01-01', '2026-04-01')
+    GROUP BY 1 ORDER BY 1`);
+  const byMonth = Object.fromEntries(stock.rows);
+  const quotedStock = { '2025-08-01': 3949, '2025-12-01': 20846, '2026-01-01': 21120, '2026-04-01': 21757 };
+  for (const [m, q] of Object.entries(quotedStock)) {
+    if (!near(byMonth[m], q)) fail('dom-021', `остатки на ${m}: в базе ${byMonth[m]}, в тексте ${q}`);
+  }
+  if (byMonth['2026-04-01'] < byMonth['2025-12-01']) {
+    fail('dom-021', 'излишек на складе всё-таки рассосался — задание учит выводу, которого в данных больше нет');
+  } else {
+    console.log(`  ok   dom-021: остатки ${byMonth['2025-08-01']} → ${byMonth['2025-12-01']} → ${byMonth['2026-04-01']} (излишек не ушёл)`);
+  }
+
+  // dom-025 и карточка dom-seasonality: три базы сравнения дают три ответа.
+  const vitamins = runSql(`
+    SELECT substr(f.week_start, 1, 7) AS m, SUM(f.units) AS units
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.brand = 'Витамакс' AND substr(f.week_start, 6, 2) IN ('08', '09')
+      AND substr(f.week_start, 1, 4) IN ('2024', '2025')
+    GROUP BY 1 ORDER BY 1`);
+  const v = Object.fromEntries(vitamins.rows);
+  const quotedV = { '2024-08': 481, '2024-09': 862, '2025-08': 282, '2025-09': 1174 };
+  for (const [m, q] of Object.entries(quotedV)) {
+    if (v[m] !== q) fail('dom-025', `Витамакс ${m}: в базе ${v[m]}, в тексте ${q}`);
+  }
+  const vYears = runSql(`
+    SELECT substr(f.week_start, 1, 4) AS y, SUM(f.units) AS units
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.brand = 'Витамакс' AND f.week_start BETWEEN '2024-01-01' AND '2025-12-31'
+    GROUP BY 1 ORDER BY 1`);
+  const quotedYears = [['2024', 9126], ['2025', 9419]];
+  vYears.rows.forEach((row, i) => {
+    if (row[0] !== quotedYears[i][0] || row[1] !== quotedYears[i][1]) {
+      fail('dom-025', `Витамакс за ${row[0]}: в базе ${row[1]}, в тексте ${quotedYears[i][1]}`);
+    }
+  });
+  if (!failed) {
+    console.log(`  ok   dom-025: Витамакс +316% за месяц / +36% год к году / +3.2% за год — все три базы совпали`);
+  }
+
+  // dom-027 сравнивает воду и витамины в августе — задание живо, только пока
+  // сезоны действительно расходятся: вода падает, витамины растут.
+  const water = runSql(`
+    SELECT substr(f.week_start, 1, 7) AS m, SUM(f.units) AS units
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.brand = 'Ключевая' AND substr(f.week_start, 1, 7) IN ('2025-07', '2025-08')
+    GROUP BY 1 ORDER BY 1`);
+  const w = Object.fromEntries(water.rows);
+  if (w['2025-07'] !== 15792 || w['2025-08'] !== 11711) {
+    fail('dom-027', `Ключевая июль/август: в базе ${w['2025-07']}/${w['2025-08']}, в тексте 15792/11711`);
+  } else if (!(w['2025-08'] < w['2025-07'] && v['2025-09'] > v['2025-08'])) {
+    fail('dom-027', 'сезоны воды и витаминов перестали расходиться — задание потеряло смысл');
+  } else {
+    console.log('  ok   dom-027: в августе вода падает, витамины растут — противоположные сезоны воспроизводятся');
+  }
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);
