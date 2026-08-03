@@ -1,7 +1,7 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Track } from '../content/types';
 import type { SchemaDoc } from '../engine/types';
-import { ru } from '../i18n/ru';
+import { useI18n } from '../i18n/context';
 
 /**
  * Редактор кода для телефона — общий для SQL и Python.
@@ -56,8 +56,29 @@ interface Props {
   placeholder?: string;
 }
 
+const KEYBOARD_STORAGE_KEY = 'querium-keyboard';
+
+/**
+ * Экранная клавиатура открывается по касанию в textarea всегда, даже когда
+ * человек весь запрос собирает из панели токенов и колонок ниже. На телефоне
+ * это лишняя половина экрана, которую приходится закрывать вручную. Тумблер
+ * переключает textarea в inputMode="none": фокус и позиция курсора работают
+ * как раньше (вставка из панели по-прежнему целится в них), а клавиатура
+ * просто не всплывает, пока её явно не попросили — состояние общее для всех
+ * заданий, а не переустанавливается на каждой задаче.
+ */
+function initialKeyboardOn(): boolean {
+  try {
+    return localStorage.getItem(KEYBOARD_STORAGE_KEY) === 'on';
+  } catch {
+    return false;
+  }
+}
+
 export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder }: Props) {
+  const { t } = useI18n();
   const ref = useRef<HTMLTextAreaElement>(null);
+  const [keyboardOn, setKeyboardOn] = useState(initialKeyboardOn);
   const isSql = track === 'sql';
 
   const symbols = isSql ? SQL_SYMBOLS : PYTHON_SYMBOLS;
@@ -103,8 +124,33 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
     });
   };
 
+  const toggleKeyboard = () => {
+    const next = !keyboardOn;
+    setKeyboardOn(next);
+    try {
+      localStorage.setItem(KEYBOARD_STORAGE_KEY, next ? 'on' : 'off');
+    } catch {
+      // localStorage недоступен — просто не запоминаем выбор между заданиями
+    }
+    const el = ref.current;
+    if (!el) return;
+    // Blur закрывает уже открытую клавиатуру; при включении, наоборот,
+    // фокусируем сразу — незачем заставлять коснуться поля второй раз.
+    if (next) requestAnimationFrame(() => el.focus());
+    else el.blur();
+  };
+
   return (
     <div>
+      <button
+        type="button"
+        className="pill"
+        style={{ marginBottom: 8 }}
+        aria-pressed={keyboardOn}
+        onClick={toggleKeyboard}
+      >
+        ⌨ {keyboardOn ? t.editor.keyboardHide : t.editor.keyboardShow}
+      </button>
       <textarea
         ref={ref}
         className="sql"
@@ -112,6 +158,9 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         disabled={disabled}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+        // Без включённого тумблера клавиатура не должна всплывать сама —
+        // фокус и выделение при этом продолжают работать как обычно.
+        inputMode={keyboardOn ? undefined : 'none'}
         // Автозамена и заглавные буквы превращают ввод кода в борьбу с браузером.
         spellCheck={false}
         autoCapitalize="none"
@@ -119,14 +168,14 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         autoComplete="off"
         data-gramm="false"
       />
-      <div className="accessory" role="toolbar" aria-label={ru.editor.symbolsAria(track)}>
+      <div className="accessory" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
         {symbols.map((s) => (
           <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
             {s}
           </button>
         ))}
       </div>
-      <div className="accessory" role="toolbar" aria-label={ru.editor.keywordsAria(track)}>
+      <div className="accessory" role="toolbar" aria-label={t.editor.keywordsAria(track)}>
         {keywords.map((k) => (
           <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
             {k}
@@ -134,7 +183,7 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         ))}
       </div>
       {chips.length > 0 && (
-        <div className="accessory" role="toolbar" aria-label={ru.editor.chipsAria}>
+        <div className="accessory" role="toolbar" aria-label={t.editor.chipsAria}>
           {chips.map((s) => (
             <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
               {s}

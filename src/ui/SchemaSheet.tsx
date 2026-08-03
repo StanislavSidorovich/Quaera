@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SchemaDoc } from '../engine/types';
-import { ru } from '../i18n/ru';
+import { useI18n } from '../i18n/context';
 
 /**
  * Шторка со схемой данных.
@@ -33,7 +33,11 @@ export function useSchema(): SchemaDoc | null {
 }
 
 export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: () => void }) {
-  // Аппаратная кнопка «назад» на Android должна закрывать шторку, а не приложение.
+  const { t, locale } = useI18n();
+  const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
+
+  // Аппаратная кнопка «назад» закрывает шторку — обработано в App.tsx (popstate),
+  // а не здесь: это тот же перехват, что и для экранов, единый на всё приложение.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -43,35 +47,35 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={ru.schema.ariaLabel}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={t.schema.ariaLabel}>
         <div className="grabber" />
         {!doc ? (
-          <p className="muted">{ru.schema.loading}</p>
+          <p className="muted">{t.schema.loading}</p>
         ) : (
           <>
-            <h2>{ru.schema.title}</h2>
+            <h2>{t.schema.title}</h2>
             <p className="muted" style={{ marginTop: 0 }}>
               {doc.company}. Период данных: {doc.period.from} — {doc.period.to}.
             </p>
-            {doc.tables.map((t) => (
-              <details key={t.table} className="table-doc">
+            {doc.tables.map((table) => (
+              <details key={table.table} className="table-doc">
                 <summary>
-                  <code style={{ color: 'var(--code)' }}>{t.table}</code> — {t.title}
-                  <small>{ru.schema.grainLabel(t.grain, t.row_count.toLocaleString('ru-RU'))}</small>
+                  <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title}
+                  <small>{t.schema.grainLabel(table.grain, table.row_count.toLocaleString(numberLocale))}</small>
                 </summary>
-                {t.columns.map((c) => (
+                {table.columns.map((c) => (
                   <div className="col-doc" key={c.name}>
                     <code>{c.name}</code>
                     <span>{c.description}</span>
                   </div>
                 ))}
-                {t.note && <div className="note">{t.note}</div>}
+                {table.note && <div className="note">{table.note}</div>}
               </details>
             ))}
           </>
         )}
         <button className="btn secondary" style={{ marginTop: 12 }} onClick={onClose}>
-          {ru.schema.closeBtn}
+          {t.schema.closeBtn}
         </button>
       </div>
     </>

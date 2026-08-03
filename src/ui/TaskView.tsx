@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '../content/types';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
-import { ru } from '../i18n/ru';
+import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { ResultTable } from './ResultTable';
 
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props) {
+  const { t, locale } = useI18n();
   const [code, setCode] = useState('');
   const [blanks, setBlanks] = useState<string[]>([]);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -114,8 +115,8 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       setWasCorrect(correct);
       setFeedback(
         correct
-          ? { tone: 'warn', title: ru.task.correctTitle, body: '', nudges: [] }
-          : { tone: 'warn', title: ru.task.wrongOptionTitle, body: ru.task.wrongOptionBody, nudges: [] }
+          ? { tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] }
+          : { tone: 'warn', title: t.task.wrongOptionTitle, body: t.task.wrongOptionBody, nudges: [] }
       );
       if (!correct) setWrongAttempts((n) => n + 1);
       return;
@@ -139,11 +140,11 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
         setExpected(null);
         setFeedback({
           tone: 'warn',
-          title: ru.task.correctTitle,
+          title: t.task.correctTitle,
           body: '',
           nudges: [],
           style: res.comparison.columnNamesDiffer
-            ? ru.task.columnNameNote(res.comparison.expectedCols.join(', '))
+            ? t.task.columnNameNote(res.comparison.expectedCols.join(', '))
             : undefined,
         });
       } else {
@@ -172,8 +173,8 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
     setHintsShown(task.hints.length);
     setFeedback({
       tone: 'warn',
-      title: ru.task.giveUpTitle,
-      body: ru.task.giveUpBody,
+      title: t.task.giveUpTitle,
+      body: t.task.giveUpBody,
       nudges: [],
     });
   };
@@ -182,15 +183,15 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
     <>
       <div className="card">
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-          <span className="pill level">{ru.task.levelLabel(task.level)}</span>
+          <span className="pill level">{t.task.levelLabel(task.level)}</span>
           <span className="pill">
-            {task.mode === 'predict' ? ru.task.modePredict : task.mode === 'fill' ? ru.task.modeFill : ru.task.modeWrite}
+            {task.mode === 'predict' ? t.task.modePredict : task.mode === 'fill' ? t.task.modeFill : t.task.modeWrite}
           </span>
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
           {!task.scenario && (
             <button className="pill" onClick={onOpenSchema} style={{ marginLeft: 'auto' }}>
-              {ru.task.schemaBtn}
+              {t.task.schemaBtn}
             </button>
           )}
         </div>
@@ -219,7 +220,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
           ))}
           {!solved && (
             <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
-              {ru.task.checkBtn}
+              {t.task.checkBtn}
             </button>
           )}
         </div>
@@ -235,25 +236,25 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
               level={task.level}
               track={task.track}
               disabled={solved}
-              placeholder={ru.task.placeholder(task.track)}
+              placeholder={t.task.placeholder(task.track)}
             />
           )}
           <div className="row" style={{ marginTop: 12 }}>
             <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
-              {ru.task.runBtn}
+              {t.task.runBtn}
             </button>
             <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
-              {running ? '…' : ru.task.checkBtn}
+              {running ? '…' : t.task.checkBtn}
             </button>
           </div>
           <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-            {ru.task.runNote}
+            {t.task.runNote}
           </p>
         </div>
       )}
 
       {feedback && (
-        <div className={`feedback ${solved && feedback.title === ru.task.correctTitle ? 'ok' : feedback.tone}`}>
+        <div className={`feedback ${solved && feedback.title === t.task.correctTitle ? 'ok' : feedback.tone}`}>
           <h3>{feedback.title}</h3>
           {feedback.body && <p>{feedback.body}</p>}
           {feedback.nudges.length > 0 && (
@@ -267,13 +268,16 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
         </div>
       )}
 
-      {preview && !solved && <div className="card"><ResultTable data={preview} caption={ru.task.yourResult} /></div>}
+      {preview && !solved && <div className="card"><ResultTable data={preview} caption={t.task.yourResult} /></div>}
 
       {expected && (
         <div className="card">
           <ResultTable
             data={expected}
-            caption={ru.task.expectedResult(expected.rows.length, expected.totalRows.toLocaleString('ru-RU'))}
+            caption={t.task.expectedResult(
+              expected.rows.length,
+              expected.totalRows.toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-US')
+            )}
           />
         </div>
       )}
@@ -292,8 +296,8 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
               onClick={() => setHintsShown((n) => n + 1)}
             >
               {waitLeft > 0 && hintsShown === 0
-                ? ru.task.hintWait(waitLeft)
-                : ru.task.hintShow(hintsShown + 1, task.hints.length)}
+                ? t.task.hintWait(waitLeft)
+                : t.task.hintShow(hintsShown + 1, task.hints.length)}
             </button>
           )}
         </div>
@@ -302,26 +306,26 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       {solved && (
         <>
           <div className="card">
-            <h2>{ru.task.explainTitle}</h2>
+            <h2>{t.task.explainTitle}</h2>
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{task.explain}</p>
           </div>
           {task.mode !== 'predict' && (
             <details className="table-doc">
-              <summary>{ru.task.solutionSummary}</summary>
+              <summary>{t.task.solutionSummary}</summary>
               <pre className="sql-block" style={{ border: 'none', borderRadius: 0 }}>
                 {task.solution}
               </pre>
             </details>
           )}
           <button className="btn" onClick={finish}>
-            {ru.task.nextBtn}
+            {t.task.nextBtn}
           </button>
         </>
       )}
 
       {!solved && (
         <button className="btn secondary" onClick={giveUp}>
-          {ru.task.giveUpBtn}
+          {t.task.giveUpBtn}
         </button>
       )}
     </>
@@ -343,6 +347,7 @@ function FillTemplate({
   onChange: (b: string[]) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const parts = template.split('___');
   return (
     <pre className="sql-block" style={{ whiteSpace: 'pre-wrap' }}>
@@ -361,7 +366,7 @@ function FillTemplate({
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"
-              aria-label={ru.task.blankAriaLabel(i + 1)}
+              aria-label={t.task.blankAriaLabel(i + 1)}
               style={{
                 width: `${Math.max(4, (blanks[i] ?? '').length + 2)}ch`,
                 font: 'inherit',

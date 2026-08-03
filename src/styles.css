@@ -122,6 +122,22 @@ textarea.sql {
   color: var(--text-dim);
 }
 
+/* Снэкбар «нажмите назад ещё раз, чтобы выйти» — на главном экране, ненавязчиво. */
+.exit-hint {
+  position: fixed;
+  left: 50%;
+  bottom: max(env(safe-area-inset-bottom), 12px);
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 .content {
   flex: 1;
   padding: 16px;

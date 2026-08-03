@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Lesson } from '../content/types';
 import type { Executor, Preview } from '../engine/types';
-import { ru } from '../i18n/ru';
+import { useI18n } from '../i18n/context';
 import { ResultTable } from './ResultTable';
 
 /**
@@ -15,6 +15,7 @@ import { ResultTable } from './ResultTable';
  */
 
 function RunnableSql({ sql, tone, executor }: { sql: string; tone?: 'wrong'; executor: Executor }) {
+  const { t } = useI18n();
   const [result, setResult] = useState<Preview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,11 +38,11 @@ function RunnableSql({ sql, tone, executor }: { sql: string; tone?: 'wrong'; exe
     <div>
       <pre className="sql-block">{sql}</pre>
       <button className="hint-btn" style={{ marginTop: 8 }} onClick={run} disabled={busy}>
-        {busy ? ru.lesson.running : tone === 'wrong' ? ru.lesson.runWrong : ru.lesson.runExample}
+        {busy ? t.lesson.running : tone === 'wrong' ? t.lesson.runWrong : t.lesson.runExample}
       </button>
       {error && (
         <div className="feedback error" style={{ marginTop: 8 }}>
-          <h3>{ru.lesson.errorTitle}</h3>
+          <h3>{t.lesson.errorTitle}</h3>
           <p style={{ margin: 0 }}>{error}</p>
         </div>
       )}
@@ -68,21 +69,22 @@ interface Props {
 }
 
 export function LessonCard({ lesson, executor, runnable = true, onContinue }: Props) {
+  const { t } = useI18n();
   return (
     <>
       <div className="card">
-        <span className="pill level">{ru.lesson.pill}</span>
+        <span className="pill level">{t.lesson.pill}</span>
         <h2 style={{ fontSize: 18, marginTop: 10 }}>{lesson.title}</h2>
         <p className="brief" style={{ marginBottom: 0 }}>{lesson.why}</p>
       </div>
 
       <div className="card">
-        <h2>{ru.lesson.formTitle}</h2>
+        <h2>{t.lesson.formTitle}</h2>
         <pre className="sql-block">{lesson.form}</pre>
       </div>
 
       <div className="card">
-        <h2>{ru.lesson.exampleTitle}</h2>
+        <h2>{t.lesson.exampleTitle}</h2>
         {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="sql-block">{lesson.example}</pre>}
         <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
           {lesson.reads}
@@ -90,7 +92,7 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
       </div>
 
       <div className="card">
-        <h2>{ru.lesson.wrongTitle}</h2>
+        <h2>{t.lesson.wrongTitle}</h2>
         {runnable ? (
           <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
         ) : (
@@ -100,13 +102,13 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
       </div>
 
       <div className="card">
-        <h2>{ru.lesson.selfCheckTitle}</h2>
+        <h2>{t.lesson.selfCheckTitle}</h2>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.selfCheck}</p>
       </div>
 
       {onContinue && (
         <button className="btn" onClick={onContinue}>
-          {ru.lesson.continueBtn}
+          {t.lesson.continueBtn}
         </button>
       )}
     </>

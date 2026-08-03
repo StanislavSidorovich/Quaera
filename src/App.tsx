@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { lessonBySkill, packForTrack, packs } from './content';
 import type { Lesson, Pack, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
-import { ru } from './i18n/ru';
+import { useI18n } from './i18n/context';
 import { LessonCard } from './ui/LessonCard';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { TaskView, type TaskOutcome } from './ui/TaskView';
@@ -26,12 +26,17 @@ import {
 
 const SESSION_SIZE = 5;
 
+/** Раз в столько мс перестаём считать повторное «назад» подтверждением выхода. */
+const EXIT_HINT_MS = 2000;
+
 /**
- * Порядок треков на главной — не алфавитный, а порядок дорожной карты:
- * SQL → «аналитика как профессия» → модель данных → pandas. Карта навыков
- * должна читаться как план, а не как список файлов.
+ * Порядок треков на главной — не алфавитный, а порядок дорожной карты,
+ * повторяющий реальный рабочий процесс: «аналитика как профессия» задаёт
+ * контекст → SQL достаёт данные из системы-источника → pandas делает то,
+ * что одним запросом неудобно → Power BI/DAX моделирует уже выгруженное
+ * и приведённое в порядок. Пояснение для пользователя — в about.tracksWhy*.
  */
-const TRACK_ORDER: Track[] = ['sql', 'domain', 'model', 'python'];
+const TRACK_ORDER: Track[] = ['domain', 'sql', 'python', 'model'];
 
 /**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
@@ -50,11 +55,13 @@ type Screen =
   | { name: 'about' };
 
 export default function App() {
+  const { t, locale, setLocale } = useI18n();
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [activeTrack, setActiveTrack] = useState<Track>('sql');
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   const [schemaOpen, setSchemaOpen] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
   const schema = useSchema();
 
   // Пак трека и его исполнитель — единственное место, где App знает,
@@ -76,6 +83,72 @@ export default function App() {
   }, [executor]);
 
   useEffect(() => saveProgress(progress), [progress]);
+
+  /**
+   * Аппаратная/жестовая кнопка «назад» на телефоне.
+   *
+   * Без этого эффекта первое же «назад» в PWA закрывает приложение: у вкладки
+   * нет своей истории переходов, и браузеру/ОС уходить больше некуда. Держим
+   * под текущим экраном одну запасную запись истории — тогда «назад» всегда
+   * сначала попадает сюда, а не сразу в закрытие. Popstate обрабатываем так же,
+   * как верхнюю стрелку в шапке (лекция → справочник, всё остальное → главная),
+   * и сразу восстанавливаем запас, чтобы следующее «назад» тоже перехватилось.
+   *
+   * На главном экране запас не восстанавливаем при повторном «назад» подряд —
+   * тогда следующее нажатие уходит на закрытие по-настоящему. Это и есть
+   * «нажмите ещё раз, чтобы выйти»: полностью гарантировать закрытие ровно
+   * на втором нажатии нельзя (JS не видит самое первое «назад» с пустой
+   * историей ни при каких ухищрениях), но начиная с этого места дальше
+   * выход больше не будет неожиданным.
+   */
+  const exitArmedRef = useRef(false);
+  const exitTimerRef = useRef<number | undefined>(undefined);
+  const schemaOpenRef = useRef(schemaOpen);
+  useEffect(() => {
+    schemaOpenRef.current = schemaOpen;
+  }, [schemaOpen]);
+  // Текущий экран читаем через ref, а не из замыкания: обработчик popstate
+  // сам вызывает setState (и side-effect'ы вроде pushState/таймера), а делать
+  // это внутри функционального апдейтера setScreen нельзя — React вправе
+  // вызвать такой апдейтер повторно (и делает это в StrictMode), и тогда
+  // history задваивается, а подсказка о выходе взводится не тем нажатием.
+  const screenRef = useRef(screen);
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+
+  useEffect(() => {
+    history.replaceState(null, '');
+    history.pushState(null, '');
+
+    function onPopState() {
+      // Открытая шторка со схемой — самый верхний слой: «назад» должен закрыть
+      // её, а не менять экран под ней (тот и не виден, пока шторка открыта).
+      if (schemaOpenRef.current) {
+        setSchemaOpen(false);
+        history.pushState(null, '');
+        return;
+      }
+      const current = screenRef.current;
+      if (current.name === 'home') {
+        if (exitArmedRef.current) return; // второе «назад» подряд — не мешаем выходу
+        exitArmedRef.current = true;
+        setShowExitHint(true);
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = window.setTimeout(() => {
+          exitArmedRef.current = false;
+          setShowExitHint(false);
+        }, EXIT_HINT_MS);
+        history.pushState(null, '');
+        return;
+      }
+      history.pushState(null, '');
+      setScreen(current.name === 'lesson' ? { name: 'reference' } : { name: 'home' });
+    }
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const dueCount = useMemo(
     () => activePack.skills.filter((s) => skillState(progress, s.id).reps > 0 && isDue(progress.skills[s.id])).length,
@@ -164,31 +237,31 @@ export default function App() {
             // Из карточки возвращаемся в список приёмов, а не на главную:
             // в справочнике их обычно листают подряд.
             onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
-            aria-label={ru.app.back}
+            aria-label={t.app.back}
           >
             ←
           </button>
         )}
         <h1>
           {screen.name === 'session'
-            ? ru.session.title
+            ? t.session.title
             : screen.name === 'reference'
-              ? ru.reference.title
+              ? t.reference.title
               : screen.name === 'lesson'
-                ? ru.lesson.pill
+                ? t.lesson.pill
                 : screen.name === 'about'
-                  ? ru.about.title
-                  : ru.app.name}
+                  ? t.about.title
+                  : t.app.name}
           <span className="sub">
             {screen.name === 'session'
-              ? ru.session.progressOf(screen.index + 1, screen.queue.length)
+              ? t.session.progressOf(screen.index + 1, screen.queue.length)
               : screen.name === 'reference'
-                ? activePack.title
+                ? t.tracks.names[activeTrack]
                 : screen.name === 'lesson'
                   ? (lessonBySkill.get(screen.skill)?.title ?? '')
                   : screen.name === 'about'
-                    ? ru.app.name
-                    : `${activePack.title} · серия ${streak(progress.activeDays)} дн.`}
+                    ? t.app.name
+                    : `${t.tracks.names[activeTrack]} · серия ${streak(progress.activeDays)} дн.`}
           </span>
         </h1>
         {screen.name === 'session' && (
@@ -198,15 +271,22 @@ export default function App() {
             ))}
           </div>
         )}
+        <button
+          className="icon-btn"
+          aria-label={t.locale.switchAriaLabel}
+          onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
+        >
+          {locale === 'ru' ? 'EN' : 'RU'}
+        </button>
       </header>
 
       <main className="content">
         {load.phase === 'error' && (
           <div className="feedback error">
-            <h3>{ru.loadError.title}</h3>
+            <h3>{t.loadError.title}</h3>
             <p>{load.message}</p>
             <button className="btn secondary" onClick={() => location.reload()}>
-              {ru.loadError.reloadBtn}
+              {t.loadError.reloadBtn}
             </button>
           </div>
         )}
@@ -230,7 +310,7 @@ export default function App() {
         )}
 
         {screen.name === 'about' && (
-          <About onSelectTrack={(t) => { switchTrack(t); }} />
+          <About onSelectTrack={(track) => { switchTrack(track); }} />
         )}
 
         {step?.kind === 'lesson' && executor && (
@@ -268,16 +348,18 @@ export default function App() {
 
         {screen.name === 'done' && (
           <div className="card">
-            <h2>{ru.session.doneTitle}</h2>
-            <p className="muted">{ru.session.doneBody(screen.solved)}</p>
+            <h2>{t.session.doneTitle}</h2>
+            <p className="muted">{t.session.doneBody(screen.solved)}</p>
             <button className="btn" style={{ marginTop: 12 }} onClick={() => setScreen({ name: 'home' })}>
-              {ru.session.homeBtn}
+              {t.session.homeBtn}
             </button>
           </div>
         )}
       </main>
 
       {schemaOpen && <SchemaSheet doc={schema} onClose={() => setSchemaOpen(false)} />}
+
+      {showExitHint && <div className="exit-hint">{t.app.exitHint}</div>}
     </div>
   );
 }
@@ -287,24 +369,25 @@ export default function App() {
  * Черновые треки видны и кликабельны (можно посмотреть граф навыков),
  * но помечены статусом и не дают начать занятие — контента там пока нет.
  */
-function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (t: Track) => void }) {
+function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (track: Track) => void }) {
+  const { t } = useI18n();
   return (
-    <div className="tabs tracks" role="tablist" aria-label={ru.tracks.ariaLabel}>
-      {TRACK_ORDER.map((t) => {
-        const p = packForTrack(t);
+    <div className="tabs tracks" role="tablist" aria-label={t.tracks.ariaLabel}>
+      {TRACK_ORDER.map((track) => {
+        const p = packForTrack(track);
         if (!p) return null;
         const ready = p.status !== 'draft' && p.tasks.length > 0;
         return (
           <button
-            key={t}
+            key={track}
             role="tab"
-            aria-selected={active === t}
-            aria-pressed={active === t}
+            aria-selected={active === track}
+            aria-pressed={active === track}
             className={ready ? undefined : 'draft'}
-            onClick={() => onSelect(t)}
+            onClick={() => onSelect(track)}
           >
-            <span>{p.title}</span>
-            <small>{ready ? ru.tracks.readyBadge(p.tasks.length) : ru.tracks.draftBadge}</small>
+            <span>{t.tracks.names[track]}</span>
+            <small>{ready ? t.tracks.readyBadge(p.tasks.length) : t.tracks.draftBadge}</small>
           </button>
         );
       })}
@@ -340,8 +423,9 @@ function Home({
   onOpenSchema: () => void;
   onOpenReference: () => void;
   onOpenAbout: () => void;
-  onSwitchTrack: (t: Track) => void;
+  onSwitchTrack: (track: Track) => void;
 }) {
+  const { t, locale } = useI18n();
   const byTier = useMemo(() => {
     const groups = new Map<number, typeof activePack.skills>();
     for (const s of activePack.skills) {
@@ -368,11 +452,19 @@ function Home({
     <>
       {isNewUser && (
         <div className="card">
-          <p className="brief" style={{ margin: 0 }}>{ru.welcome.body}</p>
+          <p className="brief" style={{ margin: 0 }}>{t.welcome.body}</p>
         </div>
       )}
 
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
+
+      {/*
+       * Показываем только на английском: это признание, что контент заданий
+       * ещё не переведён, и по-русски оно просто неуместно.
+       */}
+      {locale === 'en' && (
+        <p className="muted" style={{ margin: '-6px 0 12px', fontSize: 12 }}>{t.locale.partialNote}</p>
+      )}
 
       {/*
        * Постоянная ссылка, а не разовая карточка новичка: та показывается один
@@ -387,7 +479,7 @@ function Home({
         onClick={onOpenAbout}
         style={{ margin: '-2px 0 12px' }}
       >
-        {ru.about.entryLink}
+        {t.about.entryLink}
       </button>
 
       {/*
@@ -398,11 +490,11 @@ function Home({
        */}
       {consent !== null && (
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>{ru.consent.title}</h2>
-          <p className="brief">{ru.consent.body(Math.round(consent / 1e6))}</p>
-          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{ru.consent.note}</p>
+          <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
+          <p className="brief">{t.consent.body(Math.round(consent / 1e6))}</p>
+          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
           <button className="btn" onClick={onConfirmDownload}>
-            {ru.consent.confirmBtn}
+            {t.consent.confirmBtn}
           </button>
         </div>
       )}
@@ -412,22 +504,22 @@ function Home({
           <div className="hero">
             <div>
               <div className="big">{dueCount}</div>
-              <div className="muted">{ru.home.dueLabel}</div>
+              <div className="muted">{t.home.dueLabel}</div>
             </div>
             <div>
               <div className="big">{progress.totalSolved}</div>
-              <div className="muted">{ru.home.solvedLabel}</div>
+              <div className="muted">{t.home.solvedLabel}</div>
             </div>
             <div>
               <div className="big">{startedCount}</div>
-              <div className="muted">{ru.home.startedOf(startedCount, activePack.skills.length)}</div>
+              <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
             </div>
           </div>
           <button className="btn" onClick={onStart} disabled={loading}>
-            {loading ? ru.home.loading : dueCount > 0 ? ru.home.startBtnResume : ru.home.startBtnBegin}
+            {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
           </button>
           <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-            {writesCode ? ru.home.heroNote : ru.home.heroNoteNoCode}
+            {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
           </p>
         </div>
       )}
@@ -435,12 +527,12 @@ function Home({
       {!ready && (
         <div className="card">
           <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
-          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{ru.home.draftNote}</p>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{t.home.draftNote}</p>
         </div>
       )}
 
       <div className="card">
-        <h2>{ru.home.skillMapTitle}</h2>
+        <h2>{t.home.skillMapTitle}</h2>
         {byTier.map(([tier, list]) => (
           <div key={tier} style={{ marginTop: 12 }}>
             <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -458,7 +550,7 @@ function Home({
                 <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
                   <div className="name">
                     {s.title}
-                    <small>{unlocked ? s.summary : ru.home.lockedNote}</small>
+                    <small>{unlocked ? s.summary : t.home.lockedNote}</small>
                   </div>
                   {ready && (
                     <div className={`bar${due ? ' due' : ''}`} title={`Освоено на ${Math.round(m * 100)}%`}>
@@ -475,11 +567,11 @@ function Home({
       {ready && (
         <div className="row">
           <button className="btn secondary" onClick={onOpenReference}>
-            {ru.home.referenceBtn}
+            {t.home.referenceBtn}
           </button>
           {writesCode && (
             <button className="btn secondary" onClick={onOpenSchema}>
-              {ru.home.schemaBtn}
+              {t.home.schemaBtn}
             </button>
           )}
         </div>
@@ -503,36 +595,37 @@ function Home({
  * справочника или просто когда человек вернулся через неделю и забыл,
  * что где лежит.
  */
-function About({ onSelectTrack }: { onSelectTrack: (t: Track) => void }) {
+function About({ onSelectTrack }: { onSelectTrack: (track: Track) => void }) {
+  const { t } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
 
   return (
     <>
       <div className="card">
-        <p className="brief" style={{ margin: 0 }}>{ru.welcome.body}</p>
+        <p className="brief" style={{ margin: 0 }}>{t.welcome.body}</p>
       </div>
 
       <div className="card">
-        <h2>{ru.about.structureTitle}</h2>
+        <h2>{t.about.structureTitle}</h2>
         <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
-          {ru.about.structureIntro(totalSkills, totalTasks)}
+          {t.about.structureIntro(totalSkills, totalTasks)}
         </p>
-        {TRACK_ORDER.map((t) => {
-          const p = packForTrack(t);
+        {TRACK_ORDER.map((track) => {
+          const p = packForTrack(track);
           if (!p) return null;
           const ready = p.status !== 'draft' && p.tasks.length > 0;
           return (
             <button
-              key={t}
+              key={track}
               type="button"
               className="track-summary"
-              onClick={() => onSelectTrack(t)}
+              onClick={() => onSelectTrack(track)}
             >
               <div className="track-summary-head">
-                <span>{p.title}</span>
+                <span>{t.tracks.names[track]}</span>
                 <span className={`pill ${ready ? '' : 'draft'}`}>
-                  {ready ? ru.tracks.readyBadge(p.tasks.length) : ru.tracks.draftBadge}
+                  {ready ? t.tracks.readyBadge(p.tasks.length) : t.tracks.draftBadge}
                 </span>
               </div>
               <p className="muted" style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.5 }}>
@@ -541,18 +634,27 @@ function About({ onSelectTrack }: { onSelectTrack: (t: Track) => void }) {
             </button>
           );
         })}
+        <p
+          className="muted"
+          style={{ margin: '14px 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+        >
+          {t.about.tracksWhyTitle}
+        </p>
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+          {t.about.tracksWhyBody}
+        </p>
       </div>
 
       <div className="card">
-        <h2>{ru.about.howTitle}</h2>
-        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{ru.about.howSrs}</p>
-        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{ru.about.howModes}</p>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{ru.about.howData}</p>
+        <h2>{t.about.howTitle}</h2>
+        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
+        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
       </div>
 
       <div className="card">
-        <h2>{ru.about.privacyTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{ru.about.privacyBody}</p>
+        <h2>{t.about.privacyTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
       </div>
     </>
   );
@@ -567,6 +669,7 @@ function Reference({
   progress: Progress;
   onOpen: (skill: string) => void;
 }) {
+  const { t } = useI18n();
   const byTier = useMemo(() => {
     const groups = new Map<number, typeof activePack.skills>();
     for (const s of activePack.skills) {
@@ -581,7 +684,7 @@ function Reference({
   if (!byTier.length) {
     return (
       <div className="card">
-        <p className="muted" style={{ margin: 0, fontSize: 14 }}>{ru.reference.emptyNote}</p>
+        <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.reference.emptyNote}</p>
       </div>
     );
   }
@@ -590,7 +693,7 @@ function Reference({
     <>
       <div className="card">
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-          {activePack.tasks.some((t) => t.mode !== 'predict') ? ru.reference.intro : ru.reference.introNoCode}
+          {activePack.tasks.some((t) => t.mode !== 'predict') ? t.reference.intro : t.reference.introNoCode}
         </p>
       </div>
       <div className="card">
@@ -614,9 +717,9 @@ function Reference({
                 >
                   <div className="name">
                     {s.title}
-                    <small>{seen ? s.summary : ru.reference.notSeen}</small>
+                    <small>{seen ? s.summary : t.reference.notSeen}</small>
                   </div>
-                  <span className="pill">{seen ? ru.reference.openBtn : ru.reference.nextBtn}</span>
+                  <span className="pill">{seen ? t.reference.openBtn : t.reference.nextBtn}</span>
                 </button>
               );
             })}
