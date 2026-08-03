@@ -77,6 +77,14 @@
       "prereqs": ["py-groupby", "py-index"]
     },
     {
+      "id": "py-explore",
+      "track": "python",
+      "title": "Разведка данных",
+      "tier": 2,
+      "summary": "Смотрю на данные до расчёта: value_counts по разрезам, describe по мерам — и замечаю выброс или лишнюю категорию раньше, чем они попадут в отчёт.",
+      "prereqs": ["py-dataframe", "py-dtypes"]
+    },
+    {
       "id": "py-reshape",
       "track": "python",
       "title": "pivot, pivot_table и melt",
@@ -104,25 +112,9 @@
       "id": "py-chaining",
       "track": "python",
       "title": "Цепочки, виды и копии",
-      "tier": 3,
+      "tier": 4,
       "summary": "Пишу преобразования цепочкой через assign и не ловлю SettingWithCopyWarning, потому что понимаю, где возникает копия, а где вид на исходные данные.",
       "prereqs": ["py-select-filter", "py-transform"]
-    },
-    {
-      "id": "py-viz",
-      "track": "python",
-      "title": "График как инструмент проверки",
-      "tier": 4,
-      "summary": "Строю график, чтобы увидеть форму распределения и поймать выброс, а не чтобы вставить картинку в отчёт.",
-      "prereqs": ["py-groupby", "py-timeseries"]
-    },
-    {
-      "id": "py-reproducibility",
-      "track": "python",
-      "title": "Воспроизводимость",
-      "tier": 4,
-      "summary": "Пишу расчёт так, что он даёт тот же результат завтра и на чужой машине: фиксирую версии, сид и порядок шагов.",
-      "prereqs": ["py-chaining"]
     },
     {
       "id": "py-performance",

@@ -149,6 +149,7 @@ export const ru = {
     ariaLabel: 'Схема данных',
   },
   result: {
+    stdoutLabel: 'Вывод print()',
     noColumns: 'Запрос не вернул колонок.',
     rowsSuffix: (n: string) => `${n} строк`,
     truncatedSuffix: (n: number) => ` · показаны первые ${n}`,

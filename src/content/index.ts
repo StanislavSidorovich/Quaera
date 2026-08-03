@@ -4,6 +4,7 @@ import rawModelCore from './packs/model-core.json';
 import rawPythonCore from './packs/python-core.json';
 import rawDomainCore from './packs/domain-core.json';
 import rawDomainLessons from './packs/domain-lessons.json';
+import rawPythonLessons from './packs/python-lessons.json';
 import type { Lesson, Pack, Task, Track } from './types';
 
 /**
@@ -73,6 +74,7 @@ export const packForTrack = (track: Track): Pack | undefined => packsByTrack.get
 export const lessons: Lesson[] = [
   ...(rawSqlLessons as { lessons: Lesson[] }).lessons,
   ...(rawDomainLessons as { lessons: Lesson[] }).lessons,
+  ...(rawPythonLessons as { lessons: Lesson[] }).lessons,
 ];
 export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 

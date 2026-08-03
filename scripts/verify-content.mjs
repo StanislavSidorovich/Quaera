@@ -336,10 +336,10 @@ for (const packId of draftPacks) {
  * это условие эквивалентно старому «на все скиллы разом», потому что там
  * пустых скиллов нет.
  *
- * example/wrong исполняются как SQL только в треке sql — в domain это
- * иллюстративный текст или готовые цифры расчёта, а не запрос.
+ * example/wrong исполняются в треках с исполнителем кода (sql, python) —
+ * в domain это иллюстративный текст или готовые цифры расчёта, а не код.
  */
-function checkLessons(pack, lessonsFileId) {
+async function checkLessons(pack, lessonsFileId) {
   const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.json`), 'utf8'));
   console.log(`\n=== Карточки теории (${pack.id}): ${lessons.length}`);
 
@@ -358,14 +358,15 @@ function checkLessons(pack, lessonsFileId) {
       if (!l[field] || String(l[field]).trim().length < 20) fail(l.skill, `блок «${field}» пустой или слишком короткий`);
     }
 
-    if (pack.track !== 'sql') {
+    const run = pack.track === 'sql' ? runSql : pack.track === 'python' ? runPython : null;
+    if (!run) {
       console.log(`  ok   ${l.skill.padEnd(20)} карточка текстовая — не исполняется`);
       continue;
     }
 
     let ok;
     try {
-      ok = runSql(l.example);
+      ok = await run(l.example);
     } catch (e) {
       fail(l.skill, `пример не выполняется — ${e.message}`);
       continue;
@@ -377,7 +378,7 @@ function checkLessons(pack, lessonsFileId) {
     let wrongRes = null;
     let wrongErr = null;
     try {
-      wrongRes = runSql(l.wrong);
+      wrongRes = await run(l.wrong);
     } catch (e) {
       wrongErr = e.message;
     }
@@ -386,20 +387,23 @@ function checkLessons(pack, lessonsFileId) {
         JSON.stringify(wrongRes.columns) === JSON.stringify(ok.columns) &&
         JSON.stringify(wrongRes.rows) === JSON.stringify(ok.rows);
       if (same) fail(l.skill, 'ошибочный вариант даёт тот же результат, что и правильный');
-    } else if (/syntax error/i.test(wrongErr)) {
-      // Синтаксическая ошибка означает, что антипример написан обрывком запроса.
-      // Тогда проверка проходит по неверной причине — она ловит незакрытый SELECT,
+    } else if (/syntax error|синтаксическая ошибка|не создаёт переменную result/i.test(wrongErr)) {
+      // Синтаксическая ошибка означает, что антипример написан обрывком кода.
+      // Тогда проверка проходит по неверной причине — она ловит незакрытую скобку,
       // а не ту ошибку, которой посвящена карточка. И скопировать такой антипример,
       // чтобы увидеть последствия своими глазами, человек тоже не сможет.
-      fail(l.skill, `антипример не выполняется как запрос (${wrongErr}) — нужен целый запрос, а не фрагмент`);
+      // Для python в ту же категорию попадает код без result: он не «падает
+      // по существу», а просто не доходит до сравнения.
+      fail(l.skill, `антипример не выполняется как целый фрагмент кода (${wrongErr}) — нужен работающий код, а не огрызок`);
     }
     const verdict = wrongErr ? `ошибка: ${wrongErr.slice(0, 40)}` : `${wrongRes.rows.length} строк, результат иной`;
     console.log(`  ok   ${l.skill.padEnd(20)} пример ${String(ok.rows.length).padStart(4)} строк · антипример — ${verdict}`);
   }
 }
 
-checkLessons(readPack('sql-core'), 'sql-lessons');
-checkLessons(readPack('domain-core'), 'domain-lessons');
+await checkLessons(readPack('sql-core'), 'sql-lessons');
+await checkLessons(readPack('domain-core'), 'domain-lessons');
+await checkLessons(readPack('python-core'), 'python-lessons');
 
 // --- Проверки, специфичные для отдельных заданий: смысл, а не только исполнимость.
 

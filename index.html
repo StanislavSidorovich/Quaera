@@ -7,7 +7,24 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
     <meta name="theme-color" content="#0b1020" />
-    <meta name="description" content="Тренажёр аналитика данных: SQL, модель данных, метрики FMCG и фармы. Работает офлайн." />
+    <meta name="description" content="Тренажёр аналитика данных: SQL, pandas, метрики FMCG и фармы. Запросы выполняются по-настоящему, в браузере и офлайн." />
+
+    <!--
+      Карточка ссылки в соцсетях и мессенджерах. og:image обязан быть абсолютным
+      URL — относительный путь превью не покажет, поэтому адрес прописан явно
+      и завязан на боевой домен. Картинка генерируется scripts/gen-icons.mjs.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Querium" />
+    <meta property="og:url" content="https://querium.pages.dev/" />
+    <meta property="og:title" content="Querium — тренажёр аналитика данных" />
+    <meta property="og:description" content="SQL, pandas и метрики FMCG/фармы на одном сквозном датасете дистрибьютора. Запросы выполняются по-настоящему — в браузере, офлайн, без регистрации." />
+    <meta property="og:image" content="https://querium.pages.dev/icons/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="/manifest.webmanifest" />
