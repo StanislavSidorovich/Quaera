@@ -309,11 +309,15 @@ checkLessons(readPack('domain-core'), 'domain-lessons');
   else console.log(`\n  ok   sql-014: регионов без новинки — ${zeros} из 16 (LEFT JOIN оправдан)`);
 }
 
-// sql-013 держится на том, что у бренда в dim_promo действительно несколько акций.
+// sql-013 держится на том, что у бренда в dim_promo действительно несколько акций,
+// и текст задания называет конкретный масштаб раздувания — «почти вдесятеро»,
+// «по 9–11 акций». Это уже не общее свойство данных, а цитата, которую нужно сверять.
 {
-  const r = runSql(`SELECT brand, COUNT(*) n FROM dim_promo GROUP BY brand ORDER BY n DESC LIMIT 1`);
-  if (r.rows[0][1] < 2) fail('sql-013', 'у брендов по одной акции — размножения строк не произойдёт');
-  else console.log(`  ok   sql-013: максимум акций на бренд — ${r.rows[0][1]} (fan-out воспроизводится)`);
+  const r = runSql(`SELECT MIN(n) AS lo, MAX(n) AS hi FROM (SELECT COUNT(*) n FROM dim_promo GROUP BY brand)`);
+  const [lo, hi] = r.rows[0];
+  if (lo < 2) fail('sql-013', 'у бренда всего одна акция — размножения строк не произойдёт');
+  else if (lo < 9 || hi > 11) fail('sql-013', `в тексте задания «по 9–11 акций», в базе ${lo}–${hi}`);
+  else console.log(`  ok   sql-013: акций на бренд — ${lo}–${hi} (совпадает с текстом задания)`);
 }
 
 // sql-023 цитирует конкретные цифры в тексте задания. Если данные поехали, текст соврёт.
@@ -367,6 +371,164 @@ checkLessons(readPack('domain-core'), 'domain-lessons');
     }
   });
   if (r.rows.length === 2 && !quoted.some((q, i) => !r.rows[i])) console.log('  ok   sql-059: цифры в тексте задания совпадают с датасетом');
+}
+
+// --- Цифры и факты, которые называет разбор (explain) заданий-предсказаний.
+//
+// У режима predict нет исполнимого эталона, поэтому проверка эталонов выше их не
+// касается вообще: запрос в predictSql только показывается, а числа в разборе живут
+// в тексте. Все проверки ниже поставлены при финальной вычитке разборов — каждое
+// число там сверено с базой вручную, и эти блоки удерживают сверку в силе после
+// любой правки генератора.
+
+// sql-041: разбор утверждает, что соединение с dim_promo по бренду раздувает
+// выборку «Чистовъ» ровно в 10 раз — это и есть весь смысл задания.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM fact_sellout f
+       JOIN dim_product p ON p.product_id = f.product_id
+       WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS before,
+      (SELECT COUNT(*) FROM fact_sellout f
+       JOIN dim_product p ON p.product_id = f.product_id
+       JOIN dim_promo m ON m.brand = p.brand
+       WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS after`);
+  const [before, after] = r.rows[0];
+  if (before === 0 || after !== before * 10) {
+    fail('sql-041', `в разборе «ровно в 10 раз», в базе ${before} → ${after}`);
+  } else console.log(`  ok   sql-041: соединение по бренду раздувает выборку ${before} → ${after} (×10, как в разборе)`);
+}
+
+// sql-048: разбор говорит, что из трёх товаров по 98 ₽ на страницу LIMIT 3 OFFSET 33
+// попадают два, а третий остаётся на предыдущей. Держится на местах 33–35 в рейтинге.
+{
+  const r = runSql(`
+    SELECT (SELECT COUNT(*) FROM dim_product WHERE list_price = 98) AS at_98,
+           (SELECT COUNT(*) FROM (SELECT list_price FROM dim_product ORDER BY list_price DESC LIMIT 3 OFFSET 33)
+             WHERE list_price = 98) AS on_page`);
+  const [at98, onPage] = r.rows[0];
+  if (at98 !== 3 || onPage !== 2) {
+    fail('sql-048', `в разборе три товара по 98 ₽ и два из них на странице, в базе ${at98} и ${onPage}`);
+  } else console.log('  ok   sql-048: три товара по 98 ₽, на странице OFFSET 33 — два из них');
+}
+
+// sql-051: разбор объясняет тривиальный результат для Pharma тем, что канал сбыта
+// у неё в базе один. Появится второй — объяснение станет неверным.
+{
+  const r = runSql(`
+    SELECT COUNT(DISTINCT c.channel) AS n
+    FROM fact_sellout f
+    JOIN dim_product p ON p.product_id = f.product_id
+    JOIN dim_customer c ON c.customer_id = f.customer_id
+    WHERE p.division = 'Pharma'`);
+  if (r.rows[0][0] !== 1) fail('sql-051', `в разборе «у Pharma один канал сбыта», в базе их ${r.rows[0][0]}`);
+  else console.log('  ok   sql-051: у Pharma по-прежнему один канал сбыта — аптека');
+}
+
+// sql-052: разбор оправдывает выбор RANK вместо ROW_NUMBER оговоркой, что точных
+// совпадений выручки внутри команды в этом году нет. Появятся — оговорку надо снимать.
+{
+  const r = runSql(`
+    WITH rep_rev AS (
+      SELECT c.rep_id, SUM(f.revenue) AS rev
+      FROM fact_sellout f
+      JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      GROUP BY c.rep_id
+    )
+    SELECT COUNT(*) AS ties FROM (
+      SELECT r.team, rr.rev FROM rep_rev rr JOIN dim_rep r ON r.rep_id = rr.rep_id
+      WHERE r.role = 'rep' GROUP BY r.team, rr.rev HAVING COUNT(*) > 1)`);
+  if (r.rows[0][0] !== 0) fail('sql-052', `в разборе «точных совпадений нет», в базе их ${r.rows[0][0]}`);
+  else console.log('  ok   sql-052: одинаковой выручки внутри команды нет — оговорка в разборе верна');
+}
+
+// sql-056: вопрос и разбор называют две конкретные выручки — хвост ecom и первый
+// месяц modern_trade. Именно на их подстановке друг вместо друга держится задание.
+{
+  const r = runSql(`
+    WITH monthly AS (
+      SELECT c.channel, substr(f.week_start, 1, 7) AS month, SUM(f.revenue) AS revenue
+      FROM fact_sellout f
+      JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE f.week_start BETWEEN '2025-01-01' AND '2025-03-31'
+      GROUP BY c.channel, month
+    )
+    SELECT channel, month, ROUND(revenue) AS revenue FROM monthly
+    WHERE (channel = 'ecom' AND month = '2025-03') OR (channel = 'modern_trade' AND month = '2025-01')
+    ORDER BY channel, month`);
+  const quoted = [['ecom', '2025-03', 2382221], ['modern_trade', '2025-01', 751734]];
+  const same = r.rows.length === 2 && quoted.every((q, i) => q.every((v, j) => r.rows[i][j] === v));
+  // Порядок ecom → modern_trade должен сохраниться и по алфавиту: на нём держится
+  // сам сюжет — LAG берёт последнюю строку ecom как предыдущую для modern_trade.
+  if (!same) fail('sql-056', `цифры в тексте задания разошлись с данными: в базе ${JSON.stringify(r.rows)}`);
+  else console.log('  ok   sql-056: выручка ecom за март и modern_trade за январь совпадают с текстом');
+}
+
+// sql-057: разбор называет остаток в штуках и запас в неделях. Числа связаны
+// делением, поэтому сверяются оба — иначе «почти 22 недели» может уехать молча.
+{
+  const r = runSql(`
+    WITH weekly AS (
+      SELECT f.week_start, SUM(f.units) AS units
+      FROM fact_sellout f
+      JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
+        AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+        AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'
+      GROUP BY f.week_start
+    )
+    SELECT
+      (SELECT units_on_hand FROM fact_stock
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
+           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+           AND month_start = '2025-12-01') AS on_hand,
+      ROUND((SELECT units_on_hand FROM fact_stock
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
+           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+           AND month_start = '2025-12-01') * 1.0 / AVG(units), 1) AS cover
+    FROM weekly`);
+  const [onHand, cover] = r.rows[0];
+  if (onHand !== 1315 || Math.abs(cover - 21.9) > 0.3) {
+    fail('sql-057', `в разборе 1315 штук и почти 22 недели, в базе ${onHand} и ${cover}`);
+  } else console.log(`  ok   sql-057: остаток ${onHand} штук — ${cover} недели запаса (совпадает с разбором)`);
+}
+
+// sql-060: разбор называет «15 из 47 товаров» — и сам вывод о концентрации
+// портфеля держится на этой доле, а не только на числе.
+{
+  const r = runSql(`
+    WITH sku_rev AS (
+      SELECT p.product_name, SUM(f.revenue) AS rev
+      FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id
+      WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      GROUP BY p.product_name
+    ),
+    ranked AS (
+      SELECT rev,
+             100.0 * (SUM(rev) OVER (ORDER BY rev DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - rev)
+               / (SELECT SUM(rev) FROM sku_rev) AS prev_share
+      FROM sku_rev
+    )
+    SELECT (SELECT COUNT(*) FROM ranked WHERE prev_share < 50) AS leaders,
+           (SELECT COUNT(*) FROM sku_rev) AS total`);
+  const [leaders, total] = r.rows[0];
+  if (leaders !== 15 || total !== 47) {
+    fail('sql-060', `в разборе «15 из 47 товаров», в базе ${leaders} из ${total}`);
+  } else console.log(`  ok   sql-060: половину выручки дают ${leaders} товаров из ${total} (как в разборе)`);
+}
+
+// sql-027: разбор утверждает не про данные, а про движок — что LOWER в SQLite
+// не понижает кириллицу и потому не чинит регистронезависимый поиск. Проверка
+// стоит копейки и переживёт смену версии sql.js, где поведение могло бы измениться.
+{
+  const r = runSql(`SELECT lower('Ключевая') AS cyr, lower('ABC') AS lat`);
+  const [cyr, lat] = r.rows[0];
+  if (lat !== 'abc') fail('sql-027', 'LOWER перестал работать даже на латинице — разбор надо перечитывать целиком');
+  else if (cyr !== 'Ключевая') {
+    fail('sql-027', `в разборе LOWER не трогает кириллицу, но эта сборка SQLite вернула «${cyr}»`);
+  } else console.log('  ok   sql-027: LOWER в SQLite по-прежнему понижает только латиницу');
 }
 
 // Трек domain цитирует опорные числа бизнеса в тексте заданий и карточек.
@@ -522,6 +684,339 @@ checkLessons(readPack('domain-core'), 'domain-lessons');
     fail('dom-027', 'сезоны воды и витаминов перестали расходиться — задание потеряло смысл');
   } else {
     console.log('  ok   dom-027: в августе вода падает, витамины растут — противоположные сезоны воспроизводятся');
+  }
+}
+
+// Tier 3 трека domain — «Метрики рынка». Здесь исполнимого эталона нет вообще,
+// а числа стоят прямо в тексте заданий и карточек: обвал дистрибуции «Чистовъ»,
+// две акции, доля рынка в фарме, раскатка новинки, ABC и вариация спроса.
+// Проверяется не только совпадение цифр, но и условия, при которых задание
+// вообще осмысленно: что численная и взвешенная дистрибуция расходятся, что
+// сопоставимые точки выросли, что помесячная доля скачет сильнее годовой.
+{
+  const near = (a, b, tol = 0.005) => Math.abs(a - b) <= Math.max(0.05, Math.abs(b) * tol);
+  const rowsBy = (res, key = 0) => Object.fromEntries(res.rows.map((r) => [r[key], r]));
+
+  // --- dom-028, dom-030, карточка dom-fmcg-distribution: обвал дистрибуции «Чистовъ».
+  // Взвешенная считается по обороту точки во всём дивизионе FMCG — это ACV.
+  const dist = runSql(`
+    WITH acv AS (
+      SELECT f.customer_id AS cid, SUM(f.revenue) AS w
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.division = 'FMCG' GROUP BY 1),
+    tot AS (SELECT SUM(w) AS tw, COUNT(*) AS tn FROM acv),
+    m AS (
+      SELECT substr(f.week_start, 1, 7) AS ym, f.customer_id AS cid
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.brand = 'Чистовъ' GROUP BY 1, 2)
+    SELECT m.ym AS month,
+           ROUND(100.0 * COUNT(*) / tn, 1) AS numeric_d,
+           ROUND(100.0 * SUM(acv.w) / tw, 1) AS weighted_d
+    FROM m JOIN acv ON acv.cid = m.cid, tot GROUP BY m.ym ORDER BY m.ym`);
+  const dm = rowsBy(dist);
+  const quotedDist = {
+    '2024-01': [81.9, 97.3], '2025-01': [78.7, 97.2], '2025-06': [68.1, 92.1],
+    '2025-08': [56.4, 78.8], '2025-12': [42.6, 63.5], '2026-06': [33.0, 47.5],
+  };
+  for (const [m, [nd, wd]] of Object.entries(quotedDist)) {
+    if (!dm[m] || !near(dm[m][1], nd) || !near(dm[m][2], wd)) {
+      fail('dom-028', `${m}: в базе ${dm[m]?.slice(1).join(' / ')}, в тексте ${nd} / ${wd}`);
+    }
+  }
+  // Задание держится на том, что показатели расходятся и что численная поехала первой.
+  if (!(dm['2025-06'][2] - dm['2025-06'][1] > dm['2024-01'][2] - dm['2024-01'][1])) {
+    fail('dom-028', 'численная и взвешенная перестали расходиться — разбирать в задании нечего');
+  }
+
+  // dom-030: цена двух формулировок одной цели. Проверяем, что возврат горстки
+  // крупных точек всё ещё закрывает взвешенную, а численную — нет.
+  const back = runSql(`
+    WITH acv AS (
+      SELECT f.customer_id AS cid, SUM(f.revenue) AS w
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.division = 'FMCG' GROUP BY 1),
+    tot AS (SELECT SUM(w) AS tw, COUNT(*) AS tn FROM acv),
+    cur AS (
+      SELECT DISTINCT f.customer_id AS cid
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01'),
+    base AS (
+      SELECT DISTINCT f.customer_id AS cid
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2024-04-01' AND '2024-06-30'),
+    lost AS (
+      SELECT a.cid, a.w FROM acv a
+      WHERE a.cid IN (SELECT cid FROM base) AND a.cid NOT IN (SELECT cid FROM cur)),
+    r AS (SELECT w, ROW_NUMBER() OVER (ORDER BY w DESC) AS rn, SUM(w) OVER (ORDER BY w DESC) AS cum FROM lost)
+    SELECT (SELECT COUNT(*) FROM cur) AS points_now,
+           (SELECT COUNT(*) FROM lost) AS points_lost,
+           (SELECT tn FROM tot) AS universe,
+           (SELECT ROUND(100.0 * SUM(w) / (SELECT tw FROM tot), 1) FROM acv WHERE cid IN (SELECT cid FROM cur)) AS weighted_now,
+           (SELECT ROUND(100.0 * cum / (SELECT tw FROM tot), 1) FROM r WHERE rn = 5) AS weighted_plus5`);
+  const [pNow, pLost, universe, wNow, wPlus5] = back.rows[0];
+  if (pNow !== 33 || pLost !== 46 || universe !== 94 || !near(wNow, 47.6) || !near(wPlus5 + wNow, 80.1, 0.01)) {
+    fail('dom-030', `в базе ${pNow} точек / потеряно ${pLost} / из ${universe} / взвешенная ${wNow} / +5 точек = ${(wNow + wPlus5).toFixed(1)}, в тексте 33 / 46 / 94 / 47.6 / 80.1`);
+  } else {
+    console.log(`\n  ok   dom-030: пять крупных точек дают взвешенную ${(wNow + wPlus5).toFixed(1)}%, численная при этом ${(100 * (pNow + 5) / universe).toFixed(1)}%`);
+  }
+
+  // --- dom-031, dom-033: три сомножителя объёма и скорость продажи.
+  const velocity = runSql(`
+    WITH b AS (
+      SELECT p.sku_code AS sku, f.customer_id AS cid, f.week_start AS ws, SUM(f.units) AS u
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01' GROUP BY 1, 2, 3),
+    c AS (SELECT sku, cid, COUNT(*) AS wks, SUM(u) AS u FROM b GROUP BY 1, 2)
+    SELECT sku, COUNT(*) AS points, ROUND(AVG(wks), 1) AS weeks_per_point,
+           ROUND(1.0 * SUM(u) / SUM(wks), 2) AS units_per_week,
+           SUM(u) AS units, ROUND(1.0 * SUM(u) / COUNT(*) / 52, 2) AS rate_of_sale
+    FROM c GROUP BY sku`);
+  const vm = rowsBy(velocity);
+  const quotedVel = {
+    'ФРУТ001': [46, 36.5, 13.09, 21972], 'ФРУТ002': [52, 33.0, 9.87, 16934],
+  };
+  for (const [sku, q] of Object.entries(quotedVel)) {
+    const r = vm[sku];
+    if (!r || r[1] !== q[0] || !near(r[2], q[1]) || !near(r[3], q[2]) || r[4] !== q[3]) {
+      fail('dom-031', `${sku}: в базе ${r?.slice(1, 5).join(' / ')}, в тексте ${q.join(' / ')}`);
+    }
+  }
+  // Задание живо, только пока у Яблока дистрибуция шире, а объём меньше.
+  if (!(vm['ФРУТ002'][1] > vm['ФРУТ001'][1] && vm['ФРУТ002'][4] < vm['ФРУТ001'][4])) {
+    fail('dom-031', 'Яблоко перестало быть шире по дистрибуции и меньше по объёму — парадокс задания исчез');
+  }
+  const quotedRos = {
+    'КЛЮЧ001': [41, 13.16], 'КЛЮЧ002': [52, 10.79], 'КЛЮЧ005': [40, 8.80],
+    'КЛЮЧ003': [46, 8.73], 'КЛЮЧ004': [48, 6.97], 'КЛЮЧ006': [46, 4.48],
+  };
+  for (const [sku, [pts, ros]] of Object.entries(quotedRos)) {
+    if (vm[sku][1] !== pts || !near(vm[sku][5], ros, 0.01)) {
+      fail('dom-033', `${sku}: в базе ${vm[sku][1]} точек, скорость ${vm[sku][5]}; в тексте ${pts} / ${ros}`);
+    }
+  }
+  // Вся соль dom-033 — что у «Спорта» дистрибуция как у лидеров, а скорость худшая.
+  if (vm['КЛЮЧ006'][5] !== Math.min(...Object.keys(quotedRos).map((s) => vm[s][5]))) {
+    fail('dom-033', '«Спорт 0.75 л» больше не самый медленный в портфеле — задание теряет ответ');
+  } else {
+    console.log(`  ok   dom-033: «Спорт» ${vm['КЛЮЧ006'][1]} точек при скорости ${vm['КЛЮЧ006'][5]} против ${vm['КЛЮЧ003'][5]} у газированной 0.5 л с тем же числом точек`);
+  }
+
+  // --- dom-034 и карточка dom-fmcg-promo: акция «Молочный Дом», август 2025.
+  const promoWeekly = (brand, from, to) => runSql(`
+    SELECT ROUND(AVG(u), 1) AS units, ROUND(AVG(r)) AS revenue, ROUND(SUM(r) / SUM(u), 2) AS price
+    FROM (SELECT f.week_start AS ws, SUM(f.units) AS u, SUM(f.revenue) AS r
+          FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+          WHERE p.brand = '${brand}' AND f.week_start BETWEEN '${from}' AND '${to}'
+          GROUP BY 1)`).rows[0];
+  const milkPre = promoWeekly('Молочный Дом', '2025-07-07', '2025-07-28');
+  const milkOn = promoWeekly('Молочный Дом', '2025-08-04', '2025-08-18');
+  const milkPost = promoWeekly('Молочный Дом', '2025-08-25', '2025-09-15');
+  const quotedMilk = [[1353.3, 104645, 77.33], [3327.0, 180157, 54.15], [1376.0, 106344, 77.28]];
+  [milkPre, milkOn, milkPost].forEach((row, i) => {
+    if (row.some((v, j) => !near(v, quotedMilk[i][j]))) {
+      fail('dom-034', `период ${i + 1}: в базе ${row.join(' / ')}, в тексте ${quotedMilk[i].join(' / ')}`);
+    }
+  });
+  // Задание объясняет разрыв штук и денег ценой, а не закупкой впрок: провала после акции быть не должно.
+  if (milkPost[0] < milkPre[0] * 0.95) {
+    fail('dom-034', 'после акции появился провал — объяснение задания «дело только в цене» перестало быть верным');
+  } else {
+    console.log(`  ok   dom-034: штуки ×${(milkOn[0] / milkPre[0]).toFixed(2)}, выручка ×${(milkOn[1] / milkPre[1]).toFixed(2)}, после акции ${(100 * milkPost[0] / milkPre[0] - 100).toFixed(1)}% к базе`);
+  }
+
+  // dom-035: акция «Хрустик» только в сетях — эффект на бренде разбавлен каналами вне охвата.
+  const crispChannels = runSql(`
+    WITH w AS (
+      SELECT f.week_start AS ws, c.customer_type AS ct, SUM(f.units) AS u
+      FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id
+      JOIN dim_customer c ON c.customer_id = f.customer_id
+      WHERE p.brand = 'Хрустик' GROUP BY 1, 2)
+    SELECT ct AS channel,
+           ROUND(AVG(CASE WHEN ws BETWEEN '2025-07-07' AND '2025-08-04' THEN u END), 1) AS before_promo,
+           ROUND(AVG(CASE WHEN ws BETWEEN '2025-08-11' AND '2025-09-08' THEN u END), 1) AS during_promo
+    FROM w GROUP BY ct`);
+  const cm = rowsBy(crispChannels);
+  const quotedCrisp = { chain: [303, 973.8], ecom: [852.4, 897.2], traditional: [26.0, 25.4] };
+  for (const [ch, q] of Object.entries(quotedCrisp)) {
+    if (!cm[ch] || !near(cm[ch][1], q[0], 0.01) || !near(cm[ch][2], q[1], 0.01)) {
+      fail('dom-035', `${ch}: в базе ${cm[ch]?.slice(1).join(' → ')}, в тексте ${q.join(' → ')}`);
+    }
+  }
+  const crispBrandBefore = Object.values(cm).reduce((s, r) => s + r[1], 0);
+  const crispBrandDuring = Object.values(cm).reduce((s, r) => s + r[2], 0);
+  if (!near(crispBrandBefore, 1181.4, 0.01) || !near(crispBrandDuring, 1896.4, 0.01)) {
+    fail('dom-035', `бренд целиком: в базе ${crispBrandBefore.toFixed(1)} → ${crispBrandDuring.toFixed(1)}, в тексте 1181.4 → 1896.4`);
+  } else {
+    console.log(`  ok   dom-035: в сетях +${(100 * cm.chain[2] / cm.chain[1] - 100).toFixed(0)}%, по бренду +${(100 * crispBrandDuring / crispBrandBefore - 100).toFixed(0)}% — разбавление воспроизводится`);
+  }
+
+  // --- dom-038 и карточка dom-pharma-rx: помесячная доля скачет, годовая стоит.
+  const share = runSql(`
+    WITH m AS (
+      SELECT substr(f.week_start, 1, 7) AS ym, p.brand AS brand, SUM(f.units) AS u
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.division = 'Pharma' GROUP BY 1, 2),
+    b AS (
+      SELECT ym, brand, u,
+             SUM(u) OVER (PARTITION BY brand ORDER BY ym ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS mat,
+             COUNT(*) OVER (PARTITION BY brand ORDER BY ym ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS n
+      FROM m),
+    t AS (SELECT ym, SUM(u) AS tu, SUM(mat) AS tmat FROM b GROUP BY ym)
+    SELECT b.ym AS month, ROUND(100.0 * b.u / t.tu, 1) AS month_share,
+           CASE WHEN b.n = 12 THEN ROUND(100.0 * b.mat / t.tmat, 1) END AS mat_share
+    FROM b JOIN t ON t.ym = b.ym WHERE b.brand = 'Витамакс' ORDER BY b.ym`);
+  const sm = rowsBy(share);
+  const quotedShare = {
+    '2024-03': [11.0, null], '2025-02': [49.5, null], '2025-08': [13.5, null], '2026-06': [24.4, 26.1],
+    '2025-03': [null, 29.4], '2025-09': [null, 29.5], '2025-12': [null, 27.1],
+  };
+  for (const [m, [ms, mat]] of Object.entries(quotedShare)) {
+    if (ms !== null && !near(sm[m][1], ms)) fail('dom-038', `${m}: помесячная доля в базе ${sm[m][1]}, в тексте ${ms}`);
+    if (mat !== null && !near(sm[m][2], mat)) fail('dom-038', `${m}: доля в MAT в базе ${sm[m][2]}, в тексте ${mat}`);
+  }
+  const monthly = share.rows.map((r) => r[1]);
+  const mats = share.rows.map((r) => r[2]).filter((v) => v !== null);
+  const spread = (a) => Math.max(...a) - Math.min(...a);
+  if (spread(monthly) < spread(mats) * 3) {
+    fail('dom-038', `размах помесячной доли (${spread(monthly).toFixed(1)}) перестал заметно превышать размах MAT (${spread(mats).toFixed(1)}) — задание учит различию, которого в данных нет`);
+  } else {
+    console.log(`  ok   dom-038: помесячная доля гуляет на ${spread(monthly).toFixed(1)} пункта, в скользящем году — на ${spread(mats).toFixed(1)}`);
+  }
+
+  // dom-039: раскатка новинки встала на 19 аптеках при 37 доступных.
+  const launch = runSql(`
+    SELECT substr(f.week_start, 1, 7) AS month, SUM(f.units) AS units,
+           COUNT(DISTINCT f.customer_id) AS pharmacies
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.sku_code = 'ВИТА005' GROUP BY 1 ORDER BY 1`);
+  const lm = rowsBy(launch);
+  const quotedLaunch = {
+    '2025-09': [1, 1], '2025-10': [9, 4], '2025-11': [19, 7], '2025-12': [41, 10],
+    '2026-01': [135, 15], '2026-02': [91, 19], '2026-03': [104, 16],
+    '2026-04': [161, 19], '2026-05': [127, 19], '2026-06': [68, 19],
+  };
+  for (const [m, [u, ph]] of Object.entries(quotedLaunch)) {
+    if (!lm[m] || lm[m][1] !== u || lm[m][2] !== ph) {
+      fail('dom-039', `${m}: в базе ${lm[m]?.slice(1).join(' / ')}, в тексте ${u} / ${ph}`);
+    }
+  }
+  const brandPharmacies = runSql(`
+    SELECT COUNT(DISTINCT f.customer_id) AS pharmacies
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.brand = 'Витамакс' AND p.sku_code <> 'ВИТА005'`).rows[0][0];
+  if (brandPharmacies !== 36) {
+    fail('dom-039', `остальные препараты «Витамакс» продаются в ${brandPharmacies} аптеках, в тексте 36`);
+  } else if (!(lm['2026-06'][2] < brandPharmacies / 1.5)) {
+    fail('dom-039', 'новинка доехала почти до всех аптек бренда — вывод «раскатка встала на полпути» пропал');
+  } else {
+    console.log(`  ok   dom-039: новинка в ${lm['2026-06'][2]} аптеках из ${brandPharmacies}, число не двигается с февраля`);
+  }
+
+  // --- dom-043, dom-044 и карточка dom-decomposition: разложение падения «Чистовъ».
+  const q2 = runSql(`
+    WITH b AS (
+      SELECT substr(f.week_start, 1, 4) AS y, f.customer_id AS cid, SUM(f.revenue) AS r, SUM(f.units) AS u
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.brand = 'Чистовъ' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2)
+    SELECT y AS year, COUNT(*) AS points, ROUND(SUM(r)) AS revenue,
+           ROUND(SUM(r) / COUNT(*)) AS revenue_per_point, ROUND(SUM(r) / SUM(u), 2) AS price
+    FROM b WHERE y IN ('2024', '2026') GROUP BY y ORDER BY y`);
+  const qm = rowsBy(q2);
+  const quotedQ2 = { '2024': [79, 2121702, 26857, 199.43], '2026': [33, 1079055, 32699, 194.42] };
+  for (const [y, q] of Object.entries(quotedQ2)) {
+    const r = qm[y];
+    if (!r || r[1] !== q[0] || !near(r[2], q[1]) || !near(r[3], q[2]) || !near(r[4], q[3])) {
+      fail('dom-043', `${y}: в базе ${r?.slice(1).join(' / ')}, в тексте ${q.join(' / ')}`);
+    }
+  }
+  // Смысл задания — в том, что множители разошлись: точек меньше, а выручка на точку больше.
+  if (!(qm['2026'][1] < qm['2024'][1] && qm['2026'][3] > qm['2024'][3])) {
+    fail('dom-043', 'множители перестали расходиться — задание учит выводу, которого в данных больше нет');
+  }
+
+  const lfl = runSql(`
+    WITH b AS (
+      SELECT substr(f.week_start, 1, 4) AS y, f.customer_id AS cid, SUM(f.revenue) AS r
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.brand = 'Чистовъ' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2),
+    a AS (SELECT cid, r FROM b WHERE y = '2024'),
+    c AS (SELECT cid, r FROM b WHERE y = '2026')
+    SELECT (SELECT COUNT(*) FROM a JOIN c ON c.cid = a.cid) AS same_points,
+           (SELECT ROUND(SUM(a.r)) FROM a JOIN c ON c.cid = a.cid) AS revenue_2024,
+           (SELECT ROUND(SUM(c.r)) FROM a JOIN c ON c.cid = a.cid) AS revenue_2026,
+           (SELECT ROUND(AVG(r)) FROM a WHERE cid IN (SELECT cid FROM c)) AS kept_avg,
+           (SELECT ROUND(AVG(r)) FROM a WHERE cid NOT IN (SELECT cid FROM c)) AS lost_avg`);
+  const [samePts, lfl24, lfl26, keptAvg, lostAvg] = lfl.rows[0];
+  const quotedLfl = [33, 983740, 1079055, 29810, 24738];
+  if ([samePts, lfl24, lfl26, keptAvg, lostAvg].some((v, i) => !near(v, quotedLfl[i]))) {
+    fail('dom-044', `в базе ${[samePts, lfl24, lfl26, keptAvg, lostAvg].join(' / ')}, в тексте ${quotedLfl.join(' / ')}`);
+  } else if (!(lostAvg < keptAvg && lfl26 > lfl24)) {
+    fail('dom-044', 'выбывшие точки перестали быть мельче оставшихся или сопоставимый рост исчез — эффект состава разбирать не на чем');
+  } else {
+    console.log(`  ok   dom-044: сопоставимые точки +${(100 * lfl26 / lfl24 - 100).toFixed(1)}%, эффект состава +${(100 * keptAvg / qm['2024'][3] - 100).toFixed(1)}% — вместе дают наблюдаемые +${(100 * qm['2026'][3] / qm['2024'][3] - 100).toFixed(0)}%`);
+  }
+
+  // --- dom-046, dom-047 и карточка dom-abc-xyz: ABC на ровном ассортименте и вариация спроса.
+  const abc = runSql(`
+    WITH m AS (
+      SELECT p.sku_code AS sku, substr(f.week_start, 1, 7) AS ym, SUM(f.revenue) AS r
+      FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+      WHERE p.division = 'FMCG' AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01'
+      GROUP BY 1, 2),
+    a AS (SELECT sku, SUM(r) AS total, AVG(r) AS mu, SQRT(AVG(r * r) - AVG(r) * AVG(r)) AS sd FROM m GROUP BY 1)
+    SELECT sku, ROW_NUMBER() OVER (ORDER BY total DESC) AS rank,
+           ROUND(100.0 * total / (SELECT SUM(total) FROM a), 2) AS share,
+           ROUND(100.0 * SUM(total) OVER (ORDER BY total DESC) / (SELECT SUM(total) FROM a), 1) AS cumulative,
+           ROUND(100.0 * sd / mu, 1) AS cv
+    FROM a ORDER BY rank`);
+  const byRank = Object.fromEntries(abc.rows.map((r) => [r[1], r]));
+  const bySku = rowsBy(abc);
+  if (abc.rows.length !== 29) fail('dom-046', `в дивизионе FMCG ${abc.rows.length} SKU, в тексте 29`);
+  const quotedAbc = { 1: 8.5, 6: 36.3, 10: 52.4, 15: 68.2, 19: 79.5, 20: 82.2 };
+  for (const [rank, cum] of Object.entries(quotedAbc)) {
+    if (!near(byRank[rank][3], cum, 0.01)) {
+      fail('dom-046', `накопленная доля на месте ${rank}: в базе ${byRank[rank][3]}, в тексте ${cum}`);
+    }
+  }
+  // Вся суть dom-046 — что правило 20/80 не выполняется. Если ассортимент станет
+  // концентрированным, верным окажется противоположный вариант ответа.
+  const top20pct = byRank[Math.round(abc.rows.length * 0.2)][3];
+  if (top20pct > 60) {
+    fail('dom-046', `верхние 20% SKU дают ${top20pct}% выручки — правило 20/80 заработало, и задание учит обратному`);
+  } else {
+    console.log(`  ok   dom-046: верхние 20% SKU дают ${top20pct}%, до 80% выручки нужно ${abc.rows.findIndex((r) => r[3] >= 80) + 1} SKU из ${abc.rows.length}`);
+  }
+  const quotedCv = { 'КЛЮЧ005': 28.5, 'ХРУС002': 35.1, 'МОЛО005': 16.9 };
+  for (const [sku, cv] of Object.entries(quotedCv)) {
+    if (!near(bySku[sku][4], cv, 0.02)) fail('dom-047', `${sku}: коэффициент вариации в базе ${bySku[sku][4]}, в тексте ${cv}`);
+  }
+
+  // dom-047 цитирует два месячных ряда целиком: сезон воды и всплеск от акции.
+  const series = runSql(`
+    SELECT p.sku_code AS sku, substr(f.week_start, 1, 7) AS month, ROUND(SUM(f.revenue) / 1000) AS thousands
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+    WHERE p.sku_code IN ('КЛЮЧ005', 'ХРУС002')
+      AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01'
+    GROUP BY 1, 2 ORDER BY 1, 2`);
+  const quotedSeries = {
+    'КЛЮЧ005': [277, 231, 253, 157, 123, 168, 165, 131, 156, 154, 182, 285],
+    'ХРУС002': [89, 113, 131, 92, 85, 112, 94, 90, 114, 85, 88, 230],
+  };
+  for (const [sku, values] of Object.entries(quotedSeries)) {
+    const got = series.rows.filter((r) => r[0] === sku).map((r) => r[2]);
+    if (got.length !== 12 || got.some((v, i) => Math.abs(v - values[i]) > 1)) {
+      fail('dom-047', `${sku}: ряд в базе ${got.join(' ')}, в тексте ${values.join(' ')}`);
+    }
+  }
+  // Задание держится на том, что всплеск снека приходится на собственную акцию.
+  const promoJune = runSql(`
+    SELECT COUNT(*) AS promos FROM dim_promo
+    WHERE brand = 'Хрустик' AND start_date <= '2026-06-30' AND end_date >= '2026-06-01'`).rows[0][0];
+  if (!promoJune) {
+    fail('dom-047', 'июньского всплеска «Хрустика» больше нечем объяснить — акции в dim_promo на этот месяц нет');
+  } else {
+    console.log(`  ok   dom-047: вода даёт сезонную волну, снек — один всплеск в месяц собственной акции`);
   }
 }
 
