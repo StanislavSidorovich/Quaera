@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { lessonBySkill, packForTrack } from './content';
+import { lessonBySkill, packForTrack, packs } from './content';
 import type { Lesson, Pack, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
@@ -46,7 +46,8 @@ type Screen =
   | { name: 'session'; queue: Step[]; index: number }
   | { name: 'done'; solved: number }
   | { name: 'reference' }
-  | { name: 'lesson'; skill: string };
+  | { name: 'lesson'; skill: string }
+  | { name: 'about' };
 
 export default function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
@@ -175,7 +176,9 @@ export default function App() {
               ? ru.reference.title
               : screen.name === 'lesson'
                 ? ru.lesson.pill
-                : ru.app.name}
+                : screen.name === 'about'
+                  ? ru.about.title
+                  : ru.app.name}
           <span className="sub">
             {screen.name === 'session'
               ? ru.session.progressOf(screen.index + 1, screen.queue.length)
@@ -183,7 +186,9 @@ export default function App() {
                 ? activePack.title
                 : screen.name === 'lesson'
                   ? (lessonBySkill.get(screen.skill)?.title ?? '')
-                  : `${activePack.title} · серия ${streak(progress.activeDays)} дн.`}
+                  : screen.name === 'about'
+                    ? ru.app.name
+                    : `${activePack.title} · серия ${streak(progress.activeDays)} дн.`}
           </span>
         </h1>
         {screen.name === 'session' && (
@@ -217,8 +222,13 @@ export default function App() {
             onStart={startSession}
             onOpenSchema={() => setSchemaOpen(true)}
             onOpenReference={() => setScreen({ name: 'reference' })}
+            onOpenAbout={() => setScreen({ name: 'about' })}
             onSwitchTrack={switchTrack}
           />
+        )}
+
+        {screen.name === 'about' && (
+          <About onSelectTrack={(t) => { switchTrack(t); }} />
         )}
 
         {step?.kind === 'lesson' && executor && (
@@ -310,6 +320,7 @@ function Home({
   onStart,
   onOpenSchema,
   onOpenReference,
+  onOpenAbout,
   onSwitchTrack,
 }: {
   activeTrack: Track;
@@ -321,6 +332,7 @@ function Home({
   onStart: () => void;
   onOpenSchema: () => void;
   onOpenReference: () => void;
+  onOpenAbout: () => void;
   onSwitchTrack: (t: Track) => void;
 }) {
   const byTier = useMemo(() => {
@@ -354,6 +366,22 @@ function Home({
       )}
 
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
+
+      {/*
+       * Постоянная ссылка, а не разовая карточка новичка: та показывается один
+       * раз и исчезает после первой решённой задачи, а вопрос «что вообще
+       * входит в тренажёр и как это устроено» у человека может возникнуть
+       * и на второй, и на десятой сессии — особенно если он открывает
+       * приложение по ссылке, а не проходит его сам с нуля.
+       */}
+      <button
+        type="button"
+        className="link-row"
+        onClick={onOpenAbout}
+        style={{ margin: '-2px 0 12px' }}
+      >
+        {ru.about.entryLink}
+      </button>
 
       {ready && (
         <div className="card">
@@ -443,6 +471,69 @@ function Home({
  * на работе или перед собеседованием». Без него теория существует только
  * внутри занятия и добраться до неё второй раз невозможно.
  */
+/**
+ * «О тренажёре» — единственный экран, который отвечает на вопрос «что это
+ * вообще такое и что тут есть», не требуя пройти хотя бы одну сессию.
+ * Карточка новичка на главной решает ту же задачу, но исчезает после первой
+ * решённой задачи; этот экран остаётся доступен всегда — по ссылке, из
+ * справочника или просто когда человек вернулся через неделю и забыл,
+ * что где лежит.
+ */
+function About({ onSelectTrack }: { onSelectTrack: (t: Track) => void }) {
+  const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
+  const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
+
+  return (
+    <>
+      <div className="card">
+        <p className="brief" style={{ margin: 0 }}>{ru.welcome.body}</p>
+      </div>
+
+      <div className="card">
+        <h2>{ru.about.structureTitle}</h2>
+        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
+          {ru.about.structureIntro(totalSkills, totalTasks)}
+        </p>
+        {TRACK_ORDER.map((t) => {
+          const p = packForTrack(t);
+          if (!p) return null;
+          const ready = p.status !== 'draft' && p.tasks.length > 0;
+          return (
+            <button
+              key={t}
+              type="button"
+              className="track-summary"
+              onClick={() => onSelectTrack(t)}
+            >
+              <div className="track-summary-head">
+                <span>{p.title}</span>
+                <span className={`pill ${ready ? '' : 'draft'}`}>
+                  {ready ? ru.tracks.readyBadge(p.tasks.length) : ru.tracks.draftBadge}
+                </span>
+              </div>
+              <p className="muted" style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+                {p.description}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="card">
+        <h2>{ru.about.howTitle}</h2>
+        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{ru.about.howSrs}</p>
+        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{ru.about.howModes}</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{ru.about.howData}</p>
+      </div>
+
+      <div className="card">
+        <h2>{ru.about.privacyTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{ru.about.privacyBody}</p>
+      </div>
+    </>
+  );
+}
+
 function Reference({
   activePack,
   progress,

@@ -166,6 +166,33 @@ textarea.sql {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
 }
 
+.pill.draft {
+  opacity: 0.65;
+}
+
+/* Карточка трека на экране «О тренажёре» — кликабельна, ведёт в этот трек. */
+.track-summary {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.track-summary:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.track-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .btn {
   display: block;
   width: 100%;
@@ -190,6 +217,18 @@ textarea.sql {
 .row {
   display: flex;
   gap: 10px;
+}
+
+/* Текстовая ссылка-строка: для действий, которые не должны выглядеть
+   как основная кнопка, но обязаны быть заметны без прищуривания. */
+.link-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 4px 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .row > * {
@@ -297,26 +336,24 @@ textarea.sql:focus {
   outline-offset: -1px;
 }
 
-/* Панель токенов: главный ответ на то, что набирать SQL с телефона мучительно. */
+/*
+ * Панель токенов: главный ответ на то, что набирать SQL с телефона мучительно.
+ *
+ * Раньше на узком экране была горизонтальная лента без переноса — при
+ * 30+ кнопках (ключевые слова уровня 4, колонки нескольких таблиц) это
+ * превращалось в скролл вслепую: нужную колонку искали короче на ощупь,
+ * чем набрать руками. Перенос по строкам решает поиск, но плоский список
+ * из тридцати кнопок в несколько рядов увёл бы редактор далеко вниз —
+ * поэтому высота ограничена и лишнее уходит в вертикальный скролл,
+ * который на телефоне естественнее горизонтального.
+ */
 .accessory {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
-  padding: 8px 0 2px;
-  scrollbar-width: none;
-}
-
-.accessory::-webkit-scrollbar {
-  display: none;
-}
-
-/* На широком экране места хватает: переносим по строкам вместо прокрутки.
-   Горизонтальная лента оправдана только там, где иначе не влезает — на телефоне. */
-@media (min-width: 640px) {
-  .accessory {
-    flex-wrap: wrap;
-    overflow-x: visible;
-  }
+  padding: 8px 2px 2px;
+  max-height: 132px;
+  overflow-y: auto;
 }
 
 .accessory button {
