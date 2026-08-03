@@ -4,6 +4,7 @@ dist/
 # Датасет генерируется из скрипта и весит 3.5 МБ — в репозитории ему не место.
 public/data/
 public/sqljs/
+public/pyodide/
 public/icons/
 *.local
 .DS_Store

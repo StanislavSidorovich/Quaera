@@ -9,7 +9,9 @@
  * Запуск: npm run verify:content
  */
 import initSqlJs from 'sql.js';
+import { loadPyodide } from 'pyodide';
 import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,13 +22,59 @@ const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.
 const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'querium.sqlite'))));
 
 /**
+ * Pyodide поднимается лениво и один раз: инициализация занимает секунды,
+ * и её не нужно платить, пока в python-core нет ни одного задания в режиме
+ * write/fill. Источник обвязки — public/python-bootstrap.py, тот же файл,
+ * что читает браузерный воркер: гейт обязан видеть код так же, как его
+ * увидит ученик (см. пояснение в самом файле).
+ */
+let pyodidePromise = null;
+async function getPyodide() {
+  if (!pyodidePromise) {
+    pyodidePromise = (async () => {
+      const pyodide = await loadPyodide({ indexURL: path.join(root, 'public', 'pyodide') });
+      await pyodide.loadPackage(['pandas', 'sqlite3']);
+      let buf = readFileSync(path.join(root, 'public', 'data', 'querium.dataset'));
+      if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
+      pyodide.FS.writeFile('/data.sqlite', new Uint8Array(buf));
+      await pyodide.runPythonAsync(`
+import pandas as pd
+import sqlite3
+_con = sqlite3.connect('/data.sqlite')
+_tables_list = [r[0] for r in _con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+_TABLES = {name: pd.read_sql(f"SELECT * FROM {name}", _con) for name in _tables_list}
+_con.close()
+`);
+      await pyodide.runPythonAsync(readFileSync(path.join(root, 'public', 'python-bootstrap.py'), 'utf8'));
+      return pyodide;
+    })();
+  }
+  return pyodidePromise;
+}
+
+/** Запускает код заданий ровно тем же путём, что и public/python-worker.js — контракт result=, чистая ошибка при провале. */
+async function runPython(code) {
+  const pyodide = await getPyodide();
+  const runCellFn = pyodide.globals.get('_run_cell');
+  let out;
+  try {
+    out = runCellFn(code).toJs({ dict_converter: Object.fromEntries });
+  } finally {
+    runCellFn.destroy();
+  }
+  if (!out.ok) throw new Error(out.message);
+  return { columns: out.table.columns, rows: out.table.rows };
+}
+
+/**
  * Готовые паки — с исполнимым контентом (весь или частично). У domain-core
  * пока наполнена только часть графа: скиллы без единого задания — это не
  * дефект, а нормальное промежуточное состояние трека в процессе наполнения
  * (см. checkLessons ниже — покрытие карточками требуется только там, где уже
- * есть задания, а не на весь граф разом).
+ * есть задания, а не на весь граф разом). python-core наполняется тем же
+ * образом — на момент первого батча заполнен только один скилл из пятнадцати.
  */
-const packs = ['sql-core', 'domain-core'];
+const packs = ['sql-core', 'domain-core', 'python-core'];
 
 /**
  * Черновые паки: граф навыков спроектирован, контента ещё нет вообще.
@@ -37,7 +85,7 @@ const packs = ['sql-core', 'domain-core'];
  * с более высоким уровнем стоит здесь минуты, а не переписывания пака.
  * Проверяется у них только граф — заданий и карточек спрашивать не с чего.
  */
-const draftPacks = ['model-core', 'python-core'];
+const draftPacks = ['model-core'];
 
 let failed = 0;
 const fail = (id, msg) => {
@@ -141,7 +189,7 @@ function checkSkillCoverage(pack) {
       fail(skillId, `у навыка ${tasks.length} задание(й), минимум 3 — SRS не наберёт повторений`);
       continue;
     }
-    if (pack.track === 'sql' && new Set(tasks.map((t) => t.mode)).size < 2) {
+    if ((pack.track === 'sql' || pack.track === 'python') && new Set(tasks.map((t) => t.mode)).size < 2) {
       fail(skillId, `все ${tasks.length} заданий в режиме «${tasks[0].mode}» — нет разнообразия ввода`);
     }
   }
@@ -191,7 +239,7 @@ for (const packId of packs) {
 
     // Треки без исполнителя кода (domain) работают только в predict: там нечего
     // выполнять, и write/fill означали бы поле ввода, которое некому проверить.
-    if (pack.track !== 'sql') {
+    if (pack.track !== 'sql' && pack.track !== 'python') {
       fail(t.id, `трек «${pack.track}» без исполнителя кода, а задание в режиме «${t.mode}» — допустим только predict`);
       continue;
     }
@@ -217,21 +265,44 @@ for (const packId of packs) {
       }
     }
 
+    if (pack.track === 'sql') {
+      let res;
+      try {
+        res = runSql(t.solution);
+      } catch (e) {
+        fail(t.id, `эталон не выполняется — ${e.message}`);
+        continue;
+      }
+      if (!res.rows.length) fail(t.id, 'эталон возвращает пустой результат');
+      if (res.columns.some((c) => /^(sum|count|avg|round|min|max)\(/i.test(c))) {
+        fail(t.id, `в эталоне колонка без алиаса: ${res.columns.find((c) => /^\w+\(/.test(c))}`);
+      }
+      // Задание требует сортировки — значит, эталон обязан её содержать.
+      if (t.orderMatters && !/order\s+by/i.test(t.solution)) fail(t.id, 'orderMatters, но в эталоне нет ORDER BY');
+      if (!t.orderMatters && /order\s+by/i.test(t.solution) && !/over\s*\(/i.test(t.solution)) {
+        fail(t.id, 'в эталоне есть ORDER BY, но orderMatters не выставлен — порядок не будет проверяться');
+      }
+      console.log(`  ok   ${t.id} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length} — ${t.title}`);
+      continue;
+    }
+
+    // pack.track === 'python'
+    if (!/(^|\n)\s*result\s*=/.test(t.solution)) {
+      fail(t.id, 'эталон не присваивает переменную result — см. контракт в ROADMAP.md §6');
+      continue;
+    }
     let res;
     try {
-      res = runSql(t.solution);
+      res = await runPython(t.solution);
     } catch (e) {
       fail(t.id, `эталон не выполняется — ${e.message}`);
       continue;
     }
     if (!res.rows.length) fail(t.id, 'эталон возвращает пустой результат');
-    if (res.columns.some((c) => /^(sum|count|avg|round|min|max)\(/i.test(c))) {
-      fail(t.id, `в эталоне колонка без алиаса: ${res.columns.find((c) => /^\w+\(/.test(c))}`);
-    }
-    // Задание требует сортировки — значит, эталон обязан её содержать.
-    if (t.orderMatters && !/order\s+by/i.test(t.solution)) fail(t.id, 'orderMatters, но в эталоне нет ORDER BY');
-    if (!t.orderMatters && /order\s+by/i.test(t.solution) && !/over\s*\(/i.test(t.solution)) {
-      fail(t.id, 'в эталоне есть ORDER BY, но orderMatters не выставлен — порядок не будет проверяться');
+    // Аналог проверки ORDER BY в SQL-ветке: сортировка не встроена в структуру
+    // pandas-результата, и если orderMatters, эталон обязан явно вызывать sort_values.
+    if (t.orderMatters && !/\.sort_values\s*\(/.test(t.solution)) {
+      fail(t.id, 'orderMatters, но в эталоне нет .sort_values(...)');
     }
     console.log(`  ok   ${t.id} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length} — ${t.title}`);
   }

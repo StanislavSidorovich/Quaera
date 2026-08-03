@@ -6,6 +6,8 @@ export interface ExecResult {
   totalRows: number;
   truncated: boolean;
   elapsedMs: number;
+  /** Вывод print() — есть только у исполнителей кода, у SQL всегда пусто. */
+  stdout?: string;
 }
 
 export interface Preview {
@@ -13,6 +15,7 @@ export interface Preview {
   rows: SqlValue[][];
   totalRows: number;
   truncated?: boolean;
+  stdout?: string;
 }
 
 export interface Mismatch {
@@ -45,6 +48,12 @@ export interface Comparison {
 
 export type GradeResult =
   | { status: 'sql_error'; message: string; elapsedMs: number }
+  /**
+   * Аналог sql_error для исполнителей кода (Python): ошибка в коде человека
+   * до сравнения с эталоном. message — краткая причина, traceback — только
+   * то, что относится к телу задания (без служебных фреймов Pyodide).
+   */
+  | { status: 'code_error'; message: string; traceback?: string; elapsedMs: number }
   | {
       status: 'correct' | 'incorrect';
       comparison: Comparison;
@@ -77,12 +86,26 @@ export interface Executor {
   init(): Promise<DatasetInfo>;
   exec(code: string): Promise<ExecResult>;
   grade(userCode: string, solutionCode: string, options?: GradeOptions): Promise<GradeResult>;
+  /**
+   * Только у исполнителей, которым init() может упереться в согласие
+   * пользователя (см. LoadState 'consent') — у sql.js такого шага нет,
+   * там 3.5 МБ грузятся молча. Optional, чтобы не раздувать интерфейс
+   * ради одного трека.
+   */
+  confirmDownload?(): void;
 }
 
 /** Прогресс загрузки датасета — нужен, чтобы первый запуск не выглядел зависанием. */
 export type LoadState =
   | { phase: 'idle' }
   | { phase: 'loading' }
+  /**
+   * Исполнителю нужно скачать что-то тяжёлое (Pyodide+pandas, ~52 МБ), и он
+   * ждёт явного согласия — в отличие от sql.js, здесь размер сопоставим
+   * со скачиванием отдельного приложения, и включать это молча по заходу
+   * на вкладку нельзя, особенно на мобильном интернете.
+   */
+  | { phase: 'consent'; bytes: number }
   | { phase: 'ready'; info: DatasetInfo }
   | { phase: 'error'; message: string };
 

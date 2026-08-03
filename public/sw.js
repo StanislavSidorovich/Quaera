@@ -32,6 +32,9 @@ const PRECACHE = [
   '/sqljs/sql-wasm.js',
   '/sqljs/sql-wasm.wasm',
   '/sql-worker.js',
+  '/grade-lib.js',
+  '/python-worker.js',
+  '/python-bootstrap.py',
   '/data/schema.json',
   ...BUILD_ASSETS,
 ];
@@ -87,6 +90,7 @@ self.addEventListener('activate', (event) => {
 const isImmutable = (url) =>
   url.pathname.startsWith('/assets/') ||
   url.pathname.startsWith('/sqljs/') ||
+  url.pathname.startsWith('/pyodide/') ||
   url.pathname.startsWith('/data/') ||
   url.pathname.startsWith('/icons/');
 

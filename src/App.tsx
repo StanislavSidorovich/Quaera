@@ -219,6 +219,8 @@ export default function App() {
             dueCount={dueCount}
             startedCount={startedCount}
             loading={load.phase === 'loading' || load.phase === 'idle'}
+            consent={load.phase === 'consent' ? load.bytes : null}
+            onConfirmDownload={() => executor?.confirmDownload?.()}
             onStart={startSession}
             onOpenSchema={() => setSchemaOpen(true)}
             onOpenReference={() => setScreen({ name: 'reference' })}
@@ -236,7 +238,7 @@ export default function App() {
             key={step.lesson.skill}
             lesson={step.lesson}
             executor={executor}
-            runnable={activeTrack === 'sql'}
+            runnable={activeTrack === 'sql' || activeTrack === 'python'}
             onContinue={advance}
           />
         )}
@@ -260,7 +262,7 @@ export default function App() {
           <LessonCard
             lesson={lessonBySkill.get(screen.skill)!}
             executor={executor}
-            runnable={activeTrack === 'sql'}
+            runnable={activeTrack === 'sql' || activeTrack === 'python'}
           />
         )}
 
@@ -317,6 +319,8 @@ function Home({
   dueCount,
   startedCount,
   loading,
+  consent,
+  onConfirmDownload,
   onStart,
   onOpenSchema,
   onOpenReference,
@@ -329,6 +333,9 @@ function Home({
   dueCount: number;
   startedCount: number;
   loading: boolean;
+  /** Байт для скачивания, если исполнитель ждёт согласия (см. LoadState 'consent'), иначе null. */
+  consent: number | null;
+  onConfirmDownload: () => void;
   onStart: () => void;
   onOpenSchema: () => void;
   onOpenReference: () => void;
@@ -383,7 +390,24 @@ function Home({
         {ru.about.entryLink}
       </button>
 
-      {ready && (
+      {/*
+       * Согласие — приоритетнее обычного hero-блока: пока исполнитель ждёт
+       * решения пользователя, начинать занятие нельзя (init() ещё не дошёл
+       * до реальной загрузки), а показывать пустой счётчик «0 на повторение»
+       * поверх невыполнимой кнопки было бы просто ложью на экране.
+       */}
+      {consent !== null && (
+        <div className="card">
+          <h2 style={{ marginTop: 0 }}>{ru.consent.title}</h2>
+          <p className="brief">{ru.consent.body(Math.round(consent / 1e6))}</p>
+          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{ru.consent.note}</p>
+          <button className="btn" onClick={onConfirmDownload}>
+            {ru.consent.confirmBtn}
+          </button>
+        </div>
+      )}
+
+      {ready && consent === null && (
         <div className="card">
           <div className="hero">
             <div>

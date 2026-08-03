@@ -1,6 +1,7 @@
 import type { Track } from '../content/types';
 import type { Executor } from './types';
 import { sqlExecutor } from './sqlClient';
+import { pythonExecutor } from './pythonClient';
 
 /**
  * Заглушка для треков без реального исполнителя кода.
@@ -31,15 +32,19 @@ const noExecutor: Executor = {
 /**
  * Регистр исполнителей по треку.
  *
- * У model/python пока нет ни одного задания (черновые паки), поэтому до
- * исполнителя дело не доходит — сессию для них не запустить, и getExecutor
- * может честно вернуть null. У domain задания уже есть, а write/fill там
- * не будет никогда (см. noExecutor выше) — когда появится pandas-трек,
- * сюда добавится реальный Pyodide-исполнитель, а не заглушка.
+ * У model пока нет ни одного задания (черновой пак), поэтому до исполнителя
+ * дело не доходит — сессию не запустить, и getExecutor может честно вернуть
+ * null. У domain задания уже есть, а write/fill там не будет никогда
+ * (см. noExecutor выше). У python исполнитель реальный (Pyodide+pandas,
+ * см. pythonClient.ts) — но init() безопасен сам по себе: тяжёлый рантайм
+ * (~52 МБ) не начинает грузиться молча, а ждёт явного согласия
+ * (LoadState 'consent' в engine/types.ts), даже если App вызывает init()
+ * сразу при переключении на трек, как и для остальных исполнителей.
  */
 const registry: Partial<Record<Track, Executor>> = {
   sql: sqlExecutor,
   domain: noExecutor,
+  python: pythonExecutor,
 };
 
 export const getExecutor = (track: Track): Executor | null => registry[track] ?? null;

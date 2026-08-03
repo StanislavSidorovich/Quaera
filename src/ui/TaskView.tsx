@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '../content/types';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
-import { diagnoseComparison, diagnoseSqlError, type Feedback } from '../engine/diagnose';
+import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { ru } from '../i18n/ru';
+import { CodeEditor } from './CodeEditor';
 import { ResultTable } from './ResultTable';
-import { SqlEditor } from './SqlEditor';
 
 /**
  * Экран задания.
@@ -33,7 +33,7 @@ interface Props {
 }
 
 export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props) {
-  const [sql, setSql] = useState('');
+  const [code, setCode] = useState('');
   const [blanks, setBlanks] = useState<string[]>([]);
   const [chosen, setChosen] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -50,7 +50,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
 
   // Сброс при переходе к следующему заданию: компонент переиспользуется.
   useEffect(() => {
-    setSql(task.starter ?? '');
+    setCode(task.starter ?? '');
     setBlanks(new Array(task.template ? task.template.split('___').length - 1 : 0).fill(''));
     setChosen(null);
     setPreview(null);
@@ -79,24 +79,29 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
     return [...tables, ...columns];
   }, [schema]);
 
-  /** Финальный текст запроса: для fill собирается из шаблона и введённых фрагментов. */
-  const composedSql = useMemo(() => {
-    if (task.mode !== 'fill' || !task.template) return sql;
+  /** Финальный текст кода: для fill собирается из шаблона и введённых фрагментов. */
+  const composedCode = useMemo(() => {
+    if (task.mode !== 'fill' || !task.template) return code;
     const parts = task.template.split('___');
     return parts.reduce((acc, part, i) => acc + part + (blanks[i] ?? ''), '');
-  }, [task.mode, task.template, sql, blanks]);
+  }, [task.mode, task.template, code, blanks]);
 
-  const canSubmit = task.mode === 'predict' ? chosen !== null : composedSql.trim().length > 0;
+  const canSubmit = task.mode === 'predict' ? chosen !== null : composedCode.trim().length > 0;
+
+  /** Разбор ошибки исполнителя — разный по языку: SQLite и Python выдают разные тексты. */
+  const diagnoseError = (message: string, traceback?: string): Feedback =>
+    task.track === 'python' ? diagnosePythonError(message, suggestions, traceback) : diagnoseSqlError(message, suggestions);
 
   async function handleRun() {
     setRunning(true);
     setFeedback(null);
     try {
-      const r = await executor.exec(composedSql);
+      const r = await executor.exec(composedCode);
       setPreview(r);
     } catch (e) {
       setPreview(null);
-      setFeedback(diagnoseSqlError(String((e as Error).message), suggestions));
+      const err = e as Error & { traceback?: string };
+      setFeedback(diagnoseError(err.message, err.traceback));
     } finally {
       setRunning(false);
     }
@@ -118,13 +123,13 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
 
     setRunning(true);
     try {
-      const res: GradeResult = await executor.grade(composedSql, task.solution!, {
+      const res: GradeResult = await executor.grade(composedCode, task.solution!, {
         orderMatters: task.orderMatters,
       });
-      if (res.status === 'sql_error') {
+      if (res.status === 'sql_error' || res.status === 'code_error') {
         setPreview(null);
         setWrongAttempts((n) => n + 1);
-        setFeedback(diagnoseSqlError(res.message, suggestions));
+        setFeedback(diagnoseError(res.message, res.status === 'code_error' ? res.traceback : undefined));
         return;
       }
       setPreview(res.preview);
@@ -147,7 +152,8 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
         setFeedback(diagnoseComparison(res.comparison));
       }
     } catch (e) {
-      setFeedback(diagnoseSqlError(String((e as Error).message), suggestions));
+      const err = e as Error & { traceback?: string };
+      setFeedback(diagnoseError(err.message, err.traceback));
     } finally {
       setRunning(false);
     }
@@ -222,13 +228,14 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
           {task.mode === 'fill' && task.template ? (
             <FillTemplate template={task.template} blanks={blanks} onChange={setBlanks} disabled={solved} />
           ) : (
-            <SqlEditor
-              value={sql}
-              onChange={setSql}
+            <CodeEditor
+              value={code}
+              onChange={setCode}
               schema={schema}
               level={task.level}
+              track={task.track}
               disabled={solved}
-              placeholder={ru.task.placeholder}
+              placeholder={ru.task.placeholder(task.track)}
             />
           )}
           <div className="row" style={{ marginTop: 12 }}>

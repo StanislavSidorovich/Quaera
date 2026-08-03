@@ -1,27 +1,33 @@
 import { useMemo, useRef } from 'react';
+import type { Track } from '../content/types';
 import type { SchemaDoc } from '../engine/types';
 import { ru } from '../i18n/ru';
 
 /**
- * Редактор SQL для телефона.
+ * Редактор кода для телефона — общий для SQL и Python.
  *
  * Набор кода с экранной клавиатуры — то, на чём ломаются все мобильные
  * тренажёры: каждая скобка и кавычка требуют переключения раскладки.
- * Панель токенов снимает большую часть ввода: ключевые слова и имена колонок
- * вставляются одним касанием, фокус и позиция курсора при этом сохраняются,
- * поэтому клавиатура не закрывается и мысль не теряется.
+ * Панель токенов снимает большую часть ввода: символы, ключевые слова
+ * и имена таблиц/колонок вставляются одним касанием, фокус и позиция
+ * курсора при этом сохраняются, поэтому клавиатура не закрывается
+ * и мысль не теряется.
  *
- * Состав панели подбирается под ситуацию. Показывать все девяносто колонок
- * сразу бесполезно: нужную в такой ленте искать дольше, чем набрать руками.
- * Поэтому колонки показываются от таблиц, уже упомянутых в запросе,
- * а ключевые слова — по уровню задания: конструкции, до которых человек
- * ещё не дошёл, не только загромождают панель, но и подсказывают лишнее.
+ * Состав панели языковой: SQL и pandas почти не пересекаются по синтаксису
+ * (`GROUP BY` против `.groupby(`), поэтому набор символов и ключевых слов
+ * выбирается по track, а не сваливается в одну общую свалку токенов —
+ * показывать SELECT/FROM в Python-задании не просто бесполезно, а прямо
+ * подсказывает неверный синтаксис.
+ *
+ * Панель таблиц/колонок общая: она строится из той же схемы данных,
+ * которой пользуется и SQL, и pandas — один датасет, одни имена.
  */
 
-const SYMBOLS = ['(', ')', ',', "'", '.', '*', '=', '>', '<', '>=', '<=', '<>', '||', '_'];
+const SQL_SYMBOLS = ['(', ')', ',', "'", '.', '*', '=', '>', '<', '>=', '<=', '<>', '||', '_'];
+const PYTHON_SYMBOLS = ['(', ')', '[', ']', ',', "'", '.', '==', '!=', '>', '<', '&', '|', '~', '_'];
 
 /** Ключевые слова открываются по мере роста сложности заданий. */
-const KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
+const SQL_KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
   { upTo: 1, words: ['SELECT', 'FROM', 'WHERE', 'ORDER BY', 'AS', 'AND', 'OR', 'DISTINCT', 'LIMIT', 'DESC'] },
   {
     upTo: 2,
@@ -31,22 +37,34 @@ const KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
   { upTo: 4, words: ['OVER (', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING', 'CURRENT ROW'] },
 ];
 
+const PYTHON_KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
+  { upTo: 1, words: ['result =', '.loc[', '.isin([', '.str.contains(', '& ', '| '] },
+  { upTo: 2, words: ['.groupby(', '.agg(', '.merge(', 'as_index=False', '.sum()', '.transform('] },
+  { upTo: 3, words: ['.pivot_table(', '.melt(', '.sort_values(', 'pd.to_datetime(', '.resample(', '.rolling('] },
+  { upTo: 4, words: ['.assign(', '.reset_index()', 'np.'] },
+];
+
 interface Props {
   value: string;
   onChange: (v: string) => void;
   schema: SchemaDoc | null;
   /** Уровень задания — определяет, какие конструкции показывать в панели. */
   level: number;
+  /** Выбирает набор символов и ключевых слов: SQL и pandas синтаксически не пересекаются. */
+  track: Track;
   disabled?: boolean;
   placeholder?: string;
 }
 
-export function SqlEditor({ value, onChange, schema, level, disabled, placeholder }: Props) {
+export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const isSql = track === 'sql';
 
+  const symbols = isSql ? SQL_SYMBOLS : PYTHON_SYMBOLS;
+  const keywordGroups = isSql ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL;
   const keywords = useMemo(
-    () => KEYWORDS_BY_LEVEL.filter((g) => g.upTo <= level).flatMap((g) => g.words),
-    [level]
+    () => keywordGroups.filter((g) => g.upTo <= level).flatMap((g) => g.words),
+    [keywordGroups, level]
   );
 
   /**
@@ -74,7 +92,7 @@ export function SqlEditor({ value, onChange, schema, level, disabled, placeholde
     // Пробел ставим между двумя «словами» — иначе имена колонок слипаются
     // (date_id + year давало date_idyear). Перед запятой и закрывающей скобкой
     // пробел не нужен, после открывающей — тоже.
-    const needsSpace = /[\w)'"]$/.test(before) && /^[\w(]/.test(text);
+    const needsSpace = /[\w)'"\]]$/.test(before) && /^[\w([]/.test(text);
     const chunk = (needsSpace ? ' ' : '') + text;
     const next = before + chunk + value.slice(end);
     onChange(next);
@@ -101,14 +119,14 @@ export function SqlEditor({ value, onChange, schema, level, disabled, placeholde
         autoComplete="off"
         data-gramm="false"
       />
-      <div className="accessory" role="toolbar" aria-label={ru.editor.symbolsAria}>
-        {SYMBOLS.map((s) => (
+      <div className="accessory" role="toolbar" aria-label={ru.editor.symbolsAria(track)}>
+        {symbols.map((s) => (
           <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
             {s}
           </button>
         ))}
       </div>
-      <div className="accessory" role="toolbar" aria-label={ru.editor.keywordsAria}>
+      <div className="accessory" role="toolbar" aria-label={ru.editor.keywordsAria(track)}>
         {keywords.map((k) => (
           <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
             {k}

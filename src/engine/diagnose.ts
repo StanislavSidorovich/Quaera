@@ -46,8 +46,13 @@ function editDistance(a: string, b: string): number {
   return dp[a.length][b.length];
 }
 
-/** Ищем ближайшее реальное имя — опечатки в именах колонок самая частая причина ступора. */
-function closest(name: string, candidates: string[]): string | null {
+/**
+ * Ищем ближайшее реальное имя — опечатки в именах колонок самая частая причина
+ * ступора. Экспортирован: тот же приём переиспользует diagnosePythonError
+ * для KeyError на несуществующей колонке — опечатка есть опечатка независимо
+ * от языка.
+ */
+export function closest(name: string, candidates: string[]): string | null {
   const target = name.toLowerCase();
   let best: string | null = null;
   let bestScore = Infinity;
@@ -142,6 +147,38 @@ export function diagnoseSqlError(message: string, knownNames: string[] = []): Fe
     title: 'Запрос не выполнился',
     body: message,
     nudges: [],
+  };
+}
+
+/**
+ * Разбор ошибок исполнителя Python — по образцу diagnoseSqlError, но проще:
+ * python-bootstrap.py уже отдаёт сообщение вида «ТипОшибки: подробности»
+ * и, отдельно, traceback, обрезанный до кода задания (без служебных кадров
+ * Pyodide) — не нужно распознавать сырые сообщения движка по регуляркам,
+ * как для SQLite. Единственный частый случай, где стоит помочь адресно —
+ * опечатка в имени колонки (KeyError), тем же приёмом closest(), что и в SQL.
+ */
+export function diagnosePythonError(message: string, knownNames: string[] = [], traceback = ''): Feedback {
+  const keyError = /^KeyError:\s*'([^']+)'/.exec(message);
+  if (keyError) {
+    const name = keyError[1];
+    const hint = closest(name, knownNames);
+    return {
+      tone: 'error',
+      title: `Нет колонки «${name}»`,
+      body: hint
+        ? `Похоже на опечатку: в таблицах есть «${hint}».`
+        : 'Такой колонки нет ни в одной из использованных таблиц — проверьте имя в схеме, включая регистр.',
+      nudges: [],
+    };
+  }
+
+  const [, kind, detail] = /^(\w+):\s*([\s\S]*)$/.exec(message) ?? [null, null, null];
+  return {
+    tone: 'error',
+    title: kind ?? 'Код не выполнился',
+    body: detail ?? message,
+    nudges: traceback ? traceback.split('\n').filter(Boolean) : [],
   };
 }
 
