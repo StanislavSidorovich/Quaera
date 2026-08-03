@@ -115,11 +115,44 @@ function runSql(sql) {
   return { columns, rows };
 }
 
+/**
+ * Покрытие навыка заданиями.
+ *
+ * «Пак кажется тонким» превращаем в измеримое условие сборки: у навыка,
+ * которому уже дали хотя бы одно задание, должно быть не меньше трёх —
+ * иначе SRS быстро выест единственное задание и повторять нечем. Требование
+ * применяется только к затронутым скиллам: у domain-core часть графа ещё
+ * пустая, и это нормальное промежуточное состояние (см. draftPacks и
+ * checkLessons выше), а не дефект.
+ *
+ * Разнообразие режима проверяется только там, где режимов вообще несколько —
+ * то есть в треке с исполнителем кода (sql). В domain единственный
+ * допустимый режим — predict (см. проверку выше), и требовать от него
+ * разнообразия было бы поводом всегда падать.
+ */
+function checkSkillCoverage(pack) {
+  const bySkill = new Map();
+  for (const t of pack.tasks) {
+    if (!bySkill.has(t.skill)) bySkill.set(t.skill, []);
+    bySkill.get(t.skill).push(t);
+  }
+  for (const [skillId, tasks] of bySkill) {
+    if (tasks.length < 3) {
+      fail(skillId, `у навыка ${tasks.length} задание(й), минимум 3 — SRS не наберёт повторений`);
+      continue;
+    }
+    if (pack.track === 'sql' && new Set(tasks.map((t) => t.mode)).size < 2) {
+      fail(skillId, `все ${tasks.length} заданий в режиме «${tasks[0].mode}» — нет разнообразия ввода`);
+    }
+  }
+}
+
 for (const packId of packs) {
   const pack = readPack(packId);
   console.log(`\n=== Пак ${pack.id}: ${pack.tasks.length} заданий, ${pack.skills.length} скиллов`);
 
   checkGraph(pack);
+  checkSkillCoverage(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
   // --- задания
@@ -139,6 +172,14 @@ for (const packId of packs) {
       if (!t.predictSql && !t.scenario) fail(t.id, 'нет ни запроса, ни ситуации для режима predict');
       if (t.predictSql && t.scenario) fail(t.id, 'заданы и predictSql, и scenario — плеер покажет только одно');
       if (!t.predictQuestion) fail(t.id, 'нет вопроса для режима predict');
+      // На экране 375 px в моноширинном .scenario помещается около 39 знаков;
+      // white-space: pre-wrap переносит всё, что длиннее, и таблица, выровненная
+      // пробелами, разъезжается. Измерено в браузере (см. ROADMAP.md §5).
+      if (t.scenario) {
+        for (const line of t.scenario.split('\n')) {
+          if (line.length > 39) fail(t.id, `строка scenario длиннее 39 знаков (${line.length}): «${line}»`);
+        }
+      }
       const correct = (t.options ?? []).filter((o) => o.correct);
       if (correct.length !== 1) fail(t.id, `должен быть ровно один верный вариант, найдено ${correct.length}`);
       if ((t.options ?? []).length < 3) fail(t.id, 'меньше трёх вариантов ответа');
