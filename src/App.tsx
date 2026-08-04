@@ -860,27 +860,35 @@ function TrackIntroScreen({
   const intro = pack?.intro;
   if (!intro) return null;
 
+  /**
+   * `pre-line`, а не `pre-wrap`: пустая строка в тексте становится границей
+   * абзаца, а обычные переносы внутри абзаца по-прежнему делает браузер
+   * по ширине экрана. Здесь это безопасно — в отличие от `.scenario`,
+   * выравнивание пробелами тут не используется, текст сплошной.
+   */
+  const body = { margin: 0, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-line' as const };
+
   return (
     <>
       <div className="card">
         <h2>{t.trackIntro.whatTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.what}</p>
+        <p style={body}>{intro.what}</p>
       </div>
       <div className="card">
         <h2>{t.trackIntro.whereTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.where}</p>
+        <p style={body}>{intro.where}</p>
       </div>
       <div className="card">
         <h2>{t.trackIntro.ideaTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.idea}</p>
+        <p style={body}>{intro.idea}</p>
       </div>
       <div className="card">
         <h2>{t.trackIntro.limitsTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.limits}</p>
+        <p style={body}>{intro.limits}</p>
       </div>
       <div className="card">
         <h2>{t.trackIntro.bridgeTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.bridge}</p>
+        <p style={body}>{intro.bridge}</p>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>

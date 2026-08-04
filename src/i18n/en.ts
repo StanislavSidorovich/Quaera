@@ -81,7 +81,7 @@ export const en = {
     limitsTitle: "What it doesn't give you",
     bridgeTitle: 'How it connects to the other tracks',
     startBtn: 'Start session',
-    skipBtn: 'Skip to the session',
+    skipBtn: 'Skip',
   },
   reference: {
     title: 'Reference',

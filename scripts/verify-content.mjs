@@ -1319,6 +1319,20 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     } else {
       console.log(`  ok   dom-058: три выручки 2025 — ${sellOut} / ${sellIn[0]} / ${sellIn[2]} (скидки ${sellIn[3]}%)`);
     }
+
+    // Те же три выручки процитированы во вводной карточке трека (intro.idea) —
+    // на них держится её главный тезис «расходятся вопросы, а не расчёты».
+    // Число в тексте становится условием сборки независимо от того, в каком
+    // поле пака оно лежит: до этой проверки текст вне задания гейт не видел
+    // вовсе и мог разойтись с датасетом молча.
+    const introIdea = readPack('domain-core').intro?.idea ?? '';
+    const expectedMln = [sellOut, sellIn[0], sellIn[2]].map((v) => (v / 1e6).toFixed(1));
+    const missing = expectedMln.filter((m) => !introIdea.includes(m));
+    if (missing.length) {
+      fail('domain-core', `intro.idea не цитирует выручки ${missing.join(' / ')} млн — карточка разошлась с датасетом`);
+    } else {
+      console.log(`  ok   domain-core intro: три выручки ${expectedMln.join(' / ')} млн совпадают с датасетом`);
+    }
   }
 }
 
