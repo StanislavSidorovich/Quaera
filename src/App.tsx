@@ -60,6 +60,26 @@ function initialTheme(): Theme {
   return 'system';
 }
 
+const ACTIVE_TRACK_STORAGE_KEY = 'querium-active-track';
+const ALL_TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
+
+/**
+ * Трек не сбрасывается на sql при перезагрузке страницы. Раньше activeTrack
+ * жил только в состоянии React: F5 (или полная перезагрузка PWA на телефоне)
+ * всегда возвращал на SQL, даже если человек был в domain или python, —
+ * состояние занятия внутри трека при этом всё равно теряется (queue сессии
+ * нигде не сохраняется), но хотя бы не приходится заново переключать трек.
+ */
+function initialActiveTrack(): Track {
+  try {
+    const stored = localStorage.getItem(ACTIVE_TRACK_STORAGE_KEY);
+    if (ALL_TRACKS.includes(stored as Track)) return stored as Track;
+  } catch {
+    // localStorage недоступен — просто не запоминаем выбор
+  }
+  return 'sql';
+}
+
 /** Раз в столько мс перестаём считать повторное «назад» подтверждением выхода. */
 const EXIT_HINT_MS = 2000;
 
@@ -105,7 +125,7 @@ export default function App() {
   const { t, locale, setLocale } = useI18n();
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
-  const [activeTrack, setActiveTrack] = useState<Track>('sql');
+  const [activeTrack, setActiveTrack] = useState<Track>(initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   const seenIntrosRef = useRef<Set<Track>>(loadSeenIntros());
   const [schemaOpen, setSchemaOpen] = useState(false);
@@ -358,6 +378,11 @@ export default function App() {
    */
   function switchTrack(track: Track) {
     setActiveTrack(track);
+    try {
+      localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
+    } catch {
+      // см. initialActiveTrack
+    }
     const pack = packForTrack(track);
     if (pack?.intro && !seenIntrosRef.current.has(track)) {
       setScreen({ name: 'trackIntro', track });
