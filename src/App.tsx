@@ -190,6 +190,29 @@ export default function App() {
     setScreen({ name: 'session', queue, index: 0 });
   }
 
+  /**
+   * Практика по одной теме — вход не через подбор SRS, а напрямую с карты
+   * навыков или из справочника: карточка приёма (если есть) плюс несколько
+   * заданий именно на этот навык. В отличие от startSession, тема здесь не
+   * выбирается алгоритмом — человек уже выбрал её сам, кликнув по строке.
+   */
+  function startSkillSession(skillId: string) {
+    const pool = activePack.tasks.filter((t) => t.skill === skillId);
+    if (!pool.length) return;
+    const solvedTaskIds = new Set(
+      Object.entries(progress.taskRecords).filter(([, r]) => r.solved).map(([id]) => id)
+    );
+    // Нерешённые вперёд — как и в обычном подборе; если решено всё, берём
+    // пачку для повторения, а не отказываем в практике.
+    const unsolved = pool.filter((t) => !solvedTaskIds.has(t.id)).sort((a, b) => a.level - b.level);
+    const picked = (unsolved.length ? unsolved : pool).slice(0, 3);
+
+    const lesson = lessonBySkill.get(skillId);
+    const queue: Step[] = lesson ? [{ kind: 'lesson', lesson }] : [];
+    for (const task of picked) queue.push({ kind: 'task', task });
+    setScreen({ name: 'session', queue, index: 0 });
+  }
+
   function advance() {
     setScreen((s) => {
       if (s.name !== 'session') return s;
@@ -199,6 +222,17 @@ export default function App() {
       }
       return { ...s, index: next };
     });
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
+   * Возврат к уже пройденному шагу занятия — не то же самое, что кнопка
+   * «назад» в шапке (та выходит из занятия целиком на главную). Индекс
+   * ограничен снизу нулём и сверху текущим шагом: заглядывать вперёд,
+   * минуя ещё не показанные карточки и задания, нельзя.
+   */
+  function goToStep(i: number) {
+    setScreen((s) => (s.name === 'session' && i >= 0 && i < s.index ? { ...s, index: i } : s));
     window.scrollTo({ top: 0 });
   }
 
@@ -264,11 +298,25 @@ export default function App() {
                     : `${t.tracks.names[activeTrack]} · серия ${streak(progress.activeDays)} дн.`}
           </span>
         </h1>
+        {screen.name === 'session' && screen.index > 0 && (
+          <button className="icon-btn" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
+            ‹
+          </button>
+        )}
         {screen.name === 'session' && (
-          <div className="progress-dots" aria-hidden>
-            {screen.queue.map((_, i) => (
-              <i key={i} className={i < screen.index ? 'done' : i === screen.index ? 'current' : ''} />
-            ))}
+          <div className="progress-dots">
+            {screen.queue.map((_, i) =>
+              i < screen.index ? (
+                <button
+                  key={i}
+                  className="dot done"
+                  onClick={() => goToStep(i)}
+                  aria-label={t.session.stepAria(i + 1)}
+                />
+              ) : (
+                <i key={i} className={`dot${i === screen.index ? ' current' : ''}`} aria-hidden />
+              )
+            )}
           </div>
         )}
         <button
@@ -306,6 +354,7 @@ export default function App() {
             onOpenReference={() => setScreen({ name: 'reference' })}
             onOpenAbout={() => setScreen({ name: 'about' })}
             onSwitchTrack={switchTrack}
+            onStartSkill={startSkillSession}
           />
         )}
 
@@ -409,6 +458,7 @@ function Home({
   onOpenReference,
   onOpenAbout,
   onSwitchTrack,
+  onStartSkill,
 }: {
   activeTrack: Track;
   activePack: Pack;
@@ -424,6 +474,8 @@ function Home({
   onOpenReference: () => void;
   onOpenAbout: () => void;
   onSwitchTrack: (track: Track) => void;
+  /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
+  onStartSkill: (skillId: string) => void;
 }) {
   const { t, locale } = useI18n();
   const byTier = useMemo(() => {
@@ -546,8 +598,9 @@ function Home({
               const unlocked = isUnlocked(s, progress.skills) || (st?.reps ?? 0) > 0;
               const m = mastery(st);
               const due = st && st.reps > 0 && isDue(st);
-              return (
-                <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
+              const clickable = ready && unlocked;
+              const row = (
+                <>
                   <div className="name">
                     {s.title}
                     <small>{unlocked ? s.summary : t.home.lockedNote}</small>
@@ -557,6 +610,21 @@ function Home({
                       <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
                     </div>
                   )}
+                </>
+              );
+              return clickable ? (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="skill-row"
+                  style={{ width: '100%', textAlign: 'left' }}
+                  onClick={() => onStartSkill(s.id)}
+                >
+                  {row}
+                </button>
+              ) : (
+                <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
+                  {row}
                 </div>
               );
             })}

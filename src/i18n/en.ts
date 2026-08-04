@@ -91,6 +91,8 @@ export const en = {
     doneBody: (n: number) =>
       `Tasks completed: ${n}. The skills they touched will come back for review — the interval depends on how confidently you got them.`,
     homeBtn: 'Home',
+    prevAria: 'Previous step',
+    stepAria: (i: number) => `Step ${i}`,
   },
   lesson: {
     pill: 'Technique',

@@ -256,7 +256,7 @@ textarea.sql {
 .hero {
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
@@ -824,17 +824,24 @@ details.table-doc > summary small {
   gap: 5px;
 }
 
-.progress-dots i {
+.progress-dots .dot {
   width: 22px;
   height: 4px;
+  border: none;
+  padding: 0;
   border-radius: 2px;
   background: var(--line);
 }
 
-.progress-dots i.done {
+/* Пройденные шаги — кнопки, а не просто индикатор: клик возвращает к ним. */
+.progress-dots button.dot {
+  cursor: pointer;
+}
+
+.progress-dots .dot.done {
   background: var(--ok);
 }
 
-.progress-dots i.current {
+.progress-dots .dot.current {
   background: var(--accent);
 }
