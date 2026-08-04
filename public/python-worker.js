@@ -92,7 +92,11 @@ async function runCell(code) {
   const table = out.table;
   return {
     columns: table.columns,
-    rows: table.rows,
+    // pyodide.toJs() превращает Python None в JS undefined, а не в null —
+    // ResultTable.tsx умеет красиво показывать null («NULL»), а undefined
+    // печатает буквальным словом «undefined» через String(v). Нормализуем
+    // здесь же, а не в каждом месте, где рисуется таблица.
+    rows: table.rows.map((row) => row.map((v) => (v === undefined ? null : v))),
     elapsedMs,
     stdout: out.stdout,
   };
