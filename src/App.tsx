@@ -66,7 +66,20 @@ type Screen =
   | { name: 'done'; solved: number }
   | { name: 'reference' }
   | { name: 'lesson'; skill: string }
-  | { name: 'about' };
+  | { name: 'about' }
+  | { name: 'trackIntro'; track: Track };
+
+/** Треки, для которых уже показывали вводную карточку — чтобы не навязывать её повторно. */
+const TRACK_INTRO_SEEN_KEY = 'querium-track-intro-seen';
+
+function loadSeenIntros(): Set<Track> {
+  try {
+    const raw = localStorage.getItem(TRACK_INTRO_SEEN_KEY);
+    return new Set(raw ? (JSON.parse(raw) as Track[]) : []);
+  } catch {
+    return new Set();
+  }
+}
 
 export default function App() {
   const { t, locale, setLocale } = useI18n();
@@ -74,6 +87,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [activeTrack, setActiveTrack] = useState<Track>('sql');
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
+  const seenIntrosRef = useRef<Set<Track>>(loadSeenIntros());
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
@@ -93,6 +107,16 @@ export default function App() {
   // что треков четыре. Всё остальное работает с activePack, не с конкретным sql-core.
   const activePack: Pack = packForTrack(activeTrack)!;
   const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
+
+  // Трек по умолчанию (sql) человек тоже «входит» в него, просто без клика
+  // по переключателю — switchTrack в этом случае не вызывается, поэтому
+  // первый показ карточки для него отлавливаем отдельно, один раз при монтировании.
+  useEffect(() => {
+    if (activePack.intro && !seenIntrosRef.current.has(activeTrack)) {
+      setScreen({ name: 'trackIntro', track: activeTrack });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!executor) {
@@ -280,9 +304,33 @@ export default function App() {
     advance();
   }
 
+  function markIntroSeen(track: Track) {
+    seenIntrosRef.current.add(track);
+    try {
+      localStorage.setItem(TRACK_INTRO_SEEN_KEY, JSON.stringify([...seenIntrosRef.current]));
+    } catch {
+      // см. loadSeenIntros — недоступность localStorage не должна ломать переключение
+    }
+  }
+
+  /**
+   * Переключение трека показывает вводную карточку один раз, при первом
+   * входе в трек: дальше это уже не «что это такое», а лишний экран между
+   * переключателем и занятием. Открыть карточку снова можно кнопкой
+   * с главного экрана трека — она никуда не девается после первого раза.
+   */
   function switchTrack(track: Track) {
     setActiveTrack(track);
-    setScreen({ name: 'home' });
+    const pack = packForTrack(track);
+    if (pack?.intro && !seenIntrosRef.current.has(track)) {
+      setScreen({ name: 'trackIntro', track });
+    } else {
+      setScreen({ name: 'home' });
+    }
+  }
+
+  function openTrackIntro(track: Track) {
+    setScreen({ name: 'trackIntro', track });
   }
 
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
@@ -310,7 +358,9 @@ export default function App() {
                 ? t.lesson.pill
                 : screen.name === 'about'
                   ? t.about.title
-                  : t.app.name}
+                  : screen.name === 'trackIntro'
+                    ? t.tracks.names[screen.track]
+                    : t.app.name}
           <span className="sub">
             {screen.name === 'session'
               ? t.session.progressOf(screen.index + 1, screen.queue.length)
@@ -383,11 +433,26 @@ export default function App() {
             onOpenAbout={() => setScreen({ name: 'about' })}
             onSwitchTrack={switchTrack}
             onStartSkill={startSkillSession}
+            onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
           />
         )}
 
         {screen.name === 'about' && (
           <About onSelectTrack={(track) => { switchTrack(track); }} />
+        )}
+
+        {screen.name === 'trackIntro' && (
+          <TrackIntroScreen
+            track={screen.track}
+            onStart={() => {
+              markIntroSeen(screen.track);
+              startSession(); // при пустом паке (не должно случиться, раз есть intro) сам никуда не переключит
+            }}
+            onSkip={() => {
+              markIntroSeen(screen.track);
+              setScreen({ name: 'home' });
+            }}
+          />
         )}
 
         {step?.kind === 'lesson' && executor && (
@@ -487,6 +552,7 @@ function Home({
   onOpenAbout,
   onSwitchTrack,
   onStartSkill,
+  onOpenTrackIntro,
 }: {
   activeTrack: Track;
   activePack: Pack;
@@ -504,6 +570,8 @@ function Home({
   onSwitchTrack: (track: Track) => void;
   /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
   onStartSkill: (skillId: string) => void;
+  /** Вводная карточка трека. undefined — у трека intro ещё не написан, кнопку не показываем. */
+  onOpenTrackIntro?: () => void;
 }) {
   const { t, locale } = useI18n();
   const byTier = useMemo(() => {
@@ -561,6 +629,23 @@ function Home({
       >
         {t.about.entryLink}
       </button>
+
+      {/*
+       * Вводная карточка конкретного трека — не то же самое, что About:
+       * там сводка по всем четырём сразу, здесь — что за инструмент, где
+       * он встречается в работе и чего не даёт. Кнопка остаётся и после
+       * первого показа: вопрос «что это вообще такое» может всплыть позже.
+       */}
+      {onOpenTrackIntro && (
+        <button
+          type="button"
+          className="link-row"
+          onClick={onOpenTrackIntro}
+          style={{ margin: '-2px 0 12px' }}
+        >
+          {t.trackIntro.entryLink}
+        </button>
+      )}
 
       {/*
        * Согласие — приоритетнее обычного hero-блока: пока исполнитель ждёт
@@ -751,6 +836,60 @@ function About({ onSelectTrack }: { onSelectTrack: (track: Track) => void }) {
       <div className="card">
         <h2>{t.about.privacyTitle}</h2>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Вводная карточка трека. Пять полей в фиксированном порядке — сначала зачем
+ * это в работе, потом идея, потом граница (см. TrackIntro в content/types.ts).
+ * Не блокирует: «Пропустить» ведёт туда же, куда и «Начать», просто без сессии.
+ */
+function TrackIntroScreen({
+  track,
+  onStart,
+  onSkip,
+}: {
+  track: Track;
+  onStart: () => void;
+  onSkip: () => void;
+}) {
+  const { t } = useI18n();
+  const pack = packForTrack(track);
+  const intro = pack?.intro;
+  if (!intro) return null;
+
+  return (
+    <>
+      <div className="card">
+        <h2>{t.trackIntro.whatTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.what}</p>
+      </div>
+      <div className="card">
+        <h2>{t.trackIntro.whereTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.where}</p>
+      </div>
+      <div className="card">
+        <h2>{t.trackIntro.ideaTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.idea}</p>
+      </div>
+      <div className="card">
+        <h2>{t.trackIntro.limitsTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.limits}</p>
+      </div>
+      <div className="card">
+        <h2>{t.trackIntro.bridgeTitle}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{intro.bridge}</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        <button className="btn" style={{ flex: 1 }} onClick={onStart}>
+          {t.trackIntro.startBtn}
+        </button>
+        <button className="btn secondary" style={{ flex: 1 }} onClick={onSkip}>
+          {t.trackIntro.skipBtn}
+        </button>
       </div>
     </>
   );

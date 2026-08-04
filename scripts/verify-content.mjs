@@ -141,6 +141,23 @@ function checkGraph(pack) {
   }
 }
 
+/**
+ * Вводная карточка трека (`Pack.intro`) необязательна — трек может быть
+ * в начале наполнения и без неё. Но если она есть, пустое или огрызочное
+ * поле хуже отсутствия карточки: человек открывает «О треке» и утыкается
+ * в заглушку на первом же экране трека.
+ */
+function checkIntro(pack) {
+  if (!pack.intro) return;
+  const fields = ['what', 'where', 'idea', 'limits', 'bridge'];
+  for (const field of fields) {
+    const value = pack.intro[field];
+    if (!value || value.trim().length < 40) {
+      fail(pack.id, `intro.${field} пустой или слишком короткий`);
+    }
+  }
+}
+
 /** Имена колонок датасета — заодно проверяем, что задания не ссылаются на несуществующее. */
 const knownColumns = new Set();
 for (const t of db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values.map((v) => v[0])) {
@@ -200,6 +217,7 @@ for (const packId of packs) {
   console.log(`\n=== Пак ${pack.id}: ${pack.tasks.length} заданий, ${pack.skills.length} скиллов`);
 
   checkGraph(pack);
+  checkIntro(pack);
   checkSkillCoverage(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
@@ -321,6 +339,7 @@ for (const packId of draftPacks) {
   }
 
   checkGraph(pack);
+  checkIntro(pack);
 
   const tiers = [...new Set(pack.skills.map((s) => s.tier))].sort();
   const counts = tiers.map((t) => `${pack.tierNames?.[t] ?? t} — ${pack.skills.filter((s) => s.tier === t).length}`);

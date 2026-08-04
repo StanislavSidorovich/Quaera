@@ -73,6 +73,16 @@ export const en = {
     tracksWhyBody:
       "This mirrors how the work actually flows. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
   },
+  trackIntro: {
+    entryLink: 'About this track →',
+    whatTitle: 'What this is',
+    whereTitle: 'Where it comes up on the job',
+    ideaTitle: 'The main idea',
+    limitsTitle: "What it doesn't give you",
+    bridgeTitle: 'How it connects to the other tracks',
+    startBtn: 'Start session',
+    skipBtn: 'Skip to the session',
+  },
   reference: {
     title: 'Reference',
     intro:
