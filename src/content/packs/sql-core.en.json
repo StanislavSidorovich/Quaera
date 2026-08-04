@@ -283,6 +283,900 @@
         "OFFSET 33 means \"skip the first 33 rows\" — check which row number lands 34th."
       ],
       "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit — on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ₽, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering — add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
+    },
+    {
+      "id": "sql-005",
+      "title": "Inequality and a null value",
+      "brief": "You need a list of outlets that don't belong to the 'Magnit' chain. Independent outlets have NULL in the chain_name column.",
+      "goal": "Determine whether independent outlets will make it into the result.",
+      "predictQuestion": "Will outlets with chain_name = NULL end up in the result?",
+      "options": [
+        {
+          "label": "No — rows with NULL are filtered out",
+          "why": "NULL <> 'Magnit' evaluates to neither true nor false, but NULL. WHERE keeps only rows where the condition is true, so such rows silently drop out."
+        },
+        {
+          "label": "Yes, since NULL is definitely not 'Magnit'",
+          "why": "That's intuitive for a human, but wrong by the SQL standard. NULL means 'value unknown', and you can't assert that an unknown value is not equal to 'Magnit'."
+        },
+        {
+          "label": "Yes, they'll come back with an empty value in the column",
+          "why": "They never even reach the output: the filter cuts them out earlier."
+        },
+        {
+          "label": "The query will fail with a comparison error",
+          "why": "Comparing against NULL is perfectly legal — it just evaluates to NULL."
+        }
+      ],
+      "hints": [
+        "The result of comparing against NULL is also NULL.",
+        "WHERE keeps a row only if the condition is true."
+      ],
+      "explain": "This is the most common cause of \"missing\" rows in a report. The correct phrasing is: WHERE chain_name <> 'Magnit' OR chain_name IS NULL, or WHERE COALESCE(chain_name, '') <> 'Magnit'. Rule of thumb: if a column can contain nulls, any condition using <>, NOT IN, or > must deliberately account for NULL."
+    },
+    {
+      "id": "sql-006",
+      "title": "How many outlets are outside chains",
+      "brief": "The development department wants to gauge the size of independent retail: how many outlets don't belong to any chain. Distributors don't count here — they aren't points of sale.",
+      "goal": "Return a single row with a single column outlets — the count of customers without a chain, excluding distributors.",
+      "hints": [
+        "A null check is written only with IS NULL — the equals sign doesn't work here.",
+        "dim_customer holds both distributors and points of sale — check the customer_type column."
+      ],
+      "explain": "Two traps here at once. The first is IS NULL instead of = NULL. The second matters more: the customer directory mixes entities of different kinds, and \"all rows in the table\" almost never equals \"all objects the stakeholder is asking about\". Before counting, it's worth checking what's actually in the table: SELECT customer_type, COUNT(*) FROM dim_customer GROUP BY 1."
+    },
+    {
+      "id": "sql-028",
+      "title": "Where nulls sort to",
+      "brief": "An analyst is sorting the customer list by chain name to visually group chain outlets, and can't figure out what ended up at the top of the list.",
+      "goal": "Determine what will appear in the first rows of the result.",
+      "predictQuestion": "What will be among the first five rows?",
+      "options": [
+        {
+          "label": "Outlets without a chain — NULL sorts before any text here",
+          "why": "SQLite, like most DBMSes by default, treats NULL as the smallest possible value in ascending sort — such rows end up first."
+        },
+        {
+          "label": "The 'Ozon' chain — it's first alphabetically among the filled-in values",
+          "why": "Among non-null values, 'Ozon' really would come first — Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\" — it's smaller than any text."
+        },
+        {
+          "label": "The order is unpredictable: NULL can't be compared, and ORDER BY ignores it",
+          "why": "NULL has a clear, documented place in sorting — it just doesn't match the intuition that \"unknown can't be compared\"."
+        },
+        {
+          "label": "The query will fail — you can't sort a column with nulls",
+          "why": "ORDER BY on a column with NULL is a perfectly ordinary operation — there's no error here."
+        }
+      ],
+      "hints": [
+        "Recall sql-005: NULL behaves counter to intuition both in comparisons and in sorting.",
+        "There are more than seventy outlets without a chain (distributors, independent retail) in the database — their NULLs will fill the top of the list."
+      ],
+      "explain": "The default rule in SQLite and the SQL standard: NULL is smaller than any known value, so ASC puts it first and DESC puts it last. If a report only needs named chains, filter NULL out explicitly with WHERE chain_name IS NOT NULL; if you need control over where nulls land without filtering, ORDER BY chain_name ASC NULLS LAST has worked since SQLite 3.30."
+    },
+    {
+      "id": "sql-030",
+      "title": "A label for independent pharmacies",
+      "brief": "For a pharmacy-channel summary you need a human-readable list of outlets: chain pharmacies show the chain name, independent ones show a clear label instead of a blank cell.",
+      "goal": "For customer_type = 'pharmacy', return customer_name and chain_display — chain_name, or 'Independent pharmacy' if it's empty.",
+      "hints": [
+        "The function that returns the first non-null value from a list of arguments is COALESCE(column, fallback_value).",
+        "This is a display task, not a filtering one: don't touch WHERE — independent pharmacies should stay in the result."
+      ],
+      "explain": "COALESCE(a, b) returns a if it's not NULL, and b otherwise — you can pass more than two arguments, and it takes the first non-null one in order. Unlike sql-006, where NULL needed to be accounted for in a filter, here the task is different: NULL should stay in the result set, but shouldn't reach the report's reader in raw form. Both scenarios — filtering and display — require different handling of the same NULL."
+    },
+    {
+      "id": "sql-031",
+      "title": "Counting sales outside promotions",
+      "brief": "An analyst wants to count sales outside promo campaigns and writes the condition with an equals sign out of habit.",
+      "goal": "Determine what the query returns.",
+      "predictQuestion": "What will COUNT(*) return, given tens of thousands of rows in the database have sales without a promo (where promo_id is empty)?",
+      "options": [
+        {
+          "label": "0 — the comparison promo_id = NULL is never true",
+          "why": "The result of comparing against NULL is always NULL, never true or false. WHERE keeps only rows where the condition is true, so none pass."
+        },
+        {
+          "label": "The same as promo_id IS NULL would give",
+          "why": "That would be the correct way to write the same condition. But = and IS NULL are different operators, and their results diverge on exactly the rows with an empty promo_id."
+        },
+        {
+          "label": "All rows in the table — NULL equals itself",
+          "why": "In SQL's three-valued logic, NULL is never considered equal even to itself. A check for equality against NULL never yields true."
+        },
+        {
+          "label": "The query will fail: comparing against NULL is a syntax error",
+          "why": "Syntactically, = NULL is completely legal. The problem isn't that the query fails — it's that it silently returns the wrong answer."
+        }
+      ],
+      "hints": [
+        "Same principle as sql-005: NULL is never the result of a genuine comparison via =.",
+        "The correct form of the condition is promo_id IS NULL, not promo_id = NULL."
+      ],
+      "explain": "This is the costliest version of this mistake: the result isn't an empty list or a runtime error, but a plausible-looking number — 0. Seeing 0, an analyst might conclude the company doesn't sell anything outside promotions at all, and that could end up in a presentation as fact. Rule of thumb going forward: any null check is IS NULL or IS NOT NULL — the equals sign never works for NULL, whether it's in WHERE, HAVING, or inside a CASE."
+    },
+    {
+      "id": "sql-007",
+      "title": "Three different COUNTs",
+      "brief": "The dim_customer table has 144 rows. Some customers have the chain_name column filled in with a chain name, and the rest have NULL.",
+      "goal": "Understand how the three ways of counting differ.",
+      "predictQuestion": "Which relationship between a, b, and c holds?",
+      "options": [
+        {
+          "label": "a > b > c",
+          "why": "COUNT(*) counts all rows; COUNT(column) skips NULL; COUNT(DISTINCT column) keeps only distinct non-null values — there are necessarily fewer chains than chain outlets."
+        },
+        {
+          "label": "a = b > c",
+          "why": "That would only hold if chain_name were filled in for everyone. Here independent outlets and distributors have NULL there."
+        },
+        {
+          "label": "a = b = c",
+          "why": "They'd match only if the column were fully populated and every row had a unique value — that is, if chain_name were a primary key."
+        },
+        {
+          "label": "b > a",
+          "why": "COUNT on a column can never exceed the number of rows."
+        }
+      ],
+      "hints": [
+        "COUNT ignores NULL — but only when it's given a specific column.",
+        "DISTINCT collapses duplicates."
+      ],
+      "explain": "Behind the three forms are three different questions: \"how many records\", \"for how many records is there data\", and \"how many distinct objects\". Confusing the second and third is a classic reason why \"number of customers\" doesn't match between two reports. When a stakeholder says \"count\", always clarify: count of what, exactly."
+    },
+    {
+      "id": "sql-008",
+      "title": "Price-list summary",
+      "brief": "Before defending the pricing strategy, you need a single row of numbers about the product catalog.",
+      "goal": "Return one row: products — the number of SKUs, brands — the number of distinct brands, avg_price — the average price, rounded to two decimal places.",
+      "hints": [
+        "Distinct brands is COUNT(DISTINCT ...).",
+        "Rounding: ROUND(expression, 2)."
+      ],
+      "explain": "A query without GROUP BY but with aggregates always returns exactly one row — the whole table is treated as a single group. It's a handy trick for quickly sanity-checking data before building a report on top of it."
+    },
+    {
+      "id": "sql-032",
+      "title": "Price spread in Pharma",
+      "brief": "Before a price revision, the CFO asks for a quick estimate of the price spread in the Pharma division: from the cheapest drug to the most expensive.",
+      "goal": "For the Pharma division, return one row: cheapest — the minimum list_price, priciest — the maximum list_price.",
+      "hints": [
+        "Spread is two separate aggregate functions, MIN and MAX, not a single formula.",
+        "Like other aggregates, they need an alias — otherwise the report columns will be called MIN(list_price) and MAX(list_price)."
+      ],
+      "explain": "MIN and MAX are aggregates just like COUNT, SUM, and AVG: they're computed over the whole set of rows and, like the others, ignore NULL. The MIN/MAX pair is a standard first step in profiling any numeric column: before building a report on price, it's useful to see what range it actually falls in — that immediately reveals outliers like a price of 0 or an accidentally extra digit."
+    },
+    {
+      "id": "sql-033",
+      "title": "Aggregating an empty set",
+      "brief": "A category manager checks whether the \"NeonMax\" brand was ever in the portfolio — it was never launched, but the manager isn't sure and decides to double-check with a query.",
+      "goal": "Determine what COUNT(*) and AVG(list_price) will return.",
+      "predictQuestion": "What will n and avg_price return, if there are no products of that brand in the database at all?",
+      "options": [
+        {
+          "label": "n = 0, avg_price = NULL",
+          "why": "COUNT(*) can honestly count \"zero rows\". But AVG has no value at all to average over an empty set, and the result is NULL, not 0."
+        },
+        {
+          "label": "Both return 0 — aggregates return zero over an empty set",
+          "why": "Only COUNT(*) behaves that way, because it counts rows, not values. AVG, SUM, MIN, and MAX give NULL over an empty set."
+        },
+        {
+          "label": "Both return NULL — with no rows, there's nothing to count at all",
+          "why": "COUNT(*) was designed exactly to answer \"how many rows\", including the answer \"zero\" — it never turns into NULL."
+        },
+        {
+          "label": "The query returns an empty result with no rows at all",
+          "why": "Aggregates without GROUP BY always return exactly one row, even when there were no source rows to compute from."
+        }
+      ],
+      "hints": [
+        "Recall the difference between COUNT(*) and COUNT(column) from sql-007 — the same principle applies here, just comparing COUNT and AVG.",
+        "For SUM, AVG, MIN, and MAX, the result is only defined when there is at least one value to compute over."
+      ],
+      "explain": "COUNT(*) counts rows, and zero rows is a legitimate, meaningful answer for it. The other aggregates compute something over row values, and when there are no values, they have nothing to answer with — hence NULL, not 0. Practical consequence: code like \"if avg_price equals 0, there's no data\" will behave incorrectly — the correct check for missing data looks at COUNT or at IS NULL on the aggregate itself."
+    },
+    {
+      "id": "sql-009",
+      "title": "Brand assortment",
+      "brief": "A category manager wants to know how wide each brand's lineup is in FMCG, and how average price differs.",
+      "goal": "For the FMCG division only, return per brand: brand, sku_count — number of SKUs, avg_price — average price rounded to two decimal places.",
+      "hints": [
+        "A non-aggregated column in SELECT must appear in GROUP BY.",
+        "The division filter applies before grouping, so it belongs in WHERE."
+      ],
+      "explain": "The granularity of the result is set by the GROUP BY list: one row per combination of values. Before writing the query, it helps to say out loud: \"one report row is one brand.\" If you can't say that, the task isn't understood yet."
+    },
+    {
+      "id": "sql-010",
+      "title": "Monthly sales trend",
+      "brief": "The department head asks for monthly unit sales for 2025, to see the seasonal profile.",
+      "goal": "Return month in YYYY-MM format and units — the sum of units, ordered ascending by month.",
+      "hints": [
+        "We're summing units, not counting rows.",
+        "You must group by the same expression as the first column. You don't have to repeat it — the column number is enough."
+      ],
+      "explain": "Dates here are stored as text in YYYY-MM-DD format, and that's not an accident: this format sorts correctly as a string, and substr(date, 1, 7) instantly gives the month. Practical rule: if you can store a date in ISO format, do — half of all period operations become trivial."
+    },
+    {
+      "id": "sql-034",
+      "title": "Division × category matrix",
+      "brief": "A category manager is building an assortment matrix and asks for the SKU count and average price for every combination of division and category.",
+      "goal": "Return division, category, sku_count — the number of products, and avg_price — the average price rounded to two decimal places, for every combination of division and category.",
+      "hints": [
+        "The report's granularity isn't division or category alone — it's their combination.",
+        "GROUP BY lists both columns, comma-separated, in the same order as in SELECT."
+      ],
+      "explain": "A composite GROUP BY sets granularity as the intersection of several attributes: one result row per combination of values across all listed columns. That's different from sql-009, where grouping was by a single field: adding a second column to GROUP BY splits groups further and almost always increases the number of result rows rather than decreasing it."
+    },
+    {
+      "id": "sql-035",
+      "title": "A column outside GROUP BY",
+      "brief": "A colleague who used to work with PostgreSQL is sure this query must fail with an error, and is surprised by the result.",
+      "goal": "Determine what happens when the query runs.",
+      "predictQuestion": "What does this query return? SELECT includes list_price — a column that is neither in GROUP BY nor under an aggregate function.",
+      "options": [
+        {
+          "label": "It runs and returns one row per division, but list_price isn't an aggregate — it's the value from some single row in the group",
+          "why": "SQLite allows this liberty: it doesn't forbid a column outside GROUP BY and outside an aggregate — it substitutes the value from one arbitrary row of the group. The standard leaves this undefined, and you can't rely on the specific value."
+        },
+        {
+          "label": "The query fails with an error: the column must be in GROUP BY or under an aggregate",
+          "why": "That's how PostgreSQL and most other DBMSes behave in strict mode. SQLite makes no such checks and allows this kind of query."
+        },
+        {
+          "label": "list_price comes back as NULL — since the column isn't aggregated, there's no value to show",
+          "why": "SQLite doesn't replace a non-aggregated column with NULL — it takes an actual value from one of the group's rows."
+        },
+        {
+          "label": "list_price comes back as a comma-separated list of all the group's prices",
+          "why": "That behavior would require a separate function like GROUP_CONCAT — by default the column returns a single value, not a list."
+        }
+      ],
+      "hints": [
+        "The SQL standard forbids queries like this, but SQLite is an extension on top of the standard, and this is a case where it's more lenient.",
+        "\"One of the group's rows\" means exactly that: even the SQLite developers don't guarantee which one."
+      ],
+      "explain": "This is a long-standing SQLite liberty (historically MySQL allowed the same thing without strict mode): a non-aggregated column outside GROUP BY isn't forbidden — it's silently allowed, with an unpredictable value. The query doesn't fail and looks like it works, which is more alarming than an error: the same code on PostgreSQL or strict MySQL would fail immediately, while here it silently returns a plausible-looking but random number. Practical rule: every column in an aggregate query's SELECT is either in GROUP BY or under an aggregate function, no exceptions, even when the engine happens to allow one."
+    },
+    {
+      "id": "sql-011",
+      "title": "Premium brands",
+      "brief": "There's talk of launching a premium line. You need to pick out brands with a wide lineup and a high average price.",
+      "goal": "Return brand, sku_count, and avg_price (rounded to two decimal places) for brands with at least 4 SKUs and an average price above 300.",
+      "hints": [
+        "The condition applies to a characteristic of the group, not of an individual row.",
+        "\"At least 4\" is >=."
+      ],
+      "explain": "A query executes in the order FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Everything else follows from that: WHERE can't see aggregates because groups don't exist yet, and in some DBMSes HAVING can't see SELECT aliases because SELECT hasn't run yet. Once you remember this order, you stop guessing where to put a condition."
+    },
+    {
+      "id": "sql-038",
+      "title": "HAVING on a SELECT alias",
+      "brief": "A colleague who used to write PostgreSQL is sure this query must fail, and is surprised by the result.",
+      "goal": "Determine whether the query runs.",
+      "predictQuestion": "Does the query run, given sku_count is an alias declared in this same SELECT line?",
+      "options": [
+        {
+          "label": "Yes — HAVING here refers to the same name as in SELECT, and that's allowed",
+          "why": "SQLite lets HAVING reference a SELECT alias: since the name is already bound to the expression COUNT(*), by the time HAVING is checked it's substituted as that same expression."
+        },
+        {
+          "label": "No — at the point HAVING is checked, the alias sku_count hasn't been computed yet",
+          "why": "That would be the case under strict query execution order (SELECT runs after HAVING), but SQLite makes an exception here specifically for SELECT aliases."
+        },
+        {
+          "label": "Yes, but the result will be wrong: the condition will apply to rows before grouping",
+          "why": "HAVING always runs after GROUP BY regardless — the only question is whether it can reference an alias, not at what stage the check happens."
+        },
+        {
+          "label": "No — HAVING, like WHERE, never sees SELECT aliases",
+          "why": "That's true for WHERE (it runs before aliases are even computed), but not for HAVING in SQLite and some other DBMSes."
+        }
+      ],
+      "hints": [
+        "Query execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. But in some DBMSes HAVING gets an exception specifically for names from SELECT.",
+        "Compare with the explicit version of the same check: HAVING COUNT(*) > 5 — both give the same answer."
+      ],
+      "explain": "Strictly speaking, the SQL standard doesn't require HAVING to understand SELECT aliases — under strict execution logic, those names don't exist yet at the HAVING stage. But SQLite (like MySQL) allows this liberty. Practical takeaway: if a query needs to keep working on another DBMS, it's safer to duplicate the explicit expression in HAVING, as in sql-011, rather than rely on the alias being picked up — the exact same principle as the non-aggregated column outside GROUP BY (sql-035): the engine allows more than the standard guarantees."
+    },
+    {
+      "id": "sql-049",
+      "title": "High-revenue brands with wide coverage",
+      "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets — either trait alone proves nothing.",
+      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets — the count of distinct outlets with sales, for brands with revenue above 5,000,000 ₽ and present in at least 80 outlets. Ordered by revenue descending.",
+      "hints": [
+        "Count distinct customers with the same function as in SELECT — DISTINCT customer_id.",
+        "After HAVING, sorting goes from higher revenue to lower — the keyword goes after the column name."
+      ],
+      "explain": "One condition in HAVING checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each. Unlike sql-011, which had a single threshold condition, here you can see how combining metrics screens out brands that are strong on only one dimension — exactly what a category manager needs for a shelf-expansion decision."
+    },
+    {
+      "id": "sql-012",
+      "title": "Revenue by brand",
+      "brief": "The commercial director's standard Monday query: how brands performed in H1 2026.",
+      "goal": "Return brand and revenue — the sum of revenue for the period 2026-01-01 through 2026-06-30, rounded to whole numbers, ordered by revenue descending.",
+      "hints": [
+        "The fact lives in fact_sellout, the brand name in dim_product. product_id links them.",
+        "Filter the period on f.week_start."
+      ],
+      "explain": "This is the basic shape of any star-schema report: the fact at the center, dimension tables joined to it by key, breakdowns coming from the dimensions, measures from the fact. A time-saving order to write it in: start with FROM on the fact, then JOIN the dimensions you need, then WHERE, then GROUP BY, and only at the end, SELECT."
+    },
+    {
+      "id": "sql-036",
+      "title": "Breaking down one outlet's sales",
+      "brief": "A sales rep is going through the weekly report for the \"Perekrestok #1013\" outlet and asks for the product codes decoded into human-readable names.",
+      "goal": "Return product_name, units, and revenue for the outlet with customer_id = 13 for the week of 2026-06-15.",
+      "hints": [
+        "The join key is product_id: it exists in both fact_sellout and dim_product, but since the column is named the same in both tables, you need to qualify it with a table alias in ON.",
+        "Filters on the outlet and on the week apply to the fact (f.customer_id, f.week_start) — they're already available there; the JOIN is only needed to add the product name."
+      ],
+      "explain": "This is the basic mechanics of a JOIN without aggregation: one result row is one fact row, enriched with columns from a dimension table. The join doesn't sum or group anything — it just extends each row with data matched by its key. This same mechanism underlies sql-012 and every more complex join query further on — they just add GROUP BY, a period filter, and sorting on top."
+    },
+    {
+      "id": "sql-037",
+      "title": "Who drops out of the join",
+      "brief": "A financial analyst is checking the completeness of a join between customers and sales, expecting to see every customer in the company.",
+      "goal": "Determine how many distinct customers will appear in the result.",
+      "predictQuestion": "How many distinct customers does the query return, given dim_customer has 144 customers total, 12 of them distributors?",
+      "options": [
+        {
+          "label": "132 — distributors drop out: they don't sell to end buyers and never appear in fact_sellout",
+          "why": "fact_sellout records sales at points of sale. Distributors are not points of sale — they have zero rows in this table, and INNER JOIN discards customers with no match."
+        },
+        {
+          "label": "144 — INNER JOIN keeps all rows from the left table",
+          "why": "That's how LEFT JOIN behaves. INNER JOIN keeps only rows where a matching key was found in both tables."
+        },
+        {
+          "label": "Only the 12 distributors with shipments will remain",
+          "why": "Distributor shipments live in a separate table, fact_sellin, not in fact_sellout — that table has nothing to do with this JOIN."
+        },
+        {
+          "label": "0 — customer_id has different data types in the two tables and never matches",
+          "why": "Both columns are numeric foreign keys into the same customer directory, and the comparison between them works normally."
+        }
+      ],
+      "hints": [
+        "Check which customer_type values actually appear among customers who have rows in fact_sellout — do distributors sell directly to end buyers?",
+        "144 minus the 12 distributors is exactly the number of outlets that can physically appear in fact_sellout."
+      ],
+      "explain": "INNER JOIN shows only the intersection: a dim_customer row for which fact_sellout has at least one matching sale. Distributors serve outlets but don't sell to the end buyer themselves, so they have zero rows in the sales fact — and they silently drop out of the report. This is exactly the mechanism that will later call for a LEFT JOIN (sql-014): if a report needs to show \"every customer, even those with no sales\", INNER JOIN is structurally the wrong tool for that — not because anything is broken, but because it's designed as an intersection, not a union."
+    },
+    {
+      "id": "sql-014",
+      "title": "Where did the new product reach",
+      "brief": "«Витамакс Форте №30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report — it's built specifically for them, so they must not disappear.",
+      "goal": "Return for all 16 regions: region_name and units — total unit sales of «Витамакс Форте №30» across all time. Where there were no sales, show 0.",
+      "hints": [
+        "Start from the table whose rows all need to survive — the region directory.",
+        "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product — the ones the report exists to show.",
+        "You can look up the product's key by name with a scalar subquery right inside the join condition: (SELECT product_id FROM dim_product WHERE product_name = '...'). COALESCE turns an empty sum into zero."
+      ],
+      "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\" — both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN — the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0 — in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent — zero sales, unvisited outlets, SKUs with no stock — are their own genre. They're almost always built outward from the dimension table, not from the fact."
+    },
+    {
+      "id": "sql-039",
+      "title": "A product filter that landed in the wrong place",
+      "brief": "A colleague copies the sql-014 query about «Витамакс Форте №30» coverage by region, but to add the product filter, puts the condition in WHERE instead of ON for brevity.",
+      "goal": "Determine how many regions the modified query returns.",
+      "predictQuestion": "How many regions end up in the result, given there are 16 total and the new product isn't sold at all in five of them?",
+      "options": [
+        {
+          "label": "11 — regions with no sales of this product disappear, even though the JOIN in the text is still LEFT",
+          "why": "For regions without the target product, f.product_id is NULL after the join. The condition WHERE f.product_id = ... is never true for NULL, and such rows get filtered out — LEFT JOIN behaves like INNER here."
+        },
+        {
+          "label": "16 — LEFT JOIN keeps all regions regardless of where the filter sits",
+          "why": "That would be true if the filter were in ON. In WHERE, it's checked after the join and cuts out exactly the NULL rows that LEFT JOIN generated."
+        },
+        {
+          "label": "5 — only the regions where the product truly has no sales come back",
+          "why": "It's the opposite: for those regions f.product_id is exactly NULL, and the condition WHERE f.product_id = ... filters them out rather than keeping them."
+        },
+        {
+          "label": "0 — a subquery in WHERE is incompatible with LEFT JOIN",
+          "why": "A subquery and LEFT JOIN have no technical conflict — the query runs and returns some of the regions."
+        }
+      ],
+      "hints": [
+        "Compare with sql-014: the same business question, but the product filter moved from ON to WHERE.",
+        "WHERE applies to the result of the join — and where there was no match, LEFT JOIN has already substituted NULL."
+      ],
+      "explain": "This is exactly the mistake sql-014's hint warned about: a condition on a LEFT JOIN's right-hand table must go in ON. Here you can see live what happens if you ignore that — the query is syntactically fine, the JOIN in the text is still LEFT, but it behaves like INNER in practice: the five regions the report exists for silently vanish, with no error at all. Verification reflex: if a LEFT JOIN query returns fewer rows than the left table should provide, the first thing to check is whether a filter on the right-hand table has moved into WHERE."
+    },
+    {
+      "id": "sql-040",
+      "title": "Outlets that never bought «Чистовъ»",
+      "brief": "Trade marketing is preparing a win-back program for the «Чистовъ» brand and asks for a list of outlets that have never sold it at all — they need to be approached separately, ahead of the general visit plan.",
+      "goal": "Return customer_name and city for outlets (customer_type ≠ 'distributor') with zero sales rows for «Чистовъ» brand products in fact_sellout.",
+      "hints": [
+        "The brand condition must stay in ON — otherwise outlets without this product get filtered out before you even get a chance to find them.",
+        "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found, and the fact_sellout columns are empty."
+      ],
+      "explain": "This is a second way to use LEFT JOIN — not to compute a value for each left-table row, but to find the left-table rows for which the right-hand table had nothing at all. The technique is called an anti-join: LEFT JOIN plus an IS NULL check on a mandatory right-table column, usually its key. INNER JOIN is fundamentally the wrong tool for this task — it would immediately discard exactly the rows you're trying to find."
+    },
+    {
+      "id": "sql-013",
+      "title": "Where did the extra revenue come from",
+      "brief": "An analyst added promo information to a revenue report by joining the fact table to dim_promo on brand — and total revenue nearly tripled, even though the underlying data hadn't changed.",
+      "goal": "Determine the cause.",
+      "predictQuestion": "Why is revenue higher in this query than in the same query without the join to dim_promo?",
+      "options": [
+        {
+          "label": "A brand has multiple promotions, and every sales row matched every one of them",
+          "why": "The join on brand isn't unique: brands in this database have 9–11 promotions each, and every sales row matches every one of them — so it enters the sum as many times as the brand has promotions."
+        },
+        {
+          "label": "The JOIN added sales rows that never existed in the fact table",
+          "why": "A JOIN doesn't create new facts, it only matches existing ones. But one fact row can match several dimension rows — and then it gets counted multiple times."
+        },
+        {
+          "label": "Promo revenue is counted twice: once in the base row, once in the promo row",
+          "why": "Each sale is recorded once in fact_sellout — there is no separate promo row, just a promo_id reference."
+        },
+        {
+          "label": "A LEFT JOIN should have been used instead",
+          "why": "The join type is irrelevant here: a LEFT JOIN would have multiplied the rows in exactly the same way. The problem is the non-unique key."
+        }
+      ],
+      "hints": [
+        "How many dim_promo rows correspond to a single brand?",
+        "A JOIN matches every row against every row that fits."
+      ],
+      "explain": "A rule worth making automatic: whenever you join tables, always know how many right-table rows correspond to one left-table row. If it's more than one, facts get multiplied, and the sum grows by exactly that factor. The check takes seconds: compare COUNT(*) before and after adding the JOIN. If the row count changed and you didn't plan for that, you can no longer trust any measure computed on top. The correct join here is on promo_id, which the fact table already has."
+    },
+    {
+      "id": "sql-041",
+      "title": "Proving the fan-out with numbers",
+      "brief": "Before including the join to dim_promo in a standing report (as in sql-013), an analyst wants to formally show that it multiplies facts, rather than rely on intuition.",
+      "goal": "For the «Чистовъ» brand in 2025, return one row: rows_before — the number of fact_sellout rows after an ordinary join to dim_product, rows_after — the number of rows that would result from also joining dim_promo on brand (JOIN dim_promo m ON m.brand = p.brand).",
+      "hints": [
+        "Both counts are essentially the same query, differing by exactly one JOIN — insert it as a second subquery in SELECT.",
+        "No grouping needed: both parts simply count COUNT(*) over the whole selection."
+      ],
+      "explain": "This is the before/after check described in the sql-013 explanation: if adding a JOIN changes the row count and you didn't plan for that, the join key isn't unique and facts got multiplied. Here rows_after is exactly 10 times rows_before — because the «Чистовъ» brand has exactly 10 promotions in dim_promo, and every sales row matched every one of them. Turn this check into a reflex before adding any new JOIN to an existing report, not only once the numbers already look suspicious."
+    },
+    {
+      "id": "sql-050",
+      "title": "«Чистовъ» promo revenue without duplication",
+      "brief": "After the sql-013 walkthrough, it's clear why joining dim_promo on brand doubled up revenue. Trade marketing still wants the real breakdown of «Чистовъ» brand sales for 2025 by promo mechanic.",
+      "goal": "For 2025, return for the «Чистовъ» brand: mechanic and revenue — the sum of revenue for that mechanic, rounded to whole numbers. Ordered by revenue descending.",
+      "hints": [
+        "The key that unambiguously links a sale to a specific promotion already exists in the fact table itself — it's promo_id, not brand.",
+        "Every fact_sellout row has exactly one promo_id value (or NULL), so this join can't multiply rows — unlike the join on brand in sql-013."
+      ],
+      "explain": "This is the fix for the mistake in sql-013: dim_promo should be joined on the key that exists in the fact table itself and uniquely identifies a specific promotion — promo_id. Joining on brand duplicated facts because a brand has several promotions at once; joining on promo_id is safe because each sale has at most one associated promotion. The same principle resolves any fan-out: look for a ready-made foreign key in the fact table pointing to the dimension you need, instead of joining on a descriptive field like a name or a brand."
+    },
+    {
+      "id": "sql-015",
+      "title": "Promo vs. base sales",
+      "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
+      "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue — revenue during promotions and outside them, both rounded to whole numbers.",
+      "hints": [
+        "A promo is checked with IS NOT NULL, not with a comparison.",
+        "CASE goes inside SUM: you're summing not all rows, but only the matching ones."
+      ],
+      "explain": "Conditional aggregation is an analyst's workhorse. SUM(CASE WHEN condition THEN measure ELSE 0 END) unfolds a metric into columns in a single pass over the data, instead of writing two queries and then joining them. The same trick gives you a share: SUM(CASE ...) * 1.0 / SUM(measure). And the same idea in Power BI is called CALCULATE with a filter — same concept, different syntax."
+    },
+    {
+      "id": "sql-042",
+      "title": "CASE without a branch for every case",
+      "brief": "An analyst is building a Russian lookup for sales channels and lists translations only for the channels that show up most often in FMCG reports.",
+      "goal": "Determine what ends up in channel_ru for channels that have no explicit branch.",
+      "predictQuestion": "What ends up in channel_ru for rows with channel = 'ecom' and channel = 'distributor'?",
+      "options": [
+        {
+          "label": "NULL — no WHEN branch matched, and there is no ELSE",
+          "why": "A CASE WHEN ... END with no ELSE is an implicit ELSE NULL. If no condition is true, the whole expression becomes NULL."
+        },
+        {
+          "label": "An empty string '' — CASE substitutes a blank value for unhandled cases",
+          "why": "An empty string is a specific value that would have to be written explicitly in ELSE. By default CASE returns NULL, not ''."
+        },
+        {
+          "label": "The original channel value — 'ecom' and 'distributor' as-is",
+          "why": "CASE doesn't automatically fall back to the unhandled input value — only an explicit ELSE channel would behave that way."
+        },
+        {
+          "label": "The query fails with an error because not all values are listed",
+          "why": "An incomplete CASE is not a syntax error. The query runs fine — some rows just get NULL where no branch matched."
+        }
+      ],
+      "hints": [
+        "There's no ELSE in this CASE — and without one, unmatched branches have exactly one behavior.",
+        "Compare with IF/ELSE in other languages: a missing branch there isn't equivalent to an empty string either."
+      ],
+      "explain": "A CASE WHEN ... END with no ELSE is an implicit ELSE NULL: it's not an error and not an empty string, but a genuine absence of value, visually indistinguishable from a \"real\" gap in the data. Rule of thumb: if a lookup doesn't enumerate every value, add an ELSE — either with an explicit label like 'Other', so such rows are visible, or deliberately leave ELSE NULL as a conscious decision rather than an oversight."
+    },
+    {
+      "id": "sql-043",
+      "title": "Price-list tiers",
+      "brief": "A category manager wants to see the portfolio not by brand but by price tier — this feeds a conversation with procurement about where the lineup is concentrated.",
+      "goal": "Return tier — 'Бюджетный' (list_price < 100), 'Средний' (100 ≤ list_price < 300), or 'Премиум' (list_price ≥ 300), and sku_count — the number of products in each tier.",
+      "hints": [
+        "You can group directly on the CASE expression's alias — shorter than repeating the whole construct in GROUP BY.",
+        "Branch order matters: WHEN conditions are checked in sequence, and once one matches, the rest are never evaluated."
+      ],
+      "explain": "Here CASE isn't doing conditional aggregation — it's binning: turning a continuous value into named categories that any later segmentation is built on. The order of conditions is critical: if 'Средний' (< 300) came before 'Бюджетный' (< 100), budget products would also pass the wider condition first and never reach their own branch. The general rule: from the narrowest condition to the widest."
+    },
+    {
+      "id": "sql-016",
+      "title": "A brand's share within its division",
+      "brief": "The annual presentation needs portfolio structure: what share of revenue each brand holds within its own division.",
+      "goal": "For 2025, return: division, brand, revenue (rounded to whole numbers) and share_pct — the brand's share of its division's revenue in percent, rounded to one decimal place.",
+      "hints": [
+        "You can build the second CTE directly on the first — no need to re-read the fact table.",
+        "Integer division in SQLite truncates the fractional part: multiply by 100.0, not 100."
+      ],
+      "explain": "A CTE is just naming an intermediate result. The value isn't that it's shorter (it's often longer) — it's that each step can be run on its own and checked: did brand revenues compute correctly, does the division total add up. A query written step by step gets debugged in minutes; a subquery nested four levels deep takes hours."
+    },
+    {
+      "id": "sql-044",
+      "title": "A forgotten join between two CTEs",
+      "brief": "An analyst splits a brand-share calculation into two CTEs, as in sql-016, but in the second step, out of carelessness, lists both tables comma-separated instead of using JOIN ... ON.",
+      "goal": "Determine how many rows the query returns.",
+      "predictQuestion": "How many rows does the query return, given brand_rev has 9 rows (one per brand) and div_rev has 2 (one per division)?",
+      "options": [
+        {
+          "label": "18 — a comma-separated list with no ON turns the join into a Cartesian product",
+          "why": "FROM a, b is a CROSS JOIN: every row of one table pairs with every row of the other. 9 brand_rev rows × 2 div_rev rows = 18."
+        },
+        {
+          "label": "9 — the second CTE just adds its columns onto the rows that already exist",
+          "why": "That would be the case for a one-to-one join on a shared key. With no matching condition, every brand_rev row meets both div_rev rows, not just one."
+        },
+        {
+          "label": "11 — the rows of both CTEs line up one to one, and any extras get appended at the end",
+          "why": "That's how a vertical UNION ALL behaves. A comma-separated FROM is a horizontal join with no condition — it multiplies row counts rather than adding them."
+        },
+        {
+          "label": "The query fails with an error — CTEs can't be comma-separated in FROM",
+          "why": "Syntactically this is perfectly legal — the same thing can be written for ordinary tables too. That's exactly why the mistake slips through unnoticed."
+        }
+      ],
+      "hints": [
+        "FROM a, b with no condition is the same as CROSS JOIN a, b.",
+        "The row count of a Cartesian product is the product of the row counts, not their sum."
+      ],
+      "explain": "With ordinary tables this mistake usually jumps out — thousands of rows instead of hundreds. But with CTEs, where both sides are small, the result looks plausible: 18 isn't an alarmingly large number, and it's easy to mistake for a slightly bloated but reasonable-looking list. Same rule as with ordinary tables (sql-013): joining CTEs to each other needs the same explicit ON as joining ordinary tables — the WITH syntax doesn't exempt you from that."
+    },
+    {
+      "id": "sql-045",
+      "title": "Revenue per active outlet by channel",
+      "brief": "The commercial director compares channels not by absolute revenue but by per-outlet efficiency — otherwise a channel with a hundred outlets always looks stronger than a niche one, even if it performs worse.",
+      "goal": "For 2025, return channel, revenue (sum of revenue, rounded to whole numbers), outlets (count of distinct outlets with at least one sale), and revenue_per_outlet — revenue divided by outlet count, rounded to whole numbers.",
+      "hints": [
+        "Both aggregates — SUM and COUNT(DISTINCT) — are computed in one CTE on the same key, channel.",
+        "Revenue divided by outlet count is no longer an aggregate, just ordinary division, so it belongs in the final SELECT, not inside the CTE. Don't forget to multiply by 1.0, or the division will be integer division."
+      ],
+      "explain": "Here the CTE isn't so much splitting the calculation into steps as honestly fixing two related measures at the same granularity level, once — and everything after that, i.e. dividing one by the other, happens separately, on the CTE's result. Same principle as sql-016: compute the components in one place first, then combine them as a separate, simpler step, rather than one long formula."
+    },
+    {
+      "id": "sql-021",
+      "title": "Duplicates in a raw extract",
+      "brief": "A sales extract arrives from the accounting system, and it regularly contains fully duplicated rows — the export was run twice. Before loading it into the mart, you need to gauge the scale.",
+      "goal": "From the staging_raw_sellout table, return one row: total_rows — total rows, unique_rows — how many unique records remain if a row counts as a duplicate when date, customer, SKU, quantity, and revenue all match, and duplicate_rows — the difference between them. The technical row number raw_id is not part of the comparison.",
+      "hints": [
+        "COUNT(DISTINCT ...) takes only one expression — concatenate the fields into a string with the || operator.",
+        "If even one concatenation operand is NULL, the whole concatenation becomes NULL and the row drops out of the count. Replace empty values with a placeholder via COALESCE."
+      ],
+      "explain": "The reflex matters more than the technique here: every incoming extract gets profiled first — row count, duplicates, share of nulls, date range, list of distinct values in key columns. Five minutes of profiling saves a day of figuring out why the dashboard's revenue is higher than the accounting system's. And separately, remember how concatenation with NULL behaves — it silently breaks composite keys."
+    },
+    {
+      "id": "sql-046",
+      "title": "A chain spelled two ways",
+      "brief": "In staging_raw_sellout the «Пятёрочка» chain is sometimes recorded as «Пятерочка» — missing the «ё». Before normalizing the lookup, you need to gauge the scale of the problem.",
+      "goal": "Return one row: written_yo — the number of rows where customer_name contains «Пятёрочка» (with ё), written_e — where it contains «Пятерочка» (without ё), total_chain — their sum: both groups belong to the same chain.",
+      "hints": [
+        "The two spellings differ only in the letter «ё»/«е» — catch both variants with separate LIKE conditions.",
+        "The sum of written_yo and written_e should match total_chain — that's the check that the variants don't overlap and nothing is lost."
+      ],
+      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts: the source system doesn't always render «ё», and manual entry even less so. If you group by customer_name as-is, GROUP BY will silently create two separate rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. Before aggregating, such variants are normalized once at the start of the pipeline — for example, REPLACE(customer_name, 'Пятерочка', 'Пятёрочка') — and after that you can group without worry."
+    },
+    {
+      "id": "sql-047",
+      "title": "A date range on raw text",
+      "brief": "Before normalization, an analyst wants to estimate how many rows in staging_raw_sellout belong to June 2026, and compares sale_date against text boundaries of the month — the same way they normally would for well-formed ISO dates.",
+      "goal": "Determine whether the condition will find all the needed rows.",
+      "predictQuestion": "Will this condition find all the June 2026 rows, given sale_date mixes four formats: 'YYYY-MM-DD', 'DD.MM.YYYY', 'DD/MM/YYYY', and 'YYYY-M-D' without leading zeros?",
+      "options": [
+        {
+          "label": "No — it only works for rows in YYYY-MM-DD format; the other formats compare as text and almost always give the wrong result",
+          "why": "A text comparison of '15.06.2026' against '2026-06-01' proceeds byte by byte through the string's leading characters, not by the meaning of the date — it has nothing to do with which month the date actually belongs to."
+        },
+        {
+          "label": "Yes — SQLite recognizes a date in any of these formats and compares by value",
+          "why": "SQLite has no separate \"date\" type: sale_date is plain TEXT, and >= / <= always compare character by character, regardless of what a human sees in the string."
+        },
+        {
+          "label": "It will find all the rows, but add extra ones from neighboring months",
+          "why": "The problem isn't extra rows — it's that some of the needed rows in non-standard formats never land in the range at all; the comparison for them is simply meaningless, not \"too generous\"."
+        },
+        {
+          "label": "The query fails with a type-mismatch comparison error",
+          "why": "All the values are TEXT, the comparison is syntactically valid and runs without errors — the result just won't match real June."
+        }
+      ],
+      "hints": [
+        "Before comparing dates as a range, they need to be brought to one format — for example, to ISO via a combination of substr and concatenation.",
+        "Look at a few sale_date rows from the same week — the formats will differ between neighboring rows."
+      ],
+      "explain": "A >= / <= comparison on a TEXT column is always byte-by-byte, not calendar-aware — it only works when the data format lexicographically matches chronological order, as with ISO YYYY-MM-DD. The moment the format differs even slightly — day before month, no leading zero — the comparison stops meaning what it looks like it means. Before any period filter on a raw text field, normalize the format first, and only then compare."
+    },
+    {
+      "id": "sql-017",
+      "title": "Three ways to number rows",
+      "brief": "Five products by revenue: 900, 800, 800, 700, 600.",
+      "goal": "Understand how ranking functions differ when values tie.",
+      "predictQuestion": "What values do the two rows with revenue 800, and the following row with 700, get?",
+      "options": [
+        {
+          "label": "rn: 2 and 3, then 4 — rnk: 2 and 2, then 4 — dense: 2 and 2, then 3",
+          "why": "ROW_NUMBER numbers rows consecutively and breaks ties arbitrarily; RANK gives ties the same rank and skips the next number; DENSE_RANK gives ties the same rank and leaves no gaps."
+        },
+        {
+          "label": "All three functions give 2, 2, 3",
+          "why": "Only DENSE_RANK behaves that way. ROW_NUMBER must produce different numbers, because it numbers rows, not values."
+        },
+        {
+          "label": "All three give 2, 3, 4",
+          "why": "Only ROW_NUMBER behaves that way. RANK and DENSE_RANK account for tied values."
+        },
+        {
+          "label": "rn: 2 and 2 — RANK and DENSE_RANK will match",
+          "why": "ROW_NUMBER can never produce equal numbers, and RANK and DENSE_RANK diverge from each other exactly after a tie."
+        }
+      ],
+      "hints": [
+        "One of the functions must give every row a unique number.",
+        "The other two differ in whether they leave a gap in the numbering after tied values."
+      ],
+      "explain": "The choice of function is driven by the question. \"Pick one row per group\" (e.g. a customer's last sale) — ROW_NUMBER, it guarantees exactly one. \"Podium places\" — RANK: with two second places, there's no third. \"Price tiers, categories\" — DENSE_RANK, where gaps would be meaningless. Separately, remember: with ROW_NUMBER and an ambiguous sort, the result is non-deterministic — add a second key to ORDER BY."
+    },
+    {
+      "id": "sql-018",
+      "title": "Top 3 SKUs within each brand",
+      "brief": "A category manager is preparing an assortment cut and wants to see the core: the three best-selling SKUs in each brand.",
+      "goal": "For 2025, return brand, product_name, revenue (rounded to whole numbers), and rnk — the SKU's rank within its brand by revenue. Keep only the top three ranks in each brand.",
+      "hints": [
+        "\"Within each brand\" is PARTITION BY brand.",
+        "A window function can't be used in WHERE at the same query level: compute it in a CTE or subquery first, and filter one level up."
+      ],
+      "explain": "A window function is computed after WHERE and GROUP BY, but before ORDER BY and LIMIT — so you can't filter on its result at the same level; you need an extra layer. This is the most common working pattern: compute the window in a CTE, filter outside it. It solves almost any \"top N per group\", \"latest record per customer\", or \"customer's first order\" question."
+    },
+    {
+      "id": "sql-051",
+      "title": "Leading sales channel in each division",
+      "brief": "The commercial director is preparing a budget defense and wants not the full channel breakdown, but just the leading channel within each division — that's what everything else will be compared against.",
+      "goal": "For 2025, return per division: division, channel, and revenue (rounded to whole numbers) — the channel with the highest revenue within the division.",
+      "hints": [
+        "ROW_NUMBER here is partitioned by division — insert PARTITION BY before division.",
+        "The \"top rank only\" filter is rnk = 1, since the rank within its partition is already computed in the ranked CTE."
+      ],
+      "explain": "PARTITION BY division starts a separate ROW_NUMBER counter for each division: the numbering of FMCG channels doesn't continue into Pharma channels, it restarts at one — the same principle as sql-018 with brands, the only difference being that there we kept the top three ranks, and here one is enough. Pharma has only a single sales channel in the database — pharmacy — so the result for it is trivial, but the query stays correct: it looks for the leader, it doesn't assume competition between channels within a division."
+    },
+    {
+      "id": "sql-052",
+      "title": "Rep ranking within a team",
+      "brief": "A sales manager is preparing 2025 year-end bonuses and wants to see each rep's rank within their team by the revenue of the outlets they cover — managers shouldn't be included in the ranking.",
+      "goal": "For 2025, return team, rep_name, revenue — the sum of revenue from the rep's outlets, rounded to whole numbers, and rnk — the rep's rank within their team by descending revenue. Only role = 'rep'. Sort by team, then by rank.",
+      "hints": [
+        "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep — aggregate by rep_id first.",
+        "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
+      ],
+      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers — there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
+    },
+    {
+      "id": "sql-053",
+      "title": "Numbering within a partition vs. overall",
+      "brief": "An intern is using PARTITION BY for the first time and expects the numbering to run straight through the whole table, like an ordinary list.",
+      "goal": "Determine the ROW_NUMBER values for the two rows of the ecom channel.",
+      "predictQuestion": "What rn values do the two ecom rows get (revenue 500 and 300), given they come after three retail rows in the table itself?",
+      "options": [
+        {
+          "label": "1 and 2 — numbering restarts in each partition, regardless of where the rows sit in the table",
+          "why": "PARTITION BY splits the row set into independent groups, and within each one ROW_NUMBER counts from one — the physical order of rows in the source table has no effect on this."
+        },
+        {
+          "label": "4 and 5 — the numbering continues across the whole table after retail",
+          "why": "That's how ordinary numbering without PARTITION BY would behave. PARTITION BY's whole role is to split a single counter into several — one per channel."
+        },
+        {
+          "label": "Undefined — PARTITION BY requires the rows to already be sorted by channel",
+          "why": "PARTITION BY groups the rows logically for the computation itself, regardless of their physical order in the source table."
+        },
+        {
+          "label": "1 and 1 — without sorting inside the partition, ROW_NUMBER can't tell the rows apart",
+          "why": "There is an ORDER BY revenue DESC inside OVER here — it's exactly what determines which row is first and which is second within the ecom partition."
+        }
+      ],
+      "hints": [
+        "PARTITION BY isn't a filter or a sort on the result — it splits the window into independent groups for computation.",
+        "retail has three rows, ecom has two. Each partition is numbered from 1 on its own."
+      ],
+      "explain": "PARTITION BY channel starts its own, independent ROW_NUMBER counter for each channel — as if you'd run the query separately for retail and separately for ecom and just combined the results. The order of rows in the source table doesn't matter: the numbering obeys only PARTITION BY and the ORDER BY inside the partition. This mirrors the mistake in sql-056: there, PARTITION BY was forgotten, several rows merged into one continuous window, and the function stepped across the channel boundary without noticing it. Here PARTITION BY is in place, but the expectation stayed the old, continuous one: the intern expects the overall count to continue and is surprised that ecom starts at one. In both cases the answer reads straight off the window's definition — it's the exhaustive description of what the function sees and what it doesn't."
+    },
+    {
+      "id": "sql-019",
+      "title": "Smoothing a weekly series",
+      "brief": "Water sales jump around week to week because of promotions and deliveries. For a presentation chart, you need a smoothed series so the seasonal trend shows through instead of the noise.",
+      "goal": "For 2025, for the «Ключевая» brand, return week_start, units — sum of units for the week, and ma4 — a moving average over the current and three preceding weeks, rounded to one decimal place. Ordered by week ascending.",
+      "hints": [
+        "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
+        "Three preceding weeks plus the current one is 3 PRECEDING."
+      ],
+      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row — the result isn't a moving average, it's a running total instead. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window — such values are usually hidden in a report."
+    },
+    {
+      "id": "sql-020",
+      "title": "Month-over-month change",
+      "brief": "The monthly report for management needs not just sales but change vs. the previous month — a number with no trend attached says nothing.",
+      "goal": "For 2025, return month (YYYY-MM format), units — sum of units, prev_units — units for the previous month, and mom_pct — the change vs. the previous month in percent, rounded to one decimal place. The first month is left with empty values. Ordered by month ascending.",
+      "hints": [
+        "LAG retrieves the previous row's value.",
+        "The first month has no previous value — LAG returns NULL, and the percentage becomes NULL too. That's expected."
+      ],
+      "explain": "LAG and LEAD remove the need to self-join a table against a shifted period — and that kind of self-join also breaks on missing months. An important caveat about meaning: month-over-month on a seasonal product is almost always misleading, because it mixes seasonality with trend. For seasonal categories you compare year over year (the same month last year) or use a rolling year. The technique gives you a number — the correctness of the comparison is still your responsibility."
+    },
+    {
+      "id": "sql-054",
+      "title": "A distributor's quarterly running shipments",
+      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Волга-Трейд» distributor by the end of each month.",
+      "goal": "For October–December 2025, return month_start, units — shipped that month, and running_units — the running total since the start of the quarter. Ordered by month ascending.",
+      "hints": [
+        "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
+        "distributor_id = 1 is «Волга-Трейд» — you can check this against dim_customer."
+      ],
+      "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in sql-019, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period — exactly what's needed here to track quarterly running shipments."
+    },
+    {
+      "id": "sql-055",
+      "title": "Price growth since the start of the year",
+      "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year — and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
+      "goal": "For 2025, for the «Ключевая негаз. 1.5 л» product, return month_start, list_price, jan_price — the price in January of that year, and growth_pct — growth vs. January in percent, rounded to one decimal place. Ordered by month ascending.",
+      "hints": [
+        "FIRST_VALUE(list_price) OVER (ORDER BY month_start) returns the price of the window's very first row for every result row — that's the January price.",
+        "FIRST_VALUE can be called several times with the same OVER (...) — that's not separate computations, it's the same result each time."
+      ],
+      "explain": "FIRST_VALUE's default window frame runs from the start up to the current row, but that doesn't get in the way here: the window's first row is always the same one, January, regardless of the current position. In sql-019 that same default frame was the source of a bug for AVG, because a running average isn't what smoothing needs; here the default is exactly right, because the January price shouldn't change from row to row. Both cases teach the same lesson: before relying on the default frame, check that it actually gives the meaning you need, rather than just \"looking right\"."
+    },
+    {
+      "id": "sql-056",
+      "title": "LAG without PARTITION BY across channels",
+      "brief": "An analyst computes month-over-month revenue change for each sales channel in a single query, not realizing that the first row of a new channel will get not an empty value, but the tail end of the previous channel.",
+      "goal": "Determine what ends up in prev_revenue for the first row of the modern_trade channel.",
+      "predictQuestion": "What ends up in prev_revenue for the first row of the modern_trade channel (2025-01), given the row immediately before it in the ordered list is the ecom row for March (2382221)?",
+      "options": [
+        {
+          "label": "2382221 — March's ecom revenue, not NULL and not a modern_trade value",
+          "why": "LAG without PARTITION BY looks at the previous row of the entire ordered result as a whole. Since rows run consecutively by channel, month, the row before modern_trade's first month is ecom's last month, not an empty value."
+        },
+        {
+          "label": "NULL, same as ecom's first row — both channels start with a clean slate",
+          "why": "That would be the case if the window were split with PARTITION BY channel. Without it, the boundary between channels means nothing special to LAG, same as the boundary between any two ordinary neighboring months."
+        },
+        {
+          "label": "751734 — modern_trade's January revenue gets duplicated as its own previous-row value",
+          "why": "LAG never looks at the current row against itself — only at the previous row in the given order, and here the previous one belongs to ecom."
+        },
+        {
+          "label": "0 — LAG substitutes zero when the previous row belongs to a different channel",
+          "why": "LAG has no special logic for a category change. It honestly takes the previous row's value, whatever it is, and in this case that's ecom's real revenue, not zero."
+        }
+      ],
+      "hints": [
+        "Compare with sql-020: there LAG worked over a single continuous time series, and PARTITION BY was never needed at all.",
+        "Here there are several series — one per channel — and without PARTITION BY they look like one continuous series to LAG."
+      ],
+      "explain": "LAG and LEAD don't see the table as a whole with its meaningful groups — they see a linear sequence of rows defined by the ORDER BY inside OVER. A single time series, as in sql-020, never exposes this problem — there are no other series whose boundary you could cross. The moment there are several series (channels, regions, customers), LAG without PARTITION BY silently takes the last row of the previous group instead of NULL, and the first month-over-month calculation for each new group ends up being a comparison against someone else's data. The rule is simple: anywhere the ORDER BY inside OVER runs across several entities at once, PARTITION BY on that entity is mandatory, not optional."
+    },
+    {
+      "id": "sql-022",
+      "title": "Who overstocked the warehouse",
+      "brief": "The CFO is unhappy: Q4 2025 shipments grew, but retail sales didn't. There's a suspicion that one of the distributors loaded up on stock to hit an annual bonus. That kind of stockpile comes back as a shipment drop next quarter, so it needs to be found now.",
+      "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor — name, sell_in — units shipped for the months 2025-10-01 through 2025-12-01, sell_out — units sold at outlets for the weeks 2025-09-29 through 2025-12-28, and ratio — the first divided by the second, rounded to two decimal places. Ordered by ratio descending.",
+      "hints": [
+        "Shipments and sales live at different granularities — compute them in two separate CTEs, then join.",
+        "The link between an outlet and its distributor is the served_by_distributor_id column in dim_customer.",
+        "Dividing two integers in SQLite gives an integer: multiply the numerator by 1.0."
+      ],
+      "explain": "The gap between sell-in and sell-out is a basic diagnostic metric in distribution. Shipments only mean the product left the manufacturer's warehouse; it becomes a sale only once an end buyer actually buys it. A steady ratio around one is a healthy picture. A sharp spike means the channel's stockpile is growing, and that's a deferred problem: next quarter the distributor will spend selling down inventory instead of ordering new stock. The opposite situation, a ratio noticeably below one, is also a signal — the channel is draining its stock and will soon hit a shortage."
+    },
+    {
+      "id": "sql-023",
+      "title": "Why the brand fell",
+      "brief": "«Чистовъ» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture by quarter.",
+      "goal": "Determine the cause of the decline from the decomposition results.",
+      "predictQuestion": "What was the main cause of the drop in brand sales?",
+      "options": [
+        {
+          "label": "Loss of distribution: more than half the outlets stopped carrying the brand",
+          "why": "The outlet count dropped from 79 to 37 — more than half — while sales per outlet barely changed: 127.9 vs. 116.4. Demand is alive wherever the brand is still on the shelf; what disappeared was shelf access itself."
+        },
+        {
+          "label": "A drop in demand: shoppers switched to other brands",
+          "why": "A demand drop would first show up as lower sales per outlet. Here that figure stays within about ten percent — within normal fluctuation."
+        },
+        {
+          "label": "A price too high pushed buyers away",
+          "why": "Price rose from 184.7 to 203.8 — about 10% over two years — which is below inflation and doesn't explain a halving. A price effect would also have shown up in sales per outlet."
+        },
+        {
+          "label": "Seasonality: Q1 is weak for household chemicals",
+          "why": "Seasonality is ruled out by the design: matching quarters of different years are compared. That's exactly why decompositions are built year over year, not quarter over quarter."
+        }
+      ],
+      "hints": [
+        "Break total units down into two factors: number of outlets and sales per outlet.",
+        "See which factor moved more."
+      ],
+      "explain": "This is a standard analytical technique: any change is decomposed into factors, and the question reduces to which factor moved. Units = outlet count × sales per outlet; revenue = units × price; sales per outlet = purchase count × average basket. Once it's clear that distribution fell, not demand, the problem's owner changes too: this isn't a question for marketing or pricing, it's for the field team and chain negotiations. In FMCG this metric is measured formally as numeric distribution (share of outlets carrying the product) and weighted distribution (the same share, weighted by outlet turnover). A drop in weighted distribution alone means the brand fell out of specifically the large outlets, which is far worse."
+    },
+    {
+      "id": "sql-057",
+      "title": "Weeks of cover at a distributor",
+      "brief": "The CFO is worried about write-offs: the «Волга-Трейд» distributor is showing large warehouse stock of the «Ключевая» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
+      "goal": "Return one row: units_on_hand — stock of «Ключевая негаз. 0.5 л» at the «Волга-Трейд» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
+      "hints": [
+        "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
+        "Compute the weekly sales pace only from this distributor's outlets — filter on c.served_by_distributor_id, not on all sales of the product nationwide."
+      ],
+      "explain": "Weeks of cover is a standard way to see stock not in units, but in time: 1,315 units says nothing by itself, but nearly 22 weeks of cover at the average sales pace signals serious overstocking — on FMCG products with limited shelf life, that's a direct write-off risk. A healthy level is usually 3–6 weeks depending on the category; anything noticeably higher means either an ordering mistake or a sharp slowdown in outlet sales that the warehouse hasn't reflected yet. This is the same diagnostic move as sell-in/sell-out in sql-022, just for stock instead of the shipment flow."
+    },
+    {
+      "id": "sql-058",
+      "title": "Who missed the plan in December",
+      "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division — only those under 100% attainment.",
+      "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (rounded to whole numbers) — revenue from the rep's division products at the rep's outlets, and attainment_pct — the plan attainment percentage, rounded to one decimal place. Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
+      "hints": [
+        "The plan is tied to a rep and a division at once — join the fact to the plan on both keys, rep_id and division.",
+        "A LEFT JOIN is needed in case a rep had no sales at all in their division in December: then actual should become 0, not vanish from the report — COALESCE(a.revenue, 0), as in sql-014."
+      ],
+      "explain": "The plan and the actuals sit at different granularities that aren't obvious at first glance: fact_target holds one row per rep and division per month, while fact_sellout is a scatter of sales across outlets and products, from which the rep's division still has to be assembled through two joins. LEFT JOIN is essential here for the same reason as in sql-014: a rep with zero sales in December shouldn't disappear from the report — on the contrary, that's precisely the most interesting case, 0% attainment. The filter attainment_pct < 100 belongs in WHERE, not HAVING, because the calculation runs over ordinary columns of the join result: the aggregates are already computed inside the actual CTE, and there's no grouping at this level of the query."
+    },
+    {
+      "id": "sql-059",
+      "title": "Why «Ключевая» revenue holds up even as volume falls",
+      "brief": "The «Ключевая» brand's unit sales volume in Q1 2025 dropped noticeably compared to Q1 2024, but in the presentation revenue looks almost unscathed. The CFO wants the discrepancy explained.",
+      "goal": "Determine the cause from the decomposition results.",
+      "predictQuestion": "What happened to the «Ключевая» brand between Q1 2024 and Q1 2025?",
+      "options": [
+        {
+          "label": "Price was raised by almost 20%, which offset a nearly quarter-size drop in volume — revenue holds up on price, not demand",
+          "why": "Units fell from 26,531 to 20,482 (−23%), while the average price rose from 53 to 63.4 (+20%) — as a result revenue dipped only 7.6%, even though the real physical sales volume shrank much more sharply."
+        },
+        {
+          "label": "Demand grew, since revenue barely changed",
+          "why": "Revenue is price times volume, and it can hold steady even under falling demand if price rises faster than volume falls. That's exactly what happened here."
+        },
+        {
+          "label": "The brand lost distribution, like «Чистовъ» in sql-023",
+          "why": "Outlet count didn't change — 88 in both years. That's exactly the difference that separates this case from sql-023: there the cause was losing shelf space; here the shelf space is intact, and price is what changed."
+        },
+        {
+          "label": "The figures fell because of Q1 seasonality",
+          "why": "Seasonality is ruled out by comparing the same quarter across different years — the same reasoning as in sql-023."
+        }
+      ],
+      "hints": [
+        "Compare the rate of change in units against the rate of change in average price — which is larger in magnitude?",
+        "The outlet count is identical in both years — that immediately rules out one of the usual causes."
+      ],
+      "explain": "Revenue is a deceptive front: it can barely move while two opposing shifts happen underneath it and cancel each other out. Here a 23% drop in physical volume is almost entirely masked by a 20% price increase — the resulting 7.6% revenue dip looks like \"everything's fine\", even though the real problem, lost sales volume, hasn't gone anywhere. The outlets figure is worth noting separately: it's identical in both years, which is exactly why the distribution-loss story (as in sql-023) doesn't apply here — there the cause was vanishing shelf space, here the shelf space is intact and it's the price and volume on it that changed. Practical takeaway: always break stable-looking revenue down into price and volume separately before concluding a brand is holding steady."
+    },
+    {
+      "id": "sql-060",
+      "title": "How many products make up half of revenue",
+      "brief": "Ahead of an assortment review, a category manager wants to gauge portfolio concentration: if half the annual revenue comes from a handful of SKUs, dropping any one of them is a serious risk; if revenue is spread across the whole lineup, the risk is lower.",
+      "goal": "For 2025, determine the smallest set of top-revenue products that together account for at least 50% of annual revenue. Return product_name, revenue (rounded to whole numbers), and cum_share_pct — the cumulative share of total revenue in percent, rounded to one decimal place. Ordered by revenue descending.",
+      "hints": [
+        "Cumulative share is the same trick as the running total in sql-054, just with the result additionally divided by the grand total and converted to a percentage.",
+        "To include exactly the rows needed to reach 50%, compare the share accumulated BEFORE the current row (without it) against the threshold — if it was already under 50%, this row is needed."
+      ],
+      "explain": "The idea is to include the minimal set of leaders in the report, not an arbitrary top N: what's compared isn't the current row's own cumulative share, but the share accumulated BEFORE it (prev_share_pct) — that's what decides whether this row was necessary to cross 50%. The result: 15 out of 47 products, roughly a third of the lineup, together account for just over half of revenue — moderate, not extreme concentration; not the case of five hits carrying the whole company, but not a perfectly even spread either. It's easy to go wrong here by expecting the classic \"20% of products drive 80% of revenue\" rule: this portfolio doesn't bear it out, and forcing a conclusion to match someone else's heuristic instead of reading your own numbers is a typical interpretation mistake."
     }
   ]
 }
