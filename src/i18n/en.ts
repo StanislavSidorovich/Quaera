@@ -16,8 +16,23 @@ export const en = {
     streakSuffix: (days: number) => `${days}-day streak`,
   },
   welcome: {
+    headline: 'Not a course — a trainer where the code actually runs',
     body:
-      "Querium is an analyst's trainer: SQL, a data model, and pandas on one continuous dataset of a fictional FMCG and OTC-pharma distributor. Every task is a real working query, not syntax for its own sake: find a distribution loss, untangle warehouse overstock, explain a seasonal sales dip. The system decides on its own what to show first and what to bring back for review — pick a track and start.",
+      "SQL and pandas execute for real in the browser, not against a template: the answer is checked by the query's actual result, the way it works on the job. Four tracks — analytics as a profession, SQL, pandas, and the data model — work through the same business cases on one continuous dataset of a fictional FMCG and OTC-pharma distributor: find a distribution loss, untangle a warehouse overstock, explain a seasonal sales dip.",
+    proofPoints: [
+      {
+        title: 'Code actually runs',
+        body: "SQLite and pandas (via Pyodide) execute right in the browser — the answer is checked against the query's real result, not its text.",
+      },
+      {
+        title: 'Numbers and conclusions in explanations are build conditions',
+        body: "If a number or a conclusion in a task's writeup drifts from the dataset, an automated check catches it — the writeup is held to the same standard as the code.",
+      },
+      {
+        title: 'One dataset, four tracks',
+        body: 'SQL, pandas, analytics-as-a-profession, and the data model all work through the same business cases, and the answers are required to agree.',
+      },
+    ],
   },
   tracks: {
     ariaLabel: 'Tracks',

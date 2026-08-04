@@ -378,6 +378,38 @@ textarea.sql {
 
 /* -------------------------------------------------------------- главная */
 
+/* Три доказательства в питче тренажёра (WelcomeHero) — тот же приём
+   разделителя, что и skill-row, но без интерактивности: это не список
+   для клика, а короткие факты подряд. */
+.proof-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proof-item {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.proof-item:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.proof-item strong {
+  display: block;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
+.proof-item span {
+  display: block;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .hero {
   display: flex;
   align-items: baseline;

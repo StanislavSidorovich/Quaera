@@ -174,8 +174,15 @@ export default function App() {
   // Трек по умолчанию (sql) человек тоже «входит» в него, просто без клика
   // по переключателю — switchTrack в этом случае не вызывается, поэтому
   // первый показ карточки для него отлавливаем отдельно, один раз при монтировании.
+  //
+  // Совсем новый посетитель (пустой прогресс, впервые открыл ссылку) — исключение:
+  // для него это редиректило бы мимо главной прямо в карточку конкретного трека
+  // (SQL по умолчанию), и первым, что он видит, оказывался разбор «что такое SQL»,
+  // а не питч тренажёра целиком (WelcomeHero на главной, см. Home). Для него
+  // остаёмся на главной; карточку трека он откроет сам, выбрав трек осознанно.
+  const isNewVisitor = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
   useEffect(() => {
-    if (activePack.intro && !seenIntrosRef.current.has(activeTrack)) {
+    if (!isNewVisitor && activePack.intro && !seenIntrosRef.current.has(activeTrack)) {
       setScreen({ name: 'trackIntro', track: activeTrack });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -632,6 +639,35 @@ function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (track: 
   );
 }
 
+/**
+ * Питч тренажёра в первые пять секунд — до клика.
+ *
+ * Показывается дважды одним и тем же содержимым: на главной новичку (пока
+ * не решена ни одна задача — см. isNewUser в Home) и первой карточкой
+ * на экране «О тренажёре». Это единственное, что видит человек, пришедший
+ * по ссылке из LinkedIn и не сделавший ни одного клика внутри приложения, —
+ * поэтому текст ведёт не с описания структуры («четыре трека»), а с того,
+ * что в тренажёре редко: код исполняется по-настоящему и числа в разборах
+ * закреплены проверкой сборки, а не оставлены на честное слово.
+ */
+function WelcomeHero() {
+  const { t } = useI18n();
+  return (
+    <div className="card">
+      <h2 style={{ marginTop: 0 }}>{t.welcome.headline}</h2>
+      <p className="brief" style={{ margin: '8px 0 14px' }}>{t.welcome.body}</p>
+      <div className="proof-list">
+        {t.welcome.proofPoints.map((p, i) => (
+          <div className="proof-item" key={i}>
+            <strong>{p.title}</strong>
+            <span>{p.body}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Home({
   activeTrack,
   activePack,
@@ -693,11 +729,7 @@ function Home({
 
   return (
     <>
-      {isNewUser && (
-        <div className="card">
-          <p className="brief" style={{ margin: 0 }}>{t.welcome.body}</p>
-        </div>
-      )}
+      {isNewUser && <WelcomeHero />}
 
       {/*
        * Постоянная ссылка, а не разовая карточка новичка: та показывается один
@@ -912,9 +944,7 @@ function About({
 
   return (
     <>
-      <div className="card">
-        <p className="brief" style={{ margin: 0 }}>{t.welcome.body}</p>
-      </div>
+      <WelcomeHero />
 
       <div className="card">
         <h2>{t.about.structureTitle}</h2>
