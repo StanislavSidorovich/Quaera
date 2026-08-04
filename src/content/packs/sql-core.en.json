@@ -997,7 +997,7 @@
         "PARTITION BY isn't a filter or a sort on the result — it splits the window into independent groups for computation.",
         "retail has three rows, ecom has two. Each partition is numbered from 1 on its own."
       ],
-      "explain": "PARTITION BY channel starts its own, independent ROW_NUMBER counter for each channel — as if you'd run the query separately for retail and separately for ecom and just combined the results. The order of rows in the source table doesn't matter: the numbering obeys only PARTITION BY and the ORDER BY inside the partition. This mirrors the mistake in sql-056: there, PARTITION BY was forgotten, several rows merged into one continuous window, and the function stepped across the channel boundary without noticing it. Here PARTITION BY is in place, but the expectation stayed the old, continuous one: the intern expects the overall count to continue and is surprised that ecom starts at one. In both cases the answer reads straight off the window's definition — it's the exhaustive description of what the function sees and what it doesn't."
+      "explain": "PARTITION BY channel starts its own, independent ROW_NUMBER counter for each channel — as if you'd run the query separately for retail and separately for ecom and just combined the results. The order of rows in the source table doesn't matter: the numbering obeys only PARTITION BY and the ORDER BY inside the partition. This mirrors the mistake in sql-056: there, PARTITION BY was forgotten, several series merged — as far as the window was concerned — into one continuous one, and the function stepped across the channel boundary without noticing it. Here PARTITION BY is in place, but the expectation stayed the old, continuous one: the intern expects the overall count to continue and is surprised that ecom starts at one. In both cases the answer reads straight off the window's definition — it's the exhaustive description of what the function sees and what it doesn't."
     },
     {
       "id": "sql-019",
@@ -1008,7 +1008,7 @@
         "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
       ],
-      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row — the result isn't a moving average, it's a running total instead. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window — such values are usually hidden in a report."
+      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row — the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window — such values are usually hidden in a report."
     },
     {
       "id": "sql-020",
@@ -1083,7 +1083,7 @@
         "The link between an outlet and its distributor is the served_by_distributor_id column in dim_customer.",
         "Dividing two integers in SQLite gives an integer: multiply the numerator by 1.0."
       ],
-      "explain": "The gap between sell-in and sell-out is a basic diagnostic metric in distribution. Shipments only mean the product left the manufacturer's warehouse; it becomes a sale only once an end buyer actually buys it. A steady ratio around one is a healthy picture. A sharp spike means the channel's stockpile is growing, and that's a deferred problem: next quarter the distributor will spend selling down inventory instead of ordering new stock. The opposite situation, a ratio noticeably below one, is also a signal — the channel is draining its stock and will soon hit a shortage."
+      "explain": "The gap between sell-in and sell-out is a basic diagnostic metric in distribution. Shipments only mean the product left the manufacturer's warehouse; it becomes a sale only once an end buyer actually buys it. A steady ratio around one is a healthy picture. A sharp spike means the channel's stockpile is growing, and that's a deferred problem: the distributor will spend next quarter selling down inventory rather than ordering new stock. The opposite situation, a ratio noticeably below one, is also a signal — the channel is draining its stock and will soon hit a shortage."
     },
     {
       "id": "sql-023",
@@ -1124,7 +1124,7 @@
         "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
         "Compute the weekly sales pace only from this distributor's outlets — filter on c.served_by_distributor_id, not on all sales of the product nationwide."
       ],
-      "explain": "Weeks of cover is a standard way to see stock not in units, but in time: 1,315 units says nothing by itself, but nearly 22 weeks of cover at the average sales pace signals serious overstocking — on FMCG products with limited shelf life, that's a direct write-off risk. A healthy level is usually 3–6 weeks depending on the category; anything noticeably higher means either an ordering mistake or a sharp slowdown in outlet sales that the warehouse hasn't reflected yet. This is the same diagnostic move as sell-in/sell-out in sql-022, just for stock instead of the shipment flow."
+      "explain": "Weeks of cover is a standard way to see stock not in units, but in time: 1,315 units mean nothing on their own, but nearly 22 weeks of cover at the average sales pace signals serious overstocking — on FMCG products with limited shelf life, that's a direct write-off risk. A healthy level is usually 3–6 weeks depending on the category; anything noticeably higher means either an ordering mistake or a sharp slowdown in outlet sales that the warehouse hasn't reflected yet. This is the same diagnostic move as sell-in/sell-out in sql-022, just for stock instead of the shipment flow."
     },
     {
       "id": "sql-058",
