@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ru } from './ru';
 import { en } from './en';
 
@@ -36,6 +36,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       // см. initialLocale — недоступность localStorage не должна ломать переключение
     }
   };
+
+  // <html lang> объявлен в index.html как "ru" статически, но интерфейс может
+  // быть на английском с самого первого визита (см. initialLocale выше) —
+  // без синхронизации screen reader выбирает произношение и переносы по
+  // неверному языку для половины посетителей.
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const value = useMemo(() => ({ locale, t: dict[locale], setLocale }), [locale]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
