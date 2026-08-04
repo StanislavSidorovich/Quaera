@@ -748,6 +748,20 @@ function Home({
           <button className="btn" onClick={onStart} disabled={loading}>
             {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
           </button>
+          {/*
+           * Загрузка Pyodide (~50 МБ) занимает секунды, а не миллисекунды —
+           * без визуальной обратной связи disabled-кнопка с текстом легко
+           * читается как «зависло». Полоска не показывает настоящий процент
+           * (реальный прогресс по байтам разбросан по десяткам файлов внутри
+           * Pyodide и его не свести к одному числу дёшево) — она заполняется
+           * по времени, с запасом не доходя до конца, и просто исчезает вместе
+           * с disabled, когда загрузка правда завершится.
+           */}
+          {loading && (
+            <div className="load-progress" role="presentation">
+              <div className="load-progress-bar" />
+            </div>
+          )}
           <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
             {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
           </p>

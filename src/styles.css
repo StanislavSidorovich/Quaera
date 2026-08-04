@@ -289,6 +289,44 @@ textarea.sql {
   opacity: 0.45;
 }
 
+/*
+ * Полоска под кнопкой «Загружаю данные…» — единственный сигнал, что процесс
+ * идёт, а не завис, на время загрузки Pyodide (см. пояснение в App.tsx).
+ * Ширина растёт по времени (12 с, с замедлением) и останавливается на 92%,
+ * не доходя до конца, — сам блок исчезает вместе с disabled-состоянием
+ * кнопки, когда загрузка действительно завершится.
+ */
+.load-progress {
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+.load-progress-bar {
+  height: 100%;
+  width: 4%;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: load-progress-fill 12s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes load-progress-fill {
+  0% {
+    width: 4%;
+  }
+  25% {
+    width: 40%;
+  }
+  55% {
+    width: 65%;
+  }
+  100% {
+    width: 92%;
+  }
+}
+
 .row {
   display: flex;
   gap: 10px;
