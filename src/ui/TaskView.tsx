@@ -163,6 +163,42 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
   const finish = () => onDone({ correct: wasCorrect, wrongAttempts, hintsUsed: hintsShown });
 
   /**
+   * Вынесены в переменные, а не заинлайнены в JSX: в write/fill эти блоки
+   * уезжают в правую колонку рядом с редактором (см. .task-work в styles.css),
+   * а в predict остаются в общем потоке под вариантами ответа — один и тот же
+   * узел не может физически стоять в двух местах разметки одновременно.
+   */
+  const feedbackBlock = feedback && (
+    <div className={`feedback ${solved && feedback.title === t.task.correctTitle ? 'ok' : feedback.tone}`}>
+      <h3>{feedback.title}</h3>
+      {feedback.body && <p>{feedback.body}</p>}
+      {feedback.nudges.length > 0 && (
+        <ul>
+          {feedback.nudges.map((n, i) => (
+            <li key={i}>{n}</li>
+          ))}
+        </ul>
+      )}
+      {feedback.style && <div className="style-note">{feedback.style}</div>}
+    </div>
+  );
+
+  const previewBlock = preview && !solved && (
+    <div className="card">
+      <ResultTable data={preview} caption={t.task.yourResult} />
+    </div>
+  );
+
+  const expectedBlock = expected && (
+    <div className="card">
+      <ResultTable
+        data={expected}
+        caption={t.task.expectedResult(expected.rows.length, expected.totalRows.toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-US'))}
+      />
+    </div>
+  );
+
+  /**
    * Сдаться — легальный ход, а не наказание: разбор и эталон показываются сразу.
    * Задание при этом засчитывается как нерешённое, и навык вернётся уже
    * в этой же сессии — застревание не должно ни блокировать, ни проходить даром.
@@ -201,84 +237,67 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       </div>
 
       {task.mode === 'predict' ? (
-        <div className="card">
-          {task.scenario ? <pre className="scenario">{task.scenario}</pre> : <pre className="sql-block">{task.predictSql}</pre>}
-          <p style={{ fontSize: 15, fontWeight: 600, margin: '14px 0 10px' }}>{task.predictQuestion}</p>
-          {task.options?.map((o, i) => (
-            <button
-              key={i}
-              className="option"
-              onClick={() => !solved && setChosen(i)}
-              disabled={solved}
-              aria-pressed={chosen === i}
-              data-state={solved ? (o.correct ? 'correct' : chosen === i ? 'wrong' : undefined) : undefined}
-              style={!solved && chosen === i ? { borderColor: 'var(--accent)' } : undefined}
-            >
-              {o.label}
-              {solved && <span className="why">{o.why}</span>}
-            </button>
-          ))}
-          {!solved && (
-            <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
-              {t.task.checkBtn}
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="card">
-          {task.mode === 'fill' && task.template ? (
-            <FillTemplate template={task.template} blanks={blanks} onChange={setBlanks} disabled={solved} />
-          ) : (
-            <CodeEditor
-              value={code}
-              onChange={setCode}
-              schema={schema}
-              level={task.level}
-              track={task.track}
-              disabled={solved}
-              placeholder={t.task.placeholder(task.track)}
-            />
-          )}
-          <div className="row" style={{ marginTop: 12 }}>
-            <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
-              {t.task.runBtn}
-            </button>
-            <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
-              {running ? '…' : t.task.checkBtn}
-            </button>
-          </div>
-          <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-            {t.task.runNote}
-          </p>
-        </div>
-      )}
-
-      {feedback && (
-        <div className={`feedback ${solved && feedback.title === t.task.correctTitle ? 'ok' : feedback.tone}`}>
-          <h3>{feedback.title}</h3>
-          {feedback.body && <p>{feedback.body}</p>}
-          {feedback.nudges.length > 0 && (
-            <ul>
-              {feedback.nudges.map((n, i) => (
-                <li key={i}>{n}</li>
-              ))}
-            </ul>
-          )}
-          {feedback.style && <div className="style-note">{feedback.style}</div>}
-        </div>
-      )}
-
-      {preview && !solved && <div className="card"><ResultTable data={preview} caption={t.task.yourResult} /></div>}
-
-      {expected && (
-        <div className="card">
-          <ResultTable
-            data={expected}
-            caption={t.task.expectedResult(
-              expected.rows.length,
-              expected.totalRows.toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-US')
+        <>
+          <div className="card">
+            {task.scenario ? <pre className="scenario">{task.scenario}</pre> : <pre className="sql-block">{task.predictSql}</pre>}
+            <p style={{ fontSize: 15, fontWeight: 600, margin: '14px 0 10px' }}>{task.predictQuestion}</p>
+            {task.options?.map((o, i) => (
+              <button
+                key={i}
+                className="option"
+                onClick={() => !solved && setChosen(i)}
+                disabled={solved}
+                aria-pressed={chosen === i}
+                data-state={solved ? (o.correct ? 'correct' : chosen === i ? 'wrong' : undefined) : undefined}
+                style={!solved && chosen === i ? { borderColor: 'var(--accent)' } : undefined}
+              >
+                {o.label}
+                {solved && <span className="why">{o.why}</span>}
+              </button>
+            ))}
+            {!solved && (
+              <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
+                {t.task.checkBtn}
+              </button>
             )}
-          />
+          </div>
+          {feedbackBlock}
+        </>
+      ) : (
+        <div className="task-work">
+          <div className="task-editor">
+            <div className="card">
+              {task.mode === 'fill' && task.template ? (
+                <FillTemplate template={task.template} blanks={blanks} onChange={setBlanks} disabled={solved} />
+              ) : (
+                <CodeEditor
+                  value={code}
+                  onChange={setCode}
+                  schema={schema}
+                  level={task.level}
+                  track={task.track}
+                  disabled={solved}
+                  placeholder={t.task.placeholder(task.track)}
+                />
+              )}
+              <div className="row" style={{ marginTop: 12 }}>
+                <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
+                  {t.task.runBtn}
+                </button>
+                <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
+                  {running ? '…' : t.task.checkBtn}
+                </button>
+              </div>
+              <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                {t.task.runNote}
+              </p>
+            </div>
+          </div>
+          <div className="task-results">
+            {feedbackBlock}
+            {previewBlock}
+            {expectedBlock}
+          </div>
         </div>
       )}
 
