@@ -163,4 +163,7 @@ export const en = {
     partialNote:
       'English covers the interface; task content (wording, breakdowns, technique cards) is still being translated and shows in Russian for now.',
   },
+  fontSize: {
+    aria: 'Font size — tap to switch',
+  },
 };

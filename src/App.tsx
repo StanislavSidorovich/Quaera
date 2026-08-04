@@ -26,6 +26,20 @@ import {
 
 const SESSION_SIZE = 5;
 
+type FontSize = 'md' | 'lg' | 'xl';
+const FONT_SIZE_ORDER: FontSize[] = ['md', 'lg', 'xl'];
+const FONT_SIZE_STORAGE_KEY = 'querium-font-size';
+
+function initialFontSize(): FontSize {
+  try {
+    const stored = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    if (stored === 'md' || stored === 'lg' || stored === 'xl') return stored;
+  } catch {
+    // localStorage недоступен — просто не запоминаем выбор
+  }
+  return 'md';
+}
+
 /** Раз в столько мс перестаём считать повторное «назад» подтверждением выхода. */
 const EXIT_HINT_MS = 2000;
 
@@ -62,7 +76,18 @@ export default function App() {
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [showExitHint, setShowExitHint] = useState(false);
+  const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
   const schema = useSchema();
+
+  const cycleFontSize = () => {
+    const next = FONT_SIZE_ORDER[(FONT_SIZE_ORDER.indexOf(fontSize) + 1) % FONT_SIZE_ORDER.length];
+    setFontSize(next);
+    try {
+      localStorage.setItem(FONT_SIZE_STORAGE_KEY, next);
+    } catch {
+      // см. initialFontSize
+    }
+  };
 
   // Пак трека и его исполнитель — единственное место, где App знает,
   // что треков четыре. Всё остальное работает с activePack, не с конкретным sql-core.
@@ -263,7 +288,7 @@ export default function App() {
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
   return (
-    <div className="app">
+    <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
       <header className="topbar">
         {screen.name !== 'home' && (
           <button
@@ -319,6 +344,9 @@ export default function App() {
             )}
           </div>
         )}
+        <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
+          {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
+        </button>
         <button
           className="icon-btn"
           aria-label={t.locale.switchAriaLabel}
