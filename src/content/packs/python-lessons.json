@@ -98,6 +98,39 @@
       "wrong": "result = dim_product['list_price'].describe()",
       "wrongWhy": "Само по себе не ошибка, но не полная разведка: describe() по всему каталогу разом даёт среднюю цену 230 ₽ — которой нет ни у одного реального товара, потому что колонка тихо смешивает FMCG (в среднем 111 ₽) и Pharma (в среднем 423 ₽). Разведка без разреза по ключевой категории может выглядеть законченной, а на деле прятать главное.",
       "selfCheck": "Если describe() дал разброс, подозрительно широкий относительно среднего, — прежде чем считать метрику дальше, проверьте её же по группам через groupby(...).describe()."
+    },
+    {
+      "skill": "py-reshape",
+      "title": "pivot, pivot_table и melt",
+      "why": "Отчёт для руководителя почти всегда просят в широком формате — бренды по строкам, периоды по столбцам, — а сырые данные лежат в длинном: одна строка на факт продажи. pivot_table разворачивает длинное в широкое с агрегацией внутри одного вызова; melt делает обратное, когда приёмная система (BI, следующий groupby) снова ждёт длинный формат.",
+      "form": "df.pivot_table(index='строки', columns='столбцы', values='значения', aggfunc='функция')\ndf.melt(id_vars='неизменная_колонка', var_name='имя', value_name='значение')",
+      "example": "merged = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')\nmerged['week_start'] = pd.to_datetime(merged['week_start'])\nmerged['quarter'] = merged['week_start'].dt.to_period('Q').astype(str)\nsub = merged[(merged['week_start'] >= '2025-01-01') & (merged['week_start'] < '2026-01-01')]\nresult = sub.pivot_table(index='brand', columns='quarter', values='revenue', aggfunc='sum')",
+      "reads": "Выручка каждого бренда за каждый квартал 2025 года одной таблицей: 9 строк (брендов) на 4 столбца (кварталов) вместо 36 строк в длинном формате. aggfunc='sum' суммирует все продажи бренда за квартал, сколько бы исходных строк туда ни попало.",
+      "wrong": "merged = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')\nmerged['week_start'] = pd.to_datetime(merged['week_start'])\nmerged['quarter'] = merged['week_start'].dt.to_period('Q').astype(str)\nsub = merged[(merged['week_start'] >= '2025-01-01') & (merged['week_start'] < '2026-01-01')]\nresult = sub.pivot(index='brand', columns='quarter', values='revenue')",
+      "wrongWhy": "pivot() не агрегирует — он ожидает, что на каждую пару (brand, quarter) приходится ровно одна исходная строка. В sub таких строк тысячи на каждую пару (продажи разных товаров и клиентов за один квартал), и pivot честно падает с ValueError вместо того, чтобы догадаться, что с ними делать.",
+      "selfCheck": "Данные до разворота ещё не агрегированы (несколько строк могут попасть в одну ячейку)? Нужен pivot_table с aggfunc. Уже агрегированы (одна строка на комбинацию)? Подойдёт и более простой pivot()."
+    },
+    {
+      "skill": "py-tidy",
+      "title": "Опрятные данные",
+      "why": "«Опрятные» данные (tidy data) — это одна строка на наблюдение и одна колонка на переменную, без вариаций внутри значения: одна и та же сущность не должна прятаться за двумя написаниями. Сырая выгрузка staging_raw_sellout нарушает это на каждом шагу: код товара в двух регистрах, название клиента с пробелами по краям, — и группировка по такой колонке считает один объект за два.",
+      "form": "df['колонка'].str.upper()   # единый регистр\ndf['колонка'].str.strip()   # без пробелов по краям",
+      "example": "result = staging_raw_sellout['sku_code'].str.upper().nunique()",
+      "reads": "58 условных кодов товара в сырой выгрузке превращаются в 29 реальных SKU после приведения к одному регистру — «чист005» и «ЧИСТ005» были одним и тем же товаром, просто записанным по-разному в разных выгрузках.",
+      "wrong": "result = staging_raw_sellout['sku_code'].str.lower() == staging_raw_sellout['sku_code']",
+      "wrongWhy": "Сравнение регистра само по себе не чинит данные — оно только показывает, какие строки уже в нижнем регистре, а не объединяет варианты написания одного товара. Опрятность данных — это приведение колонки к единому виду (str.upper() или str.lower() над всей колонкой), а не проверка того, в каком регистре что записано.",
+      "selfCheck": "Число уникальных значений колонки заметно больше, чем должно быть по смыслу (58 кодов вместо нескольких десятков товаров)? Проверьте регистр и пробелы по краям, прежде чем искать пропавшие строки в другом месте."
+    },
+    {
+      "skill": "py-timeseries",
+      "title": "Даты и временные ряды",
+      "why": "resample меняет частоту ряда (из недель — в месяцы), а rolling считает скользящее окно (сглаживание, тренд) — обе операции требуют, чтобы дата была не обычной колонкой, а настоящим datetime-индексом. Без pd.to_datetime и set_index обе либо упадут, либо посчитают не то, что казалось очевидным.",
+      "form": "df.set_index('дата').resample('MS').sum()      # смена частоты\ndf['мера'].rolling(окно).mean()                # скользящее среднее",
+      "example": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Ключевая', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nweekly['week_start'] = pd.to_datetime(weekly['week_start'])\nweekly = weekly.set_index('week_start').sort_index()\nresult = weekly['units'].resample('MS').sum()",
+      "reads": "Понедельные продажи «Ключевой» превращены в месячные суммы одним вызовом — resample('MS') сам находит границы месяцев по датам в индексе, без ручного извлечения года и месяца из строки.",
+      "wrong": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Ключевая', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nresult = weekly.groupby(weekly['week_start'].str[:7])['units'].sum()",
+      "wrongWhy": "Работает только для дат в едином текстовом формате 'YYYY-MM' — там, где формат смешанный (как в staging_raw_sellout) или дата уже переведена в datetime, срез строки .str[:7] либо ничего не даст, либо сработает неверно. resample с datetime-индексом решает это без предположений о формате строки.",
+      "selfCheck": "Перед resample/rolling проверьте dtype колонки с датой (или индекса, если он уже назначен) — должен быть datetime64, а не object/строка."
     }
   ]
 }
