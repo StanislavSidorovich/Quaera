@@ -69,6 +69,13 @@ export const en = {
     privacyTitle: 'Privacy',
     privacyBody:
       "No account needed. All progress is stored on the device and never sent anywhere — close the tab and pick up where you left off a month later, or clear the site data and start over.",
+    backupTitle: 'Backup',
+    backupBody:
+      "Progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a simple safeguard against that.",
+    exportBtn: 'Download progress file',
+    importBtn: 'Load progress from file',
+    importSuccess: 'Progress loaded from file',
+    importError: "Doesn't look like a Querium progress file — check you picked the right one",
     tracksWhyTitle: 'Why these tracks, in this order',
     tracksWhyBody:
       "This mirrors how the work actually flows. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",

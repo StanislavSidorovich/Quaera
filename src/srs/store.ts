@@ -57,6 +57,29 @@ export function saveProgress(p: Progress): void {
   }
 }
 
+/**
+ * Экспорт/импорт прогресса файлом — единственная страховка от потери данных
+ * в приложении без бэкенда: `localStorage` живёт до первой очистки данных
+ * сайта или переустановки PWA, и тогда несколько месяцев SRS-истории исчезают
+ * без возможности восстановить. Формат — тот же JSON, что лежит в
+ * localStorage, никакого отдельного файла-схемы не заводим: `version`
+ * в самом объекте уже отличает валидный прогресс от чего угодно другого.
+ */
+export function exportProgress(p: Progress): string {
+  return JSON.stringify(p, null, 2);
+}
+
+/** null — файл не похож на экспорт прогресса Querium (не тот JSON или version). */
+export function parseImportedProgress(raw: string): Progress | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<Progress>;
+    if (parsed.version !== 1 || typeof parsed !== 'object' || parsed === null) return null;
+    return { ...emptyProgress(), ...parsed };
+  } catch {
+    return null;
+  }
+}
+
 export const skillState = (p: Progress, id: string): SkillState => p.skills[id] ?? initialSkillState();
 
 export const today = (d = new Date()): string => d.toISOString().slice(0, 10);

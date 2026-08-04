@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { lessonBySkill, packForTrack, packs } from './content';
 import type { Lesson, Pack, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
@@ -17,10 +17,13 @@ import {
 } from './srs/scheduler';
 import {
   applyAttempt,
+  exportProgress,
   loadProgress,
+  parseImportedProgress,
   saveProgress,
   skillState,
   streak,
+  today,
   type Progress,
 } from './srs/store';
 
@@ -361,6 +364,26 @@ export default function App() {
     advance();
   }
 
+  /** Скачивает текущий прогресс файлом — см. пояснение у exportProgress в srs/store.ts. */
+  function downloadProgress() {
+    const blob = new Blob([exportProgress(progress)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `querium-progress-${today()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** true — файл распознан и прогресс заменён; false — не тот файл или битый JSON. */
+  async function importProgressFile(file: File): Promise<boolean> {
+    const raw = await file.text();
+    const parsed = parseImportedProgress(raw);
+    if (!parsed) return false;
+    setProgress(parsed);
+    return true;
+  }
+
   function markIntroSeen(track: Track) {
     seenIntrosRef.current.add(track);
     try {
@@ -503,7 +526,11 @@ export default function App() {
         )}
 
         {screen.name === 'about' && (
-          <About onSelectTrack={(track) => { switchTrack(track); }} />
+          <About
+            onSelectTrack={(track) => { switchTrack(track); }}
+            onExportProgress={downloadProgress}
+            onImportProgress={importProgressFile}
+          />
         )}
 
         {screen.name === 'trackIntro' && (
@@ -857,10 +884,28 @@ function Home({
  * справочника или просто когда человек вернулся через неделю и забыл,
  * что где лежит.
  */
-function About({ onSelectTrack }: { onSelectTrack: (track: Track) => void }) {
+function About({
+  onSelectTrack,
+  onExportProgress,
+  onImportProgress,
+}: {
+  onSelectTrack: (track: Track) => void;
+  onExportProgress: () => void;
+  /** true — файл распознан и прогресс заменён, false — не тот файл. */
+  onImportProgress: (file: File) => Promise<boolean>;
+}) {
   const { t } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<'ok' | 'error' | null>(null);
+
+  async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // тот же файл можно выбрать повторно, если первая попытка не удалась
+    if (!file) return;
+    setImportStatus((await onImportProgress(file)) ? 'ok' : 'error');
+  }
 
   return (
     <>
@@ -917,6 +962,34 @@ function About({ onSelectTrack }: { onSelectTrack: (track: Track) => void }) {
       <div className="card">
         <h2>{t.about.privacyTitle}</h2>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+      </div>
+
+      <div className="card">
+        <h2>{t.about.backupTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.backupBody}</p>
+        <div className="row">
+          <button type="button" className="btn secondary" onClick={onExportProgress}>
+            {t.about.exportBtn}
+          </button>
+          <button type="button" className="btn secondary" onClick={() => importInputRef.current?.click()}>
+            {t.about.importBtn}
+          </button>
+        </div>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json"
+          hidden
+          onChange={handleImportPick}
+        />
+        {importStatus && (
+          <p
+            role="status"
+            style={{ margin: '10px 0 0', fontSize: 13, color: importStatus === 'ok' ? 'var(--ok)' : 'var(--err)' }}
+          >
+            {importStatus === 'ok' ? t.about.importSuccess : t.about.importError}
+          </p>
+        )}
       </div>
     </>
   );
