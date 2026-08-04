@@ -10,7 +10,7 @@
  */
 import initSqlJs from 'sql.js';
 import { loadPyodide } from 'pyodide';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -1455,6 +1455,67 @@ with warnings.catch_warnings(record=True) as w:
     kinds = sorted({type(x.message).__name__ for x in w})
 result = f"{'flag' in df.columns}/{','.join(kinds)}"
 `, 'False/SettingWithCopyWarning', 'цепочечное присваивание молча теряет колонку и даёт SettingWithCopyWarning');
+}
+
+// --- Переводы на английский: параллельные файлы `<pack>.en.json`
+// и `<lessons>.en.json` (см. PackTranslation/LessonTranslation в content/types.ts).
+// Перевод накладывается на русский пак по id в рантайме (content/index.ts,
+// applyTranslation) — здесь не пересчитывается сам мёрдж, а ловится то же,
+// что ловит validateTranslation() в рантайме, но на этапе сборки, без запуска
+// приложения: перевод, ссылающийся на несуществующий id, или расходящееся
+// число вариантов predict-задания.
+{
+  const checkPackTranslation = (packId) => {
+    const enPath = path.join(root, 'src', 'content', 'packs', `${packId}.en.json`);
+    if (!existsSync(enPath)) return;
+    const pack = readPack(packId);
+    const tr = JSON.parse(readFileSync(enPath, 'utf8'));
+    const skillIds = new Set(pack.skills.map((s) => s.id));
+    const taskById = new Map(pack.tasks.map((t) => [t.id, t]));
+    let ok = true;
+    for (const s of tr.skills ?? []) {
+      if (!skillIds.has(s.id)) {
+        fail(`${packId}.en`, `скилл перевода ${s.id} не существует в паке ${packId}`);
+        ok = false;
+      }
+    }
+    for (const t of tr.tasks ?? []) {
+      const orig = taskById.get(t.id);
+      if (!orig) {
+        fail(`${packId}.en`, `задание перевода ${t.id} не существует в паке ${packId}`);
+        ok = false;
+        continue;
+      }
+      if (t.options && (orig.options ?? []).length !== t.options.length) {
+        fail(`${packId}.en`, `у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`);
+        ok = false;
+      }
+    }
+    if (ok) {
+      console.log(
+        `  ok   ${packId}.en: перевод покрывает ${(tr.skills ?? []).length} из ${pack.skills.length} скиллов и ${(tr.tasks ?? []).length} из ${pack.tasks.length} заданий, все id существуют`
+      );
+    }
+  };
+
+  const checkLessonsTranslation = (lessonsFileId) => {
+    const enPath = path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.en.json`);
+    if (!existsSync(enPath)) return;
+    const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.json`), 'utf8'));
+    const { lessons: lessonsEn } = JSON.parse(readFileSync(enPath, 'utf8'));
+    const skillIds = new Set(lessons.map((l) => l.skill));
+    let ok = true;
+    for (const l of lessonsEn) {
+      if (!skillIds.has(l.skill)) {
+        fail(`${lessonsFileId}.en`, `перевод карточки ссылается на несуществующий скилл ${l.skill}`);
+        ok = false;
+      }
+    }
+    if (ok) console.log(`  ok   ${lessonsFileId}.en: перевод покрывает ${lessonsEn.length} из ${lessons.length} карточек, все id существуют`);
+  };
+
+  for (const packId of ['sql-core', 'domain-core', 'python-core', 'model-core']) checkPackTranslation(packId);
+  for (const lessonsFileId of ['sql-lessons', 'domain-lessons', 'python-lessons']) checkLessonsTranslation(lessonsFileId);
 }
 
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');

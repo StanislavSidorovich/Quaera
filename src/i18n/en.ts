@@ -13,6 +13,7 @@ export const en = {
     name: 'Querium',
     back: 'Back',
     exitHint: 'Press back again to exit',
+    streakSuffix: (days: number) => `${days}-day streak`,
   },
   welcome: {
     body:
@@ -42,6 +43,7 @@ export const en = {
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
     skillMapTitle: 'Skill map',
     lockedNote: 'Unlocks after earlier topics',
+    masteryAria: (pct: number) => `${pct}% mastered`,
     referenceBtn: 'Reference',
     schemaBtn: 'Data schema',
     draftNote: 'The skill graph is already designed; tasks will land in one of the upcoming sprints.',

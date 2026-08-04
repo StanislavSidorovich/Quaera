@@ -5,7 +5,10 @@ import rawPythonCore from './packs/python-core.json';
 import rawDomainCore from './packs/domain-core.json';
 import rawDomainLessons from './packs/domain-lessons.json';
 import rawPythonLessons from './packs/python-lessons.json';
-import type { Lesson, Pack, Task, Track } from './types';
+import rawSqlCoreEn from './packs/sql-core.en.json';
+import rawSqlLessonsEn from './packs/sql-lessons.en.json';
+import type { Lesson, LessonTranslation, Pack, PackTranslation, Task, Track } from './types';
+import type { Locale } from '../i18n/context';
 
 /**
  * Загрузка и валидация паков.
@@ -38,6 +41,66 @@ function validate(pack: Pack): Pack {
 }
 
 /**
+ * Перевод пака на английский — накладывается на русский пак по id по полю,
+ * а не заменяет его целиком (см. PackTranslation в types.ts). Id, которых
+ * нет в файле перевода, остаются на русском — то же «частично наполненный
+ * пак», что и у самого контента, только по языку, а не по скиллу.
+ *
+ * Валидация at import time: перевод, ссылающийся на несуществующий id, —
+ * такая же поломка сборки, как скилл-задание на несуществующий prereq
+ * в validate() выше, и должна падать здесь, а не молчать до продакшена.
+ */
+function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
+  const skillIds = new Set(pack.skills.map((s) => s.id));
+  const taskById = new Map(pack.tasks.map((t) => [t.id, t]));
+  for (const s of tr.skills ?? []) {
+    if (!skillIds.has(s.id)) throw new Error(`Перевод ${tr.id}: скилл ${s.id} не существует в паке ${pack.id}`);
+  }
+  for (const t of tr.tasks ?? []) {
+    const orig = taskById.get(t.id);
+    if (!orig) throw new Error(`Перевод ${tr.id}: задание ${t.id} не существует в паке ${pack.id}`);
+    if (t.options && (orig.options ?? []).length !== t.options.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`
+      );
+    }
+  }
+  return tr;
+}
+
+function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
+  if (!tr) return pack;
+  const skillTrById = new Map((tr.skills ?? []).map((s) => [s.id, s]));
+  const taskTrById = new Map((tr.tasks ?? []).map((t) => [t.id, t]));
+  return {
+    ...pack,
+    title: tr.title ?? pack.title,
+    description: tr.description ?? pack.description,
+    tierNames: tr.tierNames ?? pack.tierNames,
+    intro: tr.intro ?? pack.intro,
+    skills: pack.skills.map((s) => {
+      const t = skillTrById.get(s.id);
+      return t ? { ...s, title: t.title, summary: t.summary } : s;
+    }),
+    tasks: pack.tasks.map((t) => {
+      const tt = taskTrById.get(t.id);
+      if (!tt) return t;
+      return {
+        ...t,
+        title: tt.title,
+        brief: tt.brief ?? t.brief,
+        goal: tt.goal ?? t.goal,
+        scenario: tt.scenario ?? t.scenario,
+        predictQuestion: tt.predictQuestion ?? t.predictQuestion,
+        hints: tt.hints ?? t.hints,
+        explain: tt.explain ?? t.explain,
+        options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
+      };
+    }),
+  };
+}
+
+/**
  * Реестр паков — вход в контент по треку, а не единственный синглтон.
  *
  * Черновые паки (model-core, python-core, domain-core) содержат только граф
@@ -62,8 +125,27 @@ for (const p of packs) {
   packsByTrack.set(p.track, list);
 }
 
-/** Пак трека. Берём первый — когда в треке появится больше одного пака, здесь появится выбор. */
-export const packForTrack = (track: Track): Pack | undefined => packsByTrack.get(track)?.[0];
+/**
+ * Переводы паков — реестр по id пака, а не по треку: у трека когда-нибудь
+ * может быть больше одного пака, а перевод привязан к конкретному файлу.
+ * Пак, для которого перевода ещё нет (domain-core, python-core, model-core),
+ * просто отсутствует здесь — applyTranslation тогда возвращает пак как есть.
+ */
+const packTranslations: Partial<Record<string, PackTranslation>> = {
+  'sql-core': validateTranslation(packById.get('sql-core')!, rawSqlCoreEn as PackTranslation),
+};
+
+/**
+ * Пак трека. Берём первый — когда в треке появится больше одного пака, здесь
+ * появится выбор. `locale` по умолчанию 'ru': весь остальной контент, кроме
+ * sql-core, пока на русском в любом случае, и явно передавать locale должны
+ * только места, которые реально показывают текст задания человеку.
+ */
+export const packForTrack = (track: Track, locale: Locale = 'ru'): Pack | undefined => {
+  const pack = packsByTrack.get(track)?.[0];
+  if (!pack) return undefined;
+  return locale === 'en' ? applyTranslation(pack, packTranslations[pack.id]) : pack;
+};
 
 /**
  * Карточки теории привязаны к скиллам, а не к паку: id скиллов уникальны
@@ -77,6 +159,29 @@ export const lessons: Lesson[] = [
   ...(rawPythonLessons as { lessons: Lesson[] }).lessons,
 ];
 export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
+
+/**
+ * Переводы карточек — плоская карта по skill, тем же приёмом, что и сами
+ * карточки: id скиллов уникальны глобально, файл перевода не обязан
+ * повторять структуру по трекам.
+ */
+const lessonTranslationBySkill = new Map(
+  (rawSqlLessonsEn as { lessons: LessonTranslation[] }).lessons.map((l) => {
+    if (!lessonBySkill.has(l.skill)) throw new Error(`Перевод карточки ссылается на несуществующий скилл ${l.skill}`);
+    return [l.skill, l];
+  })
+);
+
+/** lessonBySkill для конкретной локали — карточка без перевода остаётся на русском. */
+export const lessonBySkillFor = (locale: Locale): Map<string, Lesson> => {
+  if (locale === 'ru') return lessonBySkill;
+  const merged = new Map<string, Lesson>();
+  for (const [skill, lesson] of lessonBySkill) {
+    const tr = lessonTranslationBySkill.get(skill);
+    merged.set(skill, tr ? { ...lesson, title: tr.title, why: tr.why, form: tr.form, reads: tr.reads, wrongWhy: tr.wrongWhy, selfCheck: tr.selfCheck } : lesson);
+  }
+  return merged;
+};
 
 const allSkillIds = new Set(packs.flatMap((p) => p.skills.map((s) => s.id)));
 for (const l of lessons) {

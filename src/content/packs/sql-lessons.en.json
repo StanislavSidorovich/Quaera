@@ -1,0 +1,149 @@
+{
+  "id": "sql-lessons",
+  "lessons": [
+    {
+      "skill": "sql-select",
+      "title": "Selecting and aliasing",
+      "why": "Every report starts with deciding which columns belong in it. Extra ones aren't harmless: the reader spends time figuring out what each one means, and loses trust in numbers they don't understand. A column's name is part of the answer, not a technical detail.",
+      "form": "SELECT column, other AS clear_name\nFROM table",
+      "reads": "All items of the «Гастрокалм» brand with the shelf price. The column is named the way the requester expects it, not the way it sits in the database.",
+      "wrongWhy": "The asterisk pulls in every column, including internal ones. Fields nobody asked for show up in the export, and when the table's structure changes, the report silently changes shape too — breaking whatever was built on top of it.",
+      "selfCheck": "Read the result's headers out loud. If even one can't be explained to the requester without caveats — rename it."
+    },
+    {
+      "skill": "sql-where",
+      "title": "Filtering rows",
+      "why": "A task statement almost always carries constraints: which period, which division, which channel. Turning those words into conditions is half the work, and it's also where most discrepancies between two reports on the same thing come from.",
+      "form": "SELECT ...\nFROM table\nWHERE condition\n  AND other_condition",
+      "reads": "Pharma-division items priced above 500 ₽. Both conditions must hold at once — that's what AND does.",
+      "wrongWhy": "Zero rows come back: text comparison is case-sensitive, and the database holds «Pharma». The query doesn't fail — it runs cleanly and returns nothing. The most expensive mistakes in analytics are exactly this kind: not the ones that fail, but the ones that quietly understate the numbers.",
+      "selfCheck": "Before filtering on a text column, look at what's actually in it: SELECT DISTINCT division FROM dim_product. Five seconds versus an hour of confusion."
+    },
+    {
+      "skill": "sql-order-limit",
+      "title": "Sorting and top-N",
+      "why": "\"Show the best outlets\", \"top 10 items\", \"who dropped the most\" — half of business questions are about rankings. Order here isn't formatting, it's the answer itself.",
+      "form": "SELECT ...\nFROM table\nORDER BY column DESC\nLIMIT 10",
+      "reads": "The five most expensive items in the price list. Rows are ordered by price from high to low first, and only then are the first five cut off.",
+      "wrongWhy": "This isn't \"the first five\" — it's \"some five\". Without ORDER BY the database is free to return rows in any order, and on a different data volume or after reindexing the answer will change — while the report looks just as convincing.",
+      "selfCheck": "If the task statement has \"top\", \"best\", \"worst\" in it, find ORDER BY in your query. No ORDER BY, no real answer."
+    },
+    {
+      "skill": "sql-null",
+      "title": "NULL and three-valued logic",
+      "why": "NULL means \"value unknown\", not \"zero\" and not \"empty\". That distinction quietly eats rows out of reports every day: they don't disappear with an error, they just don't show up, and the only way to notice the shortfall is to reconcile against the source.",
+      "form": "WHERE column IS NULL\nWHERE column IS NOT NULL\nCOALESCE(column, default_value)",
+      "reads": "Total customers, how many are in chains, and how many aren't. The difference between the two counts is exactly the number of empty values in the column.",
+      "wrongWhy": "Non-chain outlets won't make it into the answer. Comparing NULL to anything gives neither true nor false, but NULL, and WHERE only lets true through. In plain language an empty value is definitely \"not Магнит\" — by the SQL standard, it's unknown.",
+      "selfCheck": "If a column can hold empty values, any condition with <>, NOT IN or > needs to be deliberately extended: OR column IS NULL, or COALESCE."
+    },
+    {
+      "skill": "sql-aggregate",
+      "title": "Aggregate functions",
+      "why": "The word \"count\" in a task statement can hide three different questions: how many records, how many have data, and how many distinct objects. Confusing the second with the third is the classic reason two reports don't match.",
+      "form": "COUNT(*)              -- rows\nCOUNT(column)          -- rows where the value is filled in\nCOUNT(DISTINCT col.)   -- distinct values\nSUM / AVG / MIN / MAX",
+      "reads": "Forty-seven items, nine brands, average price list. A query without GROUP BY but with aggregates always returns exactly one row: the whole table counts as a single group.",
+      "wrongWhy": "Returns 47, not 9. COUNT on a column counts rows where the value is filled in, not distinct values. The number looks plausible and quietly makes it into the presentation.",
+      "selfCheck": "When you hear \"count\", ask: count of what exactly — records or objects? Those are different queries with different answers."
+    },
+    {
+      "skill": "sql-group-by",
+      "title": "Grouping and grain",
+      "why": "Grain is the answer to \"what is one row of the report\". Until that's put into words, it's too early to write the query — almost every aggregation mistake starts with someone skipping that step.",
+      "form": "SELECT dimension, SUM(measure) AS total\nFROM table\nGROUP BY dimension",
+      "reads": "One row per division. The list in GROUP BY sets the grain: as many columns there, as many cuts in the result.",
+      "wrongWhy": "SQLite won't complain and will attach an arbitrary brand to each division. PostgreSQL would fail on this query, and that would be the better outcome: a silently wrong result is more dangerous than a failure. An unaggregated column in SELECT has to be in GROUP BY.",
+      "selfCheck": "Say it out loud: \"one row of the result is one …\". Can't finish the sentence — the task isn't understood yet."
+    },
+    {
+      "skill": "sql-having",
+      "title": "HAVING vs. WHERE",
+      "why": "A condition on a group and a condition on a row are different things, and confusing them gives either a runtime error or a wrong answer. Once you've worked through the query's execution order, you stop guessing where the condition goes.",
+      "form": "FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY\n\nWHERE  — picks rows before grouping\nHAVING — picks groups after",
+      "reads": "Brands with a lineup of at least six items. The condition is checked for each group only after it has already been assembled.",
+      "wrongWhy": "\"Misuse of aggregate\" error. WHERE runs before grouping, when there are no groups yet to count over. This is exactly the case where the database failing honestly is a stroke of luck.",
+      "selfCheck": "Ask yourself what the condition applies to: a single source row, or an already-computed total. The first is WHERE, the second is HAVING."
+    },
+    {
+      "skill": "sql-join-inner",
+      "title": "Joining a fact table to a dimension",
+      "why": "Data lives in a star schema: numbers sit in fact tables, names and attributes sit in dimension tables. Any report with a breakdown is assembled the same way: the fact table in the center, dimensions attached to it by keys.",
+      "form": "FROM fact_table f\nJOIN dim_table d ON d.key = f.key",
+      "reads": "Revenue by brand for the first half of 2026. The measures came from the fact table, the breakdown from the dimension table, product_id tied them together.",
+      "wrongWhy": "Joining on the wrong key won't raise an error: the types match, something will match, the query returns a result. It's just meaningless — sales get attributed to random products.",
+      "selfCheck": "Write the query in the order FROM → JOIN → WHERE → GROUP BY → SELECT, not from the top down. And always check that ON has the keys that actually link these two tables."
+    },
+    {
+      "skill": "sql-join-left",
+      "title": "LEFT JOIN and missing data",
+      "why": "Reports about what's absent are their own, most valuable genre: outlets with no sales, regions with no coverage, SKUs with no stock. An ordinary join simply won't show those rows, and the problem stays invisible.",
+      "form": "FROM dimension d\nLEFT JOIN fact f ON f.key = d.key\n                AND extra_condition",
+      "reads": "Where the new item made it: all sixteen regions, and five of them at zero. Build from the dimension table — the one whose rows all need to survive. The condition on the product sits in ON, so it filters sales rows without dropping regions.",
+      "wrongWhy": "Eleven regions come back instead of sixteen. A condition on the right-hand table placed in WHERE turns LEFT JOIN into an ordinary INNER JOIN: unmatched rows carry NULL there, and a comparison against NULL is never true. Exactly the five regions the report was built to show disappear.",
+      "selfCheck": "Compare the row count of the result with the row count of the dimension table. Doesn't match — the outer join degenerated into an inner one somewhere. And remember: SUM over an empty set gives NULL, not 0 — you need COALESCE."
+    },
+    {
+      "skill": "sql-fanout",
+      "title": "Row multiplication from a join",
+      "why": "A join doesn't add facts, but it can count the same fact several times over. Totals blow up by a multiple, and the query looks correct the whole time, with no sign anything is wrong.",
+      "form": "One row of the left table must match exactly one\nrow of the right table. Otherwise the measures duplicate.",
+      "reads": "The correct version: product_id is unique in the dimension table, every sales row finds exactly one match, the row count doesn't change.",
+      "wrongWhy": "A brand can have up to eleven promotions, and every sales row matches every one of them. Revenue grows by exactly a factor of eleven. A suspiciously round integer multiplier is close to a sure sign that a join duplicated facts.",
+      "selfCheck": "Compare COUNT(*) before and after adding a JOIN. Changed, and you didn't plan for it — the measures can no longer be trusted as-is."
+    },
+    {
+      "skill": "sql-case",
+      "title": "CASE and conditional aggregation",
+      "why": "Comparisons like \"with promo vs. without\", \"plan vs. actual\", \"this year vs. last\" show up in almost every report. Conditional aggregation unfolds a metric into columns in a single pass, instead of two queries that then need to be stitched together.",
+      "form": "SUM(CASE WHEN condition THEN measure ELSE 0 END) AS column",
+      "reads": "Promo and base revenue for each division, computed in a single pass over the data. The same trick gives a share: SUM(CASE ...) * 1.0 / SUM(measure).",
+      "wrongWhy": "Counts absolutely every row. COUNT only skips NULL, and zero is a perfectly valid value. What's needed is either SUM instead of COUNT, or a CASE with no ELSE branch, so non-matching rows produce NULL.",
+      "selfCheck": "After conditional aggregation, add up the columns: the parts have to sum to the grand total. They don't — some rows fell into neither branch."
+    },
+    {
+      "skill": "sql-cte",
+      "title": "CTEs and decomposition",
+      "why": "The value of WITH isn't brevity — it's often longer with it. The value is that every step can be run and checked on its own. A query written step by step gets debugged in minutes; a subquery nested four levels deep takes hours.",
+      "form": "WITH step1 AS (\n  ...\n),\nstep2 AS (\n  SELECT ... FROM step1\n)\nSELECT ... FROM step2",
+      "reads": "A brand's revenue and its share of the total. The intermediate result is computed once and reused — both for the rows and for the denominator.",
+      "wrongWhy": "Every share comes out zero. Dividing two integers in SQL gives an integer — the fractional part is dropped. Fixed by multiplying the numerator by 100.0 — a literal with a decimal point pushes the calculation into floating-point.",
+      "selfCheck": "Run each CTE on its own, replacing the final SELECT with «SELECT * FROM step1». If the intermediate result is wrong, there's no point looking further."
+    },
+    {
+      "skill": "sql-window-rank",
+      "title": "Window functions: rankings",
+      "why": "\"Top 3 items in each brand\", \"each customer's last order\", \"first purchase\" — questions that need clunky self-joins without windows. With windows, it's four lines.",
+      "form": "ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC)\n\nROW_NUMBER — sequential, breaks ties arbitrarily\nRANK       — same rank for ties, next number is skipped\nDENSE_RANK — same rank for ties, no gaps",
+      "reads": "The three best-selling items within each brand. PARTITION BY sets the boundaries inside which numbering starts over.",
+      "wrongWhy": "Error: the rnk column doesn't exist yet at this level. A window function is computed after WHERE, so filtering on its result is only possible one level up — in a CTE or subquery.",
+      "selfCheck": "Picking one row per group calls for ROW_NUMBER — it guarantees exactly one. And add a second key to ORDER BY: with ties, the result is otherwise non-deterministic."
+    },
+    {
+      "skill": "sql-window-frame",
+      "title": "Window functions: frames and shifts",
+      "why": "A single number says nothing on its own: you need a trend, change versus the previous period, a running total. Window frames and shift functions cover almost all of that without self-joins, which also break on missing periods.",
+      "form": "AVG(measure) OVER (ORDER BY period\n                ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)\n\nLAG(measure)  OVER (ORDER BY period)  -- previous value\nLEAD(measure) OVER (ORDER BY period)  -- next value",
+      "reads": "Monthly sales, last month's value, and a smoothed three-month series. The first row has no previous value — LAG honestly returns NULL.",
+      "wrongWhy": "Without specifying a frame, once ORDER BY is present the window defaults to everything from the start of the series to the current row. The result isn't a moving average, it's a running total — the numbers look plausible and mean something else entirely.",
+      "selfCheck": "Wrote ORDER BY inside OVER — deliberately decide whether you need a frame. And separately, on meaning: comparing month over month on a seasonal product is misleading; that calls for year over year."
+    },
+    {
+      "skill": "sql-data-quality",
+      "title": "Raw data quality",
+      "why": "An export from a source system is almost never ready to use as-is: duplicates from a re-run, dates in different formats, one chain spelled two ways. Five minutes of profiling saves a day spent figuring out why the dashboard's revenue is higher than the source's.",
+      "form": "COUNT(*) vs. COUNT(DISTINCT key) -- duplicates\nSUM(column IS NULL)              -- gaps\nTRIM / UPPER / COALESCE          -- normalization",
+      "reads": "A profile of the raw layer: how many rows, how many are unique after normalization, and where the gaps are. This is where work on any new export starts.",
+      "wrongWhy": "Rows with an empty units drop out of the count entirely: if even one operand of the concatenation is NULL, the result is NULL too. That's exactly how deduplication keys quietly break. Each field needs a COALESCE around it, plus a separator between fields — otherwise \"12\" + \"3\" and \"1\" + \"23\" produce the same key.",
+      "selfCheck": "Profile any new export first: row count, duplicates, share of empties, date range, list of distinct values in the key columns."
+    },
+    {
+      "skill": "sql-business-case",
+      "title": "Breaking down a business situation",
+      "why": "\"Sales dropped 40%\" isn't an answer — it's the start of the work. The requester needs to know what to do, and for that you need to know which factor moved, and along with it, who owns the problem.",
+      "form": "Break a metric into factors:\n  units  = number of outlets × units per outlet\n  revenue = units × price\n  units per outlet = number of purchases × average basket\nThen see which factor changed.",
+      "reads": "A brand's decline broken into factors. The outlet count halved while units per outlet held steady — so the problem isn't demand or price, it's lost shelf space. That's a question for the field team and retailer negotiations, not marketing.",
+      "wrongWhy": "Technically correct and completely useless. The number \"down 57%\" doesn't answer \"why\" and doesn't point to who should do something about it. A report that leads to no decision hasn't done its job.",
+      "selfCheck": "Compare like-for-like periods — a quarter against the same quarter last year. Comparing to the previous quarter mixes seasonality with trend and regularly leads to wrong conclusions."
+    }
+  ]
+}

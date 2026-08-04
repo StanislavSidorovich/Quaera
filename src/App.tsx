@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { lessonBySkill, packForTrack, packs } from './content';
+import { lessonBySkill, lessonBySkillFor, packForTrack, packs } from './content';
 import type { Lesson, Pack, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
@@ -165,7 +165,10 @@ export default function App() {
 
   // Пак трека и его исполнитель — единственное место, где App знает,
   // что треков четыре. Всё остальное работает с activePack, не с конкретным sql-core.
-  const activePack: Pack = packForTrack(activeTrack)!;
+  const activePack: Pack = packForTrack(activeTrack, locale)!;
+  // Карточки приёмов на текущем языке — id скиллов одинаковы для обеих локалей,
+  // меняется только проза внутри карточки (см. lessonBySkillFor в content/index.ts).
+  const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
   const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
 
   // Трек по умолчанию (sql) человек тоже «входит» в него, просто без клика
@@ -455,7 +458,7 @@ export default function App() {
                   ? (lessonBySkill.get(screen.skill)?.title ?? '')
                   : screen.name === 'about'
                     ? t.app.name
-                    : `${t.tracks.names[activeTrack]} · серия ${streak(progress.activeDays)} дн.`}
+                    : `${t.tracks.names[activeTrack]} · ${t.app.streakSuffix(streak(progress.activeDays))}`}
           </span>
         </h1>
         {screen.name === 'session' && screen.index > 0 && (
@@ -827,7 +830,7 @@ function Home({
                     <small>{unlocked ? s.summary : t.home.lockedNote}</small>
                   </div>
                   {ready && (
-                    <div className={`bar${due ? ' due' : ''}`} title={`Освоено на ${Math.round(m * 100)}%`}>
+                    <div className={`bar${due ? ' due' : ''}`} title={t.home.masteryAria(Math.round(m * 100))}>
                       <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
                     </div>
                   )}
@@ -894,7 +897,7 @@ function About({
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
   onImportProgress: (file: File) => Promise<boolean>;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -919,7 +922,7 @@ function About({
           {t.about.structureIntro(totalSkills, totalTasks)}
         </p>
         {TRACK_ORDER.map((track) => {
-          const p = packForTrack(track);
+          const p = packForTrack(track, locale);
           if (!p) return null;
           const ready = p.status !== 'draft' && p.tasks.length > 0;
           return (
@@ -1009,8 +1012,8 @@ function TrackIntroScreen({
   onStart: () => void;
   onSkip: () => void;
 }) {
-  const { t } = useI18n();
-  const pack = packForTrack(track);
+  const { t, locale } = useI18n();
+  const pack = packForTrack(track, locale);
   const intro = pack?.intro;
   if (!intro) return null;
 

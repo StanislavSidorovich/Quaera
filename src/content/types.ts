@@ -116,6 +116,23 @@ export interface Lesson {
 }
 
 /**
+ * Перевод карточки приёма. `example` и `wrong` не переводятся — это
+ * исполняемый SQL/код (или его точный аналог), а `form` — единственное
+ * поле с русскими словами-плейсхолдерами («колонка», «таблица») вместо
+ * настоящего синтаксиса, и его перевести нужно, иначе английская карточка
+ * покажет русские слова посреди псевдокода.
+ */
+export interface LessonTranslation {
+  skill: string;
+  title: string;
+  why: string;
+  form: string;
+  reads: string;
+  wrongWhy: string;
+  selfCheck: string;
+}
+
+/**
  * Вводная карточка трека — показывается один раз при первом входе, дальше
  * доступна по кнопке. Отвечает не на вопрос «что делать» (это уже умеет
  * `About`), а на вопрос «что это за инструмент вообще» — до того, как
@@ -153,4 +170,54 @@ export interface Pack {
   tierNames?: Record<number, string>;
   skills: Skill[];
   tasks: Task[];
+}
+
+/**
+ * Перевод пака на английский — параллельный файл (`sql-core.json` →
+ * `sql-core.en.json`), а не двуязычные поля внутри задания (см. ROADMAP §5:
+ * иначе каждый батч контента дорожает вдвое немедленно). Содержит только
+ * прозу: код (`starter`/`template`/`blanks`/`solution`/`predictSql`) не
+ * переводится и не дублируется вовсе — это исполняемый, уже проверенный
+ * гейтом текст, который ссылается на реальные значения датасета (бренды,
+ * города — они в датасете по-русски и остаются такими в коде независимо
+ * от языка интерфейса).
+ *
+ * Перевод может покрывать пак частично — id, которых нет в файле, просто
+ * остаются на русском (см. applyTranslation в content/index.ts). Это то же
+ * решение, что и с частично наполненным паком: точное покрытие проверяется
+ * гейтом, а не структурой типа.
+ */
+export interface SkillTranslation {
+  id: string;
+  title: string;
+  summary: string;
+}
+
+export interface TaskOptionTranslation {
+  label: string;
+  why: string;
+}
+
+export interface TaskTranslation {
+  id: string;
+  title: string;
+  brief?: string;
+  goal?: string;
+  /** Для domain-заданий без исполнимого кода — см. Task.scenario. */
+  scenario?: string;
+  predictQuestion?: string;
+  hints?: string[];
+  explain?: string;
+  /** Порядок обязан совпадать с Task.options — сопоставление позиционное, не по id. */
+  options?: TaskOptionTranslation[];
+}
+
+export interface PackTranslation {
+  id: string;
+  title?: string;
+  description?: string;
+  tierNames?: Record<number, string>;
+  intro?: TrackIntro;
+  skills?: SkillTranslation[];
+  tasks?: TaskTranslation[];
 }

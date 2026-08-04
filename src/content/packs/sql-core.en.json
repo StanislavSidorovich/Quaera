@@ -1,0 +1,288 @@
+{
+  "id": "sql-core",
+  "title": "SQL for analysts",
+  "description": "From selecting rows to window functions, on the data of an FMCG and OTC-pharma distributor. Every task is a working query, not a syntax drill.",
+  "intro": {
+    "what": "SQL is how an analyst pulls data out of a source system: a database, a warehouse, a data mart. It isn't a programming language in the usual sense — there are no loops, no variables, and you don't write an algorithm: you describe what result you want, and the database engine decides how to compute it.\n\nThat's where the whole track's central feature comes from: a mistake in SQL rarely breaks the query. More often it runs without a single complaint and returns something other than what you meant — and the only way to notice is by the meaning of the number, not by an error message.",
+    "where": "Pulling data for a report that no longer fits in Excel. Testing a hypothesis before building a dashboard — a query takes minutes, assembling a model takes half a day. Answering \"why did it dip in March\" while the question is still someone's problem. Finding where two numbers that were supposed to match diverged.\n\nSQL is asked for in analyst job postings more than any other tool, and technical interviews usually start with it.",
+    "idea": "A query doesn't work with a row, it works with the whole table — a set. That's why SQL has no \"loop through and check\": there's \"filter\", \"group\", \"join\", and each step turns one table into another. You have to think in terms of the result, not the path to it.\n\nThe second thing worth accepting right away: the order you write things in doesn't match the order they execute in. SELECT is written first and runs almost last — after FROM, WHERE and GROUP BY. That alone answers half of a beginner's questions: why an alias from SELECT isn't visible in WHERE, how HAVING differs from WHERE, and why a filter put in the wrong place silently changes the result.",
+    "limits": "SQL fetches and aggregates — it doesn't explain. Asked \"why did it drop\", it answers \"by this much, and here's where\" — the reason has to be pieced together yourself; that's what the \"Analytics as a profession\" track is for.\n\nIt's clumsy wherever the calculation is iterative, branches, or needs intermediate state, or needs statistics beyond an average — that's pandas territory.\n\nAnd every engine has its own dialect. SQLite, PostgreSQL, ClickHouse and BigQuery diverge on window functions, on date handling, and even on small things like whether LOWER understands Cyrillic — in SQLite it doesn't, and a search quietly breaks exactly where everything looked fine. A technique is worth remembering together with the engine it works on.",
+    "bridge": "The same working question runs through all four tracks, and the answers have to agree — it's the same data underneath.\n\nBrand «Чистовъ»'s revenue falling by almost half: here you'll pull the numbers with a query; in pandas you'll assemble the same thing through groupby and merge, except the result stays an object in memory you can keep working with; in \"Analytics as a profession\" you'll work out why numeric distribution fell harder than weighted distribution and what that means for negotiations; in Power BI you'll wrap it as a measure that recalculates under any slice.\n\nIf the answers disagree, that's not a difference between tools — it's somebody's mistake."
+  },
+  "tierNames": {
+    "1": "Foundation",
+    "2": "Aggregation and joins",
+    "3": "Real-world data",
+    "4": "Advanced"
+  },
+  "skills": [
+    {
+      "id": "sql-select",
+      "title": "Selecting and aliasing",
+      "summary": "I pull the columns I need and give them clear names, instead of leaving SUM(units) in the report."
+    },
+    {
+      "id": "sql-where",
+      "title": "Filtering rows",
+      "summary": "I turn a task's condition into WHERE and remember that text comparison is case-sensitive."
+    },
+    {
+      "id": "sql-order-limit",
+      "title": "Sorting and top-N",
+      "summary": "I build a ranking and understand that without ORDER BY, row order is guaranteed by nothing at all."
+    },
+    {
+      "id": "sql-null",
+      "title": "NULL and three-valued logic",
+      "summary": "I see where NULL quietly eats rows and know the difference between \"empty\" and \"zero\"."
+    },
+    {
+      "id": "sql-aggregate",
+      "title": "Aggregate functions",
+      "summary": "I tell COUNT(*), COUNT(column) and COUNT(DISTINCT column) apart and pick the one that answers the question."
+    },
+    {
+      "id": "sql-group-by",
+      "title": "Grouping and grain",
+      "summary": "I deliberately choose the report's level of detail and check that the grouping matches it."
+    },
+    {
+      "id": "sql-having",
+      "title": "HAVING vs. WHERE",
+      "summary": "I understand query execution order and know why an aggregate can't go in WHERE."
+    },
+    {
+      "id": "sql-join-inner",
+      "title": "Joining a fact table to a dimension",
+      "summary": "I assemble a report from a star schema: a fact table plus dimensions joined by keys."
+    },
+    {
+      "id": "sql-join-left",
+      "title": "LEFT JOIN and missing data",
+      "summary": "I keep rows with no sales in the report and know why a filter on the right-hand table belongs in ON, not WHERE."
+    },
+    {
+      "id": "sql-fanout",
+      "title": "Row multiplication from a join",
+      "summary": "I notice when a JOIN has duplicated facts and check the grain before handing over the numbers."
+    },
+    {
+      "id": "sql-case",
+      "title": "CASE and conditional aggregation",
+      "summary": "I unfold a metric into columns in a single pass instead of several queries."
+    },
+    {
+      "id": "sql-cte",
+      "title": "CTEs and decomposition",
+      "summary": "I break a complex calculation into readable steps with WITH instead of nested subqueries."
+    },
+    {
+      "id": "sql-window-rank",
+      "title": "Window functions: rankings",
+      "summary": "I build a top-N within each group and tell ROW_NUMBER, RANK and DENSE_RANK apart."
+    },
+    {
+      "id": "sql-window-frame",
+      "title": "Window functions: frames and shifts",
+      "summary": "I compute a moving average, a running total, and change versus the prior period with LAG."
+    },
+    {
+      "id": "sql-data-quality",
+      "title": "Raw data quality",
+      "summary": "I find duplicates, fix types, and normalize reference values before building a report on them."
+    },
+    {
+      "id": "sql-business-case",
+      "title": "Breaking down a business situation",
+      "summary": "I split a metric's change into factors and answer \"why\", not just \"how much\"."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "sql-001",
+      "title": "Price list for marketing",
+      "brief": "The brand manager asks for the product catalog exported, to check it against shelf prices before a price revision.",
+      "goal": "Return for all products: sku_code, product_name, brand and list_price. Name the last column price_rub.",
+      "hints": [
+        "All the needed fields live in one table — dim_product, nothing to join.",
+        "Renaming a column is done with AS: list_price AS price_rub."
+      ],
+      "explain": "An alias isn't decoration. A report where a column is called list_price or, worse, SUM(revenue), forces the reader to guess what it is. A column's name is part of the answer to the question, and the rule is simple: a column is named the way the requester would name it."
+    },
+    {
+      "id": "sql-002",
+      "title": "Case in a filter",
+      "brief": "A colleague sent over a query and complains it \"finds nothing\", even though there are definitely pharma products in the database.",
+      "goal": "Determine what the query returns.",
+      "predictQuestion": "What does this query return, if the division column holds the values 'FMCG' and 'Pharma'?",
+      "options": [
+        {
+          "label": "0 — no rows at all",
+          "why": "The = operator compares text byte for byte, case included. 'pharma' and 'Pharma' are different values."
+        },
+        {
+          "label": "All products in the Pharma division",
+          "why": "That would be true in MySQL, with its default case-insensitive comparison. In SQLite, PostgreSQL and most analytical databases, = is case-sensitive."
+        },
+        {
+          "label": "A runtime error",
+          "why": "The query is syntactically valid. It runs and honestly returns zero — which is exactly why this kind of mistake is dangerous: it doesn't fail, it quietly understates the numbers."
+        },
+        {
+          "label": "All products, because the condition is always true",
+          "why": "The condition is evaluated for every row, and for every one of them it comes out false."
+        }
+      ],
+      "hints": [
+        "The values in the column start with a capital letter.",
+        "The = operator isn't the same as LIKE."
+      ],
+      "explain": "The most expensive mistakes in analytics are the ones that don't fail. The query ran, returned a number, the number made it into the deck. Hence the working habit: on a suspiciously round or suspiciously small result, first check what values are actually in the column — SELECT DISTINCT division FROM dim_product takes five seconds."
+    },
+    {
+      "id": "sql-003",
+      "title": "Selection for the promo catalog",
+      "brief": "Only «Ключевая» and «Фрутта» brand drinks go into the summer catalog, and only items priced above 100 ₽ — cheap ones don't work for promo.",
+      "goal": "Return sku_code, product_name, brand, list_price for items of these two brands priced strictly above 100.",
+      "hints": [
+        "Listing several values of one column is shorter with IN than with OR.",
+        "\"Strictly above\" is >, not >=."
+      ],
+      "explain": "IN ('A', 'B') reads better than brand = 'A' OR brand = 'B', and it won't let you get tripped up by operator precedence: the condition brand = 'A' OR brand = 'B' AND price > 100 won't behave the way you'd expect, because AND binds tighter than OR."
+    },
+    {
+      "id": "sql-004",
+      "title": "The most expensive items",
+      "brief": "Finance wants to see the top of the price list: which items to start the markup conversation with.",
+      "goal": "Return the 10 most expensive products: product_name, brand, list_price. Sort by price from high to low.",
+      "hints": [
+        "Sort first, then limit the count.",
+        "Descending order is the DESC keyword after the column name."
+      ],
+      "explain": "LIMIT without ORDER BY isn't \"the first ten\" — it's \"some ten\": the database engine is free to return rows in any sequence, and on a different data volume or after reindexing, the answer changes. If the task has the word \"top\" in it, ORDER BY is mandatory."
+    },
+    {
+      "id": "sql-024",
+      "title": "Discount for the «Rigla» negotiation",
+      "brief": "The category manager is weighing a 10% discount for the «Ринофлекс» brand ahead of negotiations with the «Ригла» chain, and wants to see discounted prices right next to the current ones.",
+      "goal": "Return for all products of the «Ринофлекс» brand: product_name, list_price and discount_price — the price with a 10% discount, rounded to two decimals.",
+      "hints": [
+        "A 10% discount is multiplying the price by 0.9, not a separate percentage-subtraction formula.",
+        "Like in sql-001, the computed result needs a clear name via AS."
+      ],
+      "explain": "A computed column follows the same naming rule as an ordinary one: if the query produced a new value, it needs a new, clear name. The difference from aggregates is this: ROUND(list_price * 0.9, 2) is computed for each row separately here, not once for the whole table."
+    },
+    {
+      "id": "sql-025",
+      "title": "Column name without an alias",
+      "brief": "An intern sent over an export for the «Гастрокалм» brand and can't explain to their manager what the odd name on the second column in the file means.",
+      "goal": "Determine what the result column will be called.",
+      "predictQuestion": "What will the second column in the result be called, if no alias is given?",
+      "options": [
+        {
+          "label": "The literal text of the expression — \"list_price * 0.9\", exactly as written in the query",
+          "why": "If a column isn't given a name via AS, the database uses the expression's own text as the header — exactly what you wrote in SELECT."
+        },
+        {
+          "label": "\"discount_price\" — the database will pick a sensible name based on what the calculation means",
+          "why": "The database doesn't analyze what a formula means and can't invent business-friendly names — it takes exactly the text that's in the query."
+        },
+        {
+          "label": "\"list_price\" — the same name as the original column",
+          "why": "That would be true if the column were left untouched. But here it's already a different value — multiplied by 0.9 — and the old name doesn't reflect that."
+        },
+        {
+          "label": "The query will fail without an alias on the computed column",
+          "why": "An alias on a SELECT expression isn't syntactically required — the query runs fine, just with an inconvenient column name."
+        }
+      ],
+      "hints": [
+        "Think about where the database could even get a header from for a column nobody named.",
+        "Compare this with sql-024: there, the same formula got the name discount_price, precisely through AS."
+      ],
+      "explain": "A missing alias isn't a syntax error — it's a quiet readability problem: a file with a column called \"list_price * 0.9\" looks like raw debug output, not a business report. Getting into the habit of labeling every computed field saves time for whoever reads the report, and for you a month later, trying to remember what that formula meant."
+    },
+    {
+      "id": "sql-026",
+      "title": "All items in the «Форте» line",
+      "brief": "A brand manager is planning a separate «Форте» sub-line and wants every product across the company with that word in its name — regardless of which brand it belongs to.",
+      "goal": "Return product_name, brand, list_price for all products whose name contains «Форте».",
+      "hints": [
+        "An exact match (=) won't work here: the full names differ, the only thing in common is a word inside the string.",
+        "A substring search is LIKE with the pattern '%text%' — the percent signs mean \"anything before and after\"."
+      ],
+      "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Форте%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...' — irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
+    },
+    {
+      "id": "sql-027",
+      "title": "LIKE and Cyrillic case",
+      "brief": "A colleague who used to work with MySQL is searching for «Ключевая» brand items, typing the name in lowercase, and expects LIKE, unlike =, to ignore case.",
+      "goal": "Determine whether the query returns a result.",
+      "predictQuestion": "Does the query return a non-zero result, if the database stores the name as «Ключевая негаз. 0.5 л» — capitalized?",
+      "options": [
+        {
+          "label": "No, n = 0 — for Cyrillic, LIKE in SQLite is case-sensitive by default",
+          "why": "SQLite's built-in case-insensitivity for LIKE only works for ASCII Latin letters. Cyrillic is compared byte for byte, just like with =."
+        },
+        {
+          "label": "Yes, n = 6 — LIKE always ignores case, that's its key difference from =",
+          "why": "True only for the Latin alphabet. Outside ASCII, without the ICU extension, LIKE is just as case-sensitive as an ordinary comparison."
+        },
+        {
+          "label": "The query fails with an error because of the Cyrillic in the pattern",
+          "why": "Cyrillic in string literals and LIKE patterns is ordinary text — there's no syntax issue here."
+        },
+        {
+          "label": "Yes, but not all six brand items come back, only some of them",
+          "why": "If the case matched, all six would be found — the comparison doesn't depend on the particular SKU, only on the case of the whole substring."
+        }
+      ],
+      "hints": [
+        "Try the same condition with a capital letter — the result differs by exactly that one character.",
+        "LIKE's case-insensitivity in SQLite is historically an ASCII-range-only feature."
+      ],
+      "explain": "This is a quirk of the engine, not the SQL standard: SQLite by default treats only the letters a-z/A-Z as case-insensitive, and compares any other Unicode letters, Cyrillic included, byte for byte. The first fix that comes to mind — lowering both sides — doesn't help here: SQLite's LOWER and UPPER are limited to that same ASCII range, and LOWER('Ключевая') returns «Ключевая» completely unchanged. A query with LOWER(product_name) LIKE LOWER('%ключевая%') still finds zero rows — it looks like a fix and leaves the bug exactly where it was. SQLite has no built-in case-insensitive Cyrillic search without the ICU extension: either you search using the exact casing the value is stored in, or you normalize case on the way in — a separate column, computed outside SQLite. In PostgreSQL and ClickHouse, the same LOWER works with Cyrillic as expected, so this trick is worth remembering together with the engine it holds true on. The failure is silent: the query doesn't fail, it just finds nothing, and it's easy to mistake that for \"no such text in the database\"."
+    },
+    {
+      "id": "sql-029",
+      "title": "Second-priciest item of a brand",
+      "brief": "Ahead of a price revision, the CFO doesn't want the most expensive item of the «Витамакс» brand — that one's already clear — but the one right behind it.",
+      "goal": "Return product_name and list_price of the second most expensive product of the «Витамакс» brand.",
+      "hints": [
+        "Sort by price from high to low first — like in sql-004.",
+        "LIMIT 1 takes the first row after sorting. To skip the most expensive one and take the next, add OFFSET 1."
+      ],
+      "explain": "OFFSET shifts LIMIT's starting point: LIMIT 1 OFFSET 1 means \"one row, starting from the second\". This trick comes in handy anywhere you need not the top of a ranking but a specific spot in it — \"the second-biggest customer\", \"the third quarter in the count\". Just like with plain LIMIT, without ORDER BY the result of OFFSET is undefined — a guaranteed spot in the list only exists together with a sort."
+    },
+    {
+      "id": "sql-048",
+      "title": "Paginated price list and a tied price",
+      "brief": "The price list is displayed 3 items per page, sorted from expensive to cheap. A manager is paging through it and can't understand why an item priced 98 ₽, which they just saw, isn't on the current page anymore.",
+      "goal": "Determine how many products priced 98 ₽ end up in this query's result.",
+      "predictQuestion": "How many products priced 98 ₽ will be in the result, if there are three such products in the whole price list?",
+      "options": [
+        {
+          "label": "Two — the third one stayed on the previous page",
+          "why": "OFFSET 33 counts from the start of the sorted list, and the rows priced 98 landed split across two neighboring groups of three: one went to the previous page, two landed on this one."
+        },
+        {
+          "label": "All three — a matching price guarantees they end up next to each other on one page",
+          "why": "Next to each other in the sorted list — yes, but \"next to each other\" doesn't mean \"inside the same group of three\" if there are more rows at that price than fit before the current LIMIT window ends."
+        },
+        {
+          "label": "None — OFFSET 33 has already skipped past all the 98 ₽ items",
+          "why": "OFFSET 33 skips the first 33 rows after sorting, and the group of items priced 98 starts right at that boundary, not before it."
+        },
+        {
+          "label": "The query fails with an error — several rows with the same list_price can't be sorted",
+          "why": "Sorting a column with repeated values is an ordinary operation — there's no error here."
+        }
+      ],
+      "hints": [
+        "Start with ROW_NUMBER() OVER (ORDER BY list_price DESC) to see where each of the three 98 ₽ items lands in the overall list.",
+        "OFFSET 33 means \"skip the first 33 rows\" — check which row number lands 34th."
+      ],
+      "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit — on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ₽, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering — add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
+    }
+  ]
+}
