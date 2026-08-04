@@ -1336,5 +1336,126 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   }
 }
 
+// --- python-core: утверждения о движке, которые называет разбор.
+//
+// Проверка эталонов выше запускает только write/fill. Код predict-заданий гейт
+// не исполняет вовсе — у них нет эталона, — а между тем почти каждый разбор
+// в этом паке утверждает что-то о поведении pandas: какой будет текст ошибки,
+// сколько строк вернёт transform, что сделает groupby с пропущенным ключом.
+// Такое утверждение ничем не отличается от числа в тексте: человек выполнит его
+// ровно на том движке, о котором оно говорит (история sql-027, §2 ROADMAP).
+// Блок поставлен при финальной вычитке разборов python-пака; каждая строка
+// здесь — предложение, которое сейчас напечатано в explain или в варианте ответа.
+{
+  const py = async (code) => (await runPython(code)).rows[0][0];
+  const pyExpect = async (id, code, want, note) => {
+    const got = await py(code);
+    if (String(got) !== want) fail(id, `${note}: ожидалось «${want}», движок дал «${got}»`);
+    else console.log(`  ok   ${id}: ${note}`);
+  };
+
+  // py-002: вариант ответа цитирует сообщение ValueError дословно.
+  await pyExpect('py-002', `
+try:
+    dim_product[(dim_product['list_price'] > 100) and (dim_product['brand'] == 'Ключевая')]
+    result = 'ошибки не было'
+except Exception as e:
+    result = f'{type(e).__name__}: {str(e).split(".")[0]}'
+`, 'ValueError: The truth value of a Series is ambiguous', 'and на Series по-прежнему даёт процитированный ValueError');
+
+  // py-001: разбор объясняет, что без скобок первым вычисляется 'Ключевая' & (...)
+  // и это именно TypeError, а не тихо неверная выборка.
+  await pyExpect('py-001', `
+try:
+    dim_product[dim_product['brand'] == 'Ключевая' & (dim_product['list_price'] > 100)]
+    result = 'ошибки не было'
+except Exception as e:
+    result = type(e).__name__
+`, 'TypeError', 'приоритет & над == по-прежнему роняет фильтр без скобок');
+
+  // py-006: вариант ответа разделяет два случая — чего у Series нет вовсе
+  // и что у неё есть, но не принимает columns=.
+  await pyExpect('py-006', `
+s = dim_product['brand']
+try:
+    s.rename(columns={'brand': 'b'})
+    ren = 'ошибки не было'
+except Exception as e:
+    ren = type(e).__name__
+result = f"{hasattr(s, 'columns')}/{hasattr(s, 'merge')}/{ren}"
+`, 'False/False/TypeError', 'у Series нет .columns и .merge, а .rename(columns=) даёт TypeError');
+
+  // py-014: разбор объясняет, почему именованная агрегация лучше списка функций.
+  // Оба утверждения о списке — падение на всей таблице и двухуровневый заголовок
+  // при сужении до колонки — проверяются, а не принимаются на веру.
+  await pyExpect('py-014', `
+try:
+    dim_product.groupby('division').agg(['count', 'mean'])
+    whole = 'ошибки не было'
+except Exception as e:
+    whole = type(e).__name__
+multi = isinstance(dim_product.groupby('division')[['list_price']].agg(['count', 'mean']).columns, pd.MultiIndex)
+result = f'{whole}/{multi}'
+`, 'TypeError/True', 'список функций падает на всей таблице и даёт MultiIndex на колонке');
+
+  // py-017: разбор называет период таблицы, из которого считается доля.
+  await pyExpect('py-017', `
+result = f"{fact_sellout['week_start'].nunique()}/{fact_sellout['week_start'].min()[:7]}/{fact_sellout['week_start'].max()[:7]}"
+`, '131/2024-01/2026-06', 'период таблицы — 131 неделя, январь 2024 — июнь 2026');
+
+  // py-018: разбор утверждает, что выравнивание по индексу оставляет ровно
+  // 47 посчитанных строк и 118 402 пустых. Это опаснее сплошного NaN, и обе
+  // цифры названы в тексте.
+  await pyExpect('py-018', `
+a = fact_sellout.groupby('product_id')['units'].sum()
+r = fact_sellout['units'] / a
+result = f'{int(r.notna().sum())}/{int(r.isna().sum())}'
+`, '47/118402', 'деление с разными индексами даёт 47 чисел и 118 402 NaN');
+
+  // py-026: разбор перечисляет все пять каналов с их числами.
+  await pyExpect('py-026', `
+result = '/'.join(f'{k}:{v}' for k, v in dim_customer['channel'].value_counts().items())
+`, 'traditional_trade:44/modern_trade:42/pharmacy:38/distributor:12/ecom:8', 'пять каналов в value_counts совпадают с разбором');
+
+  // py-030: вариант ответа цитирует сообщение ValueError дословно.
+  await pyExpect('py-030', `
+m = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')
+m['week_start'] = pd.to_datetime(m['week_start'])
+m['quarter'] = m['week_start'].dt.to_period('Q').astype(str)
+sub = m[(m['week_start'] >= '2025-01-01') & (m['week_start'] < '2026-01-01')]
+try:
+    sub.pivot(index='brand', columns='quarter', values='revenue')
+    result = 'ошибки не было'
+except Exception as e:
+    result = f'{type(e).__name__}: {e}'
+`, 'ValueError: Index contains duplicate entries, cannot reshape', 'pivot на сырых данных по-прежнему падает процитированным сообщением');
+
+  // py-032/py-033: весь смысл пары заданий — в контрасте двух движков на одних
+  // и тех же данных. Если он исчезнет, задания начнут учить неверному.
+  await pyExpect('py-033', `
+result = f"{staging_raw_sellout['sku_code'].nunique()}/{staging_raw_sellout['sku_code'].str.upper().nunique()}"
+`, '58/29', 'pandas схлопывает 58 кодов в 29 (полный Unicode)');
+  {
+    const r = runSql(`SELECT COUNT(DISTINCT sku_code) AS raw, COUNT(DISTINCT UPPER(sku_code)) AS up FROM staging_raw_sellout`);
+    const [raw, up] = r.rows[0];
+    if (raw !== 58 || up !== 58) {
+      fail('py-033', `в разборе UPPER в SQLite не меняет ничего (58 → 58), в базе ${raw} → ${up}`);
+    } else console.log('  ok   py-033: UPPER в SQLite оставляет те же 58 кодов — контраст с pandas на месте');
+  }
+
+  // py-038: разбор держится на том, что pandas предупреждает, но не падает,
+  // и колонка не появляется. В pandas 3 с copy-on-write это поведение меняется —
+  // проверка обязана уронить сборку в день обновления Pyodide, а не после.
+  await pyExpect('py-038', `
+import warnings
+df = fact_sellout.copy()
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter('always')
+    df[df['revenue'] > 3000]['flag'] = 1
+    kinds = sorted({type(x.message).__name__ for x in w})
+result = f"{'flag' in df.columns}/{','.join(kinds)}"
+`, 'False/SettingWithCopyWarning', 'цепочечное присваивание молча теряет колонку и даёт SettingWithCopyWarning');
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);
