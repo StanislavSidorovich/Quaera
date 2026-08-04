@@ -36,6 +36,45 @@
   }
 }
 
+/*
+ * Ручной выбор темы поверх системной настройки. Класс вешается на <html>
+ * (см. App.tsx), поэтому специфичность та же, что у :root, — побеждает
+ * порядок в файле, эти правила идут последними и переопределяют оба
+ * блока выше в любую сторону: тёмную тему можно включить при светлой ОС
+ * и наоборот. Отсутствие класса (режим «как в системе») ничего не трогает.
+ */
+:root.theme-light {
+  --bg: #f6f7fb;
+  --bg-raised: #ffffff;
+  --bg-sunken: #eceff7;
+  --line: #d9deeb;
+  --text: #131a2c;
+  --text-dim: #5a6580;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --ok: #15803d;
+  --warn: #a16207;
+  --err: #b91c1c;
+  --code: #1e40af;
+  color-scheme: light;
+}
+
+:root.theme-dark {
+  --bg: #0b1020;
+  --bg-raised: #141a2e;
+  --bg-sunken: #080c18;
+  --line: #232b45;
+  --text: #e8ecf7;
+  --text-dim: #96a0be;
+  --accent: #6ea8fe;
+  --accent-ink: #0b1020;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --code: #a5d8ff;
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -117,6 +156,11 @@ textarea.sql {
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+/* Название «Querium» на главном экране — крупнее прочих заголовков шапки (+~25%). */
+.topbar h1.brand {
+  font-size: 21px;
 }
 
 .topbar .sub {

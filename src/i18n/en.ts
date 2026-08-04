@@ -176,4 +176,8 @@ export const en = {
   fontSize: {
     aria: 'Font size — tap to switch',
   },
+  theme: {
+    aria: (current: 'system' | 'light' | 'dark') =>
+      `Theme: ${current === 'system' ? 'system default' : current} — tap to switch`,
+  },
 };

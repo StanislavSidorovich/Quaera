@@ -201,4 +201,8 @@ export const ru = {
   fontSize: {
     aria: 'Размер шрифта — нажмите, чтобы переключить',
   },
+  theme: {
+    aria: (current: 'system' | 'light' | 'dark') =>
+      `Тема оформления: ${current === 'system' ? 'как в системе' : current === 'light' ? 'светлая' : 'тёмная'} — нажмите, чтобы переключить`,
+  },
 };

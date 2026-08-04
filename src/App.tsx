@@ -40,6 +40,26 @@ function initialFontSize(): FontSize {
   return 'md';
 }
 
+/**
+ * Тема оформления. 'system' — как в ОС (текущее поведение, media-запрос
+ * в styles.css), 'light'/'dark' — принудительно, поверх системной настройки.
+ * Класс вешается на <html>, а не на `.app`: переменные темы объявлены на
+ * :root, и только там их можно надёжно переопределить в обе стороны.
+ */
+type Theme = 'system' | 'light' | 'dark';
+const THEME_ORDER: Theme[] = ['system', 'light', 'dark'];
+const THEME_STORAGE_KEY = 'querium-theme';
+
+function initialTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === 'system' || stored === 'light' || stored === 'dark') return stored;
+  } catch {
+    // localStorage недоступен — просто не запоминаем выбор
+  }
+  return 'system';
+}
+
 /** Раз в столько мс перестаём считать повторное «назад» подтверждением выхода. */
 const EXIT_HINT_MS = 2000;
 
@@ -91,6 +111,7 @@ export default function App() {
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
+  const [theme, setTheme] = useState<Theme>(initialTheme);
   const schema = useSchema();
 
   const cycleFontSize = () => {
@@ -102,6 +123,22 @@ export default function App() {
       // см. initialFontSize
     }
   };
+
+  const cycleTheme = () => {
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+    setTheme(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // см. initialTheme
+    }
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('theme-light', theme === 'light');
+    root.classList.toggle('theme-dark', theme === 'dark');
+  }, [theme]);
 
   // Пак трека и его исполнитель — единственное место, где App знает,
   // что треков четыре. Всё остальное работает с activePack, не с конкретным sql-core.
@@ -349,7 +386,7 @@ export default function App() {
             ←
           </button>
         )}
-        <h1>
+        <h1 className={screen.name === 'home' ? 'brand' : undefined}>
           {screen.name === 'session'
             ? t.session.title
             : screen.name === 'reference'
@@ -396,6 +433,9 @@ export default function App() {
         )}
         <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
           {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
+        </button>
+        <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
+          {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
         </button>
         <button
           className="icon-btn"
