@@ -60,6 +60,41 @@
       "id": "dom-seasonality",
       "title": "Seasonality and period comparison",
       "summary": "I compare year over year, not month over month, when a category has a season, and can explain why a rolling year is more honest than a quarter."
+    },
+    {
+      "id": "dom-fmcg-distribution",
+      "title": "Distribution and shelf presence",
+      "summary": "I can tell numeric and weighted distribution apart, read ACV, and see OOS as lost revenue rather than a technical report line."
+    },
+    {
+      "id": "dom-fmcg-consumer",
+      "title": "Penetration, repeat purchase, and rate of sale",
+      "summary": "I can break market share down into penetration, frequency, and purchase volume, and see which specific lever actually dropped."
+    },
+    {
+      "id": "dom-fmcg-promo",
+      "title": "Promo: real lift and cannibalization",
+      "summary": "I compute a promo's real lift, adjusted for the part of the growth stolen from a neighboring SKU and from future weeks."
+    },
+    {
+      "id": "dom-pharma-rx",
+      "title": "TRx, NRx, and market share",
+      "summary": "I can tell all prescriptions apart from new starts, and read market share over a rolling year rather than a single month."
+    },
+    {
+      "id": "dom-pharma-data",
+      "title": "Panel data in pharma",
+      "summary": "I remember that IQVIA data is a sample of pharmacies extrapolated to the market, and I don't pass an estimate off as an actual sales fact."
+    },
+    {
+      "id": "dom-decomposition",
+      "title": "Decomposing \"why did it drop\"",
+      "summary": "I break a metric's change down into factors and carry the analysis to the link that actually has an owner."
+    },
+    {
+      "id": "dom-abc-xyz",
+      "title": "ABC-XYZ segmentation",
+      "summary": "I split the assortment by contribution and demand stability, and know what action follows for each group."
     }
   ],
   "tasks": [
@@ -899,6 +934,657 @@
         "Mentally rebuild the same slide with February data and see what conclusion comes out."
       ],
       "explain": "Categories with different seasonal profiles can only be compared against each other over a full annual window, or each against itself year over year. A single shared window will always favor whichever category's season happens to fall into it — and the decision ends up made in favor of the calendar. In FMCG this mistake is especially costly, because the budget arrives at the season's peak, when the product is already selling well on its own, and by the next peak the money is already spent. The check is simple: before comparing two brands within one period, mentally shift the comparison to the opposite season. If the conclusion flips, you measured the calendar."
+    },
+    {
+      "id": "dom-028",
+      "title": "One brand's two distributions",
+      "brief": "«Чистовъ» brand manager brings a slide: numeric distribution fell from 82% to 33%. The commercial director looks at their own report and answers: \"Mine shows weighted at 47.5%, too early to panic.\" Both are right — they're measuring the same thing by different rules.",
+      "goal": "Read what the gap between the two metrics meant in mid-2025.",
+      "scenario": "«Чистовъ» brand, household\nchemicals. Numeric distribution\n— share of outlets that sold\nthe brand at least once in\nthe month. Weighted — share\nof those outlets' turnover in\nthe channel's total turnover.\n\n  month    numeric    weighted\n  2024-01     81.9%      97.3%\n  2025-01     78.7%      97.2%\n  2025-06     68.1%      92.1%\n    ← −10.6 pp / −5.1 pp\n  2025-08     56.4%      78.8%\n  2025-12     42.6%      63.5%\n  2026-06     33.0%      47.5%",
+      "predictQuestion": "By June 2025, numeric distribution lost 10.6 points, weighted only 5.1. What did that mean at the time?",
+      "options": [
+        {
+          "label": "The brand was losing outlets below the average turnover: many addresses lost, little revenue — but those are exactly the outlets that go first, and the large ones follow later",
+          "why": "Weighted distribution falls slower than numeric precisely when the departing outlets are smaller than average. That's not a reason to relax — it's an early signal: the shelf is crumbling from the edges. By December, weighted had already lost 34 points — the wave had reached the large outlets."
+        },
+        {
+          "label": "A calculation error: two metrics of one distribution can't diverge this much",
+          "why": "They can and must. Numeric counts addresses, weighted counts the money behind those addresses. They could only match in one case: if every outlet were the same size, and no channel is like that."
+        },
+        {
+          "label": "The brand lost several chains, which is why weighted started declining too",
+          "why": "If chains had left, weighted would have fallen faster than numeric, not slower: one chain is one address and a large turnover. The picture through June 2025 is the opposite, and it points to small outlets."
+        },
+        {
+          "label": "A 5-point gap is negligible, both metrics say the same thing",
+          "why": "Five points of weighted distribution is 5% of the channel's turnover — real money. And more importantly: what matters isn't the size of the gap but its speed — the metrics diverged, and which one moved first tells you exactly who the brand is losing."
+        }
+      ],
+      "hints": [
+        "Weighted distribution is a share of turnover, numeric is a share of addresses. What has to be true about the departing outlets for many addresses to leave but little turnover?",
+        "Look not at the June gap but at what happened to both metrics by December."
+      ],
+      "explain": "Numeric distribution answers \"how many outlets carry the brand\"; weighted answers \"what share of trade those outlets account for.\" Weighted is almost always higher: a brand is placed into large outlets first, and it holds on there longer. So the pair of metrics is read not separately but by the gap between them, and by how that gap changes.\n\nThe rule is simple. Numeric falling faster than weighted means small outlets are leaving, the money is still mostly intact, but the process has started. Weighted falling faster than numeric means large ones are leaving, and that's no longer a signal, it's a fire. «Чистовъ» shows both phases in sequence: through mid-2025 small addresses were dropping out, from August the large ones started, and in five months weighted lost almost thirty points.\n\nOne more thing about the calculation base. Weighted distribution here is computed over the outlets' total category turnover — what reports call ACV (all commodity volume). Sometimes it's computed over a specific category's turnover instead, and then the number is different. A figure like \"weighted 47.5%\" with no stated base means nothing: asking \"weighted over what base\" is as mandatory as asking \"sales into the channel, or out of it\"."
+    },
+    {
+      "id": "dom-029",
+      "title": "Distribution at 94%, but the shelf is empty",
+      "brief": "A chain sent shelf audit data. Your sales report shows «Ключевая» present in 94% of the chain's stores. The auditor writes: in 12% of visits, the product wasn't on the shelf at the time of the check. The category manager asks how both numbers can be right.",
+      "goal": "Explain why a distribution metric computed from sales data can't see an empty shelf.",
+      "scenario": "How our report computes\ndistribution:\n\n  an outlet counts toward\n  the month's distribution\n  if it sold at least one\n  unit of the brand during\n  that month\n\nWhat the audit found in\none of the stores:\n\n  week 1  product on the\n    shelf all week — 46 sold\n  week 2  product ran out\n    Thursday — 31 sold\n  week 3  no product at\n    all — 0 sold\n  week 4  delivery Wednesday —\n    22 sold\n\n  month total: sales\n  occurred → outlet \"in\n  distribution\"",
+      "predictQuestion": "Which conclusion follows from this discrepancy?",
+      "options": [
+        {
+          "label": "Both numbers are correct, but they measure different things: our metric is presence at least once in the month, the audit is presence at a specific moment. Neither one sees the lost sales",
+          "why": "Distribution measured by sales is a coarse sieve: one unit sold closes out the whole month. The absence of product within the month falls through it by design, not by mistake. That's exactly why presence is measured with a separate metric and a separate source."
+        },
+        {
+          "label": "The audit is wrong: if the product were missing, sales would have dropped and the outlet would have fallen out of distribution",
+          "why": "It wouldn't have. The \"at least one unit a month\" rule survives a week without stock, or three. Sales really did drop — but the distribution metric is built in a way that never shows that drop."
+        },
+        {
+          "label": "The threshold should be lowered: only count an outlet in distribution if it sold the brand every week of the month",
+          "why": "Raising the bar helps, but it doesn't solve the problem: for a slow-selling product, a weekly threshold would produce a false absence, and a week-long gap in the middle would still stay invisible. Presence is measured with a shelf audit or stock data, not a sales threshold."
+        },
+        {
+          "label": "The discrepancy is because the audit checked a sample of the chain's stores, not all of them",
+          "why": "A sample adds error to the estimate, but doesn't explain the gap. A full audit would have shown the same thing: it measures a moment, and a sales report measures the whole month."
+        }
+      ],
+      "hints": [
+        "Read the metric's definition literally: what's enough for an outlet to count in the month's distribution?",
+        "Ask yourself which event in the weekly table a sales report fundamentally can never see."
+      ],
+      "explain": "Out-of-stock isn't a technical line in a report — it's a direct loss: a buyer showed up, the product wasn't there, they took a competing brand instead. Some of those buyers never come back, and the cost of one week without stock can exceed that week's expected revenue.\n\nSales data fundamentally can't catch OOS. Sales are what happened; an empty shelf is what didn't happen, and it has no row in a fact table. Zero sales at an outlet and zero sales because the shelf was empty look identical, and if the product was there for even a single day, there won't be a zero at all. That's why presence is measured with other sources: shelf audits, in-outlet stock levels, minute-by-minute register data, or, for chains, SKU-availability reports.\n\nPractical takeaway for an analyst: whenever a metric is computed by an \"at least once per period\" rule, always check what that \"at least once\" is hiding. The larger the period, the more forgiving the metric — monthly distribution for the same brand is always higher than weekly, and the gap between them is itself a decent estimate of how patchy the product's shelf presence actually is.\n\nAnd one more thing: 94% and 12% don't contradict each other — they complement each other. The right way to phrase it for a manager is: \"the brand is stocked almost everywhere, but at any given moment it's missing from one store in eight\" — and from there the conversation moves to ordering and logistics, not chain negotiations."
+    },
+    {
+      "id": "dom-030",
+      "title": "Which distribution to bring back",
+      "brief": "It's been decided to bring «Чистовъ» back to the shelf. The sales director sets a target: get distribution back to 80%. You ask them to clarify which one — and it turns out the answer determines a year's worth of the department's workload.",
+      "goal": "Compare the cost of two phrasings of the same goal.",
+      "scenario": "Now, Q2 2026:\nthe brand is in 33 outlets\nout of 94.\nNumeric distribution 35.1%,\nweighted 47.6%.\nVs. Q2 2024, 46 outlets\nwere lost.\n\nLost outlets, by turnover\n(share of channel turnover):\n\n  outlet 1     10.5%\n  outlet 2      7.8%\n  outlet 3      7.1%\n  outlet 4      5.6%\n    top 4 total — 31.0%\n  outlet 5      1.5%\n  outlets 6–30  1.4% to 0.34%\n  outlets 31–46 0.11% to 0.02%\n\nWinning back the first five:\nweighted 80.1%, numeric\n40.4%.\nFor numeric to reach 80%,\n43 of 46 outlets need to\ncome back.",
+      "predictQuestion": "What should be said to the director?",
+      "options": [
+        {
+          "label": "The goal needs restating: \"weighted 80%\" is five negotiations, \"numeric 80%\" is forty-three. These are different projects, and the choice has to be made deliberately",
+          "why": "The same number, \"80%\", stands for nine times the amount of work depending on which one is meant. Until the goal specifies which distribution, sales and the analyst will report on different things while sincerely believing they're doing the same job."
+        },
+        {
+          "label": "The five large outlets should be brought back: weighted will reach 80%, and numeric will follow on its own",
+          "why": "Numeric won't follow: 38 outlets out of 94 give 40.4%, only half the distance. Targeting the large outlets first is a sensible move, but presenting it as achieving the \"80%\" goal is a substitution."
+        },
+        {
+          "label": "Both goals are equivalent: 80% is 80%, only the counting method differs",
+          "why": "The difference in counting method is the difference in work. A metric that measures money is closed out with five addresses; a metric that measures addresses requires working through the whole list — including sixteen outlets worth 0.11% of turnover or less."
+        },
+        {
+          "label": "All 46 outlets should be won back: the brand was there before, so there must be demand",
+          "why": "There was demand, but the 16 smallest outlets together account for less than a percent of channel turnover. Spending as many negotiations on them as on the top four is a decision that needs to be made with eyes open, not by default."
+        }
+      ],
+      "hints": [
+        "Compute how many outlets are needed for each of the two goals. The numbers are in the setup.",
+        "Think about what happens a year from now if the goal stays worded as just \"80% distribution\"."
+      ],
+      "explain": "This task isn't about distribution — it's about how a metric turns into a work plan. \"Bring distribution back to 80%\" sounds like one goal, and unfolds into two completely different projects: five negotiations with large chains versus forty-three visits, most of them to outlets worth hundredths of a percent of turnover.\n\nWhy this happened is visible in the distribution: four lost outlets carry 31% of channel turnover, while the last sixteen together carry less than one percent. This kind of asymmetry is normal for FMCG, and it means numeric and weighted distribution are driven by different actions. Weighted moves with chain negotiations; numeric moves with sales reps working their routes. Different people, different budgets, different timelines.\n\nThe right move for an analyst here isn't to choose on the director's behalf, but to show the cost of each option before the goal gets locked into a KPI. Once \"80%\" is written into the annual plan with no clarification, the argument over what was meant will cost more than this conversation.\n\nWorth noting separately: neither goal guarantees revenue actually comes back. Getting the product onto the shelf is a necessary condition, but sales at an outlet also depend on how fast it moves off that shelf."
+    },
+    {
+      "id": "dom-031",
+      "title": "Wider doesn't mean bigger",
+      "brief": "«Фрутта Яблоко» is in 52 outlets — nothing in the brand is wider. «Фрутта Апельсин» is in 46. Yet Апельсин sells a third more. The brand manager asks where Яблоко's advantage is going.",
+      "goal": "Break sales volume into three factors and name the one that dropped.",
+      "scenario": "Sales over 12 months,\nbroken into three factors:\n\n  «Фрутта Апельсин» 1L\n    outlets              46\n    weeks with a sale   36.5\n    units per week     13.09\n    total units       21,972\n\n  «Фрутта Яблоко» 1L\n    outlets              52\n    weeks with a sale   33.0\n    units per week      9.87\n    total units       16,934\n\n  46 × 36.5 × 13.09 = 21,972\n  52 × 33.0 ×  9.87 = 16,934",
+      "predictQuestion": "Where does Яблоко lose what it gains on distribution?",
+      "options": [
+        {
+          "label": "On both remaining factors: it sells at an outlet less often (33 weeks vs. 36.5) and less per week (9.87 vs. 13.09). The 13% edge in outlets doesn't offset the 10% shortfall in frequency and 25% in volume",
+          "why": "Volume is the product of three factors, and leading on one guarantees nothing. Here there's a distribution advantage, but the other two factors are lower, with the main shortfall in units sold per week."
+        },
+        {
+          "label": "Only on frequency: Яблоко sells in 33 of 52 weeks, meaning it's absent one week in five",
+          "why": "Frequency really is lower, but the gap there is 10%, while units per week is off by 25%. Naming the first lever instead of the main one sends the sales team to fix the wrong problem."
+        },
+        {
+          "label": "Nowhere: Яблоко just has a lower price, so the gap looks smaller in money than it is",
+          "why": "Price would explain a revenue gap, but this comparison is in units, and the gap is already there in units. It fully decomposes into frequency and volume per week, with no need to bring price into it."
+        },
+        {
+          "label": "There's not enough data: without knowing competitor sales, you can't say which factor dropped",
+          "why": "Decomposing your own volume doesn't need competitors — all three factors are computed from your own data. Competitors matter at the next step: figuring out whether a rate of 9.87 is normal for this category."
+        }
+      ],
+      "hints": [
+        "Compare the three factors one by one and compute the percentage difference for each.",
+        "Leading on one factor of a product says nothing about the product itself."
+      ],
+      "explain": "In FMCG, market share is conventionally broken into three factors: how many buyers took the brand at least once (penetration), how often they came back (frequency), and how much they took each time (purchase volume). A household panel gives you that triple. We don't have a panel, but the arithmetic is exactly the same on outlet data: outlets × weeks with a sale × units in such a week. The point of the exercise isn't the source — it's the discipline of not explaining volume with one factor before looking at all three.\n\nHere the breakdown immediately flips the conclusion. Яблоко has the widest distribution in the brand, and by that one metric alone looks like the strongest SKU. But its 13% edge in outlets is eaten by a 10% shortfall in frequency and a 25% shortfall in weekly volume, and the total comes out 23% worse.\n\nWhere this leads matters. A shortfall in distribution is fixed with negotiations and a sales rep's route. A shortfall in volume per visit is a question of price, shelf placement, pack size, and whether the buyer even knows the product exists: expanding Яблоко's distribution is pointless while it moves slower than Апельсин in the 52 outlets it already has.\n\nAnd the sanity check: multiply the factors together and reconcile against the total. If the product doesn't match the fact, you decomposed volume the wrong way — for example, taking a per-outlet average where a per-week average was needed."
+    },
+    {
+      "id": "dom-032",
+      "title": "Everyone tried it, few came back",
+      "brief": "A new snack flavor launched six months ago with a big ad campaign and free samples. The household panel shows penetration grew from 4% to 11%. Market share in money stayed unchanged. Marketing asks you to explain why.",
+      "goal": "Determine which of market share's three factors failed to deliver.",
+      "scenario": "Household panel, before\nlaunch and 6 months later:\n\n  penetration\n    (bought at least once)\n    was 4%  →  now 11%\n  purchases per buyer\n    was 3.4  →  now 1.3\n  average purchase size, ₽\n    was 180  →  now 185\n\n  market share in money\n    was 2.1%  →  now 2.1%\n\nShelf space and price were\nunchanged.",
+      "predictQuestion": "What happened to the brand?",
+      "options": [
+        {
+          "label": "Lots of people were convinced to try it, and almost nobody came back: frequency fell from 3.4 to 1.3, and the penetration growth turned into one-off trial purchases",
+          "why": "Penetration grew 2.75x, frequency fell 2.6x — the product stayed put. That's the signature of trial with no follow-up repeat purchase: the product got noticed, not loved."
+        },
+        {
+          "label": "Share didn't grow because the whole market grew: the brand grew along with the category",
+          "why": "That would show up as steady frequency alongside growing penetration. Here frequency collapsed almost threefold — that's an event internal to the brand, not the market moving."
+        },
+        {
+          "label": "A panel error: penetration and market share can't move in opposite directions",
+          "why": "They absolutely can — they're linked through the other two factors. Market share = penetration × frequency × purchase volume, and a drop in any one factor cancels out growth in the others."
+        },
+        {
+          "label": "The samples distorted the data: they were free, so penetration was computed off giveaways",
+          "why": "The panel records purchases, not gifts, and the growth to 11% is people who paid. The problem isn't that the purchase wasn't real — it's that it stayed the only one."
+        }
+      ],
+      "hints": [
+        "Multiply the three numbers before and after. What would have had to happen to the product if only one factor had dropped?",
+        "Ask yourself what separates someone who bought the product once from someone who bought it four times."
+      ],
+      "explain": "Market share in a consumer panel decomposes into three factors: penetration (what share of households bought the brand at least once), frequency (how many times those buyers repurchased), and average purchase size. Growth in any one factor guarantees nothing — what matters is the product.\n\nThe picture \"penetration up, frequency down, share flat\" is the most common and most expensive one in launches. It means the ad and sampling budget worked right up to the register: people tried the product, and it didn't live up to expectations. Repeat purchase is the only honest test of a product, and its absence can't be fixed with another ad wave. A second wave will just repeat the same cycle and bring the same people to one purchase again.\n\nHence the practical rule: a launch is judged not by penetration but by the repeat rate among triers and the time to a second purchase. Penetration shows whether marketing worked; repeat purchase shows whether the product worked. The first grows from money, the second only from the product, and confusing them means funding a failure for another quarter.\n\nWhat to tell marketing: the campaign did its job, the next question isn't for them. Before planning a second wave, it's worth understanding why people didn't come back — taste, price per gram, pack size, shelf placement."
+    },
+    {
+      "id": "dom-033",
+      "title": "Speed off the shelf",
+      "brief": "A chain's category manager is preparing an assortment review. The rule is simple: any SKU that takes up space and moves off the shelf slower than the rest loses that space. You look at the «Ключевая» portfolio and see who's about to get questioned.",
+      "goal": "Find the SKU vulnerable in the assortment review, and name the reason.",
+      "scenario": "«Ключевая» portfolio, 12\nmonths. Rate of sale — units\nper outlet per week.\n\n  Ключевая still 0.5L\n    41 outlets, 13.16 units/wk\n    28,056 units total\n  Ключевая still 1.5L\n    52 outlets, 10.79 units/wk\n    29,163 units total\n  Ключевая still 5L\n    40 outlets, 8.80 units/wk\n    18,299 units total\n  Ключевая sparkling 0.5L\n    46 outlets, 8.73 units/wk\n    20,886 units total\n  Ключевая sparkling 1.5L\n    48 outlets, 6.97 units/wk\n    17,401 units total\n  Ключевая Sport 0.75L\n    46 outlets, 4.48 units/wk\n    10,720 units total",
+      "predictQuestion": "Which SKU will the chain question first, and why?",
+      "options": [
+        {
+          "label": "\"Sport 0.75L\": it occupies nearly as much shelf as the leaders, but moves off it two to three times slower — an assortment review compares return on space, not total volume",
+          "why": "The chain pays for shelf space, not for a brand. Sport is in 46 outlets — same as sparkling 0.5L — but delivers 4.48 units a week vs. 8.73. From the store's point of view, that's the worst return on space in the entire portfolio."
+        },
+        {
+          "label": "\"Still 5L\": it has the narrowest distribution in the portfolio — 40 outlets",
+          "why": "Narrow distribution is our problem, not the chain's: in the 40 outlets where it's stocked, it moves at 8.80, above the portfolio average. A category manager cares about their own shelf's return, not how many other stores stock the product."
+        },
+        {
+          "label": "\"Sparkling 1.5L\": it gives the fewest units among the 1.5-liter formats",
+          "why": "It loses to the still 1.5L, but that's competition within the flavor lineup, not a sign of a weak SKU: 6.97 units a week is mid-pack for the portfolio, and it earns its shelf space."
+        },
+        {
+          "label": "None of them: all six SKUs sell, all have positive volume",
+          "why": "An assortment review isn't about screening out zeros, it's about ranking. Shelf space is finite, and an SKU gets cut not because it doesn't sell but because something else sells faster off the same footprint."
+        }
+      ],
+      "hints": [
+        "Compare volume per outlet, not total volume. The chain is deciding about its own store, not the whole country.",
+        "Find the SKU that has distribution like the leaders but a rate of sale like the laggard."
+      ],
+      "explain": "Rate of sale — units per outlet per week, called rate of sale or velocity in reports — is the metric a store uses to judge your product. Total SKU volume breaks down into distribution and rate of sale, and those two halves belong to different conversations: distribution is something we build ourselves; rate of sale decides whether we get to keep it.\n\nThe dangerous combination is wide distribution with low velocity, and that's exactly Sport 0.75L: 46 outlets, same as sparkling 0.5L, at half the return. Its total volume of 10,720 units looks acceptable and drowns among the other rows in a brand manager's report. A category manager sees something else: the same meter of shelf earns them half as much.\n\nTwo practical takeaways follow. First: it's worth computing the metric you'll be judged on externally before someone else computes it for you — a brand report in total units gives no such signal at all. Second: on seeing low velocity, don't rush to \"bad product\". Slow movement can come from price, shelf placement, missing a price tag, or an SKU being placed in outlets where its buyer simply isn't. A small-format sports water in traditional trade is a typical case of the wrong outlet, not the wrong product.\n\nAnd last: velocity is always computed over outlets where the product actually was stocked. Divide volume by every outlet in the chain, including ones that never carried the SKU, and you get a mix of two different problems that neither one can be fixed by treating as one."
+    },
+    {
+      "id": "dom-034",
+      "title": "Plus 146, or plus 72",
+      "brief": "Trade marketing reported on the «Молочный Дом» August promo: sales grew two and a half times. The financial controller looks at the same promo and talks about 72% growth. Both numbers are computed correctly from the same data.",
+      "goal": "Explain the discrepancy and say which number is needed for the repeat-promo decision.",
+      "scenario": "«Молочный Дом», 30% discount,\nall channels, three weeks of\nAugust 2025.\nWeekly averages:\n\n  4 weeks before\n    1,353.3 units, 104,645 ₽\n    price 77.33 ₽\n  3 weeks of promo\n    3,327.0 units, 180,157 ₽\n    price 54.15 ₽\n  4 weeks after\n    1,376.0 units, 106,344 ₽\n    price 77.28 ₽\n\n  units:   +146%\n  revenue:  +72%\n  price:    −30%",
+      "predictQuestion": "Why is unit growth twice revenue growth, and what follows from that?",
+      "options": [
+        {
+          "label": "The discount cut the price of every unit sold by 30%, including ones that would have sold without the promo: part of the volume growth was paid for by our own revenue, so money grows slower than units",
+          "why": "Revenue is units times price, and the promo moves both factors in opposite directions. The discount doesn't just apply to the extra buyers — it applies to the entire baseline sale too: about 1,353 units a week would have sold anyway, but at 77 rubles instead of 54."
+        },
+        {
+          "label": "Some buyers stocked up, so the effect in money spread out into future weeks",
+          "why": "Stocking up would show a dip after the promo, and there isn't one: 1,376 units a week vs. 1,353 before. The gap between units and revenue is fully explained by price, with no need to look at future weeks."
+        },
+        {
+          "label": "Trade marketing computed the growth wrong: there's one correct figure, and it's +72%",
+          "why": "Both numbers are correct, they just answer different questions. +146% says how much product left the shelf; +72% says how much money came in. Neither replaces the other."
+        },
+        {
+          "label": "The difference comes from the promo lasting three weeks compared against four",
+          "why": "Weekly averages are compared, not totals, so a different period length doesn't affect the percentages. Different week counts would matter if comparing sums."
+        }
+      ],
+      "hints": [
+        "Revenue is a product of two numbers. What did the promo do to each of them?",
+        "Think about the buyers who would have bought the product at full price anyway."
+      ],
+      "explain": "The gap between unit growth and revenue growth is a mandatory feature of any price promo, not a quirk of this one. A discount applies to the entire unit sold, not just the incremental one: baseline sales that would have happened anyway now go at a reduced price. In money, this looks like part of the growth was self-funded.\n\nLet's compute it directly. Without the promo, three weeks would have brought roughly 313,935 ₽ (three times 104,645). Actual revenue was 540,471 ₽ — an extra 226,536 ₽ and 5,921 extra units. But on the baseline 1,353 units a week, we gave up 23 rubles each — about 94 thousand over three weeks. That 94 thousand is the price paid for the growth, and it doesn't show up in either of the two headline numbers.\n\nWhich number is needed for the repeat decision: neither +146% nor +72%, but incremental gross margin. It's computed as extra volume times promo margin, minus the margin lost on the baseline volume, minus the promo's own costs — flyers, endcap space, chain compensation. A promo showing +146% in units can easily be unprofitable at a deep discount and a thin margin, and vice versa.\n\nOn the baseline. Here it's taken as the average of the four weeks before the promo — that works because August doesn't break from trend for the dairy category. For a seasonal product, the four preceding weeks would lie, and the baseline is taken from the same period last year or from non-promoted SKUs in the same category.\n\nAnd last: no post-promo dip isn't a general rule, it's a property of this product. Short-shelf-life yogurt isn't something people stock up on. For laundry detergent or canned goods, the same three weeks of discount would almost certainly produce a drop afterward — people would simply have pulled forward future purchases into the promo period."
+    },
+    {
+      "id": "dom-035",
+      "title": "A promo that barely happened",
+      "brief": "The \"2+1\" mechanic on «Хрустик» is effectively a third of the product for free. Brand-wide, the promo delivered +61% in units. The manager calls it a failure: \"we gave away a third of the price and got sixty percent.\" You open the details and see the brand isn't the level to be judging this promo at.",
+      "goal": "Determine the right slice to evaluate the promo on, and recompute its result.",
+      "scenario": "«Хрустик», 2+1 mechanic,\nfive weeks of August–\nSeptember 2025. Promo\nterms: chains only\n(modern trade).\n\nWeekly averages, units:\n\n  chains\n    before 303  →  in promo 974\n    +221%\n  online stores\n    before 852  →  in promo 897\n    +5%\n  traditional retail\n    before 26  →  in promo 25\n    −2%\n  whole brand\n    before 1,181  →  in promo 1,896\n    +61%\n\nRevenue in chains: 31,537 ₽ →\n67,016 ₽ per week (+113%).",
+      "predictQuestion": "What is the correct way to evaluate this promo?",
+      "options": [
+        {
+          "label": "On chains, where it actually ran: growth there is threefold, +221% in units. The \"+61% brand-wide\" figure is diluted by channels that never took part in the promo and couldn't have grown from it",
+          "why": "Online stores account for three-quarters of the brand's volume and weren't part of the promo — their flat trend mechanically drags down the average growth. The promo's effect is only measurable where it actually ran: in chains, volume grew 3.2x."
+        },
+        {
+          "label": "Brand-wide: a promo affects the whole brand, buyers see it in other channels too",
+          "why": "An impact on brand perception is possible, but here it's measurable and nearly absent: online stores gave +5%, ordinary week-to-week noise. Computing brand-wide means mixing volume the promo touched with volume it never touched."
+        },
+        {
+          "label": "The promo really did fail: \"2+1\" is a 33% discount, and chain revenue only grew +113%",
+          "why": "A +113% revenue lift against a 33% discount means volume grew faster than price fell — that's exactly a working promo. Failure would look like volume growth smaller than the price drop, i.e. falling revenue."
+        },
+        {
+          "label": "It can't be evaluated: online stores also grew 5%, so the promo touched them too — there's no clean control group left",
+          "why": "Five percent on an 850-unit channel is ordinary week-to-week noise, not a promo effect — chain growth against that backdrop is threefold. Demanding total stillness from a control group means never getting one at all."
+        }
+      ],
+      "hints": [
+        "Check what share of the brand's volume comes from the channels that actually ran the promo.",
+        "The average brand-wide growth is an average over both those the promo touched and those it didn't."
+      ],
+      "explain": "The rule for evaluating promos: measure them on the slice where the promo actually ran, and only there. Here it ran in chains, and chains only account for a quarter of the brand's volume — so the brand-wide total and the promo-slice total differ by a factor of three and a half, and both numbers are arithmetically correct.\n\nThis is a specific case of a general trap: a metric computed over a group where half the members weren't exposed always understates the effect. The same mechanism dilutes promo results across regions, buyer segments, and SKUs within a brand. The first question when reviewing a promo should always be: who was actually exposed, and does that match what the report is built on.\n\nNow the mechanic. \"2+1\" means the buyer gets a third of the volume free, i.e. the per-unit price drops by about 33%. Chain revenue grew 113% — meaning volume grew faster than the price fell. At that discount depth, volume needs to grow at least 1.5x just to keep revenue flat; here it grew 3.2x.\n\nWhat this evaluation still doesn't say: how much of it is genuinely new. A buyer who took three packs instead of one might simply not show up for the next two weeks, and some of the growth could have flowed in from other «Хрустик» flavors sitting nearby. The lift computed on the exposed slice is an upper bound on the effect, and the next step of any promo review is always to bring that bound down."
+    },
+    {
+      "id": "dom-036",
+      "title": "Growth stolen from itself",
+      "brief": "A promo on the flagship SKU delivered +2,400 units over two weeks. The category manager asks you to estimate how much of that gain the company actually earned, versus moved from one pocket to another.",
+      "goal": "Compute the net category lift, adjusted for cannibalization and stock-up buying.",
+      "scenario": "Promoted SKU — \"Salt 150g\".\nSame category, same shelf —\n\"Salt 90g\" and \"Paprika 90g\",\nneither ran the promo.\n\nUnits over two weeks:\n\n  Salt 150g (promo)\n    before 1,600 → promo 4,000\n    → after 1,100\n  Salt 90g\n    before 1,500 → promo 1,050\n    → after 1,480\n  Paprika 90g\n    before 900 → promo 880\n    → after 910\n  category\n    before 4,000 → promo 5,930\n    → after 3,490\n\nBaseline for comparison — the\ntwo weeks before the promo.",
+      "predictQuestion": "What is the real lift from the promo?",
+      "options": [
+        {
+          "label": "About 470 units: the promoted SKU's 2,400-unit gain shrinks by 450 stolen from \"Salt 90g\", and another 500 that buyers pulled forward from the future — after the promo, the category fell below baseline",
+          "why": "The category, not the SKU, is what should be measured, over the full cycle, not just the promo weeks. Category-wide, the promo gave +1,930 over two weeks, but the following two weeks went 510 into the red — leaving about 1,420 in volume, and noticeably less in money once the discount is accounted for."
+        },
+        {
+          "label": "2,400 units: that's the promoted SKU's own gain, and the promo is responsible for it",
+          "why": "This figure ignores that \"Salt 90g\" simultaneously lost 450 units, and that the category fell below baseline after the promo ended. Reporting the gain of a single SKU is the fastest way to show an effect that never happened."
+        },
+        {
+          "label": "1,930 units: the whole category's gain during the promo weeks",
+          "why": "This figure catches cannibalization correctly but misses the stock-up effect. The category gives 3,490 after the promo instead of 4,000: buyers pulled forward some future purchases, and that shortfall belongs to the same promo."
+        },
+        {
+          "label": "The lift can't be computed: it's unknown what would have happened without the promo",
+          "why": "Strictly speaking, true — the baseline is always a hypothesis. But refusing to estimate means the decision gets made on the +2,400 figure instead. An analyst's job is to give the best estimate and state its assumptions, not to withhold an estimate altogether."
+        }
+      ],
+      "hints": [
+        "Look at what happened to the neighboring SKU during the promo weeks. Did it lose exactly as much by chance?",
+        "Compare the \"category\" row after the promo against the same row before it."
+      ],
+      "explain": "A promo's payoff is computed with three corrections, and each one shrinks the nice headline number.\n\nFirst — the level of measurement. Lift is measured on the category, not the promoted SKU: a buyer who switched from \"Salt 90g\" to the discounted \"Salt 150g\" brought the company not one single new purchase. The table shows this directly — the neighboring SKU lost exactly 450 units in the very weeks the promoted SKU gained 2,400, and bounced right back to its usual level afterward. That kind of timing coincidence is cannibalization.\n\nSecond — the horizon. What matters isn't the promo weeks but the whole cycle: before, during, and after. The category gives 3,490 after the promo against 4,000 before — that's purchases pulled forward from the future. The longer the shelf life and the deeper the discount, the bigger this share; for canned goods and household chemicals it eats up half the apparent lift, for fresh dairy it's nearly absent.\n\nThird — money instead of units. Even the honest 1,420-unit lift was sold at a discount, and the same discount applied to the baseline volume too. A repeat decision is made on incremental gross profit, not incremental units.\n\nWhat's missing from this calculation, and worth saying out loud: the \"two weeks before\" baseline is an assumption. It works if the season is flat and no holidays or competitor promos fall in that window. Otherwise the baseline is built from last year or from non-promoted SKUs in the same category. An analyst who states the assumption out loud is protected; one who passes an estimate off as fact is not.\n\nAnd the other side of it: cannibalization isn't always bad. A buyer switching to a larger format raises their own consumption and pushes a competitor off the shelf. The problem isn't that it happens — it's that it never gets measured."
+    },
+    {
+      "id": "dom-037",
+      "title": "TRx grows, NRx falls",
+      "brief": "A medical rep reports on a half-year for a drug: total prescriptions are steadily growing. The department head asks you to look at the data more closely, because next year's sales plan is being built on that growth.",
+      "goal": "Read what the divergence between the two prescription metrics means.",
+      "scenario": "Drug X, prescriptions by\nmonth:\n\n  TRx — all prescriptions\n  (including refills)\n  NRx — new starts\n  (patient's first time)\n\n  Jan  TRx 4,100  NRx 910\n  Feb  TRx 4,240  NRx 840\n  Mar  TRx 4,380  NRx 770\n  Apr  TRx 4,460  NRx 690\n  May  TRx 4,520  NRx 610\n  Jun  TRx 4,550  NRx 540\n\nCourse of treatment: three\nto six months.",
+      "predictQuestion": "What's happening with the drug?",
+      "options": [
+        {
+          "label": "The inflow of new patients has been shrinking for six months, and total prescriptions are only being held up by people who started treatment earlier: TRx will turn downward once their courses end",
+          "why": "TRx is the accumulated base, NRx is what refills it. With a three-to-six-month course, the drop in NRx reaches TRx with a delay of roughly that same length. TRx growth here is inertia, not a healthy drug."
+        },
+        {
+          "label": "The drug is growing: doctors prescribe it more and more, and the falling NRx just means the market is saturated",
+          "why": "Saturation would look like NRx leveling off, not falling 40% over six months. Here the inflow isn't stabilizing — it's shrinking every single month, no exceptions."
+        },
+        {
+          "label": "The two metrics contradict each other, so there's a data error: NRx is part of TRx and can't fall while TRx rises",
+          "why": "It can, and it's normal. NRx is part of TRx, but a small one: 540 out of 4,550. A growing mass of refills easily offsets a shrinking inflow of new starts, as long as there are enough patients still on-course."
+        },
+        {
+          "label": "It's a retention problem: patients are dropping treatment, which is why NRx is falling",
+          "why": "Patients dropping treatment pushes down TRx, not NRx: NRx counts the first prescription, and an abandoned course doesn't touch it. What's actually falling is the inflow of new patients — that's a question for physician outreach, not adherence."
+        }
+      ],
+      "hints": [
+        "One of the two numbers speaks about the past, the other about the future. Which is which?",
+        "Imagine NRx dropping to zero tomorrow. What happens to TRx, and after how many months?"
+      ],
+      "explain": "TRx (total prescriptions) is every prescription for the drug over a period, including refills and renewals. NRx (new prescriptions) is only the ones where the patient receives the drug for the first time. The distinction matters: TRx describes what's already accumulated, NRx describes what will accumulate next.\n\nSo TRx is a lagging indicator and NRx is a leading one. A patient who started treatment in January keeps contributing to TRx until their course ends; when the inflow of new patients shrinks, TRx feels it with a lag the length of the course. In the table, that lag hasn't fully played out yet: NRx has fallen for six months straight, while TRx has only just started losing pace — its monthly gains shrank from 140 in February to 30 in June. This is the last calm quarter before the turn.\n\nHence the practice: an annual plan can't be built on TRx. It has to be planned from NRx and course length, with TRx used as a check — the actual base should reconcile against a model of \"new patients × average treatment duration.\"\n\nThe metric doesn't say what's behind the NRx drop. Common causes: a competitor launched a drug with a more convenient dosing schedule, clinical guidelines changed, physician visit coverage dropped, reimbursement conditions tightened. The analysis starts with geography and physician segments: is NRx falling everywhere, or specifically in regions where the rep changed?\n\nAnd an analogy outside pharma: the same pair of metrics exists in any subscription or repeat-purchase business. Revenue is TRx, new customers are NRx, customer lifetime is the course length. A report showing only the first metric always looks calmer than the actual state of affairs."
+    },
+    {
+      "id": "dom-038",
+      "title": "A market share that swings by half",
+      "brief": "At an OTC portfolio review, the manager shows a slide: «Витамакс» share was 11% in March 2024, 49.5% in February 2025. The slide's conclusion: \"share is unstable, we need an urgent retention program.\" You recomputed the same share over a rolling year.",
+      "goal": "Choose the base to compute market share over, and explain why the monthly figure is misleading.",
+      "scenario": "«Витамакс» share in packs\namong four OTC brands in\nthe portfolio.\n\n  Single month:\n    2024-03    11.0%\n    2024-11    47.5%\n    2025-02    49.5%\n    2025-08    13.5%\n    2026-01    32.2%\n    2026-06    24.4%\n    range: 11.0 – 49.5\n\n  Rolling year (MAT):\n    2025-03    29.4%\n    2025-06    29.3%\n    2025-09    29.5%\n    2025-12    27.1%\n    2026-03    24.5%\n    2026-06    26.1%\n    range: 24.5 – 29.5",
+      "predictQuestion": "Which conclusion is correct?",
+      "options": [
+        {
+          "label": "Share is stable and slowly declining: the monthly swings come from seasonality and competitor promos, the rolling year averages them out and shows −3 points over a year and a half",
+          "why": "Vitamins and cold remedies peak in different months, so monthly share reflects the calendar, not brand positioning. In MAT, every one of the four brands' seasons enters the window in full, and what's left is what's actually happening: a slow loss of about three points."
+        },
+        {
+          "label": "Share really is unstable: the rolling year is just hiding the real swings under averaging",
+          "why": "Averaging is exactly the point here. The swings are real as sales facts, but they repeat every year and aren't a change in brand position — that's precisely what needs to be separated out before launching a retention program."
+        },
+        {
+          "label": "Both series are useless: share in packs doesn't reflect market position, share in money is needed",
+          "why": "Share in money is a different, also useful metric, but that's not the slide's problem. Share in rubles, computed monthly, would swing just as much, for the same reason."
+        },
+        {
+          "label": "The drop from 49.5% to 24.4% is the key fact, and MAT is smoothing it away",
+          "why": "That's comparing February to June — vitamin season against off-season. A drop like that repeats every year and will return by next February — it says nothing about the brand's position."
+        }
+      ],
+      "hints": [
+        "Look at which months the brand peaks in. What do February, November, and January have in common for vitamins?",
+        "A rolling year is a sum over 12 months, shifted monthly. What always falls into it regardless of where you start?"
+      ],
+      "explain": "Market share is a ratio, and in any single month both the numerator and the denominator swing. In an OTC portfolio, the brands' seasons don't line up: vitamins get bought in autumn and winter, cold remedies in December and March. In a month when a competitor's season peaks, your share drops even though you didn't lose a single pack. That's exactly what produces a swing from 11% to 49.5% sitting on top of a calm underlying picture.\n\nMAT (moving annual total) is the sum of the trailing twelve months, shifted forward by one month at a time. A window like that captures every brand's season exactly once, no matter where you're standing, so the calendar drops out of the metric entirely. What's left is what share was meant to measure in the first place: 29.4% in March 2025, 26.1% in June 2026 — down three points over fifteen months, a steady, slow decline.\n\nThe price paid for MAT is speed. A sharp event — a competitor launch, losing a pharmacy chain — gets smeared across twelve months and only becomes visible with a lag. That's why pharma typically watches a pair of series together: MAT for position, monthly for events, but conclusions about share are drawn from the first.\n\nAnd a practical rule for any industry: for a ratio metric, always check the denominator separately. Before explaining a share drop by your own actions, check whether the market itself simply grew. Half the \"we're losing share\" slides are really telling a story about someone else's season."
+    },
+    {
+      "id": "dom-039",
+      "title": "A launch that stalled halfway",
+      "brief": "«Витамакс Форте» launched in the fall and has grown for nine months straight. Leadership is penciling in the same pace for next year. You look at what that growth is actually made of.",
+      "goal": "Identify the source of the new product's growth and assess whether it's repeatable next year.",
+      "scenario": "«Витамакс Форте №30»,\nsales since launch:\n\n  Sep 2025   1 pack, 1 pharm.\n    1.0 pack/pharm.\n  Oct        9 packs, 4 pharm.\n    2.3 pack/pharm.\n  Nov       19 packs, 7 pharm.\n    2.7 pack/pharm.\n  Dec       41 packs, 10 pharm.\n    4.1 pack/pharm.\n  Jan 2026 135 packs, 15 pharm.\n    9.0 pack/pharm.\n  Feb       91 packs, 19 pharm.\n    4.8 pack/pharm.\n  Mar      104 packs, 16 pharm.\n    6.5 pack/pharm.\n  Apr      161 packs, 19 pharm.\n    8.5 pack/pharm.\n  May      127 packs, 19 pharm.\n    6.7 pack/pharm.\n  Jun       68 packs, 19 pharm.\n    3.6 pack/pharm.\n\nOther «Витамакс» drugs sell\nin 36 of 38 pharmacies.",
+      "predictQuestion": "What's most important to tell leadership about this growth rate?",
+      "options": [
+        {
+          "label": "The growth ran on adding new pharmacies, and since February the count has been stuck at 19 out of 37 available: the rollout stalled halfway, and without resuming it there's nothing to repeat the pace with",
+          "why": "From September to January, pharmacy count grew from 1 to 15, and that delivered most of the growth. Since February the count hasn't moved for five months, even though the brand is present in 36 pharmacies — meaning it isn't the potential that stopped, it's the rollout work."
+        },
+        {
+          "label": "The pace is repeatable: sales per pharmacy grew from 1.0 to 6.7, and this lever is far from exhausted",
+          "why": "Sales per pharmacy grew, but unevenly — bouncing between 3.6 and 9.0 with no direction since January. Building a plan on a lever that's oscillated around one level for half a year means mistaking noise for growth."
+        },
+        {
+          "label": "Growth slowed in February and stopped in June — the new product never caught on, and the launch should be called a failure",
+          "why": "Nineteen pharmacies in five months is a normal rollout pace, and the June dip falls in the vitamin off-season, visible across the rest of the brand's SKUs too. The problem isn't a failed launch, it's a rollout stalled halfway."
+        },
+        {
+          "label": "It needs comparing against the launch plan: without a plan, it's impossible to say whether the pace is good",
+          "why": "Comparing against a plan is useful for judging the past, but the question is about the future. What answers that is breaking growth down by source, and it shows one of the two sources has run dry."
+        }
+      ],
+      "hints": [
+        "Break monthly sales into two factors: pharmacy count and sales per pharmacy. Which one kept growing the whole time?",
+        "Look at pharmacy count from February onward and compare it against the count for the brand's other drugs."
+      ],
+      "explain": "A new product's growth almost always consists of two different things: rollout — adding new outlets — and ramp-up — growing sales at outlets already onboarded. They must be separated because they're managed differently. Rollout has a hard ceiling: the number of outlets the drug can be placed in at all. Ramp-up has almost no ceiling, but grows slowly and from different levers — physician outreach, pharmacists, shelf placement.\n\nHere, rollout did the work through January: from one pharmacy to fifteen, and that's what shaped the growth curve. From February on, pharmacy count has sat at 19 for five months straight. Importantly, that's not the ceiling: other «Витамакс» drugs sell in 36 pharmacies, meaning half the available network still hasn't been onboarded for the new one. Sales per pharmacy have bounced between 3.6 and 9.0 since January with no direction — the second growth source hasn't kicked in yet.\n\nTwo separate conclusions follow instead of one. For planning: nine months of this growth can't be extrapolated — the forecast has to be built from the two parts separately: how many pharmacies can realistically be onboarded, and what level of sales per pharmacy to aim for. For action: the rollout didn't stop because pharmacies ran out, and that needs a cause. Common ones: the rep switched to other priorities, the distributor isn't holding stock, or the remaining pharmacies want terms nobody's agreed to yet.\n\nA general technique worth keeping: for any metric that's \"grown N months in a row\", ask what specifically it's growing from. Growth resting on outlet count, region count, or customer count is always bounded — and what matters isn't the pace, it's the remaining distance to the limit and the speed of closing it.\n\nA data caveat: ten months of observation and under two hundred packs a month are small numbers. A single month proves nothing here, and the June dip from 127 to 68 packs falls in the vitamin off-season. The conclusion about a stalled rollout doesn't rest on volume — it rests on five months of a flat pharmacy count against double the available network."
+    },
+    {
+      "id": "dom-040",
+      "title": "Panel vs. shipments",
+      "brief": "Marketing bought pharmacy sales panel data. Per the panel, your drug's quarterly market is 412 thousand packs, your share 24%. Logistics shipped 118 thousand packs that same quarter. 24% of 412 is 99 thousand. The 19-thousand-pack gap doesn't go away, and you're asked to explain the error.",
+      "goal": "Determine whether there's actually an error, and how to relate panel data to your own shipments.",
+      "scenario": "What each source measures:\n\n  our shipments\n    packs from the\n    manufacturer's warehouse\n    to distributors — 118,000\n  panel\n    pharmacy sales to end\n    buyers, sampled from part\n    of the pharmacies and\n    extrapolated to the whole\n    market — 99,000 (24%)\n\nDistributor stock grew by\n14 thousand packs over\nthe quarter.",
+      "predictQuestion": "How should the discrepancy be explained?",
+      "options": [
+        {
+          "label": "There's no error: these are two different events in the chain — a warehouse shipment and a pharmacy purchase. The channel's warehouse sits between them, and the 14-thousand stock increase explains most of the gap, the rest is panel extrapolation error",
+          "why": "Shipments can't be compared directly to the panel: it's sell-in and sell-out at different links. Product that left for a distributor only enters the panel once a pharmacy sells it to a buyer — or never enters it at all if it sits on the shelf."
+        },
+        {
+          "label": "The panel is wrong: it understates the market because it doesn't cover every pharmacy",
+          "why": "The panel is indeed built from a sample, but it's specifically extrapolated to the whole market — that's the point of a projection. An incomplete sample produces a few percent of error, not a 19% gap, and more importantly, it isn't what explains the gap — the channel's stock is."
+        },
+        {
+          "label": "Our data is wrong: part of the shipments were double-counted or booked to the wrong quarter",
+          "why": "Worth checking always, but the setup already gives the explanation: distributor stock grew by 14 thousand packs. Hunting for double-counting without first looking at channel stock is the longest route to the answer."
+        },
+        {
+          "label": "Our real share is above 24%: the panel understates us relative to competitors",
+          "why": "Nothing about share follows from a mismatch between shipments and the panel: share is computed within the panel, where every brand is measured the same way. A projection error shifts the whole market at once and barely touches the ratio between brands."
+        }
+      ],
+      "hints": [
+        "Ask yourself: at what point in the chain does each source record a pack?",
+        "There's a third number in the setup nobody compared against the first two."
+      ],
+      "explain": "The first question for any two numbers that don't reconcile is what each one actually measures. Here, shipments record product leaving the manufacturer's warehouse, and the panel records a pharmacy purchase. These are different events, separated by a distributor's warehouse and a pharmacy's warehouse, and they're only obligated to reconcile over a long horizon, once stock levels return to their previous level.\n\nIn a quarter when the channel was building stock, shipments should exceed pharmacy sales — which is exactly what happened: 14 of the 19 thousand packs are directly explained by the stock increase. The remaining five thousand is ordinary error: the panel estimates the market from a pharmacy sample and extrapolates it to the whole population, and a few percent of accuracy on that kind of projection is considered good.\n\nHence the rule for working with panel data: it isn't there to reconcile against your own shipments — it's there for what your own data can't tell you at all: market size and what competitors are doing. Your own sales you already know more precisely than any panel. The panel answers a different question: are you growing faster than the market, or slower.\n\nAnd the reverse point, which gets forgotten more often: your own market share isn't computed by dividing your shipments by the panel's market. The numerator has to be the same event as the denominator — your sales from the panel, not your sell-in. Mixing sources inside one fraction is the most common mistake in share reports."
+    },
+    {
+      "id": "dom-041",
+      "title": "The market grew, the buyers stayed the same",
+      "brief": "Annual panel report: the category market grew 9%, your panel sales grew 2%. The deck concludes: \"we're losing share, the market is going to competitors.\" Before agreeing, you read the data provider's methodology appendix.",
+      "goal": "Check the comparability of two points in a series before explaining the difference between them.",
+      "scenario": "From the panel provider's\nmethodology appendix:\n\n  \"Starting in July of the\n  reporting year, chain N's\n  pharmacies (about 1,400\n  outlets) were added to the\n  panel. Prior periods were\n  not restated.\"\n\nAdditionally known:\n\n  — chain N is strong in\n    major cities\n  — your drug is\n    represented weaker in\n    chain N than the market\n    average: the supply\n    contract was only\n    signed in September",
+      "predictQuestion": "What needs to be done before explaining the share loss?",
+      "options": [
+        {
+          "label": "Recompute both years on a comparable panel composition: part of the market growth is new pharmacies added to the sample, not new sales, and your share within them is lower for an explainable reason",
+          "why": "A series whose observation composition changed can't be compared against its earlier self. Until both points are brought to the same set of pharmacies, any explanation of the gap is a story about the provider's methodology, not the market."
+        },
+        {
+          "label": "Request restated historical data from the provider, and hold off on conclusions until it arrives",
+          "why": "Requesting it is right, but work doesn't need to stop: a comparable estimate can be built yourself — by excluding chain N from both periods, or using only the months where the panel composition didn't change."
+        },
+        {
+          "label": "Accept the conclusion: share really did fall, since presence is weaker in the new pharmacies",
+          "why": "Weak presence in chain N is a real fact and a real task, but it doesn't mean share fell in the pre-existing market. \"We sell worse where we weren't counted before\" and \"we're losing ground\" can't be conflated."
+        },
+        {
+          "label": "Nothing: expanding the panel makes the data more accurate, so the new figure is closer to the truth",
+          "why": "The new figure is indeed closer to the truth about today's market. But that doesn't make the comparison against last year valid — two different populations are being compared, and the gap between them isn't a change."
+        }
+      ],
+      "hints": [
+        "A change in a metric between two points can mean a change in what's measured — or a change in the measuring instrument.",
+        "Reread the second sentence of the methodology appendix: what specifically was not done to the history?"
+      ],
+      "explain": "Panel data is a market estimate from a sample, and the sample composition changes: the provider adds new pharmacy chains, loses old ones, refines extrapolation coefficients. Until the composition is restated backward, the series is a splice of two different measurements, and the jump at the splice point looks exactly like a market event.\n\nHere two effects coincided, both against you. The 9% market growth is partly mechanical — pharmacies were added to the denominator that weren't in last year's measurement. At the same time, your drug is underrepresented in those pharmacies because the contract was only signed in September: your numerator grew less than the denominator, and share dropped on paper even with completely unchanged sales.\n\nThe right steps, in order. First — bring both points to the same composition: either exclude chain N from the reporting year, or use only the months before it was added. Second — separately measure what's happening within chain N itself, because there's a real task there: the drug is underrepresented, and that's a distribution question, not a share question. Third — write the event into the report's footnote permanently: a year from now, nobody will remember why the series jumped in July.\n\nThe general rule extends beyond pharma: before explaining a change in a metric, check whether the definition, source, or coverage changed. A panel composition shift, a new source added to a data warehouse, a new way of defining an active user — all of them look like a business event, and they're the most expensive kind, because the explanation people invent for them is convincing and wrong."
+    },
+    {
+      "id": "dom-042",
+      "title": "Three numbers about one drug",
+      "brief": "At a drug review meeting, three departments cited three different numbers for the same month. Nobody made a mistake. The manager asks you which one to put in the report for the board.",
+      "goal": "Compare three data sources and pick the right one for the question.",
+      "scenario": "One drug, one month:\n\n  shipments to distributors\n    41,200 packs\n    accounting system\n  pharmacy sales to buyers\n    36,800 packs\n    panel, an estimate\n  physician prescriptions\n    29,400 prescriptions\n    Rx panel, an estimate\n\nBoard's question: \"is the\ndrug growing\"",
+      "predictQuestion": "What should you tell the manager?",
+      "options": [
+        {
+          "label": "All three numbers are needed, but they answer different questions: shipments say what we sold, pharmacy sales say what the patient bought, prescriptions say what the doctor decided. For the growth question, prescriptions and pharmacy sales come first, shipments third",
+          "why": "Shipments are driven by our own sales department and the distributor's warehouse — they rise and fall for reasons unrelated to demand. Demand shows up in pharmacy sales, and its source shows up in prescriptions — and prescriptions turn before anything else."
+        },
+        {
+          "label": "Shipments: it's the only figure from the accounting system, the other two are sample-based estimates",
+          "why": "A source's precision doesn't make it the right fit. Shipments are measured exactly, but they measure product movement toward the distributor, not demand: a quarter with stock-up buying will show confident growth even as actual consumption falls."
+        },
+        {
+          "label": "Pharmacy sales: that's final consumption, the other two numbers are redundant",
+          "why": "Pharmacy sales are the single best metric, but prescriptions shouldn't be dropped: they turn earlier and explain why pharmacy sales will move a quarter from now. And shipments are needed to catch channel overstocking."
+        },
+        {
+          "label": "None of them: the numbers don't reconcile with each other, the discrepancy needs fixing first",
+          "why": "The discrepancy here isn't a defect, it's how the chain is built: warehouses and time sit between a shipment, a purchase, and a prescription, and some prescriptions never even reach a pharmacy. Demanding they match means demanding the impossible and stalling the work."
+        }
+      ],
+      "hints": [
+        "For each number, ask: whose decision does it measure — ours, the pharmacy's, or the doctor's?",
+        "Which of the three will move first if the drug starts losing the market?"
+      ],
+      "explain": "In pharma, the same movement of product gets measured at three points, and those points belong to three different decision-makers. Shipments are a decision by our own sales department and the distributor's buyer. Pharmacy sales are the patient's decision at the counter. Prescriptions are the doctor's decision, made before any of the rest.\n\nSo the series don't match, and shouldn't. Two warehouses sit between a shipment and a pharmacy sale, which can make our quarter look great purely off stock moved into the channel. A patient sits between a prescription and a purchase: some prescriptions never reach a pharmacy at all, some get filled later, some get swapped for a different drug at the counter. The gap between 29,400 prescriptions and 36,800 packs isn't a signal by itself — one course of treatment takes more than one pack.\n\nWhat to pick for \"is the drug growing\": watch pharmacy sales as the fact of demand and prescriptions as its leading indicator, and keep shipments alongside — they catch overstocking that's invisible anywhere else. The one-sentence answer for the board: demand is described by pharmacy sales, our shipments describe our own channel management, and the two shouldn't be confused.\n\nAnd a discipline that saves hours: any report with a number in it needs a source and an event stated right next to it. Not \"sales: 41,200\", but \"shipments to distributors, accounting system\". A meeting where three departments cite three unlabeled numbers always ends in an argument about who's wrong — even though nobody is."
+    },
+    {
+      "id": "dom-043",
+      "title": "Sales down by half, the average outlet sells more",
+      "brief": "«Чистовъ» revenue in Q2 2026 is half of the same quarter in 2024. Meanwhile the average outlet sells more than it did two years ago. The category manager asks for one sentence about what happened.",
+      "goal": "Break the revenue drop into two factors and name the source.",
+      "scenario": "«Чистовъ» brand, Q2:\n\n  revenue, ₽\n    2024-Q2   2,121,702\n    2026-Q2   1,079,055\n    change        −49%\n  outlets\n    2024-Q2         79\n    2026-Q2         33\n    change        −58%\n  revenue per outlet, ₽\n    2024-Q2     26,857\n    2026-Q2     32,699\n    change        +22%\n  average price, ₽\n    2024-Q2     199.43\n    2026-Q2     194.42\n    change         −3%\n\nCheck:\n33/79 × 32,699/26,857 = 0.51",
+      "predictQuestion": "What happened to the brand?",
+      "options": [
+        {
+          "label": "The brand lost 46 of its 79 outlets, and that's the sole source of the drop: in the outlets that remain, it sells even better than before, and price is nearly unchanged",
+          "why": "Revenue decomposes into outlet count and revenue per outlet, and the two factors moved in opposite directions: −58% and +22%. Their product reproduces the observed −49% exactly, so there's no third factor to look for."
+        },
+        {
+          "label": "Demand for the brand fell: people started buying household chemicals less often, which halved revenue",
+          "why": "A demand drop would look like falling revenue per outlet. It rose 22% — wherever the brand is still stocked, it sells no worse, in fact better, than before."
+        },
+        {
+          "label": "There are two causes: both the lost outlets and a 3% price drop",
+          "why": "The price really did drop, but three percent against a 49% overall decline is noise. Placing it beside a 58% loss of outlets means treating the main cause and a negligible one as equals."
+        },
+        {
+          "label": "There's not enough data: without a channel breakdown, it's impossible to say what happened",
+          "why": "A channel breakdown is useful for the next step — figuring out exactly which outlets left. But the source of the drop is already unambiguously identified: two factors multiply to reproduce the observed result."
+        }
+      ],
+      "hints": [
+        "Revenue = outlet count × revenue per outlet. See what happened to each factor.",
+        "Multiply the factors' relative changes together and compare against the change in revenue."
+      ],
+      "explain": "Decomposition starts by choosing an identity — an equality that's always true, not approximately. Here it's \"revenue = outlet count × revenue per outlet.\" The identity guarantees the factors explain the change fully, with nothing left over for \"other factors.\"\n\nThe check is mandatory and takes one line: 33/79 × 32,699/26,857 = 0.418 × 1.218 = 0.51, and revenue came in at 51% of the 2024 level. It reconciles — so the breakdown is correct and there's nothing more to look for. If it hadn't reconciled, the wrong identity was chosen, or the periods were computed on mismatched filters.\n\nThe conclusion for the manager fits in one sentence, as requested: the brand didn't lose demand, it lost shelf space — 46 of 79 outlets, and that's the sole cause of the drop. That conclusion immediately points to who should hear it: the conversation belongs with sales and chain buyers, not marketing or pricing. If revenue per outlet had been falling with outlet count unchanged, the recipient would be exactly the opposite.\n\nThat's the whole point of decomposition: it doesn't explain the cause, but it narrows the search down to one factor and hands the question to whoever can actually influence it. \"Revenue fell 49%\" isn't a task, because it has no owner. \"We're no longer in 46 outlets\" is a task with an owner, a deadline, and an obvious first step.\n\nOne more thing worth noting about the growth in revenue per outlet. It looks like good news, but deserves a separate check: some of it might not be the remaining outlets selling better, but the smallest outlets dropping out and lifting the average. That's a separate step to work through, and it needs to happen before \"+22% per outlet\" makes it into a deck as an achievement."
+    },
+    {
+      "id": "dom-044",
+      "title": "Who actually grew 22%",
+      "brief": "A deck line reads: \"revenue per outlet grew 22% — the remaining outlets are selling better.\" Before publishing it, you decide to check the figure on a like-for-like basis: comparing the same 33 outlets against themselves two years ago.",
+      "goal": "Separate real growth from the effect of losing weak outlets.",
+      "scenario": "«Чистовъ» brand, Q2,\n2024 vs. 2026:\n\n  all outlets\n    79 → 33 outlets\n    revenue per outlet\n    26,857 → 32,699 ₽ +22%\n\n  same 33 outlets that\n  remained in 2026:\n    revenue in 2024-Q2\n      983,740 ₽\n    revenue in 2026-Q2\n      1,079,055 ₽   +9.7%\n\n  average outlet revenue\n  in 2024-Q2:\n    those that stayed\n      29,810 ₽\n    those that left\n      24,738 ₽",
+      "predictQuestion": "How much of this 22% is genuine growth from the outlets that remained?",
+      "options": [
+        {
+          "label": "Less than half: the like-for-like outlets grew 9.7%, the rest came from losing below-average outlets — they were dragging the average down, and stopped",
+          "why": "The departed outlets averaged 5 thousand less than the ones that stayed. Their departure lifts the average by itself, with not one extra sale: 1.097 × 1.110 = 1.22 — real growth and the composition effect together reproduce the observed 22%."
+        },
+        {
+          "label": "All 22%: the like-for-like calculation understates the result because it ignores the departed outlets",
+          "why": "A like-for-like calculation is done for exactly the opposite reason: it answers whether the same outlets are selling better. The 2026 dropouts sell nothing at all, and including them in an average comparison means comparing two different populations."
+        },
+        {
+          "label": "There's no growth at all: the full 22% is explained by the loss of weak outlets",
+          "why": "It can't be fully explained that way: the comparable 33 outlets went from 983,740 ₽ to 1,079,055 ₽ — almost ten percent of real growth. The composition effect is large, but not the whole story."
+        },
+        {
+          "label": "The question is invalid: with outlet count falling, \"revenue per outlet\" can't be compared across periods at all",
+          "why": "It can and should be compared — just alongside a like-for-like check. Dropping the metric altogether leaves unanswered the very question it was computed for: is the brand doing better where it remains?"
+        }
+      ],
+      "hints": [
+        "Compare the average revenue of the departed outlets against the average of the ones that stayed, back in 2024.",
+        "What happens to a group's average when you remove the members below that average?"
+      ],
+      "explain": "A group average changes for two reasons: its members changed, or its composition changed. The second is called the composition effect, and it can paint growth where there is none.\n\nHere the composition effect is bigger than the real growth. The departed outlets averaged 24,738 ₽, the ones that stayed averaged 29,810 ₽; their departure alone lifts the average by 11%. Genuine growth among the comparable outlets is 9.7%. Multiplied together they reproduce the observed 22%, and both parts need to be named separately, because they mean different things. The nine percent is credit for work with those outlets. The eleven is an arithmetic consequence of losing forty-six addresses, and there's nothing to be proud of in it.\n\nHence a technique worth applying whenever composition changes: like-for-like comparison on a matched base. Retail computes it as sales from stores open more than a year; subscription businesses compute it as revenue from a cohort of customers present the whole period; here it's outlets that sold the brand in both quarters. One rule: fix the composition, then compare.\n\nWhy this matters more than it looks. \"Revenue per outlet\" grows this quarter with every small outlet lost, meaning it rewards exactly what we consider a problem. A metric that improves from bad events eventually lands in someone's KPI and starts driving decisions — and then shrinking distribution starts to look like a gain in efficiency.\n\nA phrasing for the deck: \"like-for-like outlets grew 9.7%; the remaining 11% of the brand-wide average came from losing small outlets, and isn't growth.\" Longer than \"+22%\", but nobody makes a decision off it that they'll regret."
+    },
+    {
+      "id": "dom-045",
+      "title": "How far to take the analysis",
+      "brief": "You've broken down the «Чистовъ» drop: revenue −49%, cause — loss of 46 outlets. The director asks you to keep going. You have four options for the next step and a day and a half before the board meeting.",
+      "goal": "Choose the depth at which the analysis turns into a task with an owner.",
+      "scenario": "What's already known:\n\n  revenue −49% =\n  outlets −58% ×\n  revenue per outlet +22%\n\nFour options for the next\nstep:\n\n  A  break down the −58% by\n     channel and chain: who\n     exactly left\n  B  break down the +22% into\n     like-for-like growth and\n     composition effect\n  C  break revenue per\n     outlet down into units\n     and price\n  D  compare the trend against\n     the household chemicals\n     category overall",
+      "predictQuestion": "Which one to continue with?",
+      "options": [
+        {
+          "label": "Option A: until it's known exactly which outlets left, the task has no owner and no first step — a list of 46 addresses with chain names turns the analysis into a work plan",
+          "why": "Decomposition is carried to the link that has someone able to act on it. \"There are fewer outlets\" is an observation; \"we left these specific chains\" is a task for a specific person, with an obvious first move."
+        },
+        {
+          "label": "Option D: without comparing against the category, it's unclear whether this is our problem or the market fell for everyone",
+          "why": "The market comparison matters, but it's mostly answered already: revenue per outlet grew, meaning demand didn't go anywhere wherever the brand stayed. A category-wide drop would explain the opposite picture."
+        },
+        {
+          "label": "Option B: the +22% figure will go into the deck and can't be shown unverified",
+          "why": "It does need verifying, and that takes half an hour — but that's protection against a wrong claim, not the next step of the analysis. The board's main question will be about the lost outlets, not the per-outlet growth."
+        },
+        {
+          "label": "Option C: breaking down into units and price is the deepest level, and it'll give the most precise answer",
+          "why": "Depth by itself isn't value. Units and price explain revenue within an outlet, and the drop didn't happen within an outlet — that's exactly where growth occurred. This breakdown is precise and beside the point."
+        }
+      ],
+      "hints": [
+        "For each option, ask: who in the company gets a task from its result?",
+        "The analysis is finished not when the explanation looks elegant, but when it's clear who to hand it to."
+      ],
+      "explain": "Decomposition is easy to turn into an endless exercise: any factor can be broken down further, and each next level looks more thorough than the last. There's one signal to stop: a link with an owner — a person or department who can act on it. Reaching that link is mandatory; going further is optional, on request only.\n\nIn this analysis, that link is the specific departed outlets. \"We lost 58% of outlets\" isn't a task yet: no recipient, no first action. \"We left chains X and Y, and thirty-one traditional-retail outlets in such-and-such regions\" is a task with a named owner, a deadline, and a clear conversation for the board. Option C pulls in the opposite direction: it's precise, but it decomposes the factor that grew, not the one that fell.\n\nWorth being honest about the remaining options: they're not useless, just not first. Comparing against the category protects against the conclusion \"we performed badly\" when the whole market was actually falling — here it's already mostly closed off by the growth in revenue per outlet. Breaking down the +22% matters so a figure that would fall apart under the first question doesn't end up in the deck. Both belong after the answer to the main question is ready.\n\nA note on presenting this to the board. The order of delivery is the reverse of the order of work: lead with the conclusion and the proposed action, then the chain that led there. Decomposition is an analyst's tool, not a talk's structure; the audience doesn't need to walk the whole path, they need to see that the path was walked.\n\nAnd a limitation worth stating out loud: decomposition shows exactly where a metric changed, not why. \"We left these chains\" still isn't a cause — the cause could turn out to be price, service, a buyer change, or a sales rep leaving. The arithmetic gets you to the right door; opening it takes a conversation with people."
+    },
+    {
+      "id": "dom-046",
+      "title": "The Pareto that isn't there",
+      "brief": "The commercial director proposes cutting the assortment: \"twenty percent of SKUs give eighty percent of revenue, the rest is dead weight.\" You check the rule against your own FMCG portfolio.",
+      "goal": "Test whether the 20/80 rule applies to a specific assortment.",
+      "scenario": "29 SKUs in an FMCG division,\n12-month revenue, sorted\ndescending:\n\n  rank 1\n    SKU share 3%, cumulative\n    revenue share 8.5%\n  rank 6\n    SKU share 21%, cumulative\n    revenue share 36.3%\n  rank 10\n    SKU share 34%, cumulative\n    revenue share 52.4%\n  rank 15\n    SKU share 52%, cumulative\n    revenue share 68.2%\n  rank 19\n    SKU share 66%, cumulative\n    revenue share 79.5%\n  rank 20\n    SKU share 69%, cumulative\n    revenue share 82.2%\n  rank 29\n    SKU share 100%, cumulative\n    revenue share 100.0%\n\nThe largest SKU is 8.5% of\nrevenue, the smallest 1.0%.",
+      "predictQuestion": "What should you tell the director?",
+      "options": [
+        {
+          "label": "The rule doesn't hold here: the top 20% of SKUs deliver 36%, and reaching 80% of revenue needs twenty of the twenty-nine SKUs. There's almost no \"dead weight\" in this portfolio — cutting it means cutting things that genuinely sell",
+          "why": "20/80 is an empirical observation, not a law, and it doesn't hold on a flat assortment with no clear leaders. Here the gap between the top and bottom SKU is only eightfold, so the concentration the director expects simply isn't there."
+        },
+        {
+          "label": "The rule roughly holds: 19 SKUs give 79.5%, close enough to 80%",
+          "why": "Eighty percent of revenue really is reached — but by sixty-six percent of SKUs, not twenty. The right-hand side of the rule matched by coincidence; the whole point of the rule is the left-hand side."
+        },
+        {
+          "label": "The assortment needs cutting even harder: no concentration means the portfolio is diffuse and needs a cleanup",
+          "why": "A possible conclusion, but it doesn't follow from this data. No concentration just means the SKUs are close in contribution; whether each one is worth keeping depends on margin, shelf role, and what draws the buyer in — not rank."
+        },
+        {
+          "label": "The calculation should be redone in units: in money, ABC is distorted by price differences",
+          "why": "Units would give a different ranking, a useful separate view — but it wouldn't invalidate the current one. ABC is computed on whatever metric is actually managed: revenue or margin for the shelf, units and volume for the warehouse."
+        }
+      ],
+      "hints": [
+        "Find the row where cumulative revenue share first crosses 80%. What SKU share does it correspond to?",
+        "Compare the contribution of the top SKU against the bottom one. How different are they?"
+      ],
+      "explain": "ABC analysis ranks by contribution and splits into groups: A is what delivers most of the result, C is the long tail. Group boundaries (usually 80% / 15% / 5% cumulative revenue) are a convention, not a law of nature, and the \"20% of items give 80% of the result\" rule doesn't always hold.\n\nIn this portfolio it doesn't hold at all. The top 20% of SKUs deliver 36.3% of revenue, and reaching 80% takes twenty of the twenty-nine SKUs. The reason shows up at the extremes: the gap between the largest and smallest SKU is only eightfold. For comparison, a portfolio where the rule works usually has a few double-digit-share flagships and a tail of items worth tenths of a percent each.\n\nWhat this changes in practice. Cutting the assortment here won't be an easy win: any dropped item is meaningful revenue, not scraps. A conversation about cutting turns into one about margin and the cost of carrying each item, rather than picking out \"dead weight\" by sales rank.\n\nAnd a broader point. The 20/80 rule lives in decks as an axiom, cited without checking. It's a five-minute query to verify, and a wrong citation of it launches an assortment-cut project that's expensive to walk back later. This is exactly the case where an analyst's most valuable work is checking someone else's assumption before it becomes a decision, not building something new."
+    },
+    {
+      "id": "dom-047",
+      "title": "Unstable on a schedule",
+      "brief": "A buying planner brings an XYZ classification: SKUs with a coefficient of variation above 25% go into group Z, demand is flagged unpredictable, safety stock goes up. Before signing off, you look at the monthly series of two items from that group.",
+      "goal": "Understand what the coefficient of variation is actually measuring on these series.",
+      "scenario": "Monthly revenue, thousand ₽:\n\n  Ключевая still 5L\n  (CV 28.5%)\n  Jul Aug Sep Oct Nov Dec\n  277 231 253 157 123 168\n  Jan Feb Mar Apr May Jun\n  165 131 156 154 182 285\n\n  Хрустик Sour Cream & Onion\n  (CV 35.1%)\n  Jul Aug Sep Oct Nov Dec\n   89 113 131  92  85 112\n  Jan Feb Mar Apr May Jun\n   94  90 114  85  88 230\n                        ↑\n       \"yellow tag\" promo\n       from June 4",
+      "predictQuestion": "What's wrong with this classification?",
+      "options": [
+        {
+          "label": "Both series are predictable, just for different reasons: the water follows a proper summer season, the snack has one spike from its own promo. The coefficient of variation measures spread, not unpredictability, and raising safety stock on them treats the wrong problem",
+          "why": "The season is known well in advance and goes into the plan; the promo sits on trade marketing's own calendar. Neither one is demand uncertainty — they're planned events, and CV can't tell them apart from random swings."
+        },
+        {
+          "label": "The classification is right for the water and wrong for the snack: seasonality is real demand variation, the promo is artificial",
+          "why": "Seasonality is also real variation, and equally known in advance. What matters for stock planning isn't whether the spread is large but whether you know its schedule — and both SKUs have one."
+        },
+        {
+          "label": "The 25% threshold is too low: at that level half the assortment ends up in Z",
+          "why": "The threshold could be moved, but that's not the actual problem. Even at a 40% threshold, water would stay in X, and its 2.3x seasonal swing still wouldn't be built into the plan — because the metric measures the wrong thing."
+        },
+        {
+          "label": "There's a data error in the snack figures: 230 after 88 is an outlier, it should be excluded and recomputed",
+          "why": "It shouldn't be excluded: it's not an error, it's real sales from a real promo. Its place in the demand model is as a separate promo-effect term, not the trash bin."
+        }
+      ],
+      "hints": [
+        "For each spike, ask: did you know about it in advance?",
+        "The coefficient of variation can't tell apart two series with the same spread — a regular one and a chaotic one."
+      ],
+      "explain": "XYZ analysis splits an assortment by demand stability, and the coefficient of variation — standard deviation divided by the mean — is almost always used to measure it. The trap is that CV measures spread around the mean, while a planner needs not the size of the spread but its predictability. Those are different things, and for seasonal or promoted products they diverge completely.\n\nThe 5-liter water shows a summer peak and a winter trough — a 2.3x swing, repeating every year. A series like that is as predictable as demand ever gets: July's plan is built from last July, not from the annual average. The snack hovers around a hundred thousand for eleven months and spikes to 230 in June — because we put a promo there ourselves. The date is known a quarter out, the discount depth is known, the mechanic is known.\n\nWhat to do instead. Before running XYZ, the series is cleaned: strip out the seasonal component, break out the promo as a separate effect, and compute variation on what's left. Then group Z catches the SKUs whose demand genuinely jumps around with no explanation — and those are the ones that actually need safety stock. In its raw form, the classification hands out stock to seasonal and promoted products, which need a calendar, not a buffer.\n\nA check that catches this mistake in a minute: look at the series with your own eyes before computing a coefficient on it. A regular wave and a one-off spike produce similar CVs and demand opposite responses — the first is fixed by planning around the season, the second by syncing purchasing with the promo calendar, and neither is fixed by safety stock.\n\nA practical note on the snack: a self-inflicted promo spike sitting in the sales history is dangerous beyond XYZ too. If it stays in the data as ordinary demand, any forecasting model will bake in its repeat next June — and the warehouse will end up bracing for a peak nobody actually planned."
+    },
+    {
+      "id": "dom-048",
+      "title": "What to do with each cell",
+      "brief": "The ABC-XYZ matrix is built, nine cells are filled in. The logistics director asks for one rule per cell: where to hold stock, where not to, and what to do with the borderline items.",
+      "goal": "Tie each cell of the matrix to a specific action.",
+      "scenario": "ABC-XYZ matrix, four\ncharacteristic items:\n\n  AX  1.5L water\n    large revenue,\n    steady demand\n  AZ  150g snack\n    large revenue,\n    demand swings\n  CX  kids' yogurt\n    small revenue,\n    steady demand\n  CZ  0.2L juice\n    small revenue,\n    demand swings\n\nWarehouse space is limited,\nholding safety stock on\neverything is impossible.",
+      "predictQuestion": "What allocation of effort is correct?",
+      "options": [
+        {
+          "label": "AX — precise stock calculation and auto-ordering, since a mistake here is the costliest; AZ — the main target for manual attention and safety stock; CX — a simple replenishment rule with no human involved; CZ — a candidate for order-to-demand or delisting",
+          "why": "Attention is allocated by the product of a mistake's cost and its likelihood. AX is expensive but predictable, so it gets automated. AZ is expensive and unpredictable — it's the one cell where manual work actually pays off."
+        },
+        {
+          "label": "All attention on group A as a whole, group C ordered on a leftover basis",
+          "why": "Half right: A really does matter more by money. But within A, AX and AZ need opposite treatment — the first can be trusted to auto-order, the second can't, and that's exactly the distinction XYZ provides."
+        },
+        {
+          "label": "Safety stock across every X item: demand is steady there, so shortages are unacceptable",
+          "why": "The opposite: steady demand is exactly what lets you get by with a minimal buffer, because it forecasts well. Safety stock is the price of uncertainty, and it belongs where uncertainty actually is."
+        },
+        {
+          "label": "Delist the group C items: they contribute little revenue and take up warehouse space",
+          "why": "A mechanical delist based on one cell is a common and expensive mistake. An item can be small in revenue and still necessary: it's what draws people into the store, it fills out a lineup a chain requires, or it holds the brand's shelf presence."
+        }
+      ],
+      "hints": [
+        "For each cell, ask two things: how much does a mistake cost, and how likely is it?",
+        "Safety stock is needed where demand is unpredictable, not where it's large."
+      ],
+      "explain": "The point of the matrix isn't classification, it's that each cell calls for its own action. ABC answers how much a mistake costs; XYZ answers how likely it is. Multiply them and you get an allocation of attention: where a person is needed, where a rule suffices, and where it's worth dropping the item entirely.\n\nAX — money with predictable demand: an ideal candidate for automatic ordering. The math is worked out once, then the system runs itself, and the freed-up attention goes where it's actually needed. AZ is the cell the whole matrix exists for: the mistake is expensive and likely, no formula will save you, it needs a person, a bigger buffer, and syncing with the promo calendar. CX — small stuff with steady demand: a simple replenishment rule, minimal involvement. CZ — small stuff that also swings: order to demand, minimal stock, and if problems are persistent, a question about delisting.\n\nThe main caveat is about delisting group C items. The matrix is built on one metric and knows nothing about an item's role in the assortment. A kids' yogurt might contribute a small percent of revenue and still be the reason a family picks your brand over the one next to it; a flavor lineup might be a condition of a chain contract. The delisting decision gets made after a conversation with the category manager, not off a matrix cell.\n\nThe second caveat is about recomputing. The matrix is a snapshot for a period, and an item moves between cells: a new product starts in C, a seasonal item shifts XYZ groups depending on the calculation window, and a declining brand slides into C while staying important. It's worth recomputing quarterly, and watching the transitions matters as much as the current position: a move from AX to BZ is a signal by itself, before it even shows up in revenue."
     }
   ]
 }
