@@ -139,5 +139,16 @@ const selfJoin = rows(`SELECT SUM(manager_id IS NULL) managers, SUM(manager_id I
 check('dim_rep пригоден для self-join', selfJoin.managers >= 3 && selfJoin.reps >= 10,
   `руководителей ${selfJoin.managers}, представителей ${selfJoin.reps}`);
 
+// Колонка описана человеку как «последний день месяца» (см. подписи в build-dataset.mjs),
+// и на ней будут строиться задания трека model про остаток на конец периода. Прежняя
+// версия генератора для последнего месяца датасета подставляла день РАНЬШЕ month_start:
+// граничный случай, который не видно ни в одной выборке «первых строк».
+const stockEnd = rows(`
+  SELECT COUNT(*) bad FROM fact_stock
+  WHERE month_end < month_start
+     OR substr(month_end, 1, 7) <> substr(month_start, 1, 7)
+     OR date(month_end, '+1 day') <> date(month_start, '+1 month')`)[0].bad;
+check('fact_stock: month_end — последний день своего месяца', stockEnd === 0, `нарушений ${stockEnd}`);
+
 console.log(failed ? `\n${failed} проверок провалено` : '\nВсе проверки пройдены');
 process.exit(failed ? 1 : 0);

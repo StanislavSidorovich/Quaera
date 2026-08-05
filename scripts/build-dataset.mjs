@@ -465,7 +465,12 @@ const stock = [];
         if (inc === 0 && dec === 0 && onHand === 0) continue; // не храним пустоту
         stock.push({
           stock_id: ++stId,
-          month_end: iso(addDays(parseISO(mth === months[months.length - 1] ? mth : months[months.indexOf(mth) + 1]), -1)),
+          // Последний день месяца mth = первый день следующего минус сутки.
+          // Следующий месяц считаем из самой даты, а не из соседа по массиву months:
+          // для последнего месяца соседа нет, и прежняя версия подставляла туда сам
+          // mth — то есть month_end получался днём РАНЬШЕ month_start (2026-06-01 →
+          // 2026-05-31) вопреки собственному описанию колонки «последний день месяца».
+          month_end: iso(addDays(new Date(Date.UTC(parseISO(mth).getUTCFullYear(), parseISO(mth).getUTCMonth() + 1, 1)), -1)),
           month_start: mth,
           distributor_id: d.customer_id,
           product_id: p.product_id,
