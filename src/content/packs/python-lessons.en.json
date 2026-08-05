@@ -131,6 +131,28 @@
       "wrong": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Ключевая', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nresult = weekly.groupby(weekly['week_start'].str[:7])['units'].sum()",
       "wrongWhy": "This only works for dates in a single consistent text format, 'YYYY-MM' — wherever the format is mixed (as in staging_raw_sellout) or the date has already been converted to datetime, the string slice .str[:7] either produces nothing or works incorrectly. resample with a datetime index solves this with no assumptions about string format at all.",
       "selfCheck": "Before resample/rolling, check the dtype of the date column (or the index, if it's already set) — it should be datetime64, not object/string."
+    },
+    {
+      "skill": "py-chaining",
+      "title": "Chains, views and copies",
+      "why": "df[mask]['column'] = value looks harmless, but it assembles a temporary object that is discarded immediately: the code runs, pandas prints a warning, and the data doesn't change at all. .loc[mask, 'column'] = value is the same thing in a single lookup, with no intermediate object that can be silently lost.",
+      "form": "df.loc[mask, 'column'] = value   # one lookup, safe\ndf[mask]['column'] = value        # two lookups, silent failure",
+      "example": "result = fact_sellout.copy()\nresult.loc[result['revenue'] > 3000, 'flag'] = 1",
+      "reads": "9,214 sales above 3000 ₽ are marked flag=1 directly in the table, and the remaining 109,235 rows get a gap in that column — ordinary pandas behavior for a partial assignment.",
+      "wrong": "result = fact_sellout.copy()\nresult[result['revenue'] > 3000]['flag'] = 1",
+      "wrongWhy": "result[mask] creates a temporary object — a copy of the filtered rows with no connection to result. ['flag'] = 1 adds a column to that copy specifically, and the copy is discarded immediately — result doesn't change at all, and no exception is raised in the process: pandas prints a SettingWithCopyWarning, but doesn't halt execution.",
+      "selfCheck": "Assigning a value after two consecutive [][] lookups? Replace it with a single .loc[mask, 'column'] = value — the warning and the silent failure disappear together."
+    },
+    {
+      "skill": "py-performance",
+      "title": "Vectorization",
+      "why": "apply(..., axis=1) and a vectorized operation (np.where, arithmetic on columns) often give an identical result — you can't tell them apart by value. The difference is an order of magnitude in speed: apply calls a Python function separately on every row, while a vectorized operation computes the whole column at once in optimized NumPy code.",
+      "form": "np.where(condition, if_true, if_false)   # instead of apply(lambda row: ..., axis=1)\ncolumn_a + column_b                       # instead of row-by-row string formatting",
+      "example": "result = dim_product.copy()\nresult['segment'] = np.where(result['list_price'] > 300, 'premium', 'mass')",
+      "reads": "A price segment for every product: 'premium' above 300 ₽, otherwise 'mass' — 11 premium and 36 mass items, computed with a single vectorized comparison and not one call to apply.",
+      "wrong": "result = dim_product.copy()\nresult['segment'] = 'premium' if result['list_price'] > 300 else 'mass'",
+      "wrongWhy": "Python's ordinary if expects a single True/False, while result['list_price'] > 300 is a Series of 47 values at once, and Python can't decide what to treat as \"true\" here. The code fails with ValueError 'The truth value of a Series is ambiguous' — the same error as in py-select-filter when and is used instead of &. np.where is precisely the vectorized if, built for a condition that arrives as a whole column rather than a single value.",
+      "selfCheck": "See apply(lambda row: ..., axis=1)? Ask whether the same thing can be expressed as a comparison or arithmetic directly on the columns (np.where, +, >, &) — it almost always can, and it's orders of magnitude faster on a large table."
     }
   ]
 }

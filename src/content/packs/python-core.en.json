@@ -68,6 +68,16 @@
       "id": "py-timeseries",
       "title": "Dates and time series",
       "summary": "I cast a column to datetime, change a series' frequency with resample, and compute rolling windows with rolling."
+    },
+    {
+      "id": "py-chaining",
+      "title": "Chains, views and copies",
+      "summary": "I write transformations as a chain through assign and don't run into SettingWithCopyWarning, because I understand where a copy arises and where a view onto the source data does."
+    },
+    {
+      "id": "py-performance",
+      "title": "Vectorization",
+      "summary": "I replace row loops and apply with a vectorized operation, and I understand that the difference here isn't style, it's an order of magnitude."
     }
   ],
   "tasks": [
@@ -705,6 +715,110 @@
         "After .rolling(4) you need .mean(), just as after .groupby(...): rolling() on its own only defines the window, it doesn't compute a statistic."
       ],
       "explain": "rolling(4).mean() is a direct equivalent of the window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW from sql-window-frame: the window slides over the ordered series, including the current row and the three before it. The difference is in the notation: in SQL the frame is defined inside OVER(...), in pandas it's a separate call, .rolling(window_size), before the aggregating function."
+    },
+    {
+      "id": "py-038",
+      "title": "The flag that landed nowhere",
+      "brief": "An intern marks large sales with a flag directly on a filtered slice. The code runs without a single error, and a day later it turns out nothing changed.",
+      "goal": "Understand what happens to the source table under two consecutive index lookups.",
+      "predictQuestion": "The code runs without exceptions (pandas prints a warning but doesn't stop). Will a flag column appear in fact_sellout after this line?",
+      "options": [
+        {
+          "label": "No — flag won't appear anywhere: the column is added to a temporary object that is discarded immediately, and the source table doesn't change at all",
+          "why": "fact_sellout[mask] creates a separate temporary object — a copy of the filtered rows with no connection to the original. ['flag'] = 1 modifies that copy specifically, and it ceases to exist the moment the line finishes executing."
+        },
+        {
+          "label": "Yes — flag will appear in fact_sellout for every row with revenue > 3000, and the rest will have NaN",
+          "why": "That's what .loc[mask, 'flag'] = 1 would do — one lookup into the table instead of two. Here the second indexing, ['flag'], is applied not to fact_sellout but to a copy that has already separated from it."
+        },
+        {
+          "label": "Yes — flag will appear on every row of fact_sellout with the value 1, regardless of revenue",
+          "why": "Even if the assignment did reach the original, the mask would confine it to rows with revenue > 3000. But it never reaches the original at all — the copy is discarded before anything can affect fact_sellout."
+        },
+        {
+          "label": "The code will fail with an error — you can't assign a column through two consecutive index lookups",
+          "why": "There will be no error: pandas performs both operations and prints a warning (SettingWithCopyWarning), not an exception. That's exactly what makes the bug so treacherous — nothing signals explicitly that something went wrong."
+        }
+      ],
+      "hints": [
+        "fact_sellout[mask] is already a separate object, not fact_sellout itself. The second [] works on that object, not on the source table.",
+        "The temporary object lives exactly until the end of the expression — you can't assign something to it and expect that to show up in the source table."
+      ],
+      "explain": "pandas honestly warns about this (SettingWithCopyWarning), but doesn't halt execution — and if you don't pay attention to the warning, the bug looks like a complete absence of a bug: the code ran, and the data didn't change. The correct form is through .loc: fact_sellout.loc[fact_sellout['revenue'] > 3000, 'flag'] = 1, one lookup into the table instead of two."
+    },
+    {
+      "id": "py-039",
+      "title": "Large sales as a separate table",
+      "brief": "A logistics analyst wants a separate table of sales above the average revenue across all of fact_sellout, marked with is_large — without touching the source table and without relying on pandas warnings to notice it.",
+      "goal": "Return the rows of fact_sellout where revenue is above the average for the whole table, with an extra column is_large=True — as a chain through .copy() and .assign(), with no intermediate assignment into a filtered slice.",
+      "hints": [
+        ".copy() right after the filter says explicitly: from here on you're working with an independent table, not a view onto the source — and the warning stops appearing.",
+        ".assign(name=value) adds a column and returns a new table in that same call — the chain can continue without being broken by an intermediate variable."
+      ],
+      "explain": ".copy() and .assign() are what turn the previous task from a trap into a working technique: .copy() explicitly fixes independence from the source table, instead of leaving pandas to guess whether this is a view or a copy, and .assign() adds a column while staying inside one chain of calls, rather than going through a separate df['col'] = .... It's precisely the absence of an extra intermediate variable and of direct assignment through [] that guards against the scenario that broke py-038."
+    },
+    {
+      "id": "py-040",
+      "title": "The same flag, but done right",
+      "brief": "The same \"large sale\" flag — but done right, through .loc, with no intermediate object that can be lost by accident.",
+      "goal": "Set flag=1 directly in fact_sellout for rows with revenue > 3000, modifying the table in a single lookup through .loc.",
+      "hints": [
+        ".loc[mask, 'column'] = value is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
+        ".copy() here is only so that fact_sellout isn't modified directly in this task; the .loc[...] = ... technique itself works without it, if modifying the table is what you actually intend."
+      ],
+      "explain": ".loc[mask, 'column'] = value is a single operation instead of the two consecutive index lookups that left pandas unable to tell whether you were working with a view or a copy. The very same flag that failed to appear in py-038 lands reliably here, because there's no intermediate object that can be discarded by accident."
+    },
+    {
+      "id": "py-041",
+      "title": "A price segment without apply",
+      "brief": "A colleague wrote the \"price segment\" column through apply(lambda row: ..., axis=1) — on 47 products that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
+      "goal": "Build a segment column for dim_product: 'premium' for list_price > 300, otherwise 'mass' — through vectorized np.where, without apply().",
+      "hints": [
+        "np.where(condition, if_true, if_false) is the vectorized replacement for apply(lambda row: ... if ... else ..., axis=1): the condition is checked for the whole column at once, not row after row.",
+        "np is already available in the task's code alongside pd and the tables — you can call it directly as np.where(...)."
+      ],
+      "explain": "apply(..., axis=1) calls a Python function separately for every row — on 47 products that's 47 calls, and on fact_sellout it would be 118,449, each one carrying Python interpreter overhead on top of the check itself. np.where evaluates the condition once for the entire column in optimized NumPy code — the same result, but orders of magnitude faster on a large table, even though the difference isn't visible on a small one."
+    },
+    {
+      "id": "py-042",
+      "title": "Same result, different price",
+      "brief": "A colleague insists: \"apply and a vectorized operation give the same result — so you can use either one, it's a matter of taste.\" On a small table the difference isn't visible; the question is what changes on a large one.",
+      "goal": "Understand what exactly the difference is between apply(..., axis=1) and a vectorized operation, given that the result is identical.",
+      "predictQuestion": "On dim_product's 47 rows both variants produce the same segment column. What happens if the same technique is applied to fact_sellout (118,449 rows)?",
+      "options": [
+        {
+          "label": "The result stays the same in both variants, but variant A will be noticeably slower — by orders of magnitude, not by percentages, because it calls a Python function separately on every row",
+          "why": "apply(..., axis=1) is a Python row loop under the hood: on 118,449 rows that's 118,449 separate function calls, each with interpreter overhead. np.where performs the same comparison once for the whole column in vectorized NumPy code."
+        },
+        {
+          "label": "On a large table apply(..., axis=1) and np.where will give different results — apply is more accurate, because it sees the whole row",
+          "why": "Both variants check the same condition (list_price > 300) and give an identical result regardless of the table's size. The fact that apply technically sees the whole row isn't used here and adds no accuracy."
+        },
+        {
+          "label": "np.where doesn't work on tables with more than a few thousand rows — you'd have to go back to apply",
+          "why": "np.where has no size limit — NumPy's vectorized operations were built for large data arrays specifically; they don't degrade or give out as the number of rows grows."
+        },
+        {
+          "label": "There will be a speed difference, but a small one — within 10-20%, not critical for a task running in a browser",
+          "why": "The difference is usually orders of magnitude (severalfold to tens of times over), not within 10-20% — which is exactly why apply(..., axis=1) on genuinely large tables can noticeably freeze the interface, while a vectorized operation doesn't."
+        }
+      ],
+      "hints": [
+        "The result is identical — checking the values can't tell \"bad\" code from \"good\" here, the difference shows up only in speed.",
+        "apply(..., axis=1) is a row loop at the Python level; np.where is an operation at the NumPy level, with no Python loop at all."
+      ],
+      "explain": "On small tables (like dim_product, 47 rows) the difference isn't visible to the eye; on fact_sellout it can be tens of times over — exactly what makes an analyst's code \"hang\" on a seemingly simple line. Since the values match, an ordinary check of the result won't catch the difference in approach: what needs practicing is recognizing the apply(lambda row: ..., axis=1) pattern as a candidate for replacement, not the result of running it."
+    },
+    {
+      "id": "py-043",
+      "title": "A product label without row-by-row formatting",
+      "brief": "The data schema builds a product label, \"brand / category\", through apply(lambda row: f'...', axis=1) — it works, but it's recomputed from scratch on every change of filter, and on a large table that's felt.",
+      "goal": "Build a label column = brand + ' / ' + category for dim_product in a vectorized way, without apply and without row-by-row string formatting.",
+      "hints": [
+        "pandas string columns are added with the + operator just like ordinary Python strings — but element by element, for every row at once.",
+        "The separator ' / ' is an ordinary constant string between the two columns."
+      ],
+      "explain": "Adding string columns with + is a vectorized operation: pandas concatenates values element by element for the whole column at once, with no function call on every row. apply(lambda row: f'{row[\"brand\"]} / {row[\"category\"]}', axis=1) produces the same text, but walks the rows in a Python loop — with the same overpayment on interpreter overhead as in py-041/py-042, just on a different operation: string formatting instead of comparing numbers."
     }
   ]
 }
