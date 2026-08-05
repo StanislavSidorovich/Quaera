@@ -7,6 +7,8 @@ import rawDomainLessons from './packs/domain-lessons.json';
 import rawPythonLessons from './packs/python-lessons.json';
 import rawSqlCoreEn from './packs/sql-core.en.json';
 import rawSqlLessonsEn from './packs/sql-lessons.en.json';
+import rawDomainCoreEn from './packs/domain-core.en.json';
+import rawDomainLessonsEn from './packs/domain-lessons.en.json';
 import type { Lesson, LessonTranslation, Pack, PackTranslation, Task, Track } from './types';
 import type { Locale } from '../i18n/context';
 
@@ -133,6 +135,7 @@ for (const p of packs) {
  */
 const packTranslations: Partial<Record<string, PackTranslation>> = {
   'sql-core': validateTranslation(packById.get('sql-core')!, rawSqlCoreEn as PackTranslation),
+  'domain-core': validateTranslation(packById.get('domain-core')!, rawDomainCoreEn as PackTranslation),
 };
 
 /**
@@ -165,8 +168,12 @@ export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
  * карточки: id скиллов уникальны глобально, файл перевода не обязан
  * повторять структуру по трекам.
  */
+const lessonTranslationSources: { lessons: LessonTranslation[] }[] = [
+  rawSqlLessonsEn as { lessons: LessonTranslation[] },
+  rawDomainLessonsEn as { lessons: LessonTranslation[] },
+];
 const lessonTranslationBySkill = new Map(
-  (rawSqlLessonsEn as { lessons: LessonTranslation[] }).lessons.map((l) => {
+  lessonTranslationSources.flatMap((src) => src.lessons).map((l) => {
     if (!lessonBySkill.has(l.skill)) throw new Error(`Перевод карточки ссылается на несуществующий скилл ${l.skill}`);
     return [l.skill, l];
   })
@@ -178,7 +185,17 @@ export const lessonBySkillFor = (locale: Locale): Map<string, Lesson> => {
   const merged = new Map<string, Lesson>();
   for (const [skill, lesson] of lessonBySkill) {
     const tr = lessonTranslationBySkill.get(skill);
-    merged.set(skill, tr ? { ...lesson, title: tr.title, why: tr.why, form: tr.form, reads: tr.reads, wrongWhy: tr.wrongWhy, selfCheck: tr.selfCheck } : lesson);
+    merged.set(skill, tr ? {
+      ...lesson,
+      title: tr.title,
+      why: tr.why,
+      form: tr.form,
+      example: tr.example ?? lesson.example,
+      reads: tr.reads,
+      wrong: tr.wrong ?? lesson.wrong,
+      wrongWhy: tr.wrongWhy,
+      selfCheck: tr.selfCheck,
+    } : lesson);
   }
   return merged;
 };

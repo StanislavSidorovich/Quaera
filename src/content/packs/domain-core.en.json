@@ -1,0 +1,904 @@
+{
+  "id": "domain-core",
+  "title": "Analytics as a profession",
+  "description": "What SQL courses never cover: how to work out what the stakeholder is actually asking, what FMCG and pharma metrics mean, and why a number without a conclusion isn't work. This track is about judgment, not a tool.",
+  "tierNames": {
+    "1": "What people actually want",
+    "2": "How the business works",
+    "3": "Market metrics",
+    "4": "Judgment and influence"
+  },
+  "intro": {
+    "what": "This track is about what's left once the tools are stripped away: whose question you're answering, what a computed number actually means, and why the business works the way it does rather than some other way. This isn't \"soft skills\" — there's no less specificity here than in SQL, it's just that the checker isn't an engine, it's the consequences.\n\nThe domain is FMCG and OTC-pharma distribution: how a product travels from factory to shelf, and what metrics measure that journey. The way of reasoning carries over to any industry; the specific set of metrics doesn't, and wherever that boundary falls, the tasks call it out directly.",
+    "where": "A request comes in: \"work out sales for the quarter\" — and before opening the editor, you need to know whose sales: shipments to distributors, or retail sales, before discounts or after. You bring back the correct number and it's rejected, because a neighboring department computes it differently. A report shows growth, and in the meeting it turns out that's a low-base effect.\n\nAnd the most common case of all: the question sounds like \"give me an export\", but what's needed is an answer to a question nobody asked out loud.",
+    "idea": "A number by itself asserts nothing — the assertion only appears together with a definition. \"2025 revenue\" in our dataset has at least three equally correct values: 51.5M ₽ in retail, 42.7M in shipments before discounts, and 39.1M after. None of them is wrong — it's the questions that diverge, not the arithmetic.\n\nThat's where the habit that holds the whole track together comes from: before computing, agree on exactly what's being computed; before comparing, make sure the comparison bases match. A good share of the \"data errors\" people argue about in meetings turn out to be a mismatch of definitions, not of arithmetic.",
+    "limits": "There are no ready-made answers here that apply without looking. Distribution metrics live in FMCG and pharma; in banking, on a marketplace, or in industrial construction the set would be different — what carries over is the way of working it out, not a table of formulas.\n\nThis track doesn't teach tools either: you won't write a single line of code here — tasks are built as picking a decision and seeing why the other options fall short.\n\nAnd the main limitation, worth stating honestly: correctness of a business judgment is never checked automatically by anything. Whatever can be expressed as a number, we lock down against the dataset — but a conclusion stays a conclusion, and it's worth checking against real colleagues, not just the trainer.",
+    "bridge": "This track comes first not out of politeness: it sets up the questions the other three answer. Until it's clear how sell-in differs from sell-out, SUM(units) in a query is arithmetic, not an answer.\n\nThe reverse also holds: half the tasks here are built on the same numbers you'll pull with a query in SQL and with a dataframe in pandas. The «Волга-Трейд» warehouse overstock is worked out here as a distinction between flow and stock — the flow returned to normal, but the level stayed — and the same thing takes a few lines in SQL.\n\nThe trainer gives you meaning and tool separately, so you connect them yourself."
+  },
+  "skills": [
+    {
+      "id": "dom-roles",
+      "title": "Roles and boundaries",
+      "summary": "I can tell BA, BI, DA, DS and DE apart, and I know who to route a question to when it isn't mine."
+    },
+    {
+      "id": "dom-requirements",
+      "title": "From \"build me a dashboard\" to a brief",
+      "summary": "I turn a request into a question whose answer changes someone's decision, and pin down the recipient, the deadline, and what \"done\" looks like."
+    },
+    {
+      "id": "dom-metric-definition",
+      "title": "Defining a metric",
+      "summary": "I write a metric down so two people compute the same number from it: source, filters, granularity, and what it deliberately excludes."
+    },
+    {
+      "id": "dom-sanity-check",
+      "title": "Checks before you send it",
+      "summary": "Before sending, I reconcile the total against the source, sanity-check the order of magnitude, and check period completeness — catching the mistake before the recipient does."
+    },
+    {
+      "id": "dom-value-chain",
+      "title": "The value chain",
+      "summary": "I can picture a product's path from manufacturing to the shelf, and I know which link produces the data I'm analyzing."
+    },
+    {
+      "id": "dom-order-to-cash",
+      "title": "Order-to-cash",
+      "summary": "I can read a document's statuses from order to payment, and know which one counts as \"sold\" for a given report."
+    },
+    {
+      "id": "dom-sellin-sellout",
+      "title": "Sell-in and sell-out",
+      "summary": "I don't confuse a shipment to a customer's warehouse with a sale to the end buyer, and I pick the right source for the stakeholder's question."
+    },
+    {
+      "id": "dom-planning",
+      "title": "S&OP and demand forecasting",
+      "summary": "I understand how a demand forecast turns into a shipment plan, and what an analyst is on the hook for in that cycle, versus what they're just decorating."
+    },
+    {
+      "id": "dom-seasonality",
+      "title": "Seasonality and period comparison",
+      "summary": "I compare year over year, not month over month, when a category has a season, and can explain why a rolling year is more honest than a quarter."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "dom-001",
+      "title": "Once, or every Monday",
+      "brief": "The commercial director asks you to check how brands performed in Ural-Siberia. A week later, asks the same thing for a new period. A week after that — again.",
+      "goal": "Determine what actually changed about the task by the third time.",
+      "scenario": "Week 1:\n  \"Check how brands performed\n  in Ural-Siberia\"\nWeek 2:\n  \"Now for last week\"\nWeek 3:\n  \"One more time, please\"",
+      "predictQuestion": "By the third time, the task changed in substance. In what way, exactly?",
+      "options": [
+        {
+          "label": "A one-off analysis turned into regular reporting — that's a different kind of task now, not the same request",
+          "why": "The same question, asked a third time with a new period, is a sign that what's needed isn't an answer but a tool: a mart the stakeholder opens themselves. Otherwise the request will repeat forever."
+        },
+        {
+          "label": "Nothing changed: same query with a different date filter, five minutes of work",
+          "why": "Five minutes, multiplied by every week over a year, adds up to several working days dissolved into small tasks and invisible in any workload report. And the stakeholder waits on you the whole time instead of just looking themselves."
+        },
+        {
+          "label": "The stakeholder can't formulate the task — requirements need to be gathered again",
+          "why": "The stakeholder actually formulated it with complete clarity, and repetition isn't a flaw in the brief. The problem isn't that the question is unclear — it's that the answer is delivered by hand."
+        },
+        {
+          "label": "Automate the export with a script and send the file on a schedule",
+          "why": "That's half the solution: the numbers start arriving on their own, but stay stuck in email, with no way to look at a different cut. A recurring question with a changing cut is solved by a mart, not a mailing."
+        }
+      ],
+      "hints": [
+        "Don't compare the wording of the requests — compare what happens to the answer: is it looked at once, or returned to?",
+        "The sign of regular reporting isn't the query's complexity — it's its repetition with a changing period."
+      ],
+      "explain": "The line between a one-off analysis and regular reporting isn't about complexity or topic — it's about repetition. A one-off analysis answers a question and closes; regular reporting is a product with an owner, a schedule, and a stability requirement. Practical rule: the third time is a signal. You do the first request, you notice the second, and on the third you say out loud: \"This looks like a recurring thing — let me build you a mart, and you can look yourself.\" The conversation takes a minute and saves a year of weekly exports. One caveat: turning an analysis into a dashboard also means taking on the obligation to maintain it — that's no longer one-off work, and it needs to be planned like a product."
+    },
+    {
+      "id": "dom-002",
+      "title": "Doesn't reconcile with the accounting system",
+      "brief": "Accounting complains: March revenue in the dashboard is lower than in the accounting system. The analyst checked their query three times — filters, period, and granularity are all correct.",
+      "goal": "Determine what to check next.",
+      "scenario": "March 2025:\n\n  Dashboard         4,503,200 ₽\n  Accounting system 4,694,330 ₽\n  Gap                −191,130 ₽\n    (−4.1%)\n\nQuery checked three times: logic\nis correct.\nThe mart is refreshed by a nightly\npipeline.",
+      "predictQuestion": "The query's logic is confirmed correct, but the numbers still diverge. What to check next?",
+      "options": [
+        {
+          "label": "Data completeness in the mart itself: did every March row actually make it in",
+          "why": "If the logic is right and the result is understated, there's one explanation left — it was computed over incomplete data. A partially-run pipeline produces exactly this picture: the query honestly sums whatever made it in before it."
+        },
+        {
+          "label": "Check the query one more time — there must be a bug in a filter somewhere",
+          "why": "A fourth check of the same query rarely finds what the first three didn't. Once the logic is confirmed, it's cheaper to check the input than the calculation: compare the row count for March in the mart against the source."
+        },
+        {
+          "label": "Chalk it up to rounding and methodology differences — 4% is within normal range",
+          "why": "4% here is 191 thousand rubles, not a rounding error. A gap of this size always has a specific cause, and \"within normal range\" just means nobody went looking for it."
+        },
+        {
+          "label": "Recompute it in the accounting system — the error is probably on their end",
+          "why": "Possible, but you should start from the end where the odds are better and the check is cheaper. The accounting system here is the primary source, the mart is a copy, and copies are usually where things break, not originals."
+        }
+      ],
+      "hints": [
+        "The query runs against the mart, not against the accounting system directly — there's a step in between that could also have gone wrong.",
+        "Compare row counts for March in the mart vs. the source, not the total sums."
+      ],
+      "explain": "A discrepancy against the primary source with correct logic almost always means incomplete data, not a calculation error — and that's someone else's territory: a data engineer fixes the pipeline. The analyst's role here isn't to fix it or work around it by hand, but to localize it: name the period, name the scale, show the query isn't at fault. A diagnosis like \"March 14th has zero rows in the mart, 3,812 in the source\" turns a vague complaint — \"the dashboard is lying\" — into a task with a specific owner. And until the cause is found, the number can't be sent upward with an \"approximately\" caveat — it's more honest to say the data is incomplete than to hand over an understated fact."
+    },
+    {
+      "id": "dom-003",
+      "title": "Predict how much we'll sell",
+      "brief": "The head of sales asks for a sales forecast for the \"Фрутта\" brand for next quarter — needed for purchasing planning.",
+      "goal": "Determine the right way for the analyst to handle this.",
+      "scenario": "Ask: sales forecast for \"Фрутта\"\nnext quarter\n\nHave: 2.5 years of weekly sales,\nseasonality is visible\n\nDon't have: promo plans for the\nquarter, data on new SKU launches,\ninfo on competitor pricing moves",
+      "predictQuestion": "What should the analyst do?",
+      "options": [
+        {
+          "label": "Give an estimate based on history, explicitly stating the assumptions and what it does and does not account for",
+          "why": "You can't refuse: a purchasing decision will get made either way, just without numbers. But a forecast without a list of assumptions looks more precise than it is — extending the seasonal pattern only holds if promo and pricing stay unchanged, and that condition needs to be said out loud."
+        },
+        {
+          "label": "Refuse: forecasting is data science's territory, not analytics",
+          "why": "The boundary isn't the word \"forecast\". Extending a trend with a seasonal adjustment is ordinary analyst work; you need a data scientist where a model with many factors, uncertainty estimation, and regular retraining is required."
+        },
+        {
+          "label": "Compute it and hand over one number — easier for the stakeholder to plan around",
+          "why": "A single number with no interval or assumptions creates false precision: it gets remembered as a promise, and any deviation will look like the analyst's mistake, when the real cause was an unaccounted-for promo."
+        },
+        {
+          "label": "Take last year's sales for the same quarter and multiply by overall market growth",
+          "why": "A quick and often reasonable benchmark, but it silently assumes the brand repeats last year's trajectory. If there was a major promo a year ago and none is planned this year, the estimate will come out overstated by exactly that amount."
+        }
+      ],
+      "hints": [
+        "The question isn't whether you can compute it — it's what happens to your number after you hand it over.",
+        "Compare two phrasings: \"we'll sell 18,500 units\" vs. \"assuming current promo levels hold, we expect 17–20 thousand units.\""
+      ],
+      "explain": "The boundary with data science isn't the word \"forecast\", it's whether a model is needed. Extending a seasonal profile and trend is analyst work, and refusing here just means the decision gets made with no numbers at all. What separates a professional answer from an unprofessional one is explicit assumptions: a forecast is always conditional, and the conditions need to be stated before reality states them for you. A formula that works: \"assuming current promo and pricing levels hold, we expect X; if there's no promo in July, subtract roughly Y.\" An answer like that is usable for planning and doesn't turn into a promise you'll be held to later."
+    },
+    {
+      "id": "dom-004",
+      "title": "\"Need a sales dashboard\"",
+      "brief": "The head of sales writes in chat: \"Please build me a sales dashboard. I need to see the picture.\" No further detail.",
+      "goal": "Pick the question that moves the brief forward the most.",
+      "scenario": "From: head of sales\nMessage: \"Build me a sales\ndashboard, need to see the\npicture\"\n\nDeadline: not stated\nCuts: not stated\nMetrics: not stated",
+      "predictQuestion": "Which question gives you the most to work with for defining the task?",
+      "options": [
+        {
+          "label": "\"What will you decide after looking at it?\" — a question about the action that follows the number",
+          "why": "Its answer immediately sets the metric, the cut, and the frequency all at once. \"Where to send the field team\" is one thing; \"should we pull the brand off the shelf\" is entirely another, even though both get called a \"sales dashboard.\""
+        },
+        {
+          "label": "\"Which metrics should we show — revenue, units, average price?\"",
+          "why": "A reasonable question asked too early: the set of metrics follows from the decision, not the other way around. Ask about metrics first and you'll get \"let's show all of them\" — right back where you started."
+        },
+        {
+          "label": "\"What period and which regions?\"",
+          "why": "That's a cut refinement, and the decision determines the cut too. Until it's known why anyone's looking, any period looks equally justified, and the question only creates the feeling that the task is getting clearer."
+        },
+        {
+          "label": "\"When do you need it by?\"",
+          "why": "The deadline matters, but it's about planning your own work, not the content of it. Clarifying only the deadline risks building the wrong thing on time."
+        }
+      ],
+      "hints": [
+        "All four questions are reasonable — what differs is how much each answer narrows the space of possible things to build.",
+        "Think about which answer lets you rule out the most options for what to actually build."
+      ],
+      "explain": "\"Need to see the picture\" describes a feeling, not a task, and you can't fill in the rest on the stakeholder's behalf — there are too many possibilities. The decision question works because it's the only one that ties the report to someone's subsequent action: a metric that doesn't influence anything has no correct shape. It's also protection against endless scope creep: once the decision is fixed, it's clear what belongs in the report and what's a separate task. If the stakeholder can't answer it, that's an answer too: there's no recurring decision behind the request, and what they may actually need is a one-off analysis, not a dashboard."
+    },
+    {
+      "id": "dom-005",
+      "title": "Asked for an export, needs an answer",
+      "brief": "A brand manager asks for an export of all \"Хрустик\" sales for two years, by week and by outlet — \"in Excel, I'll look at it myself.\"",
+      "goal": "Determine what the analyst should do.",
+      "scenario": "Request: export of \"Хрустик\" sales,\nweeks × outlets, 2 years\nSize: about 19,000 rows\n\nAsked \"what will you be looking\nfor in there?\", answer:\n\"I want to understand why sales\ndropped in some outlets\"",
+      "predictQuestion": "What should the analyst do?",
+      "options": [
+        {
+          "label": "Hand over the export, and along with it a ready-made answer: a list of outlets with the drop and its size",
+          "why": "The request and the goal have diverged: the person asked for a tool because they didn't expect to get an answer. The export isn't harmful, but they'll spend hours going through 19,000 rows by hand to reproduce what you can compute with a query in a minute."
+        },
+        {
+          "label": "Just hand over the export — the stakeholder is an adult and knows what they need",
+          "why": "Formally flawless and professionally thin. The stakeholder named a method, not a task — and they picked that method not because it's the best one, but because it's the only one they expected from you."
+        },
+        {
+          "label": "Refuse the export and do a finished analysis instead",
+          "why": "Refusing the underlying data looks like gatekeeping information and damages the relationship. Plus something you weren't looking for might turn up in the export — and the person who knows their brand better than you is the one who'd find it."
+        },
+        {
+          "label": "Ask for a narrower period and outlet list so the file comes out smaller",
+          "why": "Optimizing the wrong thing: file size isn't the real problem here. Even a perfectly trimmed export still leaves the stakeholder alone with the task they essentially just handed you."
+        }
+      ],
+      "hints": [
+        "Compare two things: what the person asked for, and what they said when asked about the goal.",
+        "An export is a means. Think about what the result would look like if you got to choose the means."
+      ],
+      "explain": "Stakeholders often ask for a method rather than a result — the one they imagine is available to them — and that's not a mistake on their part, it's normal behavior for someone who doesn't know your capabilities. Hence the working habit: on hearing a request for an export, ask what they'll be looking for in it. Almost always there's a question behind it that you can answer more precisely and faster. The right response isn't either/or, it's both: hand over the data, because trust matters more than control, and attach the answer, because that's what they actually came for. After a few rounds of this, the stakeholder stops asking for exports and starts bringing questions instead — that's the shift from file supplier to analyst."
+    },
+    {
+      "id": "dom-006",
+      "title": "When is the task considered done",
+      "brief": "An analyst takes on a quarterly promo profitability report. The stakeholder is the marketing director, the deadline is Friday. Nobody discussed a definition of done.",
+      "goal": "Determine the main risk of a brief like this.",
+      "scenario": "Task: Q2 promo profitability\nreport\nStakeholder: marketing director\nDeadline: Friday\nDefinition of done: not discussed",
+      "predictQuestion": "What does the analyst risk by not agreeing on a definition of done?",
+      "options": [
+        {
+          "label": "The work won't finish by Friday: without a \"done\" criterion, the report gets revised for as long as it has readers",
+          "why": "Every new viewer brings their own \"could we also get a channel breakdown\", and since scope wasn't fixed in advance, every such request looks legitimate. The deadline stays the same while the scope grows."
+        },
+        {
+          "label": "Nothing significant: if the report is done by the deadline and the numbers are correct, the task is closed",
+          "why": "\"Done\" and \"accepted\" are different events. Without a shared criterion, the moment of closure is set by the stakeholder, whenever they open the report — and their idea of completeness can differ from yours by several days of work."
+        },
+        {
+          "label": "The report might turn out technically wrong — there's nobody to check the calculation",
+          "why": "Definition of done is about the task's boundaries, not the correctness of the calculation. The numbers need checking regardless, and that check doesn't depend on this agreement."
+        },
+        {
+          "label": "The stakeholder won't realize the report is ready and won't open it on time",
+          "why": "Announcing that something's ready is easy and needs no prior agreement. The problem isn't communication — it's what counts as ready in the first place."
+        }
+      ],
+      "hints": [
+        "Imagine you sent the report Friday morning. What happens next?",
+        "Think about who decides the task is finished, if that isn't decided in advance."
+      ],
+      "explain": "A definition of done is a sentence said before work starts: \"Done means a table for every promo of the quarter with revenue, cost, and ROI, in your inbox, Friday; a channel or SKU breakdown is a separate task.\" It takes a minute and does three things at once: protects the deadline, separates revisions from new tasks, and gives the stakeholder a chance to push back in advance rather than Friday evening. The absence of this agreement is the main reason analytical work never has a visible end: without a boundary, every task keeps growing until the next urgent one displaces it."
+    },
+    {
+      "id": "dom-007",
+      "title": "How many active customers do we have",
+      "brief": "In a meeting, sales cites 132 active customers, finance cites 144. Both numbers come from the same database, the same month, and both are computed correctly.",
+      "goal": "Determine the cause of the discrepancy.",
+      "scenario": "Sales:    132 active customers\nFinance:  144 active customers\n\nPeriod:   the same\nDatabase: the same\n\ndim_customer holds 144 records,\n12 of them distributors.",
+      "predictQuestion": "What caused the discrepancy?",
+      "options": [
+        {
+          "label": "A different answer to whether a distributor counts as a customer: 144 is every directory record, 132 is points of sale only",
+          "why": "The difference is exactly 12 — the number of distributors in the directory. Finance counts everyone they invoice; sales counts only outlets where an end consumer buys the product. Both numbers are correct, each for its own question."
+        },
+        {
+          "label": "A query bug on one side — only one of the two numbers is correct",
+          "why": "A gap that exactly matches the count of records of one type is a sign of different definitions, not a bug. A query bug would produce an arbitrary difference, not one this clean."
+        },
+        {
+          "label": "Finance counts the whole year, sales counts the month",
+          "why": "Per the setup, the period is the same. And different periods would produce a gap that doesn't exactly match the distributor count in the directory."
+        },
+        {
+          "label": "Some customers have a required field left blank and dropped out of the count",
+          "why": "A plausible mechanism, but it would produce an arbitrary number of dropouts. The gap matching the distributor count exactly points to a deliberate filter, not gaps in the data."
+        }
+      ],
+      "hints": [
+        "Compute the gap between the two numbers and compare it against the makeup of the customer directory.",
+        "Ask yourself who each of the two departments considers \"their\" customer — the answers may differ, and both can be right."
+      ],
+      "explain": "This is the most common discrepancy scenario: not a bug, but two different definitions, neither of which was written down. Arguing over \"whose number is right\" is meaningless here — both are, and it's resolved not by recomputing but by definition: a customer for finance is a contracting party with an agreement, for sales it's an outlet where the product sits. Practical fix: keep a short metrics glossary recording each metric's source, filters, and exclusions, and state in the report itself which definition was used. The tell that lets you spot this instantly: the gap equals exactly the count of objects of one type — meaning the argument is really about whether that type belongs in the metric."
+    },
+    {
+      "id": "dom-008",
+      "title": "Promo share — 34% or 41%",
+      "brief": "Trade marketing reports: promo share of the brand's sales is 34%. A week later, the same metric in a different deck is 41%. Both numbers are computed correctly, using the same formula.",
+      "goal": "Determine which piece of the definition was missing.",
+      "scenario": "Metric: \"promo share of «Чистовъ»\nbrand sales\"\n\n  Report A   34%\n  Report B   41%\n\nKnown: both used the same\nformula —\npromo revenue ÷ total revenue",
+      "predictQuestion": "Which piece of the definition was missing for the numbers to match?",
+      "options": [
+        {
+          "label": "Period: promo share depends heavily on the time window it's computed over",
+          "why": "Promo activity isn't distributed evenly across the year, and a quarter with a major campaign has a noticeably higher share than the annual figure. The same formula honestly gives different numbers over different periods."
+        },
+        {
+          "label": "Formula: one counted by revenue, the other by units",
+          "why": "Per the setup, the formula is the same for both. But the point is valid in general: promo share by units is almost always higher than by revenue, because the promo price is lower — and that's another item worth pinning down."
+        },
+        {
+          "label": "Data source: one pulled from the mart, the other from the accounting system",
+          "why": "A plausible cause of discrepancies in general, but it would produce a small difference, not a seven-percentage-point gap. Plus both numbers are stated as correct, meaning the data itself wasn't at fault."
+        },
+        {
+          "label": "\"Promo\" definition: one counted only discounts as a promo, the other counted display placement too",
+          "why": "Also a real fork worth pinning down in the definition. But that would mean different row-selection rules, and per the setup the formula matched for both."
+        }
+      ],
+      "hints": [
+        "Both numbers are correct and the formula is the same — so the input differed, not the calculation.",
+        "Think about what happens to promo share computed over a year vs. over just a quarter with a major campaign."
+      ],
+      "explain": "Period is the piece of a definition most often left out, because it seems obvious from context. In metrics with seasonality and promo waves it affects the result as much as the formula does: an annual promo share, a quarterly one, and a \"last 12 weeks\" one are three different numbers, each honest. A rule that resolves most of these disputes: the period is part of the metric's name, not a footnote under the table. \"Promo share, 2025\" and \"promo share, Q4 2025\" are two metrics, not one with a clarification. This is also protection against unintentional cherry-picking: when the period isn't fixed, there's always a window where the number looks more favorable, and picking that window doesn't feel like manipulation even to the person doing it."
+    },
+    {
+      "id": "dom-009",
+      "title": "The metric got refined, history shifted",
+      "brief": "It was decided that returns should no longer reduce revenue in the report — they were broken out into a separate line. The calculation was fixed and the entire history since 2024 was recomputed.",
+      "goal": "Determine the main risk of a recompute like this.",
+      "scenario": "Before: revenue = sales − returns\nAfter:  revenue = sales;\nreturns shown as a separate line\n\nRecomputed: full history since 2024\nNotification: none sent\nOld version: not preserved",
+      "predictQuestion": "What's the main risk here?",
+      "options": [
+        {
+          "label": "Numbers in reports already sent out no longer match the mart, and trust in it erodes faster than an explanation can catch up",
+          "why": "Someone holding a February deck with one number, now seeing a different one in the mart, draws the only conclusion available to them: the system is lying. They won't dig into the methodology — they'll just stop trusting it."
+        },
+        {
+          "label": "None: the new definition is more accurate, and recomputing history keeps periods comparable",
+          "why": "Recomputing history is actually the right move — comparing periods under different rules would be worse. The problem isn't the recompute, it's that nobody was told about it."
+        },
+        {
+          "label": "The returns data is now lost — it can't be viewed anymore",
+          "why": "Per the setup, returns weren't lost — they were broken out into a separate line. The data got more detailed, not poorer."
+        },
+        {
+          "label": "Old reports will need to be manually redone",
+          "why": "Reports already sent out generally don't need redoing — they have a date and context. The issue is making sure the reader understands why they differ from the current mart."
+        }
+      ],
+      "hints": [
+        "The recompute itself was done correctly here. Think about what wasn't done around it.",
+        "Picture a colleague opening the mart with a printout of the February report in hand."
+      ],
+      "explain": "A metric's definition is a contract, and it can't be changed silently, even when the change is for the better. Minimum process: record the date of the change, keep the old definition alongside the new one, send a short notice with one line — \"what changed and by how much the numbers moved\" — and leave a version note in the report. It's worth separately preserving the fact itself: version 1 was in effect until March, version 2 after. Without this, a year from now nobody, including you, will be able to explain why 2024 revenue differs between the old deck and the current mart — and the default explanation becomes \"the data can't be trusted.\""
+    },
+    {
+      "id": "dom-010",
+      "title": "Eleven months",
+      "brief": "An analyst is preparing an annual sales-by-month report. The query ran, the numbers look reasonable, the trend resembles last year's.",
+      "goal": "Find the defect in the result.",
+      "scenario": "Report: sales by month, 2025\n\n  2025-01    3,717K ₽\n  2025-02    4,155K ₽\n  2025-03    4,694K ₽\n  ...\n  2025-12    4,408K ₽\n\nRows in result:  11\nTotal:           47,663K ₽",
+      "predictQuestion": "What's wrong here?",
+      "options": [
+        {
+          "label": "One month is missing, and the annual total is understated by its amount — while the total itself still looks plausible",
+          "why": "Twelve months give twelve rows. Eleven means a month dropped out — a filter boundary or a data gap — and the annual sum is understated by almost 4M, while still looking outwardly reasonable."
+        },
+        {
+          "label": "Nothing: if some month had no sales, it simply wouldn't have a row",
+          "why": "Formally true for a query, and impossible for the business: a month with zero sales at a running company isn't an empty report row, it's an emergency. A missing row almost always means a data problem, not a sales problem."
+        },
+        {
+          "label": "The total doesn't match the sum of the shown rows",
+          "why": "The total actually does match what was computed — that's the trap. It's correct relative to eleven months and wrong relative to the year."
+        },
+        {
+          "label": "The figures are rounded to thousands, and that accumulated a noticeable error",
+          "why": "Rounding to thousands at these magnitudes produces an error of a fraction of a percent, not a loss of several million."
+        }
+      ],
+      "hints": [
+        "Count the rows and compare against how many there should be.",
+        "Checking period completeness needs no recomputation — just knowing how many rows you expected to see."
+      ],
+      "explain": "A missing period is the quietest of the common mistakes: it doesn't break the query, doesn't distort individual values, and doesn't look suspicious in the total. It's caught exactly one way — deliberately comparing the row count against what's expected: twelve months, fifty-two weeks, four quarters, sixteen regions. Hence the habit: before running a query, say out loud how many rows you expect to see; afterward, check. Any mismatch always means either a filter bug or a data gap, and it needs to be resolved before sending. Common causes: a BETWEEN with a boundary like '2025-12-01' instead of the end of the month, and an INNER JOIN where data doesn't exist for every period."
+    },
+    {
+      "id": "dom-011",
+      "title": "One region's revenue exceeds the whole year",
+      "brief": "After a mart update, an analyst checks the regional report for December. One row stands out sharply from the rest.",
+      "goal": "Determine what to do with this number.",
+      "scenario": "Revenue by region, December\n2025:\n\n  Rostov Oblast\n    38,214,500,000 ₽\n  Krasnodar Krai\n    527,583 ₽\n  Samara Oblast\n    407,593 ₽\n  ...\n\nCompany-wide annual revenue:\nabout 51.5M ₽",
+      "predictQuestion": "What should be done with this number?",
+      "options": [
+        {
+          "label": "Don't send the report: 38B in one month against 51.5M in annual revenue is impossible, so there's a defect in the calculation",
+          "why": "The figure exceeds the whole company's annual revenue by more than seven hundred times — that's not an outlier, it's a sign of breakage: a join that duplicated rows, a lost filter, or mixed-up units. This can't be sent, not even with a caveat."
+        },
+        {
+          "label": "Send it with a note that the number needs checking — let the stakeholder decide",
+          "why": "That offloads the check onto the recipient. They don't know how the calculation works, and the only thing they'll take away from a report like this is that your numbers need separate verification."
+        },
+        {
+          "label": "Remove the anomalous row and send the rest — the other regions' data is correct",
+          "why": "There's no certainty of that: whatever inflated one row could have touched the others too, just less visibly. And silently deleting a row from a report is the worst possible move."
+        },
+        {
+          "label": "Leave it as is: it's a large region, maybe a one-off contract landed there",
+          "why": "A one-off contract explains a difference of several times over, not seven hundred times relative to the company's annual revenue. No business explanation lets one month exceed an entire year."
+        }
+      ],
+      "hints": [
+        "Compare this number not against the neighboring rows, but against the overall scale of the business.",
+        "Ask yourself whether any business explanation exists where one month exceeds a whole year."
+      ],
+      "explain": "Checking the order of magnitude is the cheapest check of all: it needs no recomputation and no access to the source, just knowing what scale the business actually operates at. An analyst who remembers the company does about 50M a year spots 38B in a split second; one who doesn't keep the scale in their head will send the number onward. Hence a requirement for yourself: know three or four anchor numbers of your business by heart — annual revenue, outlet count, average price, unit volume. Typical causes of anomalies like this: row duplication from a join, a lost period filter, and mixed-up units (rubles vs. thousands of rubles). And a rule with no exceptions: a number you can't explain doesn't get sent — not with a caveat, not without one."
+    },
+    {
+      "id": "dom-012",
+      "title": "Nothing to reconcile against",
+      "brief": "An analyst is building a sales mart for a new business line for the first time. There's no accounting system to reconcile against yet, and no past reports either — the data just appeared.",
+      "goal": "Determine how to check the result without an external benchmark.",
+      "scenario": "New mart: sales for a new line,\nfirst month\n\nReconcile with accounting system:\nnot possible, period not closed yet\nCompare with a prior period:\nnothing to compare, no history\nAsk colleagues:\nnew line, nobody has experience",
+      "predictQuestion": "How do you check the result when there's nothing to reconcile against?",
+      "options": [
+        {
+          "label": "Compute the same figure a second, independent way — from a different table or at a different granularity — and compare",
+          "why": "Two independent calculations landing on the same number is almost as strong a check as reconciling with a source. Total sales computed by outlet and, separately, by product matching means neither rows nor filters were lost."
+        },
+        {
+          "label": "There's nothing to check it against — send it with a note that the data is new and unreconciled",
+          "why": "The note is honest, but it's a substitute for a check, not a check itself. An independent cross-check is possible almost always, even without an external source."
+        },
+        {
+          "label": "Show it to the stakeholder — they know the line better and will notice if something's off",
+          "why": "Their perspective is genuinely useful, and they might catch something implausible. But that's a check after sending, and its cost is exactly what you're trying to avoid."
+        },
+        {
+          "label": "Wait until the data shows up in the accounting system, then reconcile",
+          "why": "Sometimes that's the right call, but more often the report is needed before the accounting period closes. Waiting a month just to reconcile means delivering a result that's useless by the deadline."
+        }
+      ],
+      "hints": [
+        "A reconciliation doesn't have to be external: the same figure can often be reached two different ways.",
+        "Think about what should match if you compute sales by outlet and, separately, by product."
+      ],
+      "explain": "The absence of an external source doesn't remove the check, it changes its shape: instead of reconciling against a benchmark, you reconcile two independent calculations against each other. The sum by outlet must match the sum by product and the sum by week; the count of active outlets derived from the fact table can't exceed their count in the directory; the average price from dividing revenue by units must fall within the price list's range. Each of these matches is weak on its own; together they catch nearly every mechanical error. The technique carries over even where a source does exist: a mismatch between two of your own calculations always points to a defect, regardless of what you were planning to reconcile against later."
+    },
+    {
+      "id": "dom-013",
+      "title": "How much did we sell in June",
+      "brief": "\"June sales\" is requested by three people on the same day: the CFO, the head of distribution, and a brand manager. The analyst sends all three the same number from fact_sellout.",
+      "goal": "Determine whose question this number actually answers.",
+      "scenario": "One request — \"June sales\" —\nfrom three people:\n\n  CFO\n    computing company revenue\n  Head of distribution\n    checking warehouse loading\n  Brand manager\n    gauging shelf demand\n\nSent to all three: one number\nfrom fact_sellout",
+      "predictQuestion": "Whose question does this number actually answer?",
+      "options": [
+        {
+          "label": "Only the brand manager's: fact_sellout is sales at outlets — that is, shelf demand",
+          "why": "Sell-out captures the last link visible in our data: the product moved through a register. That's exactly what \"demand\" means, and that's what the brand manager is looking at."
+        },
+        {
+          "label": "All three: sales are sales, only the cut differs",
+          "why": "It's not the cut that differs — it's the event. A shipment to a distributor's warehouse, stock sitting in that warehouse, and a purchase at an outlet are three different facts in three different tables, and they have no obligation to match."
+        },
+        {
+          "label": "The CFO's: company revenue is what the end buyer bought",
+          "why": "Company revenue arises at shipment into the channel (fact_sellin), not when a buyer takes the product off the shelf — the distributor is the one paying. Sell-out speaks to something else: whether the distributor will come back for the next batch."
+        },
+        {
+          "label": "The head of distribution's: they're responsible for how much product reached the outlets",
+          "why": "They're responsible for loading the channel, and that's stock (fact_stock) and shipments (fact_sellin). Sell-out shows how fast the stock is being drawn down, not how much of it sits there."
+        }
+      ],
+      "hints": [
+        "Walk the chain from factory to buyer and mark where each of the three tables originates.",
+        "Ask yourself at what moment the company actually receives money — it isn't the same moment the buyer takes the product off the shelf."
+      ],
+      "explain": "\"Sales\" without naming the link in the chain isn't a metric: behind it are three different events — a shipment into the channel, warehouse movement, and a purchase at an outlet. By sending one number to three people, the analyst answered one of them and misled the other two, silently: each will read it in their own frame of reference and never notice the substitution. The practical move isn't to guess but to ask back with one phrase: \"sales into the channel, or out of it?\" It sounds like a technical clarification, but it actually separates revenue from demand. And the consequence for reports: always name the link in the title — \"shipments\", \"outlet sales\" — never the generic \"sales.\""
+    },
+    {
+      "id": "dom-014",
+      "title": "Market share from our own data",
+      "brief": "The marketing director asks for the market share of the «Чистовъ» brand in Rostov Oblast — \"we have all the sales data, don't we?\"",
+      "goal": "Determine what this calculation actually measures.",
+      "scenario": "Request: «Чистовъ» market share\nin Rostov Oblast\n\nHave: fact_sellout — sales at\noutlets we have a data-sharing\nagreement with\n\nDon't have: competitor sales,\nsales at outlets without a\ndata-sharing agreement,\nmarketplaces, chains' own retail",
+      "predictQuestion": "What do you get by dividing «Чистовъ» sales by all sales in fact_sellout?",
+      "options": [
+        {
+          "label": "«Чистовъ»'s share within our own portfolio, not its share of the market",
+          "why": "The denominator will only ever contain our own brands and our own outlets. The market also includes competitors and channels that never appear in our database at all, so their share can never emerge from any version of this calculation."
+        },
+        {
+          "label": "Market share with some error — with this much data, the estimate should be close",
+          "why": "The error here isn't a matter of quantity, it's a matter of category: an entire class of objects is missing from the denominator. No amount of accumulated data will make competitor sales appear."
+        },
+        {
+          "label": "Market share within the outlets where we're present",
+          "why": "Closer, but still no: even at our own outlets, competitors' products sit on the shelf too, and we don't see their sales. What you get is our own assortment's share within our own outlets."
+        },
+        {
+          "label": "Nothing meaningful — a calculation like this makes no sense",
+          "why": "The calculation is perfectly meaningful, it just answers a different question. Brand share within your own portfolio is a useful metric for assortment management — it just can't be called market share."
+        }
+      ],
+      "hints": [
+        "Write out what lands in the numerator and what lands in the denominator, and compare that against what \"the market\" actually means.",
+        "Ask yourself where competitor sales would even come from in our data."
+      ],
+      "explain": "Market share requires a denominator that a manufacturer doesn't have and can't produce: internal systems only ever see their own product and their own outlets. That's exactly why an entire panel-data industry exists — Nielsen in FMCG, IQVIA in pharma: they collect a sample of outlets or pharmacies and extrapolate it to the whole market, and companies buy that data precisely for the denominator. Practical takeaway: if a stakeholder asks for market share and all you have is internal data, the honest answer is \"I can compute our share within our own portfolio; market share needs panel data.\" This substitution is especially dangerous because the internal figure is usually higher and looks nicer, and decisions get made on it as if it were the real market number."
+    },
+    {
+      "id": "dom-015",
+      "title": "Zero sales and an empty shelf",
+      "brief": "One outlet has sold zero units of the \"«Чистовъ» Anti-Grease 500ml\" SKU for the third week running. The sales rep asks what happened to demand.",
+      "goal": "Determine what can actually be learned from the sales data.",
+      "scenario": "Outlet \"Пятёрочка #204\"\nSKU \"«Чистовъ» Anti-Grease 500ml\"\nThird week in a row:\nsell-out = 0\n\nPossible causes:\n  A  product is on the shelf,\n     nobody buys it\n  B  product isn't there —\n     never delivered\n  C  product is in the outlet's\n     back room, not on the shelf",
+      "predictQuestion": "Which of these can be told apart using fact_sellout data?",
+      "options": [
+        {
+          "label": "None of them: all three causes look identical in the sales data — an absence of sales",
+          "why": "A sales fact table records sales, not their absence: at zero demand, at zero delivery, and at product sitting unstocked in the back room, there will be no rows either way. Sales data fundamentally contains no information about whether the product was on the shelf."
+        },
+        {
+          "label": "A and B are distinguishable: with no product there'd be no row at all, but with no demand there'd be a row with zero",
+          "why": "There's no row either way — a zero in a report is generated at the join with a dimension table, not delivered by the fact table. That's exactly why reports about zeros are built outward from the dimension table via LEFT JOIN."
+        },
+        {
+          "label": "You can tell them apart from this outlet's stock levels",
+          "why": "You could, if we had them. Our stock data only exists at distributor warehouses: visibility never reaches a specific outlet's shelf."
+        },
+        {
+          "label": "All three: just check this outlet's sales history",
+          "why": "History tells you the product used to sell here, but not what changed — demand, delivery, or shelf placement. All three causes produce the identical break in the series."
+        }
+      ],
+      "hints": [
+        "Ask yourself what event actually gets recorded in fact_sellout — and whether anything gets recorded when the event never happened.",
+        "Check which links of the chain we can see in the data, and which end at the distributor's warehouse."
+      ],
+      "explain": "An out-of-stock shelf is FMCG analytics' main blind spot: in sales data it's indistinguishable from an absence of demand, because both simply mean an absence of rows. Hence a rule for wording: on seeing zeros, write \"no sales,\" not \"demand dropped\" — the latter is a conclusion you have no data to support. Only external sources can tell the causes apart: a shelf audit, delivery data to the outlet, panel data. And a technical consequence familiar from the SQL track: a zero-sales report can't be built from the fact table — the rows you need simply don't exist there — so it starts from the outlet and product directories and works outward via LEFT JOIN."
+    },
+    {
+      "id": "dom-016",
+      "title": "Three numbers for one March",
+      "brief": "The CFO asks for March sales for a revenue report. The accounting system has three different sums for March, and all three are correct.",
+      "goal": "Pick the number that answers the question actually asked.",
+      "scenario": "March:\n\n  Orders placed\n    4,910K ₽\n  Shipped\n    4,694K ₽\n  Landed in the account\n    3,380K ₽\n\nRequest: March sales for a\nrevenue report",
+      "predictQuestion": "Which number to use?",
+      "options": [
+        {
+          "label": "Shipped, 4,694K — revenue is recognized at the transfer of control over the goods",
+          "why": "Revenue arises neither when an order is placed nor when the money lands — it arises when control over the goods transfers to the buyer, usually at shipment or receipt, depending on the contract terms."
+        },
+        {
+          "label": "Orders placed, 4,910K — that is the month's sales",
+          "why": "An order is intent, not a sale: some get canceled, some ship in April, some get cut down by stock availability. This number belongs to the sales funnel, not a revenue report."
+        },
+        {
+          "label": "Landed in the account, 3,380K — the company's actual cash",
+          "why": "That's cash movement, not revenue. With payment terms, March revenue arrives as cash in May, while March's incoming cash is January and February's revenue — a report by cash receipts measures the past."
+        },
+        {
+          "label": "All three, and let the stakeholder pick",
+          "why": "That offloads the decision onto whoever came for an answer. The CFO needs one number for a revenue report, and picking it is the analyst's job, not the stakeholder's."
+        }
+      ],
+      "hints": [
+        "Lay out the three events in order: order, shipment, payment. Revenue is tied to one of them.",
+        "Ask yourself: at what moment does the company stop controlling the goods?"
+      ],
+      "explain": "All three numbers are honest, and choosing between them isn't a technicality — it's the whole question. Revenue is tied to the transfer of control over the goods; cash is tied to payment; orders are tied to intent. That's exactly why revenue and cash move differently, and a growing company can be profitable while having no money in the bank at the same time. What matters for an analyst is different: some one rule is already baked into the mart, and knowing which one is mandatory. If the column holds an order date and the report is titled \"revenue\", the gap against accounting will be constant, unexplainable, and especially visible in the last days of the month."
+    },
+    {
+      "id": "dom-017",
+      "title": "Shipped on the 31st, received on the 2nd",
+      "brief": "A large batch left the warehouse on March 31, the customer received it on April 2. Per the contract, title transfers at receipt.",
+      "goal": "Determine which month the amount lands in.",
+      "scenario": "Shipped from warehouse   March 31\nReceived by customer     April 2\nInvoiced                 April 2\nAmount                   380K ₽\n\nPer the contract, title\ntransfers at the moment\nthe customer receives the\ngoods.",
+      "predictQuestion": "Which month does this amount land in on the revenue report?",
+      "options": [
+        {
+          "label": "April — revenue is determined by the transfer of title, and that happened at receipt",
+          "why": "The physical shipment date is irrelevant here: the contract explicitly ties transfer of control to receipt, and until April 2 the goods remain the supplier's property, even while in transit."
+        },
+        {
+          "label": "March — the goods left the warehouse in March, so they were sold in March",
+          "why": "The shipment date is convenient and often used in operational reports, but it only determines revenue when the contract ties control transfer to shipment. Here the contract says otherwise."
+        },
+        {
+          "label": "Split proportionally between March and April",
+          "why": "Revenue is recognized in full at the moment control transfers. There's no basis and no reason to split it by days spent in transit."
+        },
+        {
+          "label": "March, because it's the end of the quarter and the period needs to close",
+          "why": "A quarter boundary doesn't change the rule — it's the same rule at the end of a month, a quarter, or a year. The desire to \"close the period nicely\" is exactly what creates the discrepancies people spend months chasing down later."
+        }
+      ],
+      "hints": [
+        "The setup mentions title transfer — that's what matters here, not the dates by themselves.",
+        "Think about how an operational shipment report differs from an accounting one, and exactly where they diverge."
+      ],
+      "explain": "Deals sitting on a period boundary are the classic place where operational and accounting reports diverge: the former is usually built on shipment date, the latter on transfer of control. Mid-month the difference is invisible; in the last three days it absorbs the entire dispute. What an analyst needs here is one thing: know which rule is baked into their mart, and be able to verify it — compare the last days of the period against accounting. And it's worth remembering separately that the rule is set by the contract, not by convenience: the same company can have different transfer terms with different chains, and then there's no single answer of \"shipment or receipt\" for the whole mart."
+    },
+    {
+      "id": "dom-018",
+      "title": "Sold 4.7 million, but no cash",
+      "brief": "The owner looks at a report: March revenue is 4,694K ₽, but only 3,380K landed in the account that same month. They ask where the difference went.",
+      "goal": "Explain the gap between revenue and cash receipts.",
+      "scenario": "March:\n\n  Revenue (shipped)\n    4,694K ₽\n  Landed in the account\n    3,380K ₽\n  Difference\n    1,314K ₽\n\nPayment terms with chains:\n45 days",
+      "predictQuestion": "Where did the difference go?",
+      "options": [
+        {
+          "label": "Nowhere: it's accounts receivable — the goods shipped, the cash arrives once the payment term expires",
+          "why": "With 45-day terms, March revenue turns into cash in May, and the cash landing in March is January and February's revenue. The gap isn't a loss — it's the normal offset between two different accounting systems."
+        },
+        {
+          "label": "It's a loss from returns and write-offs",
+          "why": "Returns would reduce revenue itself — it would arrive in the report already lower. The gap here is between recognized revenue and cash receipts, not something happening inside revenue."
+        },
+        {
+          "label": "It's a reporting error: revenue and receipts for the month should match",
+          "why": "They'd only match if payment happened at the moment of shipment. As soon as a contract includes payment terms, the gap stops being an error and becomes a mandatory feature of the reporting."
+        },
+        {
+          "label": "The money went toward purchasing inventory",
+          "why": "That's expenses, visible as a separate line in a cash-flow report, and it doesn't explain the gap between recognized revenue and cash receipts."
+        }
+      ],
+      "hints": [
+        "The setup names a payment term — work out which month March's shipment turns into cash.",
+        "Ask yourself whose revenue landed in the account in March, if every shipment has a month-and-a-half payment term."
+      ],
+      "explain": "Revenue and cash are two different coordinate systems, and confusing them is expensive. Accrual answers \"how much did we earn\"; cash flow answers \"how much do we have right now.\" A growing company with payment terms can be profitable and cash-strapped at the same time: the faster it grows, the more cash gets locked up in receivables. Hence the practice: a sales report and a cash report have different audiences and different conclusions, and folding them into one slide without explanation is a sure way to get the question \"so did we make money or not?\" An analyst should also keep a third number in mind — overdue receivables: it's what tells a normal offset apart from a real collections problem."
+    },
+    {
+      "id": "dom-019",
+      "title": "One distributor out of twelve",
+      "brief": "An analyst rolls up the ratio of shipments to outlet sales across all distributors for Q4. Eleven sit close to one; one stands out.",
+      "goal": "Determine what the outlying value means.",
+      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  «Волга-Трейд» LLC\n    28,203 / 11,574 = 2.44\n  «Уралснаб» JSC\n    9,216 / 8,760 = 1.05\n  «Дальторг» LLC\n    12,018 / 11,509 = 1.04\n  «Прикамье-Групп» LLC\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
+      "predictQuestion": "What does «Волга-Трейд»'s 2.44 mean against the rest?",
+      "options": [
+        {
+          "label": "It took in twice as much product as its outlets sold: channel stock grew, and that's a deferred problem",
+          "why": "Shipments grew while outlet sales didn't: the difference settled into the distributor's warehouse. The next period will be spent selling down that stock rather than ordering new — the order drop-off is already baked in."
+        },
+        {
+          "label": "It's outperforming the rest: it has the largest sales",
+          "why": "It has the largest purchases, not the largest sales. Its outlets sold 11,574 units — on par with «Дальторг» (11,509), whose shipments are half the size. What differs is the purchase, not the sale."
+        },
+        {
+          "label": "It just has more outlets, hence the higher numbers",
+          "why": "Size explains the absolute figures, but the ratio specifically normalizes for size: the much larger «Дальторг» sits at 1.04, same as the much smaller «Магнит-Урал»."
+        },
+        {
+          "label": "A data error: sell-in and sell-out should match",
+          "why": "They have no obligation to match in any single quarter — there's a warehouse standing between them. They should reconcile on average over a long horizon, not in every period."
+        }
+      ],
+      "hints": [
+        "Compare the ratio, not the absolute figures — it already accounts for the difference in distributor size.",
+        "Look at «Волга-Трейд»'s outlet sales separately from its purchases: did they grow the same way shipments did?"
+      ],
+      "explain": "The sell-in to sell-out ratio is a basic distribution diagnostic precisely because it normalizes for size: it lets you compare anyone against anyone. A value near one means the channel's stock is stable; a noticeable excess means the channel is building up inventory. The causes can be legitimate (gearing up for a promo, entering a season), but each one has to be named in advance, or you're looking at a purchase made to hit an annual bonus — the distributor picks a volume to earn a retro discount, and the manufacturer is left to deal with the consequences. The key move here is comparison against the rest: eleven values in a tight 1.04–1.05 band turn one outlier from \"maybe that's just how it is\" into a fact demanding an explanation."
+    },
+    {
+      "id": "dom-020",
+      "title": "Which source for which question",
+      "brief": "Four questions came in to an analyst over the course of a week. Three need sell-out, one needs sell-in.",
+      "goal": "Identify the question where sell-in is the correct source.",
+      "scenario": "Four questions in a week:\n\n  A  \"How much did we earn\n     in March?\"\n  B  \"Should we launch a promo\n     on this SKU?\"\n  C  \"How much to ship the\n     distributor in April?\"\n  D  \"Is the new product\n     moving off the shelf?\"",
+      "predictQuestion": "In which question is sell-in the correct source?",
+      "options": [
+        {
+          "label": "A — company revenue is created by the shipment into the channel, not by a purchase at an outlet",
+          "why": "The company's money comes from the distributor at the moment of shipment. How much of that product ended up sold to end buyers has no bearing on March revenue."
+        },
+        {
+          "label": "B — a promo decision is made based on shipment volume",
+          "why": "A promo is launched to speed up the product leaving the shelf, so the decision is made on sell-out. Sell-in would only show how much the distributor managed to bring into their warehouse."
+        },
+        {
+          "label": "C — how much to ship is planned from past shipments",
+          "why": "Planning shipments off past shipments is a sure way to fuel overstocking: the channel will order the same amount as last time, regardless of whether it actually sold. It's planned from demand — that is, from sell-out and stock levels."
+        },
+        {
+          "label": "D — whether the new product arrived is visible from shipments",
+          "why": "\"Is it moving off the shelf\" is literally the definition of sell-out. Shipments answer a different question: did the new product reach the distributor's warehouse, which is only the first step."
+        }
+      ],
+      "hints": [
+        "Go through each question and ask: is it about the company's money, or about buyer behavior?",
+        "Three of the four questions are about what's happening on the shelf."
+      ],
+      "explain": "The choice of source is determined by whose behavior you're measuring. Sell-in measures the distributor's behavior and directly yields company revenue: they're the one paying. Sell-out measures the buyer's behavior and answers everything else — demand, promo effect, how well a new product is taking hold, supply needs. Hence a simple rule: money — sell-in, decisions — sell-out. The costliest mistake on this list is question C: planning shipments from past shipments creates a closed loop where the channel orders out of inertia, stock grows, and the real demand signal never reaches planning at all."
+    },
+    {
+      "id": "dom-021",
+      "title": "The ratio came back to normal",
+      "brief": "Six months after «Волга-Трейд»'s purchasing spike, the sell-in to sell-out ratio has returned to its usual level. The department head considers the matter closed.",
+      "goal": "Determine whether the problem is actually solved.",
+      "scenario": "«Волга-Трейд» LLC, sell-in / sell-out\nratio:\n\n  2025-Q1   1.04\n  2025-Q2   1.04\n  2025-Q3   1.03\n  2025-Q4   2.44   ← spike\n  2026-Q1   1.06\n  2026-Q2   1.05\n\nWarehouse stock, units:\n\n  Aug 2025    3,949\n  Dec 2025   20,846\n  Jan 2026   21,120\n  Apr 2026   21,757",
+      "predictQuestion": "The ratio is back to 1.05. Is the problem solved?",
+      "options": [
+        {
+          "label": "No: the ratio is a flow, and stock is a level. Orders returned to normal, but the accumulated 17,000-odd units are still sitting in the warehouse",
+          "why": "A ratio near one only means the channel is ordering roughly as much as it's selling again. For the surplus to leave, the ratio would have needed to drop below one — and it hasn't, not once in two quarters."
+        },
+        {
+          "label": "Yes: the figure returned to the level of the other distributors, the channel is operating normally",
+          "why": "The current flow is operating normally, but it isn't clearing out the past. Stock grew fivefold and hasn't come down since December — it keeps aging and taking up warehouse space regardless of what the ratio looks like."
+        },
+        {
+          "label": "Yes, the surplus has already been sold off — otherwise the ratio would be above one",
+          "why": "A ratio above one means stock is growing, not that it's being sold off. Selling down stock looks like a ratio below one, and there's no such quarter in the data."
+        },
+        {
+          "label": "Not enough data: the ratio alone can't tell you about stock levels",
+          "why": "No judgment call was even needed — the stock figures are given directly in the setup, and they say something unambiguous. That's exactly why both metrics need watching, not one instead of the other."
+        }
+      ],
+      "hints": [
+        "Compare the two tables: one shows speed, the other shows accumulated volume. Which one changed after the spike?",
+        "Think about what the ratio would need to be for the excess stock to actually leave the warehouse."
+      ],
+      "explain": "This is the distinction between flow and stock — one of the most common traps in operational analytics. The sell-in to sell-out ratio describes speed: how much is coming in relative to how much is going out. Stock levels describe a level: how much has accumulated. A flow that returns to normal stabilizes the level but doesn't reduce it — reducing it needs a period where outflow exceeds inflow. Practical takeaway: any ratio metric answers \"what's happening right now\" and says nothing about accumulated consequences, which is why a channel-health report always places it next to absolute stock levels. And separately, on phrasing: \"the metric returned to normal\" sounds like \"the problem is solved\", when it actually means only \"it stopped getting worse.\""
+    },
+    {
+      "id": "dom-022",
+      "title": "Almost nobody hits the plan",
+      "brief": "The head of sales asks you to work out why the team consistently falls short of the plan, and proposes strengthening the field team.",
+      "goal": "Determine what this data is telling you, first and foremost.",
+      "scenario": "Monthly revenue plan attainment,\nsales reps (25 people):\n\n  July        5 of 25\n  August      3 of 25\n  September   6 of 25\n  October     4 of 25\n  November    4 of 25\n  December    7 of 25",
+      "predictQuestion": "What does this say, first and foremost?",
+      "options": [
+        {
+          "label": "The plan is systematically overstated: when four out of five miss it for six months straight, it's the plan, not the people",
+          "why": "Six months of the same picture in a row is a property of the target, not a result produced by people. If it were the people, the distribution would be wider: part of the team would consistently overperform."
+        },
+        {
+          "label": "The team performs poorly — people need to be changed or reinforced",
+          "why": "Changing people changes the distribution of results, and here the distribution is precisely stable and shifted downward in the same way every time. Swap half the team and you'd get the same picture — because it's set by the bar, not by who's clearing it."
+        },
+        {
+          "label": "This is seasonality: the second half of the year is traditionally lower",
+          "why": "That's exactly what a plan is supposed to account for. If it didn't account for seasonality, that's still a planning defect, just under a different name."
+        },
+        {
+          "label": "Nothing unusual: a 20% attainment rate is normal for a stretch target",
+          "why": "A stretch target is deliberately set above what's expected — but then it can't be used to calculate bonuses. In practice it is used that way, and a tool meant to inspire ambition turns into a tool for demotivation."
+        }
+      ],
+      "hints": [
+        "Look not at the average attainment percentage, but at how many people hit the plan and how stable that share is month to month.",
+        "Ask yourself what the data would look like if the problem were really about the people."
+      ],
+      "explain": "The distribution of attainment is a far more informative metric than the average percentage: it tells a performance problem apart from a target problem. If most people miss the plan and do so consistently, the bar is set above what's achievable, and no staffing decision will change that. A systematic upward bias in planning isn't rare and usually has an obvious origin: the plan gets assembled top-down from desired growth rather than bottom-up from actual capacity. The analyst's role here is to show the distribution, not just the fact of underperformance, and to add the history: if the bias repeats year after year, it should be measured and subtracted, not rediscovered every month. And a substantial caveat: as long as bonuses are calculated off this same plan, any conversation about its quality gets heard by the team as a conversation about their paycheck — which is why the case needs to be made with numbers, not impressions."
+    },
+    {
+      "id": "dom-023",
+      "title": "Demand forecast vs. sales plan",
+      "brief": "The April planning table for the «Фрутта» brand has two numbers, and they don't match. An intern thinks it's an error and wants to reconcile them.",
+      "goal": "Determine what the difference between them means.",
+      "scenario": "April, «Фрутта» brand:\n\n  Demand forecast   18,200 units\n    what buyers are\n    estimated to buy\n  Sales plan        22,000 units\n    what we committed to\n    ship into the channel\n\n  Difference          3,800 units",
+      "predictQuestion": "What does this difference mean?",
+      "options": [
+        {
+          "label": "Planned channel loading: if demand plays out as forecast, 3,800 units will sit in distributor warehouses",
+          "why": "Shipping more into the channel than it will sell physically means one thing — a build-up of its stock. That's a legitimate decision if it's made deliberately and named, and a hidden problem if it just happened on its own."
+        },
+        {
+          "label": "A planning error: the two numbers should match",
+          "why": "They're not supposed to match. The demand forecast is an estimate of what will happen; the sales plan is a target the company sets for itself. Matching would mean the company sets no goals and only predicts."
+        },
+        {
+          "label": "That the forecast is understated — marketing is counting on promos to boost demand",
+          "why": "A plausible explanation, and if so it belongs among the plan's stated assumptions, alongside the planned promos. But the excess of plan over forecast, by itself, only ever means stock that has to land somewhere."
+        },
+        {
+          "label": "That the plan includes returns and write-offs",
+          "why": "Returns and write-offs reduce the total, not increase it. They can't explain a gap in the upward direction."
+        }
+      ],
+      "hints": [
+        "The forecast describes buyers, the plan describes shipments into the channel. Ask where the difference between them will physically end up.",
+        "Recall the sell-in to sell-out ratio: plan exceeding forecast is a deliberately planned value above one."
+      ],
+      "explain": "A demand forecast and a sales plan are different in nature: the first answers \"what will happen\", the second answers \"what do we want.\" A gap between them is acceptable and often justified: entering a new chain, gearing up for a promo, seasonal stock-building. What's not acceptable is for the gap to exist silently. Named, it becomes a managed decision with a date, a volume, and an owner; unnamed, it becomes overstocking that shows up a quarter later as a drop in orders, with the cause hunted for in the sales department. This is exactly the relationship the sell-in to sell-out ratio captures: what was a line in a planning table in April will show up as a 2.44 in July, with an explanation offered only after the fact."
+    },
+    {
+      "id": "dom-024",
+      "title": "The forecast slide",
+      "brief": "An analyst prepares materials for the monthly planning cycle: a demand forecast chart and a neat breakdown by brand.",
+      "goal": "Determine what this work is missing most.",
+      "scenario": "Planning cycle, monthly:\n\n  1. Demand forecast —\n     marketing + analytics\n  2. Alignment with\n     production — supply chain\n  3. Alignment with\n     sales — commercial\n  4. Plan approval —\n     leadership\n\nPrepared by the analyst:\na forecast chart and a\nbreakdown by brand.",
+      "predictQuestion": "What's missing the most?",
+      "options": [
+        {
+          "label": "An assessment of how well past forecasts held up: without it, participants have no idea which number to trust",
+          "why": "At the alignment meeting, the argument isn't about the chart — it's about trust in the number. A track record of forecast error — how far off it's usually been, and whether it's biased high or low — is the only thing that turns an estimate from an opinion into a measurable claim."
+        },
+        {
+          "label": "A more detailed breakdown — by SKU instead of by brand",
+          "why": "More detail without an accuracy track record just multiplies the number of figures nobody can trust. A per-SKU forecast usually isn't more accurate either — it just gets noisier than per-brand."
+        },
+        {
+          "label": "Better formatting — leadership responds to visuals",
+          "why": "Formatting helps deliver the content, it doesn't create it. A beautifully presented forecast with no accuracy history gets taken on faith just as readily as an ugly one."
+        },
+        {
+          "label": "A forecast over a longer horizon",
+          "why": "A longer horizon helps production, but accuracy drops as the horizon grows. Adding months without first showing the error on the months already behind you just adds uncertainty instead of reducing it."
+        }
+      ],
+      "hints": [
+        "Picture the argument at the alignment meeting: sales says \"the forecast is too low,\" supply chain says \"too high.\" What settles that argument?",
+        "Think about what separates a forecast from an opinion — and what's needed to make that difference visible."
+      ],
+      "explain": "In the planning cycle, an analyst isn't responsible for how nice the materials look — they're responsible for whether the forecast can be trusted in any meaningful sense. The minimum kit for that: the size of past deviations, whether there's a systematic bias (consistently over or under), and the list of assumptions under which the forecast holds. With that history, the alignment argument turns from a contest of opinions into a conversation about numbers: \"last quarter we systematically overstated by 8%, the adjustment is already in.\" Without it, every participant silently applies their own correction, and the resulting plan is the outcome of invisible adjustments that nobody can reproduce a month later."
+    },
+    {
+      "id": "dom-025",
+      "title": "Up 316% in a month",
+      "brief": "A vitamins brand manager brings a deck: sales are up 316% in a month, budget needs to increase urgently.",
+      "goal": "Determine which number actually answers the question about the brand's growth.",
+      "scenario": "«Витамакс» brand, units:\n\n  August → September 2025\n    282 → 1,174     +316%\n  September 2024 → 2025\n    862 → 1,174      +36%\n  Year 2024 → year 2025\n    9,126 → 9,419    +3.2%\n\nFor reference: the same\nAugust → September move in\n2024 gave +79% (481 → 862).",
+      "predictQuestion": "Which of the three numbers answers \"how is the brand growing\"?",
+      "options": [
+        {
+          "label": "+3.2% — the annual comparison: only it is fully stripped of seasonality",
+          "why": "A year contains every season on both sides of the comparison, so the calendar drops out entirely. What's left is what the question was actually about: whether the brand changed in substance."
+        },
+        {
+          "label": "+316% — the freshest trend, that's what shows current growth",
+          "why": "It's the move from a summer trough to an autumn peak, and it repeats every year: in 2024 the same August-September move gave +79%. Month-over-month on a seasonal product measures the calendar, not the company's performance."
+        },
+        {
+          "label": "+36% — comparing the same-named months, seasonality is accounted for",
+          "why": "Seasonality really is removed, and it's an honest comparison. But one month is a small base: a promo or shipment shifting by a week moves this number more than the real trend does. Good as a reference point, not as an answer about brand growth."
+        },
+        {
+          "label": "None of them: it should be compared against the plan",
+          "why": "\"Did we hit the plan\" answers a different question than \"is the brand growing.\" Both metrics matter, but they can't substitute for each other: overperforming an understated plan isn't growth."
+        }
+      ],
+      "hints": [
+        "Notice the reference line: the same month-to-month move a year earlier also produced a sharp jump.",
+        "Ask yourself which of the three comparisons contains all twelve months on both sides."
+      ],
+      "explain": "The same sales produce +316%, +36%, and +3.2% depending on the comparison base chosen, and all three numbers are arithmetically correct. What separates them is how much of the season falls into each side of the comparison: almost all of it for month-over-month, none of it for year-over-year. Practical rule for seasonal categories: month-over-month is never used for conclusions, only for operational shipment monitoring. Budget decisions are made on year-over-year or a rolling year. And a professional defense against self-deception: if the chosen comparison base is the only one that makes the number look convincing, the base was picked to fit the conclusion, not the other way around."
+    },
+    {
+      "id": "dom-026",
+      "title": "What to measure trend by in March",
+      "brief": "In March, a manager asks how a brand is doing. The analyst has four ways to answer, and each gives a different number.",
+      "goal": "Pick the method that is both seasonality-resistant and reasonably fresh.",
+      "scenario": "Four ways to compare a\nperiod:\n\n  A  March vs. February\n  B  March vs. March last\n     year\n  C  trailing 12 months vs.\n     the prior 12\n  D  year-to-date vs. the\n     same period last year",
+      "predictQuestion": "Which method removes seasonality and still refreshes every month?",
+      "options": [
+        {
+          "label": "C — rolling year: the full season lands in both sides of the comparison, and the window shifts monthly",
+          "why": "Twelve months contain a full seasonal cycle on both sides, so the calendar effect cancels out. And the window moves every month, so you don't have to wait until year-end for the metric."
+        },
+        {
+          "label": "B — year over year by month",
+          "why": "Seasonality is removed, and it refreshes monthly too. But a single month is noisy: a promo or a large shipment shifting by a week moves this number more than the real trend does — which is why it's watched alongside the rolling year, not instead of it."
+        },
+        {
+          "label": "D — year-to-date",
+          "why": "An honest comparison, but with shifting reliability: in March it rests on three months, in December on twelve. The same metric behaves differently at the start and end of the year, and a January reading isn't comparable to a November one."
+        },
+        {
+          "label": "A — month over month",
+          "why": "The freshest and the least useful for a seasonal product: it measures the transition between seasons, not a change in the business."
+        }
+      ],
+      "hints": [
+        "Compare the options on two dimensions at once: how much season lands on both sides, and how often the metric refreshes.",
+        "Think about what happens to option D's reliability as you move from January to December."
+      ],
+      "explain": "A rolling year is the standard reporting convention in FMCG and pharma precisely because of this combination: a full seasonal cycle on both sides plus monthly refresh. It has a cost — inertia: a fresh turning point dissolves into the eleven prior months and shows up with a lag. That's why in practice it's watched alongside year-over-year by month: the rolling year answers \"where is the brand heading\", the monthly comparison answers \"did something just happen.\" Year-to-date stays useful for reporting to leadership, where hitting an annual target matters, but it's weaker as an analytical tool because its base shifts over the course of the year."
+    },
+    {
+      "id": "dom-027",
+      "title": "Two brands in one window",
+      "brief": "A presentation compares the trend of water and vitamins for August and draws a conclusion about where to shift marketing budget.",
+      "goal": "Find the flaw in the conclusion.",
+      "scenario": "August 2025, change vs. July:\n\n  «Ключевая» water\n    15,792 → 11,711    −26%\n  «Витамакс» vitamins\n    260 → 282            +8%\n\nConclusion in the deck:\n\"Vitamins are growing, water\nis falling — shift budget\ninto vitamins\"",
+      "predictQuestion": "What's wrong with this conclusion?",
+      "options": [
+        {
+          "label": "It compares categories with opposite seasons within one window: August is the tail of the water season and the start of the vitamin season",
+          "why": "The opposite directions here are calendar-driven, not market-driven. In February the same pair would show the reverse picture, and by the same logic the budget would have to shift back."
+        },
+        {
+          "label": "Nothing: the numbers are correct, the conclusion follows from them",
+          "why": "The numbers are correct, the conclusion isn't. \"In August one fell and the other rose\" implies nothing about which brand has better prospects, until the fact that they have different seasons is accounted for."
+        },
+        {
+          "label": "The scales aren't comparable: 11,711 units vs. 282",
+          "why": "A fair point, and the percentages are exactly what normalizes for scale. But that's not the main flaw: even at comparable volumes, comparing two different seasons within a single window would still be wrong."
+        },
+        {
+          "label": "It should have been computed in money, not units",
+          "why": "Money would change the magnitudes, not the nature of the error: the seasonal bias wouldn't go anywhere, and with vitamins' high price the picture would just look even more contrasted."
+        }
+      ],
+      "hints": [
+        "Recall when water peaks in the year, and when vitamins do.",
+        "Mentally rebuild the same slide with February data and see what conclusion comes out."
+      ],
+      "explain": "Categories with different seasonal profiles can only be compared against each other over a full annual window, or each against itself year over year. A single shared window will always favor whichever category's season happens to fall into it — and the decision ends up made in favor of the calendar. In FMCG this mistake is especially costly, because the budget arrives at the season's peak, when the product is already selling well on its own, and by the next peak the money is already spent. The check is simple: before comparing two brands within one period, mentally shift the comparison to the opposite season. If the conclusion flips, you measured the calendar."
+    }
+  ]
+}

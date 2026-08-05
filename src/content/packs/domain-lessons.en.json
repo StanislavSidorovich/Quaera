@@ -1,0 +1,103 @@
+{
+  "lessons": [
+    {
+      "skill": "dom-roles",
+      "title": "Roles and boundaries",
+      "why": "A request lands on you not because it's yours, but because you're the closest person to the data. Half of an analyst's \"urgent\" tasks belong to someone else: a broken pipeline, a process that needs rebuilding, a forecast that needs an uncertainty estimate. Being able to name the task's actual owner isn't a way to dodge it — it's a way to make sure it actually gets solved.",
+      "form": "DE  — getting the data there: pipelines, storage, input quality\nDA  — what happened and why: a one-off analysis, an answer to a question\nBI  — regular reporting: marts, dashboards, metrics\nBA  — processes and requirements: how the work is structured and what to change\nDS  — forecasting and probability: models, experiments",
+      "example": "\"The dashboard breaks every morning, the data is from yesterday\"\n  → DE territory: the nightly pipeline didn't land\n\n\"Why did sales drop in Ural-Siberia?\"\n  → DA territory: a one-off analysis with a conclusion\n\n\"I need this report every Monday at 9:00\"\n  → BI territory: regularity turns an analysis into a product",
+      "reads": "The same question — \"what's going on with sales\" — can turn out to be any of the three tasks. What tells them apart isn't the topic or the difficulty, but what happens to the answer: is it looked at once, looked at every week, or does the source need fixing.",
+      "wrong": "\"The dashboard breaks every morning\"\n  → the analyst manually re-runs the export every morning",
+      "wrongWhy": "The task gets solved and stays unsolved at the same time: the numbers are there, but the cause — a broken pipeline — is still there too. A month later this is a daily forty-minute ritual that nobody counts as work and that the person who could actually fix it never sees. Manually working around someone else's outage is the most expensive kind of help: it masks the problem just enough for people to stop noticing it.",
+      "selfCheck": "Ask yourself: if I fix this right now, does the problem disappear — or come back tomorrow in the same shape? If it comes back, you're treating a symptom in someone else's territory, and that needs to be said out loud, not quietly patched over by re-running an export."
+    },
+    {
+      "skill": "dom-requirements",
+      "title": "From \"build me a dashboard\" to a brief",
+      "why": "\"Build me a sales dashboard\" isn't a task, it's a direction. It's missing the one thing that matters: what decision will this person make after looking at the result? Without that you'll build something technically flawless that nobody needs — and find out a month later, when nobody opens the dashboard.",
+      "form": "What to find out before starting work:\n  Decision   — what will you do once you see the answer?\n  Recipient  — who else looks at this, and why?\n  Cut        — what are we comparing by: period, brand, region?\n  Deadline   — when is it needed, and what happens if it's late?\n  Done       — what signal tells us the task is closed?",
+      "example": "Request:   \"Need a sales dashboard\"\nAsked:     \"What will you decide by looking at it?\"\nAnswer:    \"Where to send the field team next month\"\n\nBecame:    top 10 outlets with sales down more than 20%\n           vs. last month, with the sales rep's contact.\n           Viewed by the field team lead, once a month.",
+      "reads": "One question about the decision compressed an endless \"sales dashboard\" into a ten-row table that takes an hour to build and will actually get used.",
+      "wrong": "Request:  \"Need a sales dashboard\"\nBuilt:    20 charts — revenue, units, average price,\n          trend, shares, region map, top lists, funnel\nOutcome:  the stakeholder opened it once and asked:\n          \"Where do I see where to go?\"",
+      "wrongWhy": "A \"one for everything\" dashboard is an attempt to guess the question instead of asking it. It's more expensive to build, slower to run, needs upkeep, and still doesn't answer the stakeholder's actual question — it drowns among twenty charts, nineteen of which aren't about it. Completeness works against clarity here.",
+      "selfCheck": "Before opening the editor, finish this sentence: \"The stakeholder will look at this and decide ___.\" If you can't finish it, the task isn't defined yet, and it's too early to start."
+    },
+    {
+      "skill": "dom-metric-definition",
+      "title": "Defining a metric",
+      "why": "Two reports about the same thing almost never diverge because of a query bug — they diverge because \"active outlet\" or \"revenue\" meant something different to each author. An argument over whose numbers are right eats up the whole meeting and goes nowhere: both sides computed correctly, just different things.",
+      "form": "A metric definition has five parts:\n  Source        — which table, over what period\n  Filters       — what's included\n  Exclusions    — what's deliberately dropped, and why\n  Granularity   — what does one result row represent\n  Formula       — exactly how it's computed",
+      "example": "Monthly active outlet:\n  Source:       fact_sellout, month by week_start\n  Filters:      customer_type <> 'distributor'\n  Exclusions:   returns (units < 0) not counted\n  Granularity:  one row — one customer_id per month\n  Formula:      COUNT(DISTINCT customer_id) where SUM(units) > 0",
+      "reads": "A definition two people can apply independently and get the same number from. Each item closes off a specific argument that would otherwise happen later, in front of an audience.",
+      "wrong": "An active outlet is one that had sales.",
+      "wrongWhy": "Sounds complete and answers not a single practical question. Sales over what period — a month, a quarter, any period ever? Does a distributor count as an outlet? An outlet that sold one unit and took back a return of two — active or not? Everyone will compute it their own way and be sure they did the obvious thing.",
+      "selfCheck": "Hand the definition to a colleague and ask them to compute it without asking you any questions. If they ask one, that's the item missing from the definition."
+    },
+    {
+      "skill": "dom-sanity-check",
+      "title": "Checks before you send it",
+      "why": "A mistake found by the recipient can't be \"just fixed\": along with that one number, they stop trusting all your other numbers too, including the correct ones. Five minutes of checking before you send it is cheaper than a month spent rebuilding trust in the report.",
+      "form": "Four checks before sending:\n  Total       — does the sum reconcile with the source or last report?\n  Order       — is the number plausible in scale for this business?\n  Completeness — are all periods and entities present, no gaps?\n  Extremes    — what's in the largest and smallest row?",
+      "example": "Report: 2025 sales by month\n\n  Total        51,534K ₽ — reconciled against the annual P&L, matches\n  Order        ~4.3M per month — in line with last year\n  Completeness 12 rows, all months present\n  Extremes     max — December (peak), min — February (short month)",
+      "reads": "None of the four checks requires recomputing anything. All of them are about looking at your own result through the eyes of someone who knows the business, not the query.",
+      "wrong": "Report: 2025 sales by month\nRows in result: 11",
+      "wrongWhy": "Eleven months instead of twelve is the most common and least noticeable mistake: a month dropped out because of a filter boundary or a gap in the data, while the total still looks perfectly normal and gives no sign of anything wrong. There's exactly one way to catch it — deliberately counting the rows and comparing against how many there should be.",
+      "selfCheck": "Before sending, answer out loud: \"If this number is wrong, how exactly will I find out?\" No answer means there was no check — just a feeling that everything was fine."
+    },
+    {
+      "skill": "dom-value-chain",
+      "title": "The value chain",
+      "why": "Data doesn't fall from the sky: every row is born at a specific link in the chain — someone shipped it, someone received it, someone rang it up. Without understanding exactly where a row originated, you can't answer the main question about any data: what it doesn't and can't contain.",
+      "form": "Manufacturer → Distributor → Point of sale → Buyer\n      │              │               │             │\n   sell-in       stock on hand    sell-out     invisible\n fact_sellin    fact_stock     fact_sellout       —",
+      "example": "\"How much did we sell in June?\" — three different answers:\n\n  shipped to distributors    fact_sellin\n  sitting on their shelves   fact_stock\n  bought at outlets          fact_sellout\n\nThe numbers don't match, and shouldn't: they're three different events.",
+      "reads": "\"Sold\" without naming the link isn't a metric — it's the start of a conversation.",
+      "wrong": "\"How much of our product did consumers buy in Rostov?\"\n  → SUM(units) from fact_sellout for Rostov Oblast",
+      "wrongWhy": "The query answers a different question: how much moved through the registers of the outlets that made it into our records. A buyer could have bought from a competing distributor, at a chain that doesn't share data, or on a marketplace. Sell-out isn't \"the market\" — it's \"the part of the market visible to us\", and the gap grows the lower our coverage is.",
+      "selfCheck": "Before answering a question about sales, name the link: shipment, warehouse, or register. Didn't name it — you're counting something unknown."
+    },
+    {
+      "skill": "dom-order-to-cash",
+      "title": "Order-to-cash",
+      "why": "\"Sold\" isn't one event — it's a chain of statuses: order placed, reserved, shipped, delivered, received, invoiced, paid. Two sales reports built on different statuses will produce different numbers — and both authors will be sure they computed the same thing.",
+      "form": "Order → Reserve → Shipment → Delivery → Receipt → Invoice → Payment\n\n  Revenue      — at transfer of control over the goods: shipment\n                 or receipt, depending on what the contract says\n  Receivables  — invoiced, money not in yet\n  Cash         — money landed in the account",
+      "example": "\"How much did we sell in March?\" — three honest numbers:\n\n  Orders placed        4,910K ₽   sales funnel\n  Shipped               4,694K ₽   revenue\n  Landed in the account 3,380K ₽   cash, some on payment terms",
+      "reads": "Three numbers for the same month diverge by a quarter, and all three are correct. Which one is \"sales\" isn't up to the analyst — it's up to the stakeholder's question.",
+      "wrong": "Report \"March sales\" — 4,910K ₽\n(taken from order date, because it was easiest)",
+      "wrongWhy": "An order is intent, not a sale: some get canceled, some ship in April, some get cut down by stock availability. A report by order date systematically overstates and reconciles with neither accounting nor shipments, and the gap grows toward month-end, when orders get stockpiled ahead of time.",
+      "selfCheck": "Ask: which date is a row dated to — order, shipment, or payment? If a report says \"sales\" but has no answer to that, it isn't finished yet."
+    },
+    {
+      "skill": "dom-sellin-sellout",
+      "title": "Sell-in and sell-out",
+      "why": "Sell-in is what you shipped into the channel; sell-out is what the channel sold onward. The company earns on the first, but lives on the second: if the product doesn't leave the shelf, there's no next order. A report that treats these words as synonyms sooner or later leads to a decision based on someone else's warehouse instead of actual demand.",
+      "form": "sell-in   manufacturer → distributor    fact_sellin\nsell-out  outlet → buyer                fact_sellout\n\nratio = sell-in / sell-out\n\n  ≈ 1   channel stock is stable\n  > 1   channel is overstocking\n  < 1   channel is drawing down stock",
+      "example": "Sell-in to sell-out ratio, Q4 2025:\n\n  «Волга-Трейд» LLC        28,203 / 11,574 = 2.44\n  «Уралснаб» JSC            9,216 /  8,760 = 1.05\n  «Дальторг» LLC           12,018 / 11,509 = 1.04\n  «Прикамье-Групп» LLC     10,038 /  9,640 = 1.04\n  ... the other eight              1.04 to 1.05",
+      "reads": "Eleven distributors out of twelve stay close to one — that's the channel working normally. One stands out at double: it took in 2.44 times more than the outlets it serves actually sold.",
+      "wrong": "\"Sales grew 20%\" — computed from sell-in",
+      "wrongWhy": "Growing shipments can mean anything: real demand growth, a one-off purchase to hit an annual bonus, gearing up for a promo, or a distributor's planning mistake. The only way to tell them apart is sell-out — and if it didn't grow, \"sales growth\" means the product just moved from your warehouse to someone else's, and it'll come back as a drop next quarter.",
+      "selfCheck": "Hearing \"sales grew\", ask: into the channel, or out of it? If only into it, check inventory levels before celebrating."
+    },
+    {
+      "skill": "dom-planning",
+      "title": "S&OP and demand forecasting",
+      "why": "Planning is the one process where analytics moves money directly: a demand forecast grows into a production, purchasing, and shipment plan, and a mistake turns into either a shortage or stock that later gets written off. The analyst here isn't decorating someone else's numbers with a chart — they're on the hook for whether the number can be trusted.",
+      "form": "Demand forecast   how much will sell — an estimate, built bottom-up\n      ↓\nSales plan        how much we'll ship — a target, set top-down\n      ↓\nProduction and purchasing plan\n\nGap \"plan − forecast\" = a decision to load the channel.\nIt has to be named out loud, not appear on its own.",
+      "example": "April, «Фрутта» brand:\n\n  Demand forecast   18,200 units   estimated to sell\n  Sales plan        22,000 units   committed to ship\n  Gap                3,800 units   will sit in channel stock\n\nReason for the gap on record: entering a new chain on May 1.",
+      "reads": "A forecast and a plan don't have to match — but the difference between them has to have a name. Here it does, so the April surplus sitting in warehouses won't be a surprise in June.",
+      "wrong": "Demand forecast   18,200 units\nSales plan        22,000 units\nReason for the gap: not discussed",
+      "wrongWhy": "Without a named reason, the gap doesn't disappear — it just stops being visible: those 3,800 units still end up in the channel's warehouses. A quarter later they'll show up as a drop in orders, and it'll get pinned on sales, not planning — because by then nobody will remember there was nothing to overperform against.",
+      "selfCheck": "Find where the plan diverges from the forecast and ask what justifies the difference. An answer of \"that's just what was decided\" means the decision was made but never recorded — and there'll be nothing to deliberately repeat next cycle."
+    },
+    {
+      "skill": "dom-seasonality",
+      "title": "Seasonality and period comparison",
+      "why": "For a seasonal product, comparing against last month measures the calendar, not the business: water sales climb toward summer, vitamins toward autumn, and that happens regardless of what the company did. A month-over-month report on a category like that regularly produces conclusions and budget decisions that are exactly backwards.",
+      "form": "Ways to compare a period:\n\n  MoM   vs. the previous month      seasonality NOT removed\n  YoY   vs. the same month          seasonality removed, but noisy\n        last year\n  YTD   since the start of the year  stabilizes toward December\n  MAT   trailing 12 months vs.       seasonality fully removed,\n        the prior 12                 refreshes every month",
+      "example": "«Витамакс» brand, the same growth, three answers:\n\n  August → September 2025      282 → 1,174    +316%\n  September 2024 → 2025        862 → 1,174     +36%\n  Year 2024 → 2025           9,126 → 9,419     +3.2%",
+      "reads": "Three correct numbers about one brand, a hundredfold apart. +316% is the move from the summer trough to the autumn peak, and it repeats every year. Only the last line answers how the brand is actually growing.",
+      "wrong": "\"Vitamins grew 316% — let's shift budget there\"",
+      "wrongWhy": "In 2024 the same August-to-September transition produced +79% (481 → 862) — that's seasonality, not an achievement. A decision made on MoM in a seasonal category buys the season at the price of \"growth\": the budget arrives at the peak and sits idle once the season turns.",
+      "selfCheck": "Before comparing periods, ask: does this category have a season? If yes, compare against the same period last year or a rolling year, and never against the previous month."
+    }
+  ]
+}
