@@ -16,6 +16,25 @@ const SHELL = `querium-shell-${VERSION}`;
 const ASSETS = `querium-assets-${VERSION}`;
 
 /**
+ * Рантайм Python — в кеше, не привязанном к версии сборки.
+ *
+ * Pyodide с pandas весит 51 МБ, и человек согласился скачать его один раз.
+ * Пока он лежал в ASSETS, его стирал каждый деплой: activate удаляет все
+ * кеши, кроме имён текущей версии, — и в день, когда собрано шесть версий,
+ * это шесть повторных загрузок по 51 МБ. Именно так это и выглядело
+ * снаружи: «при каждом обновлении страницы качает заново».
+ *
+ * Привязка не к сборке, а к самому Pyodide: версия подставляется из
+ * pyodide-lock.json (см. scripts/postbuild-sw.mjs). Пути внутри /pyodide/
+ * при обновлении рантайма не меняются, поэтому только смена его версии
+ * и должна сбрасывать этот кеш — деплой правки в CSS не должен.
+ */
+const VENDOR = `querium-pyodide-__VENDOR_ID__`;
+
+/** Что живёт в кеше без версии сборки: содержимое задано пином в scripts/sync-pyodide.mjs. */
+const isVendor = (url) => url.pathname.startsWith('/pyodide/');
+
+/**
  * Собранные бандлы с хешем в имени. Список подставляется на сборке, потому что
  * иначе они не попадут в кеш при первом визите: браузер запрашивает их раньше,
  * чем service worker успевает взять страницу под контроль, — и офлайн заработал бы
@@ -80,7 +99,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== SHELL && k !== ASSETS).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR).map((k) => caches.delete(k)))
+      )
       .then(() => ensurePrecache())
       .then(() => self.clients.claim())
   );
@@ -148,7 +169,7 @@ self.addEventListener('fetch', (event) => {
         const res = await fetch(request);
         if (res.ok) {
           const copy = res.clone();
-          caches.open(ASSETS).then((c) => c.put(request, copy));
+          caches.open(isVendor(url) ? VENDOR : ASSETS).then((c) => c.put(request, copy));
         }
         return res;
       } catch (err) {

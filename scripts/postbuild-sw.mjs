@@ -41,18 +41,34 @@ const assets = all.filter(
 );
 
 const buildId = `v${Date.now().toString(36)}`;
+
+/**
+ * Версия Pyodide — из его собственного lock-файла, а не из версии сборки.
+ *
+ * Кеш рантайма (51 МБ) намеренно переживает деплои: иначе каждая новая сборка
+ * заставляла бы человека, уже согласившегося на загрузку, качать всё заново
+ * (см. VENDOR в public/sw.js). Сбрасывать этот кеш должно ровно одно событие —
+ * смена самой версии Pyodide, потому что пути внутри /pyodide/ при этом
+ * не меняются и содержимое иначе осталось бы старым навсегда.
+ */
+const pyodideLock = JSON.parse(await readFile(path.join(dist, 'pyodide', 'pyodide-lock.json'), 'utf8'));
+const vendorId = pyodideLock.info?.version;
+if (!vendorId) throw new Error('В dist/pyodide/pyodide-lock.json нет info.version — проверьте npm run sync:pyodide');
+
 let sw = await readFile(swPath, 'utf8');
 
-if (!sw.includes('__BUILD_ASSETS__') || !sw.includes('__BUILD_ID__')) {
+if (!sw.includes('__BUILD_ASSETS__') || !sw.includes('__BUILD_ID__') || !sw.includes('__VENDOR_ID__')) {
   throw new Error('В dist/sw.js нет плейсхолдеров — проверьте public/sw.js');
 }
 
 sw = sw
   .replace('/* __BUILD_ASSETS__ */', assets.map((a) => JSON.stringify(a)).join(', '))
-  .replace('__BUILD_ID__', buildId);
+  .replace('__BUILD_ID__', buildId)
+  .replace('__VENDOR_ID__', vendorId);
 
 await writeFile(swPath, sw, 'utf8');
 
 const { size } = await stat(path.join(dist, 'data', 'querium.dataset'));
 console.log(`sw: сборка ${buildId}, в предзагрузке ${assets.length} файлов`);
+console.log(`sw: рантайм Python кешируется отдельно от сборки — querium-pyodide-${vendorId}`);
 console.log(`sw: датасет ${(size / 1024 / 1024).toFixed(2)} МБ кешируется при первом запросе`);
