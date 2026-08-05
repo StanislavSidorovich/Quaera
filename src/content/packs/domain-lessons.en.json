@@ -175,6 +175,50 @@
       "wrong": "\"Demand for this SKU is unstable: CV 35%, raise the safety stock\"",
       "wrongWhy": "The coefficient of variation measures spread, not unpredictability, and it can't tell a regular seasonal wave or the brand's own promo apart from real chaos. A seasonal water and a snack with a spike in its promo month both get a high CV, even though both events are known well in advance — one from nature's calendar, the other from trade marketing's. Before running XYZ, the series is cleaned: strip out the season, break out the promo as a separate effect, and compute variation on what's left.",
       "selfCheck": "Before computing CV, look at the series with your own eyes. If a spike is explained by the calendar — a season or your own promo — it isn't uncertainty, and a safety stock won't fix it."
+    },
+    {
+      "skill": "dom-causality",
+      "title": "Correlation and causation",
+      "why": "Decisions are made on the basis of causes: if A causes B, you can influence B through A. Correlation says only that the series move together, and it's routinely mistaken for a cause — after which the company spends budget on a link that doesn't exist.",
+      "form": "Three explanations for any correlation besides \"A causes B\":\n\n  common factor  one cause lifts both A and B\n                 (season, inflation, market growth)\n  reverse        B actually causes A\n  selection      the objects didn't enter the groups\n                 at random, and differed before\n                 the measurement\n\nWhat raises confidence in a causal link:\n  a control group — same period, no treatment\n  a mechanism — an account of how A affects B\n  the link survives removal of the common factor",
+      "example": "Water and juice sales, 2025:\n\n  correlation of monthly sales                   0.84\n  correlation of year-over-year changes           0.10\n\nRemoving the season kills the link — so there wasn't one:\na common factor was lifting both series at once.",
+      "reads": "The first number describes a shared wave, not a link between the brands. The second is what's left of the link once the wave is taken out: essentially nothing. Shelving them together would produce a coincidence, not growth.",
+      "wrong": "\"Correlation 0.84 — the juice pulls the water, let's shelve them as a pair\"",
+      "wrongWhy": "Correlation is symmetric: swap the series and you get the same number, so it contains no direction whatsoever. Nor does the size of the coefficient help: 0.84 is just as compatible with a shared season as with a real link. The only way to tell them apart is a test — remove the suspected common factor and see what's left.",
+      "selfCheck": "Before concluding \"A affects B,\" answer three questions: what third factor could have lifted both, could the arrow point the other way, how did the objects end up in the groups being compared. If even one has no answer, you have an observation, not a cause."
+    },
+    {
+      "skill": "dom-storytelling",
+      "title": "Conclusion first",
+      "why": "A report exists so that someone can make a decision. The reader goes from \"what does this mean for me\" to \"how do we know,\" not the other way around — and if there's no conclusion in the first two lines, they read no further, and the work turns into a file in an attachment.",
+      "form": "Four parts of the opening paragraph:\n\n  conclusion     one sentence the reader can\n                 retell to a third person\n  support        the minimum numbers that prove it\n  recommendation what you advise doing\n  request        what you need from the reader: a decision,\n                 budget, sign-off — or an explicit \"nothing\"\n\nUncertainty is split into three levels:\n  what's confirmed · what's in question · what I'll check and when",
+      "example": "Bad: \"Sending over the analysis of the brand's decline.\nAttached is the extract by outlet, channel and region.\"\n\nGood: \"The brand lost half its revenue purely by going off\nthe shelf: we are no longer stocked in 46 of 79 outlets, and\nwhere we remain we sell 22% more. I suggest starting with the\nfive largest outlets. I need a decision on the negotiation\nbudget.\"",
+      "reads": "The second version can be read on a phone between meetings and decided on without opening the attachment. Its numbers are selected to fit the conclusion: of the analysis's four pairs of figures, two remain — the ones that prove the shelf was lost.",
+      "wrong": "\"Revenue was 1 079 055 ₽ against 2 121 702 ₽. Outlets: 33\nagainst 79. Revenue per outlet: 32 699 ₽ against 26 857 ₽.\"",
+      "wrongWhy": "These are facts with no conclusion, and they look conscientious: \"I'm not imposing an interpretation.\" In practice you're handing the reader back work you've already done — running the decomposition and seeing which multiplier moved. They have neither the time nor the context of the calculation, so most often they'll do nothing.",
+      "selfCheck": "Cover everything but the first two lines and ask: what will a person do having read only this? If the answer is \"open the attachment,\" the paragraph isn't written yet."
+    },
+    {
+      "skill": "dom-chart-choice",
+      "title": "Choosing a chart",
+      "why": "A chart doesn't illustrate the text, it answers a question faster than a table can. A form that doesn't match the question isn't merely awkward — it hands the reader a different conclusion, and that's what they'll carry away, not the caption underneath.",
+      "form": "The question determines the form:\n\n  change over time            a line\n  comparison across           bars, sorted\n  categories                  by size\n  relationship between two    a scatter plot\n  quantities\n  contribution to a change    a waterfall\n  accumulation to a threshold Pareto: bars + a curve\n  shares of one whole (3–5)   a stacked bar, not a pie\n\nAxis: bars start at zero, always — length encodes magnitude.\nOn a line truncation is allowed, but a scale break gets labeled.",
+      "example": "Question: how dependent is the company on a few products?\n\n  SKUs in FMCG in total                        29\n  the top 20% of SKUs give                  36.3% of revenue\n  reaching 80% of revenue takes         20 SKUs of 29\n\nForm: Pareto — descending bars plus a cumulative curve.",
+      "reads": "The cumulative curve gives the answer at a glance: the top is modest, the tail is long, concentration is moderate. A pie with 29 sectors doesn't answer this question at all — summing angles by eye is impossible.",
+      "wrong": "Growth of 3.2% over a year, drawn as bars with the axis\nstarting at the minimum: the last bar is three times the first.",
+      "wrongWhy": "A bar encodes magnitude with length, so a truncated axis changes not the styling but the message itself: the ratio of lengths stops matching the ratio of numbers. An honest \"+3.2%\" caption doesn't save it — a picture is read instantly and whole, the number only if you linger, and what stays in memory is the surge.",
+      "selfCheck": "Cover the labels and look at the geometry alone: what will a person conclude? If it diverges from the number, the form or the scale was chosen wrongly."
+    },
+    {
+      "skill": "dom-governance",
+      "title": "Data you're accountable for",
+      "why": "A number that several departments use has a life beyond your request: it gets compared across reports, recomputed a year later, passed outside. Without rules each of those actions quietly breaks, and it's discovered in a meeting.",
+      "form": "Three questions to ask of any metric:\n\n  definition   what exactly it counts, who owns its\n               meaning, where that's written down\n  historicity  does the attribute change over time, and is\n               the past computed with what was true then\n  access       which fields the task needs, who authorizes,\n               through which channel it travels\n\nA metric's name must reflect its definition:\n  \"revenue\" — bad · \"retail revenue (sell-out)\" — good",
+      "example": "Revenue for 2025 — three correct numbers:\n\n  sales        51 533 887 ₽   at retail (sell-out)\n  commercial   42 713 947 ₽   shipments before discounts\n  finance      39 104 808 ₽   shipments after discounts (−8.4%)",
+      "reads": "None of the three is wrong: they answer different questions. The gap between the first and second is the retail markup and stock in the channel; between the second and third, distributor discounts. An argument over which is \"correct\" isn't settled by calculation.",
+      "wrong": "\"Consolidate the three sources into one warehouse and there'll be a single number\"",
+      "wrongWhy": "A warehouse doesn't choose between definitions: it will keep all three and add a fourth of its own. A single data mart turns an agreement into code and is therefore useful — but only once the agreement exists. Without one, a technical project simply moves the argument up a level.",
+      "selfCheck": "If a meeting spends more than five minutes establishing whose number is right, the problem is no longer in the data. A good outcome for that meeting isn't \"we picked a number\" but \"we assigned a metric owner and a date by which the definition will be written down.\""
     }
   ]
 }

@@ -95,6 +95,26 @@
       "id": "dom-abc-xyz",
       "title": "ABC-XYZ segmentation",
       "summary": "I split the assortment by contribution and demand stability, and know what action follows for each group."
+    },
+    {
+      "id": "dom-causality",
+      "title": "Correlation and causation",
+      "summary": "I don't take series moving together for a cause, and I know which explanations have to be ruled out before claiming anything."
+    },
+    {
+      "id": "dom-storytelling",
+      "title": "Conclusion first",
+      "summary": "I start with the answer and with \"so what,\" and keep the working below — Minto pyramid order, not the chronology of my own work."
+    },
+    {
+      "id": "dom-chart-choice",
+      "title": "Choosing a chart",
+      "summary": "I pick the chart type to fit the question — comparison, composition, change over time or relationship — and strip out everything that doesn't answer it."
+    },
+    {
+      "id": "dom-governance",
+      "title": "Data you're accountable for",
+      "summary": "I don't drag personal data where it isn't needed, I version the calculation, and I leave documentation behind me."
     }
   ],
   "tasks": [
@@ -1585,6 +1605,378 @@
         "Safety stock is needed where demand is unpredictable, not where it's large."
       ],
       "explain": "The point of the matrix isn't classification, it's that each cell calls for its own action. ABC answers how much a mistake costs; XYZ answers how likely it is. Multiply them and you get an allocation of attention: where a person is needed, where a rule suffices, and where it's worth dropping the item entirely.\n\nAX — money with predictable demand: an ideal candidate for automatic ordering. The math is worked out once, then the system runs itself, and the freed-up attention goes where it's actually needed. AZ is the cell the whole matrix exists for: the mistake is expensive and likely, no formula will save you, it needs a person, a bigger buffer, and syncing with the promo calendar. CX — small stuff with steady demand: a simple replenishment rule, minimal involvement. CZ — small stuff that also swings: order to demand, minimal stock, and if problems are persistent, a question about delisting.\n\nThe main caveat is about delisting group C items. The matrix is built on one metric and knows nothing about an item's role in the assortment. A kids' yogurt might contribute a small percent of revenue and still be the reason a family picks your brand over the one next to it; a flavor lineup might be a condition of a chain contract. The delisting decision gets made after a conversation with the category manager, not off a matrix cell.\n\nThe second caveat is about recomputing. The matrix is a snapshot for a period, and an item moves between cells: a new product starts in C, a seasonal item shifts XYZ groups depending on the calculation window, and a declining brand slides into C while staying important. It's worth recomputing quarterly, and watching the transitions matters as much as the current position: a move from AX to BZ is a signal by itself, before it even shows up in revenue."
+    },
+    {
+      "id": "dom-049",
+      "title": "Water and juice rise together",
+      "brief": "A marketer noticed that monthly sales of «Ключевая» water and «Фрутта» juice through 2025 move almost in step, and proposes shelving them as a pair: \"the juice pulls the water along.\" Before the budget defense, the head of the team asks for the link to be checked.",
+      "goal": "Work out what a correlation of 0.84 proves, and why the second number refutes it.",
+      "scenario": "Sales in units, 2025:\n\n  month      «Ключевая»   «Фрутта»\n  January         6 510      5 756\n  February        5 663      4 357\n  April          17 482     10 567\n  June           21 181      9 266\n  July           15 792      8 702\n  November        6 499      4 291\n  December        8 162      5 396\n\nCorrelation of the two series:\n\n  monthly sales 2025           0.84\n  year-over-year changes       0.10\n\n  (in the second line each month\n  is compared with the same month\n  a year earlier, 18 pairs)",
+      "predictQuestion": "What does this pair of numbers say about the link between the two brands?",
+      "options": [
+        {
+          "label": "The joint movement is explained by a common cause — the season. As soon as each month is compared with the same month a year earlier, the link all but disappears",
+          "why": "The season lifts both drinks in summer and pushes both down in winter. The 0.84 correlation describes that shared wave, not a link between the brands: year over year the wave is subtracted from both series, and 0.10 is all that's left of the link."
+        },
+        {
+          "label": "0.84 is a strong link, the juice really does pull the water along; the second number just says year-over-year data is noisier",
+          "why": "Noise would lower the correlation moderately. A fall from 0.84 to 0.10 isn't noise — it means the first correlation rested entirely on a factor that the second calculation removes."
+        },
+        {
+          "label": "There is a link, but it runs the other way: the water pulls the juice, because it sells in larger volumes",
+          "why": "Correlation is symmetric and contains no direction at all: swap the columns and you get the same number. You can't extract from it what precedes what, let alone what causes what."
+        },
+        {
+          "label": "Not enough data: twelve months is too short a series to draw conclusions from",
+          "why": "Series length is a real limitation, but it's beside the point here. The problem isn't that 0.84 was computed unreliably — it's that even a perfectly precise coefficient doesn't answer the question \"what caused what.\""
+        }
+      ],
+      "hints": [
+        "Look at what April, June and July have in common — and what November and February lack.",
+        "Compare the two calculations against each other: what exactly changed in the second one, and why did that kill the link?"
+      ],
+      "explain": "Correlation answers exactly one question: do two series move in step. It doesn't answer \"what is the cause,\" \"what is the effect,\" or \"is there any link between them at all\" — and that isn't nitpicking over wording, it's the difference between a sound decision and a harmful one.\n\nWhat's at work here is the most common of the three traps — a shared third factor. In summer, sales of both water and juice go up because it's hot; in winter both fall. Neither brand influences the other, but the series walk hand in hand, and the coefficient honestly reports 0.84. Shelving them as a pair would buy the company not a sales increase but a coincidence that would have happened anyway.\n\nThe check that exposes a link like this is simple: remove the common factor and see what's left. Comparing each month with the same month a year earlier subtracts the season from both series at once — and the correlation drops to 0.10, which is zero up to randomness. If the brands really were linked — if shoppers genuinely bought them together — the link would survive that procedure: a good month for one would still be a good month for the other after the season came out.\n\nThe other two traps are worth keeping in mind as the same short list. Reverse causation: \"outlets with larger stock have higher sales\" — more likely stock is held where sales are already high. And selection: comparing groups that objects didn't enter at random — that's the next task.\n\nWhat to do in practice. When you see a correlation, ask three questions in a row: what third factor could have lifted both series, could the arrow point the other way, and how did the objects end up in the groups being compared. If none of them has a clear answer, the correlation remains an observation, not grounds for a decision. Stating it honestly isn't hard either: \"sales move together\" is true, \"the juice pulls the water\" is already a claim about cause, and that has to be proven separately."
+    },
+    {
+      "id": "dom-050",
+      "title": "Salesperson of the year",
+      "brief": "The head of sales pays bonuses on the absolute revenue of the outlets a rep serves. For 2025, rep Юлия Ковалёв came first in the FMCG Center team and second in the company. The manager wants to unpack what she does and roll it out to everyone else.",
+      "goal": "Determine what this ranking actually measures.",
+      "scenario": "Reps ranked by revenue of the\noutlets they serve, 2025:\n\n  1  Анна Егоров          8 outlets\n     FMCG South       5 042 930 ₽\n  2  Юлия Ковалёв         2 outlets\n     FMCG Center      4 616 915 ₽\n  3  Екатерина Дьякова    7 outlets\n     FMCG Center      4 335 843 ₽\n\nSecond place's portfolio:\n\n  СберМаркет (Taganrog\n  warehouse), e-com    4 591 844 ₽\n  Store «Уют» #1057,\n  Khimki                  25 071 ₽\n\nAverage 2025 revenue per outlet\nby channel:\n\n  e-com                3 222 912 ₽\n  pharmacy               345 636 ₽\n  chain                  277 651 ₽\n  traditional retail      21 706 ₽",
+      "predictQuestion": "What does this ranking measure?",
+      "options": [
+        {
+          "label": "The make-up of the territory, not the person's work: 99.5% of the result came from a single e-com warehouse, where the average outlet brings in 148 times more than in traditional retail",
+          "why": "The reps didn't land in this ranking at random: one had a federal marketplace's warehouse in the portfolio, another had eight ordinary stores. The gap between channels is larger than any gap in quality of work, so the ranking ranks territories."
+        },
+        {
+          "label": "The work: this person hit record revenue off just two outlets — that's efficiency in its purest form",
+          "why": "Revenue per outlet here is set by the channel, not by anything the person did. The same warehouse in someone else's portfolio would produce roughly the same result — and that's a checkable claim, not a guess: the other seven e-com outlets average 3.2M ₽ each."
+        },
+        {
+          "label": "The ranking is right, it just needs normalizing by the number of outlets",
+          "why": "Dividing by outlet count doesn't fix it, it makes it worse: the same portfolio gives 2.3M ₽ per outlet against 630 thousand for first place. The problem isn't the number of outlets, it's that the channels aren't comparable — the comparison has to be made within a channel."
+        },
+        {
+          "label": "There's an error in the data: one outlet can't produce 4.6M ₽ when the whole company's revenue is 51.5M ₽",
+          "why": "It can, and it isn't an error. An e-com warehouse ships to a whole region, so in a report it looks like a single \"outlet\" with the turnover of a small chain. It should be set against another warehouse, not against a store."
+        }
+      ],
+      "hints": [
+        "Look not at the total but at what it's made of: how much did each outlet in the portfolio contribute?",
+        "Ask what would have happened if that warehouse had gone to a different rep."
+      ],
+      "explain": "This is the selection trap: objects didn't land in the groups being compared at random, and the difference between the groups arose before the thing you're measuring. Here territories were handed out before the year began, and along with a territory a person got a channel — and channel fixes the order of magnitude of revenue harder than anything else does: 3.2M ₽ per e-com outlet against 21.7 thousand in traditional retail, a gap of a hundred and forty-eight times.\n\nWhat makes it treacherous is that the ranking isn't technically broken. The numbers are right, the formula is transparent, there's nothing to argue with. What's wrong is the step from number to conclusion: \"higher in the ranking\" turns into \"works better,\" though an unobserved assumption sits between them — that the territories are comparable. Say it out loud and the whole construction collapses.\n\nThe consequences of a KPI like this are worse than an unfair bonus. First, unpacking the leader's practice will come up empty: there's nothing to copy, the advantage isn't in technique. Second, the metric starts steering behavior — reps will compete for territory rather than for sales, and that's rational behavior under this rule. Third, genuinely strong people in weak channels will never come into view.\n\nWhat gets fixed is the comparison, not the formula. Compare like with like: within a channel, and better still against itself over time (growth of the portfolio's outlets versus last year), because a person's territory doesn't change over the year while the result does. Good practice is to look at an indicator the person actually influences: plan fulfillment on their own territory, brand presence, the number of outlets that started stocking a new product.\n\nThe general reflex: when you see a ranking of people, units or regions, ask what set them apart before the measurement began. If it set them apart strongly, the ranking measures that difference rather than merit, and no amount of normalizing cures it."
+    },
+    {
+      "id": "dom-051",
+      "title": "What proves the promo caused the lift",
+      "brief": "The «Хрустик: 2+1» promo ran in chains for five weeks, 11 August to 8 September 2025. The brand's chain sales tripled. Trade marketing is taking that number to next year's budget defense; the CFO asks for proof that the promo is what produced the lift.",
+      "goal": "Choose the comparison that proves the promo's effect.",
+      "scenario": "Units over the five promo weeks\nagainst the five weeks before:\n\n                     before   promo\n  «Хрустик»\n    chains (promo ran) 1 515   4 869\n    trad. retail         130     127\n    e-com              4 262   4 486\n  Other FMCG brands\n    chains            13 809  11 448",
+      "predictQuestion": "What in this table proves the promo produced the lift in chains?",
+      "options": [
+        {
+          "label": "The three lower rows: the same brand in channels with no promo, and other brands in the same channel. Not one of those series grew — so there was no general movement that could account for +221%",
+          "why": "A control group is whatever lived through the same weeks but got no treatment. Here there are two of them: the brand without a promo in other channels, and the channel with the promo but other brands. Both held flat or fell, so tripling can't be pinned on the season, the weather or a general lift in chains."
+        },
+        {
+          "label": "The first row: a threefold rise in the channel where the promo ran — a before-and-after comparison is the proof",
+          "why": "A before-and-after comparison doesn't separate the promo's effect from everything else that happened in those weeks: the end of summer, the back-to-school season, a competitor's moves. That's precisely why the first row needed three more."
+        },
+        {
+          "label": "The 17% drop in other brands is cannibalization, and it means there was no real growth — shoppers just moved their money around",
+          "why": "Cannibalization is the right next question, but it has to be checked separately and in units of comparable categories: a snack and water compete weakly. And crucially, it doesn't cancel the growth — «Хрустик» gained 3 354 units, while other brands lost less than that within its category."
+        },
+        {
+          "label": "Nothing: on observational data causation can't be proven in principle, you need a proper experiment",
+          "why": "An experiment really is stronger, but \"either an experiment or no conclusions\" means, in practice, no conclusions at all. A control group is a workable approximation, and in trade marketing it's the standard, not a compromise."
+        }
+      ],
+      "hints": [
+        "Ask what should have gone up if the cause were the season or a general market lift rather than the promo.",
+        "The three lower rows share one property — which one?"
+      ],
+      "explain": "Proof of an effect rests not on what happened, but on a comparison with what would have happened without the intervention. That \"without\" can't be observed directly, so it's replaced with a control group — objects that lived through the same period but got no treatment.\n\nHere the control is double, and that's a strong construction. Along one axis the brand is fixed and the channel varies: «Хрустик» in traditional retail and e-com, where there was no promo, stayed put. Along the other the channel is fixed and the brand varies: other FMCG in the same chains over the same weeks fell 17%. If the season or a general lift in chains were producing the growth, it would have shown up in at least one of those rows. It shows up in none — so the explanation is local: the promo.\n\nThis line of reasoning has a name — difference-in-differences: you take the change in the treated group and subtract the change in the control. Here the control group actually fell, so an honest estimate of the effect is slightly larger than the observed +221%, not smaller.\n\nWhere the construction can break. The control has to be comparable: if the promo ran in chains and traditional retail was taken as the control, the difference in the channels' own dynamics could manufacture an effect by itself. That's covered here by the second control — the same chains. Second: the control must not be affected by the treatment indirectly. If shoppers were shifting money from the snack to water, the control would be \"contaminated,\" and the effect would come out overstated.\n\nThe practical takeaway: for any \"we did X and the indicator went up,\" ask for an answer to \"and who didn't get X?\" With no answer, the conclusion stays a hypothesis — sometimes a plausible one, but never proven. The control group has to be planned before the promo launches, not after: holding a dozen comparable outlets back from the promo costs one week's revenue and buys you the ability to measure the return on every promo that follows."
+    },
+    {
+      "id": "dom-052",
+      "title": "The first paragraph of the email",
+      "brief": "The «Чистовъ» decline analysis is done: revenue fell 49% because the brand went off the shelf in 46 outlets out of 79, and where it stayed it sells 22% more than before. The email goes to the commercial director, who will read the first two lines on his phone between meetings.",
+      "goal": "Choose the first paragraph that makes a decision possible.",
+      "scenario": "Four versions of the opening paragraph:\n\nA  Sending over the analysis of the\n   «Чистовъ» decline for Q2. Attached\n   is the extract by outlet, channel\n   and region, plus the calculation\n   methodology. Happy to discuss.\n\nB  «Чистовъ» revenue in Q2 2026 was\n   1 079 055 ₽ against 2 121 702 ₽\n   in Q2 2024. Outlets: 33 against 79.\n   Revenue per outlet: 32 699 ₽\n   against 26 857 ₽.\n\nC  «Чистовъ» lost half its revenue\n   purely by going off the shelf:\n   we are no longer stocked in 46 of\n   79 outlets, and where we remain we\n   sell 22% more. I suggest starting\n   with the five largest lost outlets —\n   they bring weighted distribution\n   back to 80%, whereas the other\n   forty-three together add as much.\n   I need your decision on the budget\n   for the negotiations.\n\nD  The «Чистовъ» situation is alarming.\n   I believe we urgently need to rethink\n   our approach to the brand as a whole —\n   from packaging to pricing — or we\n   risk losing the category.",
+      "predictQuestion": "Which paragraph is written correctly?",
+      "options": [
+        {
+          "label": "C — the conclusion comes first, the numbers back up that specific conclusion, then a recommendation and an explicit request for a decision",
+          "why": "The reader gets an answer to his question in the first sentence and can decide without opening the attachment. The numbers are selected to support the conclusion rather than dumped wholesale, and the paragraph ends with what's needed from the reader."
+        },
+        {
+          "label": "B — facts only, no interpretation: let the manager draw his own conclusion, that's his responsibility",
+          "why": "Drawing the conclusion from these numbers is your job, not his: that's what you did the decomposition for. Handing over four pairs of numbers without a conclusion returns the task to someone who has neither the time nor the context of the calculation. And you lose the chance to explain why price is irrelevant here."
+        },
+        {
+          "label": "A — a polite cover note, with the substance in the attachment, where it belongs",
+          "why": "The only thing the reader learns from this paragraph is that the work is done. Attachments get opened only if the first lines force it; a paragraph that doesn't force it turns all the work into a file nobody opens."
+        },
+        {
+          "label": "D — the conclusion comes first, and it's decisive enough to get the manager moving",
+          "why": "There is a conclusion, but it doesn't follow from the analysis: the data are about losing the shelf, while the recommendation is about packaging and price. A confident tone is no substitute for a link to the facts, and \"rethink the approach as a whole\" isn't a decision anyone can take."
+        }
+      ],
+      "hints": [
+        "Read only the first two lines of each version — that's exactly what the recipient will see. After which one can he decide anything?",
+        "Check each version for three things: a conclusion, a number supporting it, and what's required from the reader."
+      ],
+      "explain": "There's one rule, and it's an uncomfortable one: the conclusion goes first, ahead of the explanation and ahead of the numbers. Uncomfortable because it runs against the order of the work — you went from data to conclusion and naturally want to lay it out in that order. The reader goes the other way: first \"what does this mean for me,\" and only if the answer matters, \"how do we know.\"\n\nA paragraph structure that works: conclusion, support, recommendation, request. The conclusion is one sentence someone can use to retell you to a third person. The support is the minimum set of numbers that prove that specific conclusion, not every number you have. The recommendation is what you advise doing. The request is what you need from the reader: a decision, a budget, a sign-off, nothing. Without the last item the email stays \"for information,\" and later you wonder why \"nothing happened.\"\n\nVersion B is the most widespread analyst's mistake, and it looks virtuous: \"I'm not imposing, I'm giving facts.\" In reality it's shifting the work back. You did the decomposition, you saw that price moved 3% and explains nothing — say so. Selecting numbers to fit the conclusion isn't distortion, it's the substance of the job: showing everything you computed means failing the main task, which is separating what matters from what doesn't.\n\nVersion D is the opposite mistake and a more dangerous one. There's a conclusion, it sounds confident, but it's connected to the data only by mood. The check is simple: every claim in the first paragraph must have a number or a fact behind it. \"We lost 46 outlets out of 79\" — it does. \"We need to change the packaging\" — follows from nothing you computed.\n\nAnd a last word on length. The first paragraph exists for the person who won't read further. Everything else — methodology, caveats, breakdowns — lives below and in the attachment, and there it can be as detailed as you like. That isn't cutting the content down, it's ordering it: first what you're being read for, then what you'll use to prove it if asked."
+    },
+    {
+      "id": "dom-053",
+      "title": "One conclusion, three audiences",
+      "brief": "The same «Чистовъ» analysis has to be told to three people: the CEO at a fifteen-minute committee, the head of the field team, and a fellow analyst who will maintain the report.",
+      "goal": "Understand what changes in the delivery from audience to audience, and what never changes.",
+      "scenario": "One and the same fact: the brand lost\n46 outlets out of 79, revenue in the\nones that remain grew 22%, and brand\nrevenue is down 49%.\n\nThree recipients:\n\n  CEO\n    decides where the company's\n    money goes\n  head of the field team\n    decides who negotiates\n    with whom\n  fellow analyst\n    will maintain this report\n    after you",
+      "predictQuestion": "What should change from audience to audience?",
+      "options": [
+        {
+          "label": "Depth and emphasis — matched to the decision that person makes; the facts and numbers themselves never change",
+          "why": "The CEO needs the scale of the problem and what it's worth; the field lead needs the list of outlets and the order to work them; the analyst needs methodology, filters and the limits of the data. It's one and the same conclusion, cut three ways for three different decisions, not three versions of the truth."
+        },
+        {
+          "label": "Only the length changes: shorter for the CEO, longer for the analyst, in between for the field lead",
+          "why": "Length is a consequence, not a decision. The short version for the CEO differs from the short version for the field team not in size but in which fact made it in: what the issue is worth versus which outlets to visit."
+        },
+        {
+          "label": "The field team needs it simpler and without numbers — people in the field don't work with analytics every day",
+          "why": "That swaps \"for a different decision\" for \"for less clever people.\" The field lead needs the most concrete numbers of all — which outlets, in what order, whom to talk to; simplifying them makes the analysis useless exactly where someone will act on it."
+        },
+        {
+          "label": "Nothing: all three get the same document, otherwise you end up with three versions of the truth",
+          "why": "A single version of the truth is about numbers and definitions, not about format. One document for everyone means it was written for nobody's decision, and each of them has to hunt for their part in it — and usually doesn't find it."
+        }
+      ],
+      "hints": [
+        "Ask of each one: what decision will he make tomorrow morning, and which number does he need for it?",
+        "One of the options confuses \"a different decision\" with \"simpler, for people who don't get it.\""
+      ],
+      "explain": "Delivery is determined not by the recipient's job title but by the decision they make. That's the only criterion that works: it tells you what to include, in what order, and where to stop.\n\nThe CEO needs the scale and the price: half the brand's revenue, a single cause, is it worth investing in a comeback or is closing the line more sensible. He doesn't need the list of outlets — he isn't going to visit them. The head of the field team needs exactly the reverse: which outlets, in what order, which chain is the key one, what to say to the buyer. For him the scale of the problem is one line of context. The fellow analyst needs a third thing: how it was computed, which filters, what counted as an outlet, where the data are unreliable — because his decision is \"can this report be trusted, and how do I fix it.\"\n\nWhat can't change for any audience are the facts, the numbers, and the caveats that bear on the conclusion. If the analysis has a weak spot — say, some outlets may simply have changed owner rather than dropped the brand — it travels into all three versions, because it changes the conclusion for all three. A caveat you dropped \"so as not to overcomplicate things for the CEO\" isn't simplification, it's distortion.\n\nA separate word on the temptation to simplify for the field team. It looks like consideration and works like disrespect, and it damages the work: these are precisely the people who need the most concrete data, because they're the ones who will act. The difference between versions isn't in complexity, it's in which slice you put up front.\n\nA practical technique: before writing, finish this sentence on the recipient's behalf — \"having read this, I will…\". If the sentence doesn't end in an action, the document isn't ready — either you haven't found which decision it serves, or this person doesn't need it at all."
+    },
+    {
+      "id": "dom-054",
+      "title": "A conclusion you're not sure of",
+      "brief": "The analysis is due today. The main conclusion is confirmed, but one part of it rests on data you doubt: some of the lost outlets may not have dropped the brand at all — they may have closed or changed owner, and the reference table doesn't distinguish the two. Checking will take a week.",
+      "goal": "Choose the wording that neither lies nor blocks a decision.",
+      "scenario": "Four ways to report this:\n\nA  Say nothing. The conclusion about\n   lost distribution is right in the\n   main, and a caveat will only confuse\n   the reader and weaken the email.\n\nB  \"The brand may have lost distribution,\n   but the data require further checking,\n   so no final conclusions can be drawn\n   at this point.\"\n\nC  \"The brand went off the shelf in 46\n   outlets out of 79 — that's confirmed\n   by sales. Of those 46, some may have\n   closed or changed owner: the reference\n   table doesn't distinguish the two,\n   I'll check against the visit log by\n   the 12th. This doesn't affect the\n   conclusion — even in the worst case\n   losing the shelf remains the main\n   cause; it does affect the list of\n   priority outlets.\"\n\nD  Send the analysis in a week, once\n   everything is checked: a report with\n   caveats is worse than a report\n   delivered later.",
+      "predictQuestion": "Which version is right?",
+      "options": [
+        {
+          "label": "C — separate what's confirmed, what's in question and what exactly it affects, with a date for the check",
+          "why": "Three levels of confidence are named explicitly, and crucially it says what the uncertainty affects and what it doesn't. The budget decision can be made today; the decision on the list of outlets after the 12th."
+        },
+        {
+          "label": "B — honestly admit the uncertainty and give no conclusion until it's checked",
+          "why": "Formally honest, practically useless: a \"may have\" with no indication of what specifically is in question and how much it changes the picture reads as \"the analyst isn't sure of anything.\" The reader will either decide blind or not decide at all."
+        },
+        {
+          "label": "A — say nothing: the conclusion is right in the main, and a caveat would only weaken the email",
+          "why": "The caveat will surface — at a meeting, from a colleague, or a month later. What suffers then isn't that one number but trust in everything you bring, including the flawless parts. And staying quiet denies the reader the chance to factor the risk into their decision."
+        },
+        {
+          "label": "D — send it in a week, once the data are fully checked",
+          "why": "Sometimes that's right, but not here: the confirmed part is enough for the main decision, and a week of standing still costs you negotiations that never started. Completeness bought at the price of being late is also a mistake, just a less visible one."
+        }
+      ],
+      "hints": [
+        "Ask not \"how sure am I\" but \"what exactly changes in the decision if this part turns out to be wrong.\"",
+        "One of the options is honest in form but gives the reader nothing to work with."
+      ],
+      "explain": "Uncertainty is no reason to stay silent and no reason to blur the conclusion. It has to be localized: say which part specifically is in question, how far it could shift the picture, and by when you'll find out.\n\nThe construction that works is three levels stated explicitly. What's confirmed: sales stopped in 46 outlets, that's a fact from the data. What's in question: the reason they stopped, because the reference table doesn't distinguish dropping the brand from the outlet closing. What you're doing: a check against the visit log by a specific date. And, as a separate sentence, what it's worth: the uncertainty doesn't affect the main conclusion, it does affect the list of priority outlets. That last part is what turns a caveat from noise into useful information.\n\nVersion B is the conscientious analyst's most frequent mistake. It sounds cautious and scientific, but gives the reader nothing: it's unclear what is in question, how serious it is, or when it will be resolved. In practice wording like that most often means the decision gets made without you — on intuition, or on someone else's number that came with no caveats because nobody checked it.\n\nOn staying silent, it's worth remembering the mechanics of losing trust. One undeclared weakness coming to light devalues not one number but the whole report: the recipient can't tell the places where you kept quiet from the places where everything is clean, and sensibly hedges on all of it. A declared weakness works the other way — it shows you're in control of the limits of your own knowledge.\n\nAnd on deadlines. Decisions are made on the calendar, not when the data are ready. The right strategy is almost always to deliver what's confirmed exactly on time, honestly marking the edges, and finish the rest in a separate short message. \"I promised by the 12th — here's the result of the check, the conclusion hasn't changed\" is worth more than a week of silence."
+    },
+    {
+      "id": "dom-055",
+      "title": "Four questions, four forms",
+      "brief": "Four slides are going into the «Чистовъ» deck. The designer suggests making all the charts identical — \"for a consistent look.\" You need to decide which form answers each question.",
+      "goal": "Match each question to the chart form that answers it.",
+      "scenario": "Four questions in the deck:\n\n  1  How did the brand's revenue move\n     week by week over two years?\n  2  Which five regions lost the most?\n  3  Is an outlet's size related to\n     whether it dropped the brand?\n  4  What makes up the −49%: how much\n     came from losing outlets, how much\n     from the change in revenue\n     per outlet?",
+      "predictQuestion": "Which set of forms is right?",
+      "options": [
+        {
+          "label": "1 — a line over time; 2 — horizontal bars sorted by size; 3 — a scatter plot; 4 — a waterfall",
+          "why": "Each form encodes exactly what's being asked: a line for continuous change over time, bars for comparing magnitudes across categories, points for the relationship between two numeric quantities, a waterfall for how the parts contribute to a total change."
+        },
+        {
+          "label": "1 — bars by week; 2 — a pie by region; 3 — a line; 4 — a table",
+          "why": "Bars over a hundred weeks turn into a picket fence where the trend can't be read. A pie answers a question about shares of a whole, not \"who lost the most.\" A line connects points that have no order between them. A table doesn't show contribution — the reader has to work it out by eye."
+        },
+        {
+          "label": "All four as bars: it's the most understandable form, people read it with no explanation",
+          "why": "A form being understandable is no substitute for it fitting the question. Bars really are easy to read, but on a time series of a hundred weeks they hide the very thing the chart is built for — the shape of the change."
+        },
+        {
+          "label": "1 — a line; 2 — vertical bars; 3 — a scatter plot; 4 — a pie",
+          "why": "Three of the four are right; the error is in the last one. A pie shows shares of a whole, while the question is about contribution to a change — there are positive and negative parts, and they can't fit into a circle in principle."
+        }
+      ],
+      "hints": [
+        "For each question, name the type of comparison: over time, across categories, between two numbers, or contribution to a total.",
+        "Horizontal bars beat vertical ones when the category names are long — you don't have to tilt them."
+      ],
+      "explain": "A chart isn't an illustration for the text, it's a way to answer a question faster than a table can. Hence the single rule for choosing one: state the question in a sentence first, then pick the form that encodes the answer.\n\nFour basic types of comparison cover nearly everything an analyst needs. Change over time — a line: the eye reads slope as speed and breaks as events. Comparison across categories — bars sorted by size, and horizontal ones if the names are long. The relationship between two numeric quantities — a scatter plot, the only form where you see the relationship, its absence, and the outliers alike. Contribution of parts to a change in a total — a waterfall, invented for decomposition specifically.\n\nThe pie chart deserves its own word, because it's the default in every editor. Its legitimate territory is narrow: shares of a single whole, when the parts are few, differ markedly, and genuinely sum to a hundred percent. Everything else it does badly — people compare angles worse than lengths, and negative values don't fit into it at all. For the fourth question that disqualifies it immediately: losing outlets pulls down, revenue growth per outlet pushes up.\n\nOn sorting and orientation: bars sorted by size answer \"who is biggest\" instantly, while the same bars in alphabetical order force the reader to sort by eye. That's the cheapest edit in any deck and one of the most noticeable.\n\nAnd on \"a consistent look.\" What should be consistent is the styling — palette, fonts, axis labels, legend order. The form of the chart obeys the question, not the layout; identical charts for different questions aren't style, they're a refusal to answer."
+    },
+    {
+      "id": "dom-056",
+      "title": "The axis a conclusion starts from",
+      "brief": "The «Витамакс» brand grew 3.2% over the rolling year. Marketing brings a slide where that growth is drawn as bars with the axis starting not at zero but at the series minimum: in the picture the last bar is three times the height of the first.",
+      "goal": "Decide where a truncated axis is acceptable and where it turns a chart into a lie.",
+      "scenario": "The same series, two charts:\n\n  bars, axis from zero\n    the last bar is higher than\n    the first by an amount barely\n    visible to the eye (+3.2%)\n\n  bars, axis from the minimum\n    the last bar is three times the\n    first — it looks like a surge\n\nThe number under the chart is the\nsame in both cases: +3.2%.",
+      "predictQuestion": "What's the right answer?",
+      "options": [
+        {
+          "label": "For bars the axis must start at zero: bar length encodes magnitude, and truncating lies about the ratio. On a line chart truncation is acceptable, but it has to be plainly visible",
+          "why": "A bar is compared by length, so where it starts isn't a styling setting but part of the encoding: truncate the axis and you physically change the ratio the eye reads. A line encodes change through slope and needs no zero base — but a broken scale still gets labeled."
+        },
+        {
+          "label": "You must never truncate an axis on any chart — it's a recognized manipulation technique",
+          "why": "The rule is correct for bars and harmful as a universal law: drawing temperature, an exchange rate or market share from zero is pointless — real fluctuations flatten into a straight line and the chart stops showing anything at all."
+        },
+        {
+          "label": "Any chart can be truncated as long as an honest number is printed underneath: the number is the source of the conclusion, the picture is just presentation",
+          "why": "The reader believes the picture, not the caption: the shape is the conclusion they carry away. A \"+3.2%\" under bars that differ threefold doesn't save it — it reads as a technical detail attached to an \"obvious\" surge."
+        },
+        {
+          "label": "For internal reports the scale can be chosen freely; truncation is only unacceptable in external materials",
+          "why": "Internal decisions cost money just as external promises do. Splitting the rule into \"among ourselves it's fine\" is a short road to the company planning next year's budget off a picture rather than a number."
+        }
+      ],
+      "hints": [
+        "Ask what exactly the chart uses to encode magnitude: bar length or line slope.",
+        "Check the extreme case: what would a chart of the dollar exchange rate look like drawn from zero?"
+      ],
+      "explain": "The argument about a truncated axis is usually conducted in slogans, but it's settled by one technical question: what does the chart use to encode magnitude?\n\nA bar encodes magnitude with length. The eye compares lengths and concludes something about the ratio: \"three times as tall\" reads as \"three times as much.\" Truncating the axis doesn't change the caption, but it changes the message itself — the ratio of lengths stops matching the ratio of numbers. That isn't a matter of taste, it's a corruption of the encoding, which is why bars start at zero without exception.\n\nA line encodes magnitude with position and change with slope. It promises nothing about ratios of length, so it doesn't need a zero base and is often hurt by one: an exchange rate, a temperature or a market share drawn from zero flattens out, and the meaningful fluctuations vanish. Here truncation is legitimate, but the break in the scale is marked explicitly and the axis is labeled densely enough for the reader to see the real range.\n\nThere's an opposite mistake too, discussed less often. Stretching the axis down to zero where the fluctuations are the point hides the real movement and nudges the reader toward \"nothing is happening.\" Both mistakes are of one kind: the scale was chosen to fit a desired impression rather than the question.\n\nOn \"+3.2% printed next to the picture.\" A caption doesn't cure the form, because the two are read at different speeds: the picture instantly and whole, the number only if you linger. A week later what stays in memory is the impression of a surge, not the figure. Check yourself with this question: cover every label — what would a person conclude from the geometry alone? If that conclusion diverges from the number, the chart is wrong, whatever is written underneath.\n\nAnd something practical: in this particular case 3.2% growth over a year genuinely does look unremarkable on a chart from zero. That isn't a problem with the chart, it's information — the change really is small. If it matters, show it in a different form: a year-over-year chart in percent, say, where 3.2% honestly fills the whole scale."
+    },
+    {
+      "id": "dom-057",
+      "title": "Twenty-nine slices of pie",
+      "brief": "For the slide on portfolio concentration, a pie chart is proposed: 29 SKUs in the FMCG division, each with its share of revenue. The slide's question is \"how dependent is the company on a few products.\"",
+      "goal": "Choose the form that answers the slide's question.",
+      "scenario": "What's known about the FMCG portfolio:\n\n  SKUs in total                 29\n  the top 20% of SKUs give   36.3%\n    of revenue\n  to reach 80% of revenue you\n    need            20 SKUs of 29\n\nThe slide's question: how dependent is\nthe company on a few products?",
+      "predictQuestion": "Which form answers this question?",
+      "options": [
+        {
+          "label": "A Pareto chart: bars in descending order of share plus a cumulative-percentage line — it reads off directly how many SKUs you need to reach any threshold",
+          "why": "The slide's question is about accumulation, not about individual shares. The cumulative curve answers it geometrically: you can see both that the top is modest and that reaching 80% means going all the way to the twentieth product."
+        },
+        {
+          "label": "A pie chart with 29 sectors — the most direct way to show shares of a whole",
+          "why": "Twenty-nine sectors means most of them are thinner than their label. People can't compare angles that size, and a circle doesn't answer a question about accumulation at all: summing sectors by eye is impossible."
+        },
+        {
+          "label": "The top 8 products as bars, the rest as a single \"other\" row",
+          "why": "A respectable form and the best one for many slides, but not for this question: rolling the rest into one \"other\" row hides exactly what's being asked about — the length of the tail. It would answer a different question, \"who are our biggest products.\""
+        },
+        {
+          "label": "A table of all 29 SKUs with shares and a cumulative percentage",
+          "why": "The data are all there, but the reader has to extract the conclusion himself by scanning two dozen rows. A table is good as an appendix to the slide or as a working tool, not as an answer to a question about the degree of concentration."
+        }
+      ],
+      "hints": [
+        "Reread the slide's question: is it about individual shares, or about how many products it takes to reach a threshold?",
+        "Test each form against an action: can you answer \"it takes N products to reach 80%\" from it without doing arithmetic in your head?"
+      ],
+      "explain": "The form is chosen to fit the question, and in this task the question is stated with unusual precision: not \"what are the products' shares\" but \"how dependent are we on a few.\" That's a question about accumulation, and what answers it is a cumulative curve, not a set of shares.\n\nA Pareto chart combines two encodings: descending bars show each product's contribution, the cumulative-percentage line shows how much has been gathered by each rank. The reader runs their eye from the threshold they care about to the curve and gets the answer without computing. On these data they'll see two things at once: the top is small (the top 20% of products give only 36.3%) and the tail is long (reaching 80% of revenue takes twenty products out of twenty-nine). The conclusion — concentration is moderate — matters more for an assortment decision than any individual share.\n\nOn a pie with two dozen sectors: the problem isn't aesthetics, it's that it doesn't answer. Even if a person could compare thin angles, they can't sum them by eye — and the question demands precisely a sum. The general rule: a circle is acceptable for three to five parts of one whole with markedly different shares, and almost always it can be replaced by a single stacked bar, where shares are compared by length.\n\nThe \"top 8 and other\" option is worth remembering as a good technique — it rescues most overloaded charts. But here it loses for the same reason it wins elsewhere: it deliberately collapses the tail, and the tail is what the question is about.\n\nSeparately, on the \"20% of products give 80% of revenue\" heuristic. People expect it by default, and when the data don't bear it out there's a strong temptation to bend the wording. Here the top 20% give 36.3%, and that's a meaningful result: the portfolio is spread more evenly than is usually assumed, the risk from delisting a single SKU is lower, but there will be no easy wins off a handful of hits either. Reading your own numbers matters more than checking them against someone else's rule."
+    },
+    {
+      "id": "dom-058",
+      "title": "Three revenues at one meeting",
+      "brief": "At the annual committee, three departments state 2025 revenue, and all three numbers differ. Each cites its own extract and is certain the others got it wrong. The meeting turns into an argument about numbers instead of a discussion of the plan.",
+      "goal": "Determine what is actually broken here, and at what level it gets fixed.",
+      "scenario": "What the three departments said:\n\n  sales           51 533 887 ₽\n    outlet revenue at retail\n    (sell-out)\n  commercial      42 713 947 ₽\n    shipments to distributors\n    before discounts\n  finance         39 104 808 ₽\n    shipments after discounts\n    (discounts 3 609 138 ₽, i.e. 8.4%)\n\nAll three extracts were made correctly\nand are reproducible.",
+      "predictQuestion": "What's broken here?",
+      "options": [
+        {
+          "label": "Nothing in the calculations: three departments are answering three different questions. What's broken is that the company has no settled definition of \"revenue\" with an owner and a place where it's written down",
+          "why": "Each number is right in its own frame: retail sold 51.5M, we shipped 42.7M, we'll collect 39.1M. Arguing about which is \"the right one\" is pointless — the right one is whichever the definition names, and there is no definition."
+        },
+        {
+          "label": "Finance is right and the others are wrong: a company's revenue is the money it received, i.e. shipments net of discounts",
+          "why": "For the P&L, yes. But planning a promo needs retail revenue, and assessing warehouse load needs shipments before discounts. Declaring one definition the only valid one won't settle the argument, it will move it to the next meeting."
+        },
+        {
+          "label": "The problem is technical: the three data sources need to be consolidated into one warehouse, and then there'll be one number",
+          "why": "A warehouse doesn't choose between definitions — it will keep all three and add a fourth of its own. A single data mart is useful, but it's a consequence of an agreement about meaning, not a replacement for one."
+        },
+        {
+          "label": "It's the analyst's fault: the numbers should have been reconciled before the committee and one agreed figure brought in",
+          "why": "Reconciling before the meeting is useful, but it treats the symptom: in a month the same thing repeats in another report. A one-off reconciliation doesn't create a rule that keeps the number the same without manual intervention."
+        }
+      ],
+      "hints": [
+        "Check each number for an error: is even one of them wrong?",
+        "Ask who in the company has the right to say \"revenue is calculated like this\" — and where that's written down."
+      ],
+      "explain": "A discrepancy between numbers almost never means someone computed something incorrectly. Far more often everyone computed correctly — different things. Here three numbers answer three questions: how much the end shopper bought, how much we shipped, and how much of that we'll collect as cash. The gap between the first and second is the retail markup and stock sitting in the channel; between the second and third, distributor discounts, 8.4%.\n\nTrying to pick \"the right\" number by vote is a dead end, because each is needed for its own task. Data governance solves it differently: the metric gets a definition, and the definition gets an owner and a place where it's recorded. The minimum set for each metric: what it's called, what exactly it counts, which tables it comes from, who is responsible for its meaning, and when it was last reviewed. A metric dictionary like that isn't bureaucracy, it's a way to avoid spending an hour of committee time on an argument in which nobody is wrong.\n\nThe practical consequence for an analyst: a metric's name has to reflect its definition. \"Revenue\" is a bad name because it hides a choice; \"retail revenue (sell-out)\" and \"net shipments\" are good ones, because they make the choice visible right in the column header. Half the discrepancies between reports disappear at this step, before any governance at all.\n\nOn the role of the warehouse. A single source helps once the agreement exists: it turns the agreement into code that computes identically for everyone. Without the agreement it adds one more version of the number — its own.\n\nAnd on the signal that it's time to introduce definitions: if a meeting spends more than five minutes on whose number is right, the problem is no longer in the data, it's the absence of a rule. A good outcome for such a meeting isn't a chosen number, it's an assigned metric owner and a date by which the definition will be written down."
+    },
+    {
+      "id": "dom-059",
+      "title": "The reference table rewrote last year",
+      "brief": "In June the outlet «Магазин у дома #1042» moved from the «Дикси» chain to «Пятёрочка». The customer reference table was dutifully updated — the value in the chain-name column was replaced. In July a manager opens the annual report by chain for last year and can't understand why the numbers differ from the ones seen in January.",
+      "goal": "Understand what happened to history, and how a reference table that doesn't do this is built.",
+      "scenario": "What changed in the report\nfor last year:\n\n  in January it was\n    «Дикси»          8 400 000 ₽\n    «Пятёрочка»     12 100 000 ₽\n  in July it became\n    «Дикси»          7 900 000 ₽\n    «Пятёрочка»     12 600 000 ₽\n\nLast year's sales did not change.\nOne attribute in the customer reference\ntable changed — and the outlet's sales\nfor the whole of last year moved to the\nnew chain retroactively.",
+      "predictQuestion": "What's the defect here?",
+      "options": [
+        {
+          "label": "The reference table stores only the current state, so history is reassembled to match it. An attribute that changes over time needs validity dates, so that the past is computed with what was true then",
+          "why": "The report joins sales to the current value of the attribute and assigns the outlet's entire history to today's chain. The cure is versioning: the reference row gains start and end dates, and the join is made on the sale date."
+        },
+        {
+          "label": "There's no defect: a reference table should be current, and reports should reflect today's state of affairs",
+          "why": "Currency is needed for planning the future, not for a report about the past. If history silently changes, periods can't be compared at all: any difference might turn out to be an edit to the reference table rather than a change in the business."
+        },
+        {
+          "label": "All past reports should be recomputed and re-sent so everyone has the same numbers",
+          "why": "That makes the problem systematic rather than solving it: every time an outlet switches, the past gets rewritten again. And reports that decisions were already made on can't be changed retroactively — people cite them."
+        },
+        {
+          "label": "It's enough to save finished reports as files: then history stays fixed",
+          "why": "A file freezes one picture but doesn't let you compute anything new under the old rules. Six months on, any new breakdown forces a choice between \"as it was\" and \"as in the file,\" with nothing to reconcile them against."
+        }
+      ],
+      "hints": [
+        "Sales didn't change — so what changed is the thing they're joined to. What exactly?",
+        "Ask which question the report is asking: \"how much did this chain sell back then\" or \"how much do the outlets that are in this chain today sell.\""
+      ],
+      "explain": "This is the classic slowly-changing-dimension trap. The facts are immutable — last year's sales are what they always were. What changes is the reference table they're joined to, and with it all the history computed through that table.\n\nIt's important to see that both answers are legitimately needed. \"How much did the «Дикси» chain sell last year\" is a question about history, and the outlet should count under «Дикси», because that's where it was then. \"How much do the outlets that belong to «Пятёрочка» today sell\" is a question about today's portfolio, and here it's right to assign the whole history to the new chain: that's how you assess what was acquired. The defect isn't that the second option was chosen, it's that nobody made a choice — the report silently answered the second question when the first was asked.\n\nThe technical fix: the reference row gains validity dates and a current-version flag, and the old version isn't overwritten but closed off. The join between fact and dimension goes not by key alone but by date too: a March sale looks up the version of the outlet that was in force in March. That's what's called a historical dimension, and it costs more — more versions, a more complex join — so historization is switched on where an attribute really does change and does affect reports: chain, channel, region, assigned rep, product category.\n\nA separate takeaway for an analyst who isn't building the warehouse: if history has changed on its own, look first for an edit to a reference table, not for an error in the query. The signature is distinctive — the company total still reconciles while the breakdowns have drifted apart.\n\nAnd a practical habit, cheap and always useful: state in the report the date the reference data were taken as of. A line reading \"chain structure as of 01.07.2026\" removes half the questions and explains at once why the January version differs."
+    },
+    {
+      "id": "dom-060",
+      "title": "A request to send over an extract",
+      "brief": "A consultant hired to optimize logistics writes in the work chat asking for an extract on the reps — full names, territory, outlet revenue, plan fulfillment — \"to look at the data and get a picture.\" There is a contract with them, and the task was set by a manager.",
+      "goal": "Choose what to do with a request like this.",
+      "scenario": "What's being asked for:\n\n  rep's full name, team, territory,\n  revenue of the outlets served over\n  two years, monthly plan fulfillment\n\nWhat's known:\n\n  there is a contract with the consultant,\n  the task is logistics optimization,\n  the purpose of the extract isn't stated\n  in the request, the chat is a shared one\n  with about twenty people in it",
+      "predictQuestion": "What do you do?",
+      "options": [
+        {
+          "label": "Clarify which question they're solving, hand over the minimum that serves it — by territory without names, say — and send it not through the shared chat but after clearing it with the data owner",
+          "why": "Three actions close three different risks: clarifying the purpose cuts out unnecessary fields, de-identifying removes personal data where the task doesn't need it, and the sign-off and the transfer channel record who authorized it and where it went."
+        },
+        {
+          "label": "Send it: there's a contract, a manager set the task, the data are internal and aren't a trade secret",
+          "why": "A contract answers \"may I work with this person,\" not \"do they need these fields.\" Names alongside plan fulfillment amount to an assessment of people, and logistics can be optimized on territories and volumes."
+        },
+        {
+          "label": "Refuse: extracts containing personal data are never shared externally under any circumstances",
+          "why": "A flat refusal looks safe but halts work the company paid for. Governance is about handing over exactly what's needed and leaving a trail, not about handing over nothing."
+        },
+        {
+          "label": "Send it to the shared chat marked \"confidential, do not forward\"",
+          "why": "A marking doesn't restrict access, it only records an intention. A file in a chat of twenty people has already spread: it will be downloaded, forwarded, and found by search a year from now, long after the consultant is gone."
+        }
+      ],
+      "hints": [
+        "Split the question into three: which fields this task needs, who authorizes releasing them, and by what route they'll travel.",
+        "Ask whether the logistics task can be solved without knowing anyone's surname."
+      ],
+      "explain": "The answer to a request like this consists of three independent decisions, and they must not be conflated. First, the composition of the data: which fields are genuinely needed for the stated task. Second, the basis: who in the company owns these data and authorizes the transfer. Third, the channel: how exactly they'll travel and whether a trail remains.\n\nOn composition, the principle is minimization: hand over what the task can't be solved without, and nothing beyond it. Logistics optimization works with territories, outlets, volumes and distances — the reps' surnames aren't needed for it. Drop the names, replace them with a territory code, and the task is still fully solvable while the sensitivity of the extract falls by an order of magnitude. Plan fulfillment is data about the appraisal of specific people's work, and it most likely ended up in the request simply because it sat in the same table.\n\nOn the basis: a contract is a necessary condition, not a sufficient one. Authorization comes from the data owner, not from whoever is technically able to run the extract. For an analyst that's protection first of all for themselves: the decision to release wasn't theirs alone and it's on record.\n\nOn the channel: a shared chat isn't a data transfer channel. A file in it can't be recalled, restricted, or traced to see who downloaded it. The minimum standard is a link with access limited to a specific person and an expiry date; better still, access to a data mart instead of a file — access can be revoked, a file can't.\n\nAnd on the tone of the reply. The clarifying question \"which question exactly are you solving\" isn't bureaucratic resistance, it's a normal professional response: it almost always shrinks the extract, and it often turns out that what was needed wasn't a list but two numbers. Refusing with no alternative and handing over without looking are two sides of one mistake: in both, the analyst didn't do the work, they dodged the decision."
     }
   ]
 }
