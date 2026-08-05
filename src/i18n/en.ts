@@ -83,6 +83,11 @@ export const en = {
       `Pandas tasks run right in the browser — that needs a Python runtime with pandas, about ${mb} MB. Downloaded once, then served from the device cache; offline works just like the other tracks.`,
     note: 'Wi-Fi is best — on mobile data this is a noticeable chunk of traffic.',
     confirmBtn: 'Download and continue',
+    /** См. комментарий в ru.ts: отказ должен быть таким же явным действием, как согласие. */
+    laterBtn: 'Later',
+    deferredNote:
+      'The engine is not downloaded — pandas code cannot run yet. The skill map and the reference work without it.',
+    resumeBtn: (mb: number) => `Download the Python engine (~${mb} MB)`,
   },
   about: {
     title: 'About the trainer',

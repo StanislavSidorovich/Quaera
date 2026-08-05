@@ -136,6 +136,13 @@ export default function App() {
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  /**
+   * «Позже» на карточке согласия — только в памяти, без localStorage.
+   * Само согласие хранится (см. CONSENT_KEY в pythonClient.ts), а отказ — нет:
+   * запоминать «не хочу» надолго значило бы прятать единственный вход в трек
+   * от человека, который через неделю вернулся уже по Wi-Fi.
+   */
+  const [consentDeferred, setConsentDeferred] = useState(false);
   const schema = useSchema();
 
   const cycleFontSize = () => {
@@ -412,6 +419,9 @@ export default function App() {
    */
   function switchTrack(track: Track) {
     setActiveTrack(track);
+    // Уход с трека закрывает вопрос о загрузке: вернувшись, человек снова
+    // увидит карточку целиком, а не свёрнутую строку от прошлого отказа.
+    setConsentDeferred(false);
     try {
       localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
     } catch {
@@ -556,7 +566,10 @@ export default function App() {
               startedCount={startedCount}
               loading={load.phase === 'loading' || load.phase === 'idle'}
               consent={load.phase === 'consent' ? load.bytes : null}
+              consentDeferred={consentDeferred}
               onConfirmDownload={() => executor?.confirmDownload?.()}
+              onDeferConsent={() => setConsentDeferred(true)}
+              onResumeConsent={() => setConsentDeferred(false)}
               onStart={startSession}
               onOpenSchema={() => setSchemaOpen(true)}
               onOpenReference={() => setScreen({ name: 'reference' })}
@@ -779,7 +792,10 @@ function Home({
   startedCount,
   loading,
   consent,
+  consentDeferred,
   onConfirmDownload,
+  onDeferConsent,
+  onResumeConsent,
   onStart,
   onOpenSchema,
   onOpenReference,
@@ -796,7 +812,11 @@ function Home({
   loading: boolean;
   /** Байт для скачивания, если исполнитель ждёт согласия (см. LoadState 'consent'), иначе null. */
   consent: number | null;
+  /** Человек нажал «Позже» — карточка согласия свёрнута до одной строки. */
+  consentDeferred: boolean;
   onConfirmDownload: () => void;
+  onDeferConsent: () => void;
+  onResumeConsent: () => void;
   onStart: () => void;
   onOpenSchema: () => void;
   onOpenReference: () => void;
@@ -902,13 +922,35 @@ function Home({
            * до реальной загрузки), а показывать пустой счётчик «0 на повторение»
            * поверх невыполнимой кнопки было бы просто ложью на экране.
            */}
-          {consent !== null && (
+          {consent !== null && !consentDeferred && (
             <div className="card">
               <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
               <p className="brief">{t.consent.body(Math.round(consent / 1e6))}</p>
               <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
-              <button className="btn" onClick={onConfirmDownload}>
-                {t.consent.confirmBtn}
+              <div className="row">
+                <button className="btn" onClick={onConfirmDownload}>
+                  {t.consent.confirmBtn}
+                </button>
+                <button className="btn secondary" onClick={onDeferConsent}>
+                  {t.consent.laterBtn}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/*
+           * Отложенное согласие. Карточку не прячем совсем: без движка трек
+           * наполовину нерабочий, и об этом надо сказать прямо — но одной
+           * строкой, а не тем же блоком на пол-экрана, от которого человек
+           * только что отказался. Возврат ведёт обратно к полной карточке,
+           * а не запускает скачивание сразу: 53 МБ не должны уходить
+           * по одному случайному нажатию.
+           */}
+          {consent !== null && consentDeferred && (
+            <div className="card">
+              <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.deferredNote}</p>
+              <button className="btn secondary" onClick={onResumeConsent}>
+                {t.consent.resumeBtn(Math.round(consent / 1e6))}
               </button>
             </div>
           )}
