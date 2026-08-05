@@ -113,25 +113,12 @@ type Screen =
   | { name: 'about' }
   | { name: 'trackIntro'; track: Track };
 
-/** Треки, для которых уже показывали вводную карточку — чтобы не навязывать её повторно. */
-const TRACK_INTRO_SEEN_KEY = 'querium-track-intro-seen';
-
-function loadSeenIntros(): Set<Track> {
-  try {
-    const raw = localStorage.getItem(TRACK_INTRO_SEEN_KEY);
-    return new Set(raw ? (JSON.parse(raw) as Track[]) : []);
-  } catch {
-    return new Set();
-  }
-}
-
 export default function App() {
   const { t, locale, setLocale } = useI18n();
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [activeTrack, setActiveTrack] = useState<Track>(initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
-  const seenIntrosRef = useRef<Set<Track>>(loadSeenIntros());
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
@@ -178,23 +165,6 @@ export default function App() {
   // меняется только проза внутри карточки (см. lessonBySkillFor в content/index.ts).
   const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
   const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
-
-  // Трек по умолчанию (sql) человек тоже «входит» в него, просто без клика
-  // по переключателю — switchTrack в этом случае не вызывается, поэтому
-  // первый показ карточки для него отлавливаем отдельно, один раз при монтировании.
-  //
-  // Совсем новый посетитель (пустой прогресс, впервые открыл ссылку) — исключение:
-  // для него это редиректило бы мимо главной прямо в карточку конкретного трека
-  // (SQL по умолчанию), и первым, что он видит, оказывался разбор «что такое SQL»,
-  // а не питч тренажёра целиком (WelcomeHero на главной, см. Home). Для него
-  // остаёмся на главной; карточку трека он откроет сам, выбрав трек осознанно.
-  const isNewVisitor = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
-  useEffect(() => {
-    if (!isNewVisitor && activePack.intro && !seenIntrosRef.current.has(activeTrack)) {
-      setScreen({ name: 'trackIntro', track: activeTrack });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!executor) {
@@ -417,20 +387,13 @@ export default function App() {
     return true;
   }
 
-  function markIntroSeen(track: Track) {
-    seenIntrosRef.current.add(track);
-    try {
-      localStorage.setItem(TRACK_INTRO_SEEN_KEY, JSON.stringify([...seenIntrosRef.current]));
-    } catch {
-      // см. loadSeenIntros — недоступность localStorage не должна ломать переключение
-    }
-  }
-
   /**
-   * Переключение трека показывает вводную карточку один раз, при первом
-   * входе в трек: дальше это уже не «что это такое», а лишний экран между
-   * переключателем и занятием. Открыть карточку снова можно кнопкой
-   * с главного экрана трека — она никуда не девается после первого раза.
+   * Переключение трека всегда ведёт на главную. Вводная карточка трека
+   * никогда не показывается принудительно — только по кнопке с главного
+   * экрана трека (см. openTrackIntro): раньше её навязывали при первом
+   * входе, и это било по трекам с intro не одинаково (sql и domain её
+   * показывали, python и model — нет, раз у них ещё нет текста), что
+   * выглядело как случайное поведение, а не разница в наполнении.
    */
   function switchTrack(track: Track) {
     setActiveTrack(track);
@@ -442,12 +405,7 @@ export default function App() {
     } catch {
       // см. initialActiveTrack
     }
-    const pack = packForTrack(track);
-    if (pack?.intro && !seenIntrosRef.current.has(track)) {
-      setScreen({ name: 'trackIntro', track });
-    } else {
-      setScreen({ name: 'home' });
-    }
+    setScreen({ name: 'home' });
   }
 
   function openTrackIntro(track: Track) {
@@ -528,13 +486,22 @@ export default function App() {
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
-                      : (
-                          <>
-                            {t.tracks.names[activeTrack]}
-                            {/* Серия дней тоже дублируется боковым меню — скрываем её там же. */}
-                            <span className="ctx-streak"> · {t.app.streakSuffix(streak(progress.activeDays))}</span>
-                          </>
-                        )}
+                      : screen.name === 'trackIntro'
+                        ? /*
+                           * Пусто: заголовок над подписью и так называет трек,
+                           * и в общей ветке ниже он печатался бы вторым разом
+                           * подряд — тот же дефект, что задвоенный логотип
+                           * в шапке. Серия дней здесь тоже лишняя: она стоит
+                           * в боковом меню, а этот экран открывают ради текста.
+                           */
+                          null
+                        : (
+                            <>
+                              {t.tracks.names[activeTrack]}
+                              {/* Серия дней тоже дублируется боковым меню — скрываем её там же. */}
+                              <span className="ctx-streak"> · {t.app.streakSuffix(streak(progress.activeDays))}</span>
+                            </>
+                          )}
             </span>
           </h1>
           {screen.name === 'session' && screen.index > 0 && (
@@ -619,14 +586,8 @@ export default function App() {
           {screen.name === 'trackIntro' && (
             <TrackIntroScreen
               track={screen.track}
-              onStart={() => {
-                markIntroSeen(screen.track);
-                startSession(); // при пустом паке (не должно случиться, раз есть intro) сам никуда не переключит
-              }}
-              onSkip={() => {
-                markIntroSeen(screen.track);
-                setScreen({ name: 'home' });
-              }}
+              onStart={startSession} // при пустом паке (не должно случиться, раз есть intro) сам никуда не переключит
+              onSkip={() => setScreen({ name: 'home' })}
             />
           )}
 
@@ -904,7 +865,16 @@ function Home({
       </button>
 
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
-      <TrackCards active={activeTrack} progress={progress} onSelect={onSwitchTrack} />
+      <TrackCards
+        active={activeTrack}
+        progress={progress}
+        // Клик по карточке уже активного трека раньше не делал ничего —
+        // switchTrack на тот же трек не меняет ни состояние, ни экран,
+        // а подпись кнопки при этом обещает «Продолжить». Для активного
+        // трека клик запускает занятие напрямую, как обещает подпись;
+        // для остальных — переключает трек, как и раньше.
+        onSelect={(track) => (track === activeTrack ? onStart() : onSwitchTrack(track))}
+      />
 
       {/*
        * Показываем только на английском и только на треке, контент которого
@@ -1036,6 +1006,15 @@ function Home({
         <div className="dash-side">
           <div className="card">
             <h2>{t.home.skillMapTitle}</h2>
+            {/*
+             * Прокрутка внутри блока, а не по всей странице — карта на 20
+             * навыков (domain) иначе растягивает .dash-side втрое выше
+             * экрана, и липкая .dash-main слева просто исчезает из виду,
+             * пока её листаешь. Высота ограничена только на десктопе
+             * (см. .skill-map-list в styles.css) — на телефоне колонки нет,
+             * там своя, уже проверенная прокрутка всей страницы.
+             */}
+            <div className="skill-map-list">
             {byTier.map(([tier, list]) => (
               <div key={tier} style={{ marginTop: 12 }}>
                 <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -1081,6 +1060,7 @@ function Home({
                 })}
               </div>
             ))}
+            </div>
           </div>
 
           {ready && (
