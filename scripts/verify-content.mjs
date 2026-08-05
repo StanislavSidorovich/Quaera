@@ -1378,6 +1378,170 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   } else console.log(`  ok   mdl-030: Q1 2025 через общий календарь — продажи ${selloutQ1} ₽, отгрузки ${sellinQ1} ₽`);
 }
 
+// --- model-core, tier 3-4: роль календаря, мост, CALCULATE, time intelligence,
+// слой подготовки, версионирование, размер модели. Тот же приём.
+
+// mdl-031, mdl-054: две даты в fact_sellin расходятся по месяцу ровно
+// у 1979 строк, и март 2025 по заказу и по отгрузке даёт разные суммы.
+// Это и повод для роли календаря, и аргумент выбора колонки разбиения.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM fact_sellin WHERE substr(ship_date,1,7) <> substr(order_date,1,7)) AS crossing,
+      (SELECT COUNT(*) FROM fact_sellin) AS total,
+      (SELECT ROUND(SUM(net_amount)) FROM fact_sellin WHERE substr(order_date,1,7) = '2025-03') AS by_order,
+      (SELECT ROUND(SUM(net_amount)) FROM fact_sellin WHERE substr(ship_date,1,7) = '2025-03') AS by_ship,
+      (SELECT ROUND(SUM(net_amount)) FROM fact_sellin WHERE substr(order_date,1,4) = '2025') AS year_order,
+      (SELECT ROUND(SUM(net_amount)) FROM fact_sellin WHERE substr(ship_date,1,4) = '2025') AS year_ship`);
+  const [crossing, total, byOrder, byShip, yearOrder, yearShip] = r.rows[0];
+  if (crossing !== 1979 || total !== 15362 || byOrder !== 3303414 || byShip !== 3570458) {
+    fail('mdl-031', `в задании 1979 из 15 362 и март 3 303 414 / 3 570 458; в базе ${crossing} из ${total} и ${byOrder} / ${byShip}`);
+  } else console.log(`  ok   mdl-031: март по заказу ${byOrder} ₽, по отгрузке ${byShip} ₽ (${crossing} строк через границу)`);
+  if (yearOrder !== 39104808 || yearShip !== 39023501) {
+    fail('mdl-031', `в разборе год 39 104 808 / 39 023 501, в базе ${yearOrder} / ${yearShip}`);
+  }
+  // Разбор утверждает, что на годовом горизонте разница почти исчезает,
+  // а на месячном заметна. Если это перестанет быть так — вывод сломается.
+  const monthGap = Math.abs(byShip - byOrder) / byOrder;
+  const yearGap = Math.abs(yearShip - yearOrder) / yearOrder;
+  if (!(monthGap > yearGap * 3)) fail('mdl-031', 'разница по месяцу перестала заметно превышать годовую — вывод разбора не работает');
+}
+
+// mdl-034, mdl-035: размер моста «товар × акция». 465 пар — сумма произведений
+// внутри каждого бренда, у «Чистовъ» это 5 × 10 = 50.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM dim_product p JOIN dim_promo m ON m.brand = p.brand) AS bridge,
+      (SELECT COUNT(*) FROM dim_product p JOIN dim_promo m ON m.brand = p.brand WHERE p.brand = 'Чистовъ') AS chistov_pairs,
+      (SELECT MIN(c) FROM (SELECT COUNT(*) c FROM dim_product GROUP BY brand)) AS min_products,
+      (SELECT MAX(c) FROM (SELECT COUNT(*) c FROM dim_product GROUP BY brand)) AS max_products`);
+  const [bridge, chistovPairs, minProducts, maxProducts] = r.rows[0];
+  if (bridge !== 465 || chistovPairs !== 50) {
+    fail('mdl-035', `в задании мост 465 строк и 50 пар у «Чистовъ», в базе ${bridge} и ${chistovPairs}`);
+  } else console.log(`  ok   mdl-035: мост товар×акция — ${bridge} пар, у «Чистовъ» ${chistovPairs}`);
+  if (minProducts !== 4 || maxProducts !== 6) {
+    fail('mdl-035', `в задании «товаров от 4 до 6» на бренд, в базе от ${minProducts} до ${maxProducts}`);
+  }
+}
+
+// mdl-037, mdl-038, mdl-039: выручка брендов и срез по Москве — на них стоят
+// разборы про замену фильтра и про долю через ALL.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Ключевая') AS klyuch,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Чистовъ') AS chistov,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+         JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region rg ON rg.region_id = c.region_id
+         WHERE rg.region_name = 'Москва' AND p.brand = 'Ключевая') AS klyuch_msk,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Фрутта') AS frutta,
+      (SELECT ROUND(SUM(revenue)) FROM fact_sellout) AS total`);
+  const [klyuch, chistov, klyuchMsk, frutta, total] = r.rows[0];
+  if (klyuch !== 18841733 || klyuchMsk !== 1323959) {
+    fail('mdl-037/038', `в заданиях «Ключевая» 18 841 733 ₽ и 1 323 959 ₽ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
+  } else console.log(`  ok   mdl-037/038: «Ключевая» ${klyuch} ₽ всего, ${klyuchMsk} ₽ в Москве`);
+  if (klyuch + chistov !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${klyuch + chistov}`);
+  // mdl-039: доля «Фрутты» в разборе названа как 20.1%.
+  const share = Math.round((frutta / total) * 1000) / 10;
+  if (frutta !== 25465980 || share !== 20.1) {
+    fail('mdl-039', `в разборе «Фрутта» 25 465 980 ₽ и доля 20.1%, в базе ${frutta} и ${share}%`);
+  } else console.log(`  ok   mdl-039/040: «Фрутта» ${frutta} ₽ — доля ${share}% от ${total} ₽`);
+}
+
+// mdl-043, mdl-044: YTD к марту 2025 и сравнение с мартом 2024.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT ROUND(SUM(revenue)) FROM fact_sellout WHERE week_start >= '2025-03-01' AND week_start < '2025-04-01') AS mar25,
+      (SELECT ROUND(SUM(revenue)) FROM fact_sellout WHERE week_start >= '2024-03-01' AND week_start < '2024-04-01') AS mar24,
+      (SELECT ROUND(SUM(revenue)) FROM fact_sellout WHERE week_start >= '2025-01-01' AND week_start < '2025-04-01') AS ytd,
+      (SELECT ROUND(SUM(revenue)) FROM fact_sellout WHERE week_start LIKE '2024%') AS y2024`);
+  const [mar25, mar24, ytd, y2024] = r.rows[0];
+  const growth = Math.round(((mar25 / mar24) - 1) * 1000) / 10;
+  if (mar25 !== 4694330 || mar24 !== 4392846 || ytd !== 12566159) {
+    fail('mdl-043/044', `в заданиях март-25 4 694 330, март-24 4 392 846, YTD 12 566 159; в базе ${mar25}, ${mar24}, ${ytd}`);
+  } else if (growth !== 6.9) {
+    fail('mdl-044', `в разборе рост 6.9%, в базе ${growth}%`);
+  } else console.log(`  ok   mdl-043/044: март-25 ${mar25} против марта-24 ${mar24} (+${growth}%), YTD ${ytd}`);
+  if (y2024 !== 49518071) fail('mdl-044', `в разборе варианта выручка 2024 — 49 518 071, в базе ${y2024}`);
+}
+
+// mdl-045: календарь обязан быть непрерывным — на этом стоит весь разбор
+// про time intelligence на календаре из фактов.
+{
+  const r = runSql(`
+    SELECT COUNT(*) AS rows,
+           CAST(julianday(MAX(date_id)) - julianday(MIN(date_id)) + 1 AS INTEGER) AS span,
+           (SELECT COUNT(*) FROM dim_date WHERE year = 2025) AS y2025
+    FROM dim_date`);
+  const [rows, span, y2025] = r.rows[0];
+  if (rows !== 912 || rows !== span || y2025 !== 365) {
+    fail('mdl-045', `календарь: в задании 912 подряд идущих дней и 365 дней в 2025; в базе ${rows} строк на ${span} дней, в 2025 — ${y2025}`);
+  } else console.log(`  ok   mdl-045: dim_date непрерывен — ${rows} дней подряд, 2025 год полный (${y2025})`);
+}
+
+// mdl-046, mdl-047: грязный слой. Четыре написания одной точки и четыре
+// формата даты — это и есть предмет обоих заданий.
+{
+  const spellings = runSql(`
+    SELECT COUNT(DISTINCT customer_name) FROM staging_raw_sellout
+    WHERE REPLACE(REPLACE(TRIM(customer_name), 'ё', 'е'), 'Ё', 'Е') = 'Пятерочка #1026'`);
+  const formats = runSql(`
+    SELECT COUNT(*) FROM (SELECT DISTINCT
+      CASE WHEN sale_date LIKE '__.__.____' THEN 'dot'
+           WHEN sale_date LIKE '__/__/____' THEN 'slash'
+           WHEN length(sale_date) = 10 THEN 'iso' ELSE 'short' END AS f FROM staging_raw_sellout)`);
+  const rows = runSql(`SELECT COUNT(*) FROM staging_raw_sellout`);
+  if (spellings.rows[0][0] !== 4) {
+    fail('mdl-046', `в задании «Пятёрочка #1026» в четырёх написаниях, в базе их ${spellings.rows[0][0]}`);
+  } else console.log(`  ok   mdl-046: одна точка в ${spellings.rows[0][0]} написаниях (ё/е × пробелы)`);
+  if (formats.rows[0][0] !== 4 || rows.rows[0][0] !== 3110) {
+    fail('mdl-047', `в задании 4 формата даты на 3110 строк, в базе ${formats.rows[0][0]} на ${rows.rows[0][0]}`);
+  } else console.log(`  ok   mdl-047: ${formats.rows[0][0]} формата даты на ${rows.rows[0][0]} строк грязного слоя`);
+}
+
+// mdl-052, mdl-056: распределение строк факта по годам и свежий хвост —
+// на них стоят и расчёт доли обновления, и разбор про обрезание истории.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM fact_sellout WHERE week_start LIKE '2024%') AS y24,
+      (SELECT COUNT(*) FROM fact_sellout WHERE week_start LIKE '2025%') AS y25,
+      (SELECT COUNT(*) FROM fact_sellout WHERE week_start LIKE '2026%') AS y26,
+      (SELECT COUNT(*) FROM fact_sellout WHERE week_start >= '2026-04-01') AS fresh,
+      (SELECT COUNT(*) FROM fact_sellout) AS total`);
+  const [y24, y25, y26, fresh, total] = r.rows[0];
+  if (y24 !== 48391 || y25 !== 47122 || y26 !== 22936 || fresh !== 11353 || total !== 118449) {
+    fail('mdl-052', `в заданиях 48 391 / 47 122 / 22 936, свежих 11 353 из 118 449; в базе ${y24} / ${y25} / ${y26}, ${fresh} из ${total}`);
+  } else console.log(`  ok   mdl-052: по годам ${y24} / ${y25} / ${y26}, свежих ${fresh} (${Math.round((fresh / total) * 100)}%)`);
+  if (total - y24 !== 70058) fail('mdl-056', `в задании после удаления 2024 остаётся 70 058 строк, в базе ${total - y24}`);
+}
+
+// mdl-055, mdl-057: кардинальность колонок факта. Весь разбор про размер
+// модели держится на том, что sellout_id уникален, а product_id — нет.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(DISTINCT sellout_id) FROM fact_sellout) AS ids,
+      (SELECT COUNT(DISTINCT revenue) FROM fact_sellout) AS rev,
+      (SELECT COUNT(DISTINCT units) FROM fact_sellout) AS units,
+      (SELECT COUNT(DISTINCT week_start) FROM fact_sellout) AS weeks,
+      (SELECT COUNT(DISTINCT product_id) FROM fact_sellout) AS prods,
+      (SELECT COUNT(*) FROM fact_sellout) AS total`);
+  const [ids, rev, units, weeks, prods, total] = r.rows[0];
+  const quoted = { ids: 118449, rev: 86389, units: 154, weeks: 131, prods: 47 };
+  const actual = { ids, rev, units, weeks, prods };
+  const bad = Object.keys(quoted).filter((k) => quoted[k] !== actual[k]);
+  if (bad.length) {
+    fail('mdl-055', `кардинальность разошлась: ${bad.map((k) => `${k} ${quoted[k]}→${actual[k]}`).join(', ')}`);
+  } else console.log(`  ok   mdl-055/057: кардинальность sellout_id ${ids} / revenue ${rev} / units ${units} / week ${weeks} / product ${prods}`);
+  // Задание держится на том, что суррогатный ключ уникален, а значит несжимаем:
+  // появится в нём хоть один повтор — и «самая дорогая колонка» перестанет быть таковой.
+  if (ids !== total) fail('mdl-055', `sellout_id перестал быть уникальным: ${ids} значений на ${total} строк`);
+  if (!(rev < total)) fail('mdl-057', 'revenue стала уникальной — разбор про округление копеек потерял смысл');
+}
+
 // --- Tier 4 трека domain: «Суждение и влияние».
 //
 // Уровень концептуальный, но половина заданий опирается на конкретные числа
