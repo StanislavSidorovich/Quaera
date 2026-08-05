@@ -1258,6 +1258,126 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   }
 }
 
+// --- model-core, tier 2: мера/колонка, фильтр-контекст, контекст строки,
+// аддитивность, таблица дат. Тот же приём, что и на tier 1 mdl-013: числа
+// в задании закрепляются запросом к той же базе.
+
+// mdl-016, mdl-020, mdl-021: доля Чистовъ в выручке — 12.7% по всей базе,
+// 19.1% по Москве. На них стоит и mdl-016 (мера vs колонка), и разбивка
+// по регионам в mdl-021, где сумма регионов обязана сойтись с общим итогом.
+{
+  const r = runSql(`
+    SELECT ROUND(SUM(f.revenue)) AS total,
+           ROUND(SUM(CASE WHEN p.brand = 'Чистовъ' THEN f.revenue ELSE 0 END)) AS chistov,
+           (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
+              JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
+              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Москва') AS msk_total,
+           (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
+              JOIN dim_product p2 ON p2.product_id = f2.product_id
+              JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
+              JOIN dim_region r2 ON r2.region_id = c2.region_id
+              WHERE r2.region_name = 'Москва' AND p2.brand = 'Чистовъ') AS msk_chistov
+    FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id`);
+  const [total, chistov, mskTotal, mskChistov] = r.rows[0];
+  const share = Math.round((chistov / total) * 1000) / 10;
+  const mskShare = Math.round((mskChistov / mskTotal) * 1000) / 10;
+  if (chistov !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Чистовъ в тексте 12.7% (16 165 815 ₽), в базе ${share}% (${chistov} ₽)`);
+  if (mskChistov !== 1691942 || mskTotal !== 8876489 || mskShare !== 19.1) {
+    fail('mdl-016/020', `доля по Москве в тексте 19.1% (1 691 942 из 8 876 489), в базе ${mskShare}% (${mskChistov} из ${mskTotal})`);
+  } else console.log(`  ok   mdl-016/020: доля Чистовъ ${share}% всего, ${mskShare}% по Москве`);
+
+  const byRegion = runSql(`
+    SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Чистовъ'`);
+  if (byRegion.rows[0][0] !== chistov) fail('mdl-021', 'сумма выручки Чистовъ разошлась сама с собой между запросами');
+  else console.log('  ok   mdl-021: сумма по регионам сходится с общим итогом Чистовъ');
+}
+
+// mdl-019: конкретная ячейка матрицы — Москва × 2025 × Чистовъ против Москвы
+// без среза по бренду. На двух этих числах держится весь разбор фильтр-контекста.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
+         JOIN dim_product p ON p.product_id = f.product_id
+         JOIN dim_customer c ON c.customer_id = f.customer_id
+         JOIN dim_region rg ON rg.region_id = c.region_id
+         WHERE rg.region_name = 'Москва' AND f.week_start LIKE '2025%' AND p.brand = 'Чистовъ') AS with_brand,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
+         JOIN dim_customer c ON c.customer_id = f.customer_id
+         JOIN dim_region rg ON rg.region_id = c.region_id
+         WHERE rg.region_name = 'Москва' AND f.week_start LIKE '2025%') AS all_brands`);
+  const [withBrand, allBrands] = r.rows[0];
+  if (withBrand !== 819771 || allBrands !== 3718723) {
+    fail('mdl-019', `в задании 819 771 ₽ со срезом и 3 718 723 ₽ без него, в базе ${withBrand} и ${allBrands}`);
+  } else console.log(`  ok   mdl-019: Москва×2025×Чистовъ ${withBrand} ₽, без среза по бренду ${allBrands} ₽`);
+}
+
+// mdl-023: три первые строки fact_sellout — на их revenue/units держится
+// разбор про SUM внутри и вне контекста строки.
+{
+  const r = runSql(`SELECT sellout_id, revenue, units FROM fact_sellout WHERE sellout_id IN (1, 2, 3) ORDER BY sellout_id`);
+  const quoted = [[1, 398.31, 2], [2, 399.28, 2], [3, 601.4, 3]];
+  const same = r.rows.length === 3 && quoted.every((q, i) => q.every((v, j) => r.rows[i][j] === v));
+  if (!same) fail('mdl-023', `первые три строки fact_sellout разошлись с текстом: в базе ${JSON.stringify(r.rows)}`);
+  else console.log('  ok   mdl-023: первые три строки fact_sellout совпадают с текстом задания');
+}
+
+// mdl-026: остаток одного дистрибьютора (все товары) на конец Q4 2025 —
+// на этих трёх числах и их арифметической сумме держится разбор.
+{
+  const r = runSql(`
+    SELECT month_start, SUM(units_on_hand) FROM fact_stock
+    WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_type = 'distributor' LIMIT 1)
+      AND month_start IN ('2025-10-01', '2025-11-01', '2025-12-01')
+    GROUP BY month_start ORDER BY month_start`);
+  const byMonth = Object.fromEntries(r.rows);
+  const [oct, nov, dec] = ['2025-10-01', '2025-11-01', '2025-12-01'].map((m) => byMonth[m]);
+  const sum = oct + nov + dec;
+  if (oct !== 10325 || nov !== 15108 || dec !== 20846 || sum !== 46279) {
+    fail('mdl-026', `в задании 10 325 / 15 108 / 20 846 = 46 279, в базе ${oct} / ${nov} / ${dec} = ${sum}`);
+  } else console.log(`  ok   mdl-026: остаток дистрибьютора Q4 2025 — ${oct} / ${nov} / ${dec}, сумма ${sum}`);
+}
+
+// mdl-027: годовой остаток всех дистрибьюторов — то же расхождение, что уже
+// поймано в датасете (см. verify-dataset.mjs), но здесь оно часть разбора,
+// а не структурная проверка, и его число тоже обязано остаться неизменным.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT SUM(units_on_hand) FROM fact_stock WHERE month_start LIKE '2025%') AS year_sum,
+      (SELECT SUM(units_on_hand) FROM fact_stock WHERE month_start = '2025-12-01') AS december`);
+  const [yearSum, december] = r.rows[0];
+  if (yearSum !== 370142 || december !== 52350) {
+    fail('mdl-027', `в задании 370 142 за год и 52 350 на декабрь, в базе ${yearSum} и ${december}`);
+  } else console.log(`  ok   mdl-027: годовой остаток ${yearSum} против декабрьского ${december} (×${(yearSum / december).toFixed(1)})`);
+}
+
+// mdl-029, mdl-030: строка dim_date за 2025-03-03 — week_start совпадает
+// с самой датой, month_start уходит на 1 марта, quarter=1. И следствие —
+// выручка/отгрузки по кварталу 1 через разные колонки dim_date.
+{
+  const r = runSql(`SELECT date_id, week_start, month_start, quarter FROM dim_date WHERE date_id = '2025-03-03'`);
+  const [dateId, weekStart, monthStart, quarter] = r.rows[0] ?? [];
+  if (weekStart !== '2025-03-03' || monthStart !== '2025-03-01' || quarter !== 1) {
+    fail('mdl-029', `в задании week_start=2025-03-03, month_start=2025-03-01, quarter=1; в базе ${weekStart}, ${monthStart}, ${quarter}`);
+  } else console.log(`  ok   mdl-029: dim_date 2025-03-03 — неделя ${weekStart}, месяц ${monthStart}, квартал ${quarter}`);
+
+  const sellinOnThatDate = runSql(`SELECT COUNT(*) FROM fact_sellin WHERE month_start = '2025-03-03'`);
+  if (sellinOnThatDate.rows[0][0] !== 0) fail('mdl-029', 'в fact_sellin неожиданно появилась строка с датой 2025-03-03');
+
+  const q1 = runSql(`
+    SELECT
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
+         WHERE f.week_start IN (SELECT week_start FROM dim_date WHERE year = 2025 AND quarter = 1)) AS sellout_q1,
+      (SELECT ROUND(SUM(f.net_amount)) FROM fact_sellin f
+         WHERE f.month_start IN (SELECT DISTINCT month_start FROM dim_date WHERE year = 2025 AND quarter = 1)) AS sellin_q1`);
+  const [selloutQ1, sellinQ1] = q1.rows[0];
+  if (selloutQ1 !== 13512252 || sellinQ1 !== 9186879) {
+    fail('mdl-030', `в задании продажи Q1 13 512 252 ₽, отгрузки 9 186 879 ₽; в базе ${selloutQ1} и ${sellinQ1}`);
+  } else console.log(`  ok   mdl-030: Q1 2025 через общий календарь — продажи ${selloutQ1} ₽, отгрузки ${sellinQ1} ₽`);
+}
+
 // --- Tier 4 трека domain: «Суждение и влияние».
 //
 // Уровень концептуальный, но половина заданий опирается на конкретные числа
