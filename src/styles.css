@@ -837,6 +837,103 @@ textarea.sql:focus {
   opacity: 0.7;
 }
 
+/*
+ * Карточки треков (см. TrackCards в App.tsx) — только на десктопе. На телефоне
+ * .tabs.tracks выше уже решает ту же задачу компактно; показывать вдобавок
+ * четыре крупные карточки значило бы дважды предлагать одно и то же решение
+ * на экране, где и без того тесно. Скрыто через display: none, а не условием
+ * в JS — see .sidebar выше, тот же приём.
+ */
+.track-cards {
+  display: none;
+}
+
+.track-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--track, var(--line));
+}
+
+.track-card.active {
+  border-color: var(--track, var(--accent));
+  box-shadow: 0 0 0 1px var(--track, var(--accent));
+}
+
+.track-card.draft {
+  border-top-style: dashed;
+  opacity: 0.75;
+}
+
+.track-card.track-domain {
+  --track: var(--track-domain);
+}
+
+.track-card.track-sql {
+  --track: var(--track-sql);
+}
+
+.track-card.track-python {
+  --track: var(--track-python);
+}
+
+.track-card.track-model {
+  --track: var(--track-model);
+}
+
+.track-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.track-card-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.track-card-desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  /* Три строки, а не сколько влезет: в паре описание короткое, в паре — на
+     абзац, и без ограничения карточки в одном ряду разъезжались бы по высоте. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.track-card .bar {
+  width: 100%;
+  height: 5px;
+  margin-bottom: 10px;
+}
+
+.track-card .bar span {
+  background: var(--track, var(--ok));
+}
+
+.track-card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.track-card-cta {
+  flex: none;
+  font-weight: 600;
+  color: var(--track, var(--accent));
+}
+
 .tabs.tracks button.draft {
   border-style: dashed;
   color: var(--text-dim);
@@ -1305,10 +1402,16 @@ details.table-doc > summary small {
     padding: 18px;
   }
 
-  /* Треки на десктопе живут в боковом меню — вторая копия переключателя
-     прямо под ним была бы шумом, а не навигацией. */
+  /* Компактный переключатель треков уступает место карточкам — см. .track-cards ниже. */
   .tabs.tracks {
     display: none;
+  }
+
+  .track-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
   /*

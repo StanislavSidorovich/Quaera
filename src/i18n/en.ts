@@ -54,6 +54,10 @@ export const en = {
       python: 'pandas for analysts',
       model: 'Data model and BI',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+    solvedOf: (solved: number, total: number) => `${solved} / ${total} solved`,
+    continueBtn: 'Continue →',
+    startBtn: 'Start →',
+    openBtn: 'Open skill map →',
   },
   home: {
     dueLabel: 'due for review',

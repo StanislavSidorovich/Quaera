@@ -74,6 +74,16 @@ export const ru = {
       python: 'pandas для аналитика',
       model: 'Модель данных и BI',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+    /**
+     * Карточки треков на десктопе (см. TrackCards в App.tsx) — обзор всех
+     * четырёх сразу, крупнее и с прогрессом, в дополнение к компактному
+     * переключателю бокового меню. На телефоне этих строк не видно —
+     * там по-прежнему .tabs.tracks.
+     */
+    solvedOf: (solved: number, total: number) => `${solved} / ${total} выполнено`,
+    continueBtn: 'Продолжить →',
+    startBtn: 'Начать →',
+    openBtn: 'Открыть карту навыков →',
   },
   home: {
     dueLabel: 'на повторение',

@@ -673,6 +673,76 @@ function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (track: 
 }
 
 /**
+ * Обзор всех четырёх треков на десктопе — карточками, а не вкладками.
+ *
+ * TrackSwitcher выше (.tabs.tracks) остаётся мобильным переключателем:
+ * компактные табы, где решение «куда переключиться» принимается за секунду.
+ * TrackCards решает другую задачу — она нужна ровно там, где появляется
+ * пространство её показать: обзор «что вообще есть и сколько уже сделано»
+ * по всем направлениям сразу, крупнее, с описанием и прогресс-баром.
+ * На телефоне спрятана через CSS (см. .track-cards в styles.css) — тот же
+ * приём, что и с .tabs.tracks на десктопе, а не JS-развилка по ширине экрана.
+ *
+ * Прогресс каждой карточки — из progress.taskRecords, а не из activePack:
+ * activePack показывает только текущий трек, а тут нужны все четыре сразу,
+ * включая три, которые сейчас не выбраны.
+ */
+function TrackCards({
+  active,
+  progress,
+  onSelect,
+}: {
+  active: Track;
+  progress: Progress;
+  onSelect: (track: Track) => void;
+}) {
+  const { t, locale } = useI18n();
+  return (
+    <div className="track-cards">
+      {TRACK_ORDER.map((track) => {
+        const pack = packForTrack(track, locale);
+        if (!pack) return null;
+        const total = pack.tasks.length;
+        const ready = pack.status !== 'draft' && total > 0;
+        const solved = ready
+          ? pack.tasks.filter((task) => progress.taskRecords[task.id]?.solved).length
+          : 0;
+        const started = solved > 0;
+        return (
+          <button
+            key={track}
+            type="button"
+            className={`track-card track-${track}${active === track ? ' active' : ''}${ready ? '' : ' draft'}`}
+            onClick={() => onSelect(track)}
+          >
+            <div className="track-card-head">
+              <span className="track-card-name">{t.tracks.names[track]}</span>
+              <span className="pill">{ready ? t.tracks.readyBadge(total) : t.tracks.draftBadge}</span>
+            </div>
+            <p className="muted track-card-desc">{pack.description}</p>
+            {ready ? (
+              <>
+                <div className="bar" aria-hidden>
+                  <span style={{ width: `${total ? Math.round((solved / total) * 100) : 0}%` }} />
+                </div>
+                <div className="track-card-foot">
+                  <span className="muted">{t.tracks.solvedOf(solved, total)}</span>
+                  <span className="track-card-cta">{started ? t.tracks.continueBtn : t.tracks.startBtn}</span>
+                </div>
+              </>
+            ) : (
+              <div className="track-card-foot">
+                <span className="track-card-cta">{t.tracks.openBtn}</span>
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * Питч тренажёра в первые пять секунд — до клика.
  *
  * Показывается дважды одним и тем же содержимым: на главной новичку (пока
@@ -783,6 +853,7 @@ function Home({
       </button>
 
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
+      <TrackCards active={activeTrack} progress={progress} onSelect={onSwitchTrack} />
 
       {/*
        * Показываем только на английском и только на треке, контент которого
