@@ -83,22 +83,37 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
         <pre className="sql-block">{lesson.form}</pre>
       </div>
 
-      <div className="card">
-        <h2>{t.lesson.exampleTitle}</h2>
-        {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="sql-block">{lesson.example}</pre>}
-        <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
-          {lesson.reads}
-        </p>
-      </div>
+      {/*
+       * Пример и антипример — рядом, а не друг под другом.
+       *
+       * Смысл карточки в контрасте: увидеть, что антипример возвращает
+       * одиннадцать регионов вместо шестнадцати. Пока блоки шли колонкой,
+       * этот контраст приходилось удерживать в памяти через полтора экрана
+       * прокрутки — а после запуска обоих запросов между ними вставали ещё
+       * и две таблицы результата. На широком экране оба варианта и оба
+       * результата видны одновременно, и сравнение делают глазами.
+       *
+       * На телефоне колонка снова одна, порядок прежний: сначала как надо,
+       * потом как не надо.
+       */}
+      <div className="lesson-compare">
+        <div className="card">
+          <h2>{t.lesson.exampleTitle}</h2>
+          {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="sql-block">{lesson.example}</pre>}
+          <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
+            {lesson.reads}
+          </p>
+        </div>
 
-      <div className="card">
-        <h2>{t.lesson.wrongTitle}</h2>
-        {runnable ? (
-          <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
-        ) : (
-          <pre className="sql-block">{lesson.wrong}</pre>
-        )}
-        <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.wrongWhy}</p>
+        <div className="card">
+          <h2>{t.lesson.wrongTitle}</h2>
+          {runnable ? (
+            <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
+          ) : (
+            <pre className="sql-block">{lesson.wrong}</pre>
+          )}
+          <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.wrongWhy}</p>
+        </div>
       </div>
 
       <div className="card">

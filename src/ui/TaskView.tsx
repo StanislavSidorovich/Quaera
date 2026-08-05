@@ -163,10 +163,10 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
   const finish = () => onDone({ correct: wasCorrect, wrongAttempts, hintsUsed: hintsShown });
 
   /**
-   * Вынесены в переменные, а не заинлайнены в JSX: в write/fill эти блоки
-   * уезжают в правую колонку рядом с редактором (см. .task-work в styles.css),
-   * а в predict остаются в общем потоке под вариантами ответа — один и тот же
-   * узел не может физически стоять в двух местах разметки одновременно.
+   * Вынесены в переменные, а не заинлайнены в JSX: обратная связь нужна
+   * в двух разных ветках разметки (write/fill — рядом с редактором,
+   * predict — под вариантами ответа), а один и тот же узел не может
+   * физически стоять в двух местах одновременно.
    */
   const feedbackBlock = feedback && (
     <div className={`feedback ${solved && feedback.title === t.task.correctTitle ? 'ok' : feedback.tone}`}>
@@ -237,32 +237,50 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       </div>
 
       {task.mode === 'predict' ? (
-        <>
-          <div className="card">
-            {task.scenario ? <pre className="scenario">{task.scenario}</pre> : <pre className="sql-block">{task.predictSql}</pre>}
-            <p style={{ fontSize: 15, fontWeight: 600, margin: '14px 0 10px' }}>{task.predictQuestion}</p>
-            {task.options?.map((o, i) => (
-              <button
-                key={i}
-                className="option"
-                onClick={() => !solved && setChosen(i)}
-                disabled={solved}
-                aria-pressed={chosen === i}
-                data-state={solved ? (o.correct ? 'correct' : chosen === i ? 'wrong' : undefined) : undefined}
-                style={!solved && chosen === i ? { borderColor: 'var(--accent)' } : undefined}
-              >
-                {o.label}
-                {solved && <span className="why">{o.why}</span>}
-              </button>
-            ))}
-            {!solved && (
-              <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
-                {t.task.checkBtn}
-              </button>
-            )}
+        /*
+         * Ситуация слева, вопрос и варианты справа — той же сеткой, что
+         * редактор и результат в write/fill.
+         *
+         * Раньше это была одна карточка в столбик: выдержка из переписки
+         * с цифрами, под ней вопрос, под ним четыре развёрнутых варианта.
+         * На ноутбуке строка ситуации растягивалась на всю ширину экрана,
+         * а варианты уезжали под сгиб — выбирая ответ, человек уже не видел
+         * данных, по которым выбирает, и прокручивал вверх-вниз. Это ровно
+         * тот случай, где рабочая ситуация и решение по ней должны стоять
+         * рядом. На телефоне колонка снова одна, порядок прежний.
+         */
+        <div className="task-work">
+          <div className="task-situation">
+            <div className="card">
+              {task.scenario ? <pre className="scenario">{task.scenario}</pre> : <pre className="sql-block">{task.predictSql}</pre>}
+            </div>
           </div>
-          {feedbackBlock}
-        </>
+          <div className="task-answer">
+            <div className="card">
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 10px' }}>{task.predictQuestion}</p>
+              {task.options?.map((o, i) => (
+                <button
+                  key={i}
+                  className="option"
+                  onClick={() => !solved && setChosen(i)}
+                  disabled={solved}
+                  aria-pressed={chosen === i}
+                  data-state={solved ? (o.correct ? 'correct' : chosen === i ? 'wrong' : undefined) : undefined}
+                  style={!solved && chosen === i ? { borderColor: 'var(--accent)' } : undefined}
+                >
+                  {o.label}
+                  {solved && <span className="why">{o.why}</span>}
+                </button>
+              ))}
+              {!solved && (
+                <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={chosen === null}>
+                  {t.task.checkBtn}
+                </button>
+              )}
+            </div>
+            {feedbackBlock}
+          </div>
+        </div>
       ) : (
         <div className="task-work">
           <div className="task-editor">
