@@ -143,14 +143,26 @@ const packTranslations: Partial<Record<string, PackTranslation>> = {
 
 /**
  * Пак трека. Берём первый — когда в треке появится больше одного пака, здесь
- * появится выбор. `locale` по умолчанию 'ru': весь остальной контент, кроме
- * sql-core, пока на русском в любом случае, и явно передавать locale должны
- * только места, которые реально показывают текст задания человеку.
+ * появится выбор. `locale` по умолчанию 'ru': явно передавать locale должны
+ * только места, которые реально показывают текст задания человеку, — остальным
+ * нужна структура, и там локаль ничего не меняет.
  */
 export const packForTrack = (track: Track, locale: Locale = 'ru'): Pack | undefined => {
   const pack = packsByTrack.get(track)?.[0];
   if (!pack) return undefined;
   return locale === 'en' ? applyTranslation(pack, packTranslations[pack.id]) : pack;
+};
+
+/**
+ * Есть ли у трека перевод контента. Нужно ровно для одного: предупредить
+ * англоязычного человека, что тексты этого трека он увидит по-русски.
+ * Пока перевод частичный — говорить это на всех треках сразу было бы враньём
+ * в обе стороны: на переведённых трек уже английский, на непереведённом
+ * предупреждение обязано остаться.
+ */
+export const isTrackTranslated = (track: Track): boolean => {
+  const pack = packsByTrack.get(track)?.[0];
+  return !!pack && !!packTranslations[pack.id];
 };
 
 /**

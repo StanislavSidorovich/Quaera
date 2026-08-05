@@ -195,7 +195,7 @@ export const en = {
   locale: {
     switchAriaLabel: 'Language',
     partialNote:
-      'English covers the interface; task content (wording, breakdowns, technique cards) is still being translated and shows in Russian for now.',
+      'This track is not translated yet: its skill names and, once tasks are written, their wording and breakdowns show in Russian. The SQL, analytics and pandas tracks are fully in English.',
   },
   fontSize: {
     aria: 'Font size — tap to switch',

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { lessonBySkill, lessonBySkillFor, packForTrack, packs } from './content';
+import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs } from './content';
 import type { Lesson, Pack, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
@@ -752,10 +752,13 @@ function Home({
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
 
       {/*
-       * Показываем только на английском: это признание, что контент заданий
-       * ещё не переведён, и по-русски оно просто неуместно.
+       * Показываем только на английском и только на треке, контент которого
+       * действительно не переведён. Раньше условие было одно — locale === 'en', —
+       * и после того как sql, domain и python были переведены целиком, надпись
+       * стала враньём: она сообщала о русских текстах на треке, полностью
+       * английском. По-русски она неуместна в любом случае.
        */}
-      {locale === 'en' && (
+      {locale === 'en' && !isTrackTranslated(activeTrack) && (
         <p className="muted" style={{ margin: '-6px 0 12px', fontSize: 12 }}>{t.locale.partialNote}</p>
       )}
 
