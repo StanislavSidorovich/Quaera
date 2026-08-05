@@ -1,0 +1,710 @@
+{
+  "id": "python-core",
+  "title": "pandas for an analyst",
+  "description": "Not \"Python in general,\" but the slice of it used to work with data. Every technique is placed next to its SQL equivalent — and what SQL doesn't have at all — the index, copies, column types — is worked through separately.",
+  "tierNames": {
+    "1": "DataFrame and data",
+    "2": "Aggregation",
+    "3": "Shape of data",
+    "4": "Working habits"
+  },
+  "skills": [
+    {
+      "id": "py-dataframe",
+      "title": "DataFrame and Series",
+      "summary": "I read data into a DataFrame and distinguish a table from a single column — a Series, which has its own set of methods."
+    },
+    {
+      "id": "py-index",
+      "title": "The index — SQL has no equivalent",
+      "summary": "I remember that a DataFrame has an index, and I'm not surprised when a column \"disappears\" after groupby — it moved into the index."
+    },
+    {
+      "id": "py-select-filter",
+      "title": "Selecting and filtering",
+      "summary": "I select rows with a boolean mask and columns through loc, without confusing lookup by label with lookup by position."
+    },
+    {
+      "id": "py-dtypes",
+      "title": "Column types",
+      "summary": "I check dtypes before computing anything, and I understand why \"summing numbers\" glued strings together, and why whole numbers turned fractional on their own."
+    },
+    {
+      "id": "py-groupby",
+      "title": "groupby and agg",
+      "summary": "I build a summary with groupby, and I know ahead of time what comes back — a Series or a DataFrame — and what ends up in the index."
+    },
+    {
+      "id": "py-transform",
+      "title": "transform vs. agg and apply",
+      "summary": "I return a value at the source granularity through transform instead of computing a summary and gluing it back on — the pandas version of a window function."
+    },
+    {
+      "id": "py-nan",
+      "title": "NaN and gaps",
+      "summary": "I remember that NaN isn't equal to itself, and that groupby silently drops rows with a missing key by default."
+    },
+    {
+      "id": "py-merge",
+      "title": "merge and row multiplication",
+      "summary": "I join tables knowing the key's cardinality, and I check it with validate — not after the total has doubled."
+    },
+    {
+      "id": "py-explore",
+      "title": "Exploring the data",
+      "summary": "I look at the data before computing anything: value_counts by slice, describe by measure — and I catch an outlier or a stray category before it reaches a report."
+    },
+    {
+      "id": "py-reshape",
+      "title": "pivot, pivot_table and melt",
+      "summary": "I move a table between wide and long format and pick whichever one the next step of the calculation needs."
+    },
+    {
+      "id": "py-tidy",
+      "title": "Tidy data",
+      "summary": "I bring data to \"one row, one observation; one column, one variable\" and understand that this saves steps rather than just tidying up the code."
+    },
+    {
+      "id": "py-timeseries",
+      "title": "Dates and time series",
+      "summary": "I cast a column to datetime, change a series' frequency with resample, and compute rolling windows with rolling."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "py-001",
+      "title": "Price list for a promo",
+      "brief": "The summer catalog only takes drinks from the «Ключевая» and «Фрутта» brands, and only items priced above 100 ₽ — cheap ones don't go into a promo.",
+      "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
+      "hints": [
+        "A list of values for one column is conveniently checked with .isin([...]) — the pandas equivalent of SQL IN.",
+        "\"Strictly above\" is >, not >=. Conditions are combined with & (ampersand), not and — and doesn't work on a pandas column."
+      ],
+      "explain": "& and | are not and/or: and/or in Python expect a single boolean value, while a column is a Series of thousands of True/False at once, and and has no way to decide what to do with it. & and | compute logic element-wise, and that's the only option that works for a pandas filter. Hence the parentheses around each condition: & binds tighter than ==, so without parentheses Python would first evaluate 'Ключевая' & (list_price > 100) and fail with a TypeError about \"rand_\" — a message that gives no hint at the cause unless you remember operator precedence."
+    },
+    {
+      "id": "py-002",
+      "title": "and instead of &",
+      "brief": "A colleague wrote a filter out of an old Python habit — with and — and got not a result but an error, right in front of the client.",
+      "goal": "Determine what happens when the code runs.",
+      "predictQuestion": "What happens when this code runs, if dim_product has more than one row?",
+      "options": [
+        {
+          "label": "Returns products of the «Ключевая» brand priced above 100 ₽",
+          "why": "That's what would happen with & instead of and. and tries to reduce each condition to a single True/False before the comparison even happens — and that's exactly the step where everything fails."
+        },
+        {
+          "label": "Fails with an error: 'The truth value of a Series is ambiguous'",
+          "why": "and requires a single boolean value on each side, and (dim_product['list_price'] > 100) is a Series of thousands of True/False values. pandas can't decide what to treat as \"true\" here, and honestly fails with a ValueError instead of guessing."
+        },
+        {
+          "label": "Returns an empty DataFrame — no row matched",
+          "why": "That would be a quiet, much more harmless outcome. In reality pandas doesn't stay silent: it can't evaluate and over an entire column and raises a ValueError before it ever gets to selecting rows."
+        },
+        {
+          "label": "Returns every row of the original table, unfiltered",
+          "why": "If and were simply ignored, that would be plausible. But and is part of the Python language, not pandas, and it tries to evaluate both operands as bool at once — which is impossible for a Series."
+        }
+      ],
+      "hints": [
+        "and is a Python-language operator, not a pandas one. It expects one True/False on each side.",
+        "(dim_product['list_price'] > 100) isn't a single value, it's a column of True/False, one per row."
+      ],
+      "explain": "The message 'The truth value of a Series is ambiguous' is the most common beginner's mistake in pandas, and it's worth seeing consciously once, rather than in a panic in the middle of a real task. The rule is simple: between two conditions on columns it's always & or |, and and/or are only for two already-resolved single values (two numbers, say)."
+    },
+    {
+      "id": "py-003",
+      "title": "E-com customers for the logistics report",
+      "brief": "Logistics puts together a separate report for marketplace warehouses — they're serviced differently from retail — and needs a short list of these outlets.",
+      "goal": "Return customer_id, customer_name and city only for customers with channel = 'ecom'.",
+      "hints": [
+        "The channel value is a string, compared with ==, like an ordinary text value.",
+        "The second blank is one more column name in the list passed to .loc."
+      ],
+      "explain": "loc[mask, column_list] isn't two different techniques, it's one call with two parts: to the left of the comma you decide which rows to take, to the right which columns to keep. In SQL that's WHERE and the SELECT list; here it's one operation, because both are just indexing into the table."
+    },
+    {
+      "id": "py-004",
+      "title": "The «Форте» line for the category report",
+      "brief": "The category manager is pulling the strengthened «Форте» line into a separate section of the quarterly report — there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
+      "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Форте'.",
+      "hints": [
+        "Text methods on a string column are called through .str — the pandas equivalent of LIKE '%...%'.",
+        ".str.contains('Форте') returns a boolean column, which you can plug straight into .loc as a mask."
+      ],
+      "explain": ".str isn't decoration, it's a necessity: without it Python would try to call .contains() on the whole column at once and fail, because a Series as a whole has no such method. .str opens access to string methods element by element, for each value of the column separately — the pandas equivalent of how SQL applies LIKE to every row of a table."
+    },
+    {
+      "id": "py-005",
+      "title": "A view for the buyer",
+      "brief": "A buyer asks for a short view of products for price reconciliation: just the code, name and price — no service fields like launch_date.",
+      "goal": "Return sku_code, product_name, list_price for all products.",
+      "hints": [
+        "A list of columns is passed as a list inside square brackets: df[['a', 'b']].",
+        "No row filtering is needed here — just select columns, all products stay."
+      ],
+      "explain": "dim_product[['sku_code', 'product_name', 'list_price']] is df[column_list], and the result is always a DataFrame, even if the list has one column. The outer brackets address the table, the inner ones are the list of names itself. It's easy to confuse this with df['sku_code'] (one column, no nested brackets) — that gives a Series, not a table, see the next task."
+    },
+    {
+      "id": "py-006",
+      "title": "One bracket or two",
+      "brief": "A colleague copied code from an old report, and instead of a table with one column got something that won't accept .rename(columns=...).",
+      "goal": "Understand the difference between dim_product['brand'] and dim_product[['brand']].",
+      "predictQuestion": "What's the fundamental difference between a and b?",
+      "options": [
+        {
+          "label": "a is a Series (a one-dimensional column), b is a DataFrame with one column, \"brand\"",
+          "why": "Single square brackets with a column name return a Series — the column itself. Double brackets are df[list], and even a list of one name gives a DataFrame, a two-dimensional table."
+        },
+        {
+          "label": "The result is the same — these are two equivalent ways of writing the same thing",
+          "why": "The values match, but the types differ: a is a Series, b is a DataFrame. The difference surfaces on the very first call meant for a table: a Series has neither .columns nor .merge(), and while .rename(columns=...) does exist, it doesn't accept the columns parameter there and fails with a TypeError — there's nothing to rename in a Series, it has one name of its own instead of a list of columns."
+        },
+        {
+          "label": "a will raise an error — that's not how columns are selected",
+          "why": "df['col'] is the standard, most common way to get a single column as a Series. There's no error here."
+        },
+        {
+          "label": "a is a DataFrame with one column, b is a Series",
+          "why": "It's exactly the reverse: one level of brackets is a Series, two levels (a list inside the brackets) is a DataFrame."
+        }
+      ],
+      "hints": [
+        "The number of levels of square brackets is the answer itself: one level versus a list inside.",
+        "A DataFrame has columns and their names; a Series has only values and one name of its own."
+      ],
+      "explain": "This is the most common cause of \"AttributeError: 'Series' object has no attribute ...\" for people just starting out: a method that exists on DataFrame gets called on a Series, because there ended up being one fewer pair of brackets than expected. The habit worth building: after selecting columns, check the type of the result, not just the values."
+    },
+    {
+      "id": "py-007",
+      "title": "Regions for a demographic summary",
+      "brief": "A demographics report needs a short slice of regions — just the name and population, no federal district or tier.",
+      "goal": "Return region_name and population for all regions.",
+      "hints": [
+        "Both blanks are column names, each in quotes, separated by a comma.",
+        "The outer brackets are already there — they mean \"a list of columns from the table\"."
+      ],
+      "explain": "The same df[[...]] technique works for any table: on the outside, addressing the DataFrame by a list of columns, on the inside, the list of name strings itself. The order in the list is the order of the columns in the result, just like a SELECT list in SQL."
+    },
+    {
+      "id": "py-008",
+      "title": "Manager 1.0",
+      "brief": "An HR analyst opens the employee extract and can't understand why the manager's code is 1.0, not 1: \"Is this a fractional employee?\"",
+      "goal": "Understand why manager_id prints with a decimal point.",
+      "predictQuestion": "Five managers have an empty manager_id (they have no boss of their own). Why does that make the ENTIRE manager_id column display as 1.0, 2.0, ... rather than 1, 2, ...?",
+      "options": [
+        {
+          "label": "The column has gaps, and the plain integer type int64 can't hold NaN — pandas upgrades the whole column to float64",
+          "why": "NaN is a special floating-point value, and int64 physically cannot hold it. As soon as an integer column has even one gap, pandas converts the entire column to float64 — hence the decimal point on every value, even the ones that are present."
+        },
+        {
+          "label": "It's a bug in the dataset — someone forgot to store manager_id as an integer",
+          "why": "The data are fine: pandas chooses the type itself when reading, and with gaps present int64 simply isn't physically available for that column — this is library behavior, not a flaw in the source."
+        },
+        {
+          "label": "pandas always stores numeric ids as float64 — that's a general rule for every column",
+          "why": "Not general: rep_id in the same table is also numbers, but it has no gaps, and that column stayed int64, without a single decimal point. The cause is specifically NaN, not the fact that the values are identifiers."
+        },
+        {
+          "label": "This only happens in old pandas versions — in newer ones the ids will stay whole",
+          "why": "This is a fundamental limitation of the NumPy int64 type (it simply has no representation for \"no value\"), not a version bug. There's a separate nullable type, Int64 with a capital letter, that can hold both integers and gaps — but that isn't the default behavior."
+        }
+      ],
+      "hints": [
+        "The five managers have role = 'manager', and none of them has their own manager_id — meaning the column contains NaN.",
+        "int64 is a type with no NaN. Since a gap needs to fit somewhere, pandas picks the nearest type that can hold it."
+      ],
+      "explain": "One and the same cause sits behind two frequent confusions: \"why is the id fractional\" and \"why did the sum of numbers turn into NaN when just one row was missing.\" pandas types a column as a whole, not value by value, and a single gap in an integer column changes the type of every one of its values at once."
+    },
+    {
+      "id": "py-009",
+      "title": "Who in the company has no manager",
+      "brief": "The org chart needs a list of top-level employees — the ones who have no manager of their own.",
+      "goal": "Return rep_id, rep_name, team for employees whose manager_id is empty.",
+      "hints": [
+        "\"Empty\" in pandas is NaN, and checking for it is a separate method: .isna(), not == None and not == NaN.",
+        "The result of .isna() is already a boolean mask, and it can be plugged straight into .loc."
+      ],
+      "explain": "NaN is the only value in Python that isn't equal to itself, so df['x'] == None or df['x'] == float('nan') don't find gaps at all. .isna() is the only reliable way to check for them, and it's the same gap that turned manager_id into float64 in the previous task — two problems, one cause."
+    },
+    {
+      "id": "py-010",
+      "title": "Bringing the id back to whole numbers",
+      "brief": "A colleague asks for an extract for the HR system, where manager_id has to arrive without a decimal point — the import doesn't accept \"6.0\" as an employee code.",
+      "goal": "Return rep_id, rep_name, manager_id, casting manager_id to an integer type that still allows gaps.",
+      "hints": [
+        "Plain int64 won't work here — the column has gaps, and int64 can't hold them.",
+        "pandas has a separate nullable type, capitalized at the start of its name — it holds both whole numbers and gaps."
+      ],
+      "explain": "Int64 (capitalized) isn't a typo and isn't the same as int64: it's a separate pandas nullable type that prints gaps as <NA> rather than as a floating-point NaN, and stores the rest of the values as true integers — no decimal point. Plain int64 doesn't fit this task at all: .astype('int64') on this same column fails with IntCastingNaNError — \"cannot convert NA to integer\" — and no rewording gets around it, because int64 physically has no room for a gap."
+    },
+    {
+      "id": "py-011",
+      "title": "Where did product_id go",
+      "brief": "An intern computed sales by product and sent a screenshot: columns units and product_id — but only units is there, and above it sits a strange caption product_id, as if it were a heading rather than a column.",
+      "goal": "Understand where product_id went after the grouping.",
+      "predictQuestion": "The result is a Series with one column of units values. Where did product_id end up?",
+      "options": [
+        {
+          "label": "It became the index of the result — labeled to the left of the values, but it isn't counted as a separate column",
+          "why": "groupby makes the grouping column the index of the result by default. It's visible — just not in the position of an ordinary column, and code expecting product_id as df['product_id'] won't find it."
+        },
+        {
+          "label": "It's gone for good — you'll have to group again while keeping product_id separately",
+          "why": "Nothing is lost: product_id is alive in the index, and .reset_index() returns it as a column again at any moment, with no need to regroup."
+        },
+        {
+          "label": "It stayed an ordinary column, it's just not shown in this particular output",
+          "why": "It is shown — that thing that looks like a \"caption on top\" is exactly product_id: it's the index of the Series, not a missing column."
+        },
+        {
+          "label": "groupby deletes the grouping column from the result entirely by default",
+          "why": "It doesn't delete it, it moves it — into the index. That's an important difference: what's in the index isn't deleted, it just has to be accessed differently from an ordinary column."
+        }
+      ],
+      "hints": [
+        "groupby('col') isn't the same as removing col from the result.",
+        "Every DataFrame and Series has an index — its own label column on the left of the values, which isn't physically part of the list of ordinary columns."
+      ],
+      "explain": "SQL has no such distinction — GROUP BY product_id simply leaves product_id as an ordinary column of the result. pandas has a third dimension — the index — and this is the first place where the analogy with SQL stops matching one to one."
+    },
+    {
+      "id": "py-012",
+      "title": "Brand by product code",
+      "brief": "A merchandiser is reconciling warehouse stock against the shelf and knows only the product_id from the delivery note — needs to quickly check which brand that is.",
+      "goal": "Return product_id and brand for the product with product_id = 5, setting product_id as the table's index and looking up the row with .loc.",
+      "hints": [
+        "set_index('product_id') makes product_id the index — after that, rows are looked up through it via .loc, not through a mask on a column.",
+        "The number in square brackets inside .loc is the index label to look up, not a position."
+      ],
+      "explain": ".loc[[5], ['brand']] is a lookup by index label, not by condition: the same spirit as a primary key in SQL, only explicitly assigned via set_index rather than implied. A list of one element, [5], not bare 5 — that way the result stays a table, rather than turning into a single-value Series."
+    },
+    {
+      "id": "py-013",
+      "title": "Bringing product_id back as a column",
+      "brief": "The result of the grouping needs to be merged with another table on product_id — and merge looks for it as an ordinary column, not as an index.",
+      "goal": "After grouping by product_id, return product_id as an ordinary column again.",
+      "hints": [
+        "You need the method that reverses what groupby does with the grouping column by default.",
+        "The method's name says it plainly: it \"resets\" the index back into ordinary columns."
+      ],
+      "explain": ".reset_index() is the most common next step after groupby if the grouping result is going to be used further: in a merge, in a comparison with another table, when writing to a file. Without it, product_id stays in the index, and an attempt at merge(..., on='product_id') won't find such a column."
+    },
+    {
+      "id": "py-014",
+      "title": "Assortment and price by division",
+      "brief": "The category manager is comparing the price spread between FMCG and Pharma before planning next quarter's price list.",
+      "goal": "Group dim_product by division and return three columns: division, n_sku — the number of products (count on sku_code), avg_price — the average list_price, rounded to one decimal place.",
+      "hints": [
+        "Named aggregation: .agg(column_name=('column', 'function')) — gives flat names right away, no MultiIndex headers.",
+        "as_index=False returns division as an ordinary column right away, not as an index — no need to call reset_index() separately."
+      ],
+      "explain": "In SQL this would be GROUP BY division with two aggregates in the SELECT. Here it's the same thing — one call to .agg(...) with named results: each name=('source_column', 'function') immediately becomes a separate column with the name you want. The alternative, a list of functions, .agg(['count', 'mean']), is worse for two reasons at once. Applied to the whole table it fails with a TypeError: you can't average product_name or brand, and a list of functions gives no way to say which one applies to which column. And narrowed to one column — dim_product.groupby('division')[['list_price']].agg(['count', 'mean']) — both functions land in a two-level header ('list_price', 'count'), which still has to be picked apart afterward. Named aggregation removes both problems: it names the source, the function, and the result's name all at once."
+    },
+    {
+      "id": "py-015",
+      "title": "What order will the brands land in",
+      "brief": "An intern groups products by brand and expects to see them in the order the brands first appeared in the file — and gets something else.",
+      "goal": "Understand the order groupby puts groups in by default.",
+      "predictQuestion": "dim_product has 47 rows, brands appear in mixed order. In what order will the first three brands land in the result?",
+      "options": [
+        {
+          "label": "Alphabetically: «Витамакс», «Гастрокалм», «Ключевая» — that is, in order of the key's values, not the order of rows in the source table",
+          "why": "groupby sorts groups by the key's value by default (sort=True) — this behavior is always on unless sort=False is passed explicitly. The row order in the source table has no effect on the result."
+        },
+        {
+          "label": "In the order the brands first appeared in the file",
+          "why": "That would happen with sort=False — but that isn't the default. Without an explicit sort=False, groupby always sorts by key."
+        },
+        {
+          "label": "In descending average price — from the most expensive brand to the cheapest",
+          "why": "groupby doesn't sort by the value of the measure (list_price) on its own — that would need a separate .sort_values() after the aggregation. By default it's the grouping key that gets sorted, not the result."
+        },
+        {
+          "label": "The order is unpredictable and can differ on every run",
+          "why": "The result is deterministic: the same table always gives the same group order, because the sorting is by the key's value, not by randomness or memory layout."
+        }
+      ],
+      "hints": [
+        "groupby has a sort parameter, and it's True by default.",
+        "It's specifically the grouping key (brand) that gets sorted, not the aggregation result (mean)."
+      ],
+      "explain": "In SQL, GROUP BY without a separate ORDER BY gives no guaranteed result order under any standard. pandas is exactly the opposite: sorting by key is on by default, and if you need the row order of the source table (for speed on a very large grouping, say), that's a separate, deliberate choice — sort=False."
+    },
+    {
+      "id": "py-016",
+      "title": "Division × category matrix",
+      "brief": "Before assembling the assortment matrix, someone needs a quick view of how many SKUs fall into each \"division — category\" pair.",
+      "goal": "Group dim_product by two columns at once — division and category — and count sku_code in each pair.",
+      "hints": [
+        "Grouping by several columns at once is a list of names inside groupby([...]), not two separate calls.",
+        "Both blanks are column names in quotes: division first, then category."
+      ],
+      "explain": "groupby([...]) with a list is a direct equivalent of GROUP BY division, category in SQL: every unique combination of values from the two columns becomes its own group. as_index=False matters here just as much as in single-key grouping — without it both columns would go into a MultiIndex instead of staying ordinary columns of the result."
+    },
+    {
+      "id": "py-017",
+      "title": "A shipment's share of the product's yearly volume",
+      "brief": "The «Хрустик» brand manager wants to see how each product's shipments are spread across the whole sales history — a noticeable jump for one SKU in June looks more like a promo than organic demand.",
+      "goal": "Add a unit_share column to fact_sellout — this row's share of units in the sum of units for the same product_id over the whole period of the table.",
+      "hints": [
+        "transform, unlike agg, returns a result the same length as the source table — good for gluing a summary back onto every row.",
+        ".groupby('product_id')['units'].transform('sum') is the sum of units for the product, repeated in every row of that product."
+      ],
+      "explain": "agg() would collapse the group into one row — 47 products would give 47 rows, not 118,449. transform() returns the same number of rows as the source table, plugging its group's total into every row — the product's whole volume over the table's 131 weeks (January 2024 to June 2026), repeated in every one of its shipments. From there the share comes out of a single division, with no separate merge needed to \"glue the summary back on\" — the same thing a SUM(...) OVER (PARTITION BY product_id) window function does in SQL."
+    },
+    {
+      "id": "py-018",
+      "title": "sum() and transform('sum') — different length",
+      "brief": "A colleague plugged in sum() where a transform was needed, and got a column that's almost all NaN instead of each sale's share.",
+      "goal": "Understand how the results of sum() and transform('sum') differ after the same grouping.",
+      "predictQuestion": "fact_sellout has 118,449 rows and 47 unique product_id values. How many rows will a and b have?",
+      "options": [
+        {
+          "label": "a has 47 rows, b has 118,449: sum() collapses the group into one row, transform returns a result for every source row",
+          "why": "sum() is an ordinary aggregation: the group collapses into a single value, and the result is a Series with one row per product_id. transform('sum') computes the same thing, but repeats it in every row of the source group, keeping the source table's length."
+        },
+        {
+          "label": "Both have 47 rows — both methods aggregate the data the same way",
+          "why": "transform doesn't aggregate in that sense: it's specifically built not to change the number of rows, otherwise a share column couldn't be glued back onto the source table element by element."
+        },
+        {
+          "label": "Both have 118,449 rows — since it's the same measure (units), the result's length shouldn't change",
+          "why": "sum() after groupby always collapses the group — that's its whole point as an aggregating function. The difference between sum() and transform('sum') is precisely whether the result collapses the group or not, not which function is computed inside."
+        },
+        {
+          "label": "a has 118,449, b has 47: the options are swapped",
+          "why": "It's exactly the reverse: the short result (47 rows, one per product) comes from the plain aggregation sum(), the long one (118,449, one per source row) comes from transform."
+        }
+      ],
+      "hints": [
+        "agg/sum is a per-group summary, transform is that same summary repeated on every row of the group.",
+        "If the result is going to sit as a new column next to the source data, the length has to match — that's the first sign you need transform specifically."
+      ],
+      "explain": "Dividing result['units'] (118,449 rows) by a (47 rows) doesn't give what was intended: pandas aligns the two objects by index, and their indexes differ — row numbers versus product_id. The result turns out sneakier than a solid wall of NaN: labels 1…47 will coincide, and 47 rows will get a real number computed from an unrelated pairing of \"this row / that unrelated product,\" while the remaining 118,402 come out empty. There's no runtime error at all — just a column that looks half-plausible."
+    },
+    {
+      "id": "py-019",
+      "title": "Each product's biggest sale",
+      "brief": "A logistics analyst is looking, for each product, for its single largest delivery — a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
+      "goal": "Add a revenue_rank column — this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
+      "hints": [
+        ".rank() is the pandas equivalent of the RANK/DENSE_RANK/ROW_NUMBER window functions: it also needs a group and an order, just through the method's parameters instead of an OVER clause.",
+        "method='min' gives RANK (tied values get the same rank, the next one jumps over the skipped places); method='dense' would give DENSE_RANK, 'first' would give ROW_NUMBER."
+      ],
+      "explain": "rank() inside groupby is a direct equivalent of RANK() OVER (PARTITION BY ... ORDER BY ...): the partition is set by groupby, the order and direction are parameters of rank() rather than a separate ORDER BY. Choosing method changes the same thing that choosing between RANK, DENSE_RANK and ROW_NUMBER changes in SQL: they each decide differently what to do with a spot that looks \"claimed twice\" when values tie."
+    },
+    {
+      "id": "py-020",
+      "title": "132 customers instead of 144",
+      "brief": "A financial controller is reconciling the \"customers by rep\" report against the total customer count in the reference table — the sums don't match, and it's unclear where twelve went missing.",
+      "goal": "Understand where rows disappear when grouping by a column with gaps.",
+      "predictQuestion": "dim_customer has 144 customers, and 12 of them (all with channel = 'distributor') have an empty rep_id. What will this sum equal?",
+      "options": [
+        {
+          "label": "132 — groupby drops rows with a missing key by default, before the count is even taken",
+          "why": "dropna=True is the default behavior: the 12 customers without a rep_id don't fall into any group and aren't counted anywhere, so the sum across all groups is smaller than the total row count."
+        },
+        {
+          "label": "144 — groupby counts every row, including the ones where the grouping key is empty",
+          "why": "That would be true with dropna=False. By default pandas quietly excludes rows with NaN in the grouping key from the result entirely."
+        },
+        {
+          "label": "12 — pandas will group only the customers with no rep, and count the other 132 as one shared gap",
+          "why": "It's the reverse: gaps in the key don't form their own group by default, they drop out completely. The other 132 customers, meanwhile, group normally, each under its own rep_id."
+        },
+        {
+          "label": "The code will fail with an error — groupby doesn't accept a column with gaps as a key",
+          "why": "There's no error: NaN in a grouping key is an ordinary situation, and pandas handles it quietly by excluding rows, not by refusing to run the grouping."
+        }
+      ],
+      "hints": [
+        "groupby has a dropna parameter, and it's True by default.",
+        "\"Quietly\" is the key word: pandas doesn't report the excluded rows with any warning."
+      ],
+      "explain": "One and the same setting sits behind two frequent confusions: \"the report's sum is smaller than the total count\" and \"this category didn't show up in the result at all.\" The check is simple — compare the sum of the grouping result to the row count of the source table: if it's smaller, some rows were excluded because of a gap in the key."
+    },
+    {
+      "id": "py-021",
+      "title": "Customers by rep — with nothing lost",
+      "brief": "The same report, but done right: the sum has to match the reference table's total customer count, including the 12 who have no rep at all.",
+      "goal": "Count the number of customers per rep_id, including a separate group for customers with no rep, and return columns rep_id, n_customers.",
+      "hints": [
+        "dropna=False is a groupby parameter that keeps the NaN key as its own group instead of dropping its rows.",
+        "After groupby(...)['customer_id'].count() you'll get a Series — .reset_index(name='n_customers') turns it into a table with the column name you want."
+      ],
+      "explain": "dropna=False is the only difference from the \"ordinary\" grouping, and it changes everything: without it, the sum of n_customers over the result equals 132, not 144, and there's no way to tell from that single report where the remaining 12 customers went. NaN in rep_id in this dataset isn't a defect, it's a fact: distributors have no assigned rep, they're handled by the whole team."
+    },
+    {
+      "id": "py-022",
+      "title": "Labeling customers with no rep",
+      "brief": "The rep report goes into a BI system, where a NaN in the key looks like a load error — a readable label is needed instead of an empty value.",
+      "goal": "Before grouping, replace gaps in rep_id with a clear label, -1, so the group stays put without needing dropna=False on the receiving end.",
+      "hints": [
+        "fillna(-1) replaces NaN with a specific value before grouping — after that it isn't a gap anymore, it's an ordinary key, -1.",
+        ".assign(rep_id=...) returns a new table with the replaced column, without touching the original dim_customer."
+      ],
+      "explain": "fillna before grouping and dropna=False after grouping solve the same problem in different ways: dropna=False keeps NaN as is (that's NaN in the final table), while fillna(-1) turns the gap into an ordinary value ahead of time, one you can work with further without special parameters — say, if the next step compares rep_id against another table where comparisons with NaN don't work."
+    },
+    {
+      "id": "py-023",
+      "title": "110,480 sales instead of 11,048",
+      "brief": "An analyst joins fact_sellout to dim_promo by brand, to mark the promo period next to every sale — and afterward revenue is off by multiples from the report.",
+      "goal": "Understand what happens when you join on a key that's non-unique on both sides.",
+      "predictQuestion": "The «Чистовъ» brand has 11,048 rows in fact_sellout and 10 different promos in dim_promo (all with brand = 'Чистовъ'). How many rows will merged give for this brand?",
+      "options": [
+        {
+          "label": "110,480 — each of the 11,048 sales got glued to each of the brand's 10 promos",
+          "why": "merge doesn't check key uniqueness on either side by default: if there are 11,048 rows on the left with brand = 'Чистовъ' and 10 on the right, every pair with a matching brand produces a separate result row — 11,048 × 10."
+        },
+        {
+          "label": "11,048 — one per source sale, with the promo just noted alongside",
+          "why": "That would be the case if the join were on promo_id — dim_promo's unique key. Joining on brand doesn't distinguish the 10 promos from each other, so every sale shows up 10 times in the result, not once."
+        },
+        {
+          "label": "10 — merge will collapse all of the brand's sales down to one row per promo",
+          "why": "merge never collapses rows — that's what groupby does. merge only joins rows that match on the key, and if there are multiple matches on both sides, the row count goes up, not down."
+        },
+        {
+          "label": "The code will fail with an error — merge doesn't allow joining on a column with repeated values",
+          "why": "There's no error: merge, by default (without validate=), doesn't check key cardinality at all. It honestly performs the cross-match for every pair — silently, without a single warning."
+        }
+      ],
+      "hints": [
+        "merge doesn't check by default that the join key is unique on at least one side.",
+        "10 promos for one brand is the same as if there were 10 promos for one product: a tenfold blow-up is expected when the key doesn't distinguish them from each other."
+      ],
+      "explain": "This is the same fan-out as in SQL (see sql-fanout): an INNER JOIN on a key that's non-unique on both sides multiplies rows rather than flagging them. merge() in pandas behaves identically — the library only checks that values match, not that a one-to-one relationship was intended. The right key here is promo_id, which already exists in fact_sellout and points to a specific promo, not the brand as a whole."
+    },
+    {
+      "id": "py-024",
+      "title": "The promo discount next to every sale",
+      "brief": "The same question, but asked correctly: the commercial director wants to see the discount (discount_pct) next to every sale if it went through a promo, and an empty value if it didn't.",
+      "goal": "Join fact_sellout to dim_promo on promo_id so that all rows of fact_sellout are kept (including sales outside any promo), adding only discount_pct.",
+      "hints": [
+        "how='left' keeps all rows of fact_sellout, even where promo_id is empty — the pandas equivalent of LEFT JOIN.",
+        "promo_id is dim_promo's primary key (89 rows, 89 unique values), so joining on it doesn't multiply rows, unlike joining on brand."
+      ],
+      "explain": "how='left' is mandatory here, not a stylistic detail: fact_sellout has rows with no promo (promo_id empty), and merge's default (how='inner') would quietly drop them from the result. Plus promo_id is unique in dim_promo, so joining on it is one-to-one and doesn't multiply rows — unlike the previous task, where the key was brand."
+    },
+    {
+      "id": "py-025",
+      "title": "Guarding against another fan-out",
+      "brief": "After the story about joining on brand, a colleague asks for a safeguard going forward: the code should fail with a clear error if someone mixes up the key again, instead of silently bloating the table.",
+      "goal": "Repeat the join of fact_sellout to dim_promo on promo_id with how='left', adding a cardinality check: the key may repeat on the left, but must be unique on the right.",
+      "hints": [
+        "validate is an optional merge parameter that checks join cardinality and fails with a MergeError if the expectation isn't met.",
+        "'many_to_one' means: on the left (fact_sellout) the key can repeat, on the right (dim_promo) it must be unique."
+      ],
+      "explain": "validate='many_to_one' is a claim recorded right in the code: if a duplicate promo_id ever shows up in dim_promo, or someone by mistake joins on brand instead of promo_id, merge will fail with a MergeError instead of quietly returning a bloated table, as in the first task in this skill. It's cheap and catches exactly the mistake this walkthrough started with."
+    },
+    {
+      "id": "py-026",
+      "title": "Customers by sales channel",
+      "brief": "Before computing revenue by channel, an analyst wants a quick look at how many customers fall into each sales channel — without grouping or counting by hand.",
+      "goal": "Count the number of customers for each value of channel in dim_customer, sorted in descending order of count.",
+      "hints": [
+        "value_counts() is a Series method, not a DataFrame one: first select one column with single brackets.",
+        "Descending order is the default behavior, nothing extra needs to be called."
+      ],
+      "explain": "value_counts() is groupby(column).size(), sorted descending, in one short call. Unlike groupby, it's purpose-built for one task — counting how often values occur — and it's almost always the first step of exploration: not computing the metric right away, but seeing how the categories that will be used to slice the data are distributed in the first place. There are five channels here, and the top three run nearly even — traditional trade 44 outlets, modern trade 42, pharmacies 38 — then distributors (12) and e-com (8). A channel with few customers can still be large by turnover: value_counts counts rows in the reference table, not money, and confusing those two questions is the most common mistake at this very first step of exploration."
+    },
+    {
+      "id": "py-027",
+      "title": "An average price of 230 ₽ that doesn't exist",
+      "brief": "A category manager looks at .describe() over list_price for the whole product reference table and reports upstairs: \"the average SKU price is 230 ₽.\" A colleague from pharma is surprised: isn't our average around 400?",
+      "goal": "Understand what's behind the discrepancy, given that describe()'s own number isn't wrong.",
+      "predictQuestion": "The mean in the output really is 230.3 ₽ — describe() didn't lie. What's behind the mismatch the colleague noticed?",
+      "options": [
+        {
+          "label": "The column actually mixes two different divisions — FMCG with an average of 110.7 ₽ and Pharma with an average of 423.2 ₽ — the overall average describes neither",
+          "why": "describe() computes statistics over all 47 values at once, with no idea they belong to two dissimilar groups. 230.3 ₽ is the real average across the whole catalog, but it sits between the two real averages, at a point with no product at all."
+        },
+        {
+          "label": "describe() was computed wrong — with prices ranging from 38 to 812 ₽, the function should have split the column into groups itself",
+          "why": "describe() knows nothing about categories inside a column, and it shouldn't: that's a limitation by design, not a computation error. Splitting into groups is a separate, deliberate step through groupby."
+        },
+        {
+          "label": "It's a rounding error: 230.3 is actually the average for FMCG only",
+          "why": "The numbers don't match: FMCG's average is 110.7 ₽, not 230.3. 230.3 ₽ is the honest average across all 47 products at once, it just doesn't resemble either of the two real groups within the column."
+        },
+        {
+          "label": "describe()'s std would have flagged the problem right away, so if the colleague didn't look at it, that's on them",
+          "why": "std really would hint at a wide spread, but describe() doesn't force anyone to interpret it correctly — a large std can be written off as natural price variation rather than two groups being mixed together. The danger is precisely that one number (mean) looks sufficient on its own."
+        }
+      ],
+      "hints": [
+        "describe() knows nothing about categories inside a column — it computes statistics over all the values at once, however different they may be.",
+        "A suspiciously wide spread (a large std relative to the mean) is a signal to check whether different groups are mixed in the column."
+      ],
+      "explain": "describe() is exploration, not a diagnosis: it honestly computes statistics over whatever it was given, and doesn't check whether the sample is homogeneous. Thorough exploration almost always includes a slice by the key category, not just an overall summary — describe() over the whole column and describe() by group can tell different stories, and here the second one is closer to the truth."
+    },
+    {
+      "id": "py-028",
+      "title": "describe() for each division separately",
+      "brief": "To avoid repeating the past mistake, the same manager wants to see describe() for each division separately right away, not one overall summary for the whole catalog.",
+      "goal": "Get describe() on list_price separately for each value of division.",
+      "hints": [
+        "describe() can be called not only on a whole column but on the result of a groupby too — then the statistics are computed separately for each group.",
+        "Group by the very field that hid the difference between FMCG and Pharma in the previous task."
+      ],
+      "explain": "groupby(...).describe() is a way to run its own summary statistics over every group in one call, with no loop and no manually splitting the table into parts. Since the column for describe() is already chosen (['list_price']), the result stays an ordinary table: one row per division, eight statistic columns — you can compare them at a glance, not just as a single number, unlike in the previous task."
+    },
+    {
+      "id": "py-029",
+      "title": "Revenue by brand, by quarter",
+      "brief": "The commercial director wants to see 2025 revenue by brand, by quarter, in one table — brands as rows, quarters as columns, not a long list of thirty-six rows.",
+      "goal": "Build a pivot table off the already-prepared merged/sub: rows — brand, columns — quarter, values — the sum of revenue.",
+      "hints": [
+        "pivot_table can aggregate and reshape in one call — aggfunc decides what to do if several rows land on the same brand/quarter intersection (here: many sales of different products and customers).",
+        "index becomes the rows, columns becomes the column headers, values ends up in the cells."
+      ],
+      "explain": "Unlike .pivot(), which requires exactly one row per (brand, quarter) pair, pivot_table resolves this itself through aggregation: aggfunc='sum' sums up all of the brand's sales for the quarter, no matter how many source rows land in that cell. It's the same thing a conditional aggregation, CASE WHEN quarter = '2025Q1' THEN revenue END (see sql-case), does in SQL — just without spelling out every quarter explicitly in the code."
+    },
+    {
+      "id": "py-030",
+      "title": "pivot() instead of pivot_table()",
+      "brief": "A colleague tries reshaping the same dataset with .pivot() — a shorter name, quicker to type — and gets an error instead of a table.",
+      "goal": "Understand why pivot() doesn't work on raw, not-yet-aggregated data.",
+      "predictQuestion": "sub is the raw fact_sellout rows (customer × product × week), joined with brand and quarter, with no aggregation done beforehand. What happens when .pivot() is called?",
+      "options": [
+        {
+          "label": "It fails with ValueError \"Index contains duplicate entries, cannot reshape\" — many rows land on each (brand, quarter) pair, and pivot expects exactly one",
+          "why": "pivot() is a pure reshape with no aggregation: it has no way to decide what to do if several source rows claim the same result cell, and it honestly raises a ValueError instead of guessing."
+        },
+        {
+          "label": "It returns the same table as pivot_table — those are two names for the same operation",
+          "why": "The names are similar, but the behavior differs: pivot_table takes an aggfunc and aggregates matches, while pivot expects there to be no matches at all, and fails if that isn't the case."
+        },
+        {
+          "label": "It returns a table, taking the last row in order for each cell and silently dropping the rest",
+          "why": "pivot doesn't silently drop data — wherever several rows are found for one cell, it stops with an error rather than arbitrarily picking one of them."
+        },
+        {
+          "label": "It returns a table, summing the values in cells with matching brand and quarter — like pivot_table with aggfunc='sum'",
+          "why": "Summing is exactly what pivot_table does, not pivot. pivot has no aggfunc parameter at all: it can't aggregate and doesn't try to."
+        }
+      ],
+      "hints": [
+        "pivot() expects the index/columns combination to already be unique — the kind of result you'd get after a groupby.",
+        "pivot_table takes raw, not-yet-aggregated data and aggregates it itself via aggfunc."
+      ],
+      "explain": "The difference is exactly the word \"table\": pivot is a pure reshape of the data, pivot_table is the same reshape plus a mandatory aggfunc for collisions. If the data has already been through a groupby and each row/column combination is guaranteed to have exactly one entry, pivot() runs without errors; on raw data, as here, it's almost always pivot_table."
+    },
+    {
+      "id": "py-031",
+      "title": "Reshaping the report back to long format",
+      "brief": "The same quarterly-by-brand report needs to go to a BI system that only accepts long format — one brand and one quarter per row, not a wide table.",
+      "goal": "Reshape the wide table piv (brand, 2025Q1, 2025Q2) back to long format: columns brand, quarter, revenue.",
+      "hints": [
+        "id_vars is the column that stays as is and doesn't get reshaped; everything else turns into pairs of \"column name → value\".",
+        "var_name and value_name name the two new columns: the one with the former column names and the one with their values."
+      ],
+      "explain": "melt is the reverse of pivot_table: a wide table (one column per quarter) becomes a long one (one row per brand-quarter pair). id_vars fixes brand as is, while '2025Q1' and '2025Q2' stop being column names and become values in the new quarter column — exactly what's needed if the receiving system expects one row per observation."
+    },
+    {
+      "id": "py-032",
+      "title": "58 codes instead of 29 products",
+      "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs — some of the codes are duplicated in a different case: \"чист005\" and \"ЧИСТ005\" are the same product.",
+      "goal": "Count how many unique product codes will remain in staging_raw_sellout if sku_code is cast to a single case.",
+      "hints": [
+        ".str.upper() upper-cases every string in the column in one call — and, unlike the equivalent function in SQLite, it works with Cyrillic.",
+        "nunique() counts the number of unique values — exactly what's needed to see how many codes remain after normalization."
+      ],
+      "explain": "58 → 29: exactly half of the codes were the same product, written in a different case. What happens here is exactly what didn't work in SQL (sql-027): SQLite's UPPER()/LOWER() are limited to ASCII and don't touch Cyrillic, while pandas's .str.upper() operates on full Unicode and correctly handles any alphabet."
+    },
+    {
+      "id": "py-033",
+      "title": "The same trick as in SQL — but it works differently here",
+      "brief": "A colleague who recently worked through sql-027 suggests reusing the same trick: wrap the code comparison in an upper-case conversion. Before carrying a solution from one tool to another, it's worth checking whether it behaves the same way here.",
+      "goal": "Understand whether .str.upper() in pandas behaves the same as UPPER() in SQLite on Cyrillic text.",
+      "predictQuestion": "In sql-027 it turned out that UPPER and LOWER in SQLite don't touch Cyrillic at all. On this table you can see it directly: SELECT COUNT(DISTINCT UPPER(sku_code)) returns the same 58 codes as without UPPER — \"чист005\" and \"ЧИСТ005\" stay distinct. How many unique codes will the same idea give in pandas?",
+      "options": [
+        {
+          "label": "29 — unlike SQLite, pandas's .str.upper() works with Cyrillic under full Unicode rules and merges the case variants",
+          "why": "pandas and Python in general operate on Unicode strings with no SQLite-style ASCII restriction — 'чист005'.upper() correctly gives 'ЧИСТ005', and the case variants collapse into one code."
+        },
+        {
+          "label": "58 — the same limitation as SQLite: .str.upper() is also built on top of ASCII and doesn't touch Cyrillic",
+          "why": "The sql-027 limitation is a property of SQLite, not a universal rule: PostgreSQL and ClickHouse's UPPER understands Cyrillic just fine. And pandas doesn't call into the database engine at all — it calls Python string methods, and those work with full Unicode regardless of alphabet."
+        },
+        {
+          "label": "The code will fail with an error — .str.upper() is only defined for Latin script",
+          "why": ".str.upper() doesn't check the alphabet and isn't limited to Latin script — it's defined for any Unicode string and can't fail because of Cyrillic."
+        },
+        {
+          "label": "29 names in alphabetical order, but each printed twice — in its original and upper case — so 58 rows in the result",
+          "why": "nunique() returns a single number — the count of unique values, not the values themselves. Casting to one case and counting unique values here brings the final number down to 29."
+        }
+      ],
+      "hints": [
+        "SQLite's ASCII limitation in UPPER/LOWER is a quirk of that specific engine, not a universal rule for every tool.",
+        "pandas string methods run through Python, and Python strings are Unicode with full support for any alphabet."
+      ],
+      "explain": "The same idea in spirit — \"convert to a single case before comparing\" — behaves differently depending on the engine: SQLite implements UPPER/LOWER for ASCII only, while Python and pandas operate on full Unicode. Carrying a trick between tools without checking is a source of quiet bugs precisely where two engines look interchangeable."
+    },
+    {
+      "id": "py-034",
+      "title": "One customer, two spellings",
+      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Перекрёсток #1013 \" and \"Перекрёсток #1013\" — these are two different values here, even though it's the same outlet.",
+      "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
+      "hints": [
+        ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",
+        "After normalizing, count with nunique(), as in the previous task."
+      ],
+      "explain": "104 unique values turn into 52 — exactly half turned out to be the same customer with an extra space at the edge. .strip() is the most common first step when working with any raw extract: spaces aren't visible to the eye in a table, but they make two visually identical strings different for grouping and joining."
+    },
+    {
+      "id": "py-035",
+      "title": "Weekly sales into monthly",
+      "brief": "The «Ключевая» category manager wants monthly sales dynamics rather than weekly — weekly numbers swing too much to discuss in a meeting.",
+      "goal": "From the weekly series weekly (already with a datetime index), return the monthly sum of units via resample('MS').",
+      "hints": [
+        "resample('MS') re-buckets a time series onto month-start boundaries (Month Start) — similar to GROUP BY month in SQL, but it requires the index to already be datetime.",
+        "resample needs an aggregating function afterward, .sum(), just like an ordinary groupby."
+      ],
+      "explain": "resample only works on a datetime index — first the date is turned into an index (pd.to_datetime + set_index), and only then can resample('MS') find month boundaries. The idea is the same as GROUP BY strftime('%Y-%m', week_start) in SQL, but resample additionally understands the calendar and can work at any frequency — week, quarter, year — with no manual date formatting."
+    },
+    {
+      "id": "py-036",
+      "title": "Why the first three weeks have no value",
+      "brief": "An analyst smooths a weekly series with a 4-week rolling average and can't understand why the first three points of the chart have no value at all.",
+      "goal": "Understand rolling()'s behavior at the start of a series.",
+      "predictQuestion": "weekly is a series of weekly units, sorted by date, with no gaps at all. What will the first three values of rolling(4).mean() be?",
+      "options": [
+        {
+          "label": "NaN — a 4-week window has nothing to average yet, until 4 observations have accumulated",
+          "why": "rolling(4) requires a full window by default: min_periods equals the window size unless set separately. For the first three weeks there's simply nothing to compute a 4-week average from."
+        },
+        {
+          "label": "0 — pandas substitutes zero until the window fills up",
+          "why": "pandas never substitutes 0 for a missing value — that would distort the average. The correct signal for \"not enough data yet\" is NaN, not a number."
+        },
+        {
+          "label": "The average of whatever weeks are already available — first over one, then two, then three",
+          "why": "That's how rolling(4, min_periods=1) would behave — but that isn't the default. Without an explicit min_periods, pandas waits for a full window of 4 values."
+        },
+        {
+          "label": "The series' first real value, repeated three times",
+          "why": "rolling() doesn't fill the start of the series by repeating the first value — with an incomplete window it returns NaN by default, rather than trying to guess an average from missing weeks."
+        }
+      ],
+      "hints": [
+        "rolling() has a min_periods parameter, and by default it equals the window size.",
+        "NaN at the start of a rolling series isn't an error, it's an honest signal that there's no full window here yet."
+      ],
+      "explain": "min_periods = window size is the default behavior, and it's a deliberate library choice: an approximation from a partial window (an average of 1-2-3 observations instead of 4) would be a statistically different quantity, and pandas doesn't substitute it without an explicit request. If values are needed from the very start of the series, min_periods=1 changes that explicitly, not by default."
+    },
+    {
+      "id": "py-037",
+      "title": "A smoothed series next to the source",
+      "brief": "The same «Ключевая» weekly series is needed with 4-week smoothing next to the source data, so the chart doesn't show a weekly sawtooth.",
+      "goal": "Add a rolling4 column to weekly — the rolling mean of units over the last 4 weeks.",
+      "hints": [
+        "rolling(4) sets a 4-observation rolling-average window — the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL (sql-window-frame).",
+        "After .rolling(4) you need .mean(), just as after .groupby(...): rolling() on its own only defines the window, it doesn't compute a statistic."
+      ],
+      "explain": "rolling(4).mean() is a direct equivalent of the window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW from sql-window-frame: the window slides over the ordered series, including the current row and the three before it. The difference is in the notation: in SQL the frame is defined inside OVER(...), in pandas it's a separate call, .rolling(window_size), before the aggregating function."
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "lessons": [
+    {
+      "skill": "py-dataframe",
+      "title": "DataFrame and Series",
+      "why": "Any work with a table starts with pulling the columns you need out of it: a full 11-field reference table is awkward both to read and to hand to a client. And it's the first place where pandas's key distinction shows up — a table and a single column are different types here, with different sets of methods.",
+      "form": "df[['column_a', 'column_b']]   # DataFrame\ndf['column_a']                  # Series",
+      "example": "result = dim_product[['sku_code', 'brand', 'list_price']]",
+      "reads": "A product view: code, brand and price across all 47 items in the reference table. The outer brackets address the table, the inner ones are the list of column names.",
+      "wrong": "result = dim_product['brand']",
+      "wrongWhy": "Single brackets with one name return a Series — an individual column, not a table. The values are the same, but the type is different, and DataFrame methods don't work on it: trying to call .merge() or .rename(columns=...) ends in an AttributeError. A single pair of brackets is the most common cause of this mistake for beginners.",
+      "selfCheck": "Ask yourself what you're supposed to get — a table or a column. Need a table, even one with a single column? Then it's a list inside the brackets: df[['brand']], not df['brand']."
+    },
+    {
+      "skill": "py-select-filter",
+      "title": "Selecting and filtering",
+      "why": "Almost every working question sounds like \"show me these rows and these columns\": products above a threshold, customers on one channel, pharmacies in one region. In pandas both halves happen in one call to .loc — rows to the left of the comma, columns to the right.",
+      "form": "df.loc[mask, ['column_a', 'column_b']]",
+      "example": "result = dim_product.loc[\n    (dim_product['brand'] == 'Фрутта') & (dim_product['list_price'] > 130),\n    ['sku_code', 'product_name', 'list_price'],\n]",
+      "reads": "«Фрутта» juices priced above 130 ₽ — what would go onto the catalog's premium shelf. The mask on the left selects rows, the list on the right keeps three columns out of eleven.",
+      "wrong": "result = dim_product.loc[\n    dim_product['brand'] == 'Фрутта' & dim_product['list_price'] > 130,\n    ['sku_code', 'product_name', 'list_price'],\n]",
+      "wrongWhy": "Parentheses around each condition aren't a style choice. The & operator binds tighter than == and >, so without parentheses Python first evaluates 'Фрутта' & dim_product['list_price'] and fails with a TypeError before it ever gets to the comparison. The error surfaces nowhere near where the actual problem is.",
+      "selfCheck": "Is every condition inside .loc wrapped in its own parentheses? And is & or | placed between them, rather than and or or — those don't work on a column."
+    },
+    {
+      "skill": "py-dtypes",
+      "title": "Column types",
+      "why": "A column's type explains oddities that would otherwise look like data corruption: why an employee code prints as \"1.0\", why summing numbers glued strings together, why a comparison against an empty value finds nothing. pandas types a column as a whole, and one gap changes the type of every value at once.",
+      "form": "df.dtypes                 # what types came out\ndf['column'].isna()      # where the gaps are",
+      "example": "result = dim_rep.loc[dim_rep['manager_id'].isna(), ['rep_id', 'rep_name', 'role']]",
+      "reads": "Five employees with no manager of their own — the top level of the org chart. It's exactly these five gaps that force pandas to store all of manager_id as float64, which is why the ids print with a decimal point.",
+      "wrong": "result = dim_rep.loc[dim_rep['manager_id'] == None, ['rep_id', 'rep_name', 'role']]",
+      "wrongWhy": "A gap in pandas is NaN, and NaN isn't equal to anything, including itself and None. A comparison with == doesn't fail or complain: it calmly returns an empty result. That's the worst kind of bug — one that looks like a trustworthy answer of \"there are no such employees\".",
+      "selfCheck": "Looking for empty values? Use .isna(), not == None and not == NaN. Got a suspiciously empty selection from a condition involving gaps? Check this first."
+    },
+    {
+      "skill": "py-index",
+      "title": "The index — SQL has no equivalent",
+      "why": "A DataFrame has a third dimension a SQL table doesn't — the index, a row label to the left of the values. .loc works through it, the key ends up there after groupby, and pandas aligns tables by it when combining them. Without knowing about the index, there's no way to understand where a column \"went\" after a grouping.",
+      "form": "df.groupby('key')['measure'].sum().reset_index()",
+      "example": "result = (\n    fact_sellout.groupby('product_id')['units'].sum()\n    .reset_index()\n    .merge(dim_product[['product_id', 'brand']], on='product_id')\n)",
+      "reads": "Sales in units for every product, with the brand glued on from the reference table. reset_index() is mandatory here: it returns product_id from the index back into the columns, which is where merge looks for it.",
+      "wrong": "result = (\n    fact_sellout.groupby('product_id')['units'].sum()\n    .merge(dim_product[['product_id', 'brand']], on='product_id')\n)",
+      "wrongWhy": "Without reset_index() the grouping returns a Series with product_id sitting in the index, not in the columns. A Series has no .merge() method at all, so the code fails with an AttributeError. Even if the join were possible, on='product_id' wouldn't find such a column — it's in the index.",
+      "selfCheck": "After a groupby, ask yourself what happens to the result next. If a merge, a comparison with another table, or an export is coming — .reset_index() first, or the key stays stuck in the index."
+    },
+    {
+      "skill": "py-groupby",
+      "title": "groupby and agg",
+      "why": "A \"by slice\" summary is the most common request in the job: revenue by channel, SKU count by division, average ticket by region. groupby does the same thing SQL's GROUP BY does, with two quirks: the key is sorted by default, and it goes into the index by default rather than staying an ordinary column (see py-index).",
+      "form": "df.groupby('key', as_index=False).agg(\n    name=('column', 'function'),\n)",
+      "example": "result = dim_product.groupby('division', as_index=False).agg(\n    n_sku=('sku_code', 'count'),\n    avg_price=('list_price', 'mean'),\n)",
+      "reads": "For each division — SKU count and the average price list: 29 FMCG products averaging 110.7 ₽, 18 Pharma products at 423.2 ₽. Pharma prices are several times higher, and an overall average across the whole catalog describes neither group.",
+      "wrong": "result = dim_product.groupby('division').agg(['count', 'mean'])",
+      "wrongWhy": "Without named aggregation and without picking a specific column, agg(['count', 'mean']) applies both functions to every numeric column of the table at once, not just list_price — and it creates MultiIndex columns like ('list_price', 'mean'), which are awkward to work with afterward. Named aggregation, agg(name=('column', 'function')), gives flat, predictable names right away.",
+      "selfCheck": "After groupby(...).agg(...), the first thing to check is df.columns. Tuples like ('list_price', 'mean') instead of plain strings are a sign agg was called without naming."
+    },
+    {
+      "skill": "py-transform",
+      "title": "transform vs. agg and apply",
+      "why": "agg collapses a group into one row — useful for a summary, but no good if the result needs to come back at the source granularity: a sale's share of its product's yearly volume, say. transform computes the same thing as agg, but repeats the group's result on every row of it — the pandas version of the SUM(...) OVER (PARTITION BY ...) window function.",
+      "form": "df.groupby('key')['measure'].transform('function')   # same length as df",
+      "example": "result = fact_sellout.copy()\nresult['unit_share'] = result['units'] / result.groupby('product_id')['units'].transform('sum')",
+      "reads": "Each shipment's share of its product's yearly volume. transform('sum') plugs the sum for its product_id into every row, repeated as many times as that product has rows — the division works element by element, with no separate merge needed to \"glue the summary back to the detail\".",
+      "wrong": "result = fact_sellout.copy()\nresult['unit_share'] = result['units'] / result.groupby('product_id')['units'].sum()",
+      "wrongWhy": "sum() collapses the group into a Series of 47 rows — one per product_id — while the left side is a DataFrame of 118,449 rows. Dividing objects of different lengths, pandas tries to align them by index — and fact_sellout's index is row numbers, not product_id — and the result is NaN almost everywhere instead of a share.",
+      "selfCheck": "If the groupby result is about to become a new column sitting next to the source data, you need transform, not agg or a bare sum(): the length has to match the source table's length."
+    },
+    {
+      "skill": "py-nan",
+      "title": "NaN and gaps",
+      "why": "groupby silently drops rows where the grouping key is NaN by default: no warning, no separate group formed for them, they simply don't get counted. When a gap in the key isn't a defect but a meaningful \"nobody's assigned to this,\" the grouping result stops matching the total row count.",
+      "form": "df.groupby('key', dropna=False)   # don't drop the NaN group",
+      "example": "result = dim_customer.groupby('rep_id', dropna=False)['customer_id'].count().reset_index(name='n_customers')",
+      "reads": "The customer count per rep, plus a separate row for the 12 customers with no rep. These are all the channel = 'distributor' customers — distributors aren't handled by one person but by the whole team, and the gap here isn't a data defect.",
+      "wrong": "result = dim_customer.groupby('rep_id')['customer_id'].count().reset_index(name='n_customers')",
+      "wrongWhy": "dropna=True is the default value, and the 12 customers with no rep_id simply vanish from the result with no notice. The sum of n_customers across the result comes to 132, not 144 — a discrepancy easy to write off as a counting error somewhere else, though the cause is a single groupby setting.",
+      "selfCheck": "After a groupby on a column that may have gaps, compare the sum of the result to the source table's row count. If it's off, check dropna: some rows most likely disappeared silently."
+    },
+    {
+      "skill": "py-merge",
+      "title": "merge and row multiplication",
+      "why": "merge doesn't check that the join key is unique on at least one side: if the right side has several rows with the same key value, every row on the left gets glued to all of them at once — the result multiplies rather than getting flagged \"a match was found\". It's the same fan-out as a SQL JOIN (see sql-fanout), just under a different name.",
+      "form": "left.merge(right, on='key', how='left', validate='many_to_one')",
+      "example": "result = fact_sellout.merge(\n    dim_promo[['promo_id', 'discount_pct']], on='promo_id', how='left', validate='many_to_one',\n)",
+      "reads": "The promo discount glued onto every sale, if the sale went through a promo (promo_id is filled), and NaN if not. promo_id is dim_promo's primary key, so the row count doesn't change: the join is one-to-one from the sales side.",
+      "wrong": "result = fact_sellout.merge(\n    dim_product[['product_id', 'brand']], on='product_id'\n).merge(\n    dim_promo[['promo_id', 'brand', 'discount_pct']], on='brand'\n)",
+      "wrongWhy": "The second merge joins on brand, not promo_id — and the «Чистовъ» brand, say, has 10 different promos. Each of that brand's 11,048 sales gets glued to all ten, and the result balloons to 110,480 rows: revenue comes out tenfold, even though merge doesn't raise a single error — it honestly did exactly what it was asked to do.",
+      "selfCheck": "After any merge, compare len(result) with len(left) from before the join. If it grew, the key on the right isn't unique. validate='many_to_one' catches this automatically, before the discrepancy ever reaches a report."
+    },
+    {
+      "skill": "py-explore",
+      "title": "Exploring the data",
+      "why": "Before computing a metric, it's worth looking at the data itself: value_counts() shows how categories are distributed, describe() shows the shape of a numeric column. Skipping exploration means the first sign of a problem won't be describe(), it'll be a wrong report a week later.",
+      "form": "df['column'].value_counts()             # category frequencies\ndf.groupby('slice')['measure'].describe()  # statistics by group",
+      "example": "result = dim_customer['channel'].value_counts()",
+      "reads": "Customer count by sales channel: 44 in traditional trade, 42 in modern trade, 38 in pharmacies, 12 with distributors, 8 in e-com. Already you can see that e-com is a small channel by outlet count, though it may well be the largest by average ticket.",
+      "wrong": "result = dim_product['list_price'].describe()",
+      "wrongWhy": "Not a mistake on its own, but not thorough exploration either: describe() over the whole catalog at once gives an average price of 230 ₽ — one no real product has, because the column quietly mixes FMCG (averaging 111 ₽) and Pharma (averaging 423 ₽). Exploration without a slice by the key category can look complete while actually hiding the main thing.",
+      "selfCheck": "If describe() gave a spread that's suspiciously wide relative to the mean, check it by group through groupby(...).describe() before computing the metric any further."
+    },
+    {
+      "skill": "py-reshape",
+      "title": "pivot, pivot_table and melt",
+      "why": "A report for a manager is almost always requested in wide format — brands as rows, periods as columns — while the raw data sits in long format: one row per sales fact. pivot_table reshapes long into wide with the aggregation built into one call; melt does the reverse, when the receiving side (a BI tool, the next groupby) expects long format again.",
+      "form": "df.pivot_table(index='rows', columns='columns', values='values', aggfunc='function')\ndf.melt(id_vars='unchanged_column', var_name='name', value_name='value')",
+      "example": "merged = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')\nmerged['week_start'] = pd.to_datetime(merged['week_start'])\nmerged['quarter'] = merged['week_start'].dt.to_period('Q').astype(str)\nsub = merged[(merged['week_start'] >= '2025-01-01') & (merged['week_start'] < '2026-01-01')]\nresult = sub.pivot_table(index='brand', columns='quarter', values='revenue', aggfunc='sum')",
+      "reads": "Every brand's revenue for every quarter of 2025 in one table: 9 rows (brands) by 4 columns (quarters) instead of 36 rows in long format. aggfunc='sum' sums up all of a brand's sales for the quarter, no matter how many source rows land there.",
+      "wrong": "merged = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')\nmerged['week_start'] = pd.to_datetime(merged['week_start'])\nmerged['quarter'] = merged['week_start'].dt.to_period('Q').astype(str)\nsub = merged[(merged['week_start'] >= '2025-01-01') & (merged['week_start'] < '2026-01-01')]\nresult = sub.pivot(index='brand', columns='quarter', values='revenue')",
+      "wrongWhy": "pivot() doesn't aggregate — it expects exactly one source row per (brand, quarter) pair. In sub there are thousands of rows per pair (sales of different products and customers in one quarter), and pivot honestly fails with a ValueError instead of guessing what to do with them.",
+      "selfCheck": "Is the data not yet aggregated before the reshape (could several rows land in one cell)? You need pivot_table with an aggfunc. Already aggregated (one row per combination)? The simpler pivot() will work too."
+    },
+    {
+      "skill": "py-tidy",
+      "title": "Tidy data",
+      "why": "\"Tidy\" data means one row per observation and one column per variable, with no variation hiding inside a value: the same entity shouldn't hide behind two different spellings. The raw extract staging_raw_sellout breaks this at every turn: a product code in two cases, a customer name with spaces at the edges — and grouping by a column like that counts one object as two.",
+      "form": "df['column'].str.upper()   # a single case\ndf['column'].str.strip()   # no leading/trailing spaces",
+      "example": "result = staging_raw_sellout['sku_code'].str.upper().nunique()",
+      "reads": "58 nominal product codes in the raw extract turn into 29 real SKUs once cast to a single case — \"чист005\" and \"ЧИСТ005\" were the same product, just written differently in different extracts.",
+      "wrong": "result = staging_raw_sellout['sku_code'].str.lower() == staging_raw_sellout['sku_code']",
+      "wrongWhy": "Comparing the case doesn't fix the data on its own — it only shows which strings are already lower case, it doesn't merge the different spellings of one product. Tidying data means casting the column to a single form (str.upper() or str.lower() over the whole column), not checking which case something happens to be written in.",
+      "selfCheck": "Is the number of unique values in a column noticeably higher than it should be by meaning (58 codes instead of a few dozen products)? Check the case and the leading/trailing spaces before looking for missing rows anywhere else."
+    },
+    {
+      "skill": "py-timeseries",
+      "title": "Dates and time series",
+      "why": "resample changes a series' frequency (from weeks to months), and rolling computes a sliding window (smoothing, a trend) — both operations need the date to be a real datetime index, not an ordinary column. Without pd.to_datetime and set_index both will either fail or compute something other than what seemed obvious.",
+      "form": "df.set_index('date').resample('MS').sum()      # change frequency\ndf['measure'].rolling(window).mean()            # rolling average",
+      "example": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Ключевая', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nweekly['week_start'] = pd.to_datetime(weekly['week_start'])\nweekly = weekly.set_index('week_start').sort_index()\nresult = weekly['units'].resample('MS').sum()",
+      "reads": "Weekly «Ключевая» sales turned into monthly totals in one call — resample('MS') finds the month boundaries from the dates in the index itself, with no manual extraction of year and month from a string.",
+      "wrong": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Ключевая', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nresult = weekly.groupby(weekly['week_start'].str[:7])['units'].sum()",
+      "wrongWhy": "This only works for dates in a single consistent text format, 'YYYY-MM' — wherever the format is mixed (as in staging_raw_sellout) or the date has already been converted to datetime, the string slice .str[:7] either produces nothing or works incorrectly. resample with a datetime index solves this with no assumptions about string format at all.",
+      "selfCheck": "Before resample/rolling, check the dtype of the date column (or the index, if it's already set) — it should be datetime64, not object/string."
+    }
+  ]
+}

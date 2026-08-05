@@ -9,6 +9,8 @@ import rawSqlCoreEn from './packs/sql-core.en.json';
 import rawSqlLessonsEn from './packs/sql-lessons.en.json';
 import rawDomainCoreEn from './packs/domain-core.en.json';
 import rawDomainLessonsEn from './packs/domain-lessons.en.json';
+import rawPythonCoreEn from './packs/python-core.en.json';
+import rawPythonLessonsEn from './packs/python-lessons.en.json';
 import type { Lesson, LessonTranslation, Pack, PackTranslation, Task, Track } from './types';
 import type { Locale } from '../i18n/context';
 
@@ -136,6 +138,7 @@ for (const p of packs) {
 const packTranslations: Partial<Record<string, PackTranslation>> = {
   'sql-core': validateTranslation(packById.get('sql-core')!, rawSqlCoreEn as PackTranslation),
   'domain-core': validateTranslation(packById.get('domain-core')!, rawDomainCoreEn as PackTranslation),
+  'python-core': validateTranslation(packById.get('python-core')!, rawPythonCoreEn as PackTranslation),
 };
 
 /**
@@ -171,6 +174,7 @@ export const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 const lessonTranslationSources: { lessons: LessonTranslation[] }[] = [
   rawSqlLessonsEn as { lessons: LessonTranslation[] },
   rawDomainLessonsEn as { lessons: LessonTranslation[] },
+  rawPythonLessonsEn as { lessons: LessonTranslation[] },
 ];
 const lessonTranslationBySkill = new Map(
   lessonTranslationSources.flatMap((src) => src.lessons).map((l) => {
