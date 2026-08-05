@@ -288,6 +288,21 @@ export default function App() {
     () => activePack.skills.filter((s) => (progress.skills[s.id]?.reps ?? 0) > 0).length,
     [progress, activePack]
   );
+  /**
+   * Решено в этом треке, а не во всех сразу.
+   *
+   * Раньше сюда шёл progress.totalSolved — сумма по четырём трекам, — и стоял
+   * он в одном ряду с двумя показателями текущего трека. На главной pandas
+   * это выглядело так: карточка трека «0 / 43 выполнено», меню «0 / 43»,
+   * а между ними счётчик «7 решено». Три числа рядом, разные знаменатели:
+   * на дашборде это читается как ошибка в расчёте, а не как две разные метрики.
+   * Считаем тем же способом, что карточка трека и меню, — по решённым
+   * заданиям пака.
+   */
+  const solvedCount = useMemo(
+    () => activePack.tasks.filter((task) => progress.taskRecords[task.id]?.solved).length,
+    [progress, activePack]
+  );
 
   function startSession() {
     if (!activePack.tasks.length) return; // черновой трек — заданий ещё нет
@@ -497,7 +512,13 @@ export default function App() {
                     ? t.about.title
                     : screen.name === 'trackIntro'
                       ? t.tracks.names[screen.track]
-                      : t.app.name}
+                      : /*
+                         * На десктопе название приложения скрыто (см. .brand-word
+                         * в styles.css): оно уже стоит в шапке бокового меню,
+                         * в трёхстах пикселях левее. На телефоне меню нет,
+                         * и это единственное место, где приложение называет себя.
+                         */
+                        <span className="brand-word">{t.app.name}</span>}
             <span className="sub">
               {screen.name === 'session'
                 ? t.session.progressOf(screen.index + 1, screen.queue.length)
@@ -507,7 +528,13 @@ export default function App() {
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
-                      : `${t.tracks.names[activeTrack]} · ${t.app.streakSuffix(streak(progress.activeDays))}`}
+                      : (
+                          <>
+                            {t.tracks.names[activeTrack]}
+                            {/* Серия дней тоже дублируется боковым меню — скрываем её там же. */}
+                            <span className="ctx-streak"> · {t.app.streakSuffix(streak(progress.activeDays))}</span>
+                          </>
+                        )}
             </span>
           </h1>
           {screen.name === 'session' && screen.index > 0 && (
@@ -564,6 +591,7 @@ export default function App() {
               progress={progress}
               dueCount={dueCount}
               startedCount={startedCount}
+              solvedCount={solvedCount}
               loading={load.phase === 'loading' || load.phase === 'idle'}
               consent={load.phase === 'consent' ? load.bytes : null}
               consentDeferred={consentDeferred}
@@ -790,6 +818,7 @@ function Home({
   progress,
   dueCount,
   startedCount,
+  solvedCount,
   loading,
   consent,
   consentDeferred,
@@ -809,6 +838,8 @@ function Home({
   progress: Progress;
   dueCount: number;
   startedCount: number;
+  /** Решено заданий в этом треке — не суммарно по всем (см. solvedCount в App). */
+  solvedCount: number;
   loading: boolean;
   /** Байт для скачивания, если исполнитель ждёт согласия (см. LoadState 'consent'), иначе null. */
   consent: number | null;
@@ -963,7 +994,7 @@ function Home({
                   <div className="muted">{t.home.dueLabel}</div>
                 </div>
                 <div>
-                  <div className="big">{progress.totalSolved}</div>
+                  <div className="big">{solvedCount}</div>
                   <div className="muted">{t.home.solvedLabel}</div>
                 </div>
                 <div>
