@@ -6,6 +6,7 @@ import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
 import { LessonCard } from './ui/LessonCard';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
+import { Sidebar, type SidebarSection } from './ui/Sidebar';
 import { TaskView, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -430,176 +431,208 @@ export default function App() {
 
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
+  // Занятие, карточка приёма и вводная трека своего пункта в меню не имеют:
+  // подсвечивать там «Главную» значило бы врать о том, где человек находится.
+  const sidebarSection: SidebarSection =
+    screen.name === 'home' || screen.name === 'done'
+      ? 'home'
+      : screen.name === 'reference'
+        ? 'reference'
+        : screen.name === 'about'
+          ? 'about'
+          : null;
+
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
-      <header className="topbar">
-        {screen.name !== 'home' && (
+      {/*
+       * Постоянная боковая навигация — только от 1024px, на телефоне её нет
+       * вовсе (см. Sidebar.tsx). Рендерится всегда: скрывает её CSS, а не
+       * условие в JS, — иначе пришлось бы слушать resize и решать за браузер
+       * то, что он и так знает, а на границе брейкпоинта компонент бы
+       * размонтировался вместе со своим состоянием.
+       */}
+      <Sidebar
+        section={sidebarSection}
+        tracks={TRACK_ORDER}
+        activeTrack={activeTrack}
+        progress={progress}
+        streakDays={streak(progress.activeDays)}
+        onHome={() => setScreen({ name: 'home' })}
+        onReference={() => setScreen({ name: 'reference' })}
+        onAbout={() => setScreen({ name: 'about' })}
+        onSelectTrack={switchTrack}
+      />
+
+      <div className="shell">
+        <header className="topbar">
+          {screen.name !== 'home' && (
+            <button
+              className="icon-btn"
+              // Из карточки возвращаемся в список приёмов, а не на главную:
+              // в справочнике их обычно листают подряд.
+              onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
+              aria-label={t.app.back}
+            >
+              ←
+            </button>
+          )}
+          <h1 className={screen.name === 'home' ? 'brand' : undefined}>
+            {screen.name === 'session'
+              ? t.session.title
+              : screen.name === 'reference'
+                ? t.reference.title
+                : screen.name === 'lesson'
+                  ? t.lesson.pill
+                  : screen.name === 'about'
+                    ? t.about.title
+                    : screen.name === 'trackIntro'
+                      ? t.tracks.names[screen.track]
+                      : t.app.name}
+            <span className="sub">
+              {screen.name === 'session'
+                ? t.session.progressOf(screen.index + 1, screen.queue.length)
+                : screen.name === 'reference'
+                  ? t.tracks.names[activeTrack]
+                  : screen.name === 'lesson'
+                    ? (lessonBySkill.get(screen.skill)?.title ?? '')
+                    : screen.name === 'about'
+                      ? t.app.name
+                      : `${t.tracks.names[activeTrack]} · ${t.app.streakSuffix(streak(progress.activeDays))}`}
+            </span>
+          </h1>
+          {screen.name === 'session' && screen.index > 0 && (
+            <button className="icon-btn" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
+              ‹
+            </button>
+          )}
+          {screen.name === 'session' && (
+            <div className="progress-dots">
+              {screen.queue.map((_, i) =>
+                i < screen.index ? (
+                  <button
+                    key={i}
+                    className="dot done"
+                    onClick={() => goToStep(i)}
+                    aria-label={t.session.stepAria(i + 1)}
+                  />
+                ) : (
+                  <i key={i} className={`dot${i === screen.index ? ' current' : ''}`} aria-hidden />
+                )
+              )}
+            </div>
+          )}
+          <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
+            {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
+          </button>
+          <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
+            {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
+          </button>
           <button
             className="icon-btn"
-            // Из карточки возвращаемся в список приёмов, а не на главную:
-            // в справочнике их обычно листают подряд.
-            onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
-            aria-label={t.app.back}
+            aria-label={t.locale.switchAriaLabel}
+            onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
           >
-            ←
+            {locale === 'ru' ? 'EN' : 'RU'}
           </button>
-        )}
-        <h1 className={screen.name === 'home' ? 'brand' : undefined}>
-          {screen.name === 'session'
-            ? t.session.title
-            : screen.name === 'reference'
-              ? t.reference.title
-              : screen.name === 'lesson'
-                ? t.lesson.pill
-                : screen.name === 'about'
-                  ? t.about.title
-                  : screen.name === 'trackIntro'
-                    ? t.tracks.names[screen.track]
-                    : t.app.name}
-          <span className="sub">
-            {screen.name === 'session'
-              ? t.session.progressOf(screen.index + 1, screen.queue.length)
-              : screen.name === 'reference'
-                ? t.tracks.names[activeTrack]
-                : screen.name === 'lesson'
-                  ? (lessonBySkill.get(screen.skill)?.title ?? '')
-                  : screen.name === 'about'
-                    ? t.app.name
-                    : `${t.tracks.names[activeTrack]} · ${t.app.streakSuffix(streak(progress.activeDays))}`}
-          </span>
-        </h1>
-        {screen.name === 'session' && screen.index > 0 && (
-          <button className="icon-btn" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
-            ‹
-          </button>
-        )}
-        {screen.name === 'session' && (
-          <div className="progress-dots">
-            {screen.queue.map((_, i) =>
-              i < screen.index ? (
-                <button
-                  key={i}
-                  className="dot done"
-                  onClick={() => goToStep(i)}
-                  aria-label={t.session.stepAria(i + 1)}
-                />
-              ) : (
-                <i key={i} className={`dot${i === screen.index ? ' current' : ''}`} aria-hidden />
-              )
-            )}
-          </div>
-        )}
-        <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
-          {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
-        </button>
-        <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
-          {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
-        </button>
-        <button
-          className="icon-btn"
-          aria-label={t.locale.switchAriaLabel}
-          onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
-        >
-          {locale === 'ru' ? 'EN' : 'RU'}
-        </button>
-      </header>
+        </header>
 
-      <main className="content">
-        {load.phase === 'error' && (
-          <div className="feedback error">
-            <h3>{t.loadError.title}</h3>
-            <p>{load.message}</p>
-            <button className="btn secondary" onClick={() => location.reload()}>
-              {t.loadError.reloadBtn}
-            </button>
-          </div>
-        )}
+        <main className="content">
+          {load.phase === 'error' && (
+            <div className="feedback error">
+              <h3>{t.loadError.title}</h3>
+              <p>{load.message}</p>
+              <button className="btn secondary" onClick={() => location.reload()}>
+                {t.loadError.reloadBtn}
+              </button>
+            </div>
+          )}
 
-        {screen.name === 'home' && (
-          <Home
-            activeTrack={activeTrack}
-            activePack={activePack}
-            progress={progress}
-            dueCount={dueCount}
-            startedCount={startedCount}
-            loading={load.phase === 'loading' || load.phase === 'idle'}
-            consent={load.phase === 'consent' ? load.bytes : null}
-            onConfirmDownload={() => executor?.confirmDownload?.()}
-            onStart={startSession}
-            onOpenSchema={() => setSchemaOpen(true)}
-            onOpenReference={() => setScreen({ name: 'reference' })}
-            onOpenAbout={() => setScreen({ name: 'about' })}
-            onSwitchTrack={switchTrack}
-            onStartSkill={startSkillSession}
-            onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
-          />
-        )}
+          {screen.name === 'home' && (
+            <Home
+              activeTrack={activeTrack}
+              activePack={activePack}
+              progress={progress}
+              dueCount={dueCount}
+              startedCount={startedCount}
+              loading={load.phase === 'loading' || load.phase === 'idle'}
+              consent={load.phase === 'consent' ? load.bytes : null}
+              onConfirmDownload={() => executor?.confirmDownload?.()}
+              onStart={startSession}
+              onOpenSchema={() => setSchemaOpen(true)}
+              onOpenReference={() => setScreen({ name: 'reference' })}
+              onOpenAbout={() => setScreen({ name: 'about' })}
+              onSwitchTrack={switchTrack}
+              onStartSkill={startSkillSession}
+              onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
+            />
+          )}
 
-        {screen.name === 'about' && (
-          <About
-            onSelectTrack={(track) => { switchTrack(track); }}
-            onExportProgress={downloadProgress}
-            onImportProgress={importProgressFile}
-          />
-        )}
+          {screen.name === 'about' && (
+            <About
+              onSelectTrack={(track) => { switchTrack(track); }}
+              onExportProgress={downloadProgress}
+              onImportProgress={importProgressFile}
+            />
+          )}
 
-        {screen.name === 'trackIntro' && (
-          <TrackIntroScreen
-            track={screen.track}
-            onStart={() => {
-              markIntroSeen(screen.track);
-              startSession(); // при пустом паке (не должно случиться, раз есть intro) сам никуда не переключит
-            }}
-            onSkip={() => {
-              markIntroSeen(screen.track);
-              setScreen({ name: 'home' });
-            }}
-          />
-        )}
+          {screen.name === 'trackIntro' && (
+            <TrackIntroScreen
+              track={screen.track}
+              onStart={() => {
+                markIntroSeen(screen.track);
+                startSession(); // при пустом паке (не должно случиться, раз есть intro) сам никуда не переключит
+              }}
+              onSkip={() => {
+                markIntroSeen(screen.track);
+                setScreen({ name: 'home' });
+              }}
+            />
+          )}
 
-        {step?.kind === 'lesson' && executor && (
-          <LessonCard
-            key={step.lesson.skill}
-            lesson={step.lesson}
-            executor={executor}
-            runnable={activeTrack === 'sql' || activeTrack === 'python'}
-            onContinue={advance}
-          />
-        )}
+          {step?.kind === 'lesson' && executor && (
+            <LessonCard
+              key={step.lesson.skill}
+              lesson={step.lesson}
+              executor={executor}
+              runnable={activeTrack === 'sql' || activeTrack === 'python'}
+              onContinue={advance}
+            />
+          )}
 
-        {step?.kind === 'task' && executor && (
-          <TaskView
-            key={step.task.id}
-            task={step.task}
-            executor={executor}
-            schema={schema}
-            onOpenSchema={() => setSchemaOpen(true)}
-            onDone={(o) => handleDone(step.task, o)}
-          />
-        )}
+          {step?.kind === 'task' && executor && (
+            <TaskView
+              key={step.task.id}
+              task={step.task}
+              executor={executor}
+              schema={schema}
+              onOpenSchema={() => setSchemaOpen(true)}
+              onDone={(o) => handleDone(step.task, o)}
+            />
+          )}
 
-        {screen.name === 'reference' && (
-          <Reference activePack={activePack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
-        )}
+          {screen.name === 'reference' && (
+            <Reference activePack={activePack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
+          )}
 
-        {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && executor && (
-          <LessonCard
-            lesson={lessonBySkill.get(screen.skill)!}
-            executor={executor}
-            runnable={activeTrack === 'sql' || activeTrack === 'python'}
-          />
-        )}
+          {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && executor && (
+            <LessonCard
+              lesson={lessonBySkill.get(screen.skill)!}
+              executor={executor}
+              runnable={activeTrack === 'sql' || activeTrack === 'python'}
+            />
+          )}
 
-        {screen.name === 'done' && (
-          <div className="card">
-            <h2>{t.session.doneTitle}</h2>
-            <p className="muted">{t.session.doneBody(screen.solved)}</p>
-            <button className="btn" style={{ marginTop: 12 }} onClick={() => setScreen({ name: 'home' })}>
-              {t.session.homeBtn}
-            </button>
-          </div>
-        )}
-      </main>
+          {screen.name === 'done' && (
+            <div className="card">
+              <h2>{t.session.doneTitle}</h2>
+              <p className="muted">{t.session.doneBody(screen.solved)}</p>
+              <button className="btn" style={{ marginTop: 12 }} onClick={() => setScreen({ name: 'home' })}>
+                {t.session.homeBtn}
+              </button>
+            </div>
+          )}
+        </main>
+      </div>
 
       {schemaOpen && <SchemaSheet doc={schema} onClose={() => setSchemaOpen(false)} />}
 
@@ -780,129 +813,146 @@ function Home({
       )}
 
       {/*
-       * Согласие — приоритетнее обычного hero-блока: пока исполнитель ждёт
-       * решения пользователя, начинать занятие нельзя (init() ещё не дошёл
-       * до реальной загрузки), а показывать пустой счётчик «0 на повторение»
-       * поверх невыполнимой кнопки было бы просто ложью на экране.
+       * Две колонки на десктопе, одна на телефоне.
+       *
+       * Порядок в разметке выбран так, чтобы на узком экране страница
+       * осталась ровно той же, что была: сначала блок «начать занятие»,
+       * потом карта навыков, потом справочник и схема. На широком экране
+       * левая колонка становится липкой — кнопка занятия и счётчики видны,
+       * пока листаешь карту из двадцати тем, — а карта переезжает вправо,
+       * получая ширину, при которой описание темы перестаёт обрезаться
+       * многоточием.
        */}
-      {consent !== null && (
-        <div className="card">
-          <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
-          <p className="brief">{t.consent.body(Math.round(consent / 1e6))}</p>
-          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
-          <button className="btn" onClick={onConfirmDownload}>
-            {t.consent.confirmBtn}
-          </button>
-        </div>
-      )}
-
-      {ready && consent === null && (
-        <div className="card">
-          <div className="hero">
-            <div>
-              <div className="big">{dueCount}</div>
-              <div className="muted">{t.home.dueLabel}</div>
-            </div>
-            <div>
-              <div className="big">{progress.totalSolved}</div>
-              <div className="muted">{t.home.solvedLabel}</div>
-            </div>
-            <div>
-              <div className="big">{startedCount}</div>
-              <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
-            </div>
-          </div>
-          <button className="btn" onClick={onStart} disabled={loading}>
-            {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
-          </button>
+      <div className="dashboard">
+        <div className="dash-main">
           {/*
-           * Загрузка Pyodide (~50 МБ) занимает секунды, а не миллисекунды —
-           * без визуальной обратной связи disabled-кнопка с текстом легко
-           * читается как «зависло». Полоска не показывает настоящий процент
-           * (реальный прогресс по байтам разбросан по десяткам файлов внутри
-           * Pyodide и его не свести к одному числу дёшево) — она заполняется
-           * по времени, с запасом не доходя до конца, и просто исчезает вместе
-           * с disabled, когда загрузка правда завершится.
+           * Согласие — приоритетнее обычного hero-блока: пока исполнитель ждёт
+           * решения пользователя, начинать занятие нельзя (init() ещё не дошёл
+           * до реальной загрузки), а показывать пустой счётчик «0 на повторение»
+           * поверх невыполнимой кнопки было бы просто ложью на экране.
            */}
-          {loading && (
-            <div className="load-progress" role="presentation">
-              <div className="load-progress-bar" />
+          {consent !== null && (
+            <div className="card">
+              <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
+              <p className="brief">{t.consent.body(Math.round(consent / 1e6))}</p>
+              <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
+              <button className="btn" onClick={onConfirmDownload}>
+                {t.consent.confirmBtn}
+              </button>
             </div>
           )}
-          <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-            {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
-          </p>
-        </div>
-      )}
 
-      {!ready && (
-        <div className="card">
-          <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
-          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{t.home.draftNote}</p>
-        </div>
-      )}
-
-      <div className="card">
-        <h2>{t.home.skillMapTitle}</h2>
-        {byTier.map(([tier, list]) => (
-          <div key={tier} style={{ marginTop: 12 }}>
-            <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
-            </p>
-            {list.map((s) => {
-              const st = progress.skills[s.id];
-              // Уже начатая тема не может быть «закрытой», даже если предпосылка
-              // взята неуверенно: планировщик выдаёт темы волной, и подпись
-              // «откроется позже» на пройденном задании выглядит как сбой.
-              const unlocked = isUnlocked(s, progress.skills) || (st?.reps ?? 0) > 0;
-              const m = mastery(st);
-              const due = st && st.reps > 0 && isDue(st);
-              const clickable = ready && unlocked;
-              const row = (
-                <>
-                  <div className="name">
-                    {s.title}
-                    <small>{unlocked ? s.summary : t.home.lockedNote}</small>
-                  </div>
-                  {ready && (
-                    <div className={`bar${due ? ' due' : ''}`} title={t.home.masteryAria(Math.round(m * 100))}>
-                      <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
-                    </div>
-                  )}
-                </>
-              );
-              return clickable ? (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="skill-row"
-                  style={{ width: '100%', textAlign: 'left' }}
-                  onClick={() => onStartSkill(s.id)}
-                >
-                  {row}
-                </button>
-              ) : (
-                <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
-                  {row}
+          {ready && consent === null && (
+            <div className="card">
+              <div className="hero">
+                <div>
+                  <div className="big">{dueCount}</div>
+                  <div className="muted">{t.home.dueLabel}</div>
                 </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+                <div>
+                  <div className="big">{progress.totalSolved}</div>
+                  <div className="muted">{t.home.solvedLabel}</div>
+                </div>
+                <div>
+                  <div className="big">{startedCount}</div>
+                  <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
+                </div>
+              </div>
+              <button className="btn" onClick={onStart} disabled={loading}>
+                {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
+              </button>
+              {/*
+               * Загрузка Pyodide (~50 МБ) занимает секунды, а не миллисекунды —
+               * без визуальной обратной связи disabled-кнопка с текстом легко
+               * читается как «зависло». Полоска не показывает настоящий процент
+               * (реальный прогресс по байтам разбросан по десяткам файлов внутри
+               * Pyodide и его не свести к одному числу дёшево) — она заполняется
+               * по времени, с запасом не доходя до конца, и просто исчезает вместе
+               * с disabled, когда загрузка правда завершится.
+               */}
+              {loading && (
+                <div className="load-progress" role="presentation">
+                  <div className="load-progress-bar" />
+                </div>
+              )}
+              <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
+                {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
+              </p>
+            </div>
+          )}
 
-      {ready && (
-        <div className="row">
-          <button className="btn secondary" onClick={onOpenReference}>
-            {t.home.referenceBtn}
-          </button>
-          {writesCode && (
-            <button className="btn secondary" onClick={onOpenSchema}>
-              {t.home.schemaBtn}
-            </button>
+          {!ready && (
+            <div className="card">
+              <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>{t.home.draftNote}</p>
+            </div>
           )}
         </div>
-      )}
+
+        <div className="dash-side">
+          <div className="card">
+            <h2>{t.home.skillMapTitle}</h2>
+            {byTier.map(([tier, list]) => (
+              <div key={tier} style={{ marginTop: 12 }}>
+                <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
+                </p>
+                {list.map((s) => {
+                  const st = progress.skills[s.id];
+                  // Уже начатая тема не может быть «закрытой», даже если предпосылка
+                  // взята неуверенно: планировщик выдаёт темы волной, и подпись
+                  // «откроется позже» на пройденном задании выглядит как сбой.
+                  const unlocked = isUnlocked(s, progress.skills) || (st?.reps ?? 0) > 0;
+                  const m = mastery(st);
+                  const due = st && st.reps > 0 && isDue(st);
+                  const clickable = ready && unlocked;
+                  const row = (
+                    <>
+                      <div className="name">
+                        {s.title}
+                        <small>{unlocked ? s.summary : t.home.lockedNote}</small>
+                      </div>
+                      {ready && (
+                        <div className={`bar${due ? ' due' : ''}`} title={t.home.masteryAria(Math.round(m * 100))}>
+                          <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
+                        </div>
+                      )}
+                    </>
+                  );
+                  return clickable ? (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="skill-row"
+                      style={{ width: '100%', textAlign: 'left' }}
+                      onClick={() => onStartSkill(s.id)}
+                    >
+                      {row}
+                    </button>
+                  ) : (
+                    <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
+                      {row}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {ready && (
+            <div className="row">
+              <button className="btn secondary" onClick={onOpenReference}>
+                {t.home.referenceBtn}
+              </button>
+              {writesCode && (
+                <button className="btn secondary" onClick={onOpenSchema}>
+                  {t.home.schemaBtn}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }

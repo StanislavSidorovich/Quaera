@@ -34,6 +34,16 @@ export const en = {
       },
     ],
   },
+  /** См. комментарий в ru.ts: боковая навигация существует только на десктопе. */
+  nav: {
+    ariaLabel: 'Sections',
+    sectionsLabel: 'Learning',
+    tracksLabel: 'Tracks',
+    home: 'Home',
+    reference: 'Reference',
+    about: 'About',
+    trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
+  },
   tracks: {
     ariaLabel: 'Tracks',
     readyBadge: (n: number) => `${n} tasks`,

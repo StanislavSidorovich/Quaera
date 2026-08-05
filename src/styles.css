@@ -16,6 +16,18 @@
   --radius: 14px;
   --tap: 44px;
   color-scheme: dark;
+
+  /*
+   * Цвета треков — вне блоков темы намеренно: это опознавательный знак
+   * направления, а не элемент оформления, и он обязан остаться тем же
+   * в светлой и в тёмной теме, иначе «зелёный — это SQL» перестаёт
+   * работать как признак. Тона средней светлоты — читаются заливкой
+   * и на --bg-sunken светлой темы, и на тёмной.
+   */
+  --track-domain: #4f8ef7;
+  --track-sql: #2fa96b;
+  --track-python: #8b6cf0;
+  --track-model: #d98429;
 }
 
 @media (prefers-color-scheme: light) {
@@ -135,17 +147,202 @@ textarea.sql {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* --------------------------------------------------- оболочка и навигация */
+
 /*
- * Выше планшета — не растянутый телефон. 720px, зафиксированные для мобильного
- * чтения, на ноутбучном экране превращаются в узкую колонку с пустотой по бокам:
- * первое, что видит рекрутёр по ссылке с десктопа. 880px — компромисс между
- * «использовать пространство» и абзацем, который ещё можно читать: карточки
- * держат внутренний padding, а не текст на всю ширину экрана без переносов.
+ * Колонка «шапка + содержимое». На телефоне она единственный ребёнок .app
+ * и не меняет ничего; на десктопе рядом с ней встаёт боковое меню, и .app
+ * из колонки становится строкой. Обёртка нужна ровно для этого: без неё
+ * шапка и содержимое оказались бы соседями меню и выстроились бы в ряд с ним.
  */
-@media (min-width: 1024px) {
-  .app {
-    max-width: 880px;
-  }
+.shell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Боковое меню существует только на десктопе — см. Sidebar.tsx. */
+.sidebar {
+  display: none;
+}
+
+.dashboard,
+.dash-main,
+.dash-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/*
+ * Внутренности бокового меню. Живут вне медиазапроса: наружу их всё равно
+ * не видно, пока сам .sidebar скрыт, а держать вложенным ещё сотню строк
+ * значило бы читать их с постоянным отступом ради одного условия.
+ *
+ * Прилипает не сама полоса, а её содержимое: полоса растянута на всю высоту
+ * страницы (иначе граница справа обрывается там, где кончились пункты),
+ * а растянутому элементу некуда двигаться внутри собственной области.
+ */
+.sidebar-inner {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 12px 20px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 2px;
+}
+
+.sidebar-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sidebar-brand b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-brand small {
+  display: block;
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.side-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.side-group h2 {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+}
+
+.side-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.side-item svg {
+  flex: none;
+  color: var(--text-dim);
+}
+
+.side-item:hover {
+  background: var(--bg-raised);
+}
+
+/* Открытый раздел — акцентом; активный трек — только фоном: это состояние
+   приложения, а не то место, где человек сейчас находится. */
+.side-item[aria-current='page'] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.side-item[aria-current='page'] svg {
+  color: inherit;
+}
+
+.side-track {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.side-track[aria-pressed='true'] {
+  background: var(--bg-raised);
+}
+
+.side-track-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Название трека переносится на вторую строку, а не обрезается многоточием:
+   «Аналитика как професс…» в меню — это не короче, а просто непонятнее. */
+.side-track-head span:first-child {
+  min-width: 0;
+}
+
+.side-track[aria-pressed='true'] .side-track-head span:first-child {
+  font-weight: 600;
+}
+
+.side-track-head span:last-child {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.side-track .bar {
+  width: 100%;
+  height: 4px;
+}
+
+/* Цвет трека — только на его полоске прогресса. Красить им весь пункт значило бы
+   четыре разных акцента в меню одновременно: узнаваемости это не добавляет, шума — да. */
+.side-track .bar span {
+  background: var(--track, var(--ok));
+}
+
+.side-track.track-domain {
+  --track: var(--track-domain);
+}
+
+.side-track.track-sql {
+  --track: var(--track-sql);
+}
+
+.side-track.track-python {
+  --track: var(--track-python);
+}
+
+.side-track.track-model {
+  --track: var(--track-model);
+}
+
+.side-foot {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 /*
@@ -1054,4 +1251,89 @@ details.table-doc > summary small {
 
 .progress-dots .dot.current {
   background: var(--accent);
+}
+
+/* ------------------------------------------------------------- десктоп */
+
+/*
+ * Выше планшета — не растянутый телефон.
+ *
+ * Раньше здесь была одна строка: max-width 880px вместо 720px. От этого
+ * страница переставала быть узкой полосой, но оставалась той же мобильной
+ * лентой карточек — просто чуть шире. Теперь на этой ширине появляется
+ * постоянная левая навигация, а главная раскладывается в две колонки:
+ * слева то, что нужно решить сейчас, справа карта тем целиком.
+ *
+ * Блок стоит последним в файле не по вкусовым соображениям: он переопределяет
+ * отступы .topbar, .content и .card и прячет переключатель треков, а все эти
+ * правила объявлены ниже по файлу и при равной специфичности выигрывают
+ * по порядку. Любое новое десктопное правило должно оставаться здесь же.
+ */
+@media (min-width: 1024px) {
+  .app {
+    flex-direction: row;
+    max-width: none;
+  }
+
+  .sidebar {
+    display: block;
+    flex: none;
+    width: 248px;
+    background: var(--bg-sunken);
+    border-right: 1px solid var(--line);
+  }
+
+  /*
+   * Содержимое прижато к меню, а не отцентровано по остатку ширины:
+   * шапка прилипшая и тянется во всю ширину, и при центрировании её
+   * заголовок на широком мониторе переставал бы совпадать по левому краю
+   * с карточками под ней. Предел ширины при этом остаётся — строка текста
+   * в 1900px нечитаема независимо от того, как её выровняли.
+   */
+  .topbar {
+    padding: 12px 28px;
+    gap: 14px;
+  }
+
+  .content {
+    max-width: 1240px;
+    padding: 24px 28px 56px;
+    gap: 20px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  /* Треки на десктопе живут в боковом меню — вторая копия переключателя
+     прямо под ним была бы шумом, а не навигацией. */
+  .tabs.tracks {
+    display: none;
+  }
+
+  /*
+   * auto-fit, а не жёсткие «две колонки»: ширина здесь зависит не только
+   * от экрана. Крупный шрифт включается через zoom на .app (см. .app.font-xl),
+   * и при нём на мониторе 1280px под содержимое остаётся ~660 условных
+   * пикселей — две колонки по 330px превратились бы в две узкие полосы
+   * с текстом в два слова. Порог 380px разводит это сам: не помещается —
+   * колонка снова одна, как на планшете.
+   */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    align-items: start;
+    gap: 20px;
+  }
+
+  /*
+   * Левая колонка липкая: карта навыков справа выше экрана, и при обычной
+   * прокрутке кнопка «Начать занятие» со счётчиками уезжала бы вверх ровно
+   * тогда, когда человек выбирает, с чего начать. 72px — высота прилипшей
+   * шапки плюс тот же отступ, что у остальных карточек.
+   */
+  .dash-main {
+    position: sticky;
+    top: 72px;
+  }
 }
