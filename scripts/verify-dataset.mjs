@@ -150,5 +150,18 @@ const stockEnd = rows(`
      OR date(month_end, '+1 day') <> date(month_start, '+1 month')`)[0].bad;
 check('fact_stock: month_end — последний день своего месяца', stockEnd === 0, `нарушений ${stockEnd}`);
 
+// Вторая дата в факте заведена ради одного: чтобы «по дате заказа» и «по дате
+// отгрузки» давали РАЗНЫЕ месячные итоги. Если задержка окажется настолько
+// короткой, что ни один заказ не переезжает через границу месяца, тема активной
+// и неактивной связи станет неотличима от одной даты, а задания на ней — пустыми.
+const ship = rows(`
+  SELECT SUM(ship_date <= order_date) bad,
+         SUM(substr(ship_date,1,7) <> substr(order_date,1,7)) crossing,
+         COUNT(*) total
+  FROM fact_sellin`)[0];
+check('fact_sellin: отгрузка всегда позже заказа', ship.bad === 0, `нарушений ${ship.bad}`);
+check('fact_sellin: часть заказов отгружается в следующем месяце', ship.crossing > 500,
+  `${ship.crossing} из ${ship.total} строк переходят границу месяца`);
+
 console.log(failed ? `\n${failed} проверок провалено` : '\nВсе проверки пройдены');
 process.exit(failed ? 1 : 0);

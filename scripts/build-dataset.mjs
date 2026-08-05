@@ -416,6 +416,18 @@ for (const r of sellout) {
   sellinAgg.set(key, (sellinAgg.get(key) ?? 0) + r.units);
 }
 const OVERSTOCK_DIST = distributors[0].customer_id; // «Волга-Трейд»
+
+/**
+ * Отдельный поток случайных чисел — только под задержку отгрузки.
+ *
+ * Все остальные выборки идут из общего `rnd`, и он детерминирован: любая
+ * ЛИШНЯЯ выборка из него сдвигает весь поток дальше по генератору, а вместе
+ * с ним — каждое число, закреплённое в verify-content.mjs (их больше двухсот).
+ * Собственный генератор с собственным seed этого не делает: главный поток
+ * не замечает, что рядом появился второй.
+ */
+const rndShip = mulberry32(20260802);
+
 const sellin = [];
 let siId = 0;
 for (const [key, units] of sellinAgg) {
@@ -427,9 +439,18 @@ for (const [key, units] of sellinAgg) {
   const listPrice = p.list_price * Math.pow(1.011, (parseISO(mth) - START) / (365.25 * DAY));
   const gross = qty * listPrice * 0.72; // дистрибьюторская цена = 72% от полки
   const discountPct = between(0.03, 0.14);
+  const orderDate = addDays(parseISO(mth), intBetween(1, 26));
+  /**
+   * Отгрузка отстаёт от заказа на 2–11 дней, поэтому заказ конца месяца
+   * уезжает отгрузкой в следующий. Ради этого расхождения колонка и заведена:
+   * без неё «выручка по дате заказа» и «по дате отгрузки» — одно и то же
+   * число, и роль второй даты в модели показать не на чем.
+   */
+  const shipDate = addDays(orderDate, 2 + Math.floor(rndShip() * 10));
   sellin.push({
     sellin_id: ++siId,
-    order_date: iso(addDays(parseISO(mth), intBetween(1, 26))),
+    order_date: iso(orderDate),
+    ship_date: iso(shipDate),
     month_start: mth,
     distributor_id: Number(dist),
     product_id: Number(pid),
@@ -671,10 +692,12 @@ const SCHEMA = [
   {
     table: 'fact_sellin', title: 'Отгрузки дистрибьюторам (sell-in)', grain: 'месяц × дистрибьютор × SKU',
     ddl: `CREATE TABLE fact_sellin (
-      sellin_id INTEGER PRIMARY KEY, order_date TEXT, month_start TEXT, distributor_id INTEGER,
+      sellin_id INTEGER PRIMARY KEY, order_date TEXT, ship_date TEXT, month_start TEXT, distributor_id INTEGER,
       product_id INTEGER, units INTEGER, gross_amount REAL, discount_amount REAL, net_amount REAL)`,
     cols: {
-      sellin_id: 'Ключ строки', order_date: 'Дата заказа', month_start: 'Месяц отгрузки',
+      sellin_id: 'Ключ строки', order_date: 'Дата заказа',
+      ship_date: 'Дата отгрузки — на 2–11 дней позже заказа, поэтому заказ конца месяца отгружается уже в следующем',
+      month_start: 'Месяц заказа (по order_date)',
       distributor_id: 'FK → dim_customer (только customer_type = distributor)', product_id: 'FK → dim_product',
       units: 'Отгружено штук', gross_amount: 'Сумма до скидок, ₽', discount_amount: 'Скидки, ₽',
       net_amount: 'Сумма к оплате, ₽',
