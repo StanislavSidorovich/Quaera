@@ -1234,25 +1234,36 @@ function TrackIntroScreen({
 
   return (
     <>
-      <div className="card">
-        <h2>{t.trackIntro.whatTitle}</h2>
-        <p style={body}>{intro.what}</p>
-      </div>
-      <div className="card">
-        <h2>{t.trackIntro.whereTitle}</h2>
-        <p style={body}>{intro.where}</p>
-      </div>
-      <div className="card">
-        <h2>{t.trackIntro.ideaTitle}</h2>
-        <p style={body}>{intro.idea}</p>
-      </div>
-      <div className="card">
-        <h2>{t.trackIntro.limitsTitle}</h2>
-        <p style={body}>{intro.limits}</p>
-      </div>
-      <div className="card">
-        <h2>{t.trackIntro.bridgeTitle}</h2>
-        <p style={body}>{intro.bridge}</p>
+      {/*
+       * Пять карточек в две колонки на десктопе (см. .track-intro в styles.css).
+       * Одной колонкой текст занимал левую половину экрана, а правая оставалась
+       * пустой: абзац ограничен 68ch по ширине для читаемости, и растягивать
+       * его на всю страницу нельзя — а вот поставить карточки рядом можно.
+       * Это не сплошная проза, а пять отдельных ответов на пять вопросов,
+       * и читаются они самостоятельно, а не строго подряд.
+       */}
+      <div className="track-intro">
+        <div className="card">
+          <h2>{t.trackIntro.whatTitle}</h2>
+          <p style={body}>{intro.what}</p>
+        </div>
+        <div className="card">
+          <h2>{t.trackIntro.whereTitle}</h2>
+          <p style={body}>{intro.where}</p>
+        </div>
+        <div className="card">
+          <h2>{t.trackIntro.ideaTitle}</h2>
+          <p style={body}>{intro.idea}</p>
+        </div>
+        <div className="card">
+          <h2>{t.trackIntro.limitsTitle}</h2>
+          <p style={body}>{intro.limits}</p>
+        </div>
+        {/* Мост к остальным трекам — закрывающий блок, поэтому во всю ширину. */}
+        <div className="card track-intro-wide">
+          <h2>{t.trackIntro.bridgeTitle}</h2>
+          <p style={body}>{intro.bridge}</p>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
