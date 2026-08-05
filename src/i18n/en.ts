@@ -70,6 +70,7 @@ export const en = {
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Code actually runs — on 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
+    overallProgressLabel: 'Track mastery',
     skillMapTitle: 'Skill map',
     lockedNote: 'Unlocks after earlier topics',
     masteryAria: (pct: number) => `${pct}% mastered`,
@@ -92,16 +93,19 @@ export const en = {
   about: {
     title: 'About the trainer',
     entryLink: "What's in the trainer and how it works →",
+    tracksStatLabel: 'tracks',
+    skillsStatLabel: 'skills',
+    tasksStatLabel: 'tasks',
     structureTitle: 'Structure',
     structureIntro: (skills: number, tasks: number) =>
-      `Four tracks on one dataset. Right now that's ${skills} skills and ${tasks} tasks — the numbers grow with every sprint, and the counter on each track tile is always accurate.`,
+      `Right now the tracks add up to ${skills} skills and ${tasks} tasks — the numbers grow with every sprint, and the counter on each track tile is always accurate.`,
     howTitle: 'How it works',
     howSrs:
       "The system decides on its own what to show: a new topic or one that's due for review. The interval is assigned to the skill, not the task — so if you just worked through one window-function problem, what comes back isn't that same task but a different one on the same technique. It guards against the illusion of understanding: remembering the wording of a task isn't the same as remembering the technique.",
     howModes:
       'Three input modes for different circumstances: predict the result — readable one-handed on the go; fill in the gaps in a query — an intermediate step; write it from scratch — for the desk. The same skill moves through all three as you master it.',
     howData:
-      'All tracks run on one continuous dataset of a fictional FMCG and OTC-pharma distributor: 156,000 rows over two and a half years, with built-in storylines like distribution loss or warehouse overstock. SQL queries actually run, in the browser, offline.',
+      "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart — every skill is trained on its own concrete situation, not an abstract example.",
     privacyTitle: 'Privacy',
     privacyBody:
       "No account needed. All progress is stored on the device and never sent anywhere — close the tab and pick up where you left off a month later, or clear the site data and start over.",

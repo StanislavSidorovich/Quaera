@@ -80,7 +80,14 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
 
       <div className="card">
         <h2>{t.lesson.formTitle}</h2>
-        <pre className="sql-block">{lesson.form}</pre>
+        {/*
+         * У runnable-треков (sql, python) form — скелет синтаксиса
+         * («SELECT колонка FROM таблица»), короткие строки, моноширинный
+         * блок со скроллом уместен как для кода. У треков без исполнителя
+         * form — разобранный текст, ему нужен перенос по ширине, а не
+         * горизонтальная прокрутка (см. .lesson-prose в styles.css).
+         */}
+        {runnable ? <pre className="sql-block">{lesson.form}</pre> : <pre className="lesson-prose">{lesson.form}</pre>}
       </div>
 
       {/*
@@ -99,7 +106,7 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
       <div className="lesson-compare">
         <div className="card">
           <h2>{t.lesson.exampleTitle}</h2>
-          {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="sql-block">{lesson.example}</pre>}
+          {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className="lesson-prose">{lesson.example}</pre>}
           <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
             {lesson.reads}
           </p>
@@ -110,7 +117,7 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
           {runnable ? (
             <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
           ) : (
-            <pre className="sql-block">{lesson.wrong}</pre>
+            <pre className="lesson-prose">{lesson.wrong}</pre>
           )}
           <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.wrongWhy}</p>
         </div>

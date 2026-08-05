@@ -668,6 +668,57 @@ textarea.sql {
   border-radius: 3px;
 }
 
+/*
+ * Мастерство по уровням графа на главной — до четырёх строк «название
+ * уровня / полоса / процент». Полоса крупнее .bar (тот рассчитан на 64px
+ * в строке карты навыков, здесь тянется на всё доступное место между
+ * подписью уровня и процентом).
+ */
+.overall-progress {
+  margin: 4px 0 14px;
+}
+
+.overall-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.overall-progress-tier {
+  flex: 0 0 auto;
+  width: 40%;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overall-progress-pct {
+  flex: none;
+  width: 34px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-lg {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+.bar-lg span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 .bar.due span {
   background: var(--warn);
 }
@@ -1254,6 +1305,31 @@ pre.sql-block {
   line-height: 1.55;
 }
 
+/*
+ * Проза внутри карточки приёма — form/example/wrong у треков без исполнителя
+ * (domain, model). Эти поля никогда не исполняемый код, а разобранный текст
+ * с ручными переносами абзацев: у domain автор укладывался в короткие строки
+ * вручную (макс. ~70 знаков), а у model реальные предложения на 200-300+
+ * знаков — и .sql-block с overflow-x: auto превращал их в длинную полосу,
+ * которую приходится листать вбок, особенно на телефоне. .lesson-prose
+ * решает это на уровне вёрстки, а не переписыванием текста под лимит строки:
+ * pre-wrap сохраняет \n\n между абзацами, но переносит длинные предложения
+ * по ширине блока, как обычный текст. Шрифт — не моноширинный: это проза,
+ * а не таблица со значениями, выровненными пробелами (в отличие от .scenario).
+ */
+pre.lesson-prose {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* -------------------------------------------------------------- шторка */
 
 .sheet-backdrop {
@@ -1647,7 +1723,16 @@ details.table-doc > summary small {
  * треков: когда число элементов известно заранее, адаптивная сетка должна
  * быть ограничена сверху, иначе она выдаёт сироту.
  */
-.track-intro {
+/*
+ * .about-grid делит ту же раскладку: независимые карточки-ответы рядом,
+ * а не в один шаблон с .track-intro — там сетка ровно из пяти карточек
+ * с обязательной широкой пятой (.track-intro-wide), здесь произвольное
+ * число обычных карточек без такого правила. Оставлены разными классами,
+ * чтобы источник не путал семантику («о треке» и «о тренажёре» — разные
+ * экраны), но CSS-поведение общее.
+ */
+.track-intro,
+.about-grid {
   display: grid;
   /*
    * min(440px, 100%), а не голые 440px: когда контейнер уже минимума, minmax

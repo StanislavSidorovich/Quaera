@@ -830,6 +830,25 @@ function Home({
     return [...groups.entries()].sort((a, b) => a[0] - b[0]);
   }, [activePack]);
 
+  /**
+   * Мастерство по уровням графа — отдельная метрика от solvedCount
+   * и startedCount, а не их пересказ другими словами. Те считают решённые
+   * задания и начатые темы; здесь — глубина освоения (интервал и качество
+   * последних оценок SRS), сгруппированная по tier. Это агрегат, а не
+   * дублирование карты навыков справа: там построчно перечислены все темы,
+   * здесь — до четырёх усреднённых чисел, обзор без прокрутки. Заодно даёт
+   * карточке занятия содержательную высоту, сопоставимую с картой навыков, —
+   * не за счёт пустого отступа, а за счёт другого среза тех же данных.
+   */
+  const masteryByTier = useMemo(
+    () =>
+      byTier.map(([tier, list]) => {
+        const sum = list.reduce((acc, s) => acc + mastery(progress.skills[s.id]), 0);
+        return { tier, avg: sum / list.length };
+      }),
+    [byTier, progress]
+  );
+
   const ready = activePack.status !== 'draft' && activePack.tasks.length > 0;
   /**
    * Пишет ли человек код в этом треке. Выводится из самих заданий, а не из
@@ -971,6 +990,18 @@ function Home({
                   <div className="big">{startedCount}</div>
                   <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
                 </div>
+              </div>
+              <div className="overall-progress">
+                <p className="muted" style={{ margin: '0 0 8px', fontSize: 13 }}>{t.home.overallProgressLabel}</p>
+                {masteryByTier.map(({ tier, avg }) => (
+                  <div className="overall-progress-row" key={tier}>
+                    <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
+                    <div className="bar-lg" title={t.home.masteryAria(Math.round(avg * 100))}>
+                      <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
+                    </div>
+                    <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
+                  </div>
+                ))}
               </div>
               <button className="btn" onClick={onStart} disabled={loading}>
                 {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
@@ -1123,6 +1154,30 @@ function About({
     <>
       <WelcomeHero />
 
+      {/*
+       * Три плитки того же вида, что hero-счётчики на главной, — не декор,
+       * а реальные числа, которые иначе читались бы только внутри предложения
+       * structureIntro ниже. На широком экране заодно занимают часть пустого
+       * места под текстом WelcomeHero, у которого абзац ограничен по ширине
+       * ради читаемости (см. .card p { max-width: 68ch }).
+       */}
+      <div className="card">
+        <div className="hero">
+          <div>
+            <div className="big">{TRACK_ORDER.length}</div>
+            <div className="muted">{t.about.tracksStatLabel}</div>
+          </div>
+          <div>
+            <div className="big">{totalSkills}</div>
+            <div className="muted">{t.about.skillsStatLabel}</div>
+          </div>
+          <div>
+            <div className="big">{totalTasks}</div>
+            <div className="muted">{t.about.tasksStatLabel}</div>
+          </div>
+        </div>
+      </div>
+
       <div className="card">
         <h2>{t.about.structureTitle}</h2>
         <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
@@ -1162,16 +1217,26 @@ function About({
         </p>
       </div>
 
-      <div className="card">
-        <h2>{t.about.howTitle}</h2>
-        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
-        <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
-      </div>
+      {/*
+       * Две независимые карточки-ответа рядом, а не друг под другом — тот же
+       * приём, что и в TrackIntroScreen (.track-intro): на широком экране
+       * узкий абзац (68ch) иначе оставлял пустую половину карточки. «Как
+       * это устроено» длиннее «Приватности», но auto-fit это не мешает —
+       * ряды выравниваются по высоте самой длинной карточки в строке
+       * (align-items: start в CSS и так не растягивает их принудительно).
+       */}
+      <div className="about-grid">
+        <div className="card">
+          <h2>{t.about.howTitle}</h2>
+          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
+          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
+        </div>
 
-      <div className="card">
-        <h2>{t.about.privacyTitle}</h2>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+        <div className="card">
+          <h2>{t.about.privacyTitle}</h2>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+        </div>
       </div>
 
       <div className="card">
