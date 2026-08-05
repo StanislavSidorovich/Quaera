@@ -74,7 +74,7 @@ async function runPython(code) {
  * есть задания, а не на весь граф разом). python-core наполняется тем же
  * образом — на момент первого батча заполнен только один скилл из пятнадцати.
  */
-const packs = ['sql-core', 'domain-core', 'python-core'];
+const packs = ['sql-core', 'domain-core', 'python-core', 'model-core'];
 
 /**
  * Черновые паки: граф навыков спроектирован, контента ещё нет вообще.
@@ -85,7 +85,7 @@ const packs = ['sql-core', 'domain-core', 'python-core'];
  * с более высоким уровнем стоит здесь минуты, а не переписывания пака.
  * Проверяется у них только граф — заданий и карточек спрашивать не с чего.
  */
-const draftPacks = ['model-core'];
+const draftPacks = [];
 
 let failed = 0;
 const fail = (id, msg) => {
@@ -420,6 +420,7 @@ async function checkLessons(pack, lessonsFileId) {
   }
 }
 
+await checkLessons(readPack('model-core'), 'model-lessons');
 await checkLessons(readPack('sql-core'), 'sql-lessons');
 await checkLessons(readPack('domain-core'), 'domain-lessons');
 await checkLessons(readPack('python-core'), 'python-lessons');
@@ -1152,6 +1153,108 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     fail('dom-047', 'июньского всплеска «Хрустика» больше нечем объяснить — акции в dim_promo на этот месяц нет');
   } else {
     console.log(`  ok   dom-047: вода даёт сезонную волну, снек — один всплеск в месяц собственной акции`);
+  }
+}
+
+// --- model-core: числа, которыми описана модель.
+//
+// У трека model нет исполнителя: DAX в браузере выполнить нечем, и мера,
+// показанная человеку, остаётся текстом. Поэтому проверяется не она, а то,
+// на чём она стоит: гранулярность таблиц, кардинальность ключей и результат
+// соединения. Каждое такое утверждение выражается запросом к той же базе,
+// на которой считают sql и python, — и если генератор датасета изменится,
+// разбор в model упадёт здесь, а не останется тихо неверным.
+//
+// Эквивалентность «мера в задании = запрос здесь» проверяется человеком
+// один раз при написании задания; гейт после этого держит числа. Это тот же
+// уровень гарантий, что у domain, и он честно ограничен: подмену смысла
+// в прозе не ловит ни то, ни другое.
+
+// mdl-004: гранулярность fact_sellout названа как «неделя × точка × SKU».
+// Доказательство — совпадение числа строк с числом различных сочетаний;
+// на нём же держится верный вариант и разбор всего задания.
+{
+  const r = runSql(`
+    SELECT (SELECT COUNT(*) FROM fact_sellout) AS rows,
+           (SELECT COUNT(*) FROM (SELECT DISTINCT week_start, customer_id, product_id FROM fact_sellout)) AS combos`);
+  const [rows, combos] = r.rows[0];
+  if (rows !== 118449 || combos !== rows) {
+    fail('mdl-004', `в задании 118 449 строк и столько же сочетаний, в базе ${rows} и ${combos}`);
+  } else console.log(`  ok   mdl-004: гранулярность fact_sellout — ${rows} строк = ${combos} сочетаний`);
+}
+
+// mdl-005 и mdl-006: гранулярности fact_target и fact_sellin. Задания строятся
+// на том, что товара в плане нет вовсе, а у отгрузок нет ни недели, ни точки.
+{
+  const r = runSql(`
+    SELECT (SELECT COUNT(*) FROM fact_target) AS t_rows,
+           (SELECT COUNT(*) FROM (SELECT DISTINCT month_start, rep_id, division FROM fact_target)) AS t_combos,
+           (SELECT COUNT(*) FROM fact_sellin) AS s_rows,
+           (SELECT COUNT(*) FROM (SELECT DISTINCT month_start, distributor_id, product_id FROM fact_sellin)) AS s_combos`);
+  const [tRows, tCombos, sRows, sCombos] = r.rows[0];
+  const cols = new Set(db.exec('PRAGMA table_info(fact_target)')[0].values.map((c) => c[1]));
+  if (tRows !== 750 || tCombos !== tRows) {
+    fail('mdl-005', `в задании 750 строк плана на уникальном ключе, в базе ${tRows} и ${tCombos}`);
+  } else if (cols.has('product_id')) {
+    fail('mdl-005', 'в fact_target появился product_id — задание утверждает, что товара в плане нет вовсе');
+  } else console.log(`  ok   mdl-005: план — ${tRows} строк, товара в нём по-прежнему нет`);
+  if (sRows !== 15362 || sCombos !== sRows) {
+    fail('mdl-006', `в задании 15 362 отгрузки на уникальном ключе, в базе ${sRows} и ${sCombos}`);
+  } else console.log(`  ok   mdl-006: отгрузки — ${sRows} строк, гранулярность «месяц × дистрибьютор × SKU»`);
+}
+
+// mdl-007, mdl-008, mdl-011: размеры справочников и уникальность ключей.
+// На них держатся и «47 названий против 118 449 повторов», и вывод о том,
+// что связь по бренду — многие-ко-многим.
+{
+  const r = runSql(`
+    SELECT (SELECT COUNT(*) FROM dim_product) AS products,
+           (SELECT COUNT(DISTINCT brand) FROM dim_product) AS prod_brands,
+           (SELECT COUNT(*) FROM dim_customer) AS customers,
+           (SELECT COUNT(DISTINCT category) FROM dim_product) AS cats,
+           (SELECT COUNT(*) FROM dim_promo) AS promos,
+           (SELECT COUNT(DISTINCT brand) FROM dim_promo) AS promo_brands,
+           (SELECT COUNT(*) FROM dim_product WHERE brand = 'Чистовъ') AS chistov_products,
+           (SELECT COUNT(*) FROM dim_promo WHERE brand = 'Чистовъ') AS chistov_promos`);
+  const [products, prodBrands, customers, cats, promos, promoBrands, cProd, cPromo] = r.rows[0];
+  const quoted = { products: 47, prodBrands: 9, customers: 144, cats: 5, promos: 89, promoBrands: 9, cProd: 5, cPromo: 10 };
+  const actual = { products, prodBrands, customers, cats, promos, promoBrands, cProd, cPromo };
+  const bad = Object.keys(quoted).filter((k) => quoted[k] !== actual[k]);
+  if (bad.length) {
+    fail('mdl-007/008/011', `цифры справочников разошлись: ${bad.map((k) => `${k} ${quoted[k]}→${actual[k]}`).join(', ')}`);
+  } else console.log(`  ok   mdl-007/008/011: справочники ${products}/${customers}/${promos}, «Чистовъ» — ${cProd} товаров и ${cPromo} акций`);
+  // Многие-ко-многим требует неуникальности С ОБЕИХ сторон: станет ключ
+  // уникальным хоть где-то — и mdl-011 будет учить несуществующему случаю.
+  if (prodBrands >= products || promoBrands >= promos) {
+    fail('mdl-011', 'brand стал уникален в одном из справочников — связь больше не многие-ко-многим');
+  }
+}
+
+// mdl-013: главное число трека. Соединение по бренду вместо promo_id раздувает
+// и строки, и выручку примерно вдесятеро — на этом держатся и вопрос, и разбор,
+// и подсказка «сравните с полной выручкой таблицы».
+{
+  const r = runSql(`
+    SELECT (SELECT ROUND(SUM(revenue)) FROM fact_sellout) AS total,
+           (SELECT COUNT(*) FROM fact_sellout) AS rows_ok,
+           (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
+              JOIN dim_product p ON p.product_id = f.product_id
+              JOIN dim_promo m ON m.brand = p.brand) AS inflated,
+           (SELECT COUNT(*) FROM fact_sellout f
+              JOIN dim_product p ON p.product_id = f.product_id
+              JOIN dim_promo m ON m.brand = p.brand) AS rows_inflated,
+           (SELECT MIN(c) FROM (SELECT COUNT(*) c FROM dim_promo GROUP BY brand)) AS min_promos,
+           (SELECT MAX(c) FROM (SELECT COUNT(*) c FROM dim_promo GROUP BY brand)) AS max_promos`);
+  const [total, rowsOk, inflated, rowsInflated, minPromos, maxPromos] = r.rows[0];
+  if (total !== 126911191 || inflated !== 1262668596 || rowsOk !== 118449 || rowsInflated !== 1173847) {
+    fail('mdl-013', `цифры задания разошлись с базой: выручка ${total} (в тексте 126 911 191), раздутая ${inflated} (в тексте 1 262 668 596), строк ${rowsOk} → ${rowsInflated} (в тексте 118 449 → 1 173 847)`);
+  } else if (minPromos !== 9 || maxPromos !== 11) {
+    fail('mdl-013', `в задании «акций на бренд 9–11», в базе ${minPromos}–${maxPromos}`);
+  } else {
+    // Разбор учит признаку «превысило полный итог — значит посчитано многократно».
+    // Если раздутая сумма вдруг перестанет превышать полную, признак исчезнет.
+    if (inflated <= total) fail('mdl-013', 'раздутая выручка перестала превышать полную — признак из разбора не работает');
+    console.log(`  ok   mdl-013: соединение по бренду ${rowsOk} → ${rowsInflated} строк, выручка ${total} → ${inflated} (×${(inflated / total).toFixed(1)})`);
   }
 }
 
