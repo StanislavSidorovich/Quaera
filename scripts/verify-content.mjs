@@ -937,7 +937,9 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     console.log(`  ok   dom-033: «Спорт» ${vm['КЛЮЧ006'][1]} точек при скорости ${vm['КЛЮЧ006'][5]} против ${vm['КЛЮЧ003'][5]} у газированной 0.5 л с тем же числом точек`);
   }
 
-  // --- dom-034 и карточка dom-fmcg-promo: акция «Молочный Дом», август 2025.
+  // --- dom-034, dom-061 и карточка dom-fmcg-promo: акция «Молочный Дом», август 2025.
+  // dom-061 цитирует те же три пары чисел: там они уже не предмет расчёта,
+  // а плохая новость, которую надо сообщить автору акции.
   const promoWeekly = (brand, from, to) => runSql(`
     SELECT ROUND(AVG(u), 1) AS units, ROUND(AVG(r)) AS revenue, ROUND(SUM(r) / SUM(u), 2) AS price
     FROM (SELECT f.week_start AS ws, SUM(f.units) AS u, SUM(f.revenue) AS r
@@ -1050,6 +1052,9 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   }
 
   // --- dom-043, dom-044 и карточка dom-decomposition: разложение падения «Чистовъ».
+  // На эти же числа опираются конфликтные задания dom-063, dom-064 и dom-065:
+  // средняя выбывшей точки против оставшейся (24 738 / 29 810) и сопоставимый
+  // рост 9.7% там не пересчитываются, а цитируются как результат разбора.
   const q2 = runSql(`
     WITH b AS (
       SELECT substr(f.week_start, 1, 4) AS y, f.customer_id AS cid, SUM(f.revenue) AS r, SUM(f.units) AS u
@@ -1091,6 +1096,56 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     fail('dom-044', 'выбывшие точки перестали быть мельче оставшихся или сопоставимый рост исчез — эффект состава разбирать не на чем');
   } else {
     console.log(`  ok   dom-044: сопоставимые точки +${(100 * lfl26 / lfl24 - 100).toFixed(1)}%, эффект состава +${(100 * keptAvg / qm['2024'][3] - 100).toFixed(1)}% — вместе дают наблюдаемые +${(100 * qm['2026'][3] / qm['2024'][3] - 100).toFixed(0)}%`);
+  }
+
+  // --- dom-062: дашборд BI и разбор считают активные точки за разные окна.
+  // Всё задание держится на том, что разрыв между окнами большой и виден:
+  // если скользящий год сойдётся с кварталом, спор о определении в сценарии
+  // станет спором ни о чём.
+  const activePoints = runSql(`
+    SELECT
+      (SELECT COUNT(DISTINCT f.customer_id) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+        WHERE p.brand = 'Чистовъ' AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01') AS rolling_year,
+      (SELECT COUNT(DISTINCT f.customer_id) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+        WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01') AS quarter`);
+  const [rollingYear, quarterPoints] = activePoints.rows[0];
+  if (rollingYear !== 60 || quarterPoints !== 33) {
+    fail('dom-062', `в базе ${rollingYear} точек за скользящий год и ${quarterPoints} за квартал, в тексте 60 и 33`);
+  } else {
+    console.log(`  ok   dom-062: 60 активных точек за скользящий год против 33 за квартал — расхождение определений воспроизводится`);
+  }
+
+  // --- dom-066: таблица по каналам, из которой выпал e-commerce.
+  // Задание учит тому, что ошибка меняет не вывод, а приоритет, — значит,
+  // проверять надо две вещи: доли каналов и то, что без e-commerce сети
+  // выглядят главным каналом (86% против настоящих 17%).
+  const channels = runSql(`
+    WITH c AS (
+      SELECT cu.channel AS ch, SUM(f.revenue) AS r
+      FROM fact_sellout f
+      JOIN dim_product p ON p.product_id = f.product_id
+      JOIN dim_customer cu ON cu.customer_id = f.customer_id
+      WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01'
+      GROUP BY 1)
+    SELECT ch, ROUND(r / 1000) AS thousands, ROUND(100.0 * r / (SELECT SUM(r) FROM c), 1) AS share,
+           ROUND(100.0 * r / (SELECT SUM(r) FROM c WHERE ch <> 'ecom'), 1) AS share_without_ecom
+    FROM c ORDER BY 2 DESC`);
+  const chm = rowsBy(channels);
+  // Доли в тексте округлены до целых процентов и подобраны так, чтобы давать
+  // в сумме сто, — поэтому сверяются с допуском в пол-пункта, а не побитово.
+  const quotedChannels = { ecom: [869, 80], modern_trade: [180, 17], traditional_trade: [30, 3] };
+  for (const [ch, [th, share]] of Object.entries(quotedChannels)) {
+    const row = chm[ch];
+    if (!row || Math.abs(row[1] - th) > 1 || Math.abs(row[2] - share) > 0.6) {
+      fail('dom-066', `${ch}: в базе ${row?.slice(1).join(' / ')}, в тексте ${th} тыс. / ${share}%`);
+    }
+  }
+  if (Math.abs(chm['modern_trade'][3] - 86) > 0.6 || Math.abs(chm['traditional_trade'][3] - 14) > 0.6) {
+    fail('dom-066', `без e-commerce в базе ${chm['modern_trade'][3]} / ${chm['traditional_trade'][3]}, в тексте 86 / 14`);
+  } else if (chm['ecom'][2] < chm['modern_trade'][2]) {
+    fail('dom-066', 'e-commerce перестал быть крупнейшим каналом бренда — потерянная строка больше не меняет приоритет');
+  } else {
+    console.log(`  ok   dom-066: e-commerce ${chm['ecom'][2]}% выручки бренда, но без него сети выглядят на ${chm['modern_trade'][3]}%`);
   }
 
   // --- dom-046, dom-047 и карточка dom-abc-xyz: ABC на ровном ассортименте и вариация спроса.
