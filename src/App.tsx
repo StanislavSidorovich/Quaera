@@ -721,6 +721,7 @@ function TrackCards({
               <span className="track-card-name">{t.tracks.names[track]}</span>
               <span className="pill">{ready ? t.tracks.readyBadge(total) : t.tracks.draftBadge}</span>
             </div>
+            <p className="muted track-card-chain">{t.tracks.chainStage[track]}</p>
             <p className="muted track-card-desc">{pack.description}</p>
             {ready ? (
               <>
@@ -766,6 +767,42 @@ function WelcomeHero() {
           <div className="proof-item" key={i}>
             <strong>{p.title}</strong>
             <span>{p.body}</span>
+          </div>
+        ))}
+      </div>
+      <ChainDiagram />
+    </div>
+  );
+}
+
+/**
+ * Цепочка «от вопроса до решения» — то же самое, что читается между строк
+ * в порядке треков (about.tracksWhyBody), но названо явно и с шагами.
+ * Живёт в WelcomeHero (см. .proof-item выше по стилю разделителя) и рядом
+ * с каждым треком — TrackCards и About берут ту же t.tracks.chainStage,
+ * чтобы подпись «на каком я шаге» не расходилась между экранами.
+ */
+function ChainDiagram() {
+  const { t } = useI18n();
+  return (
+    <div className="chain">
+      <p className="muted" style={{ margin: '14px 0 8px', fontSize: 13 }}>
+        <strong style={{ color: 'var(--text)' }}>{t.welcome.chainTitle}.</strong> {t.welcome.chainIntro}
+      </p>
+      <div className="chain-steps" aria-hidden>
+        {t.welcome.chainSteps.map((step, i) => (
+          <span key={step} className="chain-step-wrap">
+            <span className="pill chain-step">{step}</span>
+            {i < t.welcome.chainSteps.length - 1 && <span className="chain-arrow">→</span>}
+          </span>
+        ))}
+      </div>
+      <div className="chain-legend">
+        {TRACK_ORDER.map((track) => (
+          <div className="chain-legend-item" key={track}>
+            <span className={`chain-legend-dot track-${track}`} aria-hidden />
+            <span>{t.tracks.names[track]}</span>
+            <span className="muted">{t.tracks.chainStage[track]}</span>
           </div>
         ))}
       </div>
@@ -1200,7 +1237,10 @@ function About({
                   {ready ? t.tracks.readyBadge(p.tasks.length) : t.tracks.draftBadge}
                 </span>
               </div>
-              <p className="muted" style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+              <p className="muted" style={{ margin: '4px 0 0', fontSize: 12.5, fontWeight: 600 }}>
+                {t.tracks.chainStage[track]}
+              </p>
+              <p className="muted" style={{ margin: '2px 0 0', fontSize: 13, lineHeight: 1.5 }}>
                 {p.description}
               </p>
             </button>

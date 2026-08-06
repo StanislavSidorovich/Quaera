@@ -33,6 +33,9 @@ export const en = {
         body: 'SQL, pandas, analytics-as-a-profession, and the data model all work through the same business cases, and the answers are required to agree.',
       },
     ],
+    chainTitle: 'From question to decision',
+    chainIntro: 'The same path for every business case, and each step has its own track.',
+    chainSteps: ['business question', 'requirements', 'metric', 'data', 'analysis', 'model', 'insight', 'decision'],
   },
   /** См. комментарий в ru.ts: боковая навигация существует только на десктопе. */
   nav: {
@@ -53,6 +56,12 @@ export const en = {
       domain: 'Analytics as a profession',
       python: 'pandas for analysts',
       model: 'Data model and BI',
+    } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+    chainStage: {
+      domain: 'question → requirements → metric · insight → decision',
+      sql: 'data',
+      python: 'analysis',
+      model: 'model',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
     solvedOf: (solved: number, total: number) => `${solved} / ${total} solved`,
     continueBtn: 'Continue →',

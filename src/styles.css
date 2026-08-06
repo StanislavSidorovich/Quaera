@@ -607,6 +607,74 @@ textarea.sql {
   line-height: 1.5;
 }
 
+/* Цепочка «от вопроса до решения» под доказательствами в WelcomeHero. */
+.chain-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
+  margin-bottom: 12px;
+}
+
+.chain-step-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px 2px;
+}
+
+.chain-step {
+  font-size: 12px;
+}
+
+.chain-arrow {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.chain-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.chain-legend-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.chain-legend-item > span:nth-child(2) {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chain-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+}
+
+.chain-legend-dot.track-domain {
+  background: var(--track-domain);
+}
+
+.chain-legend-dot.track-sql {
+  background: var(--track-sql);
+}
+
+.chain-legend-dot.track-python {
+  background: var(--track-python);
+}
+
+.chain-legend-dot.track-model {
+  background: var(--track-model);
+}
+
 .hero {
   display: flex;
   align-items: baseline;
@@ -990,6 +1058,15 @@ textarea.sql:focus {
 .track-card-name {
   font-size: 15px;
   font-weight: 600;
+}
+
+/* Участок цепочки «от вопроса до решения», который тренирует этот трек —
+   цвет берётся из --track, уже заданной на .track-card.track-{track}. */
+.track-card-chain {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--track);
 }
 
 .track-card-desc {
