@@ -12,6 +12,8 @@ import rawDomainCoreEn from './packs/domain-core.en.json';
 import rawDomainLessonsEn from './packs/domain-lessons.en.json';
 import rawPythonCoreEn from './packs/python-core.en.json';
 import rawPythonLessonsEn from './packs/python-lessons.en.json';
+import rawModelCoreEn from './packs/model-core.en.json';
+import rawModelLessonsEn from './packs/model-lessons.en.json';
 import type { Lesson, LessonTranslation, Pack, PackTranslation, Task, Track } from './types';
 import type { Locale } from '../i18n/context';
 
@@ -140,6 +142,10 @@ const packTranslations: Partial<Record<string, PackTranslation>> = {
   'sql-core': validateTranslation(packById.get('sql-core')!, rawSqlCoreEn as PackTranslation),
   'domain-core': validateTranslation(packById.get('domain-core')!, rawDomainCoreEn as PackTranslation),
   'python-core': validateTranslation(packById.get('python-core')!, rawPythonCoreEn as PackTranslation),
+  // Частичный перевод (tier 1-3 из 4) — applyTranslation подставляет то, что
+  // есть, и оставляет tier 4 русским; isTrackTranslated следит за полнотой
+  // отдельно (см. комментарий там), так что баннер не солжёт до полного покрытия.
+  'model-core': validateTranslation(packById.get('model-core')!, rawModelCoreEn as PackTranslation),
 };
 
 /**
@@ -157,13 +163,20 @@ export const packForTrack = (track: Track, locale: Locale = 'ru'): Pack | undefi
 /**
  * Есть ли у трека перевод контента. Нужно ровно для одного: предупредить
  * англоязычного человека, что тексты этого трека он увидит по-русски.
- * Пока перевод частичный — говорить это на всех треках сразу было бы враньём
- * в обе стороны: на переведённых трек уже английский, на непереведённом
- * предупреждение обязано остаться.
+ *
+ * Проверяется полное покрытие (все скиллы и все задания), а не факт наличия
+ * файла перевода: model-core регистрируется в packTranslations уже на тире
+ * 1-3, чтобы переведённые задания сразу применялись через applyTranslation,
+ * но пока не переведён tier 4, часть заданий трека остаётся русской —
+ * баннер обязан это показывать. На «наличие объекта» эта функция отвечала
+ * бы неверно ровно в таком частичном состоянии.
  */
 export const isTrackTranslated = (track: Track): boolean => {
   const pack = packsByTrack.get(track)?.[0];
-  return !!pack && !!packTranslations[pack.id];
+  if (!pack) return false;
+  const tr = packTranslations[pack.id];
+  if (!tr) return false;
+  return (tr.skills?.length ?? 0) === pack.skills.length && (tr.tasks?.length ?? 0) === pack.tasks.length;
 };
 
 /**
@@ -191,6 +204,7 @@ const lessonTranslationSources: { lessons: LessonTranslation[] }[] = [
   rawSqlLessonsEn as { lessons: LessonTranslation[] },
   rawDomainLessonsEn as { lessons: LessonTranslation[] },
   rawPythonLessonsEn as { lessons: LessonTranslation[] },
+  rawModelLessonsEn as { lessons: LessonTranslation[] },
 ];
 const lessonTranslationBySkill = new Map(
   lessonTranslationSources.flatMap((src) => src.lessons).map((l) => {

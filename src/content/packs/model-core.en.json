@@ -1,0 +1,492 @@
+{
+  "id": "model-core",
+  "title": "Data model and BI",
+  "description": "How flat extracts turn into a model a report can compute correctly and fast. Star schema, grain, evaluation context, time intelligence. The anchor is the PL-300 exam, but the order follows the logic of mistakes, not the exam syllabus.",
+  "tierNames": {
+    "1": "How the warehouse is built",
+    "2": "Measures and context",
+    "3": "CALCULATE, relationships and time",
+    "4": "Production model"
+  },
+  "intro": {
+    "what": "A data model isn't a report file — it's a layer between raw tables and what a person sees on a dashboard: facts and dimensions laid out so the same measure computes correctly under any slice someone asks for. DAX is the language that measure is written in; it exists only inside a model and means nothing outside one, unlike SQL or Python code, which work on their own.\n\nThe main difference from SQL and pandas: there, you write a new query for every new question. Here, you build the model and its measures once, and after that any slice — by region, by month, by brand — the report computes on its own, with no new query.",
+    "where": "A dashboard that different people open every day and slice differently — today by region, tomorrow by product group — and the number has to agree both times without hand-editing the query for each slice. A report built on a single flat extract, where joining the fact to a lookup table multiplied rows and quietly doubled revenue: a model with correctly set relationships and cardinality keeps that from happening structurally, not because whoever built the extract was careful enough.\n\nAt a BI-analyst interview this doesn't come up as DAX syntax trivia — it comes up as walking through an actual model: why did this double, why does a measure give the wrong thing under a slice, where should this column have lived. The same style of reasoning underlies the PL-300 exam, which this track uses as its anchor for topic coverage.",
+    "idea": "A measure doesn't store a number — it gets computed at the moment the report already knows which slice is asking for it: that's the filter context. The same formula written as a calculated column computes once, at data refresh, and freezes — a measure recomputes for every cell of a pivot table, with its own set of filters from rows, columns and slicers.\n\nThat's where CALCULATE comes from — not an analogue of WHERE, but a tool that changes the filter context already in place, before the formula ever sees it. Until that difference settles, time intelligence (YTD, comparison to the prior period) looks like a set of spells to memorise; after it, the same one action applied to different date filters.",
+    "limits": "DAX means nothing without a model around it: a formula relies on relationships between tables, and cut off from them it's just text. The model itself, though, travels — the same language and the same mechanics work in Power BI, in Power Pivot inside Excel, and in Analysis Services, so the skill is learned once, not relearned per tool.\n\nA model doesn't replace SQL and pandas: it takes facts and dimensions that are already prepared, not raw data — if the source is dirty, that gets cleaned earlier, before the model.\n\nAnd it isn't free: every extra relationship, every extra high-cardinality column, every extra calculated column grows the model and slows the report down. Later in the track we work through what's worth its cost and what didn't need to go into the model at all.",
+    "bridge": "The same working question as in SQL, domain and pandas: the «Чистовъ» brand's revenue falling by nearly half. Here the same number is packaged as a measure that recomputes on its own under any slice — by region, by month, by channel — with no new query and no dataframe rebuilt for every new question.\n\nIf a measure, a query and a dataframe on the same data suddenly disagree, that's — as everywhere in this trainer — not a difference between tools, but a mistake in one of the three."
+  },
+  "skills": [
+    {
+      "id": "model-oltp-olap",
+      "title": "Why analytics needs its own model",
+      "summary": "I understand why a report isn't built on the production database, and how a write-friendly schema differs from a read-friendly one."
+    },
+    {
+      "id": "model-grain",
+      "title": "Fact grain",
+      "summary": "I can state in words what one fact row means, and I notice when a report mixes tables at different levels of detail."
+    },
+    {
+      "id": "model-star",
+      "title": "Star and snowflake",
+      "summary": "I split data into a fact and dimensions, and explain why one wide flat table is more expensive to maintain, not simpler."
+    },
+    {
+      "id": "model-relationships",
+      "title": "Relationships and cardinality",
+      "summary": "I set relationships with the right cardinality and always know which way a filter will flow through one."
+    },
+    {
+      "id": "model-ambiguity",
+      "title": "Two paths to the same table",
+      "summary": "I notice when there's more than one path from a fact to a dimension, and I know the model doesn't pick the best one for me in that case — it refuses to decide."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "mdl-001",
+      "title": "Let the report read the live database",
+      "brief": "You ask for data access for a dashboard. The developer offers to grant read-only straight into the production database: \"the schema is already there, why build another one.\"",
+      "goal": "Work out what will show up first.",
+      "scenario": "Production DB of an online store.\nDaytime: checkout, payment.\n\nDashboard: revenue by category\nover two years, refreshed every 5 min.\n\nOrders in the DB: 4M rows\nConcurrent shoppers: up to 300",
+      "predictQuestion": "What will show up first?",
+      "hints": [
+        "Ask exactly what the dashboard and the register compete for. Both hit the same hardware.",
+        "\"Read-only\" limits permissions, not load. Reading four million rows is an expensive operation on its own."
+      ],
+      "explain": "An OLTP database is tuned for writes: short queries, each touching a handful of rows. An analytical query is built the opposite way — it reads a lot, rarely, and its cost is measured in volume scanned, not rows touched. Put them in one database and you don't get the sum of the two loads, you get contention: the report slows down checkout, and checkout slows down the report. That's exactly why a separate layer sits between a source and a report — one that refreshes on a schedule and lives its own life. The word \"read-only\" isn't an argument in this conversation: it's about permissions, not the cost of a query.",
+      "options": [
+        {
+          "label": "Recalculating the dashboard starts competing for resources with checkout, and shoppers will hit delays",
+          "why": "A two-year query across four million rows reads about half the table, and it does that every five minutes. The production database is busy at that exact moment doing the thing that makes money. Read-only doesn't save you: the right to \"only read\" doesn't mean \"read for free\" — the contention is over disk, memory and CPU."
+        },
+        {
+          "label": "The dashboard will show wrong numbers, because the production database has no history",
+          "why": "The history is right there — two years of orders haven't gone anywhere. The problem isn't completeness of data, it's that it has to be read from the same place new data is being written. Wrong numbers will show up later, for a different reason: the source's structure changes to fit the application's needs."
+        },
+        {
+          "label": "There won't be enough disk space: the dashboard will start creating temp tables",
+          "why": "Space is the cheapest of the problems, and usually not the first one. A heavy analytical query hits CPU and disk reads long before the disk itself runs out. Naming this as the first risk means preparing for the wrong thing."
+        },
+        {
+          "label": "Nothing will break: read-only access can't change data",
+          "why": "It really won't change data — but an incident isn't only about corrupted data. Slowing down the production database during peak hours costs the business more than a wrong number on a report, and it happens without a single error in the logs."
+        }
+      ]
+    },
+    {
+      "id": "mdl-002",
+      "title": "Five tables for one category",
+      "brief": "You open the source schema to see where to pull the product category from for a report. The category turns out to be a tree, not a column.",
+      "goal": "Work out why the source is structured this way.",
+      "scenario": "Source schema:\n\n  order_lines → products\n  products → product_categories\n  product_categories → cat_tree\n  cat_tree → cat_tree (parent)\n\nTo get «Напитки», you have to\nwalk the tree up to the root.",
+      "predictQuestion": "Why is the source built this way, and why is it awkward for a report?",
+      "hints": [
+        "Ask what this schema optimizes for. It has an intended reader, and it isn't the analyst.",
+        "Compare two operations: \"rename a category\" and \"read the category for a million rows.\" Normalization makes exactly one of them cheap."
+      ],
+      "explain": "Normal forms exist so data can't be corrupted by a partial edit: if a category name lives in one place, it can't drift from itself. The price is a join on every read. Reporting has the opposite priorities: data refreshes once a day, in full, but gets read constantly, in large chunks — so the dimension gets denormalized back: category becomes a column on the product lookup table. That's not \"simplifying for analysts\", it's a different set of trade-offs for a different workload. It follows that turning a source into a model is its own job, not just copying tables across.",
+      "options": [
+        {
+          "label": "It's cheaper to change this way: editing a category touches one row. A report needs the opposite — read everything at once — and every hop up the tree makes that more expensive",
+          "why": "Normalization optimizes for writes: one change in one place, no copies to drift apart. A report lives by different rules — it reads millions of rows at once, and every join on that path multiplies by volume. What makes writing cheap makes reading expensive, and the other way around."
+        },
+        {
+          "label": "The source is designed wrong: the category tree should have been stored as one column",
+          "why": "For the application it's actually the right call. The tree lets you add a subcategory without touching products, and guarantees the category name exists in exactly one place. The mistake isn't the source schema — it's trying to build a report on it with no layer in between."
+        },
+        {
+          "label": "The only difference is how fast the query is to write: the result is the same, the SQL is just longer",
+          "why": "Query length is the smallest of the costs. A recursive climb up the tree for every fact row costs execution time, not writing time. And you'd have to repeat that logic in every new report that touches category — with the risk that it ends up different in two places."
+        }
+      ]
+    },
+    {
+      "id": "mdl-003",
+      "title": "The column got renamed overnight",
+      "brief": "In the morning the dashboard greets you with an error. Overnight the app team shipped a release that renamed the status column to order_status — nobody thought about reporting.",
+      "goal": "Work out what actually needs to change here.",
+      "scenario": "The dashboard reads the source\ndirectly.\n\nBefore:  orders.status\nAfter:   orders.order_status\n\nReports that reference it: 14\nThere was no warning.",
+      "predictQuestion": "What actually needs fixing here?",
+      "hints": [
+        "Don't ask \"whose fault\" — ask \"why did one change cost fourteen fixes.\"",
+        "Compare two options: agreeing the source won't change, versus arranging things so its changes only touch one place."
+      ],
+      "explain": "This shows the second argument for a separate model, besides load: decoupling in time and in ownership. The source belongs to the application team and changes on its schedule — that's correct and it won't change. As long as reports read it directly, each one is a hidden dependency the source's authors don't know about. A preparation layer makes that dependency explicit and singular: it breaks, not fourteen reports, and it gets fixed in one place by someone who understands why the column matters to reporting. Release sign-off doesn't solve the same problem, because it rests on people remembering, not on how the system is built.",
+      "options": [
+        {
+          "label": "That fourteen reports know the source structure directly. A preparation layer would have reduced the fix to one place",
+          "why": "Renaming a column is ordinary life for an application — you can't forbid it. The defect isn't the release, it's that every report keeps its own copy of knowledge about the source schema: one change over there turns into fourteen fixes over here. A layer in between turns that into one."
+        },
+        {
+          "label": "The release process: developers must clear any schema change with analytics first",
+          "why": "Sign-off looks like a solution and works like a tax: it slows the app team down for the sake of a consumer they shouldn't have to think about. And it rests on people remembering — the first change made in a hurry slips through. A technical seam is more reliable than an agreement."
+        },
+        {
+          "label": "Nothing: it's a one-off accident, fixing the fourteen queries is enough",
+          "why": "It only looks like a one-off the first time. The source schema will keep changing — that's its normal behaviour, not a malfunction. Fixing the fourteen queries just returns the system to the exact state it already broke from once."
+        }
+      ]
+    },
+    {
+      "id": "mdl-004",
+      "title": "What one row means",
+      "brief": "The first question for an unfamiliar fact table: what does one of its rows mean. The requester asks to \"count the number of purchases for the quarter.\"",
+      "goal": "Work out what a fact_sellout row describes, and whether the question can be answered.",
+      "scenario": "fact_sellout — 118,449 rows\n\n  week_start   week\n  customer_id  outlet\n  product_id   SKU\n  units        units sold\n  revenue      revenue\n\nDistinct combinations of\n\"week × outlet × SKU\": 118,449",
+      "predictQuestion": "What does one row of this table mean?",
+      "hints": [
+        "Compare two numbers: rows in the table, and distinct combinations of the key columns.",
+        "If a row meant one purchase, how many rows would there be for one SKU at one outlet in a week?"
+      ],
+      "explain": "Grain is checked by counting, not by reading column names: the row count should match the count of distinct combinations of the dimensions you consider the key. If it matches, the description is exact. If there are more rows, the grain is actually finer, and there's something in the key you haven't named. The practical takeaway matters more than the answer itself: this table has no answer to \"how many purchases\", because receipts are already summed inside it. That question should go back to the requester, not get swapped for the row count — which answers something else.",
+      "options": [
+        {
+          "label": "Total sales of one SKU at one outlet for one week — the match between row count and combination count confirms it",
+          "why": "The match is the proof: if a row meant something finer-grained, the same combination would appear several times and there would be fewer distinct combinations than rows. Since the numbers are equal, the key isn't duplicated and the grain has been named exactly."
+        },
+        {
+          "label": "One purchase: one person buying one item",
+          "why": "Then there would be many rows per SKU at one outlet in a week — one per receipt. Distinct \"week × outlet × SKU\" combinations would be noticeably fewer than 118,449, and they match the row count exactly. This table can't answer \"how many purchases\" at all — the receipts are already summed inside it."
+        },
+        {
+          "label": "One delivery of goods to an outlet",
+          "why": "Deliveries are movement toward an outlet, not sales out of it, and they live in a different table (fact_sellin, shipments to distributors). Here the column is called revenue and means revenue from a sale to the end customer."
+        },
+        {
+          "label": "Stock on hand at an outlet at week's end",
+          "why": "Stock is a point-in-time quantity, and summing it across weeks makes no sense. Here units and revenue are period totals, which sum perfectly normally. Stock lives separately, in fact_stock, and behaves differently."
+        }
+      ]
+    },
+    {
+      "id": "mdl-005",
+      "title": "Plan and actuals in one report",
+      "brief": "The requester wants to see plan attainment by SKU: sales and plan side by side. Both tables already exist in the model.",
+      "goal": "Work out what such a report will show.",
+      "scenario": "fact_sellout — 118,449 rows\n  week × outlet × SKU\n\nfact_target — 750 rows\n  month × rep × division\n\nShared dimensions: date only\n(and at different granularity)",
+      "predictQuestion": "What happens when you try to show plan next to sales, broken down by SKU?",
+      "hints": [
+        "Write out the grain of both tables and find the shared dimensions. There are fewer than you'd think.",
+        "What does a product filter do to a table that has no product column at all?"
+      ],
+      "explain": "Measures at different grains coexist in one report only along the dimensions both of them share. Here there's exactly one shared dimension — date, and even that's weekly in one table and monthly in the other. Along any other dimension, the coarser measure behaves the same way every time: it doesn't narrow, and it repeats its full value on every row. The mistake is sneaky because it doesn't look like one — the numbers are there, the report builds, the plan column total just ends up multiplied over. The right answer for the requester here isn't technical, it's substantive: plan by SKU doesn't exist, and before showing it you need to agree on a rule for splitting it.",
+      "options": [
+        {
+          "label": "Plan won't break down by SKU: it has no product dimension at all. Every report row will repeat the same division plan total",
+          "why": "Plan is recorded by rep and division; product doesn't exist in it in any form. A breakdown by SKU doesn't exist for it, so a product filter doesn't narrow it — every row gets the full plan, regardless of which SKU is selected. And the number looks perfectly normal while doing it."
+        },
+        {
+          "label": "The report will refuse to compute: the model won't let you combine tables of different grain",
+          "why": "Nothing refuses. Both tables connect to the calendar, and that's enough to put them side by side. The danger is exactly that the report builds silently and shows a number — just not the one the requester meant."
+        },
+        {
+          "label": "Plan will get allocated across SKUs in proportion to sales",
+          "why": "Proportional allocation is separate work that has to be done by hand: setting up a rule for how the division plan splits between products. It doesn't happen on its own, and the model doesn't guess that's what you wanted."
+        },
+        {
+          "label": "Plan will come out blank for every row, because there's no product relationship",
+          "why": "It would be blank if the product filter reached fact_target and found nothing there. But this table has no product dimension at all, so there's nothing to filter — instead of blank you get the full total, which is far more dangerous: blank gets noticed right away."
+        }
+      ]
+    },
+    {
+      "id": "mdl-006",
+      "title": "Weeks versus months",
+      "brief": "You need to compare shipments to distributors with retail sales: does what left the warehouse match what sold off the shelf.",
+      "goal": "Work out at what level of detail this comparison is valid.",
+      "scenario": "fact_sellout — shelf sales\n  week × outlet × SKU\n\nfact_sellin — warehouse\n  shipments: month ×\n  distributor × SKU\n\nA week doesn't nest inside a\nmonth cleanly: it can split.",
+      "predictQuestion": "At what level can the two measures sit side by side without caveats?",
+      "hints": [
+        "Write both tables' dimensions in two columns and circle the ones present in both.",
+        "Which direction does data roll up for free: fine to coarse, or the other way?"
+      ],
+      "explain": "The shared grain of two facts is the intersection of their dimensions, taken at the coarser level of each. Here that's \"month × SKU\": shipments don't exist below a month, and outlet and distributor belong to different tables. That gives an asymmetric rule worth remembering: aggregating up is always free, splitting down requires introducing an allocation rule — that is, adding your own assumption to the data. That's exactly why sell-in and sell-out comparisons in practice always run monthly and by product: not caution for its own sake, but the only level at which both numbers mean exactly what they are.",
+      "options": [
+        {
+          "label": "By month and by SKU — the shared part of both grains. Weekly detail isn't available for shipments, and neither is outlet",
+          "why": "The comparison lives at the intersection of the dimensions: SKU is in both tables, date is in both, but the finest shared unit of time is the month. Outlet exists only in sellout, distributor only in sellin, so both of those breakdowns drop out of the joint report."
+        },
+        {
+          "label": "By week and by SKU: weekly sales can be summed into a month, and monthly shipments split across weeks proportionally",
+          "why": "The first half is right, the second isn't. You can always sum fine into coarse; splitting coarse into fine takes inventing an allocation rule. Proportional to what? Any answer here is your assumption, not the data, and you'll have to defend it to whoever sees the number."
+        },
+        {
+          "label": "By month and by outlet: an outlet unambiguously belongs to its distributor",
+          "why": "The relationship really is unambiguous, but the direction is wrong. A distributor serves many outlets, so its shipment can only be summed upward — to the distributor — and can't be split back down to outlets: fact_sellin simply has no data on how much of a shipment went to each outlet."
+        },
+        {
+          "label": "At any level: both tables connect to the calendar, and the report sorts the rest out on its own",
+          "why": "The report builds at any level and shows a number — that's exactly the danger. Along a breakdown missing from one of the tables, that table's measure stops narrowing and repeats in full on every row. Connecting to the calendar is enough to get a number, but not enough for it to mean what you need."
+        }
+      ]
+    },
+    {
+      "id": "mdl-007",
+      "title": "One wide table",
+      "brief": "The extract arrives as one table: brand, category, city and region are already sitting right next to sales. The temptation is to leave it as is and build the report straight on top.",
+      "goal": "Work out what the biggest cost of that choice turns out to be.",
+      "scenario": "Flat table — 118,449 rows\n  week_start, revenue, units,\n  product_name, brand,\n  category, customer_name,\n  city, region_name\n\nDistinct products: 47\nOutlets: 144",
+      "predictQuestion": "What turns out to be the most expensive cost?",
+      "hints": [
+        "Compare two numbers: how many times a product name is stored, and how many products exist.",
+        "What happens if a product gets renamed and some rows get missed in the edit?"
+      ],
+      "explain": "A star schema separates what's measured from what describes it. A measure lives in the fact table, one row per event; an attribute lives in a lookup table, one row per object. The payoff isn't size or speed: it's that every description gets exactly one place to live, and therefore exactly one place to edit. A second consequence is less obvious and shows up sooner than you'd expect: a lookup table exists independently of the fact table, so a product with no sales is still in the report — with its own zero. In a flat table it isn't there at all, and \"why is this SKU blank\" turns into \"did this SKU even exist.\"",
+      "options": [
+        {
+          "label": "Consistency: the product name is stored 118,449 times instead of 47, and any edit has to hit every row at once",
+          "why": "Repetition isn't about disk space — it's that the same value exists in thousands of copies and can drift from itself. Miss some rows during a rename, and an extra category shows up in the filter, with the sum split between two spellings of the same brand."
+        },
+        {
+          "label": "Size: the table will take up too much space and the model won't fit in memory",
+          "why": "Space is the smallest of the problems here. Low-cardinality columns compress very well — 47 values across 118,449 rows the engine stores efficiently. What bloats a model is high cardinality, not forty-seven repeated names."
+        },
+        {
+          "label": "Speed: queries against a wide table are always slower than against a star",
+          "why": "Not always — a flat table has no joins to pay for and can even be faster on simple queries. A flat table's problem isn't performance, and selling a star schema on speed alone means eventually losing a benchmark."
+        },
+        {
+          "label": "Nothing significant: as long as data arrives as one extract, there's no reason to split it into a fact and lookups",
+          "why": "\"Show all SKUs, including ones that never sold\" has no answer on this table at all: a product with no sales simply doesn't exist in it as a row. True right up to the first question that goes beyond what was sold."
+        }
+      ]
+    },
+    {
+      "id": "mdl-008",
+      "title": "Category got split out",
+      "brief": "A colleague brought the model \"to proper shape\": pulled category out of the product lookup into its own table, and from there added a reference to division.",
+      "goal": "Work out what this changes in practice.",
+      "scenario": "Before (star):\n  fact_sellout → dim_product\n  dim_product: brand, category,\n               division as columns\n\nAfter (snowflake):\n  fact_sellout → dim_product\n  dim_product  → dim_category\n  dim_category → dim_division\n\n47 products, 5 categories,\n2 divisions.",
+      "predictQuestion": "What does this split actually buy here?",
+      "hints": [
+        "Put a number on the win: how many rows does pulling category out of a 47-product lookup actually save?",
+        "What happens to the filter's path from a division slicer to the fact table after the split?"
+      ],
+      "explain": "A snowflake is a star with a dimension normalized one step further. It's a legitimate technique, but it has a condition of use: the dimension has to be genuinely large and the repeated attribute has to be heavy. The classic example is a customer lookup with millions of rows and a long region name. Forty-seven products don't qualify, and here splitting just lengthens the filter's path. The general rule for an analytical model runs opposite to what database design trains you to expect: denormalize dimensions until it starts to hurt — a readable model and a short filter path are worth more than the repetition you eliminated.",
+      "options": [
+        {
+          "label": "Almost nothing: the saving across 47 rows is negligible, and the filter's path to the fact table just got two hops longer",
+          "why": "A snowflake pays off where a dimension is genuinely large and repetition is heavy. Forty-seven products isn't that case: the storage win is indistinguishable, and every extra hop lengthens the filter's path and adds one more place to get a relationship wrong. Here it's pure complexity for nothing."
+        },
+        {
+          "label": "The model became more correct: a normalized schema is standard practice for dimensions",
+          "why": "Standard practice for a source, not for an analytical model. Reporting deliberately denormalizes dimensions back, because the priority here is different: read often and heavily, changed rarely and wholesale. Carrying OLTP rules into a model is a common mistake, not a standard to aim for."
+        },
+        {
+          "label": "The report will get faster: the engine won't have to read the category column for all 118,449 rows",
+          "why": "It never read it that way to begin with: category lived in a 47-row lookup table, not in the fact table. This is splitting one small lookup table into three even smaller ones — an operation that has zero effect on how fast the fact table reads."
+        },
+        {
+          "label": "You gain the ability to filter by division, which wasn't there before",
+          "why": "It was already there: division was a column in the same product lookup and worked as a slicer exactly the same way. Splitting into tables doesn't add breakdowns — it only changes where a value physically lives and how many hops it takes to reach it."
+        }
+      ]
+    },
+    {
+      "id": "mdl-009",
+      "title": "Where to store the price",
+      "brief": "The model needs a product's price. It exists in two places: list price in the product lookup, and the actual sale price in the fact row.",
+      "goal": "Work out why both columns are needed, and how they differ in meaning.",
+      "scenario": "dim_product.list_price\n  list price, one per product\n\nfact_sellout.avg_price\n  average sale price\n  at this outlet, this week\n\nSales sometimes include\ndiscounts and promotions.",
+      "predictQuestion": "Why can't you keep just list_price from the lookup?",
+      "hints": [
+        "Ask of each column: does it describe an object, or measure an event?",
+        "What do you get if you multiply list price by units sold, when half the sales were on promotion?"
+      ],
+      "explain": "The split into fact and dimension isn't about where a column is convenient to sit — it's about what it belongs to. An attribute describes an object and lives in a lookup, one copy. A measure describes an event and lives in the fact table, at its grain. Price falls into both categories because it's two different measures with a similar name: list price is a property of the product, sale price is a property of the transaction. The practical test that tells them apart: if the value can differ between two fact rows with the same product, it belongs to the fact table. Same for everyone — it belongs to the lookup.",
+      "options": [
+        {
+          "label": "List price describes the product; sale price describes a specific event. Multiply list_price by units and you get revenue with no discounts, not the real thing",
+          "why": "These are different quantities living in different places: one answers \"what does the product cost\", the other answers \"what did it actually sell for, here and then.\" Discounts and promotions belong to the event, not the product, so the actual price can only be stored at the fact table's grain."
+        },
+        {
+          "label": "List price changes over time, and the lookup only holds the current one — that's enough if the model refreshes daily",
+          "why": "A daily refresh doesn't restore the past — it just replaces yesterday's price with today's, and the whole history recomputes under the new one. Tracking an attribute's changes over time is a separate problem (slowly changing dimensions), and it doesn't substitute for the sale price in the fact table."
+        },
+        {
+          "label": "For speed: reading price from the fact table is faster than going to fetch it from the lookup",
+          "why": "Speed has nothing to do with it, and it isn't why this decision gets made. Even if the join were free, list_price still wouldn't answer the question about actual revenue — because it's simply a different number, not the same one fetched at a higher cost."
+        }
+      ]
+    },
+    {
+      "id": "mdl-010",
+      "title": "Which way the filter runs",
+      "brief": "A report has a brand slicer set. Next to it sit two measures: revenue from the fact table, and a product count from the lookup.",
+      "goal": "Work out what the slicer actually affects.",
+      "scenario": "dim_product (47 rows)\n  product_id is unique\n      │  one-to-many\n      ▼\nfact_sellout (118,449 rows)\n\nThe slicer picks brand «Чистовъ».\nIt has 5 products.",
+      "predictQuestion": "What will revenue and product count show?",
+      "hints": [
+        "Find the table where the \"brand\" column physically lives. That's where the filter starts.",
+        "By default a filter flows from the \"one\" side to the \"many\" side. Which side is which here?"
+      ],
+      "explain": "A relationship in a model isn't a row join — it's a direction filters propagate in. By default there's one: the \"one\" side filters the \"many\" side, meaning a lookup narrows a fact table. That's why a star is laid out the way it is: dimensions around the edges, fact in the middle, and any slicer set on a dimension reaches the fact table on its own. The reverse direction is deliberately off — turned on, it creates ambiguity in models with several lookups and noticeably complicates the calculation. A habit that clears up most questions about a number: before you get surprised, trace the path with your finger from the slicer to the table where the measure computes, and check whether it even gets there.",
+      "options": [
+        {
+          "label": "Both measures narrow to the brand: revenue to its five products, product count to 5. The filter flows from lookup to fact",
+          "why": "The slicer sits on the lookup table, where brand actually lives. The lookup narrows immediately, and along the one-to-many relationship the filter carries on into the fact table, leaving only those five products' rows in the calculation. This direction works by default and needs no extra setup."
+        },
+        {
+          "label": "Revenue narrows, but product count stays at 47: the lookup doesn't obey the filter",
+          "why": "It's the other way around: the lookup is the table the slicer is set on directly, and it's the first to narrow. The direction that doesn't obey the filter by default is fact to lookup — but there's no such hop here at all."
+        },
+        {
+          "label": "Product count becomes 5, but revenue stays at the full total: the filter from lookup to fact is off by default",
+          "why": "That's exactly the direction that's on by default — the whole mechanics of slicers rests on it. What's off is the reverse: many-to-one. Mixing up these two directions is the most common reason for being surprised by a number on a report."
+        }
+      ]
+    },
+    {
+      "id": "mdl-011",
+      "title": "A relationship on brand",
+      "brief": "A colleague wants to link the promo lookup to the product lookup directly by brand — \"the field is in both, why not.\"",
+      "goal": "Work out this relationship's cardinality.",
+      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nFor brand «Чистовъ»:\n  5 products, 10 promos",
+      "predictQuestion": "What cardinality results from a relationship on the brand column?",
+      "hints": [
+        "Cardinality is about the key's uniqueness on each side, not about what the word \"brand\" means.",
+        "Compare row count to distinct-brand count in each table. Do they match anywhere at all?"
+      ],
+      "explain": "Cardinality reads mechanically: take the relationship's key and check whether it's unique in the table. Unique on one side — one-to-many. Not unique on either — many-to-many. The singular word \"brand\" and the phrase \"a product has one brand\" nudge you toward the wrong answer because they describe meaning, not structure: a product really does have one brand, but in the product table brand repeats forty-seven times across nine values. A many-to-many relationship isn't a ban, it's a warning: you can't join tables like this directly, they need a bridge between them, or every pair inside a group turns into its own row.",
+      "options": [
+        {
+          "label": "Many-to-many: brand isn't unique in either table — «Чистовъ»'s five products correspond to its ten promos",
+          "why": "Cardinality is set by the key's uniqueness on each side. Here it's 47 products across 9 brands and 89 promos across 9 brands — repeats on both sides. A relationship like this doesn't match row to row, it matches group to group, and every pair inside a group counts as a match."
+        },
+        {
+          "label": "One-to-many: a product has one brand, so the product lookup is the \"one\" side",
+          "why": "A product really does have one brand, but the \"one\" side isn't determined by that — it's determined by whether the key is unique in the table. dim_product has 47 rows across 9 brands, meaning the same brand repeats — there's no uniqueness, and this table can't be the \"one\" side."
+        },
+        {
+          "label": "One-to-one: nine brands on one side and nine on the other",
+          "why": "The matching count of distinct values says nothing about cardinality — it's set by row uniqueness, not by how many distinct values exist. One-to-one would hold if brand appeared exactly once in each table, meaning each would have exactly nine rows."
+        }
+      ]
+    },
+    {
+      "id": "mdl-012",
+      "title": "The region slicer has no effect",
+      "brief": "A report has shelf sales and warehouse shipments side by side. A region slicer narrows the first and leaves the second untouched.",
+      "goal": "Work out why.",
+      "scenario": "dim_region → dim_customer\ndim_customer → fact_sellout\n\nfact_sellin.distributor_id\n  references dim_customer\n  (type distributor only)\n\n12 distributors,\nshipping into 16 regions.",
+      "predictQuestion": "Why doesn't the region slicer narrow shipments?",
+      "hints": [
+        "Ask what region means in a shipment row: where goods ship from, or where they end up?",
+        "There are twelve distributors and sixteen regions. Can a shipment possibly know the destination outlet's region?"
+      ],
+      "explain": "Two role lookups are mixed into one here: dim_customer describes both retail outlets and distributors, and for them region means two different things — where the outlet sits and where the warehouse sits. The filter honestly travels the whole path and honestly narrows shipments, just on a different attribute than the person expected. Cases like this are more dangerous than a missing relationship altogether, because the number changes — so the slicer looks like it's working. The check that catches them: put into words what the dimension means in each table it reaches. Words match — the relationship is correct. Words diverge — you have two different dimensions sharing one name, and at least one of them needs its own name in the report.",
+      "options": [
+        {
+          "label": "A distributor's own region in the lookup is where the distributor sits, not where the goods end up. A shipment has no idea which region the goods travel on to",
+          "why": "The region filter does reach fact_sellin and does narrow it — but by the distributor's own region, not the region of sale. Twelve distributors deliver goods across sixteen regions, and that link doesn't exist in the shipments table — it only appears one step later, in shelf sales."
+        },
+        {
+          "label": "The relationship between dim_customer and fact_sellin isn't set up, so the filter never gets there",
+          "why": "The relationship exists — distributor_id references the same lookup table. If it didn't, shipments wouldn't narrow by any customer breakdown at all, but the question here is different: why the narrowing happens differently than expected."
+        },
+        {
+          "label": "The filter direction is set backwards, flowing from the fact table into the lookup",
+          "why": "The reverse direction really is off by default, but it isn't needed here: the path runs from the region lookup, through the customer lookup, into the fact table — the whole way from the \"one\" side to the \"many\" side. Direction has nothing to do with it."
+        },
+        {
+          "label": "Shipment grain is too coarse: month versus week",
+          "why": "Different date granularity gets in the way of comparing over time, but it has nothing to do with region: if a shipment had a destination region, a slicer on it would work at any time grain. The problem is a missing dimension, not its detail."
+        }
+      ]
+    },
+    {
+      "id": "mdl-013",
+      "title": "Revenue jumped tenfold",
+      "brief": "A second path to the promo lookup got added to the model — \"to filter sales by the promo's brand.\" After that, report revenue became ₽1,262,668,596.",
+      "goal": "Work out where that number came from.",
+      "scenario": "Path 1 (existing):\n  fact_sellout.promo_id\n    → dim_promo.promo_id\n\nPath 2 (added):\n  fact_sellout.product_id\n    → dim_product.brand\n      → dim_promo.brand\n\nTotal revenue: ₽126,911,191\nNow shows: ₽1,262,668,596\nPromos per brand: 9-11",
+      "predictQuestion": "Where does the tenfold number come from?",
+      "hints": [
+        "Compare the new number not to the old report, but to the table's total revenue. It's bigger than the total.",
+        "How many promos will match one sales row if you join on brand?"
+      ],
+      "explain": "A tell worth turning into a reflex: if a measure exceeds the table's full total, it isn't about filters or added rows — something got counted multiple times. Here the second path runs on brand, and brand is non-unique in either the product lookup or the promo lookup. A join on a key like that matches group to group and produces every pair inside it: each brand has 9 to 11 promos, so row count became 1,173,847 instead of 118,449, and revenue became ₽1,262,668,596 instead of ₽126,911,191. Not one row is wrong on its own — the join did exactly what it was asked. The mistake happened earlier, at the moment someone decided the second path was harmless.",
+      "options": [
+        {
+          "label": "Every sales row matched all of its brand's promos at once — 9 to 11 of them — and that row's revenue got counted just as many times",
+          "why": "A join on a key that's non-unique on both sides multiplies rows by the number of matches. Row count became 1,173,847 instead of 118,449 — almost exactly tenfold — and each one carries the full revenue of its original row. The sum grew by the same factor, because the same value gets summed over and over."
+        },
+        {
+          "label": "Non-promo sales made it into the report, ones that were filtered out before",
+          "why": "That would grow the total at most to the full ₽126,911,191 — the entire table's volume, there simply isn't more in it. The resulting number is ten times more than the total revenue there is, so the explanation isn't which rows got added, it's that existing ones got counted repeatedly."
+        },
+        {
+          "label": "Double counting: revenue got summed along both the first path and the second",
+          "why": "That would make the result roughly double, and it's ten times bigger. It isn't about the number of paths — it's that the second path runs through a key that's non-unique on either side; the multiplier is the number of promos per brand, not the number of paths."
+        },
+        {
+          "label": "A data error: duplicates appeared in the promo lookup",
+          "why": "There are no duplicates there — 89 promos across 9 brands is a normal two-year promo history. The data is fine; the model is wrong: it joins a group of products to a group of promos, when what should be linked is a sales row to its specific promo."
+        }
+      ]
+    },
+    {
+      "id": "mdl-014",
+      "title": "The model refused to choose",
+      "brief": "You draw a second relationship between the same two tables. The modeling tool creates it, but marks it dashed and won't let you activate it.",
+      "goal": "Work out why this is the response the tool gives.",
+      "scenario": "Between fact_sellout and\ndim_promo there are two paths:\n\n  direct — via promo_id\n  via dim_product — by brand\n\nThe second exists but is\ninactive (dashed on the\ndiagram).",
+      "predictQuestion": "Why doesn't the tool activate the second relationship on its own?",
+      "hints": [
+        "Ask how the two paths differ in result. If they gave the same thing, there'd be nothing to choose.",
+        "Which is worse: refusing to compute, or a computed number whose meaning nobody can explain?"
+      ],
+      "explain": "An inactive relationship isn't broken — it's deliberately switched off. The model allows the second path to exist but refuses to use it by default, because then every measure would lose a single, unambiguous definition. You can still use a relationship like this, but only explicitly — invoking it inside a specific measure, where the author takes responsibility for the interpretation. Behind this is a principle that separates a model from a query: a query answers one question and lives for a minute; a model answers every future question at once, so ambiguity inside it costs incomparably more. Refusing to compute here isn't a limitation of the tool — it's its best feature.",
+      "options": [
+        {
+          "label": "Choosing between the paths would change the meaning of every measure, and the tool has no right to guess — it leaves the decision to the model's author",
+          "why": "Two paths give two different answers to one question, and both are formally valid. Choosing on the author's behalf would silently lock one interpretation into every measure in the report. Refusing to compute an ambiguity is noticed right away; a silent choice would show up as a number nobody could explain."
+        },
+        {
+          "label": "The second relationship is redundant: it leads to the same rows as the first, just by a longer route",
+          "why": "It doesn't lead to the same rows — that's the whole point. The direct relationship matches a sale to its own promo; the path via brand matches it to all of that brand's promos at once. These are different sets of rows and different numbers, not a long and a short route to the same answer."
+        },
+        {
+          "label": "It saves resources: two active relationships between the tables would slow down recalculation",
+          "why": "The restriction exists for unambiguity, not performance. Even if recalculation were free, a model with two active paths couldn't say what its measure means — and that costs more than any slowdown."
+        },
+        {
+          "label": "It's a temporary restriction: the relationship will start working after a data refresh",
+          "why": "A data refresh changes nothing — the ambiguity is built into the model's structure, not its content. Dashed doesn't mean \"not ready yet\" — it's a deliberate state: the relationship exists and can be invoked explicitly from a measure, but doesn't apply by default."
+        }
+      ]
+    },
+    {
+      "id": "mdl-015",
+      "title": "How to keep the two paths apart",
+      "brief": "The requester needs both pictures: revenue from the promo a sale actually took part in, and the total revenue of the brand that ran the promo.",
+      "goal": "Work out how to satisfy both requests without ambiguity.",
+      "scenario": "Two measures are needed:\n\n  A — revenue via its own promo\n  B — revenue of the brand that\n      had a promo running\n\nThe direct promo_id relationship\nis active. The brand\nrelationship exists but is\ninactive.",
+      "predictQuestion": "How do you get both measures?",
+      "hints": [
+        "The measures are different, so there should be two of them. The question is what sets the default behaviour.",
+        "An inactive relationship isn't useless: you can invoke it from a specific measure without changing the whole model."
+      ],
+      "explain": "The right answer to ambiguity isn't picking one path forever — it's making the choice explicit and local. The relationship most calculations need stays active and sets the default; the alternative stays inactive and gets switched on inside the one measure that needs it. The payoff is double: the model keeps its unambiguity, and anyone opening the measure list sees two distinctly named measures instead of one with an unresolved meaning. Duplicating the lookup solves the same problem more crudely and costs more to maintain, so it's reached for when explicit invocation is impossible — say, when both interpretations are needed at once inside the same visual.",
+      "options": [
+        {
+          "label": "Keep the direct relationship active for measure A, and write a separate measure for B that invokes the second relationship explicitly",
+          "why": "The relationship that most measures need stays active — it sets the default behaviour. The second measure gets its own formula, inside which the second path is switched on explicitly, and its name says outright that it computes something different. No ambiguity: every measure has exactly one interpretation."
+        },
+        {
+          "label": "Activate both relationships and pick the one you need in each report",
+          "why": "\"Choosing in the report\" is precisely what a model can't do — that's exactly what explicit invocation inside a measure is for. There's no picking to be done: with two active paths the model doesn't ask which one was meant, it either refuses to create them, or starts computing off one of them silently."
+        },
+        {
+          "label": "Delete the promo_id relationship and keep only the brand one: it gives both pictures at once",
+          "why": "It doesn't give either one correctly. A join on brand multiplies rows by the number of promos and overstates revenue roughly tenfold, so measure A can't be built on it at all, and measure B comes out overstated by that exact same factor."
+        },
+        {
+          "label": "Add a second copy of the promo lookup to the model and link it by brand",
+          "why": "A copy removes the ambiguity formally — there are no longer two paths to one table — but it moves the problem elsewhere: two lookups with identical content will drift apart at the first refresh, and the field list will show two \"promo\" tables for a person to guess between. This technique gets used, but as a last resort, not a first one."
+        }
+      ]
+    }
+  ]
+}

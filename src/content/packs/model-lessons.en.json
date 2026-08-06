@@ -1,0 +1,59 @@
+{
+  "lessons": [
+    {
+      "skill": "model-oltp-olap",
+      "title": "Why analytics needs its own model",
+      "why": "\"Let's have the report just read the same database as the app\" — a proposal that comes up on every other project. It saves a day at the start and costs months later. Being able to explain why this isn't done comes up before you even start building the model itself.",
+      "form": "A source (OLTP) answers \"what's happening with this order right now\" and is optimized for writes: data is spread across dozens of narrow tables, so one change touches one row.\n\nA reporting model (OLAP) answers \"what happened across all orders over two years\" and is optimized for reads: wide fact tables with small lookup tables next to them.",
+      "example": "The requester's question: \"revenue by category for the quarter.\"\n\nIn a reporting model that's one fact table and one product lookup: sum revenue, break it down by category. Two objects, one relationship.",
+      "reads": "The report reads exactly the data it needs, without getting in the way of checkout — the model refreshes at night and lives apart from the production database.",
+      "wrong": "The same question, as a query straight against the production database: join orders, order_lines, products, product_categories, category_tree, and sum by the top level of the tree.",
+      "wrongWhy": "It will work — right up to the day fifty people open the report at once and a heavy query collides with the same database that's handling checkout. A second bill arrives later: the source's structure changes for the app's needs, not the report's, and one day a renamed column silently breaks the reporting.",
+      "selfCheck": "Ask yourself: does this query compete for resources with whatever is making money right now? If yes, there needs to be a layer between it and the source."
+    },
+    {
+      "skill": "model-grain",
+      "title": "Fact grain",
+      "why": "The first question for any fact table is \"what does one row mean.\" Without an answer, you can't sum correctly or compare honestly: two tables at different levels of detail in one report give numbers that are each correct on their own and meaningless side by side.",
+      "form": "Grain is written as a list joined by a multiplication sign — one dimension per factor:\n\n  week × outlet × SKU\n\nIf that combination occurs exactly once in the table, the grain has been named correctly.",
+      "example": "fact_sellout: one row is the sales of one SKU at one outlet for one week. There are 118,449 rows, and exactly that many distinct \"week × outlet × SKU\" combinations.",
+      "reads": "The match between row count and combination count is the proof: the key isn't duplicated, so the grain is described exactly, not approximately.",
+      "wrong": "\"One row of fact_sellout is one purchase.\"",
+      "wrongWhy": "The phrasing sounds natural and is almost always wrong: a register rings up dozens of receipts a week, while the table has one row per SKU for that week. It's already an aggregate, not an event. The mistake surfaces on \"how many purchases were there\" — this table has no answer to that at all, and people usually bring the row count instead of an answer.",
+      "selfCheck": "Check it by counting: the row count and the count of distinct combinations of the key dimensions should match. If they don't, the grain is actually finer than you thought."
+    },
+    {
+      "skill": "model-star",
+      "title": "Star and snowflake",
+      "why": "An extract arrives as one wide table, with product name, brand, category, city and region sitting right next to sales. The temptation to leave it as is is real — it works, doesn't it. The star schema is why it gets split into a fact table and lookups anyway.",
+      "form": "A fact is what gets measured and accumulated: units, revenue. A dimension is what you slice it by: product, outlet, date, promo.\n\n  fact in the center, dimensions around it — a star\n  a dimension split further — a snowflake",
+      "example": "fact_sellout (118,449 rows) plus dim_product (47), dim_customer (144), dim_promo (89), dim_date. The \"category\" attribute sits as a column inside dim_product — five categories across forty-seven products.",
+      "reads": "The product name is stored 47 times — once per product — not 118,449 times, once per sales row. Editing the name happens in one place and shows up in every report immediately.",
+      "wrong": "Keep one flat table of 118,449 rows, where product_name, brand, category, city and region_name sit as columns next to revenue.",
+      "wrongWhy": "The most expensive thing here isn't disk space — it's consistency. Rename a product and the edit has to be carried into every row it appeared in, and any row you miss turns into a stray extra category in the filter. And the reverse case: a product that never sold this year simply doesn't exist in a table like this, so a \"sales by all SKUs\" report has no row for it with a zero.",
+      "selfCheck": "Ask of every column in the fact table: is it measured, or does it describe? If it describes, it belongs in a lookup table, where it's stored once."
+    },
+    {
+      "skill": "model-relationships",
+      "title": "Relationships and cardinality",
+      "why": "A relationship in a model isn't the same thing as a JOIN in a query. A JOIN combines rows; a relationship sets the direction a filter will travel along it. A report where a slicer doesn't affect half the measures is almost always explained by exactly this.",
+      "form": "A relationship has two properties, and they must not be confused:\n\n  cardinality — how many rows on each side correspond to one row on the other (one-to-many, many-to-many)\n  filter direction — lookup to fact by default, not the reverse",
+      "example": "dim_product (47 rows, product_id unique) → fact_sellout (118,449 rows): one-to-many. Pick brand «Чистовъ» in a slicer — the filter travels from lookup to fact, and the revenue sum computes across that brand's five products.",
+      "reads": "The \"one\" side filters the \"many\" side: the lookup sets which fact rows take part in the calculation.",
+      "wrong": "Expecting a slicer on promo in dim_promo to filter dim_product the same way — \"show the products that took part in the promo.\"",
+      "wrongWhy": "The filter will reach from dim_promo into fact_sellout, and stop there: it doesn't flow back into dim_product by default — that's the \"many\"-to-\"one\" direction. The product list stays at its full 47, and that isn't a bug, it's the default behaviour — turning the reverse direction on takes a deliberate choice, and it has a cost.",
+      "selfCheck": "Before you get surprised by a number, trace the filter's path with your finger from the slicer to the table where the measure computes. Did it get there, and did it change direction along the way?"
+    },
+    {
+      "skill": "model-ambiguity",
+      "title": "Two paths to the same table",
+      "why": "The most expensive modeling mistake looks harmless: another relationship got added because \"it's more convenient to filter this way.\" After that, the report either refuses to compute, or — worse — computes and returns a number several times bigger than the real one.",
+      "form": "There should be exactly one path from a fact table to a lookup. If there are two, the model doesn't pick the better one — it either bans the second relationship (leaves it inactive), or, if the join is made directly in a query, multiplies rows across every match.",
+      "example": "fact_sellout links to dim_promo by promo_id — that's the correct path: a sales row either has a promo or it doesn't. The table's total revenue is ₽126,911,191, and along this path it stays that way.",
+      "reads": "One path, one value. Every sales row corresponds to exactly one promo, or none.",
+      "wrong": "Add a second path: fact_sellout → dim_product by product_id, then dim_product → dim_promo by brand, because \"a promo is set up per brand anyway.\"",
+      "wrongWhy": "Each of the nine brands has 9 to 11 entries in the promo lookup, so every sales row matches all of its brand's promos at once. Row count becomes 1,173,847 instead of 118,449, and revenue becomes ₽1,262,668,596 instead of ₽126,911,191 — exactly tenfold. No single row is \"wrong\" in this: the join did precisely what it was asked to do.",
+      "selfCheck": "Count the paths from a fact table to a lookup. More than one — either delete the extra one, or leave it inactive and switch it on explicitly inside a measure."
+    }
+  ]
+}
