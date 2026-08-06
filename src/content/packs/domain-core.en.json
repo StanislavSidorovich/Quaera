@@ -104,7 +104,7 @@
     {
       "id": "dom-storytelling",
       "title": "Conclusion first",
-      "summary": "I start with the answer and with \"so what,\" and keep the working below — Minto pyramid order, not the chronology of my own work."
+      "summary": "I start with the answer and with \"so what,\" and keep the working below — Minto pyramid order, not the chronology of my own work; and I defend that conclusion in front of people with different stakes in it."
     },
     {
       "id": "dom-chart-choice",
@@ -1977,6 +1977,192 @@
         "Ask whether the logistics task can be solved without knowing anyone's surname."
       ],
       "explain": "The answer to a request like this consists of three independent decisions, and they must not be conflated. First, the composition of the data: which fields are genuinely needed for the stated task. Second, the basis: who in the company owns these data and authorizes the transfer. Third, the channel: how exactly they'll travel and whether a trail remains.\n\nOn composition, the principle is minimization: hand over what the task can't be solved without, and nothing beyond it. Logistics optimization works with territories, outlets, volumes and distances — the reps' surnames aren't needed for it. Drop the names, replace them with a territory code, and the task is still fully solvable while the sensitivity of the extract falls by an order of magnitude. Plan fulfillment is data about the appraisal of specific people's work, and it most likely ended up in the request simply because it sat in the same table.\n\nOn the basis: a contract is a necessary condition, not a sufficient one. Authorization comes from the data owner, not from whoever is technically able to run the extract. For an analyst that's protection first of all for themselves: the decision to release wasn't theirs alone and it's on record.\n\nOn the channel: a shared chat isn't a data transfer channel. A file in it can't be recalled, restricted, or traced to see who downloaded it. The minimum standard is a link with access limited to a specific person and an expiry date; better still, access to a data mart instead of a file — access can be revoked, a file can't.\n\nAnd on the tone of the reply. The clarifying question \"which question exactly are you solving\" isn't bureaucratic resistance, it's a normal professional response: it almost always shrinks the extract, and it often turns out that what was needed wasn't a list but two numbers. Refusing with no alternative and handing over without looking are two sides of one mistake: in both, the analyst didn't do the work, they dodged the decision."
+    },
+    {
+      "id": "dom-061",
+      "title": "Bad news about someone else's work",
+      "brief": "You have analysed the August «Молочный Дом» promo for the committee. Trade marketing reported a two-and-a-half-fold increase — true in units, but in money the increase is 72%, because the 30% discount also went to the volume that would have sold without the promo. You present on Thursday, and the head of trade marketing is your most frequent internal client.",
+      "goal": "Choose how to deliver a result that lands on someone you have to keep working with.",
+      "scenario": "What the analysis showed\n(weekly average):\n\n  units    1 353 → 3 327\n                     +146%\n  revenue  104 645 → 180 157\n                      +72%\n  price    77.33 → 54.15\n                      −30%\n\nThe setup:\n\n  trade marketing has quoted\n  the \"two and a half times\"\n  figure all quarter\n  on Thursday he presents\n  the same promo to the\n  committee\n  you work with him weekly\n  and depend on his briefs",
+      "predictQuestion": "What do you do with the analysis before Thursday?",
+      "options": [
+        {
+          "label": "Show him the numbers and the method before the committee — not to get the conclusion approved, but so he has time to check it and bring his own explanation; present the analysis unchanged",
+          "why": "Bad news heard publicly and for the first time turns a conversation about promo mechanics into a defence of reputation, and the argument becomes about you rather than the number. A heads-up neither softens the conclusion nor grants a veto — it removes the surprise; and it often buys you what the data does not have, such as a competitor's promo running the same weeks."
+        },
+        {
+          "label": "Take it to the committee as is, without warning him: showing the analysis to an interested party in advance means giving him time to prepare objections",
+          "why": "Objections on the merits are useful, not risky, and better heard before the committee than during it. The real risk is different: someone who learns of a bad result in front of everyone starts defending himself, and the discussion drifts from \"should we repeat this promo\" to \"whose fault is it\"."
+        },
+        {
+          "label": "Soften it: show the growth in money and the price drop, but skip the comparison with how the promo was presented all quarter",
+          "why": "Remove the comparison and you remove the conclusion itself: the whole point is that the decision to repeat is being made on a figure twice the real effect. Gentleness that costs the reader the conclusion is not tact, it is distortion."
+        },
+        {
+          "label": "Hand the analysis to him and let him present it: it is his promo and his reporting — let him decide what goes to the committee",
+          "why": "The committee asked the question, not him, and the answer goes back to whoever asked. Handing the material to an interested party and stepping aside makes him the editor of his own assessment."
+        }
+      ],
+      "hints": [
+        "For each option, picture the conversation at the committee: will it be about how the promo worked, or about who got it wrong?",
+        "One option protects the relationship at the cost of the conclusion — check what is left of the analysis once the comparison is gone."
+      ],
+      "explain": "The rule is called \"no surprises\": the person whose work the bad news is about hears it from you, and before the audience does. This is not about politeness. Someone caught out in public has no way to respond on the merits — he does not remember the details, has not seen the method, and is forced to defend himself; the subject quietly changes to his reputation, and the decision you did all the work for does not get made.\n\nWhat a heads-up is not: it is not approval of the conclusion, not a veto, and not a reason to soften the wording. The working formula is \"on Thursday I present the promo analysis, here are the numbers and the method, here is the conclusion; I want you to see it before the committee and tell me if I missed something.\" Give enough lead time to actually check it — a warning with no time to react is worse than none, because it reads as a formality.\n\nIn return you almost always get what the data does not hold: a competitor's promo in the same weeks, a supply gap, a change in shelf layout. Sometimes it changes the conclusion, and then you found your error before the committee rather than during it. A stakeholder with context is the cheapest reviewer you will ever get.\n\nOn wording: judge the work, not the person. \"The promo delivered +72% in money at a 30% price cut\" is a statement about mechanics, and one can agree with it. \"Trade marketing inflated the effect\" is a statement about people, and one can only argue with it. The difference in text is small; the difference in how the committee ends is enormous.\n\nAnd about the pressure that will likely follow. Separate the two: wording, order, emphasis are negotiable, and giving ground there is normal and useful. The conclusion, the numbers and the caveats are not. If you do end up defending the conclusion in public, the method will already have been through its most motivated reviewer, and the argument will be about the substance rather than about who failed to warn whom."
+    },
+    {
+      "id": "dom-062",
+      "title": "Three positions and fifteen minutes",
+      "brief": "The «Чистовъ» brand committee. Your analysis is on the screen: revenue −49%, the brand stopped selling in 46 outlets out of 79. The CFO proposes winding down support for the brand, the sales director says the numbers are wrong and the outlets are still there, the head of BI says his dashboard shows 60 active outlets. The budget decision is made today.",
+      "goal": "Work out what the argument actually consists of, and what can be closed in fifteen minutes.",
+      "scenario": "Three positions at the table:\n\n  finance\n    the brand is a drag,\n    wind support down\n  sales\n    the numbers are wrong,\n    the outlets are there\n  BI\n    the dashboard shows 60\n    active outlets, not 33\n\nWhat you know:\n\n  46 outlets had not a single\n  sale of the brand all\n  quarter — that is a fact\n  in the BI dashboard an outlet\n  stays active for a year\n  after its last shipment",
+      "predictQuestion": "Where do you start when you have fifteen minutes?",
+      "options": [
+        {
+          "label": "Split the argument into three: BI is a definition mismatch, sales is a checkable fact, finance is a decision that does not follow from the data. Close the first two on the spot, and for the third put a price on each option",
+          "why": "The three remarks sound like one argument about numbers, but only two of them are about numbers. The definition of an active outlet and the list of 46 addresses close right there and take half the heat out of the room; \"wind the brand down\" is a choice of priorities, and your contribution to it is not winning but pricing each option."
+        },
+        {
+          "label": "Back the CFO: his conclusion matches your analysis, and he is the one making the decision anyway",
+          "why": "Your analysis explains the cause of the decline; it does not say the brand should be wound down. The same numbers support going back into the 46 outlets just as well. By joining a side you lose the only thing that distinguishes you from everyone else at the table — having no stake in the outcome."
+        },
+        {
+          "label": "Suggest pausing the discussion and coming back in a week, once the three sources have been reconciled",
+          "why": "The gap with BI closes in one sentence about definitions, and the list of 46 outlets is already in your hands: a week here buys delay, not accuracy. The budget decision will be made today regardless — only now without you."
+        },
+        {
+          "label": "Show that your figure is right: it is computed from sales and verified, while the BI dashboard counts shipments",
+          "why": "Being right about method answers none of the three remarks: sales is not arguing about method, BI measures a different metric rather than a worse one, and finance is not talking about a number at all. An argument won on method leaves the decision unmade."
+        }
+      ],
+      "hints": [
+        "For each remark ask: is this a claim about a fact, about a definition, or about what to do?",
+        "One of the three positions cannot be checked against data at all — which does not make it wrong."
+      ],
+      "explain": "An argument around a table is almost never homogeneous, and the first move is to sort it by type of disagreement. There are three, and each is treated differently.\n\nDisagreement about a fact: \"the outlets are still there.\" It is closed by a source, and not by your authority but by a checkable statement: not \"my numbers are correct\" but \"here are 46 outlets with zero sales of the brand this quarter — name any one and we will look together.\" A checkable statement turns the argument into shared work; a claim about your own correctness turns it into a standoff. Often this same step teaches you something important — that three of those outlets changed owners rather than dropped the brand, for instance.\n\nDisagreement about a definition: BI shows 60 active outlets because activity there is counted over a rolling year, while yours is sales for the quarter. Nobody is wrong here: these are two correct metrics, and confusing them is not a person's mistake but the absence of a place where the definition is written down (see dom-058: that is fixed at the level of a metric owner, not at a meeting). The right line in the room sounds boring and works: \"these are different metrics; for a shelf question we need the quarterly one, and here is why.\"\n\nDisagreement about a decision: \"wind down support for the brand.\" Data does not close this at all — it is a choice of priorities, and it legitimately belongs to someone else. Your contribution is the price of the options: how much revenue sits behind the 46 outlets, what returning to the five largest gives, what another quarter of support costs. An analyst who brings a personal opinion about the priority instead of the price of the options loses both.\n\nThe interests around the table are worth remembering and not worth naming out loud. Sales has a target and a bonus on this brand, finance has a budget; that is normal, and it explains the heat. The line \"you are just defending your bonus\" instantly turns a working argument into a personal one and makes you a party to it. Work on the subject, not the motive.\n\nAnd here is how to notice you have drifted into being a party: you start caring which position \"wins\". Your job is to narrow the argument down to what is checkable and hand the decision to whoever owns it, together with the cost of being wrong in either direction."
+    },
+    {
+      "id": "dom-063",
+      "title": "A metric someone else's report rests on",
+      "brief": "You have been with the company three months. The weekly commercial report carries a metric called \"average revenue per outlet\": the team reports growth on it, and part of the quarterly bonus is tied to it. For «Чистовъ» it shows +22% — while the brand's revenue halved: the outlets that dropped out were smaller than the ones that stayed, and their departure lifts the average by itself.",
+      "goal": "Choose how to challenge a metric that is long established and not yours.",
+      "scenario": "Metric: average revenue per\noutlet. For «Чистовъ», +22%.\n\nWhat is behind it:\n\n  outlets that dropped out\n  averaged 24 738 ₽\n  those that stayed — 29 810 ₽\n  like-for-like outlets grew\n  by 9.7%\n  the rest is the mix effect\n\nThe setup:\n\n  the metric has been in the\n  report for three years\n  a bonus is tied to it\n  its owner heads commercial\n  analytics\n  you have been here three\n  months",
+      "predictQuestion": "How do you challenge this metric?",
+      "options": [
+        {
+          "label": "Go to the metric's owner one to one with the specific case where it gives a false signal, and propose not removal but a second metric alongside it — like-for-like growth",
+          "why": "The argument is not with the metric in general but with the decision it steers wrong: +22% while revenue halves is a case the owner will see for himself. Adding rather than replacing keeps three years of history comparable and does not require him to admit that the report has been misleading all this time."
+        },
+        {
+          "label": "Write it up for the general mailing list with this very example: everyone reads the metric, and staying quiet about a false signal is dishonest",
+          "why": "You are right on the substance, but a public dissection of someone else's metric reads as an accusation, and the discussion will be about you rather than about averages. The owner is left with no way to agree without losing face — and the likeliest outcome is that the metric stays and you stop being invited."
+        },
+        {
+          "label": "Nothing: the metric is not yours, you have been here three months, and one figure will not outweigh three years of reporting and a bonus",
+          "why": "Tenure is an argument neither way: the signal is either false or it is not. By staying quiet you agree to be accountable for conclusions drawn from a metric you consider wrong — and each quarter makes it harder to challenge."
+        },
+        {
+          "label": "Use like-for-like outlets in your own reports and show your own figure: practice will convince people better than an argument",
+          "why": "That is how a company ends up with two numbers for the same thing and no explanation of the difference, and the first \"why is yours different\" turns a conversation about the signal into a fight about who counts correctly. Metrics are changed by agreement and with a change date, not unilaterally."
+        }
+      ],
+      "hints": [
+        "Ask which decision is made on this metric and where exactly that decision goes wrong: what you challenge is the decision, not the number.",
+        "One option is right on the substance but chosen so that nobody can agree with it without losing face."
+      ],
+      "explain": "A metric is not challenged by the claim \"it is wrong\" — such a claim gets defended, and what gets defended is not the metric but the person. A metric is challenged by a case: here is a specific situation where its signal is the opposite of reality. Average revenue per outlet rising 22% while brand revenue halves is the ideal case — it does not ask anyone to take your word for it, and it can be checked in a minute.\n\nWhy \"add\" beats \"remove\". Removal touches three years of history (the series stops being comparable — the same problem as in dom-009), a bonus that has already been paid, and the author's reputation. A second metric alongside touches none of that: the old series lives on, the new one shows what the old one cannot distinguish, and the decision everyone actually cares about becomes correct. Resistance drops several-fold for the same result.\n\nWhy one to one, and before anything public: the person has to be able to agree cheaply. Agreeing in public that your metric has given a false signal for three years is expensive — expensive enough that finding an objection becomes the cheaper option. You are not \"sparing feelings\", you are removing the reason a correct decision would not be taken.\n\nAbout \"I have only been here three months\". It has no bearing on whether the signal is false, and a lot of bearing on form. Three months is a good reason to ask rather than assert: \"am I right that when weaker outlets drop out, the average rises on its own, even if no single outlet grew?\" A question gets answered, and usually answered correctly — meaning the other person arrives at your conclusion himself. An accusation gets rebutted.\n\nIf you cannot reach agreement, there are two wrong paths and one workable one. The wrong ones are to fight in public and to quietly count your own way (that is how a company ends up with two truths). The workable one is to keep the caveat next to the figure in your own materials and take the question to where the decision that relies on the metric is made: not \"to the owner's boss\" but to the owner of that decision. That also surfaces the real question — whether the metric has an owner at all and whether its definition is written down anywhere (dom-058). If not, the actual problem is not the average."
+    },
+    {
+      "id": "dom-064",
+      "title": "A question the data cannot answer",
+      "brief": "The sales director asks for one figure for the board: how much revenue «Чистовъ» lost because the brand is off the shelf in 46 outlets. Data about sales that never happened does not exist in any system.",
+      "goal": "Answer without inventing a number and without leaving the requester with nothing.",
+      "scenario": "What is being asked:\n\n  revenue lost to being off\n  the shelf — one figure\n  for the board\n\nWhat you have:\n\n  46 outlets with no sales\n  their 2024 revenue\n  the trend of like-for-like\n  outlets that stayed (+9.7%)\n\nWhat exists nowhere:\n\n  what those outlets would\n  have bought had the product\n  been on the shelf",
+      "predictQuestion": "What do you tell the sales director?",
+      "options": [
+        {
+          "label": "Give an estimate with the assumption named: the past revenue of those outlets, adjusted for the trend of the ones that stayed — and say plainly that this is an upper bound, not a measured loss",
+          "why": "The board needs an order of magnitude for a decision about negotiation budget, not roubles. An estimate with its derivation written next to it delivers exactly that and stays honest: the reader can see the number came from those outlets' past rather than from measurement."
+        },
+        {
+          "label": "Say there is no such data: sales that never happened cannot be measured, and any number here would be invented",
+          "why": "Formally true and practically useless. The board will name some figure anyway — just not yours, and with no assumptions attached. \"There is no data\" answers the question \"is there data\", not the question \"is it worth going back into these outlets\"."
+        },
+        {
+          "label": "Compute it from the past revenue of the 46 outlets and give the number without caveats: it comes from facts, and the assumption is obvious to anyone",
+          "why": "It is obvious to you, today. On a slide the number lives apart from how it was derived, and a month later it will be quoted as a measured loss — including by people who never saw your email. An assumption not written next to the number does not exist."
+        },
+        {
+          "label": "Take the brand's average revenue per outlet and multiply by 46: simple, and it needs no caveats",
+          "why": "That is precisely the error the analysis was done to avoid: the outlets that dropped out are smaller than the ones that stayed (24 738 ₽ against 29 810 ₽), so the brand average will overstate the loss. A simple calculation is no reason to compute off the wrong base."
+        }
+      ],
+      "hints": [
+        "Separate what is physically absent from the data from what can be estimated out of what you do have, with one named assumption.",
+        "For each option, check what actually lands on the board's slide and how it will be read a month later without you."
+      ],
+      "explain": "Requests like this arrive constantly, and there are three answers to them, not two: it cannot be measured — say so plainly; it can be estimated — estimate it; and the assumption goes next to the number, not into a conversation.\n\nHow the estimate is built here. The base is the past revenue of those 46 outlets specifically, not the brand average: they were smaller to begin with, and the average would overstate the answer. The adjustment is the trend of like-for-like outlets (+9.7%): had the brand stayed on the shelf, those outlets would probably have behaved like the rest. What comes out is an upper bound, and calling it an upper bound is not weakness but information: the board learns not only the size but the direction of the error. Some of that demand did not vanish — the shopper moved to a neighbouring outlet or to e-commerce, and that part is not a loss to the company.\n\nThis is why a range is usually more honest than a point. \"Between a quarter and a third of the brand's quarterly revenue, likely closer to the lower end\" keeps the reader away from false precision and shows what would narrow it: data on switching to nearby outlets, panel data, a measurement in the outlets you win back. A precise-looking number starts no such conversation — it just gets quoted.\n\n\"There is no data\" is the most expensive form of refusal. The decision gets made anyway, on a figure someone says out loud with no assumptions attached, and the next question may not come to you. Work with the decision behind the request rather than with the request itself (dom-requirements): the director does not need the loss in roubles, he needs an argument about whether to spend budget getting back into those outlets — and an estimate with bounds answers that better than an exact number.\n\nThe line past which an estimate stops being one is simple: the base, the adjustment and the direction of the error must all be nameable. If none of the three can be named, it is an invented number, and then \"we have nothing to measure this with\" really is the honest answer. But even that should be finished properly: say what would make it measurable next time — recording the reason for a refusal in the visit log, for example. A refusal that ends in a proposal reads as work; a refusal without one reads as an excuse."
+    },
+    {
+      "id": "dom-065",
+      "title": "Asked to lead with a different number",
+      "brief": "The board slide on «Чистовъ» is ready: revenue −49%, cause — the brand going off the shelf in 46 outlets. Your manager asks you to lead with a different figure from the same analysis, revenue per outlet at +22%: \"it is true as well, and the conversation will go more calmly.\" Both numbers are computed correctly.",
+      "goal": "Answer a request that is not a lie but changes the conclusion.",
+      "scenario": "Both figures, one analysis:\n\n  brand revenue     −49%\n  revenue per outlet +22%\n\nWhere the +22% comes from:\n\n  46 outlets left, and they\n  were smaller than the rest —\n  the average rose by itself\n  like-for-like outlets grew\n  by 9.7%\n\nThe request:\n\n  lead the slide with +22%,\n  mention the decline if\n  asked",
+      "predictQuestion": "What do you do with the slide?",
+      "options": [
+        {
+          "label": "Keep the answer to the board's question in the headline — what is happening to the brand — and show +22% next to it as part of the explanation, with one line on where it comes from",
+          "why": "The headline answers the question the board was convened for; +22% does not answer it but does explain the mechanics of the decline, so it belongs on the slide — just not first. The line about the mix effect also removes the temptation to read that growth as success."
+        },
+        {
+          "label": "Do as your manager asks: both figures are correct, and what goes in the headline is his call, not yours",
+          "why": "Both are computed correctly, but the board will read the headline and complete the thought as \"the brand is growing\". Silently swapping a figure in a way that changes the conclusion is the same distortion as staying quiet about a caveat: honest numbers, false picture."
+        },
+        {
+          "label": "Refuse to make the slide: leading with +22% while revenue halves swaps the conclusion, and you cannot be part of that",
+          "why": "The request is not absurd: the conversation really will turn to panic if the slide says nothing but −49%. Refusing instead of proposing turns a solvable argument about form into a conflict about your position — and the slide gets made by someone else, now without your caveats."
+        },
+        {
+          "label": "Put both figures in the headline side by side, −49% and +22%, and leave the link between them unexplained: let the board decide",
+          "why": "Two opposite figures with no explanation are not honesty but handing the work back: everyone picks the one that suits their position, and the discussion becomes an argument about which is the real one. Saying how they are connected is exactly your part of the job."
+        }
+      ],
+      "hints": [
+        "Ask what question the board was convened for, and whether the figure you are asked to lead with answers it.",
+        "One option formally shows everything and communicates nothing."
+      ],
+      "explain": "Distinguish pressure on form from pressure on the conclusion — they are different things, and you give ground in them differently.\n\nForm — order, emphasis, tone, what goes first — is negotiable, and your manager is within his rights there: he knows the audience and the cost of panic in that room better than you do. The conclusion — the understanding the reader leaves with — is not negotiable. One-line test: if after the edit the reader leaves with a different picture of the situation, the edit changed the conclusion, not the form, however honestly each individual number was computed.\n\nThe +22% still belongs on the slide — as explanation, not as headline. First, without it the mechanics are unclear: the brand is not losing revenue because it sells worse where it is stocked. Second, if you leave it out, someone else will bring it in with the opposite meaning. Shown together with the mix effect, it works for the correct conclusion: growth per outlet is not an achievement but a consequence of smaller outlets leaving (dom-044).\n\nAnswer your manager with \"here is how\" rather than \"I can't\": the headline answers the board's question, +22% goes underneath with its explanation, and next to them the proposal and the price of the decision. An objection that comes with an alternative is almost always accepted; an objection without one reads as a refusal to work, and then the slide is made without you.\n\nIf he insists, remember what you do control. The numbers and the caveats do not change, but the line under the figure is yours in any case: one sentence showing that +22% is computed on a shrunken set of outlets costs little and saves the reader. When you are asked to drop that too, the argument has stopped being about form, and that is the point at which it is worth putting in writing — not to escalate, but so the decision is made visibly.\n\nAnd about \"so the conversation goes more calmly\". The goal is not a foolish one: panic kills a sound decision just as reliably as false optimism. It is simply not achieved by choosing a figure — it is achieved by having a proposal next to the problem: what to do, what it costs, and what decision is needed from the board."
+    },
+    {
+      "id": "dom-066",
+      "title": "An error in a report already sent",
+      "brief": "A day after the quarterly analysis went out you find an error: the \"revenue by channel\" table lost a filter, and e-commerce never made it in. The table implied the brand rests on the chains; in fact 80% of «Чистовъ» revenue comes from four e-commerce outlets, and the chains give 17%. The main conclusion does not change, but negotiations were opened with the chains yesterday on the strength of it.",
+      "goal": "Choose how to correct an error people are already acting on.",
+      "scenario": "What went out in the report:\n\n  chains             86%\n  traditional trade  14%\n  e-commerce   no row at all\n\nWhat is actually true:\n\n  e-commerce   869k   80%\n  chains       180k   17%\n  traditional   30k    3%\n\nForty people read the report,\nnegotiations with the chains\nstarted yesterday. The finding\nabout 46 outlets still holds.",
+      "predictQuestion": "How do you correct it?",
+      "options": [
+        {
+          "label": "Write immediately to the people whose decision rests on that table — with the corrected figures and an explicit line, \"the main conclusion is unchanged, the priority changes\"; a short correction follows to the other forty",
+          "why": "Negotiations are happening today, so speed matters more than completeness of explanation. Splitting it into \"what did not change / what did\" lets the reader work out in ten seconds whether the correction touches their actions, without rereading the whole report."
+        },
+        {
+          "label": "Quietly replace the table in the file and the dashboard: the figures become correct, and making noise over one table only draws attention to your mistake",
+          "why": "People are acting on the version they saw, and the corrected file will not reach them; the discrepancy will surface in a meeting where someone is holding a printout. A silent fix turns one error into two — a wrong table, and no way to tell which version to trust."
+        },
+        {
+          "label": "Write to all forty with a detailed apology and an explanation of how the error got into the report",
+          "why": "The people running negotiations need ten seconds to decide whether to change the plan; a detailed act of contrition does not give them that and pushes the point to the end of the message. The root cause matters, but separately, later, and as what now stands between you and the next error of this kind."
+        },
+        {
+          "label": "Fix it in next week's regular report: the table will be right there, and a separate message would only confuse people",
+          "why": "A week is a week of negotiating with the channel that gives 17% of the brand's revenue instead of the one that gives 80%. The cost of silence is not measured in awkwardness but in the work of people acting on your figure."
+        }
+      ],
+      "hints": [
+        "Ask whose action tomorrow changes because of this correction — that is where the recipient list starts.",
+        "One option makes the correction invisible to exactly the people already acting on the old version."
+      ],
+      "explain": "Correcting an error that has already reached people has an order to it, and it does not start with apologies.\n\nFirst: who is acting on this figure. Not \"all forty recipients\" but those whose action tomorrow changes — the team that opened talks with the chains. They are written to first and immediately, because every hour of work on the wrong priority is paid for. Second: what exactly is wrong, in which direction and by how much — not \"there was an error in the table\" but \"e-commerce was missing from the breakdown; it accounts for 80% of the brand's revenue, the chains for 17%\". Third, and this is what gets skipped most often: what has not changed. The main finding about the 46 lost outlets stands. Without that line, a reader who does not know the boundaries of the error quite reasonably stops trusting the whole document, flawless parts included. A stated boundary works the same way as a stated weakness in the data in dom-054: it shows you know where your knowledge ends.\n\nEveryone else gets the short correction next, one paragraph. And only then, in a separate message and without rushing, the cause and what has changed in the process so it does not recur.\n\nThe silent fix looks like the cheapest way out and is the most expensive. People made a decision on the version they saw; two files with the same name will be left in the correspondence, and a month later nobody will be able to prove which table was on the table when the decision was made. The rule is simple: the corrected version carries a date and a \"what changed\" line, and the old one is not deleted but marked superseded (dom-059).\n\nOn apologies: one sentence is enough, then get to the substance. A long act of contrition moves attention from the reader's decision to your feelings and damages trust more than the error itself: the recipient starts to feel something extraordinary happened, when what happened was a lost filter.\n\nAnd the root cause, properly. It is not \"carelessness\" — nothing protects against carelessness. It is the absence of the check that catches this class of error: a breakdown must add up to the report's total. Chains plus traditional trade came to 210 thousand against brand revenue of 1 079 thousand — a discrepancy visible in a second, if anyone does that reconciliation at all. That is the pre-send check (dom-sanity-check): every breakdown of one quantity gives the same total, and when it does not, the thing to look at is not the breakdown but the filter."
     }
   ]
 }
