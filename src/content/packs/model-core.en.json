@@ -40,6 +40,31 @@
       "id": "model-ambiguity",
       "title": "Two paths to the same table",
       "summary": "I notice when there's more than one path from a fact to a dimension, and I know the model doesn't pick the best one for me in that case — it refuses to decide."
+    },
+    {
+      "id": "model-measure-vs-column",
+      "title": "Measure or calculated column",
+      "summary": "I choose deliberately between a measure and a column: a column computes once at refresh and takes up memory, a measure computes at query time and adapts to the slicer."
+    },
+    {
+      "id": "model-filter-context",
+      "title": "Filter context",
+      "summary": "For any report cell I can list every filter acting on it: from rows, from columns, from slicers, and from the measure itself."
+    },
+    {
+      "id": "model-row-context",
+      "title": "Row context",
+      "summary": "I understand why SUM inside a calculated column returns the table's total, not the current row's value."
+    },
+    {
+      "id": "model-additivity",
+      "title": "Measure additivity",
+      "summary": "I tell apart measures that sum across any breakdown, semi-additive ones like stock on hand, and non-additive ones like shares, averages and prices."
+    },
+    {
+      "id": "model-date-table",
+      "title": "The date table",
+      "summary": "I keep a separate calendar in the model and can explain why filtering by date straight off a fact table is a dead end."
     }
   ],
   "tasks": [
@@ -485,6 +510,406 @@
         {
           "label": "Add a second copy of the promo lookup to the model and link it by brand",
           "why": "A copy removes the ambiguity formally — there are no longer two paths to one table — but it moves the problem elsewhere: two lookups with identical content will drift apart at the first refresh, and the field list will show two \"promo\" tables for a person to guess between. This technique gets used, but as a last resort, not a first one."
+        }
+      ]
+    },
+    {
+      "id": "mdl-016",
+      "title": "Brand share got hard-coded as a number",
+      "brief": "Brand «Чистовъ»'s share of revenue is 12.7% across the whole database. A colleague set it up as a calculated column: computed once and put 12.7% into every fact row.",
+      "goal": "Work out what the report shows after a region slicer is applied.",
+      "scenario": "dim_product → fact_sellout\nColumn: Chistov Share — 12.7%\n(written once, into every\nfact row)\n\nA slicer for region «Москва»\nwas added to the report.\nCorrect share for Moscow: 19.1%",
+      "predictQuestion": "What will the column show after the Moscow slicer?",
+      "hints": [
+        "Remember: a calculated column computes once at refresh, a measure recomputes every time it's displayed.",
+        "A slicer changes which rows the report sees. Does it change what's already written into the column?"
+      ],
+      "explain": "A column and a measure look identical in the field list, but behave fundamentally differently under a slicer. A column physically stores a number computed once at data refresh — it knows nothing about future slicers and doesn't recompute for them. A measure doesn't store a number at all: it stores a formula and evaluates it fresh every time the report displays it, accounting for whatever filters are in effect at that moment. The danger is exactly that 12.7% still looks entirely plausible after the slicer — a mistake like this isn't visible to the eye, it only gets caught by checking against an independent calculation.",
+      "options": [
+        {
+          "label": "Still 12.7% — the slicer doesn't recompute the column, it holds the number that was written into it",
+          "why": "A calculated column computes once at refresh and lives on afterward as ordinary data. A slicer filters which rows the report sees, but it doesn't make the column recompute the value already written into it."
+        },
+        {
+          "label": "19.1% — the column recomputes along with the slicer, like any number on the report",
+          "why": "What recomputes under a slicer is a measure, not a calculated column — that's exactly the difference between them. The column holds the result of one calculation, made at data refresh, before it ever knew about the slicer."
+        },
+        {
+          "label": "Blank — the column breaks, because it was computed without accounting for future slicers",
+          "why": "The column doesn't break and doesn't go blank: it holds a perfectly working number, just not the one you need after the slicer. It's a modeling mistake, not a display one — so there's no error message either."
+        }
+      ]
+    },
+    {
+      "id": "mdl-017",
+      "title": "One formula, two ways to set it up",
+      "brief": "You're shown two formulas for the same brand share — one set up as a column, the other as a measure. You need to see how they differ in how they compute, not in syntax.",
+      "goal": "Work out the difference in when each variant computes.",
+      "predictQuestion": "What's the main difference between variant A and variant B in how they compute?",
+      "hints": [
+        "Ignore the difference in DIVIDE's syntax — focus on the difference in when the computation happens.",
+        "Ask: when does each of these formulas physically compute — once, or every time it's shown?"
+      ],
+      "explain": "Both formulas look syntactically similar and both use DIVIDE — that's exactly where the confusion comes from. But the context they live in differs: a column is tied to a table row and computes at the moment of data refresh, once and for all, until the next refresh. A measure isn't tied to any row — it exists as a formula and unfolds fresh every time the report asks for its value, taking as input whatever filter context is in effect right now. The number 126911191 hard-coded straight into formula A is an extra red flag: a column can't reach for \"the current filtered sum\", because at the moment it computes there's no current filter yet.",
+      "options": [
+        {
+          "label": "A computes once at data refresh and is stored per row; B computes fresh every time it's shown, under the current filter",
+          "why": "That's exactly the defining difference between a column and a measure — it isn't about DIVIDE's syntax, it's about when the computation happens. A column has one such moment, at data refresh; a measure has one every time it's displayed."
+        },
+        {
+          "label": "A runs faster, because it contains the number 126911191 directly instead of referencing another measure",
+          "why": "The number inside formula A has nothing to do with how fast it runs. Speed isn't the main difference here at all — the main difference is when the formula computes: once at refresh, or fresh every time it's shown."
+        },
+        {
+          "label": "A and B give the same result in any report; the difference is purely cosmetic",
+          "why": "The results only match in one special case — a report with no slicers at all. Add any filter by region or brand, and A keeps showing the number computed at refresh, while B recomputes."
+        }
+      ]
+    },
+    {
+      "id": "mdl-018",
+      "title": "A column for every slicer combination",
+      "brief": "A colleague proposes a compromise: since a measure recomputes slower than a column, set up a separate column for every slicer you need — by region, by brand, by region and brand together.",
+      "goal": "Work out what's wrong with this plan, beyond the growing number of columns.",
+      "scenario": "Proposed:\n\n  ShareByRegion (column)\n  ShareByBrand (column)\n  ShareByRegionBrand (column)\n\nEach for every slicer\ncombination known so far.",
+      "predictQuestion": "What happens to this plan at the first unplanned slicer?",
+      "hints": [
+        "Put a number on it: how many possible slicer combinations exist (region, brand, month, channel...) versus how many columns you could realistically pre-build?",
+        "A measure answers any slicer with one formula. How many formulas do columns need to do the same?"
+      ],
+      "explain": "The idea of \"a column for every slicer\" doesn't break on the first case or the second — it breaks on the third, the slicer nobody foresaw. A measure solves this fundamentally differently: it doesn't enumerate combinations of conditions in advance, it computes under whatever filter context happens to form in a given report cell, whatever that turns out to be. One formula answers any conceivable slicer, because it doesn't store the answer — it stores how to get it. That's exactly why measures are the standard way to compute quantities that need to behave correctly under a slicer, while calculated columns get left for things that genuinely don't change with a slicer: a category, a status, a flag.",
+      "options": [
+        {
+          "label": "For a slicer nobody set up a column for in advance, there will be no correct number at all — the columns only cover the combinations that were planned",
+          "why": "A column computes once for a specific, known-in-advance combination of conditions. The moment the requester asks for a slicer by month or by sales channel that no column was set up for, there's nothing to answer with — a column for that case simply doesn't exist."
+        },
+        {
+          "label": "Nothing serious: there'll be more columns, but each keeps showing the correct number for its own combination",
+          "why": "True for combinations already planned for, but the plan is fragile at exactly the moment a combination shows up that wasn't foreseen. And foreseeing every possible slicer a report might ever need is impossible in principle — there are too many combinations."
+        },
+        {
+          "label": "The model will refuse to create the third column, because combining two dimensions isn't supported in DAX",
+          "why": "There's no technical limit on a formula like this — DIVIDE with two filter conditions writes freely. The problem isn't that the column can't be created — it's that the whole approach doesn't scale to slicers nobody planned for."
+        }
+      ]
+    },
+    {
+      "id": "mdl-019",
+      "title": "What a cell's filter is made of",
+      "brief": "In a matrix report, a cell sits at the intersection of row «Москва» and a page-level slicer for «Чистовъ». The measure is Revenue.",
+      "goal": "Work out what makes up this cell's filter context.",
+      "scenario": "Matrix:\n  row = region («Москва»)\n  page slicer = brand «Чистовъ»\n\nMeasure: Revenue = SUM(revenue)\nRevenue in the cell: ₽819,771",
+      "predictQuestion": "Which of the following is part of this cell's filter context?",
+      "hints": [
+        "Mentally remove one of the two sources — the slicer or the row — and ask whether the number in the cell changes.",
+        "A matrix row works the same way as a row in GROUP BY: it doesn't just label, it also restricts."
+      ],
+      "explain": "A report cell isn't one condition — it's the intersection of every condition currently acting on it. Here there are two: the row sets the region, the page slicer sets the brand, and the measure sees both at once, as if joined with AND. Remove either source and the number in the cell changes — that's the practical test: remove the slicer and keep the row, and you get all of Moscow's revenue across every brand, ₽3,718,723 instead of ₽819,771. The habit of listing filter sources one at a time — row, column, slicers, filters baked into the measure itself — saves more time than any other report-reading skill.",
+      "options": [
+        {
+          "label": "Both the row's condition (region = «Москва») and the page slicer's condition (brand = «Чистовъ») — both apply at once",
+          "why": "A cell's filter context is made up of every source at once, not just one. A matrix row and a page slicer are two independent sources, and both narrow the data down to what meets both conditions."
+        },
+        {
+          "label": "Only the row's condition — page slicers don't affect individual matrix cells",
+          "why": "A page slicer applies to the whole page, including every cell of every matrix on it — that's exactly what it's for. If the slicer didn't reach the cells, the number in them wouldn't change when a brand is picked, but it does: without the slicer it would be ₽3,718,723."
+        },
+        {
+          "label": "Only the slicer's condition — a matrix row sets a label, not a filter",
+          "why": "A matrix row isn't just a label: every row by region physically filters the data down to that region, otherwise the «Москва» and «Санкт-Петербург» rows would show the same number. Here, labeling and filtering are one and the same action."
+        }
+      ]
+    },
+    {
+      "id": "mdl-020",
+      "title": "A measure with its own filter inside",
+      "brief": "The \"Chistov Revenue\" measure already has a brand condition baked into its formula. It gets put into a by-region matrix with no slicer on the page at all.",
+      "goal": "Work out what the \"Москва\" cell shows.",
+      "predictQuestion": "What does the \"Москва\" row show, if there's no brand slicer on the page at all?",
+      "hints": [
+        "The brand condition sits inside CALCULATE, not outside the measure. Does it need an external slicer to fire?",
+        "Compare with mdl-019: there the condition came from a page slicer. Where does it come from here?"
+      ],
+      "explain": "A cell's filter context isn't made up only of rows, columns and page slicers — there's a fourth source: conditions baked into the measure itself via CALCULATE. A filter like this doesn't depend on what's selected outside it: it applies every time the measure is invoked, whether there's a brand slicer on the page or not. The practical takeaway: two measures shown side by side on a report (\"Revenue\" and \"Chistov Revenue\") can behave differently under the exact same set of external slicers — and understanding why takes more than looking at the report page, you have to look inside the measure's own formula.",
+      "options": [
+        {
+          "label": "₽1,691,942 — Chistov's revenue for Moscow. The brand filter always applies, because it's part of the measure itself, not an external slicer",
+          "why": "The condition dim_product[brand]=\"Чистовъ\" is baked inside CALCULATE and acts as a fourth source of filter context — the measure's own filter. It doesn't need a page slicer: it applies every time the measure is invoked, regardless of what's selected outside it."
+        },
+        {
+          "label": "₽8,876,489 — Moscow's full revenue across every brand, because there's no brand slicer on the page",
+          "why": "That would be true for a measure with no internal filter, like a plain Revenue. But Chistov Revenue has the brand condition built into its formula, and it doesn't depend on whether there's a page slicer — it's always there."
+        },
+        {
+          "label": "Blank — without an external brand slicer, CALCULATE can't evaluate the condition inside it",
+          "why": "CALCULATE exists precisely to set filter conditions explicitly, without external slicers. The formula here is complete and working — it evaluates its own condition; the filter's source is simply different, the measure itself rather than a page slicer."
+        }
+      ]
+    },
+    {
+      "id": "mdl-021",
+      "title": "The \"Total\" row at the bottom",
+      "brief": "The same by-region matrix has a \"Total\" row underneath it. A slicer for brand «Чистовъ» is set on the page.",
+      "goal": "Work out what filter context applies in the \"Total\" row.",
+      "scenario": "Matrix with a «Чистовъ» slicer:\n\n  Москва          1,691,942\n  Ростовская обл. 2,441,558\n  ...\n  Total          16,165,815",
+      "predictQuestion": "What filter context applies in the \"Total\" row?",
+      "hints": [
+        "Ask: does a region value \"Total\" exist in the dim_region lookup? If not, what is this row's filter resting on?",
+        "Compare the \"Total\" row to the \"Москва\" row by the number of filter sources, not by the final figure."
+      ],
+      "explain": "\"Total\" isn't a sum of the displayed rows computed separately by the visual — it's the same measure invoked under its own filter context, one condition lighter. An ordinary row combines the page slicer with a condition on its own region; the \"Total\" row sees only the page slicer, with no region condition at all. This explains behavior that would otherwise look strange: \"Total\" recomputes on its own when new regions are added to the lookup, because it doesn't store a list of what to add up — it simply computes in a context with fewer restrictions.",
+      "options": [
+        {
+          "label": "Only the page slicer (brand = «Чистовъ») — with no region condition, because the \"Total\" row isn't tied to any specific region",
+          "why": "\"Total\" isn't another region — it's a row with no region condition of its own: only the page slicer remains in its filter context. That's why it shows the sum across every region at once — the same figure a brand slicer alone would give, with no row breakdown at all."
+        },
+        {
+          "label": "Region = all sixteen at once, joined with OR — the same as an ordinary row, just with the full list",
+          "why": "Formally that would give the same result, but in fact the \"Total\" row isn't built as a list of region conditions — it's built as the absence of any region condition at all. The difference is practical: add a seventeenth region to the lookup, and the \"Total\" row picks it up on its own, while an \"all sixteen joined with OR\" list would need rewriting."
+        },
+        {
+          "label": "The same filter context as the \"Москва\" row, plus an extra condition \"region = Total\"",
+          "why": "\"Total\" is an element of the visual, not a lookup value — no such region value exists in any table in the model. A row can't have a condition on a value that doesn't exist; it's more accurate to say the row simply has no region condition at all."
+        }
+      ]
+    },
+    {
+      "id": "mdl-022",
+      "title": "SUM inside a row-level column",
+      "brief": "A new calculated column gets added to fact_sellout, to look at each individual sale's revenue right next to the row.",
+      "goal": "Work out what the column shows in the table's first row.",
+      "predictQuestion": "What does this column show in the first row?",
+      "hints": [
+        "SUM is an aggregating function. It responds to filter context, not row context.",
+        "How many rows does the filter restrict at the moment this new column computes, if no slicer has been applied yet?"
+      ],
+      "explain": "This is the most common trap with calculated columns: row context gives the formula access to the current row's values, but it doesn't force aggregating functions like SUM to use that row specifically. SUM only responds to the filter context, and at the moment an ordinary column computes, that context is simply empty — nothing is filtered. So SUM(fact_sellout[revenue]) sums revenue across the entire table and puts the same number, 126,911,191, into every single row without exception. To get the current row's own value, an aggregating function isn't needed at all — a direct reference to the column is enough.",
+      "options": [
+        {
+          "label": "126,911,191 — the sum of revenue across the whole table. SUM ignores row context and aggregates whatever isn't filtered, and here nothing is filtered",
+          "why": "SUM is an aggregating function — it responds to the filter context, not the row context. At the moment the column computes, no filter is in effect, so SUM adds up every row in the table — and gets the same result in every row."
+        },
+        {
+          "label": "398.31 — this row's own revenue value, because the column computes in row context",
+          "why": "That's how a plain reference to the column would work — \"=fact_sellout[revenue]\" with no SUM. But SUM inside the formula changes things: aggregating functions don't read row context directly, they aggregate over the filter context, which here is empty and restricts nothing."
+        },
+        {
+          "label": "A calculation error — SUM can't be used inside a calculated column",
+          "why": "The formula is syntactically fine, there's no error. SUM inside a calculated column is entirely legal — it's just that the result is almost never what people expect: it equals the sum across the whole table, not the current row."
+        }
+      ]
+    },
+    {
+      "id": "mdl-023",
+      "title": "The fix without aggregation",
+      "brief": "You still need revenue per unit for each row — not the table's overall total, but exactly that row's own value.",
+      "goal": "Work out which formula solves this correctly.",
+      "predictQuestion": "Which variant returns the first row's own price, 199.16, for that row?",
+      "hints": [
+        "Compare the two variants on one point: is there a SUM or a similar aggregating function inside either of them?",
+        "Row context works on its own for direct column references — an aggregating function overrides it."
+      ],
+      "explain": "The difference between the two variants isn't DIVIDE — it's identical in both formulas and just divides two numbers. The difference is what's inside DIVIDE. In variant A those are direct references to the current row's columns: revenue and units are pulled from that row specifically, and row context works with no extra effort. In variant B there's a SUM inside — and SUM, just as in the previous task, responds not to the row but to the filter context, which is absent here, and aggregates the entire table. The practical takeaway: if a column formula needs to answer \"for this row\", aggregating functions mostly have no place in it — only direct field references do.",
+      "options": [
+        {
+          "label": "Variant A — direct references to revenue and units, with no aggregating functions, naturally use row context",
+          "why": "DIVIDE here just divides two values, and the values themselves are direct references to the current row's columns. Nothing stops row context from doing its job: for the first row that's 398.31 and 2, giving 199.16 — that specific sale's own price."
+        },
+        {
+          "label": "Variant B — SUM inside DIVIDE sums exactly the row the formula is applied to",
+          "why": "SUM behaves the same regardless of what wraps around it — it still responds to filter context, not row context. Variant B returns the same number in every row: the overall price per unit across the whole table."
+        },
+        {
+          "label": "Both variants give the same result — DIVIDE normalizes the difference between them",
+          "why": "DIVIDE is an ordinary division function — it doesn't change how its arguments compute. If one argument is aggregated across the whole table and the other isn't, DIVIDE can't magically reconcile them into the same context."
+        }
+      ]
+    },
+    {
+      "id": "mdl-024",
+      "title": "Row context inside an iterator",
+      "brief": "Unlike an ordinary column, a formula inside SUMX or a similar iterator function runs separately for each row — and there SUM behaves differently.",
+      "goal": "Work out why the same SUM inside an iterator no longer gives the table-wide total.",
+      "predictQuestion": "Why does revenue inside SUMX here behave like the current row's value, rather than the table's total?",
+      "hints": [
+        "SUMX isn't an ordinary aggregating function like SUM — it's an iterator: it walks rows one at a time.",
+        "Ask: who creates row context in this example — a calculated column (like mdl-022), or SUMX itself?"
+      ],
+      "explain": "In the previous two tasks, row context already existed — a calculated column supplied it, and SUM inside it ignored that context, because SUM only responds to filter context. Here the source is different: SUMX itself creates row context by walking fact_sellout row by row, and for each row it evaluates the expression passed to it inside that exact context — only afterward summing the results across every row. That's why inside SUMX a direct column reference means the current iteration row's value, not the table's total. This is the key difference between iterator functions (SUMX, AVERAGEX, FILTER) and ordinary aggregating functions: they don't just aggregate — they iterate, and at every step of the iteration the formula inside has its own row context, one the function itself built.",
+      "options": [
+        {
+          "label": "SUMX itself creates a row context for every row of fact_sellout and evaluates the expression passed to it inside that context — before summing the results at the end",
+          "why": "SUMX is an iterator function: it walks the table row by row and creates its own row context for each row, and that's the context the expression passed to it computes in. Inside that context, a direct reference to fact_sellout[revenue] means \"this row's own revenue value\", not the table's total."
+        },
+        {
+          "label": "SUM inside SUMX always refers to the current row — a special exception to the general rule about SUM",
+          "why": "There's no separate SUM function inside the expression at all — just direct column references multiplied and divided against each other. The rule about SUM (responds to filter context, ignores row context) doesn't change; what changes is that SUMX itself supplies a row context that wouldn't exist in an ordinary column."
+        },
+        {
+          "label": "The formula is flawed: units*revenue/units always equals revenue, and you can't write it this redundantly",
+          "why": "The formula really does reduce to revenue mathematically — but the question isn't about writing it efficiently, it's about the computation mechanism. Even written redundantly, it demonstrates exactly how SUMX creates a row-by-row context, which is the whole point of the task."
+        }
+      ]
+    },
+    {
+      "id": "mdl-025",
+      "title": "Three measures, three ways to sum",
+      "brief": "The model has three measures: revenue, stock on hand, and average sale price. You need to decide which breakdowns each can be summed across without distorting its meaning.",
+      "goal": "Work out each of the three measures' additivity.",
+      "scenario": "Three measures:\n\n  Revenue — ₽\n  StockOnHand — units\n  AvgPrice — average price, ₽\n\nStock is counted at the end\nof each month (a snapshot).",
+      "predictQuestion": "Which of the three measures can be summed across ANY breakdown, including time?",
+      "hints": [
+        "Ask of each measure: does it accumulate over a period (like money in a till), or exist at every moment (like stock on a shelf)?",
+        "An additive measure sums across time exactly as honestly as across any other breakdown — no exceptions."
+      ],
+      "explain": "The three measures represent three classes of additivity, and the line between them isn't drawn by the unit of measurement but by what happens to the meaning when you sum. Revenue is additive: it belongs to a sale event, and events can be summed along any dimension, time included. Stock on hand is semi-additive: it belongs to a point in time, not a period, so it sums across everything that isn't time (product, region, distributor) but not across time itself. Average price isn't additive at all: it's already the result of a division, and summing several such results doesn't mean anything — it needs to be recomputed fresh at whatever level you need, not summed from ready-made averages.",
+      "options": [
+        {
+          "label": "Only Revenue — revenue accumulates over a period and sums equally honestly by product, region and month",
+          "why": "Revenue is a classic additive quantity: every unit of it belongs to a specific sale, and a sum across any set of sales means exactly what it should — total revenue for that set, regardless of whether you slice it by product, region or time."
+        },
+        {
+          "label": "Only StockOnHand — stock on hand physically exists at every moment, so it can be summed across any period",
+          "why": "Physically existing at every moment is exactly why stock CAN'T be summed across time: adding up several snapshots of the same inventory doesn't mean anything meaningful. Summed across products and regions at the same point in time, stock works fine — that's the \"semi\" in semi-additive."
+        },
+        {
+          "label": "Only AvgPrice — average price is the same across any breakdown, so summing it isn't distorted",
+          "why": "Average price is the opposite of \"the same across any breakdown\": it's usually different for every product, region and period. Adding up several different average prices and getting a meaningful number is impossible along any breakdown at all — it's a non-additive quantity."
+        }
+      ]
+    },
+    {
+      "id": "mdl-026",
+      "title": "Quarterly stock as one sum",
+      "brief": "The requester wants one number — \"the distributor's stock on hand for Q4.\" The model has stock computed at the end of every month.",
+      "goal": "Work out what SUM across the quarter's three months shows.",
+      "scenario": "Distributor stock, all\nproducts, month end:\n\n  October    10,325 units\n  November   15,108 units\n  December   20,846 units\n\nSUM for the quarter = 46,279",
+      "predictQuestion": "What does 46,279 mean, and is it a valid answer for the requester?",
+      "hints": [
+        "Ask: what does 46,279 units physically mean? Did that much stock ever sit in the warehouse at once?",
+        "\"Stock for a period\" almost always means stock AT THE END of the period, not a sum of the stock levels inside it."
+      ],
+      "explain": "The mistake looks innocent, because SUM is exactly the function that works for revenue and units sold. For stock it works differently: stock is a snapshot of state at a moment, not the accumulation of an event, and three snapshots of the same physical inventory don't add up to a new physical meaning. The right answer to \"stock for the quarter\" is the value at quarter end, December's 20,846 units, because that's what answers \"how much stock is sitting in the warehouse right now, at the end of the period.\" In DAX this is expressed via LASTDATE or CALCULATE with a filter on the period's last day, not a plain SUM — but the idea matters more than the syntax: first work out what operation the quantity's meaning calls for, only then write the formula.",
+      "options": [
+        {
+          "label": "Not valid: it's the sum of three separate point-in-time snapshots of the same inventory — no such stock level ever existed at any single moment",
+          "why": "Stock on hand isn't something that accumulates over a month — it's something that exists at a specific moment, usually period end. Adding up three snapshots of goods that partly sat in the warehouse across all three months counts the same physical goods more than once."
+        },
+        {
+          "label": "Valid: it's the distributor's total stock for the quarter, exactly what the requester asked for",
+          "why": "The requester asked about stock \"for the quarter\", but the meaningful answer to that isn't a sum of monthly snapshots — it's the value at quarter end, meaning December's 20,846 units. \"For the quarter\" here means the moment the period ends, not accumulation inside it."
+        },
+        {
+          "label": "Valid, but the result needs dividing by three to get the average stock",
+          "why": "Dividing by three gives the average monthly stock — a metric in its own right, sometimes useful, but not what people usually mean by \"stock on hand for the quarter.\" The answer to the original question is the ending stock at the cutoff date, December's 20,846, not an average of three snapshots."
+        }
+      ]
+    },
+    {
+      "id": "mdl-027",
+      "title": "Annual stock came out sevenfold off",
+      "brief": "A dashboard showed stock on hand for 2025 as 370,142 units. The actual stock at the end of December, checked physically against the warehouse, is 52,350 units.",
+      "goal": "Work out what's causing the discrepancy, and how to fix it.",
+      "scenario": "Dashboard: SUM(units_on_hand)\nacross all 12 months of 2025\n= 370,142 units\n\nActual warehouse stock at\nend of December 2025: 52,350\n\nDiscrepancy — almost sevenfold.",
+      "predictQuestion": "What's causing the discrepancy, and how do you fix it?",
+      "hints": [
+        "Compare 370,142 to the sum of the distributor's twelve monthly stock figures — does it come close?",
+        "Remember mdl-026: the same effect showed up across a quarter's three months, here it's across a year's twelve."
+      ],
+      "explain": "The mistake at annual scale is the same as the quarterly one in mdl-026, just more visible: summing twelve snapshots of growing stock gives a total several times larger than any of the values it's built from, because every snapshot partly re-counts the same physical goods that sat in the warehouse for more than one month. A measure meant to answer \"stock at year end\" has to take the value on the year's last date, not sum the intermediate snapshots. The practical lesson goes wider than this one case: any measure built over a semi-additive quantity needs a separate formula for every time breakdown — annual, quarterly and monthly versions of stock don't reduce to each other by simple summing, unlike revenue, where the annual measure is exactly the sum of the monthly ones.",
+      "options": [
+        {
+          "label": "The measure sums 12 monthly stock snapshots instead of taking the snapshot at year end. The fix is to replace SUM with the value at the end of the period",
+          "why": "This is the same semi-additive effect, just at annual scale: stock at the end of each of the 12 months was, on average, growing, and summing every snapshot recounts the same physically-sitting goods over and over. The right way to get \"stock for the year\" is to take the snapshot on the period's last date, not the sum of the months inside it."
+        },
+        {
+          "label": "The fact_stock rows are duplicated in the data, and some stock got counted twice",
+          "why": "Row duplication would give exactly a twofold discrepancy in the affected months, not a steady climb across all twelve. A sevenfold discrepancy and its cumulative shape point to the arithmetic of summing snapshots over time, not a data defect."
+        },
+        {
+          "label": "The dashboard is computing off the wrong distributor — check the distributor_id filter",
+          "why": "A wrong distributor filter would give a different number, but not necessarily one that's a clean multiple bigger — just a different warehouse's stock. Here the tell points elsewhere: the total is roughly the sum of the climbing monthly stock levels, which points straight at semi-additivity, not a mixed-up filter."
+        }
+      ]
+    },
+    {
+      "id": "mdl-028",
+      "title": "Without a shared calendar",
+      "brief": "The model doesn't have a separate date table yet. A quarter slicer got built straight on the week_start column in fact_sellout — it only exists there.",
+      "goal": "Work out what happens to fact_sellin with a slicer like this.",
+      "scenario": "The slicer is built on:\n  fact_sellout.week_start\n\nThere's no separate relationship\nwith fact_sellin — it has its\nown month_start column, and\nit isn't linked to the\nweek_start slicer.",
+      "predictQuestion": "What does the shipment measure (fact_sellin) show with this slicer?",
+      "hints": [
+        "Ask what region means in a shipment row: where goods ship from, or where they end up?",
+        "There's no relationship between the two fact tables' date columns — trace whether a filter has any path at all between them."
+      ],
+      "explain": "Without a shared date table, every fact table is on its own: a slicer built on its own date column filters only that table and whatever is directly connected to it. fact_sellout and fact_sellin have no relationship between them here at all — different columns, different names, different granularity, week_start versus month_start — and a filter placed on one has no path at all to the other. The result is worse than an outright error: the report silently shows a shipments number that ignores the slicer, and it's easy to mistake for correct, because nothing visually signals a problem.",
+      "options": [
+        {
+          "label": "The full total, ignoring the slicer — a slicer built on one fact table's column doesn't affect another fact table that has no relationship to that column",
+          "why": "A slicer filters the table its column is built on, and everything connected to it. fact_sellin has no relationship whatsoever to fact_sellout's week_start — it has its own date column, and without a shared date table there's no path between the two facts a filter could travel along."
+        },
+        {
+          "label": "The same total as sales — both fact tables are, in the end, about the same product and period",
+          "why": "A shared topic (sales and shipments of the same product) doesn't create a relationship in the model automatically. A model filters along explicitly defined relationships between tables, not by how semantically close the data is — and there's currently no relationship between these two columns."
+        },
+        {
+          "label": "An error — DAX won't let you build a slicer on a column that isn't connected to other tables",
+          "why": "Building a slicer on a column like this is entirely allowed, there's no error. The problem is quieter and more dangerous than an error: the slicer simply won't apply where there's no relationship, and the number on the report ends up wrong with no warning at all."
+        }
+      ]
+    },
+    {
+      "id": "mdl-029",
+      "title": "One calendar row serving both",
+      "brief": "dim_date got added to the model. A specific day, March 3rd 2025, is picked, and its row is examined.",
+      "goal": "Work out how one calendar row connects a weekly fact table and a monthly one.",
+      "scenario": "dim_date, row for 2025-03-03:\n\n  date_id     2025-03-03\n  week_start  2025-03-03\n  month_start 2025-03-01\n  quarter     1\n\nfact_sellout.week_start\nholds 2025-03-03.\nfact_sellin.month_start\nholds 2025-03-01,\nbut NOT 2025-03-03.",
+      "predictQuestion": "How does this one dim_date row connect both facts, if their date values differ?",
+      "hints": [
+        "Look at the dim_date row for March 3rd again: how many different dates does it hold, and which fact table needs which?",
+        "What's shared in this row isn't a specific date value — it's the year and quarter this row belongs to."
+      ],
+      "explain": "The trick of a date table is that it's stored by day — the finest unit — but carries derived columns for every coarser grouping: week, month, quarter, year. The March 3rd row is simultaneously \"the start of its own week\" (for fact_sellout), \"belongs to March, which starts on the 1st\" (for fact_sellin), and \"Q1\" — all at once, in the same fields of the same row. Each fact table builds a relationship to the dim_date column it actually needs, not to the other fact's column: the weekly fact to week_start, the monthly fact to month_start. Both paths ultimately converge on the shared year and quarter, which is why a quarter slicer on dim_date filters both facts at once, even though their own native date values never coincide.",
+      "options": [
+        {
+          "label": "Through two separate relationships to the same table: date_id to week_start for one fact, and date_id to month_start for the other — both paths lead into one calendar",
+          "why": "dim_date is stored by day, and it has separate columns for different granularities — its own week_start and its own month_start, in the same row. Each fact table connects to its own dim_date column, and both relationships ultimately lead to the same calendar, with shared year and quarter."
+        },
+        {
+          "label": "It can't: since the date values are literally different (2025-03-03 and 2025-03-01), there can be no shared slicer for the two facts",
+          "why": "The values really are literally different, but dim_date doesn't require a literal match between the two facts directly — it's an intermediary with a separate column for each granularity. That's exactly why one and the same quarter on dim_date filters both facts, even though their own dates never coincide."
+        },
+        {
+          "label": "By converting month_start in fact_sellin to a weekly format before building the relationship",
+          "why": "No conversion is needed at all — dim_date already holds both required granularities in the same table, just in different columns of the same row. The task is solved with relationships to existing columns, not by transforming the fact table's data."
+        }
+      ]
+    },
+    {
+      "id": "mdl-030",
+      "title": "One slicer, both reports line up",
+      "brief": "The dashboard has weekly sales and monthly shipments side by side, both connected to dim_date. The requester sets a slicer \"quarter = 1, year = 2025.\"",
+      "goal": "Work out whether the two reports show consistent numbers, and why.",
+      "scenario": "Slicer: year=2025, quarter=1\n\nSales (weekly,\nvia dim_date.week_start):\n  ₽13,512,252\n\nShipments (monthly,\nvia dim_date.month_start):\n  ₽9,186,879",
+      "predictQuestion": "Different numbers — is this a broken relationship or an expected result?",
+      "hints": [
+        "Ask yourself: what should a shared calendar actually guarantee — matching numbers, or a matching time window?",
+        "Sell-in and sell-out are two different flows: from a distributor's warehouse, and off a retail shelf. Should they physically match?"
+      ],
+      "explain": "A shared date table solves one specific problem — it guarantees that a \"Q1, 2025\" slicer means the same window of time for every fact table connected to it, regardless of their native granularity. It doesn't solve, and doesn't promise to solve, a different problem — making different business measures equal to each other. Shelf sales and shipments to distributors are independent processes with their own dynamics: a warehouse stocks up ahead of time, retail sells gradually, and over any given quarter these two flows will almost never match in money. The value of a shared calendar is precisely that it makes a comparison like this possible and honest in the first place: both figures answer the question about the same period, and the gap between them can now be analyzed on its merits — instead of wondering whether the period boundaries themselves drifted apart.",
+      "options": [
+        {
+          "label": "Expected: both figures are honestly computed over the same quarter, through one calendar, and the gap between them is the gap between shelf sales and warehouse shipments — not a relationship bug",
+          "why": "A shared calendar guarantees both reports answer the question \"what happened in Q1 2025\" — and that's the only thing it guarantees. It doesn't promise that sell-in and sell-out will turn out equal: these are different business processes (retail sales and warehouse replenishment), and it's natural to expect their totals over the same period to diverge."
+        },
+        {
+          "label": "A relationship bug: if the calendar is shared, both reports have to show the same number for one period",
+          "why": "A shared calendar ties both facts to the same time window — but it doesn't turn different quantities into one. Shelf sales and warehouse shipments measure fundamentally different events, and their being equal would be a suspicious coincidence rather than the norm."
+        },
+        {
+          "label": "A relationship bug: fact_sellin should filter through week_start, not month_start, and the numbers would match",
+          "why": "fact_sellin has no week_start column at all — only monthly granularity, shipments aren't detailed by week in this model. Even if that relationship existed technically, sales and shipments would still be different processes with different totals, because they measure two different things."
         }
       ]
     }
