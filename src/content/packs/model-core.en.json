@@ -65,6 +65,31 @@
       "id": "model-date-table",
       "title": "The date table",
       "summary": "I keep a separate calendar in the model and can explain why filtering by date straight off a fact table is a dead end."
+    },
+    {
+      "id": "model-role-playing",
+      "title": "One date, two roles",
+      "summary": "I connect the calendar to a fact table with two dates so a report by order date and by ship date computes off one date table, not two copies."
+    },
+    {
+      "id": "model-many-to-many",
+      "title": "Many-to-many and the bridge table",
+      "summary": "I recognize a many-to-many relationship by the key being non-unique on both sides, and resolve it with a bridge instead of joining directly and getting inflated sums."
+    },
+    {
+      "id": "model-calculate",
+      "title": "CALCULATE: replacing context",
+      "summary": "I read CALCULATE not as WHERE but as replacing filter context, and predict what happens to filters a slicer has already applied."
+    },
+    {
+      "id": "model-context-transition",
+      "title": "Context transition",
+      "summary": "I explain why a measure invoked inside a table row computes something different from the same formula written as a column."
+    },
+    {
+      "id": "model-time-intelligence",
+      "title": "Time intelligence",
+      "summary": "I compute YTD, a rolling year, the prior period and its growth — and understand what each of these functions does to the date filter."
     }
   ],
   "tasks": [
@@ -910,6 +935,451 @@
         {
           "label": "A relationship bug: fact_sellin should filter through week_start, not month_start, and the numbers would match",
           "why": "fact_sellin has no week_start column at all — only monthly granularity, shipments aren't detailed by week in this model. Even if that relationship existed technically, sales and shipments would still be different processes with different totals, because they measure two different things."
+        }
+      ]
+    },
+    {
+      "id": "mdl-031",
+      "title": "March revenue — by which date",
+      "brief": "The requester asks for March 2025 shipment revenue. The table has two dates: when it was ordered and when it shipped. They didn't specify which, and you didn't ask.",
+      "goal": "Work out why two calculations give different numbers, and both are correct.",
+      "scenario": "fact_sellin, March 2025:\n\n  by order date    ₽3,303,414\n  by ship date     ₽3,570,458\n\nShipping lags ordering by\n2-11 days. Of 15,362 orders,\n1,979 ship the following month.",
+      "predictQuestion": "Why do the numbers diverge, and which one is correct?",
+      "hints": [
+        "Look at the 1,979 orders whose order month and ship month differ. Where do they land in each of the two calculations?",
+        "Ask what question each figure answers before picking the \"correct\" one."
+      ],
+      "explain": "Two dates in one fact table aren't redundancy — they're two different events in one row's life. \"Revenue for March\" without a date specified is an incomplete question, and the right analyst response isn't to choose for the requester, it's to send the clarification back: do we count by the moment of the deal, or the moment of shipping? In the model this is set up as one date table with two relationships to it: the active one sets the default behaviour, the second stays inactive and gets switched on explicitly inside whichever measure needs it. Across all of 2025 the gap nearly vanishes (₽39,104,808 against ₽39,023,501) — over a long enough horizon the boundary effect averages out, which is exactly why it shows up on monthly reports and not on annual ones.",
+      "options": [
+        {
+          "label": "Both are correct — they answer different questions. Late-February orders shipped in March, and late-March orders will ship in April",
+          "why": "Neither figure is wrong: one answers \"how much was ordered in March\", the other \"how much shipped in March.\" The ₽267,000 gap is the pure effect of the month boundary, which 1,979 of the 15,362 orders cross."
+        },
+        {
+          "label": "The order-date figure is correct: the order is the moment of the deal, shipping is just its fulfillment",
+          "why": "That might be right for a sales report, but not for a logistics or warehouse report: there, what matters is when the goods physically left. Which date is \"correct\" is set by the requester's question, not by any property of the dates themselves."
+        },
+        {
+          "label": "The difference means lost orders: ₽267,000 was ordered but never shipped",
+          "why": "Nothing is lost — late-March orders simply ship in April and land in April's figure. The balance reconciles over a long enough horizon: across all of 2025, orders total ₽39,104,808, shipments ₽39,023,501, and the difference is just the tail at year end."
+        },
+        {
+          "label": "This is a modeling error: two dates can't connect to one calendar, you need two date tables",
+          "why": "Two date tables would actually be the mistake — the field list would end up with two \"Year\" columns and two slicers to guess between. One date playing two roles gets solved with an active and an inactive relationship to a single calendar."
+        }
+      ]
+    },
+    {
+      "id": "mdl-032",
+      "title": "Two relationships to one calendar",
+      "brief": "You're connecting fact_sellin to dim_date. The first relationship, on order_date, is created active. The second, on ship_date, the tool creates dashed.",
+      "goal": "Work out why the second relationship is inactive, and what that changes.",
+      "scenario": "dim_date ← fact_sellin.order_date\n  (solid, active)\n\ndim_date ← fact_sellin.ship_date\n  (dashed, inactive)\n\nPage slicer: March 2025.\nMeasure Revenue = SUM(net_amount).",
+      "predictQuestion": "What does a plain Revenue measure compute with a \"March 2025\" slicer?",
+      "hints": [
+        "A dashed relationship exists in the model but doesn't carry the filter. How many paths does the filter from the calendar have left?",
+        "Compare with mdl-014: the dashed line showed up there for the same reason — to give the filter a single path."
+      ],
+      "explain": "An inactive relationship is a way to have a second path in the model without creating ambiguity. By default the filter travels only along the active one, and every measure computes the same way — by order date. A measure that needs the calendar's second role switches it on locally: CALCULATE(SUM(net_amount), USERELATIONSHIP(fact_sellin[ship_date], dim_date[date_id])). A measure like this gets its own name, something like \"Revenue by shipment\", and a person opening the field list sees two distinctly named measures instead of one with an unresolved meaning. It's the same principle as in mdl-015: the choice between interpretations is made explicit and local, not by flipping a switch on the whole model.",
+      "options": [
+        {
+          "label": "₽3,303,414 — by order date, because the filter only travels along the active relationship. The inactive one plays no part until it's switched on explicitly",
+          "why": "The active relationship sets the default behaviour: the filter from the calendar travels along it and no other. The inactive one exists in the model but doesn't carry the filter — it's waiting for a specific measure to invoke it via USERELATIONSHIP."
+        },
+        {
+          "label": "₽3,570,458 — by ship date, because ship_date is later and the model uses the more recent date",
+          "why": "The model doesn't pick the \"more recent\" date — it has no such concept. The choice is made by the author, by marking one relationship active; everything else follows from that."
+        },
+        {
+          "label": "The sum of both figures, because the March filter travels along both relationships",
+          "why": "If both relationships were active at once, the model simply wouldn't let you create them — that would be the ambiguity from mdl-014. That's exactly why the second one is marked inactive: to keep the filter's path singular."
+        },
+        {
+          "label": "An ambiguity error: two relationships between the same pair of tables aren't allowed",
+          "why": "Two relationships between one pair of tables are allowed precisely on the condition that only one of them is active. The error would occur if you tried to make both active — that's exactly what the dashed line prevents."
+        }
+      ]
+    },
+    {
+      "id": "mdl-033",
+      "title": "A second calendar instead of a second relationship",
+      "brief": "A colleague proposes doing without inactive relationships: add a second date table to the model — dim_ship_date — and connect it directly to ship_date.",
+      "goal": "Work out the main consequence of this choice for whoever opens the report.",
+      "scenario": "Proposed:\n\n  dim_date      → order_date\n  dim_ship_date → ship_date\n\nBoth are full calendars with\nyear, quarter, month columns.",
+      "predictQuestion": "What happens when someone puts a year slicer on the page?",
+      "hints": [
+        "A slicer is set on one specific table. Which of the two dates does it reach via relationships?",
+        "Picture a report with \"revenue by order\" and \"revenue by shipment\" side by side, sliced by just one year."
+      ],
+      "explain": "A second calendar looks like a simpler solution than an inactive relationship, and that's exactly where the danger is: it gives no error and no warning, it just severs the connection between a slicer and half of the report's measures. Someone sets a year and sees two numbers side by side, one for the chosen period and the other for the entire history. The general rule: one time axis, one calendar, however many dates sit in the fact tables. Separate calendars only get set up when the axes are genuinely different — a separate fiscal year with a shifted start, say, that its own reporting is built on. A date's role within one axis is a relationships question, not a new-tables question.",
+      "options": [
+        {
+          "label": "A slicer from one calendar narrows only one of the two measures — the other, computing off the other calendar, stays unfiltered and shows every year's data",
+          "why": "Each calendar only filters the column connected to it. A slicer set on dim_date never reaches ship_date — the shipment measure stays at its full total. Two numbers for different periods end up sitting side by side, and there's nothing about it that visually looks different from a normal report."
+        },
+        {
+          "label": "Both measures narrow correctly: the calendars contain the same dates, so a year slicer works the same way on both",
+          "why": "Identical content doesn't create a relationship. A filter propagates along the model's relationships, and a slicer on dim_date is connected only to order_date — there's no path at all to ship_date, however many identical dates sit in the second table."
+        },
+        {
+          "label": "The model will refuse to work: two calendars in one model aren't allowed",
+          "why": "Two calendars are technically allowed and sometimes even needed — different fiscal years, for instance. The problem isn't a ban — it's that here the second calendar describes the exact same time axis, and its existence only misleads people."
+        },
+        {
+          "label": "The report will get twice as slow, because the model will recompute both calendars",
+          "why": "A 912-row calendar isn't going to slow anything down noticeably — it's one of the smallest tables in the model. The cost of this choice isn't speed — it's that the report starts silently showing incomparable numbers side by side."
+        }
+      ]
+    },
+    {
+      "id": "mdl-034",
+      "title": "The key isn't unique anywhere",
+      "brief": "You need to link the product lookup to the promo lookup, to filter sales by a promo's brand. There's a shared column — brand.",
+      "goal": "Work out the cardinality, and what to do about it.",
+      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nBrand «Чистовъ»:\n  5 products, 10 promos",
+      "predictQuestion": "What does a direct relationship on brand give you, and what's the right way to link these?",
+      "hints": [
+        "Count rows and distinct key values in both tables. Do they match anywhere?",
+        "How many rows would joining «Чистовъ»'s five products to its ten promos produce?"
+      ],
+      "explain": "The tell for many-to-many is mechanical and needs no understanding of what the data means: take the relationship's key and compare row count to distinct-value count in each table. Matches in at least one — an ordinary one-to-many relationship. Matches in neither — many-to-many, and it can't be built directly. A bridge solves this by pulling the pairs out into a separate table: 465 unique \"product × promo\" combinations across all nine brands, to which both dim_product and dim_promo connect the way lookups connect to a fact table. The key point is that a bridge isn't a workaround — it's an honest description of the relationship: a \"this product took part in this promo\" pair genuinely exists as an entity in its own right.",
+      "options": [
+        {
+          "label": "Many-to-many: every product will match all of its brand's promos. You need a bridge table of unique \"product × promo\" pairs",
+          "why": "The key repeats on both sides — 47 rows across 9 brands, and 89 across the same 9. A direct relationship matches group to group: «Чистовъ»'s five products would each produce ten pairs — fifty rows instead of five. A bridge fixes these pairs explicitly, and both relationships to it become one-to-many."
+        },
+        {
+          "label": "One-to-many: a product has one brand, so dim_product will be the \"one\" side",
+          "why": "The \"one\" side is determined by the key's uniqueness in the table, not by how many brands one product has. In dim_product, brand repeats — 47 rows across 9 values — so there's no uniqueness, and this table can't be the \"one\" side."
+        },
+        {
+          "label": "No relationship is needed at all: fact_sellout is already connected to dim_promo via promo_id",
+          "why": "promo_id answers a different question — \"which promo did this specific sale take part in.\" The question here is different: which products even belong to the brand that had a promo. This is a relationship between two lookup tables, and promo_id doesn't answer it."
+        }
+      ]
+    },
+    {
+      "id": "mdl-035",
+      "title": "How many rows are in the bridge",
+      "brief": "The bridge between products and promos is going to get built. You need to work out its size and what's in it.",
+      "goal": "Work out the bridge table's contents and size.",
+      "scenario": "9 brands. For each:\n  4 to 6 products\n  9 to 11 promos\n\n«Чистовъ»: 5 products, 10 promos\nTotal: 47 products, 89 promos.\n\nThe bridge has 465 rows.",
+      "predictQuestion": "What does one bridge row represent, and where does 465 come from?",
+      "hints": [
+        "Within a brand, every product pairs with every promo. What operation is that?",
+        "Check it against «Чистовъ»: 5 products and 10 promos. How many pairs?"
+      ],
+      "explain": "A bridge is a materialized list of valid combinations, one row per pair. Its size is the sum of the products within each group: nine brands, each with its own products and its own promos, and each one's contribution is the product of those two counts. That gives 465 rows out of 47 products and 89 promos. It matters that the bridge is bigger than both source tables — that's normal, and it's the price of correctness: without it, the same combinations would still arise, just not inside a separate table under control, but inside a calculation, multiplying sums. Both source tables connect to the bridge as one-to-many, and the key no longer repeats on either of the two relationships.",
+      "options": [
+        {
+          "label": "One row is one \"this product belongs to this promo's brand\" pair. 465 is the sum, across brands, of products times promos — for «Чистовъ» that's 5 × 10 = 50",
+          "why": "A bridge lists every valid combination explicitly. Within a brand, every one of its products pairs with every one of its promos, so a brand's contribution is a product of two counts, and the total size is the sum of those products across all nine brands."
+        },
+        {
+          "label": "One row is one brand with a list of its products and promos. 465 is the total number of brand mentions across both tables",
+          "why": "A list inside a row would mean one cell holds a list — that isn't how a relational table works. A bridge lays combinations out one per row, which is exactly why there end up being more of them than rows in the original lookups."
+        },
+        {
+          "label": "One row is one product with its most recent promo. 465 is the number of products times the number of months of history",
+          "why": "Picking the \"most recent\" promo would drop all the others and turn the relationship back into one-to-many, with data loss along the way. The whole point of a bridge is to keep every combination, not pick one."
+        },
+        {
+          "label": "465 is 47 products plus 89 promos plus 329 sales that fell under a promo",
+          "why": "A bridge links two lookups and knows nothing about sales — the fact table connects to the model separately, via promo_id. Adding up the rows of two tables also doesn't give you their relationship's cardinality: that's set by combinations, not a sum."
+        }
+      ]
+    },
+    {
+      "id": "mdl-036",
+      "title": "The bridge's row sum exceeds the total",
+      "brief": "The bridge is built, the relationships are set. On a by-promo report, the sum of revenue across every row turns out bigger than the sales table's grand total.",
+      "goal": "Work out whether this is a bug or expected behaviour.",
+      "scenario": "Report: rows are promos,\nmeasure is the promo's brand\nrevenue.\n\nSum across every row:\nmore than ₽126,911,191\n(fact_sellout's full total)\n\nThe report's Total row:\nexactly ₽126,911,191.",
+      "predictQuestion": "Why is the sum of the rows bigger than the total, while the total itself is correct?",
+      "hints": [
+        "Remember mdl-021: the Total row computes in its own filter context, it doesn't sum what's visible above it.",
+        "Can one sale belong to several promos of the same brand at once?"
+      ],
+      "explain": "A many-to-many relationship inherently produces overlapping breakdowns: the same fact belongs to several elements of a dimension at once. So the sum of the visible rows and the Total row legitimately diverge — they're computed in different filter contexts, and the total doesn't sum the rows, it recomputes the measure with no promo condition. This isn't a defect of the bridge, it's a property of the relationship it honestly describes. The practical takeaway for an analyst: on reports with m2m breakdowns, either keep the Total row and explain it, or drop it entirely — but never \"fix\" it by dividing, since dividing changes the measure's meaning rather than correcting an error. And it's worth checking the question itself separately: if the business genuinely needs revenue for a specific promo, the breakdown should be built on promo_id, where there's no duplication at all.",
+      "options": [
+        {
+          "label": "Expected: a brand has several promos, and its revenue lands in the row of every one of them. The total is recomputed with no per-promo breakdown, so it doesn't double-count",
+          "why": "Through the bridge, one sale belongs to several promos of the same brand, and its revenue legitimately shows up in every such row. The Total row lives in a different filter context — with no promo condition — so it counts every sale exactly once."
+        },
+        {
+          "label": "A bridge bug: duplicate pairs are left in it, and that's doubling the revenue",
+          "why": "The pairs in the bridge are unique — otherwise it wouldn't do its job. The excess doesn't come from duplicates — it comes from the same product honestly belonging to several different promos of its brand."
+        },
+        {
+          "label": "A measure bug: revenue needs dividing by the brand's promo count, so the rows sum to the total",
+          "why": "Dividing would turn an understandable quantity (\"revenue of the brand this promo belonged to\") into a share whose meaning would need explaining separately. If the business genuinely needs a non-duplicating sum, what needs to change is the question, not the measure — compute by promo_id, not by brand."
+        },
+        {
+          "label": "A total bug: it should equal the sum of the rows, or the report shouldn't be shown",
+          "why": "The rule \"total equals the sum of the rows\" only holds for additive measures across non-overlapping breakdowns. Here the breakdown overlaps by construction, and a total recomputed in its own context is actually more honest than a mechanical sum."
+        }
+      ]
+    },
+    {
+      "id": "mdl-037",
+      "title": "CALCULATE isn't WHERE",
+      "brief": "A measure computes brand «Ключевая»'s revenue. Someone puts a slicer for brand «Чистовъ» on the page — two different brands at once.",
+      "goal": "Work out what the measure returns.",
+      "predictQuestion": "What does the measure return with a slicer on a different brand?",
+      "hints": [
+        "The key word is \"replaces.\" What survives of the brand slicer once CALCULATE applies its own condition to the same column?",
+        "Check it on a different column: if the slicer were on region and the condition on brand, both would stay in effect."
+      ],
+      "explain": "This is the main difference between CALCULATE and WHERE, and the source of most confusion when reading someone else's measures. WHERE adds a condition to whatever's already there; CALCULATE replaces the filter on the column it mentions, and leaves filters on other columns alone. The practical consequence: a measure with a baked-in brand condition will keep showing the same brand no matter what's chosen in a brand slicer — but it will honestly narrow under a region or date slicer. If you actually need an intersection — keep the external filter and add your own condition on top — there's KEEPFILTERS, which changes CALCULATE's behaviour to exactly that: combining conditions.",
+      "options": [
+        {
+          "label": "«Ключевая»'s full revenue — ₽18,841,733. The condition inside CALCULATE replaced the brand filter, rather than adding to it",
+          "why": "CALCULATE doesn't intersect its condition with an existing filter on the same column — it replaces it. The «Чистовъ» slicer disappears for this measure entirely, and it computes as if there were no brand slicer at all."
+        },
+        {
+          "label": "Zero — a product can't be both «Ключевая» and «Чистовъ» at once, the intersection is empty",
+          "why": "No intersection happens: that's how WHERE behaves in SQL, where conditions combine with AND. CALCULATE works differently — its condition on a column displaces whatever was already set on that column."
+        },
+        {
+          "label": "«Чистовъ»'s revenue — ₽16,165,815, because the page slicer takes priority over the measure's formula",
+          "why": "The priority runs the other way: a filter set inside CALCULATE applies after the external context and overwrites it on its own column. That's exactly why a measure with a baked-in condition behaves the same regardless of slicers on that same column."
+        },
+        {
+          "label": "The sum of both brands — ₽35,007,548, because the conditions combine with OR",
+          "why": "No combining happens either. CALCULATE doesn't combine its condition with the external one via AND or OR — it fully replaces the filter on that column, leaving filters on every other column untouched."
+        }
+      ]
+    },
+    {
+      "id": "mdl-038",
+      "title": "The filter on a different column survives",
+      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand — «Москва».",
+      "goal": "Work out which filters act on the calculation.",
+      "predictQuestion": "What does the measure return with a region slicer?",
+      "hints": [
+        "Compare with mdl-037: there the condition and the slicer were on the same column, here they're on different ones.",
+        "CALCULATE replaces filters selectively. On which columns exactly?"
+      ],
+      "explain": "This shows the other half of the rule, without which the first half looks alarming. CALCULATE doesn't \"break the context\" wholesale — it acts precisely, only on the columns mentioned in its conditions. Filters on every other column pass straight through and combine with the measure's condition. This is exactly what makes measures with baked-in conditions practically useful: \"Klyuchevaya Revenue\" stays «Ключевая»'s revenue under any brand slicer, while still honestly breaking down by region, month and channel. To remove the external filter entirely you need an explicit ALL — a different technique, with a different meaning and different consequences.",
+      "options": [
+        {
+          "label": "₽1,323,959 — «Ключевая»'s revenue in Moscow. Both filters apply: brand from the measure, region from the slicer",
+          "why": "CALCULATE only replaces the filter on the columns its conditions mention. Brand and region are different columns of different tables, so the brand condition did nothing to the region slicer, and both narrowed the calculation at once."
+        },
+        {
+          "label": "₽18,841,733 — «Ключевая»'s full revenue, because CALCULATE wipes out the entire external context",
+          "why": "CALCULATE doesn't wipe the entire context — only filters on the columns it mentions. Wiping the whole external filter takes an explicit instruction, ALL for instance, and that's exactly the difference between \"replace the brand filter\" and \"remove every filter.\""
+        },
+        {
+          "label": "₽8,876,489 — all of Moscow's revenue, because the page slicer beats the condition in the formula",
+          "why": "The formula's condition applies on top of the external context and wins on its own column. The region slicer survives not because it's stronger, but because it's about a different column, and there's simply no conflict with it."
+        }
+      ]
+    },
+    {
+      "id": "mdl-039",
+      "title": "The share that's always a hundred percent",
+      "brief": "A brand-share measure returns 100% in every row of a by-brand matrix. The formula looks correct: revenue divided by revenue.",
+      "goal": "Work out the cause and how to fix it.",
+      "predictQuestion": "Why is the share 100%, and what needs to change?",
+      "hints": [
+        "In the «Фрутта» row, what are the numerator and denominator individually?",
+        "The denominator needs a context with no brand filter. Which function removes a filter from a column?"
+      ],
+      "explain": "Any share is a ratio of a value in the current context to a value in a wider one, and the whole difficulty is setting that wider context explicitly. Without CALCULATE, both halves of the formula live in the same row-level filter context and give identical numbers. ALL removes the filter from the specified column, giving the denominator full reach: in the «Фрутта» row the numerator stays ₽25,465,980, the denominator becomes ₽126,911,191, and the share comes out to 20.1%. Notice the difference from the constant in mdl-017: ALL recomputes along with every other slicer — filter by Moscow and the denominator becomes Moscow's revenue, and the shares still sum to a hundred percent. That's exactly why shares are written with ALL, not a hard-coded number.",
+      "options": [
+        {
+          "label": "The numerator and denominator compute in the same row-level filter context. The denominator needs freeing from the brand filter, via CALCULATE with ALL",
+          "why": "In the «Фрутта» row, both halves of the formula see the same filter and both give ₽25,465,980 — the ratio is inevitably one. The denominator needs a different context: CALCULATE(SUM(revenue), ALL(dim_product[brand])) removes the brand filter and gives the full ₽126,911,191."
+        },
+        {
+          "label": "A DIVIDE bug: shares need a special percentage-calculating function",
+          "why": "DIVIDE has nothing to do with it — it honestly divides whatever it's handed. The problem is that it was handed two identical numbers, and no other division function would change that."
+        },
+        {
+          "label": "The denominator needs replacing with the constant 126911191 — total revenue across the database",
+          "why": "That gives a correct result right up to the first slicer: with a region filter, the numerator narrows while the hard-coded constant stays the same, and the shares stop summing to 100%. That's exactly the mistake covered in mdl-017."
+        },
+        {
+          "label": "The matrix is built wrong: shares should be computed at the visual level, not the measure level",
+          "why": "A visual can show percent-of-total with a built-in setting, but that only solves the display case. A measure with ALL gives a quantity usable anywhere — inside another measure, in conditional formatting, in a value filter."
+        }
+      ]
+    },
+    {
+      "id": "mdl-040",
+      "title": "The same formula, two different numbers",
+      "brief": "The formula SUM(revenue) is written twice: once as a measure, once as a calculated column in the product lookup. In a by-brand matrix they give different results.",
+      "goal": "Work out why the results diverge.",
+      "predictQuestion": "Why do a measure and a column with an identical formula give different numbers?",
+      "hints": [
+        "Remember mdl-022: SUM inside a calculated column aggregates the whole table. What's different for a measure?",
+        "Invoking a measure is always implicitly wrapped in CALCULATE. What does CALCULATE do to row context?"
+      ],
+      "explain": "This is exactly where the two kinds of context meet. Row context gives a formula access to the current row's values, but aggregating functions don't read it — they only look at filter context. Context transition turns one into the other: inside CALCULATE, the current row becomes a filter, \"every row where the key columns match.\" Invoking a measure is implicitly wrapped in CALCULATE, so a measure in a matrix automatically picks up the brand filter and gives ₽25,465,980. A calculated column has no such wrapping — its SUM sees an empty filter and aggregates everything, ₽126,911,191 in every one of the lookup's 47 rows. To make a column behave like a measure, wrapping its formula in CALCULATE by hand is enough.",
+      "options": [
+        {
+          "label": "Invoking a measure is implicitly wrapped in CALCULATE, and row context turns into a filter \"brand = «Фрутта».\" The column has no such transition, and SUM aggregates the whole table",
+          "why": "Context transition happens inside CALCULATE, and invoking any measure is implicitly wrapped in it. So a measure in a matrix row sees the brand filter, while a calculated column doesn't: it has row context, but SUM doesn't respond to it."
+        },
+        {
+          "label": "The column computes at data refresh and the measure at display time, so the column's data is stale",
+          "why": "The difference isn't about timing — that would matter for changing data, but here the data is identical. The gap would exist right after a refresh too: the column aggregates the whole table by the very nature of its context."
+        },
+        {
+          "label": "The measure is wrong: 25,465,980 is the revenue of just one «Фрутта» product, not the whole brand",
+          "why": "₽25,465,980 is the whole «Фрутта» brand's revenue, and that's the correct number for a brand row. It's the column that's wrong — showing ₽126,911,191, the full database total, in every row of the lookup indiscriminately."
+        },
+        {
+          "label": "A column can't reference another table, so it returns a default total",
+          "why": "A column can reference another table — the relationship between dim_product and fact_sellout exists and works. The problem isn't data access — it's that SUM without CALCULATE is bounded by nothing except filter context, and the column has none."
+        }
+      ]
+    },
+    {
+      "id": "mdl-041",
+      "title": "A measure inside an iterator",
+      "brief": "You need to count how many brands crossed ten million in revenue. The formula iterates brands and invokes a measure inside the iteration.",
+      "goal": "Work out what the measure sees at each step of the iteration.",
+      "predictQuestion": "What does [Total Revenue] compute at each step of FILTER?",
+      "hints": [
+        "SUMX isn't an ordinary aggregating function like SUM — it's an iterator: it walks rows one at a time.",
+        "Ask: who creates row context in this example — a calculated column (like mdl-022), or FILTER itself?"
+      ],
+      "explain": "The \"iterator plus a measure inside\" construction is DAX's workhorse, and it rests entirely on context transition. FILTER iterates brands, creating a row context for each; invoking [Total Revenue] inside it is implicitly wrapped in CALCULATE, and that CALCULATE translates the row context into a filter, \"brand = current.\" The measure computes exactly that brand's revenue, the condition compares it to the threshold, and FILTER keeps only the ones that qualify. Without context transition, formulas like this would be impossible: the measure would return the same total on every step. The practical tell for spotting this in someone else's code: if a measure is invoked inside an iterator, or there's an explicit CALCULATE, context transition is definitely happening, and the result needs reading with that in mind.",
+      "options": [
+        {
+          "label": "FILTER itself creates a row context for every row of fact_sellout and evaluates the expression passed to it inside that context — before summing the results at the end",
+          "why": "FILTER creates a row context for each brand, and invoking a measure inside it is implicitly wrapped in CALCULATE — meaning context transition happens. The current brand becomes a filter, and the measure returns exactly that brand's revenue, not the grand total."
+        },
+        {
+          "label": "The grand total ₽126,911,191 on every step — the measure doesn't know what iteration it was invoked inside",
+          "why": "If that were true, the condition would hold for all nine brands at once, and the formula would always return nine. It's exactly context transition that makes constructions like this meaningful: a measure inside an iterator sees the current element of the iteration."
+        },
+        {
+          "label": "Zero on every step — VALUES returns a list of brands with no connection to the fact table",
+          "why": "VALUES returns a column's values, and the relationship between dim_product and fact_sellout doesn't go anywhere. The brand filter that context transition produces travels along that relationship into the fact table in the ordinary way."
+        },
+        {
+          "label": "The first brand's revenue alphabetically — FILTER evaluates the condition once and applies it to everyone",
+          "why": "FILTER is an iterator — it evaluates the condition fresh for every row of the table being iterated. Evaluating once would make filtering pointless: the result wouldn't depend on which rows are being iterated at all."
+        }
+      ]
+    },
+    {
+      "id": "mdl-042",
+      "title": "A column that behaves like a measure",
+      "brief": "A calculated column in the product lookup needs to show its own product's revenue, not the grand total.",
+      "goal": "Work out which formula fix solves this.",
+      "predictQuestion": "Which variant gives exactly its own product's revenue?",
+      "hints": [
+        "Context transition is the work of CALCULATE itself. Does it need conditions to do that?",
+        "Check RELATED's direction: which side of the relationship does it look from, and which does it look toward?"
+      ],
+      "explain": "CALCULATE with no conditions looks pointless, and that's why it's rarely recognized in someone else's code, even though it does something quite specific: it performs context transition. The lookup's current row turns into a filter, \"product = this one\", SUM inside it sees only that product's sales, and the column starts behaving like a measure. That's exactly why experienced authors sometimes write CALCULATE around an aggregate with not a single argument — it isn't a forgotten condition, it's a deliberate switch of context type. It's worth remembering the cost too: a column like this computes once at refresh and freezes its result, so in most cases keeping a measure is the better call, and setting up a column only makes sense when the value genuinely needs to stay fixed — to filter or sort by it afterward, for instance.",
+      "options": [
+        {
+          "label": "Variant A — CALCULATE with not a single condition still performs context transition: the lookup row becomes a filter, \"this product\"",
+          "why": "Context transition is the job of CALCULATE itself, not of its conditions. Even an empty CALCULATE turns the current row into a filter, and SUM inside it starts seeing only that product's sales. This is the idiomatic way to get measure-like behaviour in a column."
+        },
+        {
+          "label": "Variant B — RELATED fetches the related value from the fact table",
+          "why": "RELATED works in the opposite direction: it pulls a value from the \"one\" side to the \"many\" side — meaning from a lookup into a fact table. It doesn't look from lookup into fact at all — there, one lookup row corresponds to many fact rows, and a single value simply doesn't exist."
+        },
+        {
+          "label": "Variant C — SUMX iterates the fact table row by row and so sees only its own rows",
+          "why": "SUMX will create a row context for every row of fact_sellout, but it will iterate the whole table regardless: there's no filter for the current product, because no context transition happened. The result stays the same grand total, just computed more expensively."
+        }
+      ]
+    },
+    {
+      "id": "mdl-043",
+      "title": "What YTD does to the filter",
+      "brief": "A by-month matrix has a year-to-date revenue measure. In the March 2025 row it shows more than March's own revenue.",
+      "goal": "Work out where the bigger number comes from.",
+      "predictQuestion": "What did TOTALYTD do to the date filter?",
+      "hints": [
+        "Compare 12,566,159 to the sum of January, February and March 2025's revenue. Does it match?",
+        "Every time intelligence function is a wrapper around CALCULATE. What does CALCULATE do to a filter?"
+      ],
+      "explain": "Time intelligence functions look like a separate mechanism, but they're built the same simple way: each is a wrapper around CALCULATE, swapping the calendar filter for a different set of dates. TOTALYTD replaces the current period with the interval from the start of the year to the end of the current one, and SUM(revenue) computes over it exactly the way it would over any other filter. There's no stored cumulative column anywhere in the model — which is exactly why the measure stays correct when any other slicer gets added: apply a region filter, and YTD recomputes for that region. Understanding it as \"just swapping dates\" removes the need to memorize each function individually — it's enough to know what interval it changes the filter to.",
+      "options": [
+        {
+          "label": "Replaced the \"March 2025\" filter with \"January 1st through March 31st, 2025\" — meaning January, February and March together",
+          "why": "TOTALYTD is a wrapper around CALCULATE that swaps the calendar filter for the interval from the start of the year to the end of the current period. The underlying data stays the same: ₽12,566,159 is the sum of three months' revenue, not some other quantity."
+        },
+        {
+          "label": "Added prior years' data for the same month to the March filter",
+          "why": "That's what a different function does — SAMEPERIODLASTYEAR — and it would return March 2024, meaning ₽4,392,846. TOTALYTD works within the current year and never crosses its boundary."
+        },
+        {
+          "label": "Didn't change the filter — it pulled a stored cumulative value from a separate column in the model",
+          "why": "No such separate column exists — all time intelligence computes on the fly from the same SUM(revenue). That's exactly why measures like this work correctly under any additional slicer: they don't store pre-computed totals."
+        },
+        {
+          "label": "Multiplied March's revenue by the month number to get a cumulative total",
+          "why": "Multiplying would give ₽14,082,990, with no relation to the actual January and February data. A cumulative total is always the actual sum for the interval, never an estimate off an average."
+        }
+      ]
+    },
+    {
+      "id": "mdl-044",
+      "title": "Comparing to last year",
+      "brief": "You need month-over-month growth against last year. The measure compares the current period's revenue to the same period a year earlier.",
+      "goal": "Work out what the measure returns in the March 2025 row.",
+      "predictQuestion": "What does RevenueLY show in the March 2025 row, and what growth does that imply?",
+      "hints": [
+        "The function shifts the set of dates back a year, preserving the period's length. What does March 2025 become?",
+        "Check the edge case: what does this measure return in the January 2024 row?"
+      ],
+      "explain": "SAMEPERIODLASTYEAR takes the dates from the current filter and shifts them back a year, preserving the period's length and position: March gives March, a quarter gives a quarter. CALCULATE then computes the expression over the new set of dates. This produces an important edge case people forget on a first implementation: in the model's earliest period, there is no prior year, and the measure returns blank — in our dataset that's all of 2024, which has no 2023 to compare to. On a report this shows up as a hole in the first row, and it needs either an explanation or explicit handling. The second condition for correct behaviour is a continuous calendar marked in the model as a date table: the shift is computed by date arithmetic, and a gap in the calendar silently breaks it.",
+      "options": [
+        {
+          "label": "₽4,392,846 — March 2024's revenue. Growth comes to 6.9%",
+          "why": "SAMEPERIODLASTYEAR takes the dates caught by the current filter and shifts them back exactly a year, after which CALCULATE computes over the new set. The ratio of 4,694,330 to 4,392,846 gives roughly 6.9% growth."
+        },
+        {
+          "label": "₽4,694,330 — the same March 2025 revenue, because the measure computes off the same fact table",
+          "why": "The fact table really is the same, but the date filter has been swapped — that's the whole point of the function. An identical result would mean the shift didn't work, and the usual cause of that is an incomplete date lookup, or one not marked as a date table."
+        },
+        {
+          "label": "₽49,518,071 — all of 2024's revenue, because SAMEPERIODLASTYEAR shifts the filter to the entire year",
+          "why": "The function preserves the period's length and position — it doesn't expand it to a full year. From March 2025 it makes March 2024, from Q1 it makes last year's Q1, and a full year would only come out of a full year."
+        },
+        {
+          "label": "Blank — there's no data for March 2024, because the model starts in 2025",
+          "why": "Data starts on January 1st 2024 and covers two and a half years. It would be blank for January 2024, where the model genuinely has no prior year — and that's an important edge case worth checking in the first row of any report like this."
+        }
+      ]
+    },
+    {
+      "id": "mdl-045",
+      "title": "A calendar with gaps",
+      "brief": "A colleague built the date table from dates that actually appear in sales: SELECT DISTINCT week_start. YTD behaves strangely on it.",
+      "goal": "Work out why a calendar like this breaks time intelligence.",
+      "scenario": "Calendar built from facts:\n  only dates that had sales\n\nCorrect dim_date:\n  912 consecutive days,\n  2024-01-01 to 2026-06-30,\n  all 365 days of 2025\n\nThe model has a product\nlaunched in September 2025.",
+      "predictQuestion": "Why does a fact-derived calendar break time intelligence functions?",
+      "hints": [
+        "A product launched in September 2025 — which days had no sales for it, and would those days even make it into a fact-derived calendar?",
+        "How does a function compute \"the same period a year ago\" — by looking up a neighbouring row, or by date arithmetic?"
+      ],
+      "explain": "A calendar for an analytical model isn't derived from facts — it's an independent lookup table that must be continuous and cover complete years. Time intelligence functions build a new set of dates by computation, not by navigating rows, so any gap shifts the interval's boundaries and silently understates the result. In our model, dim_date holds 912 consecutive days, including ones with no sales at all: for a product launched in September 2025, the January days of that same year are still in the calendar, and YTD computes correctly. The check takes a second: the calendar's row count should equal the difference between its earliest and latest dates, plus one. There's an extra condition too: the calendar has to be marked in the model as a date table, or some functions will refuse to work even on continuous data.",
+      "options": [
+        {
+          "label": "They compute the prior period by date arithmetic, not by looking up a neighbouring row. A missing day silently shifts the interval's boundaries",
+          "why": "Functions like SAMEPERIODLASTYEAR and TOTALYTD build a new set of dates by computation — shifting by a year, counting from the start of the year. If some days are missing from the calendar, the interval comes out incomplete, and the result silently ends up smaller than the real one, with no warning at all."
+        },
+        {
+          "label": "A calendar like this contains duplicates, because one week appears in the facts many times",
+          "why": "DISTINCT is exactly what removes repeats, so there won't be duplicates in a table like this. The problem is the opposite — not extra rows, but missing ones: days with no sales never make it into the calendar at all."
+        },
+        {
+          "label": "The functions require the calendar to hold future dates at least a year ahead",
+          "why": "The requirement for a calendar is continuity and complete years within the model, not a buffer into the future. A calendar ending today works perfectly fine, as long as there are no gaps inside it."
+        },
+        {
+          "label": "It's purely a performance problem: iterating dates off the fact table is slower than off a lookup",
+          "why": "Speed isn't the main issue here. A 912-row calendar is small regardless; the danger is that an incomplete calendar gives wrong numbers, not slow ones."
         }
       ]
     }

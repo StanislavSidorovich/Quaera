@@ -109,6 +109,61 @@
       "wrong": "Skip dim_date: build a slicer straight on week_start in fact_sellout, and expect it to affect fact_sellin the same way.",
       "wrongWhy": "fact_sellin has no row with date 2025-03-03 at all — the whole of March sits in one row dated 2025-03-01 there. A slicer built on one fact table's column finds no matches in the other: they literally hold different values in different columns, and no direct relationship between the two fact tables resolves that difference.",
       "selfCheck": "How many fact tables does your model have, and how many different time granularities among them (week, month)? More than one, and you need a shared calendar — otherwise one slicer will never tie them all together."
+    },
+    {
+      "skill": "model-role-playing",
+      "title": "One date, two roles",
+      "why": "A fact table has two dates: ordered and shipped. The requester asks for \"revenue for March\" — without saying which one. The answers differ, both are correct, and the choice between them falls to you — and then you need to be able to explain it.",
+      "form": "Both dates connect to the same calendar, not to two copies of it. One relationship stays active — the one most measures compute by.\n\nThe second relationship exists but is marked inactive. Whichever measure needs it specifically switches it on explicitly, via USERELATIONSHIP inside CALCULATE.",
+      "example": "In fact_sellin, shipping lags ordering by 2 to 11 days, and 1,979 of 15,362 orders ship the following month. March 2025: by order date ₽3,303,414, by ship date ₽3,570,458. The active relationship is on order_date; a \"Revenue by shipment\" measure switches context to ship_date.",
+      "reads": "A ₽267,000 gap for one month isn't a mistake in either number — it's two answers to two different questions: \"how much was ordered in March\" and \"how much shipped in March.\"",
+      "wrong": "Add a second date table to the model — a separate calendar for the ship date — and connect each to its own column.",
+      "wrongWhy": "It formally works, but the field list ends up with two \"Year\" fields, two \"Quarter\" fields, and two slicers for people to guess between. Worse: one slicer stops filtering both measures at once — pick a year on the first calendar, and you won't narrow the measure computing off the second, leaving numbers for different periods sitting side by side on the report.",
+      "selfCheck": "How many dates does your fact table have, and how many calendars does your model have? If there's more than one calendar, ask yourself what slicer someone will put on the page — and what happens to the second measure."
+    },
+    {
+      "skill": "model-many-to-many",
+      "title": "Many-to-many and the bridge table",
+      "why": "Sometimes there genuinely isn't a way to connect two tables directly: the key repeats on both sides, and that isn't a data defect, it's the nature of the relationship. Joining it directly gets you exactly the kind of inflated sums that are impossible to explain.",
+      "form": "The tell for many-to-many is mechanical: the relationship's key isn't unique in either table.\n\nThe fix is a bridge table: a separate table of unique pairs, which both sides connect to as one-to-many. No direct relationship gets created between the original tables at all.",
+      "example": "dim_product (47 rows, 9 brands) and dim_promo (89 promos, the same 9 brands). Brand repeats on both sides. The \"product × promo\" bridge holds 465 unique pairs: for brand «Чистовъ» that's 5 products × 10 promos = 50 bridge rows.",
+      "reads": "Every bridge row is one specific \"this product took part in this promo\" pair. Both source tables connect to the bridge the way a lookup connects to a fact table, and the key no longer repeats on either relationship.",
+      "wrong": "Link dim_product and dim_promo directly on the brand column, since it exists in both tables.",
+      "wrongWhy": "A relationship like that matches group to group, not row to row, and every pair inside a group becomes its own row in the calculation. That's exactly how revenue in mdl-013 grew from ₽126,911,191 to ₽1,262,668,596 — exactly tenfold, matching the number of promos per brand. A model usually won't even let you make a relationship like this active, but a join made in a query that bypasses the model is protected by nothing.",
+      "selfCheck": "Take the relationship's key and count row totals and distinct-value totals in both tables. Matches anywhere — an ordinary relationship. Matches nowhere — you need a bridge."
+    },
+    {
+      "skill": "model-calculate",
+      "title": "CALCULATE: replacing context",
+      "why": "CALCULATE is DAX's central function and the biggest source of confusion. It gets read like SQL's WHERE, and up to a point that works. It breaks on the very first report that already has a slicer on the page: WHERE would add a condition, CALCULATE will replace it.",
+      "form": "CALCULATE(expression, condition) evaluates the expression not in the current filter context, but in a modified one.\n\nA condition on a column REPLACES every filter already on that column — and leaves filters on other columns untouched.",
+      "example": "Measure \"Klyuchevaya Revenue\" = CALCULATE(SUM(revenue), brand = «Ключевая»). The page has a region slicer for «Москва». Result: ₽1,323,959 — the region filter survives, because region and brand are different columns; a brand slicer, if there were one, would get overwritten.",
+      "reads": "The condition inside CALCULATE swapped out the brand filter and left the region filter untouched. Moscow's full revenue, for comparison, is ₽8,876,489.",
+      "wrong": "Assume CALCULATE(SUM(revenue), brand = «Ключевая»), with brand «Чистовъ» selected in a slicer, gives an intersection — meaning zero, since a product can't be two brands at once.",
+      "wrongWhy": "There's no intersection: the condition inside CALCULATE doesn't add to the slicer, it replaces it. The measure returns «Ключевая»'s full revenue, as if there were no brand slicer at all. This is the most common cause of \"why is my measure ignoring my filter\" — it isn't ignoring it, it's overwriting it.",
+      "selfCheck": "Before writing a condition inside CALCULATE, ask: could there already be a slicer on this column? If yes, you'll overwrite it. Need to preserve it and add your own on top — use KEEPFILTERS."
+    },
+    {
+      "skill": "model-context-transition",
+      "title": "Context transition",
+      "why": "The same formula, written as a column and invoked as a measure, gives different numbers. This isn't a bug or a syntax quirk — it's the one place in DAX where one kind of context silently turns into another, and without understanding it, reading someone else's measures is impossible.",
+      "form": "Context transition happens inside CALCULATE (and inside any measure, because invoking a measure is implicitly wrapped in CALCULATE).\n\nThe current row stops being just a row and turns into a filter: \"every row where the key columns' values match this one's.\"",
+      "example": "dim_product has 9 brands and 47 products. The measure [Total Revenue] = SUM(revenue) gives ₽126,911,191 across the whole database. Invoked in the «Фрутта» brand row of a matrix, the same measure gives ₽25,465,980 — row context turned into a filter, \"brand = «Фрутта».\"",
+      "reads": "A measure doesn't know about a \"current row\" — it only knows about filters. Context transition is the mechanism that turns one into the other.",
+      "wrong": "Expect a calculated column \"=SUM(fact_sellout[revenue])\" in dim_product to show its own product's revenue — by analogy with how the same measure behaves in a matrix.",
+      "wrongWhy": "An ordinary calculated column has no context transition: SUM sees an empty filter context and aggregates the whole table, giving ₽126,911,191 in every row of the lookup. To get its own product's revenue, the formula needs wrapping in CALCULATE — that's exactly what translates row context into a filter.",
+      "selfCheck": "When you see a measure inside an iterator or a calculated column, ask: is there a CALCULATE here — explicit, or implicit via invoking a measure? If so, the current row has already become a filter, and the result needs reading with that in mind."
+    },
+    {
+      "skill": "model-time-intelligence",
+      "title": "Time intelligence",
+      "why": "YTD, last year, a rolling average — half of what anyone ever asks a BI analyst for. The functions for this look like ready-made buttons, but every one of them does the same thing to the date filter: replaces it with a different set of dates.",
+      "form": "Every time intelligence function is a wrapper around CALCULATE with a swapped-out calendar filter.\n\nTOTALYTD replaces the current period with \"from the start of the year through the current date.\" SAMEPERIODLASTYEAR replaces it with the same period a year earlier. DATESINPERIOD replaces it with an arbitrary interval.",
+      "example": "March 2025 revenue is ₽4,694,330. SAMEPERIODLASTYEAR swaps the filter to March 2024 and returns ₽4,392,846; that gives 6.9% growth. TOTALYTD on the same cell swaps the filter to January-March 2025 and gives ₽12,566,159.",
+      "reads": "None of these functions stores separate data — all three compute the same SUM(revenue), just under different sets of dates substituted in for the current one.",
+      "wrong": "Apply these functions to a calendar that has gaps — a date table built from dates that actually occurred in the facts, say.",
+      "wrongWhy": "Time intelligence functions assume a continuous calendar: they compute \"the prior period\" by shifting dates, not by looking up a neighbouring row. A gap in the calendar silently breaks that shift. In our model, dim_date holds 912 consecutive days with not a single gap — 2025 is represented by all 365 of its days, including ones with no sales at all.",
+      "selfCheck": "Check the calendar for continuity: its row count should equal the difference between its earliest and latest dates, plus one. If it doesn't match, complete the calendar first, then write YTD."
     }
   ]
 }
