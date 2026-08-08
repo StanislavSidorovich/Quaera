@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs } from './content';
-import type { Lesson, Pack, Task, Track } from './content/types';
+import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
+import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
@@ -119,6 +119,18 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [activeTrack, setActiveTrack] = useState<Track>(initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
+  /**
+   * Готовность Python-рантайма отдельно от activeTrack — нужна ровно для
+   * одного случая: справочник сквозной по трекам (см. Reference), и карточку
+   * python-навыка можно открыть, не заходя в сам трек python. Кнопка
+   * «Выполнить» в такой карточке обязана остаться нерабочей (как для
+   * domain/model), пока Pyodide не согласован и не загружен, — иначе клик
+   * запускает initRuntime() в обход экрана согласия, который здесь не
+   * отрисован, и виснет на фазе 'consent' без единой подсказки почему.
+   * У SQL такого риска нет: initDatabase() не спрашивает согласия и просто
+   * догружает 3.5 МБ по требованию, как и раньше.
+   */
+  const [pythonReady, setPythonReady] = useState(false);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
@@ -178,6 +190,15 @@ export default function App() {
     executor.init().catch(() => undefined);
     return unsubscribe;
   }, [executor]);
+
+  // Пассивное наблюдение за python — subscribeLoad ничего не инициирует сам,
+  // просто сообщает текущую фазу того же executor'а, который выше запускается
+  // только когда python — активный трек. Здесь не .init(), а именно подписка.
+  useEffect(() => {
+    const pythonExecutor = getExecutor('python');
+    if (!pythonExecutor) return;
+    return pythonExecutor.subscribeLoad((s) => setPythonReady(s.phase === 'ready'));
+  }, []);
 
   useEffect(() => saveProgress(progress), [progress]);
 
@@ -613,15 +634,39 @@ export default function App() {
           )}
 
           {screen.name === 'reference' && (
-            <Reference activePack={activePack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
+            <Reference activeTrack={activeTrack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
           )}
 
-          {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && executor && (
-            <LessonCard
-              lesson={lessonBySkill.get(screen.skill)!}
-              executor={executor}
-              runnable={activeTrack === 'sql' || activeTrack === 'python'}
-            />
+          {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && (
+            /*
+             * Справочник теперь сквозной по трекам (см. Reference ниже) —
+             * карточку могут открыть не из своего трека, и runnable/executor
+             * обязаны считаться по треку самого скилла, а не по activeTrack:
+             * иначе SQL-карточка, открытая из справочника во время сессии
+             * на python, показалась бы нерабочей без всякой причины.
+             *
+             * У python отдельная осторожность: RunnableSql вызывает
+             * executor.exec() напрямую, а exec ждёт initRuntime() — и если
+             * согласие на 52 МБ ещё не дано, initRuntime уходит в фазу
+             * 'consent' и виснет там, потому что здесь, в справочнике,
+             * экран согласия не отрисован (он есть только на самом треке
+             * python). Поэтому runnable для python — не просто «это код»,
+             * а «код и рантайм уже загружен» (pythonReady, см. состояние
+             * выше): до этого момента карточка ведёт себя как domain/model —
+             * пример читают, а не запускают. SQL такого риска не несёт —
+             * initDatabase грузит 3.5 МБ молча, без экрана согласия.
+             */
+            (() => {
+              const skillTrack = trackBySkill.get(screen.skill);
+              const lessonExecutor = skillTrack ? getExecutor(skillTrack) : null;
+              return (
+                <LessonCard
+                  lesson={lessonBySkill.get(screen.skill)!}
+                  executor={lessonExecutor ?? executor!}
+                  runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
+                />
+              );
+            })()
           )}
 
           {screen.name === 'done' && (
@@ -1096,34 +1141,39 @@ function Home({
                   const unlocked = isUnlocked(s, progress.skills) || (st?.reps ?? 0) > 0;
                   const m = mastery(st);
                   const due = st && st.reps > 0 && isDue(st);
-                  const clickable = ready && unlocked;
-                  const row = (
-                    <>
+                  /*
+                   * Практика с карты теперь открыта всегда — замок стал советом,
+                   * не запретом (ROADMAP §6, п. 0). selectSession (автоподбор
+                   * занятия) по-прежнему уважает предпосылки, так что разделение
+                   * честное: алгоритм советует порядок, человек решает сам, что
+                   * пройти прямо сейчас. Тусклый цвет строки (.locked) остаётся
+                   * сигналом «не по порядку», а не блокировкой.
+                   */
+                  const prereqNames = unlocked
+                    ? ''
+                    : s.prereqs
+                        .map((id) => activePack.skills.find((x) => x.id === id)?.title)
+                        .filter((title): title is string => !!title)
+                        .join(', ');
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`skill-row${unlocked ? '' : ' locked'}`}
+                      style={{ width: '100%', textAlign: 'left' }}
+                      onClick={() => onStartSkill(s.id)}
+                      disabled={!ready}
+                    >
                       <div className="name">
                         {s.title}
-                        <small>{unlocked ? s.summary : t.home.lockedNote}</small>
+                        <small>{unlocked ? s.summary : t.home.unlockedAfter(prereqNames)}</small>
                       </div>
                       {ready && (
                         <div className={`bar${due ? ' due' : ''}`} title={t.home.masteryAria(Math.round(m * 100))}>
                           <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
                         </div>
                       )}
-                    </>
-                  );
-                  return clickable ? (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className="skill-row"
-                      style={{ width: '100%', textAlign: 'left' }}
-                      onClick={() => onStartSkill(s.id)}
-                    >
-                      {row}
                     </button>
-                  ) : (
-                    <div className={`skill-row${unlocked ? '' : ' locked'}`} key={s.id}>
-                      {row}
-                    </div>
                   );
                 })}
               </div>
@@ -1383,40 +1433,141 @@ function TrackIntroScreen({
   );
 }
 
+/**
+ * Справочник — сквозной по трекам, а не привязан к тому, что открыт сейчас
+ * в занятиях. Раньше, находясь в pandas, посмотреть карточку SQL можно было
+ * только выйдя из справочника и переключив весь activeTrack — то есть заодно
+ * сменив контекст занятия. Вкладка трека здесь своя, локальная, ничего
+ * не переключает вовне (см. filterTrack ниже, отдельно от activeTrack в App).
+ */
 function Reference({
-  activePack,
+  activeTrack,
   progress,
   onOpen,
 }: {
-  activePack: Pack;
+  activeTrack: Track;
   progress: Progress;
   onOpen: (skill: string) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [filterTrack, setFilterTrack] = useState<Track>(activeTrack);
+  const [query, setQuery] = useState('');
+
+  const packsByTrack = useMemo(() => {
+    const m = new Map<Track, Pack>();
+    for (const tr of TRACK_ORDER) {
+      const p = packForTrack(tr, locale);
+      if (p) m.set(tr, p);
+    }
+    return m;
+  }, [locale]);
+
+  const visiblePack = packsByTrack.get(filterTrack);
+
   const byTier = useMemo(() => {
-    const groups = new Map<number, typeof activePack.skills>();
-    for (const s of activePack.skills) {
+    if (!visiblePack) return [];
+    const groups = new Map<number, Skill[]>();
+    for (const s of visiblePack.skills) {
       if (!lessonBySkill.has(s.id)) continue;
       const list = groups.get(s.tier) ?? [];
       list.push(s);
       groups.set(s.tier, list);
     }
     return [...groups.entries()].sort((a, b) => a[0] - b[0]);
-  }, [activePack]);
+  }, [visiblePack]);
+
+  /*
+   * Поиск сквозной по всем трекам сразу, независимо от того, какая вкладка
+   * открыта, — набрали «CALCULATE», нашли карточку в model, даже если
+   * читаете справочник SQL. Вкладка трека при непустом запросе просто
+   * не участвует в фильтрации, ей подчиняется только просмотр по темам.
+   */
+  const searchResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const out: { skill: Skill; track: Track }[] = [];
+    for (const [tr, p] of packsByTrack) {
+      for (const s of p.skills) {
+        if (!lessonBySkill.has(s.id)) continue;
+        if (`${s.title} ${s.summary}`.toLowerCase().includes(q)) out.push({ skill: s, track: tr });
+      }
+    }
+    return out;
+  }, [query, packsByTrack]);
+
+  const trackTabs = (
+    <div className="tabs" role="tablist" aria-label={t.reference.trackFilterAria}>
+      {TRACK_ORDER.map((tr) => (
+        <button key={tr} type="button" role="tab" aria-pressed={filterTrack === tr} onClick={() => setFilterTrack(tr)}>
+          {t.tracks.names[tr]}
+        </button>
+      ))}
+    </div>
+  );
+
+  const searchBox = (
+    <input
+      type="search"
+      className="reference-search"
+      placeholder={t.reference.searchPlaceholder}
+      aria-label={t.reference.searchAria}
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    />
+  );
+
+  const skillRow = (s: Skill, trackLabel?: string) => {
+    const st = progress.skills[s.id];
+    const seen = (st?.reps ?? 0) > 0;
+    return (
+      <button key={s.id} className="skill-row" onClick={() => onOpen(s.id)} style={{ width: '100%', textAlign: 'left' }}>
+        <div className="name">
+          {s.title}
+          <small>
+            {trackLabel ? `${trackLabel} · ` : ''}
+            {seen ? s.summary : t.reference.notSeen}
+          </small>
+        </div>
+        <span className="pill">{seen ? t.reference.openBtn : t.reference.nextBtn}</span>
+      </button>
+    );
+  };
+
+  if (searchResults) {
+    return (
+      <>
+        {trackTabs}
+        {searchBox}
+        <div className="card">
+          {searchResults.length === 0 ? (
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.reference.noResults(query)}</p>
+          ) : (
+            searchResults.map(({ skill: s, track: tr }) => skillRow(s, t.tracks.names[tr]))
+          )}
+        </div>
+      </>
+    );
+  }
 
   if (!byTier.length) {
     return (
-      <div className="card">
-        <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.reference.emptyNote}</p>
-      </div>
+      <>
+        {trackTabs}
+        {searchBox}
+        <div className="card">
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.reference.emptyNote}</p>
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      {trackTabs}
+      {searchBox}
       <div className="card">
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-          {activePack.tasks.some((t) => t.mode !== 'predict') ? t.reference.intro : t.reference.introNoCode}
+          {visiblePack!.tasks.some((tk) => tk.mode !== 'predict') ? t.reference.intro : t.reference.introNoCode}
         </p>
       </div>
       <div className="card">
@@ -1426,26 +1577,9 @@ function Reference({
               className="muted"
               style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
             >
-              {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
+              {visiblePack!.tierNames?.[tier] ?? `Уровень ${tier}`}
             </p>
-            {list.map((s) => {
-              const st = progress.skills[s.id];
-              const seen = (st?.reps ?? 0) > 0;
-              return (
-                <button
-                  key={s.id}
-                  className="skill-row"
-                  onClick={() => onOpen(s.id)}
-                  style={{ width: '100%', textAlign: 'left' }}
-                >
-                  <div className="name">
-                    {s.title}
-                    <small>{seen ? s.summary : t.reference.notSeen}</small>
-                  </div>
-                  <span className="pill">{seen ? t.reference.openBtn : t.reference.nextBtn}</span>
-                </button>
-              );
-            })}
+            {list.map((s) => skillRow(s))}
           </div>
         ))}
       </div>

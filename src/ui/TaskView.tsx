@@ -48,6 +48,15 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
   const [hintsShown, setHintsShown] = useState(0);
   const [waitLeft, setWaitLeft] = useState(HINT_DELAY_SEC);
   const startedAt = useRef(Date.now());
+  /**
+   * Переключатель «Условие / Код / Результат» — только для write/fill
+   * и только на узком экране (см. .task-mobile-tabs в styles.css, порог
+   * 1024px тот же, что у остального десктопного layout). На ноутбуке
+   * состояние существует, но ни на что не влияет: там условие, редактор
+   * и результат уже стоят рядом в .task-work, а сама вкладочная панель
+   * скрыта через CSS, не через JS-развилку по ширине.
+   */
+  const [mobilePanel, setMobilePanel] = useState<'brief' | 'work' | 'results'>('brief');
 
   // Сброс при переходе к следующему заданию: компонент переиспользуется.
   useEffect(() => {
@@ -62,6 +71,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
     setWrongAttempts(0);
     setHintsShown(0);
     setWaitLeft(HINT_DELAY_SEC);
+    setMobilePanel('brief');
     startedAt.current = Date.now();
   }, [task.id]);
 
@@ -105,6 +115,10 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       setFeedback(diagnoseError(err.message, err.traceback));
     } finally {
       setRunning(false);
+      // На узком экране Run/Check и есть момент, когда естественно
+      // посмотреть результат, — переключаем вкладку сами, а не заставляем
+      // тянуться до неё пальцем. На ноутбуке состояние ни на что не влияет.
+      setMobilePanel('results');
     }
   }
 
@@ -157,6 +171,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
       setFeedback(diagnoseError(err.message, err.traceback));
     } finally {
       setRunning(false);
+      setMobilePanel('results');
     }
   }
 
@@ -215,9 +230,28 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
     });
   };
 
+  // Только write/fill: predict уже держит ситуацию и ответ рядом двумя
+  // колонками (.task-situation/.task-answer), и той же тройной развязки
+  // там не нужно.
+  const tabbed = task.mode !== 'predict';
+
   return (
     <>
-      <div className="card">
+      {tabbed && (
+        <div className="tabs task-mobile-tabs" role="tablist">
+          <button role="tab" aria-pressed={mobilePanel === 'brief'} onClick={() => setMobilePanel('brief')}>
+            {t.task.mobileTabBrief}
+          </button>
+          <button role="tab" aria-pressed={mobilePanel === 'work'} onClick={() => setMobilePanel('work')}>
+            {t.task.mobileTabWork}
+          </button>
+          <button role="tab" aria-pressed={mobilePanel === 'results'} onClick={() => setMobilePanel('results')}>
+            {t.task.mobileTabResults}
+          </button>
+        </div>
+      )}
+
+      <div className="card" data-mobile-hidden={tabbed && mobilePanel !== 'brief'}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
           <span className="pill level">{t.task.levelLabel(task.level)}</span>
           <span className="pill">
@@ -283,7 +317,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
         </div>
       ) : (
         <div className="task-work">
-          <div className="task-editor">
+          <div className="task-editor" data-mobile-hidden={mobilePanel !== 'work'}>
             <div className="card">
               {task.mode === 'fill' && task.template ? (
                 <FillTemplate template={task.template} blanks={blanks} onChange={setBlanks} disabled={solved} />
@@ -311,7 +345,7 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
               </p>
             </div>
           </div>
-          <div className="task-results">
+          <div className="task-results" data-mobile-hidden={mobilePanel !== 'results'}>
             {feedbackBlock}
             {previewBlock}
             {expectedBlock}

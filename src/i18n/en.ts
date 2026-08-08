@@ -81,7 +81,8 @@ export const en = {
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
     overallProgressLabel: 'Track mastery',
     skillMapTitle: 'Skill map',
-    lockedNote: 'Unlocks after earlier topics',
+    /** См. комментарий в ru.ts: совет по порядку, а не запрет — карта открыта для любой темы. */
+    unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
     masteryAria: (pct: number) => `${pct}% mastered`,
     referenceBtn: 'Reference',
     schemaBtn: 'Data schema',
@@ -149,6 +150,10 @@ export const en = {
     openBtn: 'open',
     nextBtn: 'next',
     emptyNote: "Technique cards will appear together with this track's tasks.",
+    trackFilterAria: 'Track',
+    searchPlaceholder: 'Search techniques…',
+    searchAria: 'Search the reference',
+    noResults: (query: string) => `Nothing found for "${query}"`,
   },
   session: {
     title: 'Session',
@@ -177,6 +182,10 @@ export const en = {
     modePredict: 'Predict the result',
     modeFill: 'Fill in the query',
     modeWrite: 'Write the query',
+    /** См. комментарий в ru.ts: переключатель для write/fill на узком экране. */
+    mobileTabBrief: 'Brief',
+    mobileTabWork: 'Code',
+    mobileTabResults: 'Result',
     schemaBtn: 'Data schema',
     checkBtn: 'Check',
     runBtn: 'Run',
@@ -206,6 +215,8 @@ export const en = {
     grainLabel: (grain: string, rows: string) => `One row = ${grain} · ${rows} rows`,
     closeBtn: 'Close',
     ariaLabel: 'Data schema',
+    copyAria: (name: string) => `Copy "${name}"`,
+    copied: 'Copied',
   },
   result: {
     stdoutLabel: 'print() output',

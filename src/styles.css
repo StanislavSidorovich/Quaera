@@ -841,6 +841,30 @@ textarea.sql {
 }
 
 /*
+ * Переключатель «Условие / Код / Результат» для write/fill на узком
+ * экране (см. TaskView.tsx, тройной data-mobile-hidden). Тот же грид
+ * .task-work на ноутбуке уже кладёт все три части рядом — самостоятельный
+ * блок ниже 1024px, а не переопределение существующего десктопного
+ * @media (min-width: 1024px): так правка не может случайно задеть
+ * раскладку, которую просили не трогать.
+ */
+.task-mobile-tabs {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .task-mobile-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  [data-mobile-hidden='true'] {
+    display: none;
+  }
+}
+
+/*
  * Пример и антипример карточки приёма — рядом на широком экране (см. LessonCard).
  * Порог 320px ниже, чем у задания: здесь в колонке короткий запрос и абзац,
  * а не редактор с панелью токенов.
@@ -949,6 +973,25 @@ textarea.sql:focus {
   border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
+}
+
+/* Поиск в справочнике — тот же визуальный язык, что у textarea.sql. */
+.reference-search {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.reference-search:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: -1px;
 }
 
 /* ------------------------------------------------------- переключатель треков */
@@ -1477,9 +1520,17 @@ details.table-doc > summary small {
   font-size: 13px;
 }
 
-.col-doc code {
+.col-doc .col-name {
   flex: none;
   min-width: 42%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.col-doc .col-name code {
   color: var(--code);
   word-break: break-all;
 }

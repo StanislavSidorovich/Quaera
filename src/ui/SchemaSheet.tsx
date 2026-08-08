@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 
@@ -44,6 +44,25 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  /**
+   * Копирование имени колонки по клику — раньше схема была чисто справочной,
+   * набирать `commercial_category_id` руками с телефона на панели токенов
+   * долго и с опечатками. Ключ вида `table.column`, а не просто имя колонки:
+   * одинаковые имена (`revenue`, `product_id`) встречаются в нескольких
+   * таблицах, и без таблицы в ключе клик по одной колонке подсветил бы
+   * «Скопировано» сразу у всех тёзок на экране.
+   */
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+
+  function copyColumn(table: string, name: string) {
+    navigator.clipboard?.writeText(name).catch(() => undefined);
+    setCopiedKey(`${table}.${name}`);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopiedKey(null), 1200);
+  }
+
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
@@ -63,12 +82,22 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
                   <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title}
                   <small>{t.schema.grainLabel(table.grain, table.row_count.toLocaleString(numberLocale))}</small>
                 </summary>
-                {table.columns.map((c) => (
-                  <div className="col-doc" key={c.name}>
-                    <code>{c.name}</code>
-                    <span>{c.description}</span>
-                  </div>
-                ))}
+                {table.columns.map((c) => {
+                  const copied = copiedKey === `${table.table}.${c.name}`;
+                  return (
+                    <div className="col-doc" key={c.name}>
+                      <button
+                        type="button"
+                        className="col-name"
+                        onClick={() => copyColumn(table.table, c.name)}
+                        aria-label={t.schema.copyAria(c.name)}
+                      >
+                        <code>{c.name}</code>
+                      </button>
+                      <span>{copied ? t.schema.copied : c.description}</span>
+                    </div>
+                  );
+                })}
                 {table.note && <div className="note">{table.note}</div>}
               </details>
             ))}
