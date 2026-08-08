@@ -212,6 +212,72 @@ function checkSkillCoverage(pack) {
   }
 }
 
+/**
+ * Позиция верного варианта после перемешивания.
+ *
+ * В файлах верный вариант стоит первым — так задание пишется и правится,
+ * и менять это неудобно. Но показывать его первым нельзя: до перемешивания
+ * 158 заданий из 159 держали верный ответ на первой позиции, то есть весь
+ * режим predict проходился по признаку положения, мимо вопроса.
+ *
+ * Гейт повторяет ту же детерминированную перестановку, что и приложение
+ * (см. shuffleOptions в src/content/index.ts), и смотрит на итог. Проверяются
+ * две вещи, каждая ловит свою поломку: перестановка вообще применяется
+ * (иначе первая позиция соберёт почти всё) и она не выродилась на этом
+ * наборе id (зерно от id — величина фиксированная, и перекос теоретически
+ * возможен без единой ошибки в коде). Порог 55% — заведомо выше случайного
+ * разброса на десятках заданий и заведомо ниже той картины, ради которой
+ * проверка написана.
+ *
+ * Копия алгоритма здесь намеренная: гейт обязан считать сам, а не звать
+ * код приложения, иначе он подтвердит любую перестановку, включая её
+ * отсутствие.
+ */
+function checkOptionPositions(pack) {
+  const seedFrom = (s) => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  };
+  const rngFrom = (seed) => {
+    let a = seed;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  const positions = new Map();
+  let total = 0;
+  for (const t of pack.tasks) {
+    if (!t.options || t.options.length < 2) continue;
+    const rnd = rngFrom(seedFrom(t.id));
+    const options = [...t.options];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    const at = options.findIndex((o) => o.correct);
+    positions.set(at, (positions.get(at) ?? 0) + 1);
+    total++;
+  }
+  if (total < 10) return; // на горстке заданий разброс ничего не значит
+
+  const worst = [...positions.entries()].sort((a, b) => b[1] - a[1])[0];
+  const share = worst[1] / total;
+  const layout = [...positions.entries()].sort((a, b) => a[0] - b[0]).map(([p, n]) => `${p + 1}: ${n}`).join(', ');
+  if (share > 0.55) {
+    fail(pack.id, `верный вариант оказывается на позиции ${worst[0] + 1} у ${Math.round(share * 100)}% заданий (${layout}) — задание решается по положению ответа`);
+  } else {
+    console.log(`  ok   позиция верного варианта после перемешивания — ${layout} из ${total}`);
+  }
+}
+
 for (const packId of packs) {
   const pack = readPack(packId);
   console.log(`\n=== Пак ${pack.id}: ${pack.tasks.length} заданий, ${pack.skills.length} скиллов`);
@@ -219,6 +285,7 @@ for (const packId of packs) {
   checkGraph(pack);
   checkIntro(pack);
   checkSkillCoverage(pack);
+  checkOptionPositions(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
   // --- задания

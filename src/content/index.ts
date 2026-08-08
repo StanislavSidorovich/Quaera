@@ -108,6 +108,65 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
 }
 
 /**
+ * Перемешивание вариантов ответа.
+ *
+ * Автор пишет варианты в естественном порядке: сначала верный, потом
+ * заблуждения вокруг него. Так задание читается и правится, но так же оно
+ * и решается — 158 заданий из 159 держали верный вариант первым, и любой
+ * человек, заметивший это к третьему заданию, дальше проходит весь predict
+ * не думая. Признак «где верный» оказывался сильнее самого вопроса.
+ *
+ * Порядок меняем на выдаче, а не в файлах: соответствие перевода вариантам
+ * позиционное (см. PackTranslation в types.ts), и физическая перестановка
+ * в русском паке потребовала бы синхронной перестановки в английском —
+ * ровно тот класс правок, где рассинхрон не заметен глазом и не ловится
+ * гейтом, потому что оба файла остаются валидными.
+ *
+ * Перестановка детерминированная, с зерном от id задания: одно и то же
+ * задание всегда показывает варианты в одном и том же порядке. Это не
+ * придирка к чистоте — случайный порядок при каждом рендере переставлял бы
+ * варианты под пальцем при любой перерисовке, а после перезагрузки человек
+ * с уже выбранным вариантом видел бы на его месте другой текст. Заодно
+ * порядок совпадает в обеих локалях, и переключение языка посреди задания
+ * не сбивает выбор.
+ */
+function seedFrom(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** mulberry32 — короткий PRNG с равномерным распределением; криптостойкость здесь не нужна. */
+function rngFrom(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleOptions(pack: Pack): Pack {
+  return {
+    ...pack,
+    tasks: pack.tasks.map((task) => {
+      if (!task.options || task.options.length < 2) return task;
+      const rnd = rngFrom(seedFrom(task.id));
+      const options = [...task.options];
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+      return { ...task, options };
+    }),
+  };
+}
+
+/**
  * Реестр паков — вход в контент по треку, а не единственный синглтон.
  *
  * Черновые паки (model-core, python-core, domain-core) содержат только граф
@@ -115,6 +174,11 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
  * главной строилась по настоящим данным, а не по заглушкам. `status: 'draft'`
  * и пустой `tasks` — это то, чем плеер отличает «пока показать карту навыков»
  * от «можно начать занятие».
+ *
+ * Это паки в исходном виде: без перевода и без перемешивания вариантов.
+ * Показывать задание отсюда нельзя — для показа есть packForTrack. Здесь
+ * считают структуру (сколько всего заданий, какие навыки), и такой счёт
+ * от языка и порядка вариантов не зависит.
  */
 export const packs: Pack[] = [
   rawSqlCore as Pack,
@@ -149,6 +213,19 @@ const packTranslations: Partial<Record<string, PackTranslation>> = {
 };
 
 /**
+ * Готовый к показу пак: перевод наложен, варианты перемешаны.
+ *
+ * Кешируем по паре «пак + локаль», а не пересобираем на каждый вызов:
+ * packForTrack зовут из рендера, и новый объект пака каждый раз обнулял бы
+ * useMemo в App, у которых пак стоит в зависимостях. Кеш безопасен ровно
+ * потому, что обе операции чистые и детерминированные.
+ *
+ * Порядок шагов обязателен именно такой: перевод накладывается позиционно,
+ * поэтому перемешивать можно только после него, уже на готовом паке.
+ */
+const localizedCache = new Map<string, Pack>();
+
+/**
  * Пак трека. Берём первый — когда в треке появится больше одного пака, здесь
  * появится выбор. `locale` по умолчанию 'ru': явно передавать locale должны
  * только места, которые реально показывают текст задания человеку, — остальным
@@ -157,7 +234,12 @@ const packTranslations: Partial<Record<string, PackTranslation>> = {
 export const packForTrack = (track: Track, locale: Locale = 'ru'): Pack | undefined => {
   const pack = packsByTrack.get(track)?.[0];
   if (!pack) return undefined;
-  return locale === 'en' ? applyTranslation(pack, packTranslations[pack.id]) : pack;
+  const key = `${pack.id}:${locale}`;
+  const hit = localizedCache.get(key);
+  if (hit) return hit;
+  const built = shuffleOptions(locale === 'en' ? applyTranslation(pack, packTranslations[pack.id]) : pack);
+  localizedCache.set(key, built);
+  return built;
 };
 
 /**
