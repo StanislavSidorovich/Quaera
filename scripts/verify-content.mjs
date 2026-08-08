@@ -414,6 +414,97 @@ for (const packId of draftPacks) {
 }
 
 /**
+ * Задание, дословно повторяющее пример своей карточки теории.
+ *
+ * Карточка приёма показывается один раз, перед первой задачей на навык
+ * (см. Lesson в content/types.ts), и это осознанный компромисс: готовый
+ * образец помогает новичку и начинает мешать по мере роста навыка. Если же
+ * первое задание на навык — точная копия того, что человек только что видел
+ * в примере, компромисс не работает вообще: задание в режиме write проверяет
+ * способность скопировать экран, а не вспомнить приём.
+ *
+ * Найдено разбором 2026-08-08: 10 заданий совпадали посимвольно (9 из них
+ * в python — 21% трека), см. ROADMAP §6, пункт B. Порог — точное совпадение
+ * после нормализации пробелов, а не похожесть: почти любое второе задание
+ * на новый навык неизбежно похоже на пример структурно (та же конструкция
+ * на том же датасете), и жёсткий порог по сходству ловил бы это же самое
+ * методическое решение, а не дефект.
+ */
+const normCode = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+
+function checkTaskLessonDuplicate(pack, lessons) {
+  const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
+  for (const t of pack.tasks) {
+    const lesson = lessonBySkill.get(t.skill);
+    if (!lesson) continue;
+    const code = t.solution ?? t.predictSql ?? t.template;
+    if (!code) continue;
+    if (normCode(code) === normCode(lesson.example)) {
+      fail(t.id, `дословно повторяет example карточки «${t.skill}» — проверяет копирование экрана, а не приём`);
+    }
+  }
+}
+
+/**
+ * Конструкции в заданиях, которых нет в теории на пути к ним.
+ *
+ * Найдено разбором 2026-08-08 (ROADMAP §6, пункт A): человек узнаёт о приёме
+ * из разбора после задания, а не до него — LIKE требовался в трёх заданиях
+ * и не был введён нигде, OFFSET — в двух, BETWEEN и IN — в трёх каждый.
+ * Проверка раньше объяснения — то, чего не делают в хороших продуктах.
+ *
+ * «Теория на пути к заданию» — это карточка собственного навыка задания
+ * плюс карточки всех его предпосылок, взятые транзитивно: скилл открывается
+ * только когда предпосылки пройдены (см. isUnlocked в srs/scheduler.ts),
+ * значит к моменту задания человек мог видеть любую из этих карточек.
+ * Требовать введения в карточке именно своего навыка было бы неверно —
+ * INSTR может быть закреплена ещё в sql-where, а не в задании, которое её
+ * использует три навыка спустя.
+ *
+ * Список конструкций и порог — только sql: это тот трек, где по нему
+ * прогнан замер и оценены конкретные проблемы. Перенос на python — другой
+ * список токенов (синтаксис иной) — числится в очереди ROADMAP отдельным
+ * пунктом, а не автоматическим следствием этой функции.
+ */
+const SQL_CONSTRUCTS = [
+  'like', 'offset', 'coalesce', 'ifnull', 'nullif', 'distinct', 'between',
+  'in (', 'union', 'exists', 'substr', 'replace', 'trim', 'upper', 'lower',
+  'cast', 'round', 'strftime', 'date(', 'julianday', 'printf', 'case',
+  'over (', 'partition by', 'row_number', 'rank(', 'dense_rank', 'lag(',
+  'lead(', 'ntile', 'sum(', 'avg(', 'count(', 'min(', 'max(', 'having',
+  'left join', 'inner join', 'group by', 'order by', 'limit', 'with ',
+  'as (', 'abs(', 'length(',
+];
+
+function checkTheoryIntroducesConstructs(pack, lessons) {
+  if (pack.track !== 'sql') return;
+  const skillById = new Map(pack.skills.map((s) => [s.id, s]));
+  const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
+
+  function corpus(skillId, seen = new Set()) {
+    if (seen.has(skillId)) return '';
+    seen.add(skillId);
+    const skill = skillById.get(skillId);
+    if (!skill) return '';
+    const l = lessonBySkill.get(skillId);
+    let text = l ? [l.title, l.why, l.form, l.example, l.reads, l.wrong, l.wrongWhy, l.selfCheck].join(' ') : '';
+    for (const p of skill.prereqs) text += ' ' + corpus(p, seen);
+    return text.toLowerCase();
+  }
+
+  for (const t of pack.tasks) {
+    const code = [t.solution, t.predictSql, t.template].filter(Boolean).join('\n').toLowerCase();
+    if (!code) continue;
+    const available = corpus(t.skill);
+    for (const kw of SQL_CONSTRUCTS) {
+      if (code.includes(kw) && !available.includes(kw.trim())) {
+        fail(t.id, `использует «${kw.trim()}», но эта конструкция не встречается в теории навыка «${t.skill}» и его предпосылок`);
+      }
+    }
+  }
+}
+
+/**
  * Карточки теории для пака.
  *
  * Покрытие требуется не на весь граф, а только на скиллы, у которых уже есть
@@ -428,6 +519,9 @@ for (const packId of draftPacks) {
 async function checkLessons(pack, lessonsFileId) {
   const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.json`), 'utf8'));
   console.log(`\n=== Карточки теории (${pack.id}): ${lessons.length}`);
+
+  checkTaskLessonDuplicate(pack, lessons);
+  checkTheoryIntroducesConstructs(pack, lessons);
 
   const touchedSkills = new Set(pack.tasks.map((t) => t.skill));
   const covered = new Set(lessons.map((l) => l.skill));
@@ -1907,10 +2001,14 @@ multi = isinstance(dim_product.groupby('division')[['list_price']].agg(['count',
 result = f'{whole}/{multi}'
 `, 'TypeError/True', 'список функций падает на всей таблице и даёт MultiIndex на колонке');
 
-  // py-017: разбор называет период таблицы, из которого считается доля.
+  // py-017: разбор называет масштаб таблицы и обещает проверку «сумма долей
+  // равна числу дистрибьюторов». Второе — не украшение, а способ поймать
+  // подмену transform на agg: при неверной группировке доли не сойдутся в 12.
   await pyExpect('py-017', `
-result = f"{fact_sellout['week_start'].nunique()}/{fact_sellout['week_start'].min()[:7]}/{fact_sellout['week_start'].max()[:7]}"
-`, '131/2024-01/2026-06', 'период таблицы — 131 неделя, январь 2024 — июнь 2026');
+r = fact_sellin.copy()
+r['line_share'] = r['net_amount'] / r.groupby('distributor_id')['net_amount'].transform('sum')
+result = f"{len(fact_sellin)}/{fact_sellin['distributor_id'].nunique()}/{round(float(r['line_share'].sum()), 6)}"
+`, '15362/12/12.0', 'в fact_sellin 15 362 строки и 12 дистрибьюторов, сумма долей = 12');
 
   // py-018: разбор утверждает, что выравнивание по индексу оставляет ровно
   // 47 посчитанных строк и 118 402 пустых. Это опаснее сплошного NaN, и обе
@@ -1921,10 +2019,14 @@ r = fact_sellout['units'] / a
 result = f'{int(r.notna().sum())}/{int(r.isna().sum())}'
 `, '47/118402', 'деление с разными индексами даёт 47 чисел и 118 402 NaN');
 
-  // py-026: разбор перечисляет все пять каналов с их числами.
+  // py-026: разбор называет границы разброса по брендам — шесть позиций
+  // у самых широких линеек и четыре у самых узких, с поимённым перечислением.
   await pyExpect('py-026', `
-result = '/'.join(f'{k}:{v}' for k, v in dim_customer['channel'].value_counts().items())
-`, 'traditional_trade:44/modern_trade:42/pharmacy:38/distributor:12/ecom:8', 'пять каналов в value_counts совпадают с разбором');
+vc = dim_product['brand'].value_counts()
+top = sorted(vc[vc == vc.max()].index)
+bottom = sorted(vc[vc == vc.min()].index)
+result = f"{len(vc)}/{vc.max()}:{','.join(top)}/{vc.min()}:{','.join(bottom)}"
+`, '9/6:Ключевая,Молочный Дом,Фрутта,Хрустик/4:Гастрокалм,Ринофлекс', 'девять брендов, от шести позиций до четырёх — совпадает с разбором');
 
   // py-030: вариант ответа цитирует сообщение ValueError дословно.
   await pyExpect('py-030', `
