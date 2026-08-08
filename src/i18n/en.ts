@@ -83,7 +83,7 @@ export const en = {
     skillMapTitle: 'Skill map',
     /** См. комментарий в ru.ts: совет по порядку, а не запрет — карта открыта для любой темы. */
     unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
-    masteryAria: (pct: number) => `${pct}% mastered`,
+    masteryAria: (pct: number) => `Memory strength: ${pct}%. Grows from returning to the topic over days and weeks, not from the number of tasks solved`,
     referenceBtn: 'Reference',
     schemaBtn: 'Data schema',
     draftNote: 'The skill graph is already designed; tasks will land in one of the upcoming sprints.',
@@ -157,7 +157,8 @@ export const en = {
   },
   session: {
     title: 'Session',
-    progressOf: (i: number, total: number) => `${i} of ${total}`,
+    taskProgressOf: (i: number, total: number) => `Task ${i} of ${total}`,
+    lessonStep: 'Theory',
     doneTitle: 'Session done',
     doneBody: (n: number) =>
       `Tasks completed: ${n}. The skills they touched will come back for review — the interval depends on how confidently you got them.`,

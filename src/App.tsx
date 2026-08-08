@@ -435,6 +435,19 @@ export default function App() {
 
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
+  /**
+   * Подпись шага занятия. Карточки приёма в счёт задач не входят: они
+   * стоят в той же очереди, но человек считает занятие задачами, а не
+   * экранами (см. taskProgressOf в i18n).
+   */
+  const stepLabel = useMemo(() => {
+    if (screen.name !== 'session') return null;
+    const total = screen.queue.filter((s) => s.kind === 'task').length;
+    if (screen.queue[screen.index]?.kind === 'lesson') return t.session.lessonStep;
+    const done = screen.queue.slice(0, screen.index + 1).filter((s) => s.kind === 'task').length;
+    return t.session.taskProgressOf(done, total);
+  }, [screen, t]);
+
   // Занятие, карточка приёма и вводная трека своего пункта в меню не имеют:
   // подсвечивать там «Главную» значило бы врать о том, где человек находится.
   const sidebarSection: SidebarSection =
@@ -500,7 +513,7 @@ export default function App() {
                         <span className="brand-word">{t.app.name}</span>}
             <span className="sub">
               {screen.name === 'session'
-                ? t.session.progressOf(screen.index + 1, screen.queue.length)
+                ? stepLabel
                 : screen.name === 'reference'
                   ? t.tracks.names[activeTrack]
                   : screen.name === 'lesson'

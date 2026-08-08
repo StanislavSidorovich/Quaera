@@ -420,8 +420,9 @@ function FillTemplate({
 }) {
   const { t } = useI18n();
   const parts = template.split('___');
+  // pre-wrap здесь больше не нужен точечно — он теперь у самого .sql-block.
   return (
-    <pre className="sql-block" style={{ whiteSpace: 'pre-wrap' }}>
+    <pre className="sql-block">
       {parts.map((part, i) => (
         <span key={i}>
           {part}
