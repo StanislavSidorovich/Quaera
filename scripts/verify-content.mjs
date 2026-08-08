@@ -461,10 +461,16 @@ function checkTaskLessonDuplicate(pack, lessons) {
  * INSTR может быть закреплена ещё в sql-where, а не в задании, которое её
  * использует три навыка спустя.
  *
- * Список конструкций и порог — только sql: это тот трек, где по нему
- * прогнан замер и оценены конкретные проблемы. Перенос на python — другой
- * список токенов (синтаксис иной) — числится в очереди ROADMAP отдельным
- * пунктом, а не автоматическим следствием этой функции.
+ * Список конструкций свой на трек — синтаксис разный, и то, что нужно
+ * объяснить, тоже разное. sql проверен и починен первым (ROADMAP §6, п. A);
+ * python дописан следом тем же способом: замер, разбор причины у каждой
+ * находки, починка — либо в карточке, либо в графе, если конструкция
+ * не введена потому, что путь предпосылок обходит скилл, который её учит.
+ *
+ * В python-списке нет .head()/.tail()/.copy(): это не пробел в объяснении,
+ * а операции, самоочевидные по названию, — они не создают того риска, ради
+ * которого существует эта проверка (сравнение с SQL: сам SELECT тоже
+ * не входит в SQL_CONSTRUCTS).
  */
 const SQL_CONSTRUCTS = [
   'like', 'offset', 'coalesce', 'ifnull', 'nullif', 'distinct', 'between',
@@ -476,8 +482,22 @@ const SQL_CONSTRUCTS = [
   'as (', 'abs(', 'length(',
 ];
 
+const PYTHON_CONSTRUCTS = [
+  '.loc[', '.isin(', '.str.', '.astype(', '.assign(', '.fillna(', '.rank(',
+  '.apply(', 'axis=1', 'lambda', '.groupby(', '.merge(', 'dropna=',
+  '.transform(', '.agg(', '.pivot(', '.pivot_table(', '.melt(', '.resample(',
+  '.rolling(', 'np.where(', '.value_counts(', '.nunique(', 'pd.to_datetime(',
+  '.dt.', '.isna(', '.reset_index(', '.set_index(', '.sort_index(',
+  '.sort_values(', 'validate=', '.describe(', '.duplicated(',
+  '.drop_duplicates(', '.shift(', '.diff(', '.cumsum(', '.clip(',
+  '.replace(', '.map(', '.query(',
+];
+
+const TRACK_CONSTRUCTS = { sql: SQL_CONSTRUCTS, python: PYTHON_CONSTRUCTS };
+
 function checkTheoryIntroducesConstructs(pack, lessons) {
-  if (pack.track !== 'sql') return;
+  const constructs = TRACK_CONSTRUCTS[pack.track];
+  if (!constructs) return;
   const skillById = new Map(pack.skills.map((s) => [s.id, s]));
   const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 
@@ -496,7 +516,7 @@ function checkTheoryIntroducesConstructs(pack, lessons) {
     const code = [t.solution, t.predictSql, t.template].filter(Boolean).join('\n').toLowerCase();
     if (!code) continue;
     const available = corpus(t.skill);
-    for (const kw of SQL_CONSTRUCTS) {
+    for (const kw of constructs) {
       if (code.includes(kw) && !available.includes(kw.trim())) {
         fail(t.id, `использует «${kw.trim()}», но эта конструкция не встречается в теории навыка «${t.skill}» и его предпосылок`);
       }

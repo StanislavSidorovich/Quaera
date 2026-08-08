@@ -12,8 +12,8 @@
     {
       "skill": "py-select-filter",
       "title": "Selecting and filtering",
-      "why": "Almost every working question sounds like \"show me these rows and these columns\": products above a threshold, customers on one channel, pharmacies in one region. In pandas both halves happen in one call to .loc — rows to the left of the comma, columns to the right.",
-      "form": "df.loc[mask, ['column_a', 'column_b']]",
+      "why": "Almost every working question sounds like \"show me these rows and these columns\": products above a threshold, customers on one channel, pharmacies in one region. In pandas both halves happen in one call to .loc — rows to the left of the comma, columns to the right. The mask doesn't have to be one comparison: column.isin([...]) checks membership in a list in one call instead of a chain of == joined by |, and column.str.contains('text') searches for a substring — the pandas equivalents of SQL's IN and LIKE.",
+      "form": "df.loc[mask, ['column_a', 'column_b']]\n\ndf['column'].isin(['a', 'b', 'c'])   # membership in a list, like IN\ndf['column'].str.contains('text')    # substring, like LIKE '%text%'",
       "reads": "«Фрутта» juices priced above 130 ₽ — what would go onto the catalog's premium shelf. The mask on the left selects rows, the list on the right keeps three columns out of eleven.",
       "wrongWhy": "Parentheses around each condition aren't a style choice. The & operator binds tighter than == and >, so without parentheses Python first evaluates 'Фрутта' & dim_product['list_price'] and fails with a TypeError before it ever gets to the comparison. The error surfaces nowhere near where the actual problem is.",
       "selfCheck": "Is every condition inside .loc wrapped in its own parentheses? And is & or | placed between them, rather than and or or — those don't work on a column."
@@ -21,8 +21,8 @@
     {
       "skill": "py-dtypes",
       "title": "Column types",
-      "why": "A column's type explains oddities that would otherwise look like data corruption: why an employee code prints as \"1.0\", why summing numbers glued strings together, why a comparison against an empty value finds nothing. pandas types a column as a whole, and one gap changes the type of every value at once.",
-      "form": "df.dtypes                 # what types came out\ndf['column'].isna()      # where the gaps are",
+      "why": "A column's type explains oddities that would otherwise look like data corruption: why an employee code prints as \"1.0\", why summing numbers glued strings together, why a comparison against an empty value finds nothing. pandas types a column as a whole, and one gap changes the type of every value at once. .astype() fixes the type, but plain int64 can't hold gaps — pandas has a separate nullable type, capitalized ('Int64', not 'int64'), that holds both whole numbers and NaN at once.",
+      "form": "df.dtypes                 # what types came out\ndf['column'].isna()      # where the gaps are\ndf.astype({'column': 'Int64'})   # convert the type while keeping NaN",
       "reads": "Five employees with no manager of their own — the top level of the org chart. It's exactly these five gaps that force pandas to store all of manager_id as float64, which is why the ids print with a decimal point.",
       "wrongWhy": "A gap in pandas is NaN, and NaN isn't equal to anything, including itself and None. A comparison with == doesn't fail or complain: it calmly returns an empty result. That's the worst kind of bug — one that looks like a trustworthy answer of \"there are no such employees\".",
       "selfCheck": "Looking for empty values? Use .isna(), not == None and not == NaN. Got a suspiciously empty selection from a condition involving gaps? Check this first."
@@ -30,8 +30,8 @@
     {
       "skill": "py-index",
       "title": "The index — SQL has no equivalent",
-      "why": "A DataFrame has a third dimension a SQL table doesn't — the index, a row label to the left of the values. .loc works through it, the key ends up there after groupby, and pandas aligns tables by it when combining them. Without knowing about the index, there's no way to understand where a column \"went\" after a grouping.",
-      "form": "df.groupby('key')['measure'].sum().reset_index()",
+      "why": "A DataFrame has a third dimension a SQL table doesn't — the index, a row label to the left of the values. .loc works through it, the key ends up there after groupby, and pandas aligns tables by it when combining them. Without knowing about the index, there's no way to understand where a column \"went\" after a grouping. The index can also be assigned directly: df.set_index('column') makes the chosen column the row label — from there .loc looks it up by that label instead of a mask on a column, the same spirit as a primary key in SQL, only assigned explicitly instead of implied.",
+      "form": "df.groupby('key')['measure'].sum().reset_index()\ndf.set_index('column').loc[[value]]   # index assigned by hand, lookup by label",
       "reads": "Sales in units for every product, with the brand glued on from the reference table. reset_index() is mandatory here: it returns product_id from the index back into the columns, which is where merge looks for it.",
       "wrongWhy": "Without reset_index() the grouping returns a Series with product_id sitting in the index, not in the columns. A Series has no .merge() method at all, so the code fails with an AttributeError. Even if the join were possible, on='product_id' wouldn't find such a column — it's in the index.",
       "selfCheck": "After a groupby, ask yourself what happens to the result next. If a merge, a comparison with another table, or an export is coming — .reset_index() first, or the key stays stuck in the index."
@@ -48,8 +48,8 @@
     {
       "skill": "py-transform",
       "title": "transform vs. agg and apply",
-      "why": "agg collapses a group into one row — useful for a summary, but no good if the result needs to come back at the source granularity: a sale's share of its product's yearly volume, say. transform computes the same thing as agg, but repeats the group's result on every row of it — the pandas version of the SUM(...) OVER (PARTITION BY ...) window function.",
-      "form": "df.groupby('key')['measure'].transform('function')   # same length as df",
+      "why": "agg collapses a group into one row — useful for a summary, but no good if the result needs to come back at the source granularity: a sale's share of its product's yearly volume, say. transform computes the same thing as agg, but repeats the group's result on every row of it — the pandas version of the SUM(...) OVER (PARTITION BY ...) window function. A neighboring technique of the same kind is .rank(): instead of a sum or an average, it assigns each row its place within the group — the pandas equivalent of RANK/DENSE_RANK/ROW_NUMBER. The method parameter picks which one: 'min' is RANK (ties get the same rank, the next one skips the gap), 'dense' is DENSE_RANK, 'first' is ROW_NUMBER; ascending=False ranks from largest to smallest, like ORDER BY ... DESC inside OVER.",
+      "form": "df.groupby('key')['measure'].transform('function')   # same length as df\ndf.groupby('key')['measure'].rank(method='min', ascending=False)   # rank within the group",
       "reads": "Each shipment's share of its product's yearly volume. transform('sum') plugs the sum for its product_id into every row, repeated as many times as that product has rows — the division works element by element, with no separate merge needed to \"glue the summary back to the detail\".",
       "wrongWhy": "sum() collapses the group into a Series of 47 rows — one per product_id — while the left side is a DataFrame of 118,449 rows. Dividing objects of different lengths, pandas tries to align them by index — and fact_sellout's index is row numbers, not product_id — and the result is NaN almost everywhere instead of a share.",
       "selfCheck": "If the groupby result is about to become a new column sitting next to the source data, you need transform, not agg or a bare sum(): the length has to match the source table's length."
@@ -57,8 +57,8 @@
     {
       "skill": "py-nan",
       "title": "NaN and gaps",
-      "why": "groupby silently drops rows where the grouping key is NaN by default: no warning, no separate group formed for them, they simply don't get counted. When a gap in the key isn't a defect but a meaningful \"nobody's assigned to this,\" the grouping result stops matching the total row count.",
-      "form": "df.groupby('key', dropna=False)   # don't drop the NaN group",
+      "why": "groupby silently drops rows where the grouping key is NaN by default: no warning, no separate group formed for them, they simply don't get counted. When a gap in the key isn't a defect but a meaningful \"nobody's assigned to this,\" the grouping result stops matching the total row count. There are two ways to keep such rows: dropna=False leaves NaN as its own group as is, and .assign(key=df['key'].fillna(value)) replaces the gap with a concrete value beforehand — at that point it's no longer NaN, just an ordinary key, and any plain groupby handles it with no extra parameters.",
+      "form": "df.groupby('key', dropna=False)   # don't drop the NaN group\n\ndf.assign(key=df['key'].fillna(-1))   # replace NaN with a concrete value beforehand",
       "reads": "How many sales went through each of the 89 promos — and, as row ninety, the ones that went through none: promo_id is empty there. The n_sales column adds up to the row count of fact_sellout, all 118,449 of them.",
       "wrongWhy": "dropna=True is the default value, and the 94,600 sales with no promo simply vanish from the result with no notice. n_sales adds up to 23,849 instead of 118,449: a fifth of the sales are left in the report, yet the table looks complete — all 89 promos are in place. The galling part is that the discarded group is exactly the baseline promos get compared against.",
       "selfCheck": "After a groupby on a column that may have gaps, compare the sum of the result to the source table's row count. If it's off, check dropna: some rows most likely disappeared silently."
@@ -111,8 +111,8 @@
     {
       "skill": "py-chaining",
       "title": "Chains, views and copies",
-      "why": "df[mask]['column'] = value looks harmless, but it assembles a temporary object that is discarded immediately: the code runs, pandas prints a warning, and the data doesn't change at all. .loc[mask, 'column'] = value is the same thing in a single lookup, with no intermediate object that can be silently lost.",
-      "form": "df.loc[mask, 'column'] = value   # one lookup, safe\ndf[mask]['column'] = value        # two lookups, silent failure",
+      "why": "df[mask]['column'] = value looks harmless, but it assembles a temporary object that is discarded immediately: the code runs, pandas prints a warning, and the data doesn't change at all. .loc[mask, 'column'] = value is the same thing in a single lookup, with no intermediate object that can be silently lost. .assign(column=value) shares the same goal — add a column without losing the change — but for a different case: .loc edits an existing table in place, while .assign() returns a new one and fits right in the middle of a method chain, with no intermediate variable breaking it up.",
+      "form": "df.loc[mask, 'column'] = value   # one lookup, safe\ndf[mask]['column'] = value        # two lookups, silent failure\ndf.assign(column=value)           # a new table, fits inside a chain",
       "reads": "38 pharmacies out of 144 outlets are marked segment='pharma' directly in the table, and the remaining 106 rows get a gap in that column — ordinary pandas behavior for a partial assignment.",
       "wrongWhy": "result[mask] creates a temporary object — a copy of the filtered rows with no connection to result. ['segment'] = 'pharma' adds a column to that copy specifically, and the copy is discarded immediately — result doesn't change at all, and no exception is raised in the process: pandas prints a SettingWithCopyWarning, but doesn't halt execution.",
       "selfCheck": "Assigning a value after two consecutive [][] lookups? Replace it with a single .loc[mask, 'column'] = value — the warning and the silent failure disappear together."
@@ -121,7 +121,7 @@
       "skill": "py-performance",
       "title": "Vectorization",
       "why": "apply(..., axis=1) and a vectorized operation (np.where, arithmetic on columns) often give an identical result — you can't tell them apart by value. The difference is an order of magnitude in speed: apply calls a Python function separately on every row, while a vectorized operation computes the whole column at once in optimized NumPy code.",
-      "form": "np.where(condition, if_true, if_false)   # instead of apply(lambda row: ..., axis=1)\ncolumn_a + column_b                       # instead of row-by-row string formatting",
+      "form": "df.apply(lambda row: value_if_true if condition else value_if_false, axis=1)  # slow — a Python loop over rows\nnp.where(condition, if_true, if_false)   # fast — the whole column at once\ncolumn_a + column_b                       # instead of row-by-row string formatting",
       "reads": "A price segment for every product: 'premium' above 300 ₽, otherwise 'mass' — 11 premium and 36 mass items, computed with a single vectorized comparison and not one call to apply.",
       "wrongWhy": "Python's ordinary if expects a single True/False, while result['list_price'] > 300 is a Series of 47 values at once, and Python can't decide what to treat as \"true\" here. The code fails with ValueError 'The truth value of a Series is ambiguous' — the same error as in py-select-filter when and is used instead of &. np.where is precisely the vectorized if, built for a condition that arrives as a whole column rather than a single value.",
       "selfCheck": "See apply(lambda row: ..., axis=1)? Ask whether the same thing can be expressed as a comparison or arithmetic directly on the columns (np.where, +, >, &) — it almost always can, and it's orders of magnitude faster on a large table."

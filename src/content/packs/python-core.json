@@ -33,7 +33,7 @@
       "title": "Индекс, которого нет в SQL",
       "tier": 1,
       "summary": "Помню, что у DataFrame есть индекс, и не удивляюсь, когда после groupby колонка «пропадает» — она ушла в него.",
-      "prereqs": ["py-dataframe"]
+      "prereqs": ["py-dataframe", "py-select-filter"]
     },
     {
       "id": "py-select-filter",
