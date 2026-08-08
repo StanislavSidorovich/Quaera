@@ -10,7 +10,7 @@
  */
 import initSqlJs from 'sql.js';
 import { loadPyodide } from 'pyodide';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -1956,8 +1956,19 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
     if (ok) console.log(`  ok   ${lessonsFileId}.en: перевод покрывает ${lessonsEn.length} из ${lessons.length} карточек, все id существуют`);
   };
 
-  for (const packId of ['sql-core', 'domain-core', 'python-core', 'model-core']) checkPackTranslation(packId);
-  for (const lessonsFileId of ['sql-lessons', 'domain-lessons', 'python-lessons']) checkLessonsTranslation(lessonsFileId);
+  // Список файлов перевода берётся с диска, а не задаётся руками. Захардкоженный
+  // список уже один раз промолчал: `model-lessons.en.json` появился, а в перечне
+  // его не было — гейт четыре карточки tier 4 просто не проверял и отрапортовал
+  // «в порядке». Тот же класс дефекта, что «новый трек надо подключать к плееру
+  // вручную»: пропуск не виден, потому что проверка не падает, а исчезает.
+  const packsDir = path.join(root, 'src', 'content', 'packs');
+  const enFiles = readdirSync(packsDir).filter((f) => f.endsWith('.en.json'));
+  for (const f of enFiles) {
+    const id = f.replace(/\.en\.json$/, '');
+    if (id.endsWith('-lessons')) checkLessonsTranslation(id);
+    else checkPackTranslation(id);
+  }
+  console.log(`  ok   файлов перевода на диске: ${enFiles.length}, все проверены`);
 }
 
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');

@@ -226,8 +226,9 @@ export const en = {
   },
   locale: {
     switchAriaLabel: 'Language',
+    /** См. комментарий в ru.ts: строка сторожевая, показывается только при частичном переводе пака. */
     partialNote:
-      'This track is not translated yet: its skill names and, once tasks are written, their wording and breakdowns show in Russian. The SQL, analytics and pandas tracks are fully in English.',
+      "Part of this track's content is not translated yet: task wording and breakdowns show in Russian. The translation is catching up with the content — the interface itself is fully in English.",
   },
   fontSize: {
     aria: 'Font size — tap to switch',
