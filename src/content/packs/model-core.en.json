@@ -90,6 +90,26 @@
       "id": "model-time-intelligence",
       "title": "Time intelligence",
       "summary": "I compute YTD, a rolling year, the prior period and its growth — and understand what each of these functions does to the date filter."
+    },
+    {
+      "id": "model-power-query",
+      "title": "Power Query and the preparation layer",
+      "summary": "I decide where to clean data — at the source, in Power Query, or in a measure — and I do not push cleaning into DAX out of habit."
+    },
+    {
+      "id": "model-scd2",
+      "title": "Slowly changing dimensions",
+      "summary": "I can answer \"which region did this customer belong to at the time of the sale\", not just \"which region are they in now\"."
+    },
+    {
+      "id": "model-incremental-refresh",
+      "title": "Incremental refresh",
+      "summary": "I set refresh up so the model does not reread the entire history every night for the sake of the last week."
+    },
+    {
+      "id": "model-performance",
+      "title": "Model size and speed",
+      "summary": "I know that what bloats a model is column cardinality, not row count, and I remove what nobody will ever ask for."
     }
   ],
   "tasks": [
@@ -1380,6 +1400,378 @@
         {
           "label": "It's purely a performance problem: iterating dates off the fact table is slower than off a lookup",
           "why": "Speed isn't the main issue here. A 912-row calendar is small regardless; the danger is that an incomplete calendar gives wrong numbers, not slow ones."
+        }
+      ]
+    },
+    {
+      "id": "mdl-046",
+      "title": "One outlet, four spellings",
+      "brief": "In the raw staging layer, the name of one and the same retail outlet is written several different ways. The by-outlet report shows it four times, splitting its revenue between the variants.",
+      "goal": "Work out where this should be fixed.",
+      "scenario": "staging_raw_sellout, 3,110 rows.\nOne outlet appears as:\n\n  «Пятёрочка #1026»\n  «  Пятёрочка #1026 »\n  «Пятерочка #1026»\n  «  Пятерочка #1026 »\n\nDifferences: the letter ё vs е\nand leading/trailing spaces.",
+      "predictQuestion": "Where should this be cleaned, and why not in a measure?",
+      "hints": [
+        "Ask: does the result of this cleanup depend on what is selected in the report slicers?",
+        "Think not only about the number in a measure, but about what a person sees in the filter list."
+      ],
+      "explain": "The rule for choosing where to clean comes down to one question: does the result depend on the evaluation context. Normalising «Пятерочка» and «Пятёрочка» to a single form depends on no slicer at all, so it belongs in the preparation layer — in Power Query, or in the source itself if you have any influence there. What stays in a measure is only what evaluates differently under different filters. Cleaning in Power Query has a second advantage people forget: it fixes not only the numbers but the value lists in slicers — a person sees one «Пятёрочка» instead of four. A measure cannot do that in principle, because a filter is built from the model's data, not from measure formulas.",
+      "options": [
+        {
+          "label": "In Power Query at load time: the result does not depend on what is selected in the report, and it should be computed once before the data ever enters the model",
+          "why": "Normalising spellings is an operation on the data itself, not on the result of a calculation: its outcome is identical under any slicer. Cleaned at load time, the outlet becomes a single lookup row, and no measure ever knows this problem existed."
+        },
+        {
+          "label": "In the measure, wrapping the name in TRIM and SUBSTITUTE — that way the fix needs no model refresh",
+          "why": "It needs no refresh, true, but it repeats in every measure the outlet appears in, and one day those copies will disagree. Worse: the outlet slicer will still show four «Пятёрочка» entries — a measure fixes its own calculation, not what the person sees in the filter list."
+        },
+        {
+          "label": "Nowhere: this is the data as it is, and changing it distorts the source",
+          "why": "Normalising the spellings of one entity is not distortion but the restoration of meaning: four strings describe one physical outlet. Merging genuinely different outlets would be distortion; here the differences are purely orthographic."
+        },
+        {
+          "label": "In the report visual, by configuring a grouping of similar values",
+          "why": "Grouping in a visual solves the problem for one specific report and does not carry over to the others. It is also brittle: a fifth spelling appears, silently falls outside the group, and splits the revenue again."
+        }
+      ]
+    },
+    {
+      "id": "mdl-047",
+      "title": "Four date formats in one column",
+      "brief": "In the raw staging layer, the sale-date column is filled in four different ways. The model loads it as text, and any work with dates breaks.",
+      "goal": "Work out the order of operations when untangling a column like this.",
+      "scenario": "staging_raw_sellout, 3,110 rows,\ncolumn sale_date:\n\n  ISO     2025-03-17   893\n  dots    17.03.2025   803\n  slashes 03/17/2025   764\n  short   17.03.25     650\n\nIn the units column, numbers\nare stored as text: \"2\", \"6\".",
+      "predictQuestion": "What matters most to settle before converting these dates to a date type?",
+      "hints": [
+        "Look at 03/17/2025 and imagine 07 in place of 17. How many readings appear?",
+        "Which error is worse: the one that breaks the load, or the one that yields a valid but wrong date?"
+      ],
+      "explain": "Mixed date formats are classic preparation-layer work, and the main danger in it is semantic rather than technical. The ISO and dotted formats are unambiguous: they can be parsed by rule and the result checked. The slashed format is ambiguous in principle — 03/07/2025 is both July 3rd and March 7th — and the data itself gives no answer. This is the case where the analyst's right move lies outside the tool: find out from the source's owner which convention applies there, and record the answer in a comment on the load step. The error is especially treacherous because it does not fail: the dates come out valid, the report builds, and the discrepancy surfaces months later during a reconciliation with someone else's system.",
+      "options": [
+        {
+          "label": "What 03/17/2025 means — which of the two numbers is the month. The slashed format is ambiguous, and getting the order wrong yields wrong dates wherever both numbers are twelve or less",
+          "why": "March 17th parses unambiguously only because 17 cannot be a month. But in something like 03/07/2025 both readings are valid — July 3rd and March 7th — and the choice is settled by the source's convention, not by the data. The error here is silent: the dates come out valid, just not the right ones."
+        },
+        {
+          "label": "What type to give the units column — text or number: without that the dates will not parse",
+          "why": "The types of units and sale_date are independent, and the order in which they are handled does not matter. Parsing the dates gets neither easier nor harder depending on whether units has been converted — that is a separate job in the same preparation layer."
+        },
+        {
+          "label": "How many rows are in each format — so you can keep the most common one and discard the rest",
+          "why": "None of them can be discarded: all four formats describe genuine sales, and losing 2,217 rows out of 3,110 would distort any total. Every variant has to be parsed, not chosen between."
+        },
+        {
+          "label": "Whether a single \"change type\" step is enough: if not, the column is better left as text",
+          "why": "Leaving it as text means losing all work with dates: no sorting, no relationship to the calendar, no time intelligence. Mixed formats can always be parsed; the only questions are how many steps it takes and whether the ambiguity has been resolved."
+        }
+      ]
+    },
+    {
+      "id": "mdl-048",
+      "title": "The filter that never reached the database",
+      "brief": "The load pulls five years of history, though the report only needs the last two. There is a date filter in the query, yet the refresh still takes twenty minutes.",
+      "goal": "Work out what could have broken in the load.",
+      "scenario": "Load steps:\n\n  1. Source (table in the DB)\n  2. Parse dates from text\n  3. Filter: year >= 2024\n\nThe refresh pulls every row and\nfilters on its own side.",
+      "predictQuestion": "Why did the filter not reduce the volume of the load?",
+      "hints": [
+        "The loader tries to translate the steps into a single SQL query against the source. Are all the steps translatable?",
+        "What happens to the steps that come after an untranslatable one?"
+      ],
+      "explain": "Query folding is the mechanism behind loads that look identical differing tenfold in time. As long as every step translates into SQL, the whole chain collapses into one query and the database returns a finished result. The first untranslatable step breaks the fold: it and everything after it run locally, which means the data has to be downloaded in full. Hence the practical rule about step order: everything that reduces volume — date filters, picking only the needed columns — goes as early as possible and is phrased so it translates into SQL. Text parsing, replacements and other operations SQL has no equivalent for get pushed to the end. In this case the year filter should have been expressed against the original text column before parsing — then the database would have returned just the two years needed.",
+      "options": [
+        {
+          "label": "Parsing dates from text runs inside the loader and does not translate into SQL. After a step like that the filter can no longer be sent to the database and is applied locally, to every downloaded row",
+          "why": "As long as the steps are translatable into SQL, they fold into one query against the source and the database returns data already filtered. An untranslatable step breaks that chain: everything after it is computed on the loader's side, which means the data has to be downloaded in full first."
+        },
+        {
+          "label": "A year filter does not work on a text column; it needs to be written as a string comparison",
+          "why": "By the time the filter runs, step 2 has already parsed the date, and comparing by year is correct. The problem is not that the filter failed — it worked and gave the right result — but where it was applied."
+        },
+        {
+          "label": "Twenty minutes is normal for five years; a filter never affects load speed",
+          "why": "It affects it a great deal — but only if it reaches the source. A properly folded filter makes the database return far fewer rows, and that is exactly what keeps refresh times acceptable on large models."
+        },
+        {
+          "label": "Swap the filter and the date parsing around — then it will make it into the SQL",
+          "why": "The instinct is right, but phrased this way the step will not work: you cannot filter by year before parsing, the column is still text. The fix is to express the condition so it translates into SQL before parsing — by comparing a substring, say, or filtering on the source column directly."
+        }
+      ]
+    },
+    {
+      "id": "mdl-049",
+      "title": "An outlet moved to another region",
+      "brief": "A retail outlet changed regions: it used to be in «Москва», now it is listed in «Московская обл.». One field in the lookup table was updated.",
+      "goal": "Work out what happens to last year's report.",
+      "scenario": "dim_customer — 144 outlets,\n16 regions; an outlet has one\nregion — the current one.\n\nWas:  outlet → «Москва»\nNow:  outlet → «Моск. обл.»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
+      "predictQuestion": "What does the 2024 report show after the lookup table is edited?",
+      "hints": [
+        "Where is the region of a sale physically stored — in the fact row, or in the lookup table?",
+        "The report recomputes every time it is opened. Where does it get the region for a sale that happened a year ago?"
+      ],
+      "explain": "An ordinary lookup table answers the question \"which region is this outlet in now\" — and that is the only question it can answer. A report for last year asks a different one: \"which region was it in at the time of the sale.\" The difference between these questions is invisible while nothing changes, and it surfaces silently on the day the lookup gets edited: the regional total changes retroactively, nothing breaks, nobody gets a warning. This is the same class of error as the frozen column in mdl-016, only mirrored — there a value failed to recompute when it should have, here it recomputed when it should not have. The fix is versioning the lookup table, where each state has its own period of validity and the fact references the version that was current on the date of the event.",
+      "options": [
+        {
+          "label": "This outlet's entire 2024 sales history moves to «Московская обл.», as if it had always been there",
+          "why": "The fact stores a reference to the outlet, not to a region: the region is taken from the lookup table at the moment the report is built. The lookup only knows the current value, so the whole history is recomputed against it — silently and retroactively."
+        },
+        {
+          "label": "The 2024 report will not change: it was built against the old lookup and stores the region as saved",
+          "why": "Nothing is saved — the report is recomputed every time it is opened, and the region is fetched from the lookup each time. That is precisely the problem: the past gets rewritten along with the lookup table."
+        },
+        {
+          "label": "This outlet's 2024 sales will disappear: the link to the old region is broken",
+          "why": "The relationship runs through customer_id, which did not change — the sales are not going anywhere. Only the region they land in when grouped changes, and that is more dangerous than disappearing: a disappearance would be noticed immediately."
+        },
+        {
+          "label": "The model will refuse to refresh and demand a date for the change",
+          "why": "An ordinary lookup table knows nothing about time at all — it has neither a date field nor a versioning mechanism. Demanding a change date is exactly what SCD2 does, but it has to be designed first: the model will not ask for it on its own."
+        }
+      ]
+    },
+    {
+      "id": "mdl-050",
+      "title": "A \"previous region\" column",
+      "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table — then the old value would be preserved.",
+      "goal": "Work out whether this actually solves the problem.",
+      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Москва»\n  until 2025-03 — «Моск. обл.»\n  now — «Калужская обл.»",
+      "predictQuestion": "What does this solution fail to solve?",
+      "hints": [
+        "The outlet moved twice. How many states fit into two columns?",
+        "Take a sale from January 15th 2025. Which column determines its region, and how would you know?"
+      ],
+      "explain": "A \"previous value\" column is a tempting solution because it looks like a small edit. It breaks for two independent reasons, and the second matters more than the first. The obvious one: you cannot know the number of states in advance, and the second move already needs a third column. The non-obvious and fundamental one: even with a complete set of columns you cannot match a sale to a version, because the versions have no periods of validity. SCD2 solves both at once by changing not the set of columns but the shape of storage: a customer gets as many rows as they have had states, each with its own \"valid from — valid to\" interval, and the fact references whichever was current on the date of the event. The number of changes then stops mattering — the structure works the same for one move and for ten.",
+      "options": [
+        {
+          "label": "Neither: the first move is already lost, and more importantly, the column cannot answer which region was in effect on a specific sale date",
+          "why": "Two columns cover one change, and there were two — «Москва» has already been pushed out. But even with a single move an unanswerable question remains: does a sale from January 15th 2025 belong to the \"current\" region or the \"previous\" one? Without validity dates there is no answer."
+        },
+        {
+          "label": "It solves it completely: a measure just picks the right column depending on the report year",
+          "why": "You can only pick by year if you know when the move happened — and that information is not in the lookup table. And even if it were, a rule of \"one column before this year, another after\" falls apart on the second change."
+        },
+        {
+          "label": "The only thing it fails to solve is performance: two columns double the size of the lookup",
+          "why": "A 144-row lookup table is the cheapest table in the model, and an extra column in it costs nothing. The problem here is purely semantic: the structure cannot answer the question it was built for."
+        },
+        {
+          "label": "It fails only in the case where the outlet moved back to its earlier region",
+          "why": "Moving back is a special case of the same general problem: any third version pushes out the first. But even with no moves back, the construction does not work, because it does not know the dates, and so cannot match a sale to a version."
+        }
+      ]
+    },
+    {
+      "id": "mdl-051",
+      "title": "Not every attribute needs versioning",
+      "brief": "After working through the region problem, the team decides to version the entire customer lookup table — every attribute across the board.",
+      "goal": "Work out which attributes this is justified for.",
+      "scenario": "dim_customer attributes:\n\n  region_id     region\n  channel       sales channel\n  chain_name    retail chain\n  customer_name name\n  opened_date   opening date\n\nBusiness questions differ:\nsome ask \"how it was then\",\nothers \"how it is now\".",
+      "predictQuestion": "What tells you whether an attribute should be versioned?",
+      "hints": [
+        "Split changes into two kinds: \"the object became different\" and \"we were describing it wrong\".",
+        "What should happen to an old report if a typo in an outlet's name is corrected?"
+      ],
+      "explain": "SCD2 is not a mode you switch on for a whole lookup table — it is a decision made per attribute, and it follows from one question: does the change reflect a new state of the object, or correct an error in its description? Moving to another region and switching sales channel are new states: last year's report should show what was true then, otherwise history gets rewritten. A corrected typo in a name is a description error: it has to propagate across the entire history, otherwise the lists show two objects where there is one. Hence the standard practice: both kinds coexist in one lookup table, some attributes versioned (SCD2), others overwritten (SCD1). Telling them apart is work the analyst does with the business, not a technical default.",
+      "options": [
+        {
+          "label": "By whether old reports should change along with the attribute. Region and channel affect sales history — version those; a corrected typo in a name should change everywhere",
+          "why": "The question is not technical but substantive: is a change to the attribute a new state of the object, or a correction of an error in its description? A new state needs a version so the past stays the past; a corrected typo has to propagate across the whole history, otherwise reports will carry two spellings of one outlet."
+        },
+        {
+          "label": "Every attribute should be versioned: you cannot know in advance which one will be needed historically",
+          "why": "Every version multiplies the lookup table's rows and complicates every relationship with the fact table. Versioning typos is also harmful in substance: it permanently preserves the wrong spelling alongside the right one as two distinct objects."
+        },
+        {
+          "label": "By how often it changes: what changes often is expensive to version, so it should not be",
+          "why": "Frequency determines the size of the lookup table, not the need for history. An attribute that changes often and matters for historical reporting needs versioning all the more — that is exactly where the drift accumulates fastest."
+        },
+        {
+          "label": "By data type: text attributes get versioned, numbers and keys do not",
+          "why": "A data type says nothing about the meaning of a change. Region is stored as a numeric key and does need versioning, while a name is text — and for a typo correction, precisely no version is wanted."
+        }
+      ]
+    },
+    {
+      "id": "mdl-052",
+      "title": "The night no longer fits into the night",
+      "brief": "The model does a full refresh every night and rereads the entire history. The refresh window has stopped fitting before morning.",
+      "goal": "Work out what share of the work is done for nothing.",
+      "scenario": "fact_sellout — 118,449 rows:\n\n  2024   48,391\n  2025   47,122\n  2026   22,936\n\nThe last three months brought\n11,353 rows.\n\nHistory is not edited\nafter the fact.",
+      "predictQuestion": "What share of the rows is worth rereading every night?",
+      "hints": [
+        "How many of the 118,449 rows could have changed since last night, if history is not edited?",
+        "Note the condition in the task: history is not edited after the fact. What follows from that?"
+      ],
+      "explain": "Incremental refresh slices the fact table into partitions by date and rereads only those changes could have arrived in. The gain is directly proportional to the share of fresh data: 11,353 rows out of 118,449 means nine tenths of the nightly work is done for nothing. The key condition, without which none of this works, is hidden in the premise itself — history is not edited after the fact. That is exactly the statement to check with the business before configuring anything: the depth to which corrections genuinely arrive is what sets the boundary of the refreshed partitions. Getting it wrong here is dangerous because the drift shows up as neither an error nor a warning — the model simply spends years showing a version the source corrected long ago.",
+      "options": [
+        {
+          "label": "About a tenth — the 11,353 rows from the last three months. The other 107,000 have not changed and are reread for nothing",
+          "why": "Only what changes could have arrived in needs refreshing. Given that history is not edited, that means the recent months: 11,353 rows out of 118,449 — less than a tenth of the work instead of all of it."
+        },
+        {
+          "label": "All 118,449 — otherwise the integrity of the model cannot be guaranteed",
+          "why": "Integrity is provided by partitioning, not by rereading everything. Partitions for earlier years stay exactly as they were loaded, and their contents do not depend on whether they were refreshed that night."
+        },
+        {
+          "label": "Only 2026 — 22,936 rows, because partitions are conventionally annual",
+          "why": "An annual partition is one option, not a rule. The boundary is chosen by how deep changes genuinely arrive: if history is not edited, three months is enough, and the work comes out half as large again."
+        },
+        {
+          "label": "Half — the last full year of data, as a safety margin against late corrections",
+          "why": "A safety margin \"just in case\" costs exactly the volume that gets reread for nothing. It is better to find out the real depth of corrections from the business and set the boundary by it than to guess at a buffer."
+        }
+      ]
+    },
+    {
+      "id": "mdl-053",
+      "title": "The correction that never arrived",
+      "brief": "Incremental refresh is configured for the last three months. An error in March 2025 sales was corrected in the source — nearly a year ago.",
+      "goal": "Work out what the model shows after the next refresh.",
+      "scenario": "Partitions refreshed:\n  last 3 months — yes\n  anything earlier — no\n\nA sale from March 2025 was\ncorrected in the source.\n\nThe refresh completed fine,\nno errors in the log.",
+      "predictQuestion": "What does the model show for March 2025 after the refresh?",
+      "hints": [
+        "The model does not read the old partitions at all. How would it learn that something changed in the source?",
+        "Note that there are no errors in the log. Is that a good sign or a worrying one?"
+      ],
+      "explain": "Incremental refresh is a contract: history is immutable, therefore it need not be reread. As long as the contract holds, everything works. The moment old data gets corrected in the source, the model and the source diverge — and diverge silently, because there is no detection mechanism here by construction: any check would mean reading exactly what was decided not to read. Two practical consequences follow. First: the depth of refreshed partitions is set not by technical convenience but by the real depth of corrections in the business process. Second: when a retroactive correction does happen — and it does — you need a manual way to reload a specific partition, and that way has to be written down in advance, not invented at the moment the discrepancy is discovered.",
+      "options": [
+        {
+          "label": "The old, uncorrected value — the March 2025 partition was not refreshed, and the correction never reached the model. And there will be no sign of the discrepancy at all",
+          "why": "A partition excluded from refresh lives on as a snapshot from its last load. The source and the model diverge silently: the refresh ran normally over its own partitions, the log is clean, and the number in the report stayed as it was."
+        },
+        {
+          "label": "The new value — the model compares partition checksums and pulls in the one that changed",
+          "why": "No checksum comparison happens: the whole point of the mechanism is not to touch the old partitions at all. Any check of their contents would require exactly the reading the whole thing was set up to avoid."
+        },
+        {
+          "label": "The refresh will fail with a data mismatch error",
+          "why": "There is nothing to fail on — the model does not know anything changed in the source and does not try to find out. The absence of an error is the real danger here: the discrepancy looks like normal operation."
+        },
+        {
+          "label": "Blank — the March 2025 partition will be flagged as stale and excluded from reports",
+          "why": "There is no staleness flag on partitions, and the data does not disappear. The partition keeps taking part in reports on equal terms with the rest, just with the contents it had at its last load."
+        }
+      ]
+    },
+    {
+      "id": "mdl-054",
+      "title": "Where the partition boundary runs",
+      "brief": "Incremental refresh is being configured. You need to pick the column to slice the table into partitions by — and the shipments fact has two dates.",
+      "goal": "Work out which column is suitable for partitioning.",
+      "scenario": "fact_sellin, two dates:\n\n  order_date  order date\n  ship_date   shipment date,\n              2-11 days later\n\n1,979 orders out of 15,362\nship in the following month.\n\nThe order creates the row,\nshipment is filled in later.",
+      "predictQuestion": "Which date should partitions be sliced by, and why does it matter?",
+      "hints": [
+        "A partition is determined when the row is loaded. Which of the two dates is already known by then and will never change?",
+        "Picture a row loaded on March 30th with an empty shipment date. Where does it end up when the shipment is filled in on April 4th?"
+      ],
+      "explain": "The column used for partitioning has to have one property that is easy to overlook: it must be known the moment the row appears and never change afterward. order_date qualifies — an order is dated when it is created. ship_date gets filled in later, and a row already placed in the March partition would formally need to move to the April one; the mechanism does not support such a move, and the result is data sitting in the wrong partition, which breaks both the refresh and date filtering. The general rule: partition by the date of the event that creates the row, not by the date of its later processing. If reporting is needed specifically by shipment date, that is solved by a role-playing calendar (see the inactive relationship and USERELATIONSHIP), not by the choice of partitioning column.",
+      "options": [
+        {
+          "label": "By order_date — a row lands in its partition once and never changes it. Partitioning by ship_date means a row can move between partitions when the shipment is filled in",
+          "why": "A partition is determined at the moment the row is loaded. order_date is known immediately and does not change, so the row stays in its partition forever. ship_date is filled in later — a row loaded as a March one would have to end up in the April partition once shipment is recorded, and the mechanism has no provision for such a move."
+        },
+        {
+          "label": "By ship_date — a shipment is a completed event, whereas an order can be cancelled",
+          "why": "How complete an event is matters for the meaning of a report, but not for partitioning. What is critical for partitions is a different property — immutability: the column must determine the partition once and for all, otherwise rows start migrating between partitions."
+        },
+        {
+          "label": "By either — partitions get rebuilt on every refresh anyway",
+          "why": "Partitions specifically do not get rebuilt — that is the entire point of the mechanism: the old ones stay untouched. Which is exactly why the choice of column is irreversible and determines correctness for the whole life of the model."
+        },
+        {
+          "label": "By both at once — build a two-dimensional partitioning to cover either scenario",
+          "why": "Two-dimensional partitioning multiplies the number of partitions sharply and complicates maintenance without solving the original problem: a row would still migrate along one of the dimensions once the shipment was recorded."
+        }
+      ]
+    },
+    {
+      "id": "mdl-055",
+      "title": "The most expensive column",
+      "brief": "The model takes up too much memory. You need to work out which column of the fact table costs the most.",
+      "goal": "Identify the most expensive column and the reason.",
+      "scenario": "fact_sellout — 118,449 rows.\nDistinct values per column:\n\n  sellout_id   118,449\n  revenue       86,389\n  units            154\n  week_start       131\n  product_id        47",
+      "predictQuestion": "Which column takes up the most space, and why?",
+      "hints": [
+        "The engine compresses a column better the fewer distinct values it holds. Where are there most of them?",
+        "Ask of every column: does anyone display it in a report or filter by it?"
+      ],
+      "explain": "A columnar store compresses data by replacing values with references into a dictionary of distinct values. The smaller the dictionary, the tighter the compression: product_id with 47 values is stored almost for free, week_start with 131 nearly so. A column where every value is unique has no dictionary at all and is stored as is, becoming the most expensive one in the table. A row surrogate key is the classic example of such a column — and at the same time it is entirely useless in a report: nobody groups or filters by a row identifier. Removing it from the model is the cheapest optimisation available: a noticeable memory win with not a single capability lost. A habit worth forming: before discussing how much history to keep, sort the columns by distinct-value count and check whether everything at the top is genuinely needed by the report.",
+      "options": [
+        {
+          "label": "sellout_id — 118,449 distinct values across 118,449 rows. A column where every value is unique does not compress at all, and the report never needs it once",
+          "why": "The engine stores data by column and compresses it by replacing repeated values with references into a dictionary. A row surrogate key has no repeats, so the dictionary equals the column itself and compression gains nothing. Meanwhile a row surrogate key is never displayed in a report or filtered by."
+        },
+        {
+          "label": "week_start — dates take more space than numbers, and there are 131 distinct values",
+          "why": "131 distinct values across 118,449 rows is excellent compressibility: a 131-entry dictionary and short references into it. The data type is secondary here; what decides is the number of distinct values."
+        },
+        {
+          "label": "revenue — 86,389 values and a fractional type, the most expensive of the lot",
+          "why": "revenue really is the second most expensive column, and it is worth discussing — rounding to kopecks or to whole roubles if that precision is not needed. But at least it is used in reports, unlike a row identifier."
+        },
+        {
+          "label": "All roughly the same: space is determined by row count, and that is identical for every column",
+          "why": "The row count is identical, the space is not: a column with 47 distinct values compresses many times better than one with 118,449. That is exactly why shrinking a model starts with columns, not with rows."
+        }
+      ]
+    },
+    {
+      "id": "mdl-056",
+      "title": "Trimming history for the sake of size",
+      "brief": "The model needs to be smaller. The proposal is to drop 2024 — that would cut the rows almost in half.",
+      "goal": "Work out the real effect of such a decision.",
+      "scenario": "fact_sellout — 118,449 rows:\n  2024  48,391\n  2025  47,122\n  2026  22,936\n\nDrop 2024 and:\n  70,058 rows remain (−41%)\n\nPrices, amounts and products\nrepeat across years.",
+      "predictQuestion": "How much smaller does the model get, and what is lost?",
+      "hints": [
+        "How many distinct products remain after dropping a year? And how many were there before?",
+        "Which matters more to the business — freeing memory, or keeping the ability to compute growth against last year?"
+      ],
+      "explain": "Trimming history is intuitively the most obvious way to shrink a model and almost always the least rewarding. A column's weight is made up of its dictionary of distinct values plus the references into it; deleting rows only reduces the second part, while the first — the bulk of the weight for expensive columns — stays nearly untouched, because values repeat across years. What gets given up in exchange is year-over-year comparison, which is exactly the capability history is kept for. The right order is the reverse: first remove columns that appear in no report (see mdl-055), then reduce precision where it is excessive — rounding amounts, for instance — and only then, if that was not enough, discuss the depth of history with the business as a deliberate trade-off.",
+      "options": [
+        {
+          "label": "Noticeably less than 41%: the number of distinct values in the expensive columns barely changes. And year-over-year comparison is lost for good",
+          "why": "Size is determined by dictionaries of distinct values, and those overlap between years: the same 47 products, largely repeating prices and amounts. Rows drop by 41%, dictionaries barely shrink. In exchange, the ability to compute growth against last year disappears — the single most common request in reporting."
+        },
+        {
+          "label": "Exactly 41% — however many rows you removed, that much space is freed",
+          "why": "There is no direct proportion between rows and size in a columnar store. The references into the dictionary do shrink proportionally, but the dictionaries themselves — the bulk of the weight of the expensive columns — stay nearly as they were."
+        },
+        {
+          "label": "More than 41%: deleting rows also improves compression of the ones left",
+          "why": "Compression of the remaining data does not improve when neighbouring rows are removed — dictionaries are built from the values that remain. There is no gain to expect beyond the share of rows deleted."
+        },
+        {
+          "label": "It will not shrink at all: a columnar store does not depend on row count",
+          "why": "The dependency exists, it is just not linear: there will be proportionally fewer references into the dictionary. There is a gain, it is simply far more modest than the share of deleted rows suggests."
+        }
+      ]
+    },
+    {
+      "id": "mdl-057",
+      "title": "Precision you pay for",
+      "brief": "After removing the row identifier the model is still a bit large. Next up is the second most expensive column — revenue, with 86,389 distinct values.",
+      "goal": "Work out how to reduce its weight without losing meaning.",
+      "scenario": "revenue — 86,389 distinct\nvalues across 118,449 rows.\n\nValues look like:\n  398.31   399.28   601.40\n\nReports show revenue in\nthousands and millions of ₽;\nkopecks appear nowhere.",
+      "predictQuestion": "What reduces the column's weight without breaking the reports?",
+      "hints": [
+        "What is a column's dictionary made of, and what in the value 398.31 multiplies it hardest?",
+        "Ask what precision the reports actually display. Does it match what is stored?"
+      ],
+      "explain": "After removing the obviously unneeded columns, the next technique is reducing precision where it is excessive. Kopecks in a revenue column nearly double the dictionary and take part in no report that shows totals in thousands: that is payment for precision nobody uses. Rounding at load time cuts the number of distinct values and changes not a single visible figure. What matters is that this is a deliberate trade-off, not a free optimisation: rounding is irreversible, and if a kopeck-level reconciliation with accounting is needed tomorrow, the data for it will no longer be in the model. So the decision is made together with the business and written down, not done silently. The general order for optimising a model: unneeded columns first, excessive precision second, and only last of all, the depth of history.",
+      "options": [
+        {
+          "label": "Round to whole roubles at load time: the number of distinct values drops, and reports that show revenue in thousands will not notice a thing",
+          "why": "A column's dictionary consists of its distinct values, and kopecks multiply them almost for nothing: 398.31 and 398.47 are two dictionary entries for a difference no report displays. Rounding to whole roubles shrinks the dictionary and affects not one visible figure."
+        },
+        {
+          "label": "Delete the revenue column and compute revenue as units × price from the lookup table",
+          "why": "List price and actual sale price are different quantities (see mdl-009): sales happen at discounts and on promotion. Such a calculation would give revenue without discounts — replacing a correct number with a wrong one to save memory."
+        },
+        {
+          "label": "Split revenue into two columns — roubles and kopecks separately, each with a smaller dictionary",
+          "why": "The combined dictionary of the two columns will be no smaller, and working with revenue gets more complicated in every measure. The technique is occasionally used for very large numbers, but here it only adds complexity with no gain."
+        },
+        {
+          "label": "Do nothing: reports need revenue, so its weight is a mandatory cost",
+          "why": "What is needed is not the whole column but its significant part. The cost is mandatory for the precision actually used, and kopecks in reports that deal in millions are never used."
         }
       ]
     }

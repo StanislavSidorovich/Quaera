@@ -164,6 +164,50 @@
       "wrong": "Apply these functions to a calendar that has gaps — a date table built from dates that actually occurred in the facts, say.",
       "wrongWhy": "Time intelligence functions assume a continuous calendar: they compute \"the prior period\" by shifting dates, not by looking up a neighbouring row. A gap in the calendar silently breaks that shift. In our model, dim_date holds 912 consecutive days with not a single gap — 2025 is represented by all 365 of its days, including ones with no sales at all.",
       "selfCheck": "Check the calendar for continuity: its row count should equal the difference between its earliest and latest dates, plus one. If it doesn't match, complete the calendar first, then write YTD."
+    },
+    {
+      "skill": "model-power-query",
+      "title": "Power Query and the preparation layer",
+      "why": "Dirt in the data always has to be cleaned; the only question is where. The temptation is to clean it in a measure, because that is closest at hand and needs no refresh. The price of that decision becomes clear six months later, when there are forty measures and each has its own version of the cleanup.",
+      "form": "Three places you can clean, in order of preference:\n\n  at the source — if you have any influence there: the fix reaches every consumer at once\n  in Power Query — at load time, once per model, before the data lands in tables\n  in a measure — only what depends on the evaluation context and cannot be computed in advance",
+      "example": "In staging_raw_sellout one outlet, «Пятёрочка #1026», appears in four spellings: with «ё» and with «е», with and without spaces at the edges. Plus 110 duplicates, 84 empty units and four different date formats across 3,110 rows. All of it is fixed in Power Query, once, at load time.",
+      "reads": "After the preparation layer, one outlet enters the model instead of four, and no measure ever knows this problem existed.",
+      "wrong": "Leave it as is and write TRIM with an «ё»-to-«е» replacement into every measure: CALCULATE(SUM(revenue), SUBSTITUTE(TRIM(customer_name), \"ё\", \"е\") = ...).",
+      "wrongWhy": "First, this repeats in every measure the outlet name appears in, and one day those copies will disagree. Second, the outlet slicer will still show four variants of one «Пятёрочка» — a measure cleans its own calculation, not what the person sees in the filter list. Third, a formula like that is evaluated on every query, whereas Power Query would have done the work once overnight.",
+      "selfCheck": "Ask of every cleanup: does its result depend on what is selected in the report? If not, it belongs in Power Query or at the source, not in a measure."
+    },
+    {
+      "skill": "model-scd2",
+      "title": "Slowly changing dimensions",
+      "why": "A customer moved to another region, a product was reassigned to another category, a rep was moved to another team. An ordinary lookup table holds only the current value — and the entire sales history is instantly rewritten retroactively, without a trace in the report.",
+      "form": "SCD type 1 — overwrite: only the current value is kept, history is lost.\n\nSCD type 2 — versioning: every change adds a new row with its own validity range (valid from / valid to), and the fact references the version that was current at the time of the event.",
+      "example": "dim_customer holds 144 retail outlets and 16 regions, and every outlet has one region — the current one. If an outlet moved from «Москва» to «Московская обл.», a \"sales by region for 2024\" report will show its entire history in the new region, as if it had always been there.",
+      "reads": "There is no error in the data: the lookup table honestly answers \"where is this outlet now\". The report was simply asking a different question — \"where was it at the time of the sale\".",
+      "wrong": "Solve the problem by adding a \"previous region\" column to the lookup table.",
+      "wrongWhy": "That covers exactly one move. The second move needs a \"region before last\", and so on — and more importantly, none of those columns answers which region was in effect on a specific sale date. SCD2 solves the problem generally: a customer gets as many rows as they have had states, and the fact references the right one by date.",
+      "selfCheck": "Ask of every lookup attribute: if it changes, should old reports change along with it, or stay as they were? The latter means you need SCD2."
+    },
+    {
+      "skill": "model-incremental-refresh",
+      "title": "Incremental refresh",
+      "why": "The model refreshes overnight and rereads the entire history. While the data is small, nobody notices. Once the refresh window stops fitting into the night, it turns out 90% of the work is being done for data that has not changed in years.",
+      "form": "The fact table is sliced into partitions by date. Only the partitions changes could have arrived in get refreshed — usually the last few weeks or months.\n\nThe rest stay as they are and are not reread at all.",
+      "example": "fact_sellout holds 118,449 rows over two and a half years: 48,391 for 2024, 47,122 for 2025 and 22,936 for 2026. The last three months account for 11,353 rows, less than a tenth. Refreshing only those means doing a tenth of the work instead of all of it.",
+      "reads": "2024's data will never change again, yet it is reread every night on equal terms with the fresh rows. Partitioning by date removes exactly that work.",
+      "wrong": "Configure incremental refresh and carry on editing historical data — correcting errors in last year's sales retroactively, say.",
+      "wrongWhy": "A partition that is no longer refreshed lives a life of its own: a correction in the source simply never reaches it, and the model will spend years showing the old version of the figure without giving any sign of the discrepancy. Incremental refresh is a contract stating that history is immutable, and it has to be either honoured or broken deliberately by reloading the partition by hand.",
+      "selfCheck": "Before switching incremental refresh on, ask the business: is anything corrected retroactively, and how far back? The depth of corrections is what sets the boundary the partitions must refresh to."
+    },
+    {
+      "skill": "model-performance",
+      "title": "Model size and speed",
+      "why": "The model has bloated, the report takes half a minute to open — and the first instinct is usually to start deleting rows. That is almost always beside the point: the engine stores data by column and compresses it by the number of distinct values, not by the number of rows.",
+      "form": "A column's cost is determined by its cardinality — the number of distinct values.\n\nA column with 47 values across 118,449 rows compresses to almost nothing. A column with 118,449 distinct values does not compress at all and becomes the most expensive one in the model.",
+      "example": "fact_sellout has 118,449 rows. product_id has 47 distinct values, week_start 131, units 154, revenue 86,389. And sellout_id, the row surrogate key, is distinct across all 118,449 — the most expensive column in the table, and one nobody will ever ask for in a report.",
+      "reads": "Removing sellout_id alone from the model strips more weight than deleting half the rows — and costs you not a single reporting capability.",
+      "wrong": "Shrink the model by trimming history: drop 2024 so the row count halves.",
+      "wrongWhy": "The rows halve, but the distinct values in the expensive columns barely do: prices, amounts and identifiers repeat little between years. The gain will be far smaller than expected, and year-over-year comparison is lost for good. Start with columns the report does not need at all, and only then discuss the depth of history.",
+      "selfCheck": "Sort the table's columns by distinct-value count and look at the top ones. Ask of each: does anyone display it in a report or filter by it? If not, it does not belong in the model."
     }
   ]
 }
