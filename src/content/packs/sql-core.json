@@ -49,7 +49,7 @@
       "title": "NULL и трёхзначная логика",
       "tier": 2,
       "summary": "Вижу, где NULL молча съедает строки, и знаю разницу между «пусто» и «ноль».",
-      "prereqs": ["sql-where"]
+      "prereqs": ["sql-where", "sql-order-limit"]
     },
     {
       "id": "sql-aggregate",
@@ -65,7 +65,7 @@
       "title": "Группировка и гранулярность",
       "tier": 2,
       "summary": "Осознанно выбираю уровень детализации отчёта и проверяю, что группировка ему соответствует.",
-      "prereqs": ["sql-aggregate"]
+      "prereqs": ["sql-aggregate", "sql-order-limit"]
     },
     {
       "id": "sql-having",
@@ -145,7 +145,7 @@
       "title": "Разбор бизнес-ситуации",
       "tier": 4,
       "summary": "Раскладываю изменение показателя на факторы и отвечаю на вопрос «почему», а не только «сколько».",
-      "prereqs": ["sql-window-frame", "sql-case"]
+      "prereqs": ["sql-window-frame", "sql-case", "sql-join-left"]
     }
   ],
   "tasks": [
