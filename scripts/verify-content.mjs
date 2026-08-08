@@ -501,13 +501,28 @@ function checkTheoryIntroducesConstructs(pack, lessons) {
   const skillById = new Map(pack.skills.map((s) => [s.id, s]));
   const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
 
+  /**
+   * Считаем приём введённым, только если он есть в form, example или wrong —
+   * то есть в коде, который человек видит целиком и может выполнить кнопкой.
+   *
+   * Раньше сюда шли все поля карточки, и упоминание приёма в прозе гейт
+   * успокаивало. Это ровно та дыра, ради которой проверка писалась: исходная
+   * жалоба и была про COALESCE, который стоял в блоке «Как это пишется»
+   * и один раз в самопроверке, а объяснения и показа не имел. Прозаическое
+   * упоминание отличить от введения нельзя, показ в коде — можно.
+   *
+   * Ужесточение бесплатное: на момент правки строгое правило давало ноль
+   * находок на обоих треках, то есть весь контент уже ему удовлетворял.
+   * Ценность не в сегодняшних находках, а в том, что назвать приём в прозе
+   * и тем закрыть гейт больше нельзя.
+   */
   function corpus(skillId, seen = new Set()) {
     if (seen.has(skillId)) return '';
     seen.add(skillId);
     const skill = skillById.get(skillId);
     if (!skill) return '';
     const l = lessonBySkill.get(skillId);
-    let text = l ? [l.title, l.why, l.form, l.example, l.reads, l.wrong, l.wrongWhy, l.selfCheck].join(' ') : '';
+    let text = l ? [l.form, l.example, l.wrong].filter(Boolean).join(' ') : '';
     for (const p of skill.prereqs) text += ' ' + corpus(p, seen);
     return text.toLowerCase();
   }
