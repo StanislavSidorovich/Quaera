@@ -299,6 +299,7 @@ export const ru = {
     ariaLabel: 'Схема данных',
     copyAria: (name: string) => `Скопировать «${name}»`,
     copied: 'Скопировано',
+    periodLabel: (from: string, to: string) => `Период данных: ${from} — ${to}`,
   },
   result: {
     stdoutLabel: 'Вывод print()',

@@ -74,7 +74,7 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
           <>
             <h2>{t.schema.title}</h2>
             <p className="muted" style={{ marginTop: 0 }}>
-              {doc.company}. Период данных: {doc.period.from} — {doc.period.to}.
+              {doc.company}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
             </p>
             {doc.tables.map((table) => (
               <details key={table.table} className="table-doc">

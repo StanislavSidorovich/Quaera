@@ -217,6 +217,7 @@ export const en = {
     ariaLabel: 'Data schema',
     copyAria: (name: string) => `Copy "${name}"`,
     copied: 'Copied',
+    periodLabel: (from: string, to: string) => `Data period: ${from} — ${to}`,
   },
   result: {
     stdoutLabel: 'print() output',
