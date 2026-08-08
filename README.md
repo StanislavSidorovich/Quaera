@@ -6,6 +6,7 @@
 офлайн, без сервера и без регистрации.
 
 Приложение: [querium.pages.dev](https://querium.pages.dev)
+Автор: Станислав Сидорович — [LinkedIn](https://www.linkedin.com/in/stanislavsidorovich)
 
 Четыре трека наполнены целиком — **226 заданий, 69 навыков**:
 
@@ -202,7 +203,11 @@ Service worker регистрируется только в продакшен-�
 включая кириллические значения датасета (бренды, города), которые
 одинаковы на любой локали.
 
-## Лицензия
+## Автор и лицензия
+
+Станислав Сидорович — [LinkedIn](https://www.linkedin.com/in/stanislavsidorovich).
+Ошибку в задании, спор с разбором или вопрос по коду можно принести
+в [issues](https://github.com/StanislavSidorovich/Querium/issues).
 
 Код (`src/`, `scripts/`, конфиги) — [Apache-2.0](LICENSE).
 

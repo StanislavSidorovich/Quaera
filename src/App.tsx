@@ -30,6 +30,24 @@ import {
 
 const SESSION_SIZE = 5;
 
+/**
+ * Автор и его публичные ссылки.
+ *
+ * Живут в коде, а не в i18n: адреса одинаковы на любой локали, а имя
+ * различается только транслитерацией — её и держит перевод. Это первые
+ * и пока единственные внешние ссылки в приложении, поэтому у них
+ * `rel="noreferrer"`: обе ведут на профили, и передавать туда заголовок
+ * Referer с адресом приложения незачем.
+ *
+ * Зачем вообще в интерфейсе, а не только в LICENSE: приложение раздаётся
+ * по HTTP отдельно от репозитория, и человек, открывший querium.pages.dev,
+ * файлов лицензий не видит вовсе. Без этого блока у него нет ни способа
+ * узнать, кто автор, ни способа связаться — при том что контент отдан
+ * под CC BY-NC-SA, которая требует указания авторства при переиспользовании.
+ */
+const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/stanislavsidorovich';
+const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Querium';
+
 type FontSize = 'md' | 'lg' | 'xl';
 const FONT_SIZE_ORDER: FontSize[] = ['md', 'lg', 'xl'];
 const FONT_SIZE_STORAGE_KEY = 'querium-font-size';
@@ -1368,6 +1386,30 @@ function About({
             {importStatus === 'ok' ? t.about.importSuccess : t.about.importError}
           </p>
         )}
+      </div>
+
+      {/*
+       * Автор, связь и лицензия — закрывающий блок экрана.
+       *
+       * Стоит последним намеренно: человек, открывший «О тренажёре», пришёл
+       * за тем, что это и как устроено, а не за тем, кто это сделал. Но
+       * дочитавшему до конца больше некуда пойти — это единственное место
+       * во всём приложении, откуда можно выйти на автора или на исходники.
+       */}
+      <div className="card">
+        <h2>{t.about.authorTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.authorBody}</p>
+        <div className="row">
+          <a className="btn secondary" href={AUTHOR_LINKEDIN} target="_blank" rel="noreferrer">
+            {t.about.linkedinBtn}
+          </a>
+          <a className="btn secondary" href={AUTHOR_REPO} target="_blank" rel="noreferrer">
+            {t.about.repoBtn}
+          </a>
+        </div>
+        <p className="muted" style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55 }}>
+          {t.about.licenseBody}
+        </p>
       </div>
     </>
   );

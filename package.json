@@ -4,6 +4,16 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Мобильный тренажёр аналитика данных: SQL, модель данных, pandas, доменные метрики FMCG/pharma",
+  "author": "Stanislav Sidorovich (https://www.linkedin.com/in/stanislavsidorovich)",
+  "license": "Apache-2.0",
+  "homepage": "https://querium.pages.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StanislavSidorovich/Querium"
+  },
+  "bugs": {
+    "url": "https://github.com/StanislavSidorovich/Querium/issues"
+  },
   "scripts": {
     "sync:sqljs": "node scripts/sync-sqljs.mjs",
     "sync:pyodide": "node scripts/sync-pyodide.mjs",

@@ -126,6 +126,13 @@ export const en = {
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
     importError: "Doesn't look like a Querium progress file — check you picked the right one",
+    authorTitle: 'Author and licence',
+    authorBody:
+      'Querium was built by Stanislav Sidorovich — an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
+    linkedinBtn: "Author's LinkedIn",
+    repoBtn: 'Source code on GitHub',
+    licenseBody:
+      'The application code is under Apache-2.0. The learning content (tasks, explanations, technique cards, the dataset storylines) is under CC BY-NC-SA 4.0: you may reuse it with attribution to the author, for non-commercial purposes, and keeping the same licence on anything derived from it.',
     tracksWhyTitle: 'Why these tracks, in this order',
     tracksWhyBody:
       "This mirrors how the work actually flows. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
