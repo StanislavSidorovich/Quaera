@@ -361,14 +361,14 @@
     },
     {
       "id": "py-017",
-      "title": "A shipment's share of the product's yearly volume",
-      "brief": "The «Хрустик» brand manager wants to see how each product's shipments are spread across the whole sales history — a noticeable jump for one SKU in June looks more like a promo than organic demand.",
-      "goal": "Add a unit_share column to fact_sellout — this row's share of units in the sum of units for the same product_id over the whole period of the table.",
+      "title": "How concentrated a distributor's purchases are",
+      "brief": "The distributor KAM is preparing annual-terms negotiations and wants to understand concentration: whose purchases are spread across the whole assortment, and whose few positions make up the lion's share of volume — the discount conversation goes differently with the latter.",
+      "goal": "Add a line_share column to fact_sellin — this row's share of net_amount in the sum of net_amount for the same distributor_id over the whole period of the table.",
       "hints": [
         "transform, unlike agg, returns a result the same length as the source table — good for gluing a summary back onto every row.",
-        ".groupby('product_id')['units'].transform('sum') is the sum of units for the product, repeated in every row of that product."
+        ".groupby('distributor_id')['net_amount'].transform('sum') is the sum of net_amount for the distributor, repeated in every row of that distributor."
       ],
-      "explain": "agg() would collapse the group into one row — 47 products would give 47 rows, not 118,449. transform() returns the same number of rows as the source table, plugging its group's total into every row — the product's whole volume over the table's 131 weeks (January 2024 to June 2026), repeated in every one of its shipments. From there the share comes out of a single division, with no separate merge needed to \"glue the summary back on\" — the same thing a SUM(...) OVER (PARTITION BY product_id) window function does in SQL."
+      "explain": "agg() would collapse the group into one row — 12 distributors would give 12 rows, not 15,362. transform() returns the same number of rows as the source table, plugging its group's total into every row — the distributor's whole purchase volume across the table, repeated in every one of its order lines. From there the share comes out of a single division, with no separate merge needed to \"glue the summary back on\" — the same thing a SUM(...) OVER (PARTITION BY distributor_id) window function does in SQL. A check on the spot: line_share summed over the whole table has to come to exactly 12 — one per distributor."
     },
     {
       "id": "py-018",
@@ -517,14 +517,14 @@
     },
     {
       "id": "py-026",
-      "title": "Customers by sales channel",
-      "brief": "Before computing revenue by channel, an analyst wants a quick look at how many customers fall into each sales channel — without grouping or counting by hand.",
-      "goal": "Count the number of customers for each value of channel in dim_customer, sorted in descending order of count.",
+      "title": "How many items each brand has",
+      "brief": "Ahead of a conversation about assortment rotation, an analyst wants a quick look at how many SKUs fall under each brand in the catalogue — without grouping or counting by hand.",
+      "goal": "Count the number of items for each value of brand in dim_product, sorted in descending order of count.",
       "hints": [
         "value_counts() is a Series method, not a DataFrame one: first select one column with single brackets.",
         "Descending order is the default behavior, nothing extra needs to be called."
       ],
-      "explain": "value_counts() is groupby(column).size(), sorted descending, in one short call. Unlike groupby, it's purpose-built for one task — counting how often values occur — and it's almost always the first step of exploration: not computing the metric right away, but seeing how the categories that will be used to slice the data are distributed in the first place. There are five channels here, and the top three run nearly even — traditional trade 44 outlets, modern trade 42, pharmacies 38 — then distributors (12) and e-com (8). A channel with few customers can still be large by turnover: value_counts counts rows in the reference table, not money, and confusing those two questions is the most common mistake at this very first step of exploration."
+      "explain": "value_counts() is groupby(column).size(), sorted descending, in one short call. Unlike groupby, it's purpose-built for one task — counting how often values occur — and it's almost always the first step of exploration: not computing the metric right away, but seeing how the categories that will be used to slice the data are distributed in the first place. There are nine brands here, and the catalogue is spread evenly across them: from six items (Хрустик, Фрутта, Молочный Дом, Ключевая) down to four (Ринофлекс, Гастрокалм). The breadth of a line says nothing about its sales, though: a four-item brand can well out-earn a six-item one. value_counts counts rows in the reference table, not money, and confusing those two questions is the most common mistake at this very first step of exploration."
     },
     {
       "id": "py-027",
@@ -777,14 +777,14 @@
     },
     {
       "id": "py-041",
-      "title": "A price segment without apply",
-      "brief": "A colleague wrote the \"price segment\" column through apply(lambda row: ..., axis=1) — on 47 products that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
-      "goal": "Build a segment column for dim_product: 'premium' for list_price > 300, otherwise 'mass' — through vectorized np.where, without apply().",
+      "title": "A region's priority without apply",
+      "brief": "A colleague wrote the \"region priority\" column through apply(lambda row: ..., axis=1) — on 16 regions that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
+      "goal": "Build a priority column for dim_region: 'key' for tier == 1, otherwise 'rest' — through vectorized np.where, without apply().",
       "hints": [
         "np.where(condition, if_true, if_false) is the vectorized replacement for apply(lambda row: ... if ... else ..., axis=1): the condition is checked for the whole column at once, not row after row.",
         "np is already available in the task's code alongside pd and the tables — you can call it directly as np.where(...)."
       ],
-      "explain": "apply(..., axis=1) calls a Python function separately for every row — on 47 products that's 47 calls, and on fact_sellout it would be 118,449, each one carrying Python interpreter overhead on top of the check itself. np.where evaluates the condition once for the entire column in optimized NumPy code — the same result, but orders of magnitude faster on a large table, even though the difference isn't visible on a small one."
+      "explain": "apply(..., axis=1) calls a Python function separately for every row — on 16 regions that's 16 calls, and on fact_sellout it would be 118,449, each one carrying Python interpreter overhead on top of the check itself. np.where evaluates the condition once for the entire column in optimized NumPy code — the same result, but orders of magnitude faster on a large table, even though the difference isn't visible on a small one. Of the 16 regions, 4 come out as key and the other 12 as 'rest': the cheapest way to check that is value_counts() on the new column — a habit worth carrying from the very first step of exploration."
     },
     {
       "id": "py-042",
