@@ -328,6 +328,8 @@ export const ru = {
     copyAria: (name: string) => `Скопировать «${name}»`,
     copied: 'Скопировано',
     periodLabel: (from: string, to: string) => `Период данных: ${from} — ${to}`,
+    /** Строки берутся с разных концов таблицы — об этом честно сказано, иначе их примут за первые. */
+    sampleCaption: (n: number) => `${n} строки из разных мест таблицы — как данные выглядят на самом деле`,
   },
   result: {
     stdoutLabel: 'Вывод print()',

@@ -641,7 +641,7 @@ const SCHEMA = [
       channel: 'Канал: distributor, modern_trade, traditional_trade, pharmacy, ecom',
       chain_name: 'Сеть, если точка сетевая (иначе NULL)', region_id: 'FK → dim_region', city: 'Город',
       opened_date: 'Дата открытия', is_active: 'Активность (0/1)',
-      served_by_distributor_id: 'Дистрибьютор, обслуживающий точку — FK → dim_customer (self-join)',
+      served_by_distributor_id: 'Дистрибьютор, обслуживающий точку — FK → dim_customer.customer_id (self-join)',
       rep_id: 'Закреплённый торговый представитель — FK → dim_rep',
     },
     rows: customers.map((c) => ({
@@ -659,7 +659,7 @@ const SCHEMA = [
     cols: {
       rep_id: 'Ключ сотрудника', rep_name: 'ФИО', team: 'Команда', role: 'manager или rep',
       region_id: 'FK → dim_region', hired_date: 'Дата найма',
-      manager_id: 'Руководитель — FK → dim_rep, у руководителей NULL (self-join)',
+      manager_id: 'Руководитель — FK → dim_rep.rep_id, у руководителей NULL (self-join)',
     },
     rows: reps,
   },
@@ -698,7 +698,7 @@ const SCHEMA = [
       sellin_id: 'Ключ строки', order_date: 'Дата заказа',
       ship_date: 'Дата отгрузки — на 2–11 дней позже заказа, поэтому заказ конца месяца отгружается уже в следующем',
       month_start: 'Месяц заказа (по order_date)',
-      distributor_id: 'FK → dim_customer (только customer_type = distributor)', product_id: 'FK → dim_product',
+      distributor_id: 'FK → dim_customer.customer_id (только customer_type = distributor)', product_id: 'FK → dim_product',
       units: 'Отгружено штук', gross_amount: 'Сумма до скидок, ₽', discount_amount: 'Скидки, ₽',
       net_amount: 'Сумма к оплате, ₽',
     },
@@ -711,7 +711,7 @@ const SCHEMA = [
       product_id INTEGER, units_on_hand INTEGER, units_in_transit INTEGER)`,
     cols: {
       stock_id: 'Ключ строки', month_start: 'Месяц', month_end: 'Последний день месяца',
-      distributor_id: 'FK → dim_customer', product_id: 'FK → dim_product',
+      distributor_id: 'FK → dim_customer.customer_id', product_id: 'FK → dim_product',
       units_on_hand: 'Остаток на складе, шт', units_in_transit: 'В пути, шт',
     },
     rows: stock,
@@ -804,6 +804,48 @@ await writeFile(dbFile, raw);
 const gz = gzipSync(raw, { level: 9 });
 await writeFile(path.join(outDir, 'querium.dataset'), gz);
 
+/**
+ * Связь колонки со справочником — разбором той же прозы, которой она уже
+ * описана («FK → dim_region.region_id»), а не отдельным списком рядом.
+ *
+ * Список рядом пришлось бы держать в согласии с описаниями руками, и
+ * разъехались бы они молча: оба места остались бы синтаксически валидными.
+ * Здесь источник один, а проверка того, что связь настоящая (ключи реально
+ * сходятся, сирот нет), живёт в verify-dataset.mjs.
+ *
+ * Целевая колонка указывается явно там, где она не совпадает с именем самой
+ * колонки: `manager_id → dim_rep.rep_id`, `distributor_id →
+ * dim_customer.customer_id`. Где совпадает — можно короче, подставится сама.
+ */
+const parseReference = (columnName, description) => {
+  const m = /FK\s*→\s*([a-z_]+)(?:\.([a-z_]+))?/i.exec(description ?? '');
+  if (!m) return null;
+  return { table: m[1], column: m[2] ?? columnName };
+};
+
+/**
+ * Несколько настоящих строк на таблицу.
+ *
+ * Схема из одних имён колонок отвечает на вопрос «что есть», но не на вопрос
+ * «как это выглядит»: в каком формате лежит дата, размах ли у цены в рублях
+ * или в копейках, бывает ли колонка пустой. Всё это человек иначе выясняет
+ * пробным запросом, а на треках без исполнителя (domain, model) не выясняет
+ * вовсе — там запускать нечего.
+ *
+ * Строки берутся с трёх разных концов таблицы, а не первые подряд: у фактов
+ * первые строки — это один и тот же день и один и тот же клиент, и по такой
+ * выборке не видно ни разброса дат, ни того, что колонка вообще меняется.
+ */
+const SAMPLE_ROWS = 3;
+const sampleFor = (table, rowCount) => {
+  if (!rowCount) return [];
+  const offsets = [...new Set([0, Math.floor(rowCount / 2), rowCount - 1])].slice(0, SAMPLE_ROWS);
+  return offsets.map((offset) => {
+    const [res] = db.exec(`SELECT * FROM ${table} LIMIT 1 OFFSET ${offset}`);
+    return res.values[0];
+  });
+};
+
 const schemaJson = {
   dataset: 'querium',
   version: 1,
@@ -816,7 +858,11 @@ const schemaJson = {
     grain: t.grain,
     note: t.note ?? null,
     row_count: t.rows.length,
-    columns: Object.entries(t.cols).map(([name, description]) => ({ name, description })),
+    columns: Object.entries(t.cols).map(([name, description]) => {
+      const references = parseReference(name, description);
+      return references ? { name, description, references } : { name, description };
+    }),
+    sample: sampleFor(t.table, t.rows.length),
   })),
 };
 await writeFile(path.join(outDir, 'schema.json'), JSON.stringify(schemaJson, null, 2), 'utf8');

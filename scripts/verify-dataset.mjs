@@ -163,5 +163,58 @@ check('fact_sellin: отгрузка всегда позже заказа', ship
 check('fact_sellin: часть заказов отгружается в следующем месяце', ship.crossing > 500,
   `${ship.crossing} из ${ship.total} строк переходят границу месяца`);
 
+/*
+ * Схема данных, которую видит человек: связи и строки-примеры.
+ *
+ * Эти два блока — не описание базы, а часть интерфейса: по ним человек решает,
+ * по чему соединять таблицы, ещё не написав ни строки запроса. Соврать они
+ * могут молча — связь указана на колонку, которой нет, или ключи не сходятся
+ * и JOIN вернёт пустоту, — а увидеть это можно только попробовав.
+ *
+ * Сироты проверяются с оглядкой на NULL: пустой promo_id значит «продажа вне
+ * акции», пустой manager_id — «сам руководитель». Это не разрыв связи, а её
+ * законное отсутствие, поэтому в счёт идут только заполненные значения.
+ */
+const schema = JSON.parse(readFileSync(path.join(root, 'public', 'data', 'schema.json'), 'utf8'));
+const tablesByName = new Map(schema.tables.map((t) => [t.table, t]));
+let refCount = 0;
+
+for (const table of schema.tables) {
+  check(
+    `${table.table}: есть строки-примеры`,
+    Array.isArray(table.sample) && table.sample.length > 0 &&
+      table.sample.every((r) => r.length === table.columns.length),
+    `строк ${table.sample?.length ?? 0}, колонок в каждой должно быть ${table.columns.length}`
+  );
+
+  for (const col of table.columns) {
+    if (!col.references) continue;
+    refCount++;
+    const target = tablesByName.get(col.references.table);
+    if (!target) {
+      check(`${table.table}.${col.name} → ${col.references.table}`, false, 'такой таблицы нет в схеме');
+      continue;
+    }
+    if (!target.columns.some((c) => c.name === col.references.column)) {
+      check(
+        `${table.table}.${col.name} → ${col.references.table}.${col.references.column}`,
+        false,
+        'такой колонки нет в целевой таблице'
+      );
+      continue;
+    }
+    const orphans = rows(`
+      SELECT COUNT(*) bad FROM ${table.table} s
+      WHERE s.${col.name} IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM ${col.references.table} t WHERE t.${col.references.column} = s.${col.name})`)[0].bad;
+    check(
+      `${table.table}.${col.name} → ${col.references.table}.${col.references.column}`,
+      orphans === 0,
+      orphans ? `${orphans} значений не находят пары — JOIN потеряет эти строки` : 'ключи сходятся'
+    );
+  }
+}
+check('схема описывает связи между таблицами', refCount >= 15, `найдено ${refCount}`);
+
 console.log(failed ? `\n${failed} проверок провалено` : '\nВсе проверки пройдены');
 process.exit(failed ? 1 : 0);

@@ -226,6 +226,7 @@ export const en = {
     copyAria: (name: string) => `Copy "${name}"`,
     copied: 'Copied',
     periodLabel: (from: string, to: string) => `Data period: ${from} — ${to}`,
+    sampleCaption: (n: number) => `${n} rows from different parts of the table — what the data actually looks like`,
   },
   result: {
     stdoutLabel: 'print() output',

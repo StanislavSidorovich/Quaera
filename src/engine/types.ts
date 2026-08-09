@@ -122,6 +122,22 @@ export interface SchemaDoc {
     grain: string;
     note: string | null;
     row_count: number;
-    columns: { name: string; description: string }[];
+    columns: {
+      name: string;
+      description: string;
+      /**
+       * Куда ведёт колонка, если она внешний ключ. Заполняется генератором
+       * разбором того же описания («FK → dim_region.region_id»), поэтому
+       * второго источника правды нет — см. parseReference в build-dataset.mjs.
+       */
+      references?: { table: string; column: string };
+    }[];
+    /**
+     * Несколько настоящих строк таблицы. Схема из одних имён отвечает,
+     * что в таблице есть, но не отвечает, как это выглядит: формат даты,
+     * порядок величин, бывает ли пусто. Значения — как их отдаёт SQLite,
+     * в порядке колонок; null — настоящий NULL в данных.
+     */
+    sample: SqlValue[][];
   }[];
 }

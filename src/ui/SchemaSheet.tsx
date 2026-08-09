@@ -94,11 +94,65 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
                       >
                         <code>{c.name}</code>
                       </button>
-                      <span>{copied ? t.schema.copied : c.description}</span>
+                      <span>
+                        {copied ? (
+                          t.schema.copied
+                        ) : (
+                          <>
+                            {/*
+                              * Связь показываем отдельной строкой перед описанием,
+                              * а не оставляем внутри него: «FK → dim_region.region_id»
+                              * посреди прозы читается только если описание прочитать
+                              * целиком, а нужна она ровно в тот момент, когда человек
+                              * ищет глазами, по чему соединять — то есть до чтения.
+                              */}
+                            {c.references && (
+                              <span className="col-fk">
+                                → <code>{c.references.table}.{c.references.column}</code>
+                              </span>
+                            )}
+                            {c.description}
+                          </>
+                        )}
+                      </span>
                     </div>
                   );
                 })}
                 {table.note && <div className="note">{table.note}</div>}
+                {/*
+                 * Несколько настоящих строк под описанием колонок.
+                 *
+                 * Своя горизонтальная прокрутка у обёртки обязательна: у dim_customer
+                 * одиннадцать колонок, и без неё таблица распирала бы саму шторку.
+                 * NULL печатаем словом, а не пустой ячейкой, — пустая читается как
+                 * «здесь ничего не поместилось», а разница между NULL и пустой
+                 * строкой в этом датасете отдельная тема (sql-null).
+                 */}
+                {table.sample?.length > 0 && (
+                  <div className="sample-wrap">
+                    <div className="sample-caption">{t.schema.sampleCaption(table.sample.length)}</div>
+                    <table className="sample">
+                      <thead>
+                        <tr>
+                          {table.columns.map((c) => (
+                            <th key={c.name}>{c.name}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {table.sample.map((row, i) => (
+                          <tr key={i}>
+                            {row.map((v, j) => (
+                              <td key={j} className={v === null ? 'null' : undefined}>
+                                {v === null ? 'NULL' : String(v)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </details>
             ))}
           </>

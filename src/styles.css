@@ -1586,6 +1586,71 @@ details.table-doc > summary small {
   word-break: break-all;
 }
 
+/*
+ * Куда ведёт внешний ключ. Отдельной строкой над описанием и акцентным
+ * цветом: это единственное, что человек ищет глазами, когда собирается
+ * писать JOIN, — а в прозе описания оно тонет.
+ */
+.col-fk {
+  display: block;
+  color: var(--accent);
+  font-size: 12.5px;
+  margin-bottom: 2px;
+}
+
+.col-fk code {
+  color: inherit;
+  word-break: break-all;
+}
+
+/*
+ * Несколько настоящих строк таблицы под списком колонок.
+ *
+ * Прокрутка вбок — у обёртки, а не у шторки: у dim_customer одиннадцать
+ * колонок, и без своего контейнера таблица распирала бы весь экран схемы
+ * (тот же приём, что и у .sql-block, только здесь перенос невозможен —
+ * ячейку таблицы переносить некуда).
+ */
+.sample-wrap {
+  margin: 8px 14px 12px;
+  overflow-x: auto;
+}
+
+.sample-caption {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+table.sample {
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+table.sample th,
+table.sample td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+}
+
+table.sample th {
+  color: var(--text-dim);
+  font-weight: 600;
+  background: var(--bg-sunken);
+}
+
+table.sample td {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* NULL — не пустая ячейка: разница между «неизвестно» и «пусто» здесь отдельная тема. */
+table.sample td.null {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .col-doc span {
   color: var(--text-dim);
 }
