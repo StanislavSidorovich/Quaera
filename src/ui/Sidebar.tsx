@@ -15,7 +15,7 @@ import type { Progress } from '../srs/store';
  * они открываются изнутри разделов и своего пункта меню не имеют — иначе
  * меню обещало бы вход туда, куда попадают только по ходу занятия.
  */
-export type SidebarSection = 'home' | 'reference' | 'about' | null;
+export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'about' | null;
 
 export function Sidebar({
   section,
@@ -25,6 +25,7 @@ export function Sidebar({
   streakDays,
   onHome,
   onReference,
+  onSandbox,
   onAbout,
   onSelectTrack,
 }: {
@@ -36,6 +37,7 @@ export function Sidebar({
   streakDays: number;
   onHome: () => void;
   onReference: () => void;
+  onSandbox: () => void;
   onAbout: () => void;
   onSelectTrack: (track: Track) => void;
 }) {
@@ -102,6 +104,15 @@ export function Sidebar({
           >
             <IconBook />
             {t.nav.reference}
+          </button>
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'sandbox' ? 'page' : undefined}
+            onClick={onSandbox}
+          >
+            <IconFlask />
+            {t.nav.sandbox}
           </button>
         </div>
 
@@ -188,5 +199,13 @@ const IconInfo = () => (
     <circle cx="8" cy="8" r="5.6" />
     <path d="M8 7.3v3.4" />
     <path d="M8 5.2h.01" />
+  </svg>
+);
+
+const IconFlask = () => (
+  <svg {...iconProps}>
+    <path d="M6.4 2.6h3.2" />
+    <path d="M6.9 2.6v3.9L3.6 12c-.5.9.1 2 1.2 2h6.4c1.1 0 1.7-1.1 1.2-2L9.1 6.5V2.6" />
+    <path d="M4.9 9.6h6.2" />
   </svg>
 );

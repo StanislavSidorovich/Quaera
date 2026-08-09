@@ -5,6 +5,7 @@ import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
 import { LessonCard } from './ui/LessonCard';
+import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, type SidebarSection } from './ui/Sidebar';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
@@ -133,6 +134,7 @@ type Screen =
   | { name: 'session'; queue: Step[]; index: number; maxIndex: number }
   | { name: 'done'; solved: number }
   | { name: 'reference' }
+  | { name: 'sandbox' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
   | { name: 'trackIntro'; track: Track };
@@ -583,9 +585,11 @@ export default function App() {
       ? 'home'
       : screen.name === 'reference'
         ? 'reference'
-        : screen.name === 'about'
-          ? 'about'
-          : null;
+        : screen.name === 'sandbox'
+          ? 'sandbox'
+          : screen.name === 'about'
+            ? 'about'
+            : null;
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -604,6 +608,7 @@ export default function App() {
         streakDays={streak(progress.activeDays)}
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
+        onSandbox={() => setScreen({ name: 'sandbox' })}
         onAbout={() => setScreen({ name: 'about' })}
         onSelectTrack={switchTrack}
       />
@@ -627,11 +632,13 @@ export default function App() {
               ? (currentSkillTitle ?? t.session.title)
               : screen.name === 'reference'
                 ? t.reference.title
-                : screen.name === 'lesson'
-                  ? t.lesson.pill
-                  : screen.name === 'about'
-                    ? t.about.title
-                    : screen.name === 'trackIntro'
+                : screen.name === 'sandbox'
+                  ? t.sandbox.title
+                  : screen.name === 'lesson'
+                    ? t.lesson.pill
+                    : screen.name === 'about'
+                      ? t.about.title
+                      : screen.name === 'trackIntro'
                       ? t.tracks.names[screen.track]
                       : /*
                          * На десктопе название приложения скрыто (см. .brand-word
@@ -652,7 +659,15 @@ export default function App() {
                   )
                 : screen.name === 'reference'
                   ? t.tracks.names[activeTrack]
-                  : screen.name === 'lesson'
+                  : screen.name === 'sandbox'
+                    ? /*
+                       * Пусто, тем же приёмом, что и trackIntro ниже: заголовок
+                       * уже назвал экран, а песочница не привязана к activeTrack —
+                       * печатать здесь имя текущего трека значило бы соврать,
+                       * что песочница именно про него, хотя внутри есть SQL и Python разом.
+                       */
+                      null
+                    : screen.name === 'lesson'
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
@@ -743,6 +758,7 @@ export default function App() {
               onStart={startSession}
               onOpenSchema={() => openSchema()}
               onOpenReference={() => setScreen({ name: 'reference' })}
+              onOpenSandbox={() => setScreen({ name: 'sandbox' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
@@ -801,6 +817,8 @@ export default function App() {
           {screen.name === 'reference' && (
             <Reference activeTrack={activeTrack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
           )}
+
+          {screen.name === 'sandbox' && <Sandbox schema={schema} onOpenSchema={openSchema} />}
 
           {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && (
             /*
@@ -1045,6 +1063,7 @@ function Home({
   onStart,
   onOpenSchema,
   onOpenReference,
+  onOpenSandbox,
   onOpenAbout,
   onSwitchTrack,
   onStartSkill,
@@ -1068,6 +1087,7 @@ function Home({
   onStart: () => void;
   onOpenSchema: () => void;
   onOpenReference: () => void;
+  onOpenSandbox: () => void;
   onOpenAbout: () => void;
   onSwitchTrack: (track: Track) => void;
   /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
@@ -1359,6 +1379,17 @@ function Home({
             <div className="row">
               <button className="btn secondary" onClick={onOpenReference}>
                 {t.home.referenceBtn}
+              </button>
+              {/*
+               * Не гейтится writesCode: песочница всегда про SQL и Python,
+               * а не про открытый сейчас трек — с карточки domain до неё
+               * так же одно нажатие, как со сходной sql. Мобильный вход
+               * важен вдвойне: боковое меню (тот же пункт) видно только
+               * от 1024px, и без этой кнопки на телефоне до песочницы
+               * не добраться вовсе.
+               */}
+              <button className="btn secondary" onClick={onOpenSandbox}>
+                {t.home.sandboxBtn}
               </button>
               {writesCode && (
                 <button className="btn secondary" onClick={onOpenSchema}>

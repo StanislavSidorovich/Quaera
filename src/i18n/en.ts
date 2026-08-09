@@ -86,6 +86,7 @@ export const en = {
     unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
     masteryAria: (pct: number) => `Memory strength: ${pct}%. Grows from returning to the topic over days and weeks, not from the number of tasks solved`,
     referenceBtn: 'Reference',
+    sandboxBtn: 'Sandbox',
     schemaBtn: 'Data schema',
     draftNote: 'The skill graph is already designed; tasks will land in one of the upcoming sprints.',
   },
