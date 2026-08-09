@@ -1,6 +1,8 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import type { Preview, SqlValue } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { chartSpec } from './chartSpec';
+import { Chart } from './Chart';
 
 /** Меньше трёх строк — сравнивать нечего, полоса только зашумит две цифры. */
 const MIN_ROWS_FOR_BARS = 3;
@@ -54,6 +56,9 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
   const { t, locale } = useI18n();
   const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
   const scales = useMemo(() => barScales(data.columns, data.rows), [data.columns, data.rows]);
+  const spec = useMemo(() => chartSpec(data), [data]);
+  const [view, setView] = useState<'table' | 'chart'>('table');
+  const effectiveView = spec ? view : 'table';
   /**
    * Вывод print() показывается до таблицы и отдельно от неё: это не результат,
    * а то, что человек печатал по дороге, чтобы посмотреть на промежуточный шаг.
@@ -79,37 +84,51 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
         </>
       )}
       {caption && <p className="muted" style={{ margin: '0 0 6px' }}>{caption}</p>}
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              {data.columns.map((c, i) => (
-                <th key={`${c}-${i}`}>{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((row, ri) => (
-              <tr key={ri}>
-                {row.map((v, ci) => {
-                  const scale = scales[ci];
-                  const bar = scale !== null && typeof v === 'number' && Number.isFinite(v);
-                  return (
-                    <td
-                      key={ci}
-                      data-label={data.columns[ci]}
-                      className={`${v === null ? 'null' : typeof v === 'number' ? 'num' : ''}${bar ? ' bar-cell' : ''}`}
-                      style={bar ? ({ '--fill': `${((v as number) / scale!) * 100}%` } as CSSProperties) : undefined}
-                    >
-                      {v === null ? 'NULL' : typeof v === 'number' ? v.toLocaleString(numberLocale, { maximumFractionDigits: 4 }) : String(v)}
-                    </td>
-                  );
-                })}
+      {spec && (
+        <div className="tabs result-view-tabs" role="tablist">
+          <button type="button" role="tab" aria-pressed={effectiveView === 'table'} onClick={() => setView('table')}>
+            {t.result.tableTab}
+          </button>
+          <button type="button" role="tab" aria-pressed={effectiveView === 'chart'} onClick={() => setView('chart')}>
+            {t.result.chartTab}
+          </button>
+        </div>
+      )}
+      {effectiveView === 'chart' && spec ? (
+        <Chart spec={spec} numberLocale={numberLocale} />
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {data.columns.map((c, i) => (
+                  <th key={`${c}-${i}`}>{c}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {data.rows.map((row, ri) => (
+                <tr key={ri}>
+                  {row.map((v, ci) => {
+                    const scale = scales[ci];
+                    const bar = scale !== null && typeof v === 'number' && Number.isFinite(v);
+                    return (
+                      <td
+                        key={ci}
+                        data-label={data.columns[ci]}
+                        className={`${v === null ? 'null' : typeof v === 'number' ? 'num' : ''}${bar ? ' bar-cell' : ''}`}
+                        style={bar ? ({ '--fill': `${((v as number) / scale!) * 100}%` } as CSSProperties) : undefined}
+                      >
+                        {v === null ? 'NULL' : typeof v === 'number' ? v.toLocaleString(numberLocale, { maximumFractionDigits: 4 }) : String(v)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       <p className="muted" style={{ margin: '6px 0 0' }}>
         {t.result.rowsSuffix(data.totalRows.toLocaleString(numberLocale))}
         {data.truncated ? t.result.truncatedSuffix(data.rows.length) : ''}

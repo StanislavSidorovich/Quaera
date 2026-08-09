@@ -233,6 +233,8 @@ export const en = {
     noColumns: 'The query returned no columns.',
     rowsSuffix: (n: string) => `${n} rows`,
     truncatedSuffix: (n: number) => ` · showing the first ${n}`,
+    tableTab: 'Table',
+    chartTab: 'Chart',
   },
   editor: {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} symbols`,

@@ -1363,6 +1363,215 @@ tbody tr:last-child td {
   }
 }
 
+/* ------------------------------------------------------------- график */
+
+/* Переключатель «Таблица / График» — тот же визуальный язык, что у вкладок
+   мобильного экрана задания (.tabs), но всего два элемента и без grid. */
+.result-view-tabs {
+  max-width: 220px;
+  margin-bottom: 10px;
+}
+
+.chart {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  padding: 12px;
+}
+
+/* Название колонки для одиночной серии — вместо легенды, которая на одном
+   цвете была бы рамкой с одним кружком и повторяла бы то же самое короче. */
+.chart-caption {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.chart-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* Переключатель величин, когда в результате несколько несовместимых по
+   оси серий (см. views в chartSpec.ts) — узкие вкладки поверх графика. */
+.chart-views {
+  margin-bottom: 10px;
+}
+
+.chart-views button {
+  font-size: 11px;
+}
+
+/* --------------------------------------------------- столбцы (горизонтальные) */
+
+/*
+ * Горизонтальные, а не вертикальные: подписи категорий в датасете — названия
+ * товаров, регионов, ФИО — и на вертикальных столбцах их пришлось бы либо
+ * наклонять (карточка dom-chart-choice называет это худшим решением для
+ * длинных названий), либо обрезать без возможности прочитать. Горизонтальная
+ * полоса кладёт подпись в свою колонку слева, где текст можно резать
+ * многоточием (title-атрибут отдаёт полную строку) и не трогать геометрию.
+ */
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chart-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 34%) 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.chart-bar-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-bar-tracks {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Линия нуля через все строки — видна, только когда в данных есть
+   отрицательные значения; если все ≥0, ноль и так лежит на левом краю. */
+.chart-bar-zero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.chart-bar-track {
+  position: relative;
+  height: 18px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-radius: 3px;
+}
+
+.chart-bar-track-empty {
+  background: transparent;
+}
+
+.chart-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+}
+
+.chart-bar-value {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- линия */
+
+.chart-line {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-axis {
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-axis-zero {
+  stroke: color-mix(in srgb, var(--text) 30%, var(--line));
+}
+
+.chart-axis-label {
+  fill: var(--text-dim);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-line-path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-line-end-ring {
+  fill: var(--bg-sunken);
+}
+
+.chart-end-label {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-hover-line {
+  stroke: var(--text-dim);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-hover-dot {
+  stroke: var(--bg-sunken);
+  stroke-width: 2;
+}
+
+.chart-hover-box {
+  fill: var(--bg-raised);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-hover-title {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+
+.chart-hover-value {
+  fill: var(--text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-hover-swatch {
+  font-size: 9px;
+}
+
 /* ---------------------------------------------------------- обратная связь */
 
 .feedback {

@@ -336,6 +336,8 @@ export const ru = {
     noColumns: 'Запрос не вернул колонок.',
     rowsSuffix: (n: string) => `${n} строк`,
     truncatedSuffix: (n: number) => ` · показаны первые ${n}`,
+    tableTab: 'Таблица',
+    chartTab: 'График',
   },
   editor: {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Символы ${langGenitive(track)}`,
