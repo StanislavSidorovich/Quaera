@@ -1430,17 +1430,23 @@ tbody tr:last-child td {
  * полоса кладёт подпись в свою колонку слева, где текст можно резать
  * многоточием (title-атрибут отдаёт полную строку) и не трогать геометрию.
  */
+/*
+ * Грид общий на все строки, а не свой у каждой: колонка значений тогда
+ * одна на весь график и подбирается по самому длинному числу, а дорожки
+ * получают одинаковую ширину. Со своим гридом на строку ширина колонки
+ * значений зависела бы от длины своего числа — дорожки вышли бы разной
+ * длины, и столбцы соседних строк перестали бы быть сравнимыми по длине.
+ */
 .chart-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 34%) 1fr auto;
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: center;
 }
 
 .chart-bar-row {
-  display: grid;
-  grid-template-columns: minmax(0, 34%) 1fr;
-  gap: 10px;
-  align-items: center;
+  display: contents;
 }
 
 .chart-bar-label {
@@ -1486,15 +1492,30 @@ tbody tr:last-child td {
   border-radius: 3px;
 }
 
+/*
+ * Значения — своей колонкой справа. Высота строки и зазор те же, что
+ * у дорожек (18px / 2px), поэтому значение стоит напротив своего столбца
+ * и при двух рядах не разъезжается с ними.
+ */
+.chart-bar-values {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .chart-bar-value {
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 8px);
-  transform: translateY(-50%);
+  height: 18px;
+  line-height: 18px;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--text);
+  text-align: right;
   white-space: nowrap;
+}
+
+.chart-bar-value.is-null {
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* ------------------------------------------------------------- линия */

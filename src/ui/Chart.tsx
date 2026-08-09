@@ -48,6 +48,15 @@ function BarChart({
   return (
     <div className="chart-bars">
       {labels.map((label, ri) => (
+        /*
+         * display: contents (см. .chart-bar-row в styles.css) — строка не
+         * заводит свой грид, а раскладывается по колонкам общего. Это
+         * не оформление: пока каждая строка была отдельным гридом, колонка
+         * значений подбиралась по ширине своего числа, дорожки получались
+         * разной длины, и столбцы разных строк переставали быть сравнимыми
+         * по длине — то есть график начинал врать ровно тем, от чего его
+         * защищает chartSpec.
+         */
         <div className="chart-bar-row" key={ri}>
           <div className="chart-bar-label" title={label}>
             {label}
@@ -68,10 +77,20 @@ function BarChart({
                     className="chart-bar-fill"
                     style={{ left: `${left}%`, width: `${width}%`, background: SERIES_COLORS[si % SERIES_COLORS.length] }}
                   />
-                  <span className="chart-bar-value">{formatNum(v, numberLocale)}</span>
                 </div>
               );
             })}
+          </div>
+          {/* Значения — своей колонкой справа, а не поверх дорожки: число
+              на длинном столбце иначе легло бы на заливку, а на коротком
+              висело бы в воздухе. Порядок и высота строк те же, что
+              у дорожек, поэтому значение читается напротив своего столбца. */}
+          <div className="chart-bar-values">
+            {view.series.map((s, si) => (
+              <span className={`chart-bar-value${s.values[ri] === null ? ' is-null' : ''}`} key={si}>
+                {s.values[ri] === null ? 'NULL' : formatNum(s.values[ri] as number, numberLocale)}
+              </span>
+            ))}
           </div>
         </div>
       ))}
@@ -142,6 +161,24 @@ function LineChart({
     return -1;
   };
 
+  /*
+   * Подписи концов рядов — только пока они не наезжают друг на друга.
+   * Когда ряды сходятся (а сходятся они как раз в интересных местах —
+   * догнал план, вернулся к прошлогоднему уровню), две подписи в одной
+   * точке читаются как одно число с мусором. Разносить их по вертикали
+   * нельзя: подпись оторвётся от своей линии и начнёт врать о значении.
+   * Поэтому в такой ситуации подписи снимаются целиком — величины
+   * остаются в легенде, под курсором и в таблице рядом.
+   */
+  const endYs = view.series
+    .map((s) => {
+      const i = lastIndexOf(s.values);
+      return i < 0 ? null : y(s.values[i] as number);
+    })
+    .filter((v): v is number => v !== null)
+    .sort((a, b) => a - b);
+  const endLabelsFit = endYs.every((v, i) => i === 0 || v - endYs[i - 1] >= 14);
+
   return (
     <svg
       className="chart-line"
@@ -192,15 +229,17 @@ function LineChart({
               <>
                 <circle className="chart-line-end-ring" cx={x(last)} cy={y(s.values[last] as number)} r={5} />
                 <circle className="chart-line-end-dot" cx={x(last)} cy={y(s.values[last] as number)} r={4} fill={color} />
-                <text
-                  className="chart-end-label"
-                  x={Math.min(x(last) + 8, W - PAD_RIGHT - 4)}
-                  y={y(s.values[last] as number)}
-                  textAnchor={x(last) + 8 > W - PAD_RIGHT - 40 ? 'end' : 'start'}
-                  dominantBaseline="middle"
-                >
-                  {formatNum(s.values[last] as number, numberLocale)}
-                </text>
+                {endLabelsFit && (
+                  <text
+                    className="chart-end-label"
+                    x={Math.min(x(last) + 8, W - PAD_RIGHT - 4)}
+                    y={y(s.values[last] as number)}
+                    textAnchor={x(last) + 8 > W - PAD_RIGHT - 40 ? 'end' : 'start'}
+                    dominantBaseline="middle"
+                  >
+                    {formatNum(s.values[last] as number, numberLocale)}
+                  </text>
+                )}
               </>
             )}
           </g>
