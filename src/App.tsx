@@ -1439,6 +1439,31 @@ function About({
         </div>
       </div>
 
+      {/*
+       * Стоит до «Структуры» намеренно: сколько внутри треков и заданий,
+       * видно и по плиткам выше, а чей это уровень — не видно ниоткуда,
+       * и это первый вопрос человека, впервые открывшего экран.
+       */}
+      <div className="card">
+        <h2>{t.about.audienceTitle}</h2>
+        {/* div вокруг каждой пары — валидный HTML5 внутри dl и единственный
+            способ разложить пары сеткой: без обёртки dt и dd стали бы
+            отдельными ячейками и разъехались бы по разным колонкам. */}
+        <dl className="audience">
+          {[
+            [t.about.audienceWhoLabel, t.about.audienceWhoBody],
+            [t.about.audienceStartLabel, t.about.audienceStartBody],
+            [t.about.audienceCeilingLabel, t.about.audienceCeilingBody],
+            [t.about.audienceNotLabel, t.about.audienceNotBody],
+          ].map(([label, body]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{body}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
       <div className="card">
         <h2>{t.about.structureTitle}</h2>
         <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>

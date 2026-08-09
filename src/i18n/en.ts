@@ -106,6 +106,20 @@ export const en = {
     tracksStatLabel: 'tracks',
     skillsStatLabel: 'skills',
     tasksStatLabel: 'tasks',
+    /** См. комментарий в ru.ts: заявленный вслух потолок честнее умолчания. */
+    audienceTitle: 'Who this is for, and how far it goes',
+    audienceWhoLabel: 'Who it suits',
+    audienceWhoBody:
+      "Anyone already working with data or heading that way: a product or commercial analyst, a reporting specialist, a finance person tired of waiting on someone else's export. There is no syntax-for-its-own-sake here — every task grew out of a question analysts actually get asked.",
+    audienceStartLabel: 'Where it starts',
+    audienceStartBody:
+      'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed. The tracks are independent — start with whatever is on fire, not with the first one listed.',
+    audienceCeilingLabel: 'Where it gets you',
+    audienceCeilingBody:
+      'To a confident mid-level: window functions with frames, CTEs and query decomposition, filter context and time intelligence in DAX, reshaping data in pandas. That is the level at which an analyst closes most business requests without handing them onward.',
+    audienceNotLabel: 'What is not here',
+    audienceNotBody:
+      'Database administration, query plan tuning, data engineering, and machine learning. Those are adjacent professions: they begin where this trainer ends, and promising them in passing would be a lie.',
     structureTitle: 'Structure',
     structureIntro: (skills: number, tasks: number) =>
       `Right now the tracks add up to ${skills} skills and ${tasks} tasks — the numbers grow with every sprint, and the counter on each track tile is always accurate.`,
