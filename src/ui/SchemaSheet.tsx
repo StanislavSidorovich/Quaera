@@ -32,7 +32,18 @@ export function useSchema(): SchemaDoc | null {
   return doc;
 }
 
-export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: () => void }) {
+interface Props {
+  doc: SchemaDoc | null;
+  onClose: () => void;
+  /**
+   * Таблица, с которой шторка должна открыться раскрытой и к которой
+   * прокрутиться, — приходит с чипа задания (см. openSchema в App).
+   * null/undefined — общий вход, всё свёрнуто, как раньше.
+   */
+  focusTable?: string | null;
+}
+
+export function SchemaSheet({ doc, onClose, focusTable }: Props) {
   const { t, locale } = useI18n();
   const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
 
@@ -43,6 +54,17 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  /**
+   * Прокрутка к раскрытой по фокусу таблице. Само раскрытие — через `open`
+   * на `<details>` ниже, не здесь: `open` там завязан на `focusTable` и не
+   * трогается на несвязанных перерисовках (клик по копированию колонки),
+   * поэтому вручную раскрытую человеком другую таблицу так не захлопнет.
+   */
+  const focusRef = useRef<HTMLDetailsElement | null>(null);
+  useEffect(() => {
+    if (doc && focusTable) focusRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [doc, focusTable]);
 
   /**
    * Копирование имени колонки по клику — раньше схема была чисто справочной,
@@ -77,7 +99,12 @@ export function SchemaSheet({ doc, onClose }: { doc: SchemaDoc | null; onClose: 
               {doc.company}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
             </p>
             {doc.tables.map((table) => (
-              <details key={table.table} className="table-doc">
+              <details
+                key={table.table}
+                ref={table.table === focusTable ? focusRef : undefined}
+                open={table.table === focusTable || undefined}
+                className="table-doc"
+              >
                 <summary>
                   <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title}
                   <small>{t.schema.grainLabel(table.grain, table.row_count.toLocaleString(numberLocale))}</small>

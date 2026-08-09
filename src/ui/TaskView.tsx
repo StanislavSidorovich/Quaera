@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task } from '../content/types';
+import { taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { useI18n } from '../i18n/context';
@@ -89,7 +90,8 @@ interface Props {
   /** Название навыка задания — для пилюли рядом с уровнем. */
   skillTitle: string;
   onDone: (o: TaskOutcome) => void;
-  onOpenSchema: () => void;
+  /** Открывает шторку схемы; с именем таблицы — сразу раскрытой на ней (чип). */
+  onOpenSchema: (table?: string) => void;
   /**
    * Открыть карточку приёма этого навыка. Отсутствует, если в очереди
    * занятия её не было (навык уже введён раньше), — тогда пилюля навыка
@@ -196,6 +198,9 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
     const columns = [...new Set(schema.tables.flatMap((t) => t.columns.map((c) => c.name)))];
     return [...tables, ...columns];
   }, [schema]);
+
+  /** Таблицы этого задания — для чипов над условием, см. taskTables. */
+  const tables = useMemo(() => taskTables(task, schema), [task, schema]);
 
   /** Финальный текст кода: для fill собирается из шаблона и введённых фрагментов. */
   const composedCode = useMemo(() => {
@@ -381,11 +386,28 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
           {!task.scenario && (
-            <button className="pill" onClick={onOpenSchema} style={{ marginLeft: 'auto' }}>
+            <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
           )}
         </div>
+        {/*
+         * Таблицы этого задания — выведены из его же кода (см. taskTables),
+         * не переписаны отдельным полем: второй источник правды разошёлся бы
+         * при первой же правке запроса. Клик по имени открывает схему сразу
+         * на этой таблице, а не общий список — незачем искать её среди
+         * двенадцати. Пусто у domain (там нет кода вовсе) и у горстки заданий,
+         * где данные собраны прямо в CTE, без обращения к таблицам датасета.
+         */}
+        {tables.length > 0 && (
+          <div className="table-chips">
+            {tables.map((name) => (
+              <button key={name} className="table-chip" onClick={() => onOpenSchema(name)}>
+                <code>{name}</code>
+              </button>
+            ))}
+          </div>
+        )}
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
         <p className="brief">{task.brief}</p>
         <div className="goal">{task.goal}</div>

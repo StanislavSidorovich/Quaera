@@ -96,6 +96,28 @@ const fail = (id, msg) => {
 const readPack = (id) =>
   JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${id}.json`), 'utf8'));
 
+const schemaDoc = JSON.parse(readFileSync(path.join(root, 'public', 'data', 'schema.json'), 'utf8'));
+const schemaTableNames = new Set(schemaDoc.tables.map((t) => t.table));
+
+/**
+ * Опечатка или переименованная таблица в коде задания — ловится тут,
+ * потому что нигде больше: чипы таблиц на карточке задания (см. taskTables
+ * в src/content/index.ts) просто молча не покажут имя, которого нет в схеме,
+ * и в приложении это выглядело бы как задание без единой таблицы, а не как
+ * ошибка. Копия регулярки нарочная — тот же приём, что и в checkOptionPositions:
+ * гейт обязан считать сам, а не звать код приложения.
+ */
+function checkTaskTableNames(pack) {
+  for (const t of pack.tasks) {
+    const code = [t.starter, t.template, t.solution, t.predictSql].filter(Boolean).join('\n');
+    if (!code) continue;
+    const found = new Set(code.match(/\b(?:dim|fact|staging)_[a-z_]+\b/g) ?? []);
+    for (const name of found) {
+      if (!schemaTableNames.has(name)) fail(t.id, `код ссылается на таблицу «${name}», которой нет в schema.json`);
+    }
+  }
+}
+
 /**
  * Граф навыков — общая проверка для готовых и черновых паков.
  *
@@ -286,6 +308,7 @@ for (const packId of packs) {
   checkIntro(pack);
   checkSkillCoverage(pack);
   checkOptionPositions(pack);
+  checkTaskTableNames(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
   // --- задания

@@ -185,6 +185,8 @@ export default function App() {
    */
   const [pythonReady, setPythonReady] = useState(false);
   const [schemaOpen, setSchemaOpen] = useState(false);
+  /** Какую таблицу раскрыть при открытии шторки — см. openSchema. null — общий вход, без фокуса. */
+  const [schemaTable, setSchemaTable] = useState<string | null>(null);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
   const [theme, setTheme] = useState<Theme>(initialTheme);
@@ -533,6 +535,17 @@ export default function App() {
     setScreen({ name: 'trackIntro', track });
   }
 
+  /**
+   * Открывает шторку схемы, при вызове с именем таблицы — сразу раскрытой
+   * на ней (см. focusTable в SchemaSheet). Общий вход с главной и из карточки
+   * приёма зовёт без аргумента: там нет одной таблицы, к которой стоило бы
+   * вести — а вот с чипа задания под конкретное имя.
+   */
+  function openSchema(table?: string) {
+    setSchemaTable(table ?? null);
+    setSchemaOpen(true);
+  }
+
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
   /**
@@ -728,7 +741,7 @@ export default function App() {
               onDeferConsent={() => setConsentDeferred(true)}
               onResumeConsent={() => setConsentDeferred(false)}
               onStart={startSession}
-              onOpenSchema={() => setSchemaOpen(true)}
+              onOpenSchema={() => openSchema()}
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
               onSwitchTrack={switchTrack}
@@ -779,7 +792,7 @@ export default function App() {
                 drafts={taskDrafts}
                 skillTitle={activePack.skills.find((sk) => sk.id === step.task.skill)?.title ?? ''}
                 onOpenLesson={lessonIndex >= 0 ? () => goToStep(lessonIndex) : undefined}
-                onOpenSchema={() => setSchemaOpen(true)}
+                onOpenSchema={openSchema}
                 onDone={(o) => handleDone(step.task, o)}
               />
             );
@@ -833,7 +846,16 @@ export default function App() {
         </main>
       </div>
 
-      {schemaOpen && <SchemaSheet doc={schema} onClose={() => setSchemaOpen(false)} />}
+      {schemaOpen && (
+        <SchemaSheet
+          doc={schema}
+          focusTable={schemaTable}
+          onClose={() => {
+            setSchemaOpen(false);
+            setSchemaTable(null);
+          }}
+        />
+      )}
 
       {showExitHint && <div className="exit-hint">{t.app.exitHint}</div>}
     </div>

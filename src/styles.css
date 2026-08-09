@@ -470,6 +470,30 @@ textarea.sql {
   opacity: 0.65;
 }
 
+/*
+ * Чипы таблиц задания — отдельная строка под пилюлями уровня/навыка/режима,
+ * а не ещё пилюли в том же ряду: тот ряд уже плотный на телефоне, а имена
+ * таблиц моноширинные и длиннее одного слова («staging_raw_sellout»).
+ */
+.table-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.table-chip {
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.table-chip code {
+  color: var(--code);
+}
+
 /* Карточка трека на экране «О тренажёре» — кликабельна, ведёт в этот трек. */
 .track-summary {
   display: block;

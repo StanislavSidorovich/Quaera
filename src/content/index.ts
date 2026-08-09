@@ -16,6 +16,7 @@ import rawModelCoreEn from './packs/model-core.en.json';
 import rawModelLessonsEn from './packs/model-lessons.en.json';
 import type { Lesson, LessonTranslation, Pack, PackTranslation, Task, Track } from './types';
 import type { Locale } from '../i18n/context';
+import type { SchemaDoc } from '../engine/types';
 
 /**
  * Загрузка и валидация паков.
@@ -333,3 +334,25 @@ export const trackBySkill = new Map(packs.flatMap((p) => p.skills.map((s) => [s.
 
 /** Все скиллы, которые тренирует задание: основной плюс сопутствующие. */
 export const trainedSkills = (t: Task): string[] => [t.skill, ...(t.alsoTrains ?? [])];
+
+/**
+ * Таблицы, которые задание реально трогает — выведены из его же кода,
+ * а не переписаны руками отдельным полем: второй источник правды разошёлся
+ * бы с солюшеном при первой же правке запроса, и никто бы не заметил,
+ * потому что гейт проверял бы только собственную выдумку (см. ту же логику
+ * для связей между таблицами в схеме — parseReference в build-dataset.mjs).
+ *
+ * Совпадение по границе слова (`\b`), не по вхождению подстроки: у имён
+ * таблиц есть родственные варианты (`fact_sellout`/`fact_sellin`), и просто
+ * `.includes()` придумал бы связь там, где в коде другое имя.
+ *
+ * Domain — не про код: у его заданий нет ни одного из этих полей,
+ * и для них функция всегда возвращает пустой список, что и используется
+ * как признак «схема таблиц этому заданию не нужна» (см. TaskView).
+ */
+export function taskTables(task: Task, schema: SchemaDoc | null): string[] {
+  if (!schema) return [];
+  const code = [task.starter, task.template, task.solution, task.predictSql].filter(Boolean).join('\n');
+  if (!code) return [];
+  return schema.tables.map((t) => t.table).filter((name) => new RegExp(`\\b${name}\\b`).test(code));
+}
