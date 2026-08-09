@@ -2126,6 +2126,331 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
 `, 'False/SettingWithCopyWarning', 'цепочечное присваивание молча теряет колонку и даёт SettingWithCopyWarning');
 }
 
+// --- Песочница: вопросы к данным (src/content/sandbox.json).
+//
+// У песочницы нет эталона по замыслу — это единственный экран, где никто
+// не проверяет ответ. Но список вопросов делает собственное утверждение,
+// и оно проверяемо: «на этих данных у каждого есть ответ» (так и написано
+// в i18n, sandbox.questionsIntro). Вопрос, явление которого из датасета ушло,
+// хуже отсутствующего вопроса — человек ищет то, чего нет, и винит себя,
+// а гейта, который бы это поймал, у песочницы иначе нет вовсе.
+//
+// Поэтому у каждого вопроса здесь проба: запрос плюс утверждение о его
+// результате. Пробы живут в гейте, а не рядом с вопросами, чтобы готовый
+// ответ не уезжал в бандл экрана, который принципиально ничего не проверяет.
+// Связь «вопрос ↔ проба» проверяется в обе стороны: незакрытый вопрос —
+// это дыра, осиротевшая проба — след удалённого вопроса. Захардкоженный
+// список уже однажды промолчал о непроверенном файле (см. блок переводов
+// ниже), и здесь та же ловушка обезврежена явной сверкой ключей.
+//
+// Утверждения намеренно сформулированы отношениями («вчетверо дороже»,
+// «выбивается втрое»), а не точными числами: числа генератор двигает
+// при каждой правке сюжета, а явление обязано пережить правку — иначе
+// вопрос перестаёт иметь смысл. Точное число закрепляется только там,
+// где оно процитировано в тексте вопроса.
+{
+  const { questions } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'sandbox.json'), 'utf8'));
+  const GROUPS = new Set(['overview', 'trend', 'distribution', 'stock', 'promo', 'people', 'quality']);
+  const schemaTables = new Set(
+    JSON.parse(readFileSync(path.join(root, 'public', 'data', 'schema.json'), 'utf8')).tables.map((t) => t.table)
+  );
+
+  /** Одна строка результата пробы — почти все утверждения ниже смотрят ровно на неё. */
+  const one = (sql) => runSql(sql).rows[0];
+
+  /**
+   * Проба: запрос доказывает, что явление, о котором спрашивает вопрос,
+   * ещё в данных. Возвращает строку для лога при успехе или строку с причиной
+   * при провале — так в логе видно не «ok», а что именно сейчас в датасете.
+   */
+  const probes = {
+    'q-portfolio': () => {
+      const rows = runSql(`
+        SELECT p.division, COUNT(DISTINCT p.brand) brands, COUNT(DISTINCT p.product_id) skus, SUM(s.revenue) rev
+        FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
+        GROUP BY p.division ORDER BY p.division`).rows;
+      if (rows.length !== 2) return { ok: false, why: `дивизионов ${rows.length}, а вопрос обещает два (FMCG и Pharma)` };
+      if (rows.some((r) => r[1] < 2 || r[3] <= 0)) return { ok: false, why: 'в дивизионе меньше двух брендов или нет выручки' };
+      return { ok: true, note: rows.map((r) => `${r[0]}: ${r[1]} брендов, ${r[2]} SKU`).join('; ') };
+    },
+
+    'q-channels': () => {
+      const rows = runSql(`
+        SELECT c.channel, SUM(s.revenue) rev FROM fact_sellout s
+        JOIN dim_customer c ON c.customer_id = s.customer_id
+        GROUP BY c.channel ORDER BY rev DESC`).rows;
+      if (rows.length < 3) return { ok: false, why: `каналов ${rows.length} — раскладывать нечего` };
+      const gap = rows[0][1] / rows[1][1];
+      if (gap < 1.3) return { ok: false, why: `лидер отрывается всего в ${gap.toFixed(2)} раза — «насколько он отрывается» потеряло смысл` };
+      return { ok: true, note: `лидер ${rows[0][0]}, отрыв от второго в ${gap.toFixed(2)} раза` };
+    },
+
+    'q-abc': () => {
+      const rows = runSql(`
+        SELECT p.product_id, SUM(s.revenue) rev FROM fact_sellout s
+        JOIN dim_product p ON p.product_id = s.product_id GROUP BY p.product_id ORDER BY rev DESC`).rows;
+      const total = rows.reduce((a, r) => a + r[1], 0);
+      const topCount = Math.ceil(rows.length * 0.2);
+      const topShare = (rows.slice(0, topCount).reduce((a, r) => a + r[1], 0) / total) * 100;
+      // Весь смысл вопроса в том, что правило НЕ выполняется. Если верхние 20%
+      // однажды дадут около 80%, проверять станет нечего — вопрос выродится
+      // в подтверждение общего места, и его надо будет переписать.
+      if (topShare > 60) return { ok: false, why: `верхние 20% SKU дают ${topShare.toFixed(1)}% — правило 20/80 почти выполняется, проверять нечего` };
+      return { ok: true, note: `верхние 20% SKU (${topCount} из ${rows.length}) дают ${topShare.toFixed(1)}% выручки, а не 80%` };
+    },
+
+    'q-water-season': () => {
+      const rows = runSql(`
+        SELECT CAST(strftime('%m', s.week_start) AS INT) mon, SUM(s.units) units
+        FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
+        WHERE p.subcategory = 'Вода' GROUP BY mon ORDER BY units DESC`).rows;
+      if (rows.length !== 12) return { ok: false, why: `месяцев с продажами воды ${rows.length}, а не 12` };
+      const ratio = rows[0][1] / rows[rows.length - 1][1];
+      if (ratio < 2) return { ok: false, why: `пик выше провала лишь в ${ratio.toFixed(1)} раза — сезона, о котором спрашивают, больше нет` };
+      return { ok: true, note: `пик месяц ${rows[0][0]}, провал месяц ${rows[rows.length - 1][0]}, разрыв в ${ratio.toFixed(1)} раза` };
+    },
+
+    'q-false-correlation': () => {
+      // Премиса вопроса — «в 2025 году шли почти синхронно». Считаем Пирсона
+      // по месяцам прямо в SQL: без высокой сырой корреляции вопрос начинается
+      // с неправды. Год назван в тексте не для красоты — на всём периоде связь
+      // заметно слабее (0.69 против 0.84), и «почти синхронно» было бы
+      // преувеличением. Тот же 2025-й стоит в dom-049, где эта корреляция
+      // разбирается заданием: ответы треков обязаны сходиться.
+      const rho = (from, to) =>
+        one(`
+          WITH m AS (
+            SELECT strftime('%Y-%m', s.week_start) ym,
+              SUM(CASE WHEN p.subcategory = 'Вода' THEN s.units ELSE 0 END) w,
+              SUM(CASE WHEN p.subcategory = 'Соки' THEN s.units ELSE 0 END) j
+            FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
+            WHERE s.week_start BETWEEN '${from}' AND '${to}' GROUP BY ym)
+          SELECT COUNT(*), (AVG(w * j) - AVG(w) * AVG(j)) /
+                 (SQRT(AVG(w * w) - AVG(w) * AVG(w)) * SQRT(AVG(j * j) - AVG(j) * AVG(j))) FROM m`);
+      const [months, r2025] = rho('2025-01-01', '2025-12-31');
+      if (months !== 12) return { ok: false, why: `в 2025 году ${months} месяцев с продажами, а не 12` };
+      if (r2025 === null || r2025 < 0.75) return { ok: false, why: `корреляция воды и сока за 2025 год ${r2025}, вопрос же говорит «шли почти синхронно»` };
+      // Вопрос отправляет сравнить с тем же месяцем 2024 года — этот год
+      // обязан быть в данных целиком, иначе вторая половина вопроса повисает.
+      const [months2024] = rho('2024-01-01', '2024-12-31');
+      if (months2024 !== 12) return { ok: false, why: `в 2024 году ${months2024} месяцев — сравнивать «с тем же месяцем прошлого года» не с чем` };
+      return { ok: true, note: `корреляция воды и сока за 2025 год ${r2025.toFixed(2)}, 2024-й для сравнения на месте` };
+    },
+
+    'q-launch': () => {
+      const newest = one(`SELECT product_name, launch_date FROM dim_product ORDER BY launch_date DESC LIMIT 1`);
+      if (newest[0] !== 'Витамакс Форте №30') return { ok: false, why: `самая новая позиция теперь «${newest[0]}», а вопрос называет «Витамакс Форте №30»` };
+      if (!String(newest[1]).startsWith('2025-09')) return { ok: false, why: `дата вывода ${newest[1]}, а вопрос говорит «осенью 2025-го»` };
+      const pts = runSql(`
+        SELECT strftime('%Y-%m', s.week_start) m, COUNT(DISTINCT s.customer_id) pts
+        FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
+        WHERE p.product_name = 'Витамакс Форте №30' GROUP BY m ORDER BY m`).rows;
+      if (pts.length < 6) return { ok: false, why: `месяцев продаж новинки ${pts.length} — раскатку не разглядеть` };
+      const first = pts[0][1];
+      const last = pts[pts.length - 1][1];
+      if (!(last >= first * 3)) return { ok: false, why: `точек было ${first}, стало ${last} — раскатки, о которой спрашивают, не видно` };
+      return { ok: true, note: `новинка разошлась с ${first} точек до ${last} за ${pts.length} месяцев` };
+    },
+
+    'q-brand-drop': () => {
+      const r = one(`
+        WITH b AS (
+          SELECT strftime('%Y-%m', s.week_start) m, COUNT(DISTINCT s.customer_id) pts, SUM(s.revenue) rev
+          FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
+          WHERE p.brand = 'Чистовъ' AND s.units > 0 GROUP BY m)
+        SELECT (SELECT pts FROM b ORDER BY m LIMIT 1), (SELECT rev FROM b ORDER BY m LIMIT 1),
+               (SELECT pts FROM b ORDER BY m DESC LIMIT 1), (SELECT rev FROM b ORDER BY m DESC LIMIT 1)`);
+      const [pts0, rev0, pts1, rev1] = r;
+      const dropPts = 1 - pts1 / pts0;
+      if (dropPts < 0.3) return { ok: false, why: `точек «Чистовъ» стало меньше лишь на ${(dropPts * 100).toFixed(0)}% — падения, о котором спрашивают, нет` };
+      // Главное в вопросе — что выручка на точку при этом не упала, иначе
+      // разложение «точки против объёма» перестаёт что-либо различать.
+      const perPoint0 = rev0 / pts0;
+      const perPoint1 = rev1 / pts1;
+      if (perPoint1 <= perPoint0) return { ok: false, why: 'выручка на точку тоже упала — разложение «меньше точек или меньше берут» больше не даёт контраста' };
+      return {
+        ok: true,
+        note: `точек ${pts0} → ${pts1} (−${(dropPts * 100).toFixed(0)}%), выручка на точку ${perPoint0.toFixed(0)} → ${perPoint1.toFixed(0)} (растёт)`,
+      };
+    },
+
+    'q-chain-weight': () => {
+      const rows = runSql(`
+        SELECT c.chain_name, COUNT(DISTINCT c.customer_id) pts, SUM(s.revenue) rev
+        FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
+        WHERE c.chain_name IN ('Wildberries', 'Дикси') GROUP BY c.chain_name`).rows;
+      const wb = rows.find((r) => r[0] === 'Wildberries');
+      const dixy = rows.find((r) => r[0] === 'Дикси');
+      if (!wb || !dixy) return { ok: false, why: 'в данных больше нет сети Wildberries или «Дикси», а вопрос называет обе' };
+      if (wb[1] !== 3 || dixy[1] !== 5) return { ok: false, why: `точек Wildberries ${wb[1]} и «Дикси» ${dixy[1]}, а в тексте вопроса три и пять` };
+      if (!(wb[2] > dixy[2] * 3)) return { ok: false, why: 'выручка Wildberries больше не превышает «Дикси» втрое — парадокс «меньше точек, больше денег» исчез' };
+      return { ok: true, note: `Wildberries ${wb[1]} точки / ${Math.round(wb[2])}, «Дикси» ${dixy[1]} точек / ${Math.round(dixy[2])}` };
+    },
+
+    'q-weeks-of-supply': () => {
+      const rows = runSql(`
+        WITH so AS (
+          SELECT c.served_by_distributor_id d, SUM(s.units) / 26.0 weekly
+          FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
+          WHERE s.week_start >= '2026-01-01' GROUP BY d),
+        st AS (
+          SELECT distributor_id d, SUM(units_on_hand) onhand FROM fact_stock
+          WHERE month_start = (SELECT MAX(month_start) FROM fact_stock) GROUP BY d)
+        SELECT dc.customer_name, st.onhand / so.weekly weeks FROM st
+        JOIN so ON so.d = st.d JOIN dim_customer dc ON dc.customer_id = st.d
+        ORDER BY weeks DESC`).rows;
+      if (rows.length < 5) return { ok: false, why: `дистрибьюторов с остатком и продажами ${rows.length} — сравнивать не с чем` };
+      const median = rows[Math.floor(rows.length / 2)][1];
+      const ratio = rows[0][1] / median;
+      if (ratio < 2.5) return { ok: false, why: `худший запас всего в ${ratio.toFixed(1)} раза выше медианы — «выбивается из общего ряда» больше не про кого` };
+      return { ok: true, note: `${rows[0][0]}: ${rows[0][1].toFixed(1)} недели против медианных ${median.toFixed(1)}` };
+    },
+
+    'q-sellin-sellout': () => {
+      const rows = runSql(`
+        WITH si AS (SELECT strftime('%Y', month_start) || '-' || ((CAST(strftime('%m', month_start) AS INT) + 2) / 3) q, SUM(units) u FROM fact_sellin GROUP BY q),
+             so AS (SELECT strftime('%Y', week_start) || '-' || ((CAST(strftime('%m', week_start) AS INT) + 2) / 3) q, SUM(units) u FROM fact_sellout GROUP BY q)
+        SELECT si.q, 1.0 * si.u / so.u ratio FROM si JOIN so ON so.q = si.q ORDER BY ratio DESC`).rows;
+      if (rows.length < 8) return { ok: false, why: `кварталов с обеими метриками ${rows.length} — ряда не выйдет` };
+      const worst = rows[0];
+      const rest = rows.slice(1);
+      if (worst[1] < 1.15) return { ok: false, why: `максимальное расхождение отгрузки и полки ${worst[1].toFixed(2)} — квартала, где они разошлись, больше нет` };
+      const restMax = Math.max(...rest.map((r) => r[1]));
+      if (restMax > 1.12) return { ok: false, why: `остальные кварталы тоже разъехались (до ${restMax.toFixed(2)}) — искомый перестал быть единственным` };
+      return { ok: true, note: `${worst[0]}: отгрузка / полка = ${worst[1].toFixed(2)} против ${restMax.toFixed(2)} в остальных` };
+    },
+
+    'q-promo-cost': () => {
+      // Глубина скидки берётся ровно та, что названа в тексте (30%), а не
+      // «самая глубокая»: у бренда есть и 33% (механика 2+1), и на первом
+      // заходе проба сверяла именно её — то есть подтверждала не то, о чём
+      // спрашивает вопрос. Числа в тексте закрепляются буквально, иначе
+      // проверка зелёная, а человек смотрит на другую акцию.
+      const rows = runSql(`
+        SELECT pr.discount_pct, SUM(s.units) units, SUM(s.revenue) / SUM(s.units) per_unit
+        FROM fact_sellout s JOIN dim_promo pr ON pr.promo_id = s.promo_id
+        WHERE pr.brand = 'Молочный Дом' GROUP BY pr.discount_pct`).rows;
+      const deep = rows.find((r) => r[0] === 30);
+      const shallow = rows.filter((r) => r[0] <= 10).sort((a, b) => b[1] - a[1])[0];
+      if (!deep) return { ok: false, why: 'у «Молочный Дом» больше нет акции со скидкой 30%, которую называет вопрос' };
+      if (!shallow) return { ok: false, why: 'у «Молочный Дом» не осталось акции с мелкой скидкой — сравнивать глубокую не с чем' };
+      if (!(deep[1] > shallow[1] * 3)) return { ok: false, why: `глубокая скидка дала ${deep[1]} штук против ${shallow[1]} — «кратного роста в штуках» больше нет` };
+      const base = one(`
+        SELECT SUM(s.revenue) / SUM(s.units) FROM fact_sellout s
+        JOIN dim_product p ON p.product_id = s.product_id
+        WHERE p.brand = 'Молочный Дом' AND s.promo_id IS NULL`)[0];
+      // Порядок «глубокая < мелкая < без промо» и есть ответ на вопрос
+      // «во что обошёлся объём»: каждая ступень скидки срезает выручку со штуки.
+      if (!(deep[2] < shallow[2] && shallow[2] < base)) {
+        return { ok: false, why: `выручка на штуку ${deep[2].toFixed(1)} / ${shallow[2].toFixed(1)} / ${base.toFixed(1)} — ступени «глубокая, мелкая, без промо» перестали идти по возрастанию` };
+      }
+      return { ok: true, note: `на штуку: ${deep[2].toFixed(1)} при 30%, ${shallow[2].toFixed(1)} при ${shallow[0]}%, ${base.toFixed(1)} без промо` };
+    },
+
+    'q-price-mix': () => {
+      const rows = runSql(`
+        SELECT c.channel, AVG(s.avg_price) price, COUNT(DISTINCT p.division) divisions
+        FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
+        JOIN dim_product p ON p.product_id = s.product_id GROUP BY c.channel`).rows;
+      const pharmacy = rows.find((r) => r[0] === 'pharmacy');
+      const mt = rows.find((r) => r[0] === 'modern_trade');
+      if (!pharmacy || !mt) return { ok: false, why: 'в данных нет канала pharmacy или modern_trade, о которых спрашивает вопрос' };
+      const ratio = pharmacy[1] / mt[1];
+      // «Почти вчетверо» стоит в тексте вопроса — это цитата числа, и она
+      // закрепляется, а не проверяется на глаз.
+      if (ratio < 3.4 || ratio > 4.6) return { ok: false, why: `аптека дороже сетей в ${ratio.toFixed(2)} раза, а вопрос говорит «почти вчетверо»` };
+      // Разгадка вопроса — что в аптеке продаётся только один дивизион.
+      if (pharmacy[2] !== 1) return { ok: false, why: `в аптечном канале теперь ${pharmacy[2]} дивизиона — разгадка «дело не в цене, а в ассортименте» пропала` };
+      return { ok: true, note: `аптека ${pharmacy[1].toFixed(0)} против сетей ${mt[1].toFixed(0)} (в ${ratio.toFixed(2)} раза), в аптеке один дивизион` };
+    },
+
+    'q-target-hit': () => {
+      const reps = one(`SELECT COUNT(DISTINCT rep_id) FROM fact_target WHERE month_start >= '2026-01-01'`)[0];
+      if (reps !== 25) return { ok: false, why: `представителей с планом ${reps}, а вопрос называет 25` };
+      const rows = runSql(`
+        WITH f AS (
+          SELECT c.rep_id, p.division, date(s.week_start, 'start of month') m, SUM(s.revenue) rev
+          FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
+          JOIN dim_product p ON p.product_id = s.product_id GROUP BY c.rep_id, p.division, m)
+        SELECT t.month_start, COUNT(*) plans, SUM(CASE WHEN f.rev >= t.target_revenue THEN 1 ELSE 0 END) hit
+        FROM fact_target t LEFT JOIN f ON f.rep_id = t.rep_id AND f.division = t.division AND f.m = t.month_start
+        WHERE t.month_start >= '2026-01-01' GROUP BY t.month_start ORDER BY t.month_start`).rows;
+      const worstRate = Math.max(...rows.map((r) => r[2] / r[1]));
+      // Суть вопроса — что план не выполняет подавляющее большинство и это
+      // говорит о нормативе, а не о людях. Если план начнёт выполнять половина,
+      // вывод перестанет следовать из данных.
+      if (worstRate > 0.5) return { ok: false, why: `в лучший месяц план выполнили ${(worstRate * 100).toFixed(0)}% — перекос норматива исчез` };
+      return { ok: true, note: `план выполняют от ${Math.min(...rows.map((r) => r[2]))} до ${Math.max(...rows.map((r) => r[2]))} из 25 в месяц` };
+    },
+
+    'q-per-capita': () => {
+      const rows = runSql(`
+        SELECT r.region_name, r.population, SUM(s.revenue) / r.population per_capita
+        FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
+        JOIN dim_region r ON r.region_id = c.region_id GROUP BY r.region_id ORDER BY per_capita DESC`).rows;
+      if (rows.length < 8) return { ok: false, why: `регионов с продажами ${rows.length} — рейтинг не построить` };
+      const biggest = [...rows].sort((a, b) => b[1] - a[1])[0];
+      const rank = rows.findIndex((r) => r[0] === biggest[0]) + 1;
+      // Вопрос построен на том, что ожидание «крупнейшие регионы сверху»
+      // не подтверждается. Если крупнейший однажды окажется в верхних строках,
+      // спрашивать «предположите, почему складывается именно так» будет не о чем.
+      if (rank <= rows.length / 2) return { ok: false, why: `самый населённый регион (${biggest[0]}) стоит ${rank}-м из ${rows.length} — контринтуитивности, ради которой вопрос написан, больше нет` };
+      return { ok: true, note: `самый населённый регион (${biggest[0]}) — ${rank}-й из ${rows.length} по выручке на душу` };
+    },
+
+    'q-dirty-export': () => {
+      const r = one(`
+        SELECT (SELECT COUNT(*) FROM staging_raw_sellout) total,
+               (SELECT COUNT(*) FROM staging_raw_sellout r LEFT JOIN dim_product p ON p.sku_code = r.sku_code WHERE p.sku_code IS NULL) unmatched,
+               (SELECT COUNT(*) FROM staging_raw_sellout WHERE revenue LIKE '%,%') comma,
+               (SELECT COUNT(*) FROM staging_raw_sellout WHERE sale_date LIKE '__.__.____') dotted,
+               (SELECT COUNT(*) FROM staging_raw_sellout WHERE customer_name <> TRIM(customer_name)) padded`);
+      const [total, unmatched, comma, dotted, padded] = r;
+      if (!(unmatched > 0)) return { ok: false, why: 'выгрузка полностью сходится с dim_product — считать «сколько строк не находит пару» нечего' };
+      if (!(comma > 0 && dotted > 0 && padded > 0)) return { ok: false, why: `грязь ушла из выгрузки: запятых ${comma}, дат через точку ${dotted}, строк с пробелами ${padded}` };
+      // Опорное свойство движка, на которое человек наткнётся при первой же
+      // попытке починить регистр: в SQLite UPPER/LOWER не трогают кириллицу,
+      // поэтому «привести к одному регистру» здесь не работает (та же история,
+      // что sql-027 — см. §2 ROADMAP). Если движок однажды это исправит,
+      // вопрос останется верным, но перестанет быть тем, чем задуман.
+      const caseNoop = one(`SELECT COUNT(*) FROM staging_raw_sellout WHERE UPPER(sku_code) = LOWER(sku_code)`)[0];
+      if (caseNoop !== total) return { ok: false, why: `UPPER/LOWER перестали быть пустышкой на кириллице (${caseNoop} из ${total}) — ловушка вопроса изменилась` };
+      return { ok: true, note: `${unmatched} из ${total} строк не находят пару по регистру, UPPER/LOWER кириллицу не трогают` };
+    },
+  };
+
+  const ids = questions.map((q) => q.id);
+  if (new Set(ids).size !== ids.length) fail('sandbox', 'дублирующиеся id вопросов');
+
+  for (const q of questions) {
+    if (!GROUPS.has(q.group)) fail(q.id, `неизвестная группа «${q.group}»`);
+    for (const table of q.tables) {
+      if (!schemaTables.has(table)) fail(q.id, `вопрос отсылает к таблице «${table}», которой нет в schema.json`);
+    }
+    for (const locale of ['ru', 'en']) {
+      const text = q[locale];
+      if (!text?.title || !text?.question) fail(q.id, `нет заголовка или текста на локали ${locale}`);
+      else if (text.question.length < 60) fail(q.id, `текст на ${locale} короче 60 символов — это заголовок, а не постановка задачи`);
+    }
+    // Таблицы вопроса должны хотя бы упоминаться в его пробе: иначе проба
+    // проверяет одно, а человека посылают смотреть в другое место.
+    const probe = probes[q.id];
+    if (!probe) {
+      fail(q.id, 'у вопроса нет пробы в verify-content.mjs — некому подтвердить, что ответ на него в данных есть');
+      continue;
+    }
+    const res = probe();
+    if (!res.ok) fail(q.id, res.why);
+    else console.log(`  ok   ${q.id}: ${res.note}`);
+  }
+
+  for (const id of Object.keys(probes)) {
+    if (!ids.includes(id)) fail('sandbox', `проба «${id}» не соответствует ни одному вопросу — вопрос удалили, а проверку забыли`);
+  }
+
+  if (!failed) console.log(`  ok   песочница: ${questions.length} вопросов, у каждого проба на датасете`);
+}
+
 // --- Переводы на английский: параллельные файлы `<pack>.en.json`
 // и `<lessons>.en.json` (см. PackTranslation/LessonTranslation в content/types.ts).
 // Перевод накладывается на русский пак по id в рантайме (content/index.ts,

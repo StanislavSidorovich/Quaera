@@ -1,0 +1,250 @@
+{
+  "questions": [
+    {
+      "id": "q-portfolio",
+      "group": "overview",
+      "tables": [
+        "dim_product",
+        "fact_sellout"
+      ],
+      "ru": {
+        "title": "Что мы вообще продаём",
+        "question": "Новый человек в команде просит показать портфель: сколько брендов и SKU в каждом дивизионе (FMCG и Pharma) и как между ними делится выручка."
+      },
+      "en": {
+        "title": "What do we even sell",
+        "question": "A new teammate asks for a tour of the portfolio: how many brands and SKUs are in each division (FMCG and Pharma), and how revenue splits between them."
+      }
+    },
+    {
+      "id": "q-channels",
+      "group": "overview",
+      "tables": [
+        "fact_sellout",
+        "dim_customer"
+      ],
+      "ru": {
+        "title": "Где на самом деле деньги",
+        "question": "Нас считают дистрибьютором в розничные сети. Разложите выручку по каналам за всё время — какой канал крупнейший и насколько он отрывается от остальных?"
+      },
+      "en": {
+        "title": "Where the money actually is",
+        "question": "We are widely assumed to be a retail-chain distributor. Break revenue down by channel across the full period — which channel is largest, and by how much?"
+      }
+    },
+    {
+      "id": "q-abc",
+      "group": "overview",
+      "tables": [
+        "fact_sellout",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "Работает ли правило 20/80",
+        "question": "Принято считать, что 20% товаров дают 80% выручки. Постройте накопительную долю выручки по SKU от крупнейшего к мелкому и проверьте это правило на нашем портфеле."
+      },
+      "en": {
+        "title": "Does the 80/20 rule hold",
+        "question": "The received wisdom is that 20% of products bring 80% of revenue. Build the cumulative revenue share by SKU from largest to smallest, and test that rule against our portfolio."
+      }
+    },
+    {
+      "id": "q-water-season",
+      "group": "trend",
+      "tables": [
+        "fact_sellout",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "Когда продаётся вода",
+        "question": "Маркетинг планирует акцию по воде и предлагает март. Посмотрите продажи воды по месяцам за два года: когда пик, когда провал и во сколько раз они отличаются?"
+      },
+      "en": {
+        "title": "When water actually sells",
+        "question": "Marketing is planning a water promo and suggests March. Look at water sales by month across two years: where is the peak, where is the trough, and how far apart are they?"
+      }
+    },
+    {
+      "id": "q-false-correlation",
+      "group": "trend",
+      "tables": [
+        "fact_sellout",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "Вода и сок растут вместе",
+        "question": "Коллега заметил, что в 2025 году помесячные продажи воды и сока шли почти синхронно, и предлагает свести их в один прогноз. Проверьте связь — а затем сравните каждый месяц с тем же месяцем 2024 года и посмотрите, остаётся ли она."
+      },
+      "en": {
+        "title": "Water and juice move together",
+        "question": "A colleague noticed that through 2025 the monthly sales of water and juice moved almost in lockstep, and proposes forecasting them as one. Check the relationship — then compare each month against the same month of 2024 and see whether it survives."
+      }
+    },
+    {
+      "id": "q-launch",
+      "group": "trend",
+      "tables": [
+        "fact_sellout",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "Как раскатывалась новинка",
+        "question": "«Витамакс Форте №30» вывели на рынок осенью 2025-го. Посмотрите помесячно, в скольких точках он появлялся, и оцените: раскатка продолжается или упёрлась в потолок?"
+      },
+      "en": {
+        "title": "How the new SKU rolled out",
+        "question": "\"Витамакс Форте №30\" launched in the autumn of 2025. Track month by month how many outlets picked it up, and judge whether the rollout is still going or has hit a ceiling."
+      }
+    },
+    {
+      "id": "q-brand-drop",
+      "group": "distribution",
+      "tables": [
+        "fact_sellout",
+        "dim_product",
+        "dim_customer"
+      ],
+      "ru": {
+        "title": "Почему падает «Чистовъ»",
+        "question": "Выручка бренда «Чистовъ» снижается второй год подряд. Разберите, что именно упало: в скольких точках бренд продаётся сейчас против начала 2024 года и сколько выручки приходится на одну точку тогда и теперь."
+      },
+      "en": {
+        "title": "Why \"Чистовъ\" is sliding",
+        "question": "Revenue for the \"Чистовъ\" brand has been falling for two years running. Work out what actually dropped: how many outlets carry the brand now versus early 2024, and how much revenue each outlet brings then and now."
+      }
+    },
+    {
+      "id": "q-chain-weight",
+      "group": "distribution",
+      "tables": [
+        "fact_sellout",
+        "dim_customer"
+      ],
+      "ru": {
+        "title": "Три точки против пяти",
+        "question": "У Wildberries три точки, у «Дикси» — пять. Постройте по всем сетям пару «число точек — выручка»: на чём на самом деле держится бизнес и почему считать одни точки недостаточно?"
+      },
+      "en": {
+        "title": "Three outlets versus five",
+        "question": "Wildberries has three outlets, \"Дикси\" has five. Build the pair \"outlet count — revenue\" across all chains: what does the business actually rest on, and why is counting outlets alone not enough?"
+      }
+    },
+    {
+      "id": "q-weeks-of-supply",
+      "group": "stock",
+      "tables": [
+        "fact_stock",
+        "fact_sellout",
+        "dim_customer"
+      ],
+      "ru": {
+        "title": "Не заморожены ли деньги на складах",
+        "question": "Финансовый директор спрашивает, нет ли затоваривания у дистрибьюторов. Посчитайте запас в неделях — остаток на последнюю дату, делённый на средненедельный уход с полки, — и найдите тех, кто выбивается из общего ряда."
+      },
+      "en": {
+        "title": "Is cash frozen in the warehouses",
+        "question": "The CFO wants to know whether distributors are overstocked. Compute weeks of supply — stock on hand at the latest date divided by average weekly off-take — and find who stands apart from the pack."
+      }
+    },
+    {
+      "id": "q-sellin-sellout",
+      "group": "stock",
+      "tables": [
+        "fact_sellin",
+        "fact_sellout"
+      ],
+      "ru": {
+        "title": "Отгрузили больше, чем продали",
+        "question": "Сравните по кварталам отгрузку дистрибьюторам и продажи с полки в штуках. Обычно они идут вровень — найдите квартал, где они разошлись, и прикиньте, куда делась разница."
+      },
+      "en": {
+        "title": "Shipped more than sold",
+        "question": "Compare quarterly shipments to distributors against off-the-shelf sales in units. Normally they track each other — find the quarter where they diverged, and work out where the difference went."
+      }
+    },
+    {
+      "id": "q-promo-cost",
+      "group": "promo",
+      "tables": [
+        "fact_sellout",
+        "dim_promo"
+      ],
+      "ru": {
+        "title": "Во что обошёлся объём",
+        "question": "По бренду «Молочный Дом» акции со скидкой 30% дали кратный рост в штуках. Сравните их с акциями по мелкой скидке и с обычными неделями без промо: сколько выручки принесла каждая проданная штука в каждом случае?"
+      },
+      "en": {
+        "title": "What the volume cost",
+        "question": "For the \"Молочный Дом\" brand, the 30%-discount promos produced a multiple jump in units. Compare them against shallow-discount promos and against ordinary non-promo weeks: how much revenue did each unit sold bring in each case?"
+      }
+    },
+    {
+      "id": "q-price-mix",
+      "group": "promo",
+      "tables": [
+        "fact_sellout",
+        "dim_customer",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "В аптеке продаём дороже?",
+        "question": "Средняя цена единицы в аптечном канале почти вчетверо выше, чем в розничных сетях, и коммерческий предлагает сместить фокус на аптеки. Проверьте, действительно ли дело в цене: посмотрите, товары какого дивизиона вообще продаются в каждом канале."
+      },
+      "en": {
+        "title": "Do we sell dearer in pharmacies?",
+        "question": "Average unit price in the pharmacy channel is nearly four times that of retail chains, and Commercial wants to shift focus there. Check whether price is really the reason: look at which division’s products are sold in each channel at all."
+      }
+    },
+    {
+      "id": "q-target-hit",
+      "group": "people",
+      "tables": [
+        "fact_target",
+        "fact_sellout",
+        "dim_customer",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "План: люди или норматив",
+        "question": "Из 25 представителей план по выручке ежемесячно выполняют единицы. Посчитайте по месяцам, сколько человек уложились в план, и решите, о чём это говорит — о людях или о том, как норматив поставлен."
+      },
+      "en": {
+        "title": "The plan: the people or the target",
+        "question": "Of 25 field reps, only a handful hit their monthly revenue target. Count by month how many made the plan, and decide what that says — about the people, or about how the target is set."
+      }
+    },
+    {
+      "id": "q-per-capita",
+      "group": "people",
+      "tables": [
+        "fact_sellout",
+        "dim_customer",
+        "dim_region"
+      ],
+      "ru": {
+        "title": "Где мы недорабатываем",
+        "question": "Посчитайте выручку на душу населения по регионам. Самые населённые регионы логично ждать наверху — проверьте, так ли это, и предположите, почему складывается именно так."
+      },
+      "en": {
+        "title": "Where we are underperforming",
+        "question": "Compute revenue per capita by region. The most populous regions would reasonably sit on top — check whether they do, and suggest why it comes out the way it does."
+      }
+    },
+    {
+      "id": "q-dirty-export",
+      "group": "quality",
+      "tables": [
+        "staging_raw_sellout",
+        "dim_product"
+      ],
+      "ru": {
+        "title": "Выгрузка, которая не сходится",
+        "question": "staging_raw_sellout — сырая выгрузка из учётной системы, её нужно связать с dim_product по коду SKU. Посчитайте, сколько строк не находит пару, и разберитесь почему. Заодно посмотрите, в каком виде здесь лежат даты и суммы."
+      },
+      "en": {
+        "title": "The export that will not join",
+        "question": "staging_raw_sellout is a raw export from the accounting system, and it needs to join dim_product on the SKU code. Count how many rows find no match and work out why. While you are there, look at what shape the dates and amounts are stored in."
+      }
+    }
+  ]
+}
