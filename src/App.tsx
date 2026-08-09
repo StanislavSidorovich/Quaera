@@ -7,7 +7,7 @@ import { useI18n } from './i18n/context';
 import { LessonCard } from './ui/LessonCard';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, type SidebarSection } from './ui/Sidebar';
-import { TaskView, type TaskOutcome } from './ui/TaskView';
+import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
   isDue,
@@ -124,12 +124,44 @@ type Step = { kind: 'lesson'; lesson: Lesson } | { kind: 'task'; task: Task };
 
 type Screen =
   | { name: 'home' }
-  | { name: 'session'; queue: Step[]; index: number }
+  /**
+   * `maxIndex` — самый дальний показанный шаг, а не длина очереди. Пока
+   * ходить можно было только вперёд, он совпадал бы с index и был не нужен;
+   * с возвратом на пройденный шаг появилось второе движение — вернуться
+   * обратно туда, где остановился, не проходя середину заново.
+   */
+  | { name: 'session'; queue: Step[]; index: number; maxIndex: number }
   | { name: 'done'; solved: number }
   | { name: 'reference' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
   | { name: 'trackIntro'; track: Track };
+
+/**
+ * Куда ведёт «назад» — одна функция на верхнюю стрелку и на аппаратную
+ * кнопку телефона: раньше это условие стояло в двух местах и уже разъезжалось.
+ *
+ * С задания «назад» ведёт на карточку приёма этого же занятия, если она в нём
+ * была, и только потом из занятия наружу. Причина в том, что вопрос «а как
+ * это писалось?» возникает посреди задачи, а не вместо неё: выход на главную
+ * стоил бы всего занятия целиком (очередь нигде не сохраняется), и человек
+ * переставал за теорией ходить вовсе.
+ */
+function backTarget(current: Screen): Screen {
+  // Из карточки возвращаемся в список приёмов, а не на главную:
+  // в справочнике их обычно листают подряд.
+  if (current.name === 'lesson') return { name: 'reference' };
+  if (current.name === 'session') {
+    const step = current.queue[current.index];
+    if (step?.kind === 'task') {
+      const lessonIndex = current.queue.findIndex(
+        (s) => s.kind === 'lesson' && s.lesson.skill === step.task.skill
+      );
+      if (lessonIndex >= 0 && lessonIndex < current.index) return { ...current, index: lessonIndex };
+    }
+  }
+  return { name: 'home' };
+}
 
 export default function App() {
   const { t, locale, setLocale } = useI18n();
@@ -161,6 +193,39 @@ export default function App() {
    */
   const [consentDeferred, setConsentDeferred] = useState(false);
   const schema = useSchema();
+
+  /**
+   * Черновики шагов занятия: набранный запрос, выбранный вариант, открытые
+   * подсказки, результат проверки — по одному на задание (см. TaskDraft).
+   *
+   * Ref, а не состояние: пишутся они на каждое нажатие клавиши в редакторе,
+   * и через setState это перерисовывало бы всё приложение вместе с боковым
+   * меню на каждую букву. Ничего от их содержимого не зависит при отрисовке
+   * App — только сам экран задания при своём монтировании.
+   *
+   * Живут ровно одно занятие: новое начинается с чистого листа, иначе
+   * задание, попавшее в подбор повторно через неделю, встретило бы человека
+   * своим прошлым ответом.
+   */
+  const taskDraftsRef = useRef(new Map<string, TaskDraft>());
+  const taskDrafts = useMemo<TaskDraftStore>(
+    () => ({
+      read: (taskId) => taskDraftsRef.current.get(taskId),
+      write: (taskId, draft) => {
+        taskDraftsRef.current.set(taskId, draft);
+      },
+    }),
+    []
+  );
+
+  /**
+   * Задания, попытка по которым уже ушла в прогресс. Возврат на решённый шаг
+   * и повторное «Дальше» не должны считаться второй попыткой: SRS сдвинул бы
+   * интервал повторения дважды за один и тот же ответ. Раньше это было почти
+   * недостижимо (возврат обнулял экран, и задание пришлось бы решать заново),
+   * теперь — один клик.
+   */
+  const recordedTasksRef = useRef(new Set<string>());
 
   const cycleFontSize = () => {
     const next = FONT_SIZE_ORDER[(FONT_SIZE_ORDER.indexOf(fontSize) + 1) % FONT_SIZE_ORDER.length];
@@ -279,7 +344,7 @@ export default function App() {
         return;
       }
       history.pushState(null, '');
-      setScreen(current.name === 'lesson' ? { name: 'reference' } : { name: 'home' });
+      setScreen(backTarget(current));
     }
 
     window.addEventListener('popstate', onPopState);
@@ -338,7 +403,14 @@ export default function App() {
       }
       queue.push({ kind: 'task', task });
     }
-    setScreen({ name: 'session', queue, index: 0 });
+    startQueue(queue);
+  }
+
+  /** Общий вход в занятие для обоих способов подбора — вместе со сбросом того, что живёт одно занятие. */
+  function startQueue(queue: Step[]) {
+    taskDraftsRef.current.clear();
+    recordedTasksRef.current.clear();
+    setScreen({ name: 'session', queue, index: 0, maxIndex: 0 });
   }
 
   /**
@@ -361,7 +433,7 @@ export default function App() {
     const lesson = lessonBySkill.get(skillId);
     const queue: Step[] = lesson ? [{ kind: 'lesson', lesson }] : [];
     for (const task of picked) queue.push({ kind: 'task', task });
-    setScreen({ name: 'session', queue, index: 0 });
+    startQueue(queue);
   }
 
   function advance() {
@@ -371,38 +443,45 @@ export default function App() {
       if (next >= s.queue.length) {
         return { name: 'done', solved: s.queue.filter((q) => q.kind === 'task').length };
       }
-      return { ...s, index: next };
+      return { ...s, index: next, maxIndex: Math.max(s.maxIndex, next) };
     });
     window.scrollTo({ top: 0 });
   }
 
   /**
-   * Возврат к уже пройденному шагу занятия — не то же самое, что кнопка
-   * «назад» в шапке (та выходит из занятия целиком на главную). Индекс
-   * ограничен снизу нулём и сверху текущим шагом: заглядывать вперёд,
-   * минуя ещё не показанные карточки и задания, нельзя.
+   * Переход на другой шаг занятия — не то же самое, что кнопка «назад»
+   * в шапке (см. backTarget). Ходить можно по всему пройденному отрезку
+   * в обе стороны: назад — перечитать теорию или свой прошлый ответ, вперёд —
+   * вернуться туда, где остановился. Заглядывать за maxIndex нельзя:
+   * следующая карточка и следующее задание ещё не показывались.
    */
   function goToStep(i: number) {
-    setScreen((s) => (s.name === 'session' && i >= 0 && i < s.index ? { ...s, index: i } : s));
+    setScreen((s) => (s.name === 'session' && i >= 0 && i <= s.maxIndex ? { ...s, index: i } : s));
     window.scrollTo({ top: 0 });
   }
 
   function handleDone(task: Task, outcome: TaskOutcome) {
-    const grade = gradeFromAttempt(outcome);
-    setProgress((p) =>
-      applyAttempt(
-        p,
-        {
-          taskId: task.id,
-          skills: [task.skill, ...(task.alsoTrains ?? [])],
-          correct: outcome.correct,
-          wrongAttempts: outcome.wrongAttempts,
-          hintsUsed: outcome.hintsUsed,
-          grade,
-        },
-        review
-      )
-    );
+    // Попытка засчитывается один раз за занятие — см. recordedTasksRef.
+    // Шаг при этом двигается всегда: кнопка «Дальше» обязана вести дальше
+    // и на решённом задании, куда человек просто вернулся посмотреть разбор.
+    if (!recordedTasksRef.current.has(task.id)) {
+      recordedTasksRef.current.add(task.id);
+      const grade = gradeFromAttempt(outcome);
+      setProgress((p) =>
+        applyAttempt(
+          p,
+          {
+            taskId: task.id,
+            skills: [task.skill, ...(task.alsoTrains ?? [])],
+            correct: outcome.correct,
+            wrongAttempts: outcome.wrongAttempts,
+            hintsUsed: outcome.hintsUsed,
+            grade,
+          },
+          review
+        )
+      );
+    }
     advance();
   }
 
@@ -503,9 +582,10 @@ export default function App() {
           {screen.name !== 'home' && (
             <button
               className="icon-btn"
-              // Из карточки возвращаемся в список приёмов, а не на главную:
-              // в справочнике их обычно листают подряд.
-              onClick={() => setScreen(screen.name === 'lesson' ? { name: 'reference' } : { name: 'home' })}
+              onClick={() => {
+                setScreen(backTarget(screen));
+                window.scrollTo({ top: 0 });
+              }}
               aria-label={t.app.back}
             >
               ←
@@ -561,10 +641,15 @@ export default function App() {
               ‹
             </button>
           )}
+          {/*
+            * Точка кликабельна, если шаг уже показывали (i <= maxIndex),
+            * кроме текущего: он и так на экране. Ещё не показанные шаги
+            * остаются <i> — не кнопка, не фокусируется, не обещает перехода.
+            */}
           {screen.name === 'session' && (
             <div className="progress-dots">
               {screen.queue.map((_, i) =>
-                i < screen.index ? (
+                i <= screen.maxIndex && i !== screen.index ? (
                   <button
                     key={i}
                     className="dot done"
@@ -659,6 +744,7 @@ export default function App() {
               task={step.task}
               executor={executor}
               schema={schema}
+              drafts={taskDrafts}
               onOpenSchema={() => setSchemaOpen(true)}
               onDone={(o) => handleDone(step.task, o)}
             />

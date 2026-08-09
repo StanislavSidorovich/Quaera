@@ -18,36 +18,100 @@ import { ResultTable } from './ResultTable';
 /** Первая подсказка открывается не сразу: пауза на самостоятельную попытку. */
 const HINT_DELAY_SEC = 20;
 
+/** Сколько секунд паузы осталось до первой подсказки — считается от первого показа задания, а не от монтирования. */
+const remainingWait = (startedAt: number) =>
+  Math.max(0, HINT_DELAY_SEC - Math.floor((Date.now() - startedAt) / 1000));
+
 export interface TaskOutcome {
   correct: boolean;
   wrongAttempts: number;
   hintsUsed: number;
 }
 
+/**
+ * Черновик шага занятия — всё, что человек успел сделать на задании и что
+ * обязано пережить уход на карточку теории и возврат обратно.
+ *
+ * Хранится не здесь, а в App (см. taskDrafts): экран задания перемонтируется
+ * на каждом переходе по шагам занятия, и любое состояние внутри него уходит
+ * вместе с набранным запросом. Пока вернуться на шаг было нельзя, этого не
+ * было видно; с появлением возврата это стало главным способом потерять работу.
+ *
+ * `running` в черновик не входит намеренно: незавершённый запрос к исполнителю
+ * уезжает вместе с экраном, и восстановленное «идёт проверка» было бы враньём
+ * про процесс, которого уже нет.
+ */
+export interface TaskDraft {
+  code: string;
+  blanks: string[];
+  chosen: number | null;
+  preview: Preview | null;
+  expected: Preview | null;
+  feedback: Feedback | null;
+  solved: boolean;
+  wasCorrect: boolean;
+  wrongAttempts: number;
+  hintsShown: number;
+  /** Момент первого показа задания: пауза перед первой подсказкой не начинается заново при возврате. */
+  startedAt: number;
+  mobilePanel: 'brief' | 'work' | 'results';
+}
+
+export interface TaskDraftStore {
+  read: (taskId: string) => TaskDraft | undefined;
+  write: (taskId: string, draft: TaskDraft) => void;
+}
+
+/** Пустой черновик — то самое состояние, с которого задание начинается впервые. */
+export function blankDraft(task: Task): TaskDraft {
+  return {
+    code: task.starter ?? '',
+    blanks: new Array(task.template ? task.template.split('___').length - 1 : 0).fill(''),
+    chosen: null,
+    preview: null,
+    expected: null,
+    feedback: null,
+    solved: false,
+    wasCorrect: false,
+    wrongAttempts: 0,
+    hintsShown: 0,
+    startedAt: Date.now(),
+    mobilePanel: 'brief',
+  };
+}
+
 interface Props {
   task: Task;
   executor: Executor;
   schema: SchemaDoc | null;
+  /** Хранилище черновиков занятия — см. TaskDraft. */
+  drafts: TaskDraftStore;
   onDone: (o: TaskOutcome) => void;
   onOpenSchema: () => void;
 }
 
-export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props) {
+export function TaskView({ task, executor, schema, drafts, onDone, onOpenSchema }: Props) {
   const { t, locale } = useI18n();
-  const [code, setCode] = useState('');
-  const [blanks, setBlanks] = useState<string[]>([]);
-  const [chosen, setChosen] = useState<number | null>(null);
+  /**
+   * Стартовое состояние берётся из черновика этого задания, а не из пустоты:
+   * человек, ушедший на карточку теории и вернувшийся, застаёт свой запрос,
+   * открытые подсказки и результат проверки ровно там, где их оставил.
+   */
+  const [initial] = useState(() => drafts.read(task.id) ?? blankDraft(task));
+  const [code, setCode] = useState(initial.code);
+  const [blanks, setBlanks] = useState<string[]>(initial.blanks);
+  const [chosen, setChosen] = useState<number | null>(initial.chosen);
   const [running, setRunning] = useState(false);
-  const [preview, setPreview] = useState<Preview | null>(null);
-  const [expected, setExpected] = useState<Preview | null>(null);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [solved, setSolved] = useState(false);
+  const [preview, setPreview] = useState<Preview | null>(initial.preview);
+  const [expected, setExpected] = useState<Preview | null>(initial.expected);
+  const [feedback, setFeedback] = useState<Feedback | null>(initial.feedback);
+  const [solved, setSolved] = useState(initial.solved);
   /** Решено верно или разобрано после сдачи — от этого зависит интервал повторения. */
-  const [wasCorrect, setWasCorrect] = useState(false);
-  const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [hintsShown, setHintsShown] = useState(0);
-  const [waitLeft, setWaitLeft] = useState(HINT_DELAY_SEC);
-  const startedAt = useRef(Date.now());
+  const [wasCorrect, setWasCorrect] = useState(initial.wasCorrect);
+  const [wrongAttempts, setWrongAttempts] = useState(initial.wrongAttempts);
+  const [hintsShown, setHintsShown] = useState(initial.hintsShown);
+  const [waitLeft, setWaitLeft] = useState(() => remainingWait(initial.startedAt));
+  const startedAt = useRef(initial.startedAt);
   /**
    * Переключатель «Условие / Код / Результат» — только для write/fill
    * и только на узком экране (см. .task-mobile-tabs в styles.css, порог
@@ -56,29 +120,64 @@ export function TaskView({ task, executor, schema, onDone, onOpenSchema }: Props
    * и результат уже стоят рядом в .task-work, а сама вкладочная панель
    * скрыта через CSS, не через JS-развилку по ширине.
    */
-  const [mobilePanel, setMobilePanel] = useState<'brief' | 'work' | 'results'>('brief');
+  const [mobilePanel, setMobilePanel] = useState<'brief' | 'work' | 'results'>(initial.mobilePanel);
 
-  // Сброс при переходе к следующему заданию: компонент переиспользуется.
+  /**
+   * Смена задания без перемонтирования. Сейчас её не бывает — App рендерит
+   * экран с `key={task.id}`, — но компонент не должен на это полагаться:
+   * состояние принадлежит заданию, а не позиции в дереве. Эффект нарочно
+   * ничего не делает на монтировании (сравнение с shownTaskId): иначе он
+   * затирал бы только что восстановленный черновик пустыми значениями.
+   */
+  const shownTaskId = useRef(task.id);
   useEffect(() => {
-    setCode(task.starter ?? '');
-    setBlanks(new Array(task.template ? task.template.split('___').length - 1 : 0).fill(''));
-    setChosen(null);
-    setPreview(null);
-    setExpected(null);
-    setFeedback(null);
-    setSolved(false);
-    setWasCorrect(false);
-    setWrongAttempts(0);
-    setHintsShown(0);
-    setWaitLeft(HINT_DELAY_SEC);
-    setMobilePanel('brief');
-    startedAt.current = Date.now();
-  }, [task.id]);
+    if (shownTaskId.current === task.id) return;
+    shownTaskId.current = task.id;
+    const d = drafts.read(task.id) ?? blankDraft(task);
+    setCode(d.code);
+    setBlanks(d.blanks);
+    setChosen(d.chosen);
+    setPreview(d.preview);
+    setExpected(d.expected);
+    setFeedback(d.feedback);
+    setSolved(d.solved);
+    setWasCorrect(d.wasCorrect);
+    setWrongAttempts(d.wrongAttempts);
+    setHintsShown(d.hintsShown);
+    setMobilePanel(d.mobilePanel);
+    startedAt.current = d.startedAt;
+    setWaitLeft(remainingWait(d.startedAt));
+  }, [task, drafts]);
+
+  /**
+   * Черновик пишется после каждого рендера, без списка зависимостей.
+   *
+   * Хранилище — обычный Map в ref у App: запись в него ничего не
+   * перерисовывает, поэтому дешевле писать всегда, чем перечислять
+   * двенадцать зависимостей и завести тринадцатый источник ошибок —
+   * забытое поле здесь означало бы молча потерянную работу человека.
+   */
+  useEffect(() => {
+    drafts.write(task.id, {
+      code,
+      blanks,
+      chosen,
+      preview,
+      expected,
+      feedback,
+      solved,
+      wasCorrect,
+      wrongAttempts,
+      hintsShown,
+      startedAt: startedAt.current,
+      mobilePanel,
+    });
+  });
 
   useEffect(() => {
     if (waitLeft <= 0) return;
     const t = setInterval(() => {
-      setWaitLeft(Math.max(0, HINT_DELAY_SEC - Math.floor((Date.now() - startedAt.current) / 1000)));
+      setWaitLeft(remainingWait(startedAt.current));
     }, 1000);
     return () => clearInterval(t);
   }, [waitLeft, task.id]);
