@@ -137,6 +137,11 @@ type Screen =
   | { name: 'about' }
   | { name: 'trackIntro'; track: Track };
 
+/** Индекс карточки приёма этого навыка в очереди занятия, если она там есть, иначе -1. */
+function lessonStepIndex(queue: Step[], skillId: string): number {
+  return queue.findIndex((s) => s.kind === 'lesson' && s.lesson.skill === skillId);
+}
+
 /**
  * Куда ведёт «назад» — одна функция на верхнюю стрелку и на аппаратную
  * кнопку телефона: раньше это условие стояло в двух местах и уже разъезжалось.
@@ -154,9 +159,7 @@ function backTarget(current: Screen): Screen {
   if (current.name === 'session') {
     const step = current.queue[current.index];
     if (step?.kind === 'task') {
-      const lessonIndex = current.queue.findIndex(
-        (s) => s.kind === 'lesson' && s.lesson.skill === step.task.skill
-      );
+      const lessonIndex = lessonStepIndex(current.queue, step.task.skill);
       if (lessonIndex >= 0 && lessonIndex < current.index) return { ...current, index: lessonIndex };
     }
   }
@@ -545,6 +548,21 @@ export default function App() {
     return t.session.taskProgressOf(done, total);
   }, [screen, t]);
 
+  /**
+   * Название навыка текущего шага занятия — то, чего в шапке не было вовсе:
+   * заголовок называл тип экрана («Занятие»), а не тему, хотя тип и так
+   * очевиден из того, что человек уже на нём стоит. Один подбор SRS может
+   * собрать задания на два-три навыка подряд, поэтому это всегда текущий
+   * шаг, а не единая подпись на всё занятие.
+   */
+  const currentSkillTitle = useMemo(() => {
+    if (screen.name !== 'session') return null;
+    const s = screen.queue[screen.index];
+    const skillId = s?.kind === 'lesson' ? s.lesson.skill : s?.kind === 'task' ? s.task.skill : null;
+    if (!skillId) return null;
+    return activePack.skills.find((sk) => sk.id === skillId)?.title ?? null;
+  }, [screen, activePack]);
+
   // Занятие, карточка приёма и вводная трека своего пункта в меню не имеют:
   // подсвечивать там «Главную» значило бы врать о том, где человек находится.
   const sidebarSection: SidebarSection =
@@ -593,7 +611,7 @@ export default function App() {
           )}
           <h1 className={screen.name === 'home' ? 'brand' : undefined}>
             {screen.name === 'session'
-              ? t.session.title
+              ? (currentSkillTitle ?? t.session.title)
               : screen.name === 'reference'
                 ? t.reference.title
                 : screen.name === 'lesson'
@@ -611,7 +629,14 @@ export default function App() {
                         <span className="brand-word">{t.app.name}</span>}
             <span className="sub">
               {screen.name === 'session'
-                ? stepLabel
+                ? (
+                    // Трек впереди подписи шага: название навыка в h1 уже
+                    // говорит «о чём», а без трека «Задача 2 из 5» не говорит,
+                    // где именно — на телефоне до шапки бокового меню не достать.
+                    <>
+                      {t.tracks.names[activeTrack]} · {stepLabel}
+                    </>
+                  )
                 : screen.name === 'reference'
                   ? t.tracks.names[activeTrack]
                   : screen.name === 'lesson'
@@ -738,17 +763,27 @@ export default function App() {
             />
           )}
 
-          {step?.kind === 'task' && executor && (
-            <TaskView
-              key={step.task.id}
-              task={step.task}
-              executor={executor}
-              schema={schema}
-              drafts={taskDrafts}
-              onOpenSchema={() => setSchemaOpen(true)}
-              onDone={(o) => handleDone(step.task, o)}
-            />
-          )}
+          {step?.kind === 'task' && executor && (() => {
+            // Пилюля навыка на карточке задания ведёт на карточку приёма
+            // этого же занятия — если её в очереди не было (навык уже
+            // введён раньше), пилюля остаётся текстом без клика: вести
+            // на карточку из справочника значило бы бросить занятие,
+            // а очередь занятия нигде не сохраняется.
+            const lessonIndex = screen.name === 'session' ? lessonStepIndex(screen.queue, step.task.skill) : -1;
+            return (
+              <TaskView
+                key={step.task.id}
+                task={step.task}
+                executor={executor}
+                schema={schema}
+                drafts={taskDrafts}
+                skillTitle={activePack.skills.find((sk) => sk.id === step.task.skill)?.title ?? ''}
+                onOpenLesson={lessonIndex >= 0 ? () => goToStep(lessonIndex) : undefined}
+                onOpenSchema={() => setSchemaOpen(true)}
+                onDone={(o) => handleDone(step.task, o)}
+              />
+            );
+          })()}
 
           {screen.name === 'reference' && (
             <Reference activeTrack={activeTrack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />

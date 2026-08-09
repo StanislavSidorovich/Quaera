@@ -86,11 +86,19 @@ interface Props {
   schema: SchemaDoc | null;
   /** Хранилище черновиков занятия — см. TaskDraft. */
   drafts: TaskDraftStore;
+  /** Название навыка задания — для пилюли рядом с уровнем. */
+  skillTitle: string;
   onDone: (o: TaskOutcome) => void;
   onOpenSchema: () => void;
+  /**
+   * Открыть карточку приёма этого навыка. Отсутствует, если в очереди
+   * занятия её не было (навык уже введён раньше), — тогда пилюля навыка
+   * остаётся текстом без клика, а не ведёт наружу из занятия.
+   */
+  onOpenLesson?: () => void;
 }
 
-export function TaskView({ task, executor, schema, drafts, onDone, onOpenSchema }: Props) {
+export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, onOpenSchema, onOpenLesson }: Props) {
   const { t, locale } = useI18n();
   /**
    * Стартовое состояние берётся из черновика этого задания, а не из пустоты:
@@ -353,6 +361,20 @@ export function TaskView({ task, executor, schema, drafts, onDone, onOpenSchema 
       <div className="card" data-mobile-hidden={tabbed && mobilePanel !== 'brief'}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
           <span className="pill level">{t.task.levelLabel(task.level)}</span>
+          {/*
+           * Название навыка задания — раньше в шапке экрана стояло только
+           * «Занятие», и понять, какая тема сейчас проходится, было неоткуда.
+           * Кликабельна, только если карточка приёма этого навыка есть
+           * в очереди занятия (см. onOpenLesson в App): иначе клик уводил бы
+           * из занятия наружу без возможности продолжить с того же места.
+           */}
+          {skillTitle && (onOpenLesson ? (
+            <button className="pill" onClick={onOpenLesson}>
+              {skillTitle}
+            </button>
+          ) : (
+            <span className="pill">{skillTitle}</span>
+          ))}
           <span className="pill">
             {task.mode === 'predict' ? t.task.modePredict : task.mode === 'fill' ? t.task.modeFill : t.task.modeWrite}
           </span>
