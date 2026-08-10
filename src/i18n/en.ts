@@ -200,6 +200,11 @@ export const en = {
     disclaimerTitle: 'Nothing here checks your answer',
     disclaimerBody:
       '"The query ran" is not the same as "the number is right". The engine will report a syntax error, but it stays silent when a join has multiplied your rows and tripled the total, or when you have averaged something that was already an average. This is the only place in the trainer where a discrepancy is caught by neither a reference answer nor a writeup: check the result yourself — against the order of magnitude, a control total, a second way of counting.',
+    /** См. комментарий в ru.ts: «что тут вообще есть» — вопрос более ранний, чем «что спросить». */
+    tablesTitle: 'What tables are here',
+    tablesIntro:
+      'Where any query starts: what is in the database and what one row of each table stands for. Tap a table to see its columns, its links and three real rows.',
+    tableOpenAria: (table: string) => `Open the schema for ${table}`,
     questionsTitle: 'Where to start',
     questionsIntro:
       'Questions analysts genuinely get asked — and every one of them has an answer in this data. Clicking inserts the question into the editor as a comment.',
@@ -291,7 +296,9 @@ export const en = {
   schema: {
     title: 'Data schema',
     loading: 'Loading schema…',
-    grainLabel: (grain: string, rows: string) => `One row = ${grain} · ${rows} rows`,
+    /** См. комментарий в ru.ts: в списке таблиц песочницы объём не нужен, формулировка одна на оба места. */
+    grainLabel: (grain: string, rows?: string) =>
+      rows ? `One row = ${grain} · ${rows} rows` : `One row = ${grain}`,
     closeBtn: 'Close',
     ariaLabel: 'Data schema',
     copyAria: (name: string) => `Copy "${name}"`,

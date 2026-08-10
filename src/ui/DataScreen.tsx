@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { groupTables, type GroupedTables, type TableGroup } from '../engine/schemaGroups';
+import { GROUP_ORDER, groupTables, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { TableDoc } from './TableDoc';
@@ -19,8 +19,6 @@ import { TableDoc } from './TableDoc';
  * (см. styles.css). Третья постоянная колонка схлопнула бы главную обратно
  * в одну колонку на самой ходовой ширине. Поэтому — свой экран во всю ширину.
  */
-
-const GROUP_ORDER: TableGroup[] = ['fact', 'dimension', 'standalone'];
 
 export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
   const { t } = useI18n();

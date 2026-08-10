@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, SANDBOX_STARTER, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
 import { diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { getExecutor } from '../engine/executors';
+import { GROUP_ORDER, groupTables } from '../engine/schemaGroups';
 import type { LoadState, Preview, SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { deleteScript, loadSandboxStore, saveScript, type SandboxStore } from '../sandbox/store';
@@ -210,6 +211,23 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     setSavingOpen(false);
   }
 
+  /**
+   * Таблицы, разложенные по месту в звезде.
+   *
+   * Тот же `groupTables`, что на экране «Данные», и тот же порядок групп —
+   * не копия правила, а один источник: если песочница будет считать
+   * справочником не то, что экран «Данные», человек получит два ответа
+   * на один вопрос и не будет знать, какому верить.
+   */
+  const tablesByGroup = useMemo(() => {
+    if (!schema) return null;
+    const { group } = groupTables(schema);
+    return GROUP_ORDER.map((kind) => ({
+      kind,
+      tables: schema.tables.filter((tb) => group.get(tb.table) === kind),
+    })).filter((g) => g.tables.length > 0);
+  }, [schema]);
+
   const questionsByGroup = useMemo(() => {
     const map = new Map<SandboxGroup, SandboxQuestion[]>();
     for (const q of SANDBOX_QUESTIONS) {
@@ -220,7 +238,8 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     return map;
   }, []);
 
-  const dateFmt = locale === 'ru' ? 'ru-RU' : 'en-US';
+  /** Один тег и на даты сохранённых скриптов, и на разряды в числе строк. */
+  const intlLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
 
   return (
     <>
@@ -387,6 +406,53 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
         </div>
 
         <div className="sandbox-side">
+          {/*
+           * Список таблиц стоит выше вопросов намеренно.
+           *
+           * Вопросы обещают «с чего начать», но каждый из них подписан
+           * «Где смотреть: fact_sellout, dim_product» — и человеку, который
+           * видит эти имена впервые, подпись ничего не говорит. Сам он тем
+           * более не начнёт: в песочнице пустой редактор и никакого способа
+           * узнать, что вообще есть в базе, кроме кнопки схемы, которая
+           * читается как справка по колонкам уже известной таблицы,
+           * а не как карта датасета.
+           *
+           * Поэтому сначала «что здесь есть», потом «что спросить». Гранулярность
+           * («одна строка = отгрузка позиции в день») важнее числа строк:
+           * первое отвечает на вопрос, можно ли из таблицы получить нужное,
+           * второе — только на вопрос, много ли данных.
+           */}
+          <div className="card">
+            <h2>{t.sandbox.tablesTitle}</h2>
+            <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>{t.sandbox.tablesIntro}</p>
+            {!tablesByGroup ? (
+              <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.schema.loading}</p>
+            ) : (
+              tablesByGroup.map(({ kind, tables }) => (
+                <div key={kind} style={{ marginTop: 12 }}>
+                  <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {t.data.groups[kind].title}
+                  </p>
+                  {tables.map((tb) => (
+                    <button
+                      key={tb.table}
+                      type="button"
+                      className="skill-row sandbox-table"
+                      style={{ width: '100%', textAlign: 'left' }}
+                      onClick={() => onOpenSchema(tb.table)}
+                      aria-label={t.sandbox.tableOpenAria(tb.table)}
+                    >
+                      <div className="name">
+                        <code style={{ color: 'var(--code)' }}>{tb.table}</code> — {tb.title}
+                        <small>{t.schema.grainLabel(tb.grain)}</small>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+
           <div className="card">
             <h2>{t.sandbox.questionsTitle}</h2>
             <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>{t.sandbox.questionsIntro}</p>
@@ -433,7 +499,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                   >
                     {s.name}
                     <small>
-                      {s.env === 'sql' ? t.sandbox.envSql : t.sandbox.envPython} · {new Date(s.savedAt).toLocaleDateString(dateFmt)}
+                      {s.env === 'sql' ? t.sandbox.envSql : t.sandbox.envPython} · {new Date(s.savedAt).toLocaleDateString(intlLocale)}
                     </small>
                   </button>
                   <button

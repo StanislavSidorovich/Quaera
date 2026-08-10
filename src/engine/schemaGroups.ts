@@ -25,6 +25,14 @@ import type { SchemaDoc } from './types';
  */
 export type TableGroup = 'fact' | 'dimension' | 'standalone';
 
+/**
+ * Порядок групп на экране — от того, откуда берутся числа, к тому, что
+ * ещё не приведено в порядок. Живёт здесь, а не в каждом экране своей
+ * копией: порядок читается как утверждение о данных («сначала факты»),
+ * и разойтись между экраном «Данные» и песочницей он не имеет права.
+ */
+export const GROUP_ORDER: TableGroup[] = ['fact', 'dimension', 'standalone'];
+
 export interface GroupedTables {
   group: Map<string, TableGroup>;
   /** Сколько разных таблиц ссылается на эту — насколько она «центр» звезды. */
