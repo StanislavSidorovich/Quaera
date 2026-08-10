@@ -738,19 +738,27 @@ export default function App() {
               )}
             </div>
           )}
-          <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
-            {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
-          </button>
-          <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
-            {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
-          </button>
-          <button
-            className="icon-btn"
-            aria-label={t.locale.switchAriaLabel}
-            onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
-          >
-            {locale === 'ru' ? 'EN' : 'RU'}
-          </button>
+          {/*
+           * Группа вынесена в свой контейнер по тому же приёму, что и
+           * progress-dots ниже: на узком экране это тоже целая строка,
+           * а не три элемента, которые остаются в потоке шапки и сжимают
+           * заголовок до нечитаемой колонки (было на 390px до этой правки).
+           */}
+          <div className="topbar-tools">
+            <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
+              {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
+            </button>
+            <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
+              {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
+            </button>
+            <button
+              className="icon-btn"
+              aria-label={t.locale.switchAriaLabel}
+              onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
+            >
+              {locale === 'ru' ? 'EN' : 'RU'}
+            </button>
+          </div>
         </header>
 
         <main className="content">
