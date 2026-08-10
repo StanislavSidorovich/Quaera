@@ -1012,7 +1012,7 @@ function TrackCards({
 function WelcomeHero() {
   const { t } = useI18n();
   return (
-    <div className="card">
+    <div className="card welcome-hero">
       <h2 style={{ marginTop: 0 }}>{t.welcome.headline}</h2>
       <p className="brief" style={{ margin: '8px 0 14px' }}>{t.welcome.body}</p>
       <div className="proof-list">
@@ -1563,6 +1563,17 @@ function About({
         <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
           {t.about.structureIntro(totalSkills, totalTasks)}
         </p>
+        {/*
+         * Четыре трека — сеткой, а не столбиком во всю ширину.
+         *
+         * Описание трека ограничено 68ch (см. .card p в styles.css), поэтому
+         * в один столбец правая половина карточки высотой почти в экран
+         * оставалась пустой — та же причина, по которой .about-columns
+         * и .track-intro идут в две колонки. Треков ровно четыре
+         * и они независимы: это четыре ответа на один вопрос «что внутри»,
+         * а не текст, который читают строго сверху вниз.
+         */}
+        <div className="track-summary-list">
         {TRACK_ORDER.map((track) => {
           const p = packForTrack(track, locale);
           if (!p) return null;
@@ -1589,6 +1600,7 @@ function About({
             </button>
           );
         })}
+        </div>
         <p
           className="muted"
           style={{ margin: '14px 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
@@ -1601,14 +1613,26 @@ function About({
       </div>
 
       {/*
-       * Две независимые карточки-ответа рядом, а не друг под другом — тот же
-       * приём, что и в TrackIntroScreen (.track-intro): на широком экране
-       * узкий абзац (68ch) иначе оставлял пустую половину карточки. «Как
-       * это устроено» длиннее «Приватности», но auto-fit это не мешает —
-       * ряды выравниваются по высоте самой длинной карточки в строке
-       * (align-items: start в CSS и так не растягивает их принудительно).
+       * Четыре закрывающие карточки — колоночным потоком, а не сеткой.
+       *
+       * Рядом, а не друг под другом, они стоят по той же причине, что
+       * карточки в TrackIntroScreen: абзац ограничен 68ch ради читаемости,
+       * и во всю ширину каждая оставляла бы пустой правую половину.
+       *
+       * Но сетка здесь давала свой дефект, ради которого всё и переделано:
+       * ряд выравнивается по самой высокой карточке, а «Приватность» втрое
+       * короче «Как это устроено» — под ней зияла дыра в четверть экрана,
+       * пока следующий ряд ждал конца соседа. Растянуть короткую карточку
+       * было бы хуже: та же дыра, только внутри рамки.
+       *
+       * `columns` раскладывает карточки потоком и балансирует высоту колонок
+       * сам — здесь это даёт почти ровные 581 и 555. Порядок чтения при этом
+       * меняется с «слева направо» на «сверху вниз по колонке», и это
+       * допустимо ровно потому, что карточки независимы: четыре ответа
+       * на четыре разных вопроса, а не абзацы одного текста. «Автор
+       * и лицензия» остаётся последним и внизу — см. ниже, почему это важно.
        */}
-      <div className="about-grid">
+      <div className="about-columns">
         <div className="card">
           <h2>{t.about.howTitle}</h2>
           <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
@@ -1620,7 +1644,6 @@ function About({
           <h2>{t.about.privacyTitle}</h2>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
         </div>
-      </div>
 
       <div className="card">
         <h2>{t.about.backupTitle}</h2>
@@ -1672,6 +1695,7 @@ function About({
         <p className="muted" style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55 }}>
           {t.about.licenseBody}
         </p>
+      </div>
       </div>
     </>
   );
