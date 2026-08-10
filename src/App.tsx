@@ -1749,9 +1749,17 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
 
   return (
     <>
+      {/*
+       * Без заголовка намеренно: шапка экрана уже печатает t.onboarding.title
+       * (см. h1 в App), и h2 с той же строкой стоял бы в шестидесяти пикселях
+       * под ней — тот же дефект, что задвоенный логотип и что второй раз
+       * названный трек в trackIntro. Ни один другой экран так не делает:
+       * у about, sandbox, data и reference заголовок живёт только в шапке.
+       * Карточка остаётся ради врезки — абзац крупнее остального текста,
+       * как .brief у WelcomeHero, потому что читают его первым.
+       */}
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>{t.onboarding.title}</h2>
-        <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6 }}>{t.onboarding.intro}</p>
+        <p className="brief" style={{ margin: 0 }}>{t.onboarding.intro}</p>
       </div>
 
       {/*
@@ -1823,8 +1831,15 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
                  * подписи читатель по привычке решит, что и мера DAX
                  * прогнана по данным. Она не прогнана и прогнана быть
                  * не может.
+                 *
+                 * Выделена та пилюля, которая говорит неожиданное. Сначала
+                 * было наоборот — две исполнимые светились акцентом,
+                 * а единственная предупреждающая была обычной серой,
+                 * и глаз проскакивал именно её. Правило общее: подсвечивать
+                 * исключение, а не правило, иначе подсветка перестаёт
+                 * что-либо значить.
                  */}
-                <span className={`pill${answer.runnable ? ' level' : ''}`}>
+                <span className={`pill${answer.runnable ? '' : ' warn'}`}>
                   {answer.runnable ? t.onboarding.compareRunnable : t.onboarding.compareNotRunnable}
                 </span>
               </div>
@@ -1858,9 +1873,17 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
               <span className="onboard-step-num" aria-hidden>
                 {i + 1}
               </span>
+              {/*
+               * Тело шага — обычным цветом, а не .muted. Соседние карточки
+               * устроены наоборот: в dl.audience подпись серая, а ответ
+               * полной силы, и «Как проходить» была единственным местом,
+               * где серым набран как раз ответ. Читая экран подряд,
+               * натыкаешься на инверсию ровно там, где содержание самое
+               * инструментальное. Иерархию держит начертание заголовка.
+               */}
               <span>
                 <strong style={{ display: 'block', marginBottom: 2, fontSize: 14 }}>{step.title}</strong>
-                <span className="muted" style={{ fontSize: 14, lineHeight: 1.6 }}>{step.body}</span>
+                <span style={{ fontSize: 14, lineHeight: 1.6 }}>{step.body}</span>
               </span>
             </li>
           ))}
