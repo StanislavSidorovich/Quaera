@@ -3,6 +3,7 @@ import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs
 import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
+import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
 import { DataScreen } from './ui/DataScreen';
@@ -929,7 +930,9 @@ export default function App() {
           {load.phase === 'error' && (
             <div className="feedback error">
               <h3>{t.loadError.title}</h3>
-              <p>{load.message}</p>
+              {/* Воркер мог не сказать ничего — тогда показываем свою фразу
+                  на языке интерфейса, а не служебную метку. */}
+              <p>{load.message === WORKER_FAILURE ? t.loadError.workerBody : load.message}</p>
               <button className="btn secondary" onClick={() => location.reload()}>
                 {t.loadError.reloadBtn}
               </button>

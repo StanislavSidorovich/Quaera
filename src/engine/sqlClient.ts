@@ -1,3 +1,4 @@
+import { WORKER_FAILURE } from './types';
 import type { DatasetInfo, Executor, ExecResult, GradeOptions, GradeResult, LoadState } from './types';
 
 /**
@@ -42,10 +43,10 @@ function ensureWorker(): Worker {
     if (!p) return;
     pending.delete(id);
     if (ok) p.resolve(data);
-    else p.reject(new Error(error ?? 'Ошибка воркера'));
+    else p.reject(new Error(error ?? WORKER_FAILURE));
   };
   worker.onerror = (e) => {
-    const err = new Error(e.message || 'Воркер SQLite упал');
+    const err = new Error(e.message || WORKER_FAILURE);
     pending.forEach((p) => p.reject(err));
     pending.clear();
     setState({ phase: 'error', message: err.message });

@@ -1,3 +1,4 @@
+import { WORKER_FAILURE } from './types';
 import type { DatasetInfo, Executor, ExecResult, GradeOptions, GradeResult, LoadState } from './types';
 
 /**
@@ -74,13 +75,13 @@ function ensureWorker(): Worker {
     pending.delete(id);
     if (ok) p.resolve(data);
     else {
-      const err = new Error(error ?? 'Ошибка воркера') as Error & { traceback?: string };
+      const err = new Error(error ?? WORKER_FAILURE) as Error & { traceback?: string };
       if (traceback) err.traceback = traceback;
       p.reject(err);
     }
   };
   worker.onerror = (e) => {
-    const err = new Error(e.message || 'Воркер Python упал');
+    const err = new Error(e.message || WORKER_FAILURE);
     pending.forEach((p) => p.reject(err));
     pending.clear();
     setState({ phase: 'error', message: err.message });

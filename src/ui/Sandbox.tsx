@@ -141,7 +141,9 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
   }, [schema]);
 
   const diagnoseError = (message: string, traceback?: string): Feedback =>
-    env === 'python' ? diagnosePythonError(message, suggestions, traceback) : diagnoseSqlError(message, suggestions);
+    env === 'python'
+      ? diagnosePythonError(message, suggestions, traceback ?? '', locale)
+      : diagnoseSqlError(message, suggestions, locale);
 
   const notReady = activeLoad.phase === 'consent' || activeLoad.phase === 'loading';
 

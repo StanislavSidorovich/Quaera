@@ -493,6 +493,8 @@ export const en = {
   },
   loadError: {
     title: 'Failed to load data',
+    /** См. комментарий в ru.ts: своя фраза вместо служебной метки WORKER_FAILURE. */
+    workerBody: 'The engine stopped without reporting a reason. Reloading the page usually clears it.',
     reloadBtn: 'Reload',
   },
   locale: {

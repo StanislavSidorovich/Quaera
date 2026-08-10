@@ -213,7 +213,9 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
 
   /** Разбор ошибки исполнителя — разный по языку: SQLite и Python выдают разные тексты. */
   const diagnoseError = (message: string, traceback?: string): Feedback =>
-    task.track === 'python' ? diagnosePythonError(message, suggestions, traceback) : diagnoseSqlError(message, suggestions);
+    task.track === 'python'
+      ? diagnosePythonError(message, suggestions, traceback ?? '', locale)
+      : diagnoseSqlError(message, suggestions, locale);
 
   async function handleRun() {
     setRunning(true);
@@ -276,7 +278,7 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
       } else {
         setWrongAttempts((n) => n + 1);
         setExpected(res.expectedPreview);
-        setFeedback(diagnoseComparison(res.comparison));
+        setFeedback(diagnoseComparison(res.comparison, locale));
       }
     } catch (e) {
       const err = e as Error & { traceback?: string };
