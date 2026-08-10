@@ -79,7 +79,16 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
               aria-label={t.schema.copyAria(c.name)}
             >
               <code>{c.name}</code>
-              <small className="col-type">{c.type.toLowerCase()}</small>
+              {/*
+               * Опциональный доступ, не лишняя осторожность: schema.json
+               * отдаётся по некешируемому по хешу пути `/data/schema.json`,
+               * и в окне между обновлением JS-бандла и переключением
+               * service worker'а (см. sw.js — старый воркер отвечает своим
+               * кешем, пока клиента не забрал новый) сюда мог прилететь
+               * документ прошлой версии без поля type. Без этой проверки
+               * `undefined.toLowerCase()` ронял всё дерево без экрана ошибки.
+               */}
+              {c.type && <small className="col-type">{c.type.toLowerCase()}</small>}
             </button>
             <span>
               {copied ? (
