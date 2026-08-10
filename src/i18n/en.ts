@@ -81,11 +81,16 @@ export const en = {
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Code actually runs — on 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
-    overallProgressLabel: 'Track mastery',
+    /** См. комментарий в ru.ts: подпись называет то, что меряется, а не долю сделанного. */
+    overallProgressLabel: 'Memory strength in this track',
+    /** См. комментарий в ru.ts: объяснение жило в `title=`, то есть на телефоне не жило вовсе. */
+    overallProgressHint:
+      'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it — a low number early on is by design.',
     skillMapTitle: 'Skill map',
     /** См. комментарий в ru.ts: совет по порядку, а не запрет — карта открыта для любой темы. */
     unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
-    masteryAria: (pct: number) => `Memory strength: ${pct}%. Grows from returning to the topic over days and weeks, not from the number of tasks solved`,
+    /** Только значение — правило переехало в видимую overallProgressHint, см. ru.ts. */
+    masteryAria: (pct: number) => `Memory strength: ${pct}%`,
     referenceBtn: 'Reference',
     sandboxBtn: 'Sandbox',
     schemaBtn: 'Data schema',

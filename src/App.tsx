@@ -1283,12 +1283,38 @@ function Home({
                   <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
                 </div>
               </div>
+              {/*
+               * Объяснение полосы стоит видимой строкой, а не в `title`.
+               * Раньше оно было только там — и на телефоне не показывалось
+               * никак: `title` не открывается ни по тапу, ни по долгому
+               * нажатию. Получалось, что текст, написанный ровно против
+               * прочтения «приложение оценивает меня на 3%», не доходил
+               * до тех, у кого это прочтение и возникает. Одна тусклая
+               * строка на 12px — не баннер, прятать её под раскрытие
+               * незачем: она объясняет числа, стоящие тут же под ней.
+               */}
               <div className="overall-progress">
-                <p className="muted" style={{ margin: '0 0 8px', fontSize: 13 }}>{t.home.overallProgressLabel}</p>
+                {/*
+                 * Подпись не `.muted`, в отличие от прежней версии: рядом
+                 * с ней теперь стоит серое объяснение в две строки, и двумя
+                 * одинаково тусклыми абзацами подряд заголовок блока
+                 * переставал быть заголовком — читалось как один сплошной
+                 * комментарий неизвестно к чему. Порядок должен читаться
+                 * сразу: что это → почему так → сами числа.
+                 */}
+                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600 }}>{t.home.overallProgressLabel}</p>
+                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12, lineHeight: 1.5 }}>
+                  {t.home.overallProgressHint}
+                </p>
                 {masteryByTier.map(({ tier, avg }) => (
                   <div className="overall-progress-row" key={tier}>
                     <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
-                    <div className="bar-lg" title={t.home.masteryAria(Math.round(avg * 100))}>
+                    <div
+                      className="bar-lg"
+                      role="img"
+                      aria-label={t.home.masteryAria(Math.round(avg * 100))}
+                      title={t.home.masteryAria(Math.round(avg * 100))}
+                    >
                       <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
                     </div>
                     <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
@@ -1378,8 +1404,21 @@ function Home({
                         {s.title}
                         <small>{unlocked ? s.summary : t.home.unlockedAfter(prereqNames)}</small>
                       </div>
+                      {/*
+                       * Полоса теперь входит в имя кнопки строки: `aria-label`
+                       * на потомке подклеивается к вычисляемому имени, и это
+                       * стало уместно ровно после того, как masteryAria
+                       * сократилась до значения. Прежним текстом в полтора
+                       * предложения диктор читал бы одно и то же правило
+                       * на каждой из двадцати тем карты.
+                       */}
                       {ready && (
-                        <div className={`bar${due ? ' due' : ''}`} title={t.home.masteryAria(Math.round(m * 100))}>
+                        <div
+                          className={`bar${due ? ' due' : ''}`}
+                          role="img"
+                          aria-label={t.home.masteryAria(Math.round(m * 100))}
+                          title={t.home.masteryAria(Math.round(m * 100))}
+                        >
                           <span style={{ width: `${Math.max(m * 100, m > 0 ? 8 : 0)}%` }} />
                         </div>
                       )}
