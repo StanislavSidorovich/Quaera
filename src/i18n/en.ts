@@ -188,6 +188,15 @@ export const en = {
       model:
         "The same number is needed every day and under different slices. You build the model once, and from then on the report recalculates itself — no new query for each new question.",
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+    /** См. комментарий в ru.ts: код и пояснения к нему живут в content/tools-compare.json, здесь только облицовка. */
+    compareTitle: 'One question, three answers',
+    compareIntro:
+      'Here is the same task in three tools. The thing to watch is not the syntax but what turned out to be the essential part of each answer.',
+    compareQuestionLabel: 'Question',
+    compareRunnable: 'runs in the trainer',
+    compareNotRunnable: 'cannot be run',
+    compareFooter:
+      'The build actually executes the first two fragments and checks their results against each other: had they disagreed, this page would not have built. The third one there is nothing to check with — and that is exactly the difference between the tools worth knowing in advance.',
     toolsCost: {
       domain:
         'Not a line of code, and no automatic checking: no engine will confirm that a judgement about the business is right. Everything expressible as a number is reconciled against the dataset, but a conclusion stays a conclusion.',
@@ -234,6 +243,8 @@ export const en = {
     extraTitle: 'What to learn elsewhere',
     extraIntro:
       "The trainer covers four tools and a way of thinking around them — an analyst's job is not exhausted by that. An honest list of what isn't here: first the gaps next door, the ones you'll be asked about in the same role, then the adjacent professions this trainer does not lead to.",
+    /** См. комментарий в ru.ts: зона без описаний, она нужна ради границы, а не содержимого. */
+    extraInsideLabel: 'The trainer covers',
     extraNearLabel: "Next door: asked for on the job, absent here",
     extraNear: [
       {

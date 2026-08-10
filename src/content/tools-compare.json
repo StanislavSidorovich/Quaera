@@ -1,0 +1,35 @@
+{
+  "question": {
+    "ru": "Сколько выручки принёс каждый бренд за 2025 год, от большего к меньшему?",
+    "en": "How much revenue did each brand bring in during 2025, largest first?"
+  },
+  "answers": [
+    {
+      "track": "sql",
+      "runnable": true,
+      "code": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2025-01-01' AND f.week_start < '2026-01-01'\nGROUP BY p.brand\nORDER BY revenue DESC",
+      "note": {
+        "ru": "Вопрос переведён в запрос целиком: и отбор года, и группировка, и порядок строк записаны здесь. Ответ придёт один раз и останется таблицей.",
+        "en": "The whole question goes into the query: the year filter, the grouping and the row order are all written down here. The answer arrives once and stays a table."
+      }
+    },
+    {
+      "track": "python",
+      "runnable": true,
+      "code": "sales = fact_sellout.merge(dim_product[['product_id', 'brand']], on='product_id')\nsales = sales[(sales['week_start'] >= '2025-01-01') & (sales['week_start'] < '2026-01-01')]\nresult = (\n    sales.groupby('brand', as_index=False)['revenue'].sum()\n    .round()\n    .sort_values('revenue', ascending=False)\n)",
+      "note": {
+        "ru": "Те же три действия, но шагами и с именами: после каждой строки понятно, что лежит в sales. Результат остаётся объектом, к которому можно добавить ещё шаг.",
+        "en": "The same three actions, but as named steps: after every line you can see what sales now holds. The result stays an object you can add another step to."
+      }
+    },
+    {
+      "track": "model",
+      "runnable": false,
+      "code": "Выручка := SUM(fact_sellout[revenue])\n\n// Ни группировки по бренду, ни отбора года в формуле нет.\n// Бренды дадут строки отчёта, год — срез на странице:\n// мера считается заново под тот фильтр, который её окружает.",
+      "note": {
+        "ru": "Формула отвечает не на этот вопрос, а на все однотипные сразу — поэтому она короче остальных ровно на то, что в них было вопросом: срез и группировку. Выполнить её здесь нельзя: движка DAX в браузере не существует.",
+        "en": "The formula answers not this question but every question of its shape at once — which is why it is shorter by exactly the parts that were the question: the slice and the grouping. It cannot be run here: no DAX engine exists in a browser."
+      }
+    }
+  ]
+}

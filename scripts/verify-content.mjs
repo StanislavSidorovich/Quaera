@@ -2451,6 +2451,93 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
   if (!failed) console.log(`  ok   песочница: ${questions.length} вопросов, у каждого проба на датасете`);
 }
 
+// --- Онбординг: один вопрос — три ответа (src/content/tools-compare.json).
+//
+// Карточка на экране «С чего начать» показывает новичку один и тот же вопрос,
+// решённый в SQL, в pandas и мерой DAX. Утверждение карточки сформулировано
+// прямо в её тексте: данные одни, инструменты разные, **ответы обязаны
+// сойтись**. Здесь оно и проверяется — единственным честным способом:
+// оба исполнимых фрагмента прогоняются теми же исполнителями, что и эталоны
+// заданий, и результаты сверяются между собой.
+//
+// Без этого блока три фрагмента были бы единственным местом в приложении,
+// где код живёт на честном слове. Эталон задания падает вместе с базой,
+// число в разборе сверяется с датасетом, вопрос песочницы подтверждается
+// пробой — а код, показанный на первом экране, тихо протух бы при первой
+// правке генератора, и именно у того читателя, которому не с чем сверить.
+//
+// **Эталона у карточки нет намеренно, и это не дыра, а суть проверки:**
+// правильного ответа мы не знаем и не обязаны знать — важно, что два разных
+// движка на одних данных приходят к одному. Захардкодить сюда ожидаемые
+// девять брендов значило бы завести третий источник правды рядом с датасетом.
+//
+// У DAX исполнителя нет и не будет — движок закрытый, в браузер не переносится.
+// Проверяется ровно это: фрагмент помечен runnable: false и сам говорит,
+// почему. Асимметрия названа вслух в тексте карточки, а не оставлена
+// читателю в качестве упражнения.
+{
+  const compare = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'tools-compare.json'), 'utf8'));
+  const byTrack = new Map(compare.answers.map((a) => [a.track, a]));
+
+  for (const locale of ['ru', 'en']) {
+    if (!compare.question?.[locale]) fail('tools-compare', `нет текста вопроса на локали ${locale}`);
+  }
+  for (const a of compare.answers) {
+    for (const locale of ['ru', 'en']) {
+      if (!a.note?.[locale]) fail('tools-compare', `${a.track}: нет пояснения на локали ${locale}`);
+    }
+  }
+
+  const sqlAnswer = byTrack.get('sql');
+  const pyAnswer = byTrack.get('python');
+  const daxAnswer = byTrack.get('model');
+
+  if (!sqlAnswer?.runnable || !pyAnswer?.runnable) {
+    fail('tools-compare', 'ответы sql и python обязаны быть исполнимыми — иначе сверять между собой нечего');
+  } else {
+    const a = runSql(sqlAnswer.code);
+    const b = await runPython(pyAnswer.code);
+    if (!a.rows.length) fail('tools-compare', 'sql-фрагмент вернул пустоту');
+    else if (a.rows.length !== b.rows.length) {
+      fail('tools-compare', `строк не поровну: sql ${a.rows.length}, pandas ${b.rows.length}`);
+    } else if (a.columns.length !== b.columns.length) {
+      fail('tools-compare', `колонок не поровну: sql ${a.columns.join(', ')}, pandas ${b.columns.join(', ')}`);
+    } else {
+      // Сверка по порядку: оба фрагмента сортируют явно, и порядок строк —
+      // часть ответа на вопрос («от большего к меньшему»). Допуск в рубль —
+      // не небрежность: сумма float складывается движками в разном порядке,
+      // и расхождение в последнем разряде говорит о порядке сложения,
+      // а не о разной цифре. Всё, что больше, — уже разные ответы.
+      let mismatch = null;
+      for (let i = 0; i < a.rows.length && !mismatch; i++) {
+        for (let j = 0; j < a.columns.length; j++) {
+          const x = a.rows[i][j];
+          const y = b.rows[i][j];
+          const same = typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) <= 1 : x === y;
+          if (!same) mismatch = `строка ${i + 1}, колонка ${a.columns[j]}: sql «${x}», pandas «${y}»`;
+        }
+      }
+      if (mismatch) fail('tools-compare', `ответы разошлись — ${mismatch}`);
+      else {
+        console.log(
+          `  ok   онбординг: sql и pandas на одном вопросе дают одно и то же (${a.rows.length} строк, колонки ${a.columns.join(', ')})`
+        );
+      }
+    }
+  }
+
+  if (daxAnswer?.runnable !== false) {
+    fail('tools-compare', 'фрагмент DAX помечен исполнимым, хотя движка DAX не существует ни в браузере, ни в гейте');
+  } else if (!/DAX/.test(daxAnswer.note.ru) && !/DAX/.test(daxAnswer.note.en)) {
+    // Непроверяемый фрагмент обязан сам сказать, что он непроверяемый:
+    // иначе читатель, привыкший к «здесь всё выполняется», решит, что
+    // и эта формула прогнана по данным.
+    fail('tools-compare', 'пояснение к DAX не называет причину, по которой его нельзя выполнить');
+  } else {
+    console.log('  ok   онбординг: фрагмент DAX помечен неисполнимым и объясняет почему');
+  }
+}
+
 // --- Переводы на английский: параллельные файлы `<pack>.en.json`
 // и `<lessons>.en.json` (см. PackTranslation/LessonTranslation в content/types.ts).
 // Перевод накладывается на русский пак по id в рантайме (content/index.ts,

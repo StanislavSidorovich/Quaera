@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
+import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
@@ -1744,7 +1745,7 @@ function About({
  * в i18n/ru.ts у блока onboarding.
  */
 function Onboarding({ onFinish }: { onFinish: () => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   return (
     <>
@@ -1790,6 +1791,56 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
       </div>
 
       {/*
+       * Один вопрос — три ответа. Единственное место экрана, где новичок
+       * видит сам код, и потому единственное, что здесь проверяется сборкой:
+       * гейт выполняет sql- и python-фрагменты и сверяет их результаты между
+       * собой (см. content/tools-compare.ts). Порядок карточек берётся
+       * из файла, а не из TRACK_ORDER: сравниваются три инструмента,
+       * а domain среди них не инструмент.
+       */}
+      <div className="card">
+        <h2>{t.onboarding.compareTitle}</h2>
+        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.compareIntro}
+        </p>
+        <p className="muted" style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {t.onboarding.compareQuestionLabel}
+        </p>
+        <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
+          {toolsCompareQuestion(locale)}
+        </p>
+        <div className="compare-list">
+          {toolsCompareAnswers.map((answer) => (
+            <div key={answer.track} className="compare-item">
+              <div className="compare-head">
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 14 }}>
+                  <span className={`chain-legend-dot track-${answer.track}`} aria-hidden />
+                  {t.tracks.names[answer.track]}
+                </span>
+                {/*
+                 * Пометка исполнимости — не украшение: во всём остальном
+                 * тренажёре код выполняется по-настоящему, и без явной
+                 * подписи читатель по привычке решит, что и мера DAX
+                 * прогнана по данным. Она не прогнана и прогнана быть
+                 * не может.
+                 */}
+                <span className={`pill${answer.runnable ? ' level' : ''}`}>
+                  {answer.runnable ? t.onboarding.compareRunnable : t.onboarding.compareNotRunnable}
+                </span>
+              </div>
+              <pre className="sql-block" style={{ marginTop: 8, fontSize: 12.5 }}>{answer.code}</pre>
+              <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55 }}>
+                {answer.note[locale]}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.compareFooter}
+        </p>
+      </div>
+
+      {/*
        * Единственное место в приложении, где нумерация уместна: это
        * последовательность действий, а не набор ответов на разные вопросы
        * (см. комментарий у onboarding.steps в i18n/ru.ts). Номер рисует
@@ -1830,34 +1881,54 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
         <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
           {t.onboarding.extraIntro}
         </p>
-        <p
-          className="muted"
-          style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
-        >
-          {t.onboarding.extraNearLabel}
-        </p>
-        <dl className="audience" style={{ marginBottom: 18 }}>
-          {t.onboarding.extraNear.map((item) => (
-            <div key={item.title}>
-              <dt>{item.title}</dt>
-              <dd>{item.body}</dd>
+        {/*
+         * Карта окрестностей: три зоны от «внутри» к «снаружи», рельс слева
+         * гаснет от акцентного цвета к цвету линии. Диаграмма здесь —
+         * сама раскладка, а не картинка рядом с текстом: рисовать отдельную
+         * схему значило бы вывести названия пунктов дважды.
+         *
+         * Первая зона без описаний намеренно (см. extraInsideLabel в ru.ts):
+         * четыре трека уже описаны выше на этом экране, и нужна она не ради
+         * содержимого, а ради границы — два списка ниже перечисляют
+         * отсутствующее, и без «внутри» непонятно, относительно чего.
+         */}
+        <div className="zone-map">
+          <div className="zone zone-inside">
+            <p className="zone-label">{t.onboarding.extraInsideLabel}</p>
+            <div className="zone-chips">
+              {TRACK_ORDER.map((track) => (
+                <span key={track} className="pill">
+                  <span className={`chain-legend-dot track-${track}`} aria-hidden style={{ marginRight: 6 }} />
+                  {t.tracks.names[track]}
+                </span>
+              ))}
             </div>
-          ))}
-        </dl>
-        <p
-          className="muted"
-          style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
-        >
-          {t.onboarding.extraAdjacentLabel}
-        </p>
-        <dl className="audience">
-          {t.onboarding.extraAdjacent.map((item) => (
-            <div key={item.title}>
-              <dt>{item.title}</dt>
-              <dd>{item.body}</dd>
-            </div>
-          ))}
-        </dl>
+          </div>
+
+          <div className="zone zone-near">
+            <p className="zone-label">{t.onboarding.extraNearLabel}</p>
+            <dl className="audience">
+              {t.onboarding.extraNear.map((item) => (
+                <div key={item.title}>
+                  <dt>{item.title}</dt>
+                  <dd>{item.body}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="zone zone-outside">
+            <p className="zone-label">{t.onboarding.extraAdjacentLabel}</p>
+            <dl className="audience">
+              {t.onboarding.extraAdjacent.map((item) => (
+                <div key={item.title}>
+                  <dt>{item.title}</dt>
+                  <dd>{item.body}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
         <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
           {t.onboarding.extraClosing}
         </p>
