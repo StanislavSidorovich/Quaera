@@ -139,6 +139,7 @@ type Screen =
   | { name: 'data' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
+  | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
 
 /** Индекс карточки приёма этого навыка в очереди занятия, если она там есть, иначе -1. */
@@ -593,7 +594,9 @@ export default function App() {
             ? 'data'
             : screen.name === 'about'
               ? 'about'
-              : null;
+              : screen.name === 'onboarding'
+                ? 'onboarding'
+                : null;
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -615,6 +618,7 @@ export default function App() {
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
+        onOnboarding={() => setScreen({ name: 'onboarding' })}
         onSelectTrack={switchTrack}
       />
 
@@ -645,6 +649,8 @@ export default function App() {
                     ? t.lesson.pill
                     : screen.name === 'about'
                       ? t.about.title
+                      : screen.name === 'onboarding'
+                        ? t.onboarding.title
                       : screen.name === 'trackIntro'
                       ? t.tracks.names[screen.track]
                       : /*
@@ -685,6 +691,8 @@ export default function App() {
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
+                      : screen.name === 'onboarding'
+                        ? t.app.name
                       : screen.name === 'trackIntro'
                         ? /*
                            * Пусто: заголовок над подписью и так называет трек,
@@ -774,6 +782,7 @@ export default function App() {
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
+              onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
@@ -786,6 +795,10 @@ export default function App() {
               onExportProgress={downloadProgress}
               onImportProgress={importProgressFile}
             />
+          )}
+
+          {screen.name === 'onboarding' && (
+            <Onboarding onFinish={() => setScreen({ name: 'home' })} />
           )}
 
           {screen.name === 'trackIntro' && (
@@ -1081,6 +1094,7 @@ function Home({
   onOpenReference,
   onOpenSandbox,
   onOpenAbout,
+  onOpenOnboarding,
   onSwitchTrack,
   onStartSkill,
   onOpenTrackIntro,
@@ -1105,6 +1119,7 @@ function Home({
   onOpenReference: () => void;
   onOpenSandbox: () => void;
   onOpenAbout: () => void;
+  onOpenOnboarding: () => void;
   onSwitchTrack: (track: Track) => void;
   /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
   onStartSkill: (skillId: string) => void;
@@ -1166,6 +1181,22 @@ function Home({
        * переключателем треков: это вопрос про тренажёр целиком, до выбора
        * конкретного трека, а не после.
        */}
+      {/*
+       * Стоит над about.entryLink: тот отвечает «что это и как устроено»,
+       * этот — «что мне делать», и второй вопрос актуальнее для того, кто
+       * только открыл приложение. Тоже постоянная ссылка, не разовая карточка:
+       * см. рассуждение у about.entryLink ниже — вопрос «с чего начать»
+       * возникает не только на первом визите.
+       */}
+      <button
+        type="button"
+        className="link-row"
+        onClick={onOpenOnboarding}
+        style={{ margin: '0 0 4px' }}
+      >
+        {t.onboarding.entryLink}
+      </button>
+
       <button
         type="button"
         className="link-row"
@@ -1697,6 +1728,150 @@ function About({
         </p>
       </div>
       </div>
+    </>
+  );
+}
+
+/**
+ * «С чего начать» — экран, а не раздел «О тренажёре» (развилка закрыта
+ * 2026-08-10, см. ROADMAP). Причина в жанре: about отвечает на «что это»
+ * и читается в любом порядке, этот экран — на «что мне делать» и читается
+ * сверху вниз один раз, отсюда и единственная в приложении нумерация шагов.
+ *
+ * Ничего не пересказывает: сравнение инструментов, порядок действий и список
+ * «чего здесь нет» — единственное, чего не сказано ни в about.how*,
+ * ни в четырёх intro.what/limits каждого пака. Подробное обоснование текста —
+ * в i18n/ru.ts у блока onboarding.
+ */
+function Onboarding({ onFinish }: { onFinish: () => void }) {
+  const { t } = useI18n();
+
+  return (
+    <>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>{t.onboarding.title}</h2>
+        <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6 }}>{t.onboarding.intro}</p>
+      </div>
+
+      {/*
+       * Не повтор intro.what четырёх паков, а то, чего там нет: правило
+       * выбора между инструментами. В паках оно рассыпано по четырём
+       * intro.limits и видно только тому, кто открыл все четыре вводных.
+       * Раскладка и цветная точка — те же классы, что у списка треков
+       * на «О тренажёре» и у легенды ChainDiagram, без новых стилей.
+       */}
+      <div className="card">
+        <h2>{t.onboarding.toolsTitle}</h2>
+        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.toolsIntro}
+        </p>
+        <div className="track-summary-list">
+          {TRACK_ORDER.map((track) => (
+            <div key={track} className="track-summary">
+              <div className="track-summary-head">
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className={`chain-legend-dot track-${track}`} aria-hidden />
+                  {t.tracks.names[track]}
+                </span>
+              </div>
+              <dl className="audience" style={{ marginTop: 8 }}>
+                <div>
+                  <dt>{t.onboarding.toolsWhenLabel}</dt>
+                  <dd>{t.onboarding.toolsWhen[track]}</dd>
+                </div>
+                <div>
+                  <dt>{t.onboarding.toolsCostLabel}</dt>
+                  <dd>{t.onboarding.toolsCost[track]}</dd>
+                </div>
+              </dl>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/*
+       * Единственное место в приложении, где нумерация уместна: это
+       * последовательность действий, а не набор ответов на разные вопросы
+       * (см. комментарий у onboarding.steps в i18n/ru.ts). Номер рисует
+       * экран по индексу массива, а не текст, — переставить шаг местами
+       * не потребует правки строк в двух локалях.
+       */}
+      <div className="card">
+        <h2>{t.onboarding.stepsTitle}</h2>
+        <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.stepsIntro}
+        </p>
+        <ol className="onboard-steps">
+          {t.onboarding.steps.map((step, i) => (
+            <li key={step.title} className="onboard-step">
+              <span className="onboard-step-num" aria-hidden>
+                {i + 1}
+              </span>
+              <span>
+                <strong style={{ display: 'block', marginBottom: 2, fontSize: 14 }}>{step.title}</strong>
+                <span className="muted" style={{ fontSize: 14, lineHeight: 1.6 }}>{step.body}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.stepsNote}
+        </p>
+      </div>
+
+      {/*
+       * Два списка, не один: «пробел рядом» и «соседняя профессия» — разные
+       * обещания, и слить их значило бы поставить машинное обучение вровень
+       * со сводными таблицами (см. onboarding.extraNear/extraAdjacent в ru.ts).
+       * extraAdjacent обязан дословно продолжать about.audienceNotBody.
+       */}
+      <div className="card">
+        <h2>{t.onboarding.extraTitle}</h2>
+        <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.extraIntro}
+        </p>
+        <p
+          className="muted"
+          style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+        >
+          {t.onboarding.extraNearLabel}
+        </p>
+        <dl className="audience" style={{ marginBottom: 18 }}>
+          {t.onboarding.extraNear.map((item) => (
+            <div key={item.title}>
+              <dt>{item.title}</dt>
+              <dd>{item.body}</dd>
+            </div>
+          ))}
+        </dl>
+        <p
+          className="muted"
+          style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+        >
+          {t.onboarding.extraAdjacentLabel}
+        </p>
+        <dl className="audience">
+          {t.onboarding.extraAdjacent.map((item) => (
+            <div key={item.title}>
+              <dt>{item.title}</dt>
+              <dd>{item.body}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.extraClosing}
+        </p>
+      </div>
+
+      {/*
+       * Экран обязан куда-то вести — тот же принцип, что не пустил
+       * «Занятие закончено» остаться тупиком с одной кнопкой (см. находку
+       * навигации в ROADMAP). Ведёт на главную, а не в конкретный трек:
+       * выбор трека — отдельное решение, страница его не делает за человека.
+       */}
+      <button type="button" className="btn" style={{ marginTop: 4 }} onClick={onFinish}>
+        {t.onboarding.startBtn}
+      </button>
     </>
   );
 }

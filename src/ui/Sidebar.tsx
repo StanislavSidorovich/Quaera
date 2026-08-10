@@ -15,7 +15,7 @@ import type { Progress } from '../srs/store';
  * они открываются изнутри разделов и своего пункта меню не имеют — иначе
  * меню обещало бы вход туда, куда попадают только по ходу занятия.
  */
-export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'data' | 'about' | null;
+export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'data' | 'about' | 'onboarding' | null;
 
 export function Sidebar({
   section,
@@ -28,6 +28,7 @@ export function Sidebar({
   onSandbox,
   onData,
   onAbout,
+  onOnboarding,
   onSelectTrack,
 }: {
   /** Подсвеченный пункт. null — открыт экран без своего раздела (занятие, карточка). */
@@ -41,6 +42,7 @@ export function Sidebar({
   onSandbox: () => void;
   onData: () => void;
   onAbout: () => void;
+  onOnboarding: () => void;
   onSelectTrack: (track: Track) => void;
 }) {
   const { t } = useI18n();
@@ -162,7 +164,24 @@ export function Sidebar({
           })}
         </div>
 
+        {/*
+         * «С чего начать» стоит в подвале рядом с «О тренажёре», а не первым
+         * пунктом «Обучения»: это страница, на которую заходят один раз
+         * и по своей воле, а меню читают каждый день — постоянное место
+         * в верхней группе было бы ради разового действия. Тем же
+         * соображением «Данные» стоят после песочницы, а не рядом
+         * со справочником.
+         */}
         <div className="side-foot">
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'onboarding' ? 'page' : undefined}
+            onClick={onOnboarding}
+          >
+            <IconCompass />
+            {t.nav.onboarding}
+          </button>
           <button
             type="button"
             className="side-item"
@@ -207,6 +226,13 @@ const IconBook = () => (
     <path d="M8 4.6v8.6" />
     <path d="M8 4.6C7.2 3.6 5.9 3 4.4 3H2.6v8.6h1.8c1.5 0 2.8.6 3.6 1.6" />
     <path d="M8 4.6C8.8 3.6 10.1 3 11.6 3h1.8v8.6h-1.8c-1.5 0-2.8.6-3.6 1.6" />
+  </svg>
+);
+
+const IconCompass = () => (
+  <svg {...iconProps}>
+    <circle cx="8" cy="8" r="5.6" />
+    <path d="m10.1 5.9-1.5 3.5-3.5 1.5 1.5-3.5z" />
   </svg>
 );
 

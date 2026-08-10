@@ -2492,6 +2492,44 @@ table.sample td.null {
 }
 
 /*
+ * Шаги «С чего начать» — единственное пронумерованное перечисление
+ * в приложении (см. комментарий у onboarding.steps в i18n/ru.ts: это
+ * последовательность действий, а не набор независимых ответов, поэтому
+ * порядок и номер здесь честны). Номер — кружок с цифрой, не маркер ol:
+ * список решений «Занятие закончено» и обычный пронумерованный список
+ * не должны выглядеть одинаково.
+ */
+.onboard-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onboard-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.onboard-step-num {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/*
  * Закрывающие карточки «О тренажёре» — колоночный поток (см. подробный
  * разбор у .about-columns в App.tsx: сетка оставляла дыру под короткой
  * карточкой, растягивание перенесло бы дыру внутрь рамки).
