@@ -84,12 +84,38 @@ export const sandboxText = (q: SandboxQuestion, locale: Locale): { title: string
  * У python вдобавок назван контракт result= (см. public/python-bootstrap.py):
  * в заданиях его вводит карточка приёма, а в песочницу можно попасть,
  * не пройдя ни одного задания.
+ *
+ * Зависит от локали, хотя это код: комментарии внутри — единственная проза
+ * в заготовке, и они же единственное, что в ней нуждается в переводе. Тот же
+ * урок, что снят на DAX-фрагменте в tools-compare.json: проза внутри блока
+ * кода почти всегда и есть то, что делает блок нелокализованным.
  */
-export const SANDBOX_STARTER: Record<'sql' | 'python', string> = {
-  sql: 'SELECT * FROM fact_sellout LIMIT 20;',
-  python: [
-    '# Таблицы уже загружены как DataFrame: fact_sellout, dim_product, dim_customer, …',
-    '# Ответ — то, что присвоено переменной result.',
-    'result = fact_sellout.head(20)',
-  ].join('\n'),
+const STARTER: Record<Locale, Record<'sql' | 'python', string>> = {
+  ru: {
+    sql: 'SELECT * FROM fact_sellout LIMIT 20;',
+    python: [
+      '# Таблицы уже загружены как DataFrame: fact_sellout, dim_product, dim_customer, …',
+      '# Ответ — то, что присвоено переменной result.',
+      'result = fact_sellout.head(20)',
+    ].join('\n'),
+  },
+  en: {
+    sql: 'SELECT * FROM fact_sellout LIMIT 20;',
+    python: [
+      '# The tables are already loaded as DataFrames: fact_sellout, dim_product, dim_customer, …',
+      '# Your answer is whatever you assign to result.',
+      'result = fact_sellout.head(20)',
+    ].join('\n'),
+  },
 };
+
+export const sandboxStarter = (env: 'sql' | 'python', locale: Locale): string => STARTER[locale][env];
+
+/**
+ * Осталась ли заготовка нетронутой — проверяется по обеим локалям, а не
+ * по текущей. Человек мог открыть песочницу по-русски и переключить язык,
+ * не притронувшись к редактору: сравнение с одной локалью назвало бы чужой
+ * стартовый текст его работой и предложило бы «Вернуть» то, что он не писал.
+ */
+export const isSandboxStarter = (env: 'sql' | 'python', code: string): boolean =>
+  STARTER.ru[env] === code || STARTER.en[env] === code;

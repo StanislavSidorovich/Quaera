@@ -1624,7 +1624,9 @@ function Home({
             {byTier.map(([tier, list]) => (
               <div key={tier} style={{ marginTop: 12 }}>
                 <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {activePack.tierNames?.[tier] ?? `Уровень ${tier}`}
+                  {/* Запасная подпись берётся из локали: у пака без tierNames
+                      захардкоженный «Уровень 2» был бы русским и на английском. */}
+                  {activePack.tierNames?.[tier] ?? t.task.levelLabel(tier)}
                 </p>
                 {list.map((s) => {
                   const st = progress.skills[s.id];
@@ -2412,7 +2414,8 @@ function Reference({
               className="muted"
               style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
             >
-              {visiblePack!.tierNames?.[tier] ?? `Уровень ${tier}`}
+              {/* См. ту же подпись на карте навыков: запасной вариант из локали. */}
+              {visiblePack!.tierNames?.[tier] ?? t.task.levelLabel(tier)}
             </p>
             {list.map((s) => skillRow(s))}
           </div>

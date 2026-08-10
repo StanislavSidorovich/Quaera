@@ -200,16 +200,15 @@ for (const p of packs) {
 /**
  * Переводы паков — реестр по id пака, а не по треку: у трека когда-нибудь
  * может быть больше одного пака, а перевод привязан к конкретному файлу.
- * Пак, для которого перевода ещё нет (domain-core, python-core, model-core),
- * просто отсутствует здесь — applyTranslation тогда возвращает пак как есть.
+ * Пак, для которого перевода нет, просто отсутствует здесь — applyTranslation
+ * тогда возвращает пак как есть. На 2026-08-10 таких нет: переведены все
+ * четыре, целиком (полноту считает isTrackTranslated ниже — не верить этому
+ * комментарию, а смотреть на его результат).
  */
 const packTranslations: Partial<Record<string, PackTranslation>> = {
   'sql-core': validateTranslation(packById.get('sql-core')!, rawSqlCoreEn as PackTranslation),
   'domain-core': validateTranslation(packById.get('domain-core')!, rawDomainCoreEn as PackTranslation),
   'python-core': validateTranslation(packById.get('python-core')!, rawPythonCoreEn as PackTranslation),
-  // Частичный перевод (tier 1-3 из 4) — applyTranslation подставляет то, что
-  // есть, и оставляет tier 4 русским; isTrackTranslated следит за полнотой
-  // отдельно (см. комментарий там), так что баннер не солжёт до полного покрытия.
   'model-core': validateTranslation(packById.get('model-core')!, rawModelCoreEn as PackTranslation),
 };
 
@@ -248,11 +247,12 @@ export const packForTrack = (track: Track, locale: Locale = 'ru'): Pack | undefi
  * англоязычного человека, что тексты этого трека он увидит по-русски.
  *
  * Проверяется полное покрытие (все скиллы и все задания), а не факт наличия
- * файла перевода: model-core регистрируется в packTranslations уже на тире
- * 1-3, чтобы переведённые задания сразу применялись через applyTranslation,
- * но пока не переведён tier 4, часть заданий трека остаётся русской —
- * баннер обязан это показывать. На «наличие объекта» эта функция отвечала
- * бы неверно ровно в таком частичном состоянии.
+ * файла перевода. Так было нужно, пока model-core переводился тирами: он
+ * регистрировался в packTranslations уже на 1-3, чтобы готовое применялось
+ * сразу, — и «наличие объекта» соврало бы про непереведённый tier 4. Сейчас
+ * переведено всё, и функция всюду возвращает true; она остаётся сторожевой,
+ * а не мёртвой: первое же дописанное без перевода задание вернёт её в дело
+ * само (см. locale.partialNote в ru.ts — там та же роль у самой строки).
  */
 export const isTrackTranslated = (track: Track): boolean => {
   const pack = packsByTrack.get(track)?.[0];

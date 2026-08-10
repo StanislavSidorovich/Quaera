@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, SANDBOX_STARTER, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
+import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, isSandboxStarter, sandboxStarter, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
 import { diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { getExecutor } from '../engine/executors';
 import { GROUP_ORDER, groupTables } from '../engine/schemaGroups';
@@ -49,10 +49,10 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
 
   const [env, setEnv] = useState<'sql' | 'python'>('sql');
   /** Код держится отдельно на каждый язык — переключение вкладки не должно стирать набранное. */
-  const [codeByEnv, setCodeByEnv] = useState<Record<'sql' | 'python', string>>({
-    sql: SANDBOX_STARTER.sql,
-    python: SANDBOX_STARTER.python,
-  });
+  const [codeByEnv, setCodeByEnv] = useState<Record<'sql' | 'python', string>>(() => ({
+    sql: sandboxStarter('sql', locale),
+    python: sandboxStarter('python', locale),
+  }));
   const code = codeByEnv[env];
   const setCode = (next: string) => setCodeByEnv((prev) => ({ ...prev, [env]: next }));
 
@@ -189,7 +189,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     // Запоминаем только осмысленную потерю: пустое поле и нетронутая
     // заготовка — не работа человека, и предлагать «вернуть» для них
     // значило бы показывать кнопку, которая ничего не спасает.
-    const worthKeeping = current.trim() !== '' && current !== SANDBOX_STARTER[env] && current !== code;
+    const worthKeeping = current.trim() !== '' && !isSandboxStarter(env, current) && current !== code;
     setReplaced(worthKeeping ? { env, code: current } : null);
     setEnv(targetEnv);
     setCodeByEnv((prev) => ({ ...prev, [targetEnv]: code }));

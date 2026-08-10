@@ -37,12 +37,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // <html lang> объявлен в index.html как "ru" статически, но интерфейс может
-  // быть на английском с самого первого визита (см. initialLocale выше) —
-  // без синхронизации screen reader выбирает произношение и переносы по
-  // неверному языку для половины посетителей.
+  // <html lang> и <title> объявлены в index.html статически по-русски, но
+  // интерфейс может быть английским с самого первого визита (см. initialLocale
+  // выше). Без синхронизации lang screen reader выбирает произношение
+  // и переносы по неверному языку для половины посетителей, а вкладка
+  // остаётся русской даже после явного переключения на EN — то есть
+  // единственная надпись, которую видно, когда приложение свёрнуто.
+  //
+  // Статические og:-теги этим не чинятся и не могут: их читает краулер,
+  // до всякого JS. Превью ссылки на LinkedIn — отдельное решение.
   useEffect(() => {
     document.documentElement.lang = locale;
+    document.title = dict[locale].app.documentTitle;
   }, [locale]);
 
   const value = useMemo(() => ({ locale, t: dict[locale], setLocale }), [locale]);
