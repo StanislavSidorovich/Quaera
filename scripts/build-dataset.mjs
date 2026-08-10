@@ -641,7 +641,7 @@ const SCHEMA = [
       channel: 'Канал: distributor, modern_trade, traditional_trade, pharmacy, ecom',
       chain_name: 'Сеть, если точка сетевая (иначе NULL)', region_id: 'FK → dim_region', city: 'Город',
       opened_date: 'Дата открытия', is_active: 'Активность (0/1)',
-      served_by_distributor_id: 'Дистрибьютор, обслуживающий точку — FK → dim_customer.customer_id (self-join)',
+      served_by_distributor_id: 'Дистрибьютор, обслуживающий точку (self-join) — FK → dim_customer.customer_id',
       rep_id: 'Закреплённый торговый представитель — FK → dim_rep',
     },
     rows: customers.map((c) => ({
@@ -659,7 +659,7 @@ const SCHEMA = [
     cols: {
       rep_id: 'Ключ сотрудника', rep_name: 'ФИО', team: 'Команда', role: 'manager или rep',
       region_id: 'FK → dim_region', hired_date: 'Дата найма',
-      manager_id: 'Руководитель — FK → dim_rep.rep_id, у руководителей NULL (self-join)',
+      manager_id: 'Руководитель, у руководителей NULL (self-join) — FK → dim_rep.rep_id',
     },
     rows: reps,
   },
@@ -684,7 +684,7 @@ const SCHEMA = [
       sellout_id: 'Ключ строки', week_start: 'Понедельник недели — FK → dim_date.week_start',
       customer_id: 'FK → dim_customer', product_id: 'FK → dim_product',
       units: 'Продано штук', revenue: 'Выручка, ₽', avg_price: 'Средняя цена продажи, ₽',
-      promo_id: 'FK → dim_promo, NULL если продажа вне акции',
+      promo_id: 'NULL, если продажа вне акции — FK → dim_promo',
     },
     rows: sellout,
     note: 'Отсутствие строки означает, что продаж не было (нет товара на полке), а не ноль. Это ловушка: обычный INNER JOIN такие недели просто не покажет.',
@@ -698,7 +698,7 @@ const SCHEMA = [
       sellin_id: 'Ключ строки', order_date: 'Дата заказа',
       ship_date: 'Дата отгрузки — на 2–11 дней позже заказа, поэтому заказ конца месяца отгружается уже в следующем',
       month_start: 'Месяц заказа (по order_date)',
-      distributor_id: 'FK → dim_customer.customer_id (только customer_type = distributor)', product_id: 'FK → dim_product',
+      distributor_id: 'Только продажи дистрибьюторам (customer_type = distributor) — FK → dim_customer.customer_id', product_id: 'FK → dim_product',
       units: 'Отгружено штук', gross_amount: 'Сумма до скидок, ₽', discount_amount: 'Скидки, ₽',
       net_amount: 'Сумма к оплате, ₽',
     },
@@ -824,6 +824,35 @@ const parseReference = (columnName, description) => {
 };
 
 /**
+ * Убирает «FK → таблица.колонка» из текста, который уходит в шторку схемы.
+ *
+ * Связь и так рисуется отдельной строкой со стрелкой (см. SchemaSheet) —
+ * из того же references, что строит parseReference выше. Раньше описание
+ * показывалось рядом целиком, и «FK → dim_region» читалось дважды подряд.
+ * Здесь не второй источник правды: та же строка cols остаётся тем, что
+ * разбирает parseReference, — просто хвост про FK не дублируется на экране.
+ * Поэтому все описания с явной связью написаны так, что «FK → …» стоит
+ * в конце предложения — этот вырез просто отрезает готовый хвост.
+ */
+const stripFkNote = (description) =>
+  (description ?? '').replace(/\s*—?\s*FK\s*→\s*[a-z_]+(?:\.[a-z_]+)?\s*/i, ' ').trim();
+
+/**
+ * Тип колонки — не отдельно поддерживаемый список, а разбор той же DDL,
+ * которой уже создаётся таблица (см. SCHEMA[].ddl выше). Формат простой
+ * («имя ТИП [PRIMARY KEY]», без вложенных скобок), парсинг таким и остаётся.
+ */
+const parseColumnTypes = (ddl) => {
+  const body = ddl.slice(ddl.indexOf('(') + 1, ddl.lastIndexOf(')'));
+  const map = {};
+  for (const part of body.split(',')) {
+    const [name, type] = part.trim().split(/\s+/);
+    if (name && type) map[name] = type;
+  }
+  return map;
+};
+
+/**
  * Несколько настоящих строк на таблицу.
  *
  * Схема из одних имён колонок отвечает на вопрос «что есть», но не на вопрос
@@ -852,18 +881,22 @@ const schemaJson = {
   generated_at: new Date().toISOString().slice(0, 10),
   company: 'Нордвинд Трейд — дистрибуция FMCG и OTC-фармы',
   period: { from: iso(START), to: iso(END) },
-  tables: SCHEMA.map((t) => ({
-    table: t.table,
-    title: t.title,
-    grain: t.grain,
-    note: t.note ?? null,
-    row_count: t.rows.length,
-    columns: Object.entries(t.cols).map(([name, description]) => {
-      const references = parseReference(name, description);
-      return references ? { name, description, references } : { name, description };
-    }),
-    sample: sampleFor(t.table, t.rows.length),
-  })),
+  tables: SCHEMA.map((t) => {
+    const types = parseColumnTypes(t.ddl);
+    return {
+      table: t.table,
+      title: t.title,
+      grain: t.grain,
+      note: t.note ?? null,
+      row_count: t.rows.length,
+      columns: Object.entries(t.cols).map(([name, description]) => {
+        const references = parseReference(name, description);
+        const clean = { name, description: stripFkNote(description), type: types[name] ?? 'TEXT' };
+        return references ? { ...clean, references } : clean;
+      }),
+      sample: sampleFor(t.table, t.rows.length),
+    };
+  }),
 };
 await writeFile(path.join(outDir, 'schema.json'), JSON.stringify(schemaJson, null, 2), 'utf8');
 

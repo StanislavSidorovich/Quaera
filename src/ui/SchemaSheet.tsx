@@ -120,6 +120,7 @@ export function SchemaSheet({ doc, onClose, focusTable }: Props) {
                         aria-label={t.schema.copyAria(c.name)}
                       >
                         <code>{c.name}</code>
+                        <small className="col-type">{c.type.toLowerCase()}</small>
                       </button>
                       <span>
                         {copied ? (

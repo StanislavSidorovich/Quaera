@@ -125,6 +125,8 @@ export interface SchemaDoc {
     columns: {
       name: string;
       description: string;
+      /** SQL-тип колонки (TEXT/INTEGER/REAL) — разобран из той же DDL, что создаёт таблицу. */
+      type: string;
       /**
        * Куда ведёт колонка, если она внешний ключ. Заполняется генератором
        * разбором того же описания («FK → dim_region.region_id»), поэтому

@@ -1911,6 +1911,14 @@ details.table-doc > summary small {
   word-break: break-all;
 }
 
+/* Тип колонки — из той же DDL, что создаёт таблицу, не отдельный список. */
+.col-type {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
 /*
  * Куда ведёт внешний ключ. Отдельной строкой над описанием и акцентным
  * цветом: это единственное, что человек ищет глазами, когда собирается
