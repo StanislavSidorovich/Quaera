@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, SANDBOX_STARTER, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
 import { diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { getExecutor } from '../engine/executors';
@@ -68,6 +68,40 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
   const [store, setStore] = useState<SandboxStore>(() => loadSandboxStore());
   const [savingOpen, setSavingOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
+
+  /**
+   * Что стояло в редакторе до того, как его заменили открытым скриптом
+   * или запуском из истории. Ревью по скриншоту нашло, что без этого
+   * набранное исчезало молча: человек, писавший длинный запрос, открывал
+   * сохранённый скрипт «посмотреть» и терял работу без всякого следа.
+   * Это тот же класс дефекта, что закрывал пункт D долга (возврат на шаг
+   * занятия терял введённый код), только здесь потерю провоцирует
+   * безобидное на вид действие — клик по своему же скрипту.
+   *
+   * Спрашивать подтверждение до замены было бы хуже: диалог стоит на пути
+   * у частого и безобидного действия ради редкого случая. Обратный ход
+   * дешевле — заменяем сразу, но даём вернуть.
+   */
+  const [replaced, setReplaced] = useState<{ env: 'sql' | 'python'; code: string } | null>(null);
+
+  /**
+   * Редактор нужно показать, когда в него что-то положили не из него самого.
+   *
+   * На десктопе левая колонка липкая и редактор виден всегда — прокрутка
+   * там только мешала бы. На телефоне колонка одна, и список вопросов лежит
+   * на полторы тысячи пикселей ниже редактора: клик по вопросу вставлял
+   * комментарий за пределами экрана, и это выглядело как «кнопка не
+   * работает». Поэтому не «всегда прокручивать», а «прокрутить, если
+   * не видно» — условие, а не привычка.
+   */
+  const editorRef = useRef<HTMLDivElement>(null);
+  const revealEditor = () => {
+    const el = editorRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const visible = r.bottom > 80 && r.top < window.innerHeight;
+    if (!visible) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
 
   // SQL грузится сразу: в песочницу можно попасть, минуя трек sql (например,
   // из справочника или сразу после domain), и initDatabase идемпотентен —
@@ -141,16 +175,32 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
       if (cur.includes(line)) return prev;
       return { ...prev, [env]: `${line}\n${cur}` };
     });
+    revealEditor();
   }
 
-  function restoreEntry(entry: HistoryEntry) {
-    setEnv(entry.env);
-    setCodeByEnv((prev) => ({ ...prev, [entry.env]: entry.code }));
+  /**
+   * Положить в редактор чужой код (сохранённый скрипт, запуск из истории),
+   * запомнив то, что там было. Один путь на оба случая: терять набранное
+   * одинаково обидно, откуда бы замена ни пришла.
+   */
+  function putCode(targetEnv: 'sql' | 'python', code: string) {
+    const current = codeByEnv[env];
+    // Запоминаем только осмысленную потерю: пустое поле и нетронутая
+    // заготовка — не работа человека, и предлагать «вернуть» для них
+    // значило бы показывать кнопку, которая ничего не спасает.
+    const worthKeeping = current.trim() !== '' && current !== SANDBOX_STARTER[env] && current !== code;
+    setReplaced(worthKeeping ? { env, code: current } : null);
+    setEnv(targetEnv);
+    setCodeByEnv((prev) => ({ ...prev, [targetEnv]: code }));
+    revealEditor();
   }
 
-  function openScript(s: SandboxStore['scripts'][number]) {
-    setEnv(s.env);
-    setCodeByEnv((prev) => ({ ...prev, [s.env]: s.code }));
+  function undoReplace() {
+    if (!replaced) return;
+    setEnv(replaced.env);
+    setCodeByEnv((prev) => ({ ...prev, [replaced.env]: replaced.code }));
+    setReplaced(null);
+    revealEditor();
   }
 
   function confirmSave() {
@@ -174,9 +224,14 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
 
   return (
     <>
+      {/*
+       * Без заголовка: экран уже назван в шапке, и «Песочница» вторым
+       * разом подряд — тот же дефект, что задвоенный логотип в шапке
+       * и повтор названия трека в trackIntro. Карточка здесь ради текста,
+       * а не ради того, чтобы повторить слово.
+       */}
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>{t.sandbox.title}</h2>
-        <p className="brief">{t.sandbox.intro}</p>
+        <p className="brief" style={{ margin: 0 }}>{t.sandbox.intro}</p>
       </div>
 
       <div className="feedback warn">
@@ -186,7 +241,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
 
       <div className="sandbox-layout">
         <div className="sandbox-main">
-          <div className="card">
+          <div className="card" ref={editorRef}>
             <div className="row" style={{ alignItems: 'center', marginBottom: 10 }}>
               <div className="tabs" role="tablist" aria-label={t.sandbox.envLabel} style={{ margin: 0, flex: 1 }}>
                 <button type="button" role="tab" aria-pressed={env === 'sql'} onClick={() => setEnv('sql')}>
@@ -252,6 +307,55 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                 <div className="load-progress-bar" />
               </div>
             )}
+
+            {/*
+             * Сохранение живёт здесь, а не отдельной карточкой под результатом.
+             * Там оно стояло после таблицы и читалось как «сохранить результат»,
+             * хотя сохраняется код: действие над кодом обязано стоять рядом
+             * с кодом, а не за блоком, который к нему не относится.
+             */}
+            {savingOpen ? (
+              <div className="row" style={{ marginTop: 10 }}>
+                <input
+                  type="text"
+                  className="reference-search"
+                  style={{ marginBottom: 0 }}
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  placeholder={t.sandbox.saveNamePlaceholder}
+                  autoFocus
+                />
+                <button type="button" className="btn sandbox-inline-btn" onClick={confirmSave} disabled={!saveName.trim()}>
+                  {t.sandbox.saveConfirmBtn}
+                </button>
+                <button type="button" className="btn secondary sandbox-inline-btn" onClick={() => setSavingOpen(false)}>
+                  {t.sandbox.saveCancelBtn}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="link-row"
+                style={{ marginTop: 10 }}
+                onClick={() => {
+                  setSaveName('');
+                  setSavingOpen(true);
+                }}
+                disabled={!code.trim()}
+              >
+                {t.sandbox.saveBtn}
+              </button>
+            )}
+
+            {/* Обратный ход после замены кода — см. replaced выше. */}
+            {replaced && (
+              <div className="row" style={{ marginTop: 10, alignItems: 'center' }}>
+                <span className="muted" style={{ fontSize: 12 }}>{t.sandbox.replacedNote}</span>
+                <button type="button" className="pill sandbox-inline-btn" onClick={undoReplace}>
+                  {t.sandbox.undoBtn}
+                </button>
+              </div>
+            )}
           </div>
 
           {feedback && (
@@ -280,39 +384,6 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
             </div>
           )}
 
-          <div className="card">
-            {savingOpen ? (
-              <div className="row">
-                <input
-                  type="text"
-                  className="reference-search"
-                  style={{ marginBottom: 0 }}
-                  value={saveName}
-                  onChange={(e) => setSaveName(e.target.value)}
-                  placeholder={t.sandbox.saveNamePlaceholder}
-                  autoFocus
-                />
-                <button type="button" className="btn" style={{ flex: 'none', width: 'auto', padding: '0 16px' }} onClick={confirmSave} disabled={!saveName.trim()}>
-                  {t.sandbox.saveConfirmBtn}
-                </button>
-                <button type="button" className="btn secondary" style={{ flex: 'none', width: 'auto', padding: '0 16px' }} onClick={() => setSavingOpen(false)}>
-                  {t.sandbox.saveCancelBtn}
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => {
-                  setSaveName('');
-                  setSavingOpen(true);
-                }}
-                disabled={!code.trim()}
-              >
-                {t.sandbox.saveBtn}
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="sandbox-side">
@@ -330,7 +401,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                     <button
                       key={q.id}
                       type="button"
-                      className="skill-row"
+                      className="skill-row sandbox-question"
                       style={{ width: '100%', textAlign: 'left' }}
                       onClick={() => insertQuestion(q)}
                       aria-label={t.sandbox.insertAria(text.title)}
@@ -356,9 +427,8 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                 <div className="skill-row" key={s.id}>
                   <button
                     type="button"
-                    className="name"
-                    style={{ textAlign: 'left', minWidth: 0, background: 'none' }}
-                    onClick={() => openScript(s)}
+                    className="name sandbox-row-btn"
+                    onClick={() => putCode(s.env, s.code)}
                     aria-label={t.sandbox.savedOpenAria(s.name)}
                   >
                     {s.name}
@@ -390,7 +460,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                   type="button"
                   className="skill-row"
                   style={{ width: '100%', textAlign: 'left' }}
-                  onClick={() => restoreEntry(h)}
+                  onClick={() => putCode(h.env, h.code)}
                   aria-label={t.sandbox.historyRestoreAria(history.length - i)}
                 >
                   <div className="name">

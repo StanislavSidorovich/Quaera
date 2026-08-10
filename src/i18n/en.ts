@@ -220,6 +220,9 @@ export const en = {
     savedTitle: 'Saved scripts',
     savedEmpty: 'Empty. A query worth keeping can be saved — it stays on this device.',
     savedNote: 'Scripts live in this browser, just like your progress, and disappear the same way if you clear site data.',
+    /** См. комментарий в ru.ts: сообщение о факте, а не вопрос задним числом. */
+    replacedNote: 'Previous code replaced',
+    undoBtn: 'Undo',
     savedOpenAria: (name: string) => `Open the script "${name}"`,
     savedDeleteAria: (name: string) => `Delete the script "${name}"`,
     savedDeleteBtn: 'Delete',
