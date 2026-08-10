@@ -25,10 +25,10 @@
     {
       "track": "model",
       "runnable": false,
-      "code": "Выручка := SUM(fact_sellout[revenue])\n\n// Ни группировки по бренду, ни отбора года в формуле нет.\n// Бренды дадут строки отчёта, год — срез на странице:\n// мера считается заново под тот фильтр, который её окружает.",
+      "code": "Total Revenue := SUM(fact_sellout[revenue])",
       "note": {
-        "ru": "Формула отвечает не на этот вопрос, а на все однотипные сразу — поэтому она короче остальных ровно на то, что в них было вопросом: срез и группировку. Выполнить её здесь нельзя: движка DAX в браузере не существует.",
-        "en": "The formula answers not this question but every question of its shape at once — which is why it is shorter by exactly the parts that were the question: the slice and the grouping. It cannot be run here: no DAX engine exists in a browser."
+        "ru": "Формула отвечает не на этот вопрос, а на все однотипные сразу — поэтому она короче остальных ровно на то, что в них было вопросом. Ни группировки по бренду, ни отбора года в ней нет: бренды дадут строки отчёта, год — срез на странице, и мера считается заново под тот фильтр, который её окружает. Выполнить её здесь нельзя: движка DAX в браузере не существует.",
+        "en": "The formula answers not this question but every question of its shape at once — which is why it is shorter by exactly the parts that were the question. There is no grouping by brand in it and no year filter: brands become the rows of the report, the year becomes a slicer on the page, and the measure is recalculated under whatever filter surrounds it. It cannot be run here: no DAX engine exists in a browser."
       }
     }
   ]
