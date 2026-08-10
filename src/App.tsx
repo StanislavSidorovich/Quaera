@@ -30,6 +30,14 @@ import {
   today,
   type Progress,
 } from './srs/store';
+import {
+  clearSession,
+  fromStoredDraft,
+  loadSession,
+  saveSession,
+  toStoredDraft,
+  type StoredSession,
+} from './session/store';
 
 const SESSION_SIZE = 5;
 
@@ -219,11 +227,38 @@ export default function App() {
    * своим прошлым ответом.
    */
   const taskDraftsRef = useRef(new Map<string, TaskDraft>());
+
+  /**
+   * Незаконченное занятие из хранилища — то, что предлагаем продолжить
+   * на главной. Обновляется только когда занятие не на экране (см. эффект
+   * ниже): пока человек внутри занятия, главная не отрисована, а лишний
+   * setState на каждую запись черновика перерисовывал бы всё приложение
+   * на каждую букву — ровно то, от чего taskDraftsRef и сделан ref'ом.
+   */
+  const [pendingSession, setPendingSession] = useState<StoredSession | null>(() => loadSession());
+
+  /**
+   * Слепок текущего занятия для записи в хранилище.
+   *
+   * Ref, а не замыкание: черновики пишутся с задержкой (см. flushDraftsRef),
+   * и к моменту записи актуальная очередь должна браться из одного места,
+   * а не из того рендера, на котором человек нажал последнюю клавишу.
+   * Живёт и после выхода из занятия — иначе отложенная запись, догнавшая
+   * уже на главной, потеряла бы последнее, что человек набрал.
+   */
+  const sessionSnapshotRef = useRef<{ queue: Step[]; index: number; maxIndex: number; track: Track } | null>(null);
+  const flushDraftsRef = useRef<number | undefined>(undefined);
+
   const taskDrafts = useMemo<TaskDraftStore>(
     () => ({
       read: (taskId) => taskDraftsRef.current.get(taskId),
       write: (taskId, draft) => {
         taskDraftsRef.current.set(taskId, draft);
+        // Запись отложенная: черновик обновляется на каждое нажатие клавиши,
+        // а localStorage синхронный — писать весь снимок занятия на букву
+        // значит подвесить ввод в редакторе на длинном запросе.
+        window.clearTimeout(flushDraftsRef.current);
+        flushDraftsRef.current = window.setTimeout(persistSession, 600);
       },
     }),
     []
@@ -417,11 +452,126 @@ export default function App() {
     startQueue(queue);
   }
 
+  /**
+   * Записывает текущее занятие на устройство — очередь ссылками, позицию,
+   * зачтённые попытки и черновики (см. session/store.ts).
+   *
+   * Читает только ref'ы, поэтому безопасна из отложенного таймера: замыкание
+   * первого рендера здесь ничем не отличается от замыкания последнего.
+   */
+  function persistSession() {
+    const snapshot = sessionSnapshotRef.current;
+    if (!snapshot) return;
+    saveSession({
+      version: 1,
+      track: snapshot.track,
+      steps: snapshot.queue.map((s) =>
+        s.kind === 'lesson' ? { kind: 'lesson', skill: s.lesson.skill } : { kind: 'task', id: s.task.id }
+      ),
+      index: snapshot.index,
+      maxIndex: snapshot.maxIndex,
+      recorded: [...recordedTasksRef.current],
+      drafts: Object.fromEntries([...taskDraftsRef.current].map(([id, d]) => [id, toStoredDraft(d)])),
+      savedAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Занятие живёт на устройстве, пока не закончено.
+   *
+   * Пока оно на экране — обновляем слепок и пишем; закончилось — стираем
+   * (продолжать нечего, а «Ещё занятие» на том же экране начнёт новое).
+   * Уход на любой другой экран не делает ничего намеренно: ровно ради этого
+   * всё и затевалось — выйти на главную за практикой по другой теме и
+   * вернуться, а не потерять занятие целиком.
+   */
+  useEffect(() => {
+    if (screen.name === 'session') {
+      sessionSnapshotRef.current = {
+        queue: screen.queue,
+        index: screen.index,
+        maxIndex: screen.maxIndex,
+        track: activeTrack,
+      };
+      persistSession();
+      return;
+    }
+    // Занятие ушло с экрана — дописываем то, что не успел отложенный таймер.
+    // Без этого выход сразу после последней буквы забирал бы её с собой:
+    // хранилище прочиталось бы на 600 мс раньше, чем в него дописали.
+    if (flushDraftsRef.current !== undefined) {
+      window.clearTimeout(flushDraftsRef.current);
+      flushDraftsRef.current = undefined;
+      persistSession();
+    }
+    if (screen.name === 'done') {
+      sessionSnapshotRef.current = null;
+      clearSession();
+    }
+    // Главная спрашивает хранилище только когда её показывают: внутри занятия
+    // этот setState перерисовывал бы приложение на каждом шаге впустую.
+    setPendingSession(loadSession());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, activeTrack]);
+
+  /** Отложенная запись черновика не должна потеряться при закрытии вкладки. */
+  useEffect(() => {
+    const flush = () => {
+      window.clearTimeout(flushDraftsRef.current);
+      persistSession();
+    };
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** Общий вход в занятие для обоих способов подбора — вместе со сбросом того, что живёт одно занятие. */
   function startQueue(queue: Step[]) {
     taskDraftsRef.current.clear();
     recordedTasksRef.current.clear();
     setScreen({ name: 'session', queue, index: 0, maxIndex: 0 });
+  }
+
+  /**
+   * Восстановление занятия из хранилища.
+   *
+   * Очередь собирается из id по текущим пакам, и если хоть одного шага
+   * больше нет (контент переписан, задание удалено), занятие не поднимается
+   * вовсе — половина очереди с дырой посреди хуже честного «начните заново».
+   */
+  function resumeSession() {
+    const stored = pendingSession;
+    if (!stored) return;
+    const pack = packForTrack(stored.track, locale);
+    const taskById = pack ? new Map(pack.tasks.map((t) => [t.id, t])) : null;
+    const queue: Step[] = [];
+    for (const s of stored.steps) {
+      if (s.kind === 'lesson') {
+        const lesson = lessonBySkill.get(s.skill);
+        if (!lesson) break;
+        queue.push({ kind: 'lesson', lesson });
+      } else {
+        const task = taskById?.get(s.id);
+        if (!task) break;
+        queue.push({ kind: 'task', task });
+      }
+    }
+    if (queue.length !== stored.steps.length) {
+      // Снимок гасим вместе с записью: иначе отложенная запись или флаш
+      // на закрытии вкладки восстановили бы из памяти ровно то занятие,
+      // которое мы только что признали неподъёмным.
+      sessionSnapshotRef.current = null;
+      clearSession();
+      setPendingSession(null);
+      return;
+    }
+    taskDraftsRef.current = new Map(
+      Object.entries(stored.drafts).map(([id, d]) => [id, fromStoredDraft(d)])
+    );
+    recordedTasksRef.current = new Set(stored.recorded);
+    const maxIndex = Math.min(Math.max(stored.maxIndex, 0), queue.length - 1);
+    setScreen({ name: 'session', queue, index: Math.min(Math.max(stored.index, 0), maxIndex), maxIndex });
+    window.scrollTo({ top: 0 });
   }
 
   /**
@@ -566,6 +716,20 @@ export default function App() {
     const done = screen.queue.slice(0, screen.index + 1).filter((s) => s.kind === 'task').length;
     return t.session.taskProgressOf(done, total);
   }, [screen, t]);
+
+  /**
+   * Где человек остановился в незаконченном занятии — теми же словами, что
+   * и подпись шага в шапке (см. stepLabel): «Задача 2 из 5» или «Теория».
+   * Считается по сохранённым шагам, а не по восстановленной очереди —
+   * очередь поднимается только в момент возврата, а подпись нужна раньше.
+   */
+  const pendingSessionLabel = useMemo(() => {
+    if (!pendingSession) return null;
+    const total = pendingSession.steps.filter((s) => s.kind === 'task').length;
+    if (pendingSession.steps[pendingSession.index]?.kind === 'lesson') return t.session.lessonStep;
+    const done = pendingSession.steps.slice(0, pendingSession.index + 1).filter((s) => s.kind === 'task').length;
+    return t.session.taskProgressOf(done, total);
+  }, [pendingSession, t]);
 
   /**
    * Название навыка текущего шага занятия — то, чего в шапке не было вовсе:
@@ -795,6 +959,15 @@ export default function App() {
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
+              /*
+               * Незаконченное занятие показываем только на главной его же
+               * трека: главная — экран одного трека (его карта, его прогресс,
+               * его «начать занятие»), и вход отсюда в занятие соседнего
+               * читался бы как принадлежность этому. Занятие при этом никуда
+               * не девается — переключились обратно, и предложение вернулось.
+               */
+              resume={pendingSession?.track === activeTrack ? pendingSessionLabel : null}
+              onResume={resumeSession}
             />
           )}
 
@@ -1121,6 +1294,8 @@ function Home({
   onSwitchTrack,
   onStartSkill,
   onOpenTrackIntro,
+  resume,
+  onResume,
 }: {
   activeTrack: Track;
   activePack: Pack;
@@ -1148,6 +1323,9 @@ function Home({
   onStartSkill: (skillId: string) => void;
   /** Вводная карточка трека. undefined — у трека intro ещё не написан, кнопку не показываем. */
   onOpenTrackIntro?: () => void;
+  /** Подпись шага незаконченного занятия этого трека («Задача 2 из 5»), null — продолжать нечего. */
+  resume: string | null;
+  onResume: () => void;
 }) {
   const { t, locale } = useI18n();
   const byTier = useMemo(() => {
@@ -1375,7 +1553,32 @@ function Home({
                   </div>
                 ))}
               </div>
-              <button className="btn" onClick={onStart} disabled={loading}>
+              {/*
+               * Незаконченное занятие идёт первым и основной кнопкой: если оно
+               * есть, вернуться к нему — намерение более частое, чем набрать
+               * новое, и та же расстановка уже стоит на «Занятие закончено».
+               * Кнопка старта при этом не прячется: начать новое занятие
+               * поверх старого — законный выбор, он просто перестаёт быть
+               * единственным (раньше он был единственным и молча стирал очередь).
+               */}
+              {resume && (
+                <>
+                  <button className="btn" onClick={onResume} disabled={loading}>
+                    {t.home.resumeBtn}
+                  </button>
+                  {/*
+                   * Отступы неравные намеренно: подпись стоит между двумя
+                   * кнопками, и при близких зазорах (было 8 сверху, 12 снизу)
+                   * она читалась как пояснение к «Начать занятие» под ней —
+                   * то есть обещала сохранённое ровно тому действию, которое
+                   * сохранённое затирает. Прижата к своей кнопке.
+                   */}
+                  <p className="muted" style={{ margin: '6px 0 20px', fontSize: 13 }}>
+                    {t.home.resumeNote(resume)}
+                  </p>
+                </>
+              )}
+              <button className={resume ? 'btn secondary' : 'btn'} onClick={onStart} disabled={loading}>
                 {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
               </button>
               {/*

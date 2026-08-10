@@ -78,6 +78,8 @@ export const en = {
     startedOf: (started: number, total: number) => `${started} of ${total} topics started`,
     startBtnResume: 'Review and continue',
     startBtnBegin: 'Start session',
+    resumeBtn: 'Back to your session',
+    resumeNote: (step: string) => `Left unfinished: ${step.toLowerCase()}. Everything you did is still there.`,
     loading: 'Loading data…',
     heroNote:
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Code actually runs — on 2.5 years of FMCG and OTC-pharma distributor data.',
