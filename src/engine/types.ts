@@ -1,5 +1,31 @@
 export type SqlValue = string | number | Uint8Array | null;
 
+/**
+ * Поле схемы, написанное человеческим языком, — сразу парой на обе локали.
+ *
+ * Именно парой на месте, а не отдельным файлом перевода рядом со схемой:
+ * `schema.json` порождается генератором, и второй файл, ключёванный по
+ * `таблица.колонка`, оставался бы синтаксически валидным после добавления
+ * колонки в `build-dataset.mjs` — то есть расходился бы молча, как разошлись
+ * бы список связей рядом со схемой или словарь единиц измерения рядом
+ * с графиком. Здесь же слот второй локали физически стоит рядом с первой:
+ * колонку нельзя описать, не увидев пустого места под перевод.
+ *
+ * Отсюда же отсутствие запасного варианта («нет en — показать ru»): такой
+ * запасной вариант прячет непереведённое поле в рабочий экран, ровно как
+ * `locale = 'ru'` по умолчанию прятал бы непереданную локаль в сигнатуру
+ * diagnose (см. engine/diagnoseText.ts). Полноту сторожит гейт, а не показ.
+ *
+ * Локаль здесь не импортирована из i18n/context — намеренно, не забывчиво.
+ * У этого файла нет доступа к локали (см. комментарий у SchemaDoc ниже),
+ * а i18n/context.tsx несёт JSX; test-chart-spec.mjs компилирует chartSpec.ts
+ * (он тянет types.ts) отдельным вызовом tsc без --jsx, и такой импорт валил
+ * эту сборку с TS6142 — не по вине chartSpec.ts, а по цепочке отсюда.
+ * Литерал здесь и есть контракт: i18n/context.tsx определяет свой `Locale`
+ * тем же union'ом и не обязан на этот файл ссылаться.
+ */
+export type LocalizedText = Record<'ru' | 'en', string>;
+
 export interface ExecResult {
   columns: string[];
   rows: SqlValue[][];
@@ -143,17 +169,22 @@ export interface SchemaDoc {
   dataset: string;
   version: number;
   generated_at: string;
-  company: string;
+  company: LocalizedText;
   period: { from: string; to: string };
   tables: {
+    /**
+     * Имя таблицы, тип колонки, цель внешнего ключа и сами строки примера
+     * локали не имеют и парой не хранятся: это не язык, а то, что человек
+     * набирает в запросе. Пара стоит ровно там, где текст написан словами.
+     */
     table: string;
-    title: string;
-    grain: string;
-    note: string | null;
+    title: LocalizedText;
+    grain: LocalizedText;
+    note: LocalizedText | null;
     row_count: number;
     columns: {
       name: string;
-      description: string;
+      description: LocalizedText;
       /** SQL-тип колонки (TEXT/INTEGER/REAL) — разобран из той же DDL, что создаёт таблицу. */
       type: string;
       /**

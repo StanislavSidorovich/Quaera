@@ -16,6 +16,22 @@ import { TableDoc } from './TableDoc';
 
 let cached: SchemaDoc | null = null;
 
+/**
+ * Документ старой формы — с текстом одной строкой вместо пары локалей.
+ *
+ * Прилететь он может по той же причине, по которой у типа колонки стоит
+ * опциональный доступ (см. TableDoc): `/data/schema.json` не хеширован
+ * по содержимому, и в окне между обновлением бандла и переключением
+ * service worker'а старый воркер отвечает своим кешем. Такой документ
+ * не роняет дерево, но показывает пустые названия таблиц и пустые
+ * описания колонок — схему без единого слова. Лучше подождать: следующая
+ * загрузка придёт уже от нового воркера.
+ *
+ * Проверяется форма, а не поле version: версия — обещание, которое надо
+ * не забыть обновить, а форма и есть то, что здесь требуется.
+ */
+const isLocalized = (d: SchemaDoc): boolean => typeof d?.company?.ru === 'string';
+
 export function useSchema(): SchemaDoc | null {
   const [doc, setDoc] = useState<SchemaDoc | null>(cached);
   useEffect(() => {
@@ -24,6 +40,7 @@ export function useSchema(): SchemaDoc | null {
     fetch('/data/schema.json')
       .then((r) => r.json())
       .then((d: SchemaDoc) => {
+        if (!isLocalized(d)) return;
         cached = d;
         if (alive) setDoc(d);
       })
@@ -47,7 +64,7 @@ interface Props {
 }
 
 export function SchemaSheet({ doc, onClose, focusTable }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   // Аппаратная кнопка «назад» закрывает шторку — обработано в App.tsx (popstate),
   // а не здесь: это тот же перехват, что и для экранов, единый на всё приложение.
@@ -79,7 +96,7 @@ export function SchemaSheet({ doc, onClose, focusTable }: Props) {
           <>
             <h2>{t.schema.title}</h2>
             <p className="muted" style={{ marginTop: 0 }}>
-              {doc.company}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
+              {doc.company[locale]}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
             </p>
             {doc.tables.map((table) => (
               <TableDoc

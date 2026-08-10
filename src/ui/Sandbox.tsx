@@ -445,8 +445,8 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                       aria-label={t.sandbox.tableOpenAria(tb.table)}
                     >
                       <div className="name">
-                        <code style={{ color: 'var(--code)' }}>{tb.table}</code> — {tb.title}
-                        <small>{t.schema.grainLabel(tb.grain)}</small>
+                        <code style={{ color: 'var(--code)' }}>{tb.table}</code> — {tb.title[locale]}
+                        <small>{t.schema.grainLabel(tb.grain[locale])}</small>
                       </div>
                     </button>
                   ))}

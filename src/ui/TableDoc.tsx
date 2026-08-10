@@ -64,8 +64,8 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
   return (
     <details ref={detailsRef} open={open || undefined} className="table-doc">
       <summary>
-        <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title}
-        <small>{t.schema.grainLabel(table.grain, table.row_count.toLocaleString(numberLocale))}</small>
+        <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title[locale]}
+        <small>{t.schema.grainLabel(table.grain[locale], table.row_count.toLocaleString(numberLocale))}</small>
         {links}
       </summary>
       {table.columns.map((c) => {
@@ -107,14 +107,14 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
                       → <code>{c.references.table}.{c.references.column}</code>
                     </span>
                   )}
-                  {c.description}
+                  {c.description[locale]}
                 </>
               )}
             </span>
           </div>
         );
       })}
-      {table.note && <div className="note">{table.note}</div>}
+      {table.note && <div className="note">{table.note[locale]}</div>}
       {/*
        * Несколько настоящих строк под описанием колонок.
        *

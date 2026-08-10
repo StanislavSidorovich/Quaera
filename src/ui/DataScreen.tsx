@@ -21,7 +21,7 @@ import { TableDoc } from './TableDoc';
  */
 
 export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [query, setQuery] = useState('');
 
   const { group, incoming, outgoing } = useMemo<GroupedTables>(
@@ -51,12 +51,17 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
         continue;
       }
       const columns = table.columns.filter((c) => c.name.toLowerCase().includes(q));
+      /*
+       * Название ищется в текущей локали, а не в обеих: человек набирает то,
+       * что видит на экране. Поиск сразу по двум дал бы находку без видимой
+       * причины — таблица нашлась бы по слову, которого на ней не написано.
+       */
       const tableHit =
-        table.table.toLowerCase().includes(q) || table.title.toLowerCase().includes(q);
+        table.table.toLowerCase().includes(q) || table.title[locale].toLowerCase().includes(q);
       if (tableHit || columns.length) found.set(table.table, new Set(columns.map((c) => c.name)));
     }
     return found;
-  }, [doc, query]);
+  }, [doc, query, locale]);
 
   if (!doc) return <p className="muted">{t.schema.loading}</p>;
 
@@ -72,7 +77,7 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
        */}
       <div className="card">
         <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
-          {doc.company}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
+          {doc.company[locale]}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
         </p>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.data.intro(doc.tables.length)}</p>
       </div>

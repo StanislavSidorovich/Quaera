@@ -179,6 +179,52 @@ const schema = JSON.parse(readFileSync(path.join(root, 'public', 'data', 'schema
 const tablesByName = new Map(schema.tables.map((t) => [t.table, t]));
 let refCount = 0;
 
+/*
+ * Текст схемы обязан быть парой { ru, en } на месте, а не отдельным файлом
+ * перевода рядом (см. LocalizedText в src/engine/types.ts). Отдельный файл
+ * гейт по построению проверить не может — незаполненный слот падает уже
+ * в build-dataset.mjs, до записи schema.json на диск. Здесь проверяется
+ * другое: сам артефакт на диске может оказаться устаревшим — собранным
+ * до того, как в генератор добавили эту проверку, или руками поправленным.
+ * Тот же довод, что у сверки звезды по связям с префиксом имени чуть выше:
+ * гейт на исходник и гейт на результат ловят разные поломки.
+ */
+const cyrillic = /[А-Яа-яЁё]/;
+const checkLocalizedField = (where, pair, { allowBothEmpty = false } = {}) => {
+  const ru = pair?.ru ?? '', en = pair?.en ?? '';
+  /*
+   * Описание колонки, целиком состоявшей из «FK → …», после stripFkNote
+   * в build-dataset.mjs остаётся пустым на обеих локалях намеренно: связь
+   * и так рисуется отдельной строкой из references (см. TableDoc), а сверх
+   * неё сказать нечего. Это не непереведённый слот — переводить нечего.
+   * Разрешено только когда пусто на обеих локалях сразу: если заполнена
+   * только одна, это обычный незаполненный перевод, не особый случай.
+   */
+  if (allowBothEmpty && !ru.trim() && !en.trim()) {
+    check(`${where}: заполнены обе локали`, true);
+    return;
+  }
+  const complete = ru.trim().length > 0 && en.trim().length > 0;
+  check(`${where}: заполнены обе локали`, complete, complete ? undefined : `ru=${JSON.stringify(ru)}, en=${JSON.stringify(en)}`);
+  if (!complete) return;
+  check(`${where}: en без кириллицы`, !cyrillic.test(en), `en: «${en}»`);
+  // Совпадение локалей — это не перевод, а копипаст: почти всегда значит,
+  // что английский слот заполнили русским текстом не глядя. Не относится
+  // к чистым отметкам связи («FK → dim_region»): они латиницей и остаются
+  // латиницей, но это проверяется выше по кириллице, не здесь.
+  check(`${where}: en отличается от ru`, en !== ru || !cyrillic.test(ru), `обе локали: «${ru}»`);
+};
+
+checkLocalizedField('company', schema.company);
+for (const table of schema.tables) {
+  checkLocalizedField(`${table.table}.title`, table.title);
+  checkLocalizedField(`${table.table}.grain`, table.grain);
+  if (table.note) checkLocalizedField(`${table.table}.note`, table.note);
+  for (const col of table.columns) {
+    checkLocalizedField(`${table.table}.${col.name}`, col.description, { allowBothEmpty: Boolean(col.references) });
+  }
+}
+
 for (const table of schema.tables) {
   check(
     `${table.table}: есть строки-примеры`,

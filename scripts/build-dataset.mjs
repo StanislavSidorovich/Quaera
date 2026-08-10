@@ -587,31 +587,109 @@ const dirty = [];
 
 // ------------------------------------------------------------- запись в БД
 
+/**
+ * Связь колонки со справочником — разбором той же прозы, которой она уже
+ * описана («FK → dim_region.region_id»), а не отдельным списком рядом.
+ *
+ * Список рядом пришлось бы держать в согласии с описаниями руками, и
+ * разъехались бы они молча: оба места остались бы синтаксически валидными.
+ * Здесь источник один, а проверка того, что связь настоящая (ключи реально
+ * сходятся, сирот нет), живёт в verify-dataset.mjs.
+ *
+ * Целевая колонка указывается явно там, где она не совпадает с именем самой
+ * колонки: `manager_id → dim_rep.rep_id`, `distributor_id →
+ * dim_customer.customer_id`. Где совпадает — можно короче, подставится сама.
+ */
+const parseReference = (columnName, description) => {
+  const m = /FK\s*→\s*([a-z_]+)(?:\.([a-z_]+))?/i.exec(description ?? '');
+  if (!m) return null;
+  return { table: m[1], column: m[2] ?? columnName };
+};
+
+/**
+ * Убирает «FK → таблица.колонка» из текста, который уходит в шторку схемы.
+ *
+ * Связь и так рисуется отдельной строкой со стрелкой (см. SchemaSheet) —
+ * из того же references, что строит parseReference выше. Раньше описание
+ * показывалось рядом целиком, и «FK → dim_region» читалось дважды подряд.
+ * Здесь не второй источник правды: та же строка cols остаётся тем, что
+ * разбирает parseReference, — просто хвост про FK не дублируется на экране.
+ * Поэтому все описания с явной связью написаны так, что «FK → …» стоит
+ * в конце предложения — этот вырез просто отрезает готовый хвост.
+ *
+ * Тире перед хвостом берётся классом, а не одним символом: в английском
+ * описании на его месте естественно оказывается дефис, и без класса
+ * от него на экране оставался бы висящий хвостик пунктуации.
+ */
+const stripFkNote = (description) =>
+  (description ?? '').replace(/\s*[—–-]?\s*FK\s*→\s*[a-z_]+(?:\.[a-z_]+)?\s*/i, ' ').trim();
+
+/** Кто эти данные «собрал» — единственное человеческое поле схемы вне таблиц. */
+const COMPANY = {
+  ru: 'Нордвинд Трейд — дистрибуция FMCG и OTC-фармы',
+  en: 'Nordwind Trade — FMCG and OTC pharma distribution',
+};
+
+/**
+ * Схема датасета. Всё, что написано человеческим языком (`title`, `grain`,
+ * `note`, описания колонок), хранится **парой `{ ru, en }` на месте**, а не
+ * отдельным файлом перевода рядом.
+ *
+ * Правило на все будущие правки этого файла: добавляя колонку или таблицу,
+ * заполняешь обе локали здесь же. Отдельный `schema.en.json`, ключёванный по
+ * `таблица.колонка`, остался бы синтаксически валидным после появления новой
+ * колонки — то есть разошёлся бы с генератором молча, как разошёлся бы список
+ * связей рядом со схемой или словарь единиц измерения рядом с графиком.
+ * Пара на месте не позволяет описать колонку, не увидев пустого слота
+ * под перевод; проверка ниже (checkLocalized) не даёт этот слот забыть.
+ *
+ * Локали не имеют и парой не хранятся: имя таблицы, имя и тип колонки, цель
+ * внешнего ключа и сами строки примера. Это не язык, а то, что человек
+ * набирает в запросе; значения в строках примера одни на обе локали
+ * по построению — датасет один, и эталоны считаются по нему же.
+ */
 const SCHEMA = [
   {
-    table: 'dim_date', title: 'Календарь', grain: 'один день',
+    table: 'dim_date',
+    title: { ru: 'Календарь', en: 'Calendar' },
+    grain: { ru: 'один день', en: 'one day' },
     ddl: `CREATE TABLE dim_date (
       date_id TEXT PRIMARY KEY, year INTEGER, quarter INTEGER, month INTEGER, month_name TEXT,
       month_start TEXT, week_start TEXT, iso_week INTEGER, day_of_week INTEGER, day_name TEXT, is_weekend INTEGER)`,
     cols: {
-      date_id: 'Дата в формате YYYY-MM-DD, первичный ключ',
-      year: 'Год', quarter: 'Квартал 1–4', month: 'Номер месяца 1–12', month_name: 'Название месяца',
-      month_start: 'Первое число месяца — удобно для группировки', week_start: 'Понедельник недели',
-      iso_week: 'Номер недели по ISO', day_of_week: 'День недели, 1 = понедельник', day_name: 'Сокращение дня недели',
-      is_weekend: 'Флаг выходного дня (0/1)',
+      date_id: { ru: 'Дата в формате YYYY-MM-DD, первичный ключ', en: 'Date in YYYY-MM-DD format, primary key' },
+      year: { ru: 'Год', en: 'Year' },
+      quarter: { ru: 'Квартал 1–4', en: 'Quarter 1–4' },
+      month: { ru: 'Номер месяца 1–12', en: 'Month number 1–12' },
+      month_name: { ru: 'Название месяца', en: 'Month name' },
+      month_start: { ru: 'Первое число месяца — удобно для группировки', en: 'First day of the month — handy for grouping' },
+      week_start: { ru: 'Понедельник недели', en: 'Monday of the week' },
+      iso_week: { ru: 'Номер недели по ISO', en: 'ISO week number' },
+      day_of_week: { ru: 'День недели, 1 = понедельник', en: 'Day of week, 1 = Monday' },
+      day_name: { ru: 'Сокращение дня недели', en: 'Day-of-week abbreviation' },
+      is_weekend: { ru: 'Флаг выходного дня (0/1)', en: 'Weekend flag (0/1)' },
     },
     rows: dates,
   },
   {
-    table: 'dim_product', title: 'Товары', grain: 'один SKU',
+    table: 'dim_product',
+    title: { ru: 'Товары', en: 'Products' },
+    grain: { ru: 'один SKU', en: 'one SKU' },
     ddl: `CREATE TABLE dim_product (
       product_id INTEGER PRIMARY KEY, sku_code TEXT, product_name TEXT, brand TEXT, category TEXT,
       subcategory TEXT, division TEXT, pack_size REAL, unit TEXT, list_price REAL, launch_date TEXT)`,
     cols: {
-      product_id: 'Ключ товара', sku_code: 'Артикул', product_name: 'Наименование', brand: 'Бренд',
-      category: 'Категория', subcategory: 'Подкатегория', division: 'Дивизион: FMCG или Pharma',
-      pack_size: 'Размер упаковки', unit: 'Единица измерения', list_price: 'Базовая полочная цена, ₽',
-      launch_date: 'Дата запуска SKU — до неё продаж быть не может',
+      product_id: { ru: 'Ключ товара', en: 'Product key' },
+      sku_code: { ru: 'Артикул', en: 'SKU code' },
+      product_name: { ru: 'Наименование', en: 'Product name' },
+      brand: { ru: 'Бренд', en: 'Brand' },
+      category: { ru: 'Категория', en: 'Category' },
+      subcategory: { ru: 'Подкатегория', en: 'Subcategory' },
+      division: { ru: 'Дивизион: FMCG или Pharma', en: 'Division: FMCG or Pharma' },
+      pack_size: { ru: 'Размер упаковки', en: 'Pack size' },
+      unit: { ru: 'Единица измерения', en: 'Unit of measure' },
+      list_price: { ru: 'Базовая полочная цена, ₽', en: 'Base shelf price, ₽' },
+      launch_date: { ru: 'Дата запуска SKU — до неё продаж быть не может', en: 'SKU launch date — no sales can exist before it' },
     },
     rows: products.map((p) => ({
       product_id: p.product_id, sku_code: p.sku_code, product_name: p.product_name, brand: p.brand,
@@ -620,29 +698,43 @@ const SCHEMA = [
     })),
   },
   {
-    table: 'dim_region', title: 'География', grain: 'один регион',
+    table: 'dim_region',
+    title: { ru: 'География', en: 'Geography' },
+    grain: { ru: 'один регион', en: 'one region' },
     ddl: `CREATE TABLE dim_region (
       region_id INTEGER PRIMARY KEY, region_name TEXT, federal_district TEXT, population INTEGER, tier INTEGER)`,
     cols: {
-      region_id: 'Ключ региона', region_name: 'Регион', federal_district: 'Федеральный округ',
-      population: 'Население', tier: 'Приоритет региона: 1 — ключевой, 3 — периферия',
+      region_id: { ru: 'Ключ региона', en: 'Region key' },
+      region_name: { ru: 'Регион', en: 'Region' },
+      federal_district: { ru: 'Федеральный округ', en: 'Federal district' },
+      population: { ru: 'Население', en: 'Population' },
+      tier: { ru: 'Приоритет региона: 1 — ключевой, 3 — периферия', en: 'Region priority: 1 — key, 3 — periphery' },
     },
     rows: REGIONS,
   },
   {
-    table: 'dim_customer', title: 'Клиенты и точки продаж', grain: 'один клиент',
+    table: 'dim_customer',
+    title: { ru: 'Клиенты и точки продаж', en: 'Customers and outlets' },
+    grain: { ru: 'один клиент', en: 'one customer' },
     ddl: `CREATE TABLE dim_customer (
       customer_id INTEGER PRIMARY KEY, customer_name TEXT, customer_type TEXT, channel TEXT,
       chain_name TEXT, region_id INTEGER, city TEXT, opened_date TEXT, is_active INTEGER,
       served_by_distributor_id INTEGER, rep_id INTEGER)`,
     cols: {
-      customer_id: 'Ключ клиента', customer_name: 'Название',
-      customer_type: 'Тип: distributor, chain, traditional, pharmacy, ecom',
-      channel: 'Канал: distributor, modern_trade, traditional_trade, pharmacy, ecom',
-      chain_name: 'Сеть, если точка сетевая (иначе NULL)', region_id: 'FK → dim_region', city: 'Город',
-      opened_date: 'Дата открытия', is_active: 'Активность (0/1)',
-      served_by_distributor_id: 'Дистрибьютор, обслуживающий точку (self-join) — FK → dim_customer.customer_id',
-      rep_id: 'Закреплённый торговый представитель — FK → dim_rep',
+      customer_id: { ru: 'Ключ клиента', en: 'Customer key' },
+      customer_name: { ru: 'Название', en: 'Name' },
+      customer_type: { ru: 'Тип: distributor, chain, traditional, pharmacy, ecom', en: 'Type: distributor, chain, traditional, pharmacy, ecom' },
+      channel: { ru: 'Канал: distributor, modern_trade, traditional_trade, pharmacy, ecom', en: 'Channel: distributor, modern_trade, traditional_trade, pharmacy, ecom' },
+      chain_name: { ru: 'Сеть, если точка сетевая (иначе NULL)', en: 'Chain name, if the outlet belongs to one (NULL otherwise)' },
+      region_id: { ru: 'FK → dim_region', en: 'FK → dim_region' },
+      city: { ru: 'Город', en: 'City' },
+      opened_date: { ru: 'Дата открытия', en: 'Opening date' },
+      is_active: { ru: 'Активность (0/1)', en: 'Active flag (0/1)' },
+      served_by_distributor_id: {
+        ru: 'Дистрибьютор, обслуживающий точку (self-join) — FK → dim_customer.customer_id',
+        en: 'Distributor serving the outlet (self-join) — FK → dim_customer.customer_id',
+      },
+      rep_id: { ru: 'Закреплённый торговый представитель — FK → dim_rep', en: 'Assigned sales rep — FK → dim_rep' },
     },
     rows: customers.map((c) => ({
       customer_id: c.customer_id, customer_name: c.customer_name, customer_type: c.customer_type,
@@ -652,107 +744,227 @@ const SCHEMA = [
     })),
   },
   {
-    table: 'dim_rep', title: 'Торговые представители', grain: 'один сотрудник',
+    table: 'dim_rep',
+    title: { ru: 'Торговые представители', en: 'Sales reps' },
+    grain: { ru: 'один сотрудник', en: 'one employee' },
     ddl: `CREATE TABLE dim_rep (
       rep_id INTEGER PRIMARY KEY, rep_name TEXT, team TEXT, role TEXT, region_id INTEGER,
       hired_date TEXT, manager_id INTEGER)`,
     cols: {
-      rep_id: 'Ключ сотрудника', rep_name: 'ФИО', team: 'Команда', role: 'manager или rep',
-      region_id: 'FK → dim_region', hired_date: 'Дата найма',
-      manager_id: 'Руководитель, у руководителей NULL (self-join) — FK → dim_rep.rep_id',
+      rep_id: { ru: 'Ключ сотрудника', en: 'Employee key' },
+      rep_name: { ru: 'ФИО', en: 'Full name' },
+      team: { ru: 'Команда', en: 'Team' },
+      role: { ru: 'manager или rep', en: 'manager or rep' },
+      region_id: { ru: 'FK → dim_region', en: 'FK → dim_region' },
+      hired_date: { ru: 'Дата найма', en: 'Hire date' },
+      manager_id: { ru: 'Руководитель, у руководителей NULL (self-join) — FK → dim_rep.rep_id', en: 'Manager, NULL for managers themselves (self-join) — FK → dim_rep.rep_id' },
     },
     rows: reps,
   },
   {
-    table: 'dim_promo', title: 'Промо-акции', grain: 'одна акция',
+    table: 'dim_promo',
+    title: { ru: 'Промо-акции', en: 'Promotions' },
+    grain: { ru: 'одна акция', en: 'one promotion' },
     ddl: `CREATE TABLE dim_promo (
       promo_id INTEGER PRIMARY KEY, promo_name TEXT, brand TEXT, mechanic TEXT,
       start_date TEXT, end_date TEXT, discount_pct REAL, channel TEXT)`,
     cols: {
-      promo_id: 'Ключ акции', promo_name: 'Название', brand: 'Бренд', mechanic: 'Механика',
-      start_date: 'Начало', end_date: 'Конец', discount_pct: 'Глубина скидки, %',
-      channel: 'Канал проведения, all — все каналы',
+      promo_id: { ru: 'Ключ акции', en: 'Promotion key' },
+      promo_name: { ru: 'Название', en: 'Name' },
+      brand: { ru: 'Бренд', en: 'Brand' },
+      mechanic: { ru: 'Механика', en: 'Mechanic' },
+      start_date: { ru: 'Начало', en: 'Start date' },
+      end_date: { ru: 'Конец', en: 'End date' },
+      discount_pct: { ru: 'Глубина скидки, %', en: 'Discount depth, %' },
+      channel: { ru: 'Канал проведения, all — все каналы', en: 'Channel it runs in, all — every channel' },
     },
     rows: promos,
   },
   {
-    table: 'fact_sellout', title: 'Продажи в точках (sell-out)', grain: 'неделя × точка × SKU',
+    table: 'fact_sellout',
+    title: { ru: 'Продажи в точках (sell-out)', en: 'Sales at outlets (sell-out)' },
+    grain: { ru: 'неделя × точка × SKU', en: 'week × outlet × SKU' },
     ddl: `CREATE TABLE fact_sellout (
       sellout_id INTEGER PRIMARY KEY, week_start TEXT, customer_id INTEGER, product_id INTEGER,
       units INTEGER, revenue REAL, avg_price REAL, promo_id INTEGER)`,
     cols: {
-      sellout_id: 'Ключ строки', week_start: 'Понедельник недели — FK → dim_date.week_start',
-      customer_id: 'FK → dim_customer', product_id: 'FK → dim_product',
-      units: 'Продано штук', revenue: 'Выручка, ₽', avg_price: 'Средняя цена продажи, ₽',
-      promo_id: 'NULL, если продажа вне акции — FK → dim_promo',
+      sellout_id: { ru: 'Ключ строки', en: 'Row key' },
+      week_start: { ru: 'Понедельник недели — FK → dim_date.week_start', en: 'Monday of the week — FK → dim_date.week_start' },
+      customer_id: { ru: 'FK → dim_customer', en: 'FK → dim_customer' },
+      product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
+      units: { ru: 'Продано штук', en: 'Units sold' },
+      revenue: { ru: 'Выручка, ₽', en: 'Revenue, ₽' },
+      avg_price: { ru: 'Средняя цена продажи, ₽', en: 'Average selling price, ₽' },
+      promo_id: { ru: 'NULL, если продажа вне акции — FK → dim_promo', en: 'NULL if the sale was outside a promotion — FK → dim_promo' },
     },
     rows: sellout,
-    note: 'Отсутствие строки означает, что продаж не было (нет товара на полке), а не ноль. Это ловушка: обычный INNER JOIN такие недели просто не покажет.',
+    note: {
+      ru: 'Отсутствие строки означает, что продаж не было (нет товара на полке), а не ноль. Это ловушка: обычный INNER JOIN такие недели просто не покажет.',
+      en: 'A missing row means there were no sales (the product was not on the shelf), not a zero. That is the trap: a plain INNER JOIN will not show such weeks at all.',
+    },
   },
   {
-    table: 'fact_sellin', title: 'Отгрузки дистрибьюторам (sell-in)', grain: 'месяц × дистрибьютор × SKU',
+    table: 'fact_sellin',
+    title: { ru: 'Отгрузки дистрибьюторам (sell-in)', en: 'Shipments to distributors (sell-in)' },
+    grain: { ru: 'месяц × дистрибьютор × SKU', en: 'month × distributor × SKU' },
     ddl: `CREATE TABLE fact_sellin (
       sellin_id INTEGER PRIMARY KEY, order_date TEXT, ship_date TEXT, month_start TEXT, distributor_id INTEGER,
       product_id INTEGER, units INTEGER, gross_amount REAL, discount_amount REAL, net_amount REAL)`,
     cols: {
-      sellin_id: 'Ключ строки', order_date: 'Дата заказа',
-      ship_date: 'Дата отгрузки — на 2–11 дней позже заказа, поэтому заказ конца месяца отгружается уже в следующем',
-      month_start: 'Месяц заказа (по order_date)',
-      distributor_id: 'Только продажи дистрибьюторам (customer_type = distributor) — FK → dim_customer.customer_id', product_id: 'FK → dim_product',
-      units: 'Отгружено штук', gross_amount: 'Сумма до скидок, ₽', discount_amount: 'Скидки, ₽',
-      net_amount: 'Сумма к оплате, ₽',
+      sellin_id: { ru: 'Ключ строки', en: 'Row key' },
+      order_date: { ru: 'Дата заказа', en: 'Order date' },
+      ship_date: {
+        ru: 'Дата отгрузки — на 2–11 дней позже заказа, поэтому заказ конца месяца отгружается уже в следующем',
+        en: 'Shipment date — 2–11 days after the order, so an order placed at month-end ships in the next month',
+      },
+      month_start: { ru: 'Месяц заказа (по order_date)', en: 'Order month (based on order_date)' },
+      distributor_id: {
+        ru: 'Только продажи дистрибьюторам (customer_type = distributor) — FK → dim_customer.customer_id',
+        en: 'Sales to distributors only (customer_type = distributor) — FK → dim_customer.customer_id',
+      },
+      product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
+      units: { ru: 'Отгружено штук', en: 'Units shipped' },
+      gross_amount: { ru: 'Сумма до скидок, ₽', en: 'Amount before discounts, ₽' },
+      discount_amount: { ru: 'Скидки, ₽', en: 'Discounts, ₽' },
+      net_amount: { ru: 'Сумма к оплате, ₽', en: 'Amount payable, ₽' },
     },
     rows: sellin,
   },
   {
-    table: 'fact_stock', title: 'Остатки у дистрибьюторов', grain: 'месяц × дистрибьютор × SKU',
+    table: 'fact_stock',
+    title: { ru: 'Остатки у дистрибьюторов', en: 'Distributor stock' },
+    grain: { ru: 'месяц × дистрибьютор × SKU', en: 'month × distributor × SKU' },
     ddl: `CREATE TABLE fact_stock (
       stock_id INTEGER PRIMARY KEY, month_start TEXT, month_end TEXT, distributor_id INTEGER,
       product_id INTEGER, units_on_hand INTEGER, units_in_transit INTEGER)`,
     cols: {
-      stock_id: 'Ключ строки', month_start: 'Месяц', month_end: 'Последний день месяца',
-      distributor_id: 'FK → dim_customer.customer_id', product_id: 'FK → dim_product',
-      units_on_hand: 'Остаток на складе, шт', units_in_transit: 'В пути, шт',
+      stock_id: { ru: 'Ключ строки', en: 'Row key' },
+      month_start: { ru: 'Месяц', en: 'Month' },
+      month_end: { ru: 'Последний день месяца', en: 'Last day of the month' },
+      distributor_id: { ru: 'FK → dim_customer.customer_id', en: 'FK → dim_customer.customer_id' },
+      product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
+      units_on_hand: { ru: 'Остаток на складе, шт', en: 'Units on hand' },
+      units_in_transit: { ru: 'В пути, шт', en: 'Units in transit' },
     },
     rows: stock,
   },
   {
-    table: 'fact_target', title: 'Планы продаж', grain: 'месяц × представитель × дивизион',
+    table: 'fact_target',
+    title: { ru: 'Планы продаж', en: 'Sales targets' },
+    grain: { ru: 'месяц × представитель × дивизион', en: 'month × rep × division' },
     ddl: `CREATE TABLE fact_target (
       target_id INTEGER PRIMARY KEY, month_start TEXT, rep_id INTEGER, division TEXT,
       target_units INTEGER, target_revenue REAL)`,
     cols: {
-      target_id: 'Ключ строки', month_start: 'Месяц', rep_id: 'FK → dim_rep',
-      division: 'FMCG или Pharma', target_units: 'План, шт', target_revenue: 'План, ₽',
+      target_id: { ru: 'Ключ строки', en: 'Row key' },
+      month_start: { ru: 'Месяц', en: 'Month' },
+      rep_id: { ru: 'FK → dim_rep', en: 'FK → dim_rep' },
+      division: { ru: 'FMCG или Pharma', en: 'FMCG or Pharma' },
+      target_units: { ru: 'План, шт', en: 'Target, units' },
+      target_revenue: { ru: 'План, ₽', en: 'Target, ₽' },
     },
     rows: targets,
   },
   {
-    table: 'fact_price', title: 'Прайс-лист', grain: 'месяц × SKU',
+    table: 'fact_price',
+    title: { ru: 'Прайс-лист', en: 'Price list' },
+    grain: { ru: 'месяц × SKU', en: 'month × SKU' },
     ddl: `CREATE TABLE fact_price (
       price_id INTEGER PRIMARY KEY, month_start TEXT, product_id INTEGER,
       list_price REAL, promo_price REAL)`,
     cols: {
-      price_id: 'Ключ строки', month_start: 'Месяц', product_id: 'FK → dim_product',
-      list_price: 'Рекомендованная полочная цена, ₽', promo_price: 'Средняя промо-цена, ₽',
+      price_id: { ru: 'Ключ строки', en: 'Row key' },
+      month_start: { ru: 'Месяц', en: 'Month' },
+      product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
+      list_price: { ru: 'Рекомендованная полочная цена, ₽', en: 'Recommended shelf price, ₽' },
+      promo_price: { ru: 'Средняя промо-цена, ₽', en: 'Average promo price, ₽' },
     },
     rows: prices,
   },
   {
-    table: 'staging_raw_sellout', title: 'Сырой выгруз продаж (грязный)', grain: 'строка выгрузки',
+    table: 'staging_raw_sellout',
+    title: { ru: 'Сырой выгруз продаж (грязный)', en: 'Raw sales export (dirty)' },
+    grain: { ru: 'строка выгрузки', en: 'one export row' },
     ddl: `CREATE TABLE staging_raw_sellout (
       raw_id INTEGER PRIMARY KEY, sale_date TEXT, customer_name TEXT, sku_code TEXT,
       units TEXT, revenue TEXT, source_file TEXT)`,
     cols: {
-      raw_id: 'Номер строки в выгрузке', sale_date: 'Дата текстом в разных форматах',
-      customer_name: 'Название клиента: пробелы по краям, разное написание одной сети',
-      sku_code: 'Артикул в разном регистре', units: 'Количество текстом: бывает NULL, отрицательное, с запятой',
-      revenue: 'Выручка текстом: разделитель то точка, то запятая', source_file: 'Файл-источник',
+      raw_id: { ru: 'Номер строки в выгрузке', en: 'Row number in the export' },
+      sale_date: { ru: 'Дата текстом в разных форматах', en: 'Date as text, in mixed formats' },
+      customer_name: { ru: 'Название клиента: пробелы по краям, разное написание одной сети', en: 'Customer name: padded with spaces, one chain spelled two ways' },
+      sku_code: { ru: 'Артикул в разном регистре', en: 'SKU code in mixed case' },
+      units: { ru: 'Количество текстом: бывает NULL, отрицательное, с запятой', en: 'Quantity as text: sometimes NULL, negative, or comma-separated' },
+      revenue: { ru: 'Выручка текстом: разделитель то точка, то запятая', en: 'Revenue as text: decimal separator is sometimes a dot, sometimes a comma' },
+      source_file: { ru: 'Файл-источник', en: 'Source file' },
     },
     rows: dirty,
-    note: 'Слой как есть, до очистки. Все поля текстовые. Здесь тренируется приведение типов, дедупликация и нормализация справочников.',
+    note: {
+      ru: 'Слой как есть, до очистки. Все поля текстовые. Здесь тренируется приведение типов, дедупликация и нормализация справочников.',
+      en: 'The layer as it arrives, before any cleaning. Every field is text. This is where you practice type casting, deduplication and normalizing reference data.',
+    },
   },
 ];
+
+/**
+ * Проверка полноты пар — до первой записи на диск, а не после.
+ *
+ * Место выбрано намеренно: если бы проверка стояла рядом со сборкой
+ * schema.json в конце файла, падение оставляло бы на диске новый датасет
+ * и **прошлый** schema.json, а `npm run verify` прогонялся бы по этой паре
+ * и вполне мог бы позеленеть. Тогда «перевод забыт» выглядело бы как
+ * «всё в порядке» — ровно тот случай, ради которого гейты и заводятся.
+ *
+ * Сообщение перечисляет все пустые слоты разом, а не первый попавшийся:
+ * заполнение переводов — работа одним заходом, и список нужен целиком.
+ */
+const missingText = [];
+const checkLocalized = (where, pair) => {
+  for (const locale of ['ru', 'en']) {
+    if (typeof pair?.[locale] !== 'string' || !pair[locale].trim()) missingText.push(`${where} → ${locale}`);
+  }
+};
+const brokenRefs = [];
+/**
+ * Хвост «FK → …» обязан стоять в обоих описаниях и вести в одно место.
+ *
+ * Сам по себе он записан латиницей и переводу не подлежит — его переносят
+ * копированием. Требование от этого не формальное: связи строятся по русскому
+ * описанию, английское на них не влияет, поэтому расхождение здесь ничего
+ * не сломает на экране и не всплывёт никогда. А означать оно будет то, что
+ * переводивший принял колонку за другую, — то есть ошибку не в буквах,
+ * а в понимании данных, и рядом с ней наверняка неверно и само описание.
+ * Два независимых признака обязаны говорить одно — тот же приём, что
+ * у сверки звезды по связям с префиксом имени в verify-dataset.mjs.
+ */
+const sameRef = (a, b) => a?.table === b?.table && a?.column === b?.column;
+for (const t of SCHEMA) {
+  checkLocalized(`${t.table}.title`, t.title);
+  checkLocalized(`${t.table}.grain`, t.grain);
+  if (t.note) checkLocalized(`${t.table}.note`, t.note);
+  for (const [name, description] of Object.entries(t.cols)) {
+    checkLocalized(`${t.table}.${name}`, description);
+    const ru = parseReference(name, description.ru);
+    const en = parseReference(name, description.en);
+    // Пустой английский слот здесь молчит: о нём уже сказано выше, и второе
+    // сообщение про ту же колонку только удлинило бы список для заполнения.
+    if (description.en?.trim() && !sameRef(ru, en)) {
+      const show = (r) => (r ? `${r.table}.${r.column}` : 'нет связи');
+      brokenRefs.push(`${t.table}.${name}: ru → ${show(ru)}, en → ${show(en)}`);
+    }
+  }
+}
+checkLocalized('company', COMPANY);
+if (missingText.length || brokenRefs.length) {
+  if (missingText.length) {
+    console.error(`\nНе заполнен текст схемы (${missingText.length}):`);
+    for (const item of missingText) console.error(`  ${item}`);
+  }
+  if (brokenRefs.length) {
+    console.error(`\nСвязь FK разошлась между локалями (${brokenRefs.length}):`);
+    for (const item of brokenRefs) console.error(`  ${item}`);
+  }
+  throw new Error('schema: текст не готов — см. список выше');
+}
 
 const SQL = await initSqlJs({ locateFile: (f) => path.join(sqlDist, f) });
 const db = new SQL.Database();
@@ -805,39 +1017,6 @@ const gz = gzipSync(raw, { level: 9 });
 await writeFile(path.join(outDir, 'querium.dataset'), gz);
 
 /**
- * Связь колонки со справочником — разбором той же прозы, которой она уже
- * описана («FK → dim_region.region_id»), а не отдельным списком рядом.
- *
- * Список рядом пришлось бы держать в согласии с описаниями руками, и
- * разъехались бы они молча: оба места остались бы синтаксически валидными.
- * Здесь источник один, а проверка того, что связь настоящая (ключи реально
- * сходятся, сирот нет), живёт в verify-dataset.mjs.
- *
- * Целевая колонка указывается явно там, где она не совпадает с именем самой
- * колонки: `manager_id → dim_rep.rep_id`, `distributor_id →
- * dim_customer.customer_id`. Где совпадает — можно короче, подставится сама.
- */
-const parseReference = (columnName, description) => {
-  const m = /FK\s*→\s*([a-z_]+)(?:\.([a-z_]+))?/i.exec(description ?? '');
-  if (!m) return null;
-  return { table: m[1], column: m[2] ?? columnName };
-};
-
-/**
- * Убирает «FK → таблица.колонка» из текста, который уходит в шторку схемы.
- *
- * Связь и так рисуется отдельной строкой со стрелкой (см. SchemaSheet) —
- * из того же references, что строит parseReference выше. Раньше описание
- * показывалось рядом целиком, и «FK → dim_region» читалось дважды подряд.
- * Здесь не второй источник правды: та же строка cols остаётся тем, что
- * разбирает parseReference, — просто хвост про FK не дублируется на экране.
- * Поэтому все описания с явной связью написаны так, что «FK → …» стоит
- * в конце предложения — этот вырез просто отрезает готовый хвост.
- */
-const stripFkNote = (description) =>
-  (description ?? '').replace(/\s*—?\s*FK\s*→\s*[a-z_]+(?:\.[a-z_]+)?\s*/i, ' ').trim();
-
-/**
  * Тип колонки — не отдельно поддерживаемый список, а разбор той же DDL,
  * которой уже создаётся таблица (см. SCHEMA[].ddl выше). Формат простой
  * («имя ТИП [PRIMARY KEY]», без вложенных скобок), парсинг таким и остаётся.
@@ -877,9 +1056,11 @@ const sampleFor = (table, rowCount) => {
 
 const schemaJson = {
   dataset: 'querium',
-  version: 1,
+  // 2 — текст схемы стал парами { ru, en }. Клиент отличает старый документ
+  // по форме, а не по числу (см. useSchema), но версия обязана не врать.
+  version: 2,
   generated_at: new Date().toISOString().slice(0, 10),
-  company: 'Нордвинд Трейд — дистрибуция FMCG и OTC-фармы',
+  company: COMPANY,
   period: { from: iso(START), to: iso(END) },
   tables: SCHEMA.map((t) => {
     const types = parseColumnTypes(t.ddl);
@@ -890,8 +1071,14 @@ const schemaJson = {
       note: t.note ?? null,
       row_count: t.rows.length,
       columns: Object.entries(t.cols).map(([name, description]) => {
-        const references = parseReference(name, description);
-        const clean = { name, description: stripFkNote(description), type: types[name] ?? 'TEXT' };
+        // Связь берётся из русского описания — оно здесь канон, а совпадение
+        // с английским уже проверено выше и потому переспрашивать нечего.
+        const references = parseReference(name, description.ru);
+        const clean = {
+          name,
+          description: { ru: stripFkNote(description.ru), en: stripFkNote(description.en) },
+          type: types[name] ?? 'TEXT',
+        };
         return references ? { ...clean, references } : clean;
       }),
       sample: sampleFor(t.table, t.rows.length),
