@@ -885,6 +885,10 @@ export default function App() {
                   lesson={lessonBySkill.get(screen.skill)!}
                   executor={lessonExecutor ?? executor!}
                   runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
+                  // Из справочника карточка вела в тупик — с карты навыков в практику
+                  // перейти можно было, а отсюда нет (находка 2 из разбора навигации
+                  // 2026-08-09). startSkillSession — тот же вход, что и у карты.
+                  onPractice={() => startSkillSession(screen.skill)}
                 />
               );
             })()

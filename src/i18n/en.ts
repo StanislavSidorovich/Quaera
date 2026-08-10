@@ -385,6 +385,7 @@ export const en = {
     wrongTitle: 'Common mistake',
     selfCheckTitle: 'How to check yourself',
     continueBtn: 'Go to the task',
+    practiceBtn: 'Practice this topic',
     runExample: 'Run the example',
     runWrong: 'See what it returns',
     running: 'Running…',

@@ -66,9 +66,11 @@ interface Props {
   runnable?: boolean;
   /** В занятии показываем кнопку перехода к задаче, в справочнике — нет. */
   onContinue?: () => void;
+  /** В справочнике — кнопка практики по теме вместо перехода к следующему шагу занятия. */
+  onPractice?: () => void;
 }
 
-export function LessonCard({ lesson, executor, runnable = true, onContinue }: Props) {
+export function LessonCard({ lesson, executor, runnable = true, onContinue, onPractice }: Props) {
   const { t } = useI18n();
   return (
     <>
@@ -131,6 +133,11 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue }: Pr
       {onContinue && (
         <button className="btn" onClick={onContinue}>
           {t.lesson.continueBtn}
+        </button>
+      )}
+      {onPractice && (
+        <button className="btn" onClick={onPractice}>
+          {t.lesson.practiceBtn}
         </button>
       )}
     </>
