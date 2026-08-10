@@ -4,6 +4,7 @@ import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
+import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
@@ -135,6 +136,7 @@ type Screen =
   | { name: 'done'; solved: number }
   | { name: 'reference' }
   | { name: 'sandbox' }
+  | { name: 'data' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
   | { name: 'trackIntro'; track: Track };
@@ -587,9 +589,11 @@ export default function App() {
         ? 'reference'
         : screen.name === 'sandbox'
           ? 'sandbox'
-          : screen.name === 'about'
-            ? 'about'
-            : null;
+          : screen.name === 'data'
+            ? 'data'
+            : screen.name === 'about'
+              ? 'about'
+              : null;
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -609,6 +613,7 @@ export default function App() {
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
         onSandbox={() => setScreen({ name: 'sandbox' })}
+        onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
         onSelectTrack={switchTrack}
       />
@@ -634,6 +639,8 @@ export default function App() {
                 ? t.reference.title
                 : screen.name === 'sandbox'
                   ? t.sandbox.title
+                  : screen.name === 'data'
+                    ? t.data.title
                   : screen.name === 'lesson'
                     ? t.lesson.pill
                     : screen.name === 'about'
@@ -665,6 +672,13 @@ export default function App() {
                        * уже назвал экран, а песочница не привязана к activeTrack —
                        * печатать здесь имя текущего трека значило бы соврать,
                        * что песочница именно про него, хотя внутри есть SQL и Python разом.
+                       */
+                      null
+                    : screen.name === 'data'
+                    ? /*
+                       * Пусто по той же причине, что и в песочнице: данные
+                       * общие для всех треков, и подпись именем активного
+                       * трека обещала бы, что экран показывает только его.
                        */
                       null
                     : screen.name === 'lesson'
@@ -756,7 +770,7 @@ export default function App() {
               onDeferConsent={() => setConsentDeferred(true)}
               onResumeConsent={() => setConsentDeferred(false)}
               onStart={startSession}
-              onOpenSchema={() => openSchema()}
+              onOpenData={() => setScreen({ name: 'data' })}
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
@@ -819,6 +833,8 @@ export default function App() {
           )}
 
           {screen.name === 'sandbox' && <Sandbox schema={schema} onOpenSchema={openSchema} />}
+
+          {screen.name === 'data' && <DataScreen doc={schema} />}
 
           {screen.name === 'lesson' && lessonBySkill.get(screen.skill) && (
             /*
@@ -1061,7 +1077,7 @@ function Home({
   onDeferConsent,
   onResumeConsent,
   onStart,
-  onOpenSchema,
+  onOpenData,
   onOpenReference,
   onOpenSandbox,
   onOpenAbout,
@@ -1085,7 +1101,7 @@ function Home({
   onDeferConsent: () => void;
   onResumeConsent: () => void;
   onStart: () => void;
-  onOpenSchema: () => void;
+  onOpenData: () => void;
   onOpenReference: () => void;
   onOpenSandbox: () => void;
   onOpenAbout: () => void;
@@ -1391,11 +1407,19 @@ function Home({
               <button className="btn secondary" onClick={onOpenSandbox}>
                 {t.home.sandboxBtn}
               </button>
-              {writesCode && (
-                <button className="btn secondary" onClick={onOpenSchema}>
-                  {t.home.schemaBtn}
-                </button>
-              )}
+              {/*
+               * Больше не гейтится writesCode, и это смена решения, а не
+               * недосмотр. Гейт был верен, пока кнопка открывала шторку для
+               * набора запроса: где код не пишут, схема колонок не нужна.
+               * Теперь кнопка ведёт на экран «Данные», который отвечает
+               * на другой вопрос — что это за данные и как они связаны, —
+               * и нужен он как раз там, где код не пишут: трек модели
+               * данных состоит из звезды и гранулярности, а трек профессии
+               * разбирает ситуации, собранные на этих же строках.
+               */}
+              <button className="btn secondary" onClick={onOpenData}>
+                {t.home.schemaBtn}
+              </button>
             </div>
           )}
         </div>

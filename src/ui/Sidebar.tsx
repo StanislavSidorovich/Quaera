@@ -15,7 +15,7 @@ import type { Progress } from '../srs/store';
  * они открываются изнутри разделов и своего пункта меню не имеют — иначе
  * меню обещало бы вход туда, куда попадают только по ходу занятия.
  */
-export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'about' | null;
+export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'data' | 'about' | null;
 
 export function Sidebar({
   section,
@@ -26,6 +26,7 @@ export function Sidebar({
   onHome,
   onReference,
   onSandbox,
+  onData,
   onAbout,
   onSelectTrack,
 }: {
@@ -38,6 +39,7 @@ export function Sidebar({
   onHome: () => void;
   onReference: () => void;
   onSandbox: () => void;
+  onData: () => void;
   onAbout: () => void;
   onSelectTrack: (track: Track) => void;
 }) {
@@ -113,6 +115,20 @@ export function Sidebar({
           >
             <IconFlask />
             {t.nav.sandbox}
+          </button>
+          {/*
+           * «Данные» стоят после песочницы, а не рядом со справочником:
+           * это не ещё один способ учиться, а описание того, на чём учат
+           * все остальные разделы, — и заглядывают сюда обычно из них.
+           */}
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'data' ? 'page' : undefined}
+            onClick={onData}
+          >
+            <IconTable />
+            {t.nav.data}
           </button>
         </div>
 
@@ -207,5 +223,13 @@ const IconFlask = () => (
     <path d="M6.4 2.6h3.2" />
     <path d="M6.9 2.6v3.9L3.6 12c-.5.9.1 2 1.2 2h6.4c1.1 0 1.7-1.1 1.2-2L9.1 6.5V2.6" />
     <path d="M4.9 9.6h6.2" />
+  </svg>
+);
+
+const IconTable = () => (
+  <svg {...iconProps}>
+    <rect x="2.4" y="3" width="11.2" height="10" rx="1.2" />
+    <path d="M2.4 6.4h11.2" />
+    <path d="M6.6 6.4V13" />
   </svg>
 );

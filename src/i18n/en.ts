@@ -45,6 +45,7 @@ export const en = {
     home: 'Home',
     reference: 'Reference',
     sandbox: 'Sandbox',
+    data: 'Data',
     about: 'About',
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
   },
@@ -292,6 +293,32 @@ export const en = {
     copied: 'Copied',
     periodLabel: (from: string, to: string) => `Data period: ${from} — ${to}`,
     sampleCaption: (n: number) => `${n} rows from different parts of the table — what the data actually looks like`,
+  },
+  /** См. комментарий в ru.ts: деление на факты и справочники названо словами, а не отдано префиксу имени. */
+  data: {
+    title: 'Data',
+    intro: (tables: number) =>
+      `${tables} tables from one fictional distributor. Every track runs on them: a SQL task, a pandas walkthrough and a data-model question all pull the same rows. Open a table to see its columns and three real rows — enough to show the date format, the order of magnitude and where values go missing.`,
+    searchPlaceholder: 'Search tables and columns…',
+    searchAria: 'Search the data schema',
+    searchFound: (n: number) => `Found ${n} ${n === 1 ? 'table' : 'tables'}`,
+    searchEmpty: (query: string) => `Nothing found for "${query}"`,
+    tableCount: (n: number) => `${n} ${n === 1 ? 'table' : 'tables'}`,
+    incomingLabel: (n: number) => `Referenced by ${n} ${n === 1 ? 'table' : 'tables'}`,
+    groups: {
+      fact: {
+        title: 'Facts — what happened',
+        body: 'Events and measurements: a shipment, a sale, stock on hand, a target. One row is one fact, and almost everything in them is numbers and keys. This is where the totals in a report come from; the lookups explain what those totals are about.',
+      },
+      dimension: {
+        title: 'Lookups — who and what',
+        body: 'Products, customers, regions, staff, promotions, the calendar. No totals here — only descriptions: a brand name, an outlet city, an opening date. They join onto facts by key, and without them a number has no name.',
+      },
+      standalone: {
+        title: 'Raw layer — before cleaning',
+        body: 'An export as it arrived, tied to nothing by keys: dates as text in several formats, numbers with a comma, one chain spelled three ways. This is how data actually shows up at work, and putting it in order is a skill of its own.',
+      },
+    },
   },
   result: {
     stdoutLabel: 'print() output',

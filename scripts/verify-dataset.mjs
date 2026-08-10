@@ -216,5 +216,41 @@ for (const table of schema.tables) {
 }
 check('схема описывает связи между таблицами', refCount >= 15, `найдено ${refCount}`);
 
+/*
+ * Звезда, выведенная из связей, обязана сойтись с именами таблиц.
+ *
+ * Экран «Данные» делит таблицы на факты и справочники по графу внешних
+ * ключей (см. src/engine/schemaGroups.ts), а не по префиксу имени — так же,
+ * как этому учит трек модели данных. Имена при этом соглашению следуют,
+ * и здесь проверяется, что два независимых признака говорят одно и то же.
+ *
+ * Расхождение — всегда настоящий дефект, и оба его вида одинаково опасны:
+ * либо таблица названа не тем, что она есть, либо у неё забыт внешний ключ.
+ * Второй случай тихий: без ключа факт уедет в раздел «сырой слой», и человек
+ * прочитает про свои данные неправду ровно там, где пришёл разобраться.
+ */
+const groupOf = (t) => {
+  const selfless = (tbl) => tbl.columns.filter((c) => c.references && c.references.table !== tbl.table);
+  const referenced = schema.tables.some((other) =>
+    other.table !== t.table && selfless(other).some((c) => c.references.table === t.table)
+  );
+  if (referenced) return 'dimension';
+  return selfless(t).length ? 'fact' : 'standalone';
+};
+const byPrefix = (name) =>
+  name.startsWith('dim_') ? 'dimension' : name.startsWith('fact_') ? 'fact' : 'standalone';
+
+for (const table of schema.tables) {
+  const derived = groupOf(table);
+  const named = byPrefix(table.table);
+  check(
+    `${table.table}: связи и имя говорят одно и то же`,
+    derived === named,
+    derived === named
+      ? `${derived}`
+      : `по связям — ${derived}, по имени — ${named}: либо имя неверно, либо потерян внешний ключ`
+  );
+}
+
 console.log(failed ? `\n${failed} проверок провалено` : '\nВсе проверки пройдены');
 process.exit(failed ? 1 : 0);

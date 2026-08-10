@@ -1995,6 +1995,95 @@ table.sample td.null {
   border-top: 1px solid var(--line);
 }
 
+/*
+ * Экран «Данные».
+ *
+ * Три секции — факты, справочники, сырой слой — различаются цветом полосы
+ * слева у заголовка группы, а не заливкой карточек: заливка на двенадцати
+ * блоках подряд превращает экран в светофор, а полоса читается ровно там,
+ * где взгляд ищет границу раздела.
+ */
+.data-search input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.data-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.data-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid var(--group-color);
+  padding-left: 10px;
+  margin-bottom: 2px;
+}
+
+.data-group-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.data-group-head .pill {
+  flex: none;
+}
+
+.group-fact {
+  --group-color: var(--accent);
+}
+
+.group-dimension {
+  --group-color: var(--ok);
+}
+
+/*
+ * Сырой слой предупреждающим цветом: это единственная таблица, данным
+ * которой нельзя верить как есть, и в общем списке она ничем не отличалась
+ * от одиннадцати чистых.
+ */
+.group-standalone {
+  --group-color: var(--warn);
+}
+
+/*
+ * Связи внутри summary — то единственное, что говорит о месте таблицы
+ * в звезде, пока карточка не раскрыта.
+ */
+.data-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.data-link {
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 2px 9px;
+}
+
+.data-link code {
+  color: var(--accent);
+}
+
+/* Колонка, попавшая в поиск: иначе найденное приходится выискивать среди одиннадцати строк. */
+.col-doc.hit {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 /* ---------------------------------------------------------- состояния */
 
 .center {
