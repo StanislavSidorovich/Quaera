@@ -46,6 +46,8 @@ export const en = {
     reference: 'Reference',
     sandbox: 'Sandbox',
     data: 'Data',
+    /** См. комментарий в ru.ts: пункт живёт в подвале меню, а не первым в «Обучении». */
+    onboarding: 'Where to start',
     about: 'About',
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
   },
@@ -158,6 +160,122 @@ export const en = {
     tracksWhyTitle: 'Why these tracks, in this order',
     tracksWhyBody:
       "This mirrors how the work actually flows. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
+  },
+  /**
+   * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает
+   * и советует. Английская версия здесь не догоняющий перевод — initialLocale()
+   * отдаёт en всем, у кого браузер не русский, и на этот экран приходит
+   * прежде всего случайный посетитель с LinkedIn.
+   */
+  onboarding: {
+    title: 'Where to start',
+    entryLink: 'First time here? Where to start →',
+    intro:
+      "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. Freedom helps only when it's clear what you're choosing between — that's what this page is for. How the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
+
+    toolsTitle: 'Four tools, and how to choose between them',
+    toolsIntro:
+      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Чистовъ»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers are required to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
+    toolsWhenLabel: 'When this is your tool',
+    toolsCostLabel: 'What it costs you',
+    toolsWhen: {
+      domain:
+        "Before everything else. Before counting sales you have to know whose: shipments to the distributor or sales at the till, before discounts or after. This track isn't about a tool — it's about what the number you computed means and who needs it.",
+      sql:
+        "The answer is needed once and the data sits in a database. Pull, join, group — the shortest path from question to numbers, and the first line of requirements in analyst job ads.",
+      python:
+        "A calculation that takes several steps — with intermediate states, branching, or statistics — which is exactly where a single query stops being comfortable. The result stays an object in memory you can keep working with.",
+      model:
+        "The same number is needed every day and under different slices. You build the model once, and from then on the report recalculates itself — no new query for each new question.",
+    } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+    toolsCost: {
+      domain:
+        'Not a line of code, and no automatic checking: no engine will confirm that a judgement about the business is right. Everything expressible as a number is reconciled against the dataset, but a conclusion stays a conclusion.',
+      sql:
+        "A mistake in SQL rarely breaks the query — more often it runs without a single complaint and returns the wrong thing. And dialects diverge: a technique is worth remembering together with the engine it works on.",
+      python:
+        'The data is held in memory in full, so on large extracts it hits the limits of the machine long before a database would. This is a tool for exploration and one-off calculations, not for a report people open every day.',
+      model:
+        'DAX outside a model is meaningless: the formula leans on the relationships between tables. And the model itself is not free — an extra relationship or an extra high-cardinality column slows the report down.',
+    } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+
+    stepsTitle: 'How to work through it',
+    stepsIntro:
+      "None of this is required: any step can be skipped, and the trainer imposes no gates. It's the order that saves time, not a condition of entry.",
+    steps: [
+      {
+        title: "Start with whatever is on fire",
+        body: 'The tracks are independent and each starts from zero: SQL opens with SELECT, pandas with what a DataFrame even is, the model with why a star schema exists. If nothing is on fire, follow the chain: profession → SQL → pandas → model. In that order each one builds on the last.',
+      },
+      {
+        title: "Read the track's intro",
+        body: "Five fields: what it is, where it comes up on the job, the main idea, what the track doesn't give you, and how it connects to the others. Two minutes of reading settles the \"why am I doing this\" question that otherwise catches up with you around task ten.",
+      },
+      {
+        title: 'A session is up to five tasks, 7–10 minutes',
+        body: "That's how long attention holds for working through an explanation rather than scrolling past it. More in one evening is not better: the system brings a topic back when it's due, so there's no point grinding the same one now.",
+      },
+      {
+        title: 'Forgot a technique? Open the reference',
+        body: "Every technique is there with its minimal form, a worked example and the mistake people usually make — and the example runs right inside the card. Looking it up mid-session isn't cheating: on the job you open the documentation too.",
+      },
+      {
+        title: 'Test your own hunch in the sandbox',
+        body: "Free mode on the same data: any query, no task and no hints, with a list of questions beside it for when you have nothing to ask. It's the one place in the trainer where the answer is checked against nothing — so check it yourself.",
+      },
+      {
+        title: 'Come back tomorrow',
+        body: 'The "memory strength" bar grows from returning to a topic across days, not from how much you cleared in one evening — one evening cannot fill it, by design. Three short days do more than one long one.',
+      },
+    ],
+    stepsNote:
+      'Progress lives only in this browser: there is no account and nothing is sent to a server. If you switch devices or clear site data, download the progress file from the About page — that is the only way to carry it over.',
+
+    extraTitle: 'What to learn elsewhere',
+    extraIntro:
+      "The trainer covers four tools and a way of thinking around them — an analyst's job is not exhausted by that. An honest list of what isn't here: first the gaps next door, the ones you'll be asked about in the same role, then the adjacent professions this trainer does not lead to.",
+    extraNearLabel: "Next door: asked for on the job, absent here",
+    extraNear: [
+      {
+        title: 'Python as a language',
+        body: 'The pandas track is not "Python from scratch": it is about dataframes and is built on comparison with SQL. Functions, loops, working with files, virtual environments and pip stay outside the boundary — and without them you cannot assemble anything more complex than a single table.',
+      },
+      {
+        title: 'Spreadsheets',
+        body: 'Excel and Google Sheets are the language everyone else uses to talk to an analyst. Pivot tables and a cleanly formatted extract come up more often at work than window functions, and neither appears here at all.',
+      },
+      {
+        title: 'Power BI by hand',
+        body: "On the model track you read finished measures and predict their result, but you never write one: the DAX engine is closed and does not port to a browser. Install Power BI Desktop and build a model on your own data — mistakes in relationships and in filter direction only become visible by hand.",
+      },
+      {
+        title: 'Statistics',
+        body: 'Significance, confidence intervals, outliers, A/B tests — none of it is in the trainer yet, and BI and DA interviews ask about it. The place to start is not the formulas but the question "is this difference distinguishable from noise at all?"',
+      },
+      {
+        title: 'Visualisation',
+        body: 'Results here are shown as a table and a simple chart, but choosing the form, the scale and the labels is a craft of its own. A mistake there is not in the number: the number is right, and what people read off it is not.',
+      },
+    ],
+    extraAdjacentLabel: 'Adjacent professions: this trainer does not lead there',
+    extraAdjacent: [
+      {
+        title: 'Database administration and query plans',
+        body: 'Indexes, execution plans, server tuning. It helps an analyst to understand why a query takes twenty minutes, but fixing it is other people with other instruments.',
+      },
+      {
+        title: 'Data engineering',
+        body: 'Pipelines, orchestration, warehouse layers. The analyst consumes that layer; building it is a separate profession with a separate toolkit.',
+      },
+      {
+        title: 'Machine learning',
+        body: 'Features, models, quality metrics. A neighbouring road from the same junction: the maths partly overlaps, the day-to-day work does not.',
+      },
+    ],
+    extraClosing:
+      'The boundary is drawn deliberately, not by oversight: these professions begin where the trainer ends, and promising them in passing would be a lie.',
+
+    startBtn: 'Pick a track and begin →',
   },
   trackIntro: {
     entryLink: 'About this track →',
