@@ -898,7 +898,17 @@ export default function App() {
             <div className="card">
               <h2>{t.session.doneTitle}</h2>
               <p className="muted">{t.session.doneBody(screen.solved)}</p>
-              <button className="btn" style={{ marginTop: 12 }} onClick={() => setScreen({ name: 'home' })}>
+              {/*
+               * Раньше здесь стояла одна кнопка «На главную» — тупик для
+               * самого частого намерения в этой точке (продолжить, а не
+               * выйти), см. находку 1 из разбора навигации 2026-08-09.
+               * startSession() сам ничего не откроет, если в паке нет
+               * заданий, — та же защита, что и на главном экране.
+               */}
+              <button className="btn" style={{ marginTop: 12 }} onClick={startSession}>
+                {t.session.moreBtn}
+              </button>
+              <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setScreen({ name: 'home' })}>
                 {t.session.homeBtn}
               </button>
             </div>

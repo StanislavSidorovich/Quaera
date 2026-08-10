@@ -374,6 +374,7 @@ export const en = {
     doneTitle: 'Session done',
     doneBody: (n: number) =>
       `Tasks completed: ${n}. The skills they touched will come back for review — the interval depends on how confidently you got them.`,
+    moreBtn: 'Another session',
     homeBtn: 'Home',
     prevAria: 'Previous step',
     stepAria: (i: number) => `Step ${i}`,
