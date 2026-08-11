@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GROUP_ORDER, groupTables, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 
 /**
@@ -23,6 +24,26 @@ import { TableDoc } from './TableDoc';
 export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
   const { t, locale } = useI18n();
   const [query, setQuery] = useState('');
+
+  /**
+   * Таблица, выбранная на схеме. Схема без этого была бы украшением:
+   * человек видит форму, тычет в узел и не получает ничего — тот же тупик,
+   * что закрывали на «Занятие закончено».
+   *
+   * Хранится имя, а не сам объект таблицы: список ниже перерисовывается
+   * из `doc`, и держать рядом второй экземпляр той же строки значило бы
+   * заводить второй источник правды на ровном месте.
+   */
+  const [focused, setFocused] = useState<string | null>(null);
+  const focusRefs = useRef(new Map<string, HTMLDetailsElement>());
+
+  useEffect(() => {
+    if (!focused) return;
+    // Прокрутка — в эффекте, а не в обработчике клика: <details> ещё
+    // не раскрыт в момент клика, и scrollIntoView увёл бы к свёрнутой
+    // строке, до которой контент ниже не успел раздвинуться.
+    focusRefs.current.get(focused)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [focused]);
 
   const { group, incoming, outgoing } = useMemo<GroupedTables>(
     () =>
@@ -97,6 +118,25 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
         )}
       </div>
 
+      {/*
+       * Схема прячется на время поиска, и это не экономия места: поиск —
+       * другой режим работы с тем же экраном. Схема отвечает на вопрос
+       * «как всё устроено вместе» и обязана показывать все таблицы; список
+       * ниже во время поиска показывает найденные. Схема, оставшаяся полной
+       * над отфильтрованным списком, обещала бы, что нажатие на любой узел
+       * куда-то ведёт, — а половина узлов в этот момент со страницы убрана.
+       *
+       * Стоит после поиска, а не до: поле поиска — единственный элемент
+       * экрана, который должен оставаться на одном месте, и схема,
+       * исчезающая над ним, каждый раз сдвигала бы его вверх.
+       */}
+      {!searching && (
+        <div className="card">
+          <h2>{t.data.mapTitle}</h2>
+          <SchemaMap doc={doc} onOpenTable={setFocused} />
+        </div>
+      )}
+
       {GROUP_ORDER.map((kind) => {
         const tables = visible.filter((table) => group.get(table.table) === kind);
         if (!tables.length) return null;
@@ -113,7 +153,11 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
               <TableDoc
                 key={table.table}
                 table={table}
-                open={searching}
+                open={searching || focused === table.table}
+                detailsRef={(el) => {
+                  if (el) focusRefs.current.set(table.table, el);
+                  else focusRefs.current.delete(table.table);
+                }}
                 highlightColumns={matches.get(table.table)}
                 /*
                  * Место таблицы в звезде — единственное, что видно, пока она

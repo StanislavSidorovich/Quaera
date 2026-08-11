@@ -468,6 +468,22 @@ export const en = {
     searchEmpty: (query: string) => `Nothing found for "${query}"`,
     tableCount: (n: number) => `${n} ${n === 1 ? 'table' : 'tables'}`,
     incomingLabel: (n: number) => `Referenced by ${n} ${n === 1 ? 'table' : 'tables'}`,
+    /** См. довод у mapTitle в ru.ts: подписи колонок здесь, геометрия — в schemaMap.ts. */
+    mapTitle: 'How the tables connect',
+    mapIntro:
+      'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star — and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names. Click a table to open its description below.',
+    mapAria: 'Diagram of the links between tables',
+    mapFactsLabel: 'Facts',
+    mapDimsLabel: 'Lookups',
+    mapOpenAria: (table: string) => `Open the description of ${table}`,
+    mapLegendStar:
+      'A fact points at a lookup — the ordinary link of a star: the event stores the key, the description lives in the lookup and is edited in one place.',
+    mapLegendSnowflake:
+      'A lookup points at another lookup — a snowflake: an outlet stores the region key, not the region name. The name is still edited in one place, at the cost of one more hop.',
+    mapLegendSelf:
+      '↻ — a table pointing at itself: a hierarchy inside a lookup (an outlet has its distributor, a rep has a manager). Such a link does not affect the fact-or-lookup split.',
+    mapLegendStandalone:
+      'The raw layer stands apart: it has no keys at all, and it can only be joined to the rest once it has been put in order.',
     groups: {
       fact: {
         title: 'Facts — what happened',

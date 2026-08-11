@@ -2274,6 +2274,183 @@ table.sample td.null {
   color: var(--accent);
 }
 
+/*
+ * Схема связей картинкой (SchemaMap). Раскладку считает schemaMap.ts,
+ * здесь только цвет и поведение.
+ *
+ * Своя горизонтальная прокрутка вместо вписывания по ширине: SVG рисуется
+ * в натуральную величину, и на узком экране его прокручивают, как таблицу
+ * примеров строк в TableDoc. Вписывание уменьшало бы имена таблиц ровно
+ * там, где экран узкий, — а имя таблицы здесь единственный текст.
+ */
+.schema-map-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+  padding: 0 4px 4px;
+}
+
+/*
+ * По центру, когда помещается. Замер на 1280: холст 449px в карточке
+ * 931px, слева 4px, справа 478 — схема висела в углу, и пустая правая
+ * половина читалась как «здесь что-то не догрузилось» (тот же класс
+ * дефекта, что сирота в третьей колонке у .track-summary-list).
+ * Когда не помещается, `auto` обнуляется само, и прокрутка начинается
+ * с левого края, то есть с фактов, — читать схему всё равно слева направо.
+ */
+.schema-map {
+  display: block;
+  margin-inline: auto;
+}
+
+.schema-map-caption {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  fill: var(--text-dim);
+}
+
+/* Узел — кнопка: цвет рамки берётся из --group-color (см. .group-fact и соседей). */
+.schema-node {
+  cursor: pointer;
+}
+
+.schema-node rect {
+  fill: var(--bg-sunken);
+  stroke: var(--group-color);
+  stroke-width: 1.5;
+}
+
+.schema-node text {
+  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  fill: var(--text);
+}
+
+.schema-node:hover rect {
+  fill: color-mix(in srgb, var(--group-color) 14%, var(--bg-sunken));
+}
+
+/*
+ * Обводка фокуса рисуется по самому прямоугольнику, а не outline'ом
+ * на <g>: у группы SVG нет собственной геометрии, и браузеры обводят
+ * её по-разному — от точного контура до рамки во весь холст.
+ */
+.schema-node:focus {
+  outline: none;
+}
+
+.schema-node:focus-visible rect {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+/* Сырой слой — пунктиром: он ни с чем не связан, и рамка говорит то же самое. */
+.schema-node.group-standalone rect {
+  stroke-dasharray: 5 4;
+}
+
+.schema-node-self {
+  font-size: 13px;
+  fill: var(--text-dim);
+}
+
+/*
+ * 85%, а не 60%, и это замер, а не вкус. На 60% контраст связи к фону
+ * карточки выходил 3.41 в тёмной теме и 2.55 в светлой — то есть стрелки,
+ * ради которых схема и рисуется, были самым бледным, что на ней есть,
+ * и в светлой теме не дотягивали до порога 3:1 для нетекстовой графики.
+ * На 85% выходит 3.97 в светлой и 5.52 в тёмной (снежинка 3.82 и 7.46).
+ * Полную силу не берём: тогда линия сравнивается
+ * по весу с рамкой узла, и глаз перестаёт различать, что здесь предмет,
+ * а что связь между предметами.
+ */
+.schema-edge {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.schema-edge.star {
+  stroke: color-mix(in srgb, var(--accent) 85%, transparent);
+}
+
+.schema-edge.snowflake {
+  stroke: color-mix(in srgb, var(--ok) 85%, transparent);
+  stroke-dasharray: 5 4;
+}
+
+.schema-arrow.star {
+  fill: color-mix(in srgb, var(--accent) 85%, transparent);
+}
+
+.schema-arrow.snowflake {
+  fill: color-mix(in srgb, var(--ok) 85%, transparent);
+}
+
+/*
+ * Легенда — в две колонки, но не больше: пунктов ровно четыре, и третья
+ * колонка оставила бы четвёртый сиротой (тот же довод, что у .track-cards
+ * и .track-summary-list).
+ */
+.schema-map-legend {
+  display: grid;
+  gap: 8px 20px;
+  margin: 14px 0 0;
+}
+
+@media (min-width: 1024px) {
+  .schema-map-legend {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.schema-map-legend > div {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.schema-map-legend dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.schema-legend-mark {
+  flex: none;
+  width: 22px;
+  align-self: center;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.schema-legend-mark.star,
+.schema-legend-mark.snowflake {
+  border-top: 2px solid;
+  height: 0;
+}
+
+.schema-legend-mark.star {
+  border-color: color-mix(in srgb, var(--accent) 85%, transparent);
+}
+
+.schema-legend-mark.snowflake {
+  border-top-style: dashed;
+  border-color: color-mix(in srgb, var(--ok) 85%, transparent);
+}
+
+.schema-legend-mark.self::before {
+  content: '↻';
+  font-size: 14px;
+}
+
+.schema-legend-mark.standalone {
+  height: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--warn) 75%, transparent);
+  border-radius: 5px;
+}
+
 /* Колонка, попавшая в поиск: иначе найденное приходится выискивать среди одиннадцати строк. */
 .col-doc.hit {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
