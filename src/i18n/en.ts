@@ -425,6 +425,12 @@ export const en = {
     checkBtn: 'Check',
     runBtn: 'Run',
     runNote: '"Run" just shows the result. Try things: mistakes cost nothing here.',
+    /** См. комментарий в ru.ts: граница проверки там, где движка нет. */
+    checkTextNote:
+      'Nothing runs here: your answer is compared with the reference formula as text. Case and extra spaces do not matter.',
+    blanksWrongTitle: (n: number) => (n === 1 ? 'One blank does not match' : `${n} blanks do not match`),
+    blanksWrongBody: (positions: number[]) =>
+      positions.length === 1 ? `Check blank ${positions[0]}.` : `Check blanks: ${positions.join(', ')}.`,
     placeholder: (track: 'sql' | 'model' | 'python' | 'domain'): string =>
       track === 'python' ? 'Write your code…' : 'Write your query…',
     hintWait: (s: number) => `Hint unlocks in ${s}s (try it yourself first)`,

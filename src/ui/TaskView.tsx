@@ -3,6 +3,7 @@ import type { Task } from '../content/types';
 import { taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
+import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { ResultTable } from './ResultTable';
@@ -209,7 +210,32 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
     return parts.reduce((acc, part, i) => acc + part + (blanks[i] ?? ''), '');
   }, [task.mode, task.template, code, blanks]);
 
-  const canSubmit = task.mode === 'predict' ? chosen !== null : composedCode.trim().length > 0;
+  /**
+   * Исполнителя может не быть вовсе (трек model, см. executors.ts). Тогда
+   * задание в режиме fill проверяется сверкой текста, а «Выполнить» просто
+   * нечему выполнять — кнопки быть не должно.
+   */
+  const runsCode = executor.runsCode !== false;
+
+  /** Пропуски, разошедшиеся с эталоном на последней проверке, — для подсветки полей. */
+  const [wrongBlanks, setWrongBlanks] = useState<number[]>([]);
+
+  /*
+   * Там, где код исполняется, пустой пропуск оставлен допустимым намеренно:
+   * SQLite и Python на нём дают настоящую ошибку, а `diagnose` превращает её
+   * в содержательную подсказку — это работающая часть обучения, и отбирать
+   * её у 19 существующих заданий незачем.
+   *
+   * Там, где сверка идёт текстом, такой ошибки не существует: пустой пропуск
+   * дал бы просто «неверно» за недописанное. Поэтому здесь — и только здесь —
+   * проверка ждёт, пока заполнены все поля.
+   */
+  const canSubmit =
+    task.mode === 'predict'
+      ? chosen !== null
+      : !runsCode && task.mode === 'fill'
+        ? blanks.length > 0 && blanks.every((b) => b.trim().length > 0)
+        : composedCode.trim().length > 0;
 
   /** Разбор ошибки исполнителя — разный по языку: SQLite и Python выдают разные тексты. */
   const diagnoseError = (message: string, traceback?: string): Feedback =>
@@ -247,6 +273,31 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
           : { tone: 'warn', title: t.task.wrongOptionTitle, body: t.task.wrongOptionBody, nudges: [] }
       );
       if (!correct) setWrongAttempts((n) => n + 1);
+      return;
+    }
+
+    /*
+     * Третий путь проверки — сверка текста, без исполнения (см. textGrade.ts).
+     * Живёт до обращения к executor намеренно: у трека без движка вызов
+     * grade() бросил бы исключение, и «проверка» превратилась бы в ошибку.
+     */
+    if (!runsCode && task.mode === 'fill' && task.blanks) {
+      const verdict = gradeBlanks(blanks, task.blanks);
+      setWrongBlanks(verdict.wrongIndexes);
+      if (verdict.correct) {
+        setSolved(true);
+        setWasCorrect(true);
+        setFeedback({ tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] });
+      } else {
+        setWrongAttempts((n) => n + 1);
+        setFeedback({
+          tone: 'warn',
+          title: t.task.blanksWrongTitle(verdict.wrongIndexes.length),
+          body: t.task.blanksWrongBody(verdict.wrongIndexes.map((i) => i + 1)),
+          nudges: [],
+        });
+      }
+      setMobilePanel('results');
       return;
     }
 
@@ -465,7 +516,18 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
           <div className="task-editor" data-mobile-hidden={mobilePanel !== 'work'}>
             <div className="card">
               {task.mode === 'fill' && task.template ? (
-                <FillTemplate template={task.template} blanks={blanks} onChange={setBlanks} disabled={solved} />
+                <FillTemplate
+                  template={task.template}
+                  blanks={blanks}
+                  onChange={(b) => {
+                    setBlanks(b);
+                    // Подсветка относится к прошлой проверке: как только поле
+                    // правят, она перестаёт быть правдой.
+                    if (wrongBlanks.length) setWrongBlanks([]);
+                  }}
+                  disabled={solved}
+                  wrongIndexes={wrongBlanks}
+                />
               ) : (
                 <CodeEditor
                   value={code}
@@ -478,15 +540,18 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
                 />
               )}
               <div className="row" style={{ marginTop: 12 }}>
-                <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
-                  {t.task.runBtn}
-                </button>
+                {/* Без исполнителя запускать нечего — кнопки нет, а не «есть и падает». */}
+                {runsCode && (
+                  <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
+                    {t.task.runBtn}
+                  </button>
+                )}
                 <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
                   {running ? '…' : t.task.checkBtn}
                 </button>
               </div>
               <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                {t.task.runNote}
+                {runsCode ? t.task.runNote : t.task.checkTextNote}
               </p>
             </div>
           </div>
@@ -557,11 +622,14 @@ function FillTemplate({
   blanks,
   onChange,
   disabled,
+  wrongIndexes = [],
 }: {
   template: string;
   blanks: string[];
   onChange: (b: string[]) => void;
   disabled?: boolean;
+  /** Пропуски, разошедшиеся с эталоном: обводка ведёт глаз к месту ошибки, а не к формуле целиком. */
+  wrongIndexes?: number[];
 }) {
   const { t } = useI18n();
   const parts = template.split('___');
@@ -584,12 +652,15 @@ function FillTemplate({
               autoCapitalize="none"
               autoCorrect="off"
               aria-label={t.task.blankAriaLabel(i + 1)}
+              // Ошибка помечается не только цветом: цвет один не доходит
+              // до тех, кто его не различает, и до чтения с экрана.
+              aria-invalid={wrongIndexes.includes(i) || undefined}
               style={{
                 width: `${Math.max(4, (blanks[i] ?? '').length + 2)}ch`,
                 font: 'inherit',
                 color: 'var(--text)',
                 background: 'var(--bg-raised)',
-                border: '1px solid var(--accent)',
+                border: `1px solid ${wrongIndexes.includes(i) ? 'var(--err)' : 'var(--accent)'}`,
                 borderRadius: 6,
                 padding: '2px 6px',
                 textAlign: 'center',
