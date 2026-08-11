@@ -1592,7 +1592,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 // в задании закрепляются запросом к той же базе.
 
 // mdl-016, mdl-020, mdl-021: доля Nettora в выручке — 12.7% по всей базе,
-// 19.1% по Москве. На них стоит и mdl-016 (мера vs колонка), и разбивка
+// 19.1% по Токио. На них стоит и mdl-016 (мера vs колонка), и разбивка
 // по регионам в mdl-021, где сумма регионов обязана сойтись с общим итогом.
 {
   const r = runSql(`
@@ -1600,20 +1600,20 @@ await checkLessons(readPack('python-core'), 'python-lessons');
            ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue ELSE 0 END)) AS nettora,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
-              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Tokyo') AS msk_total,
+              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Tokyo') AS tokyo_total,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_product p2 ON p2.product_id = f2.product_id
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
               JOIN dim_region r2 ON r2.region_id = c2.region_id
-              WHERE r2.region_name = 'Tokyo' AND p2.brand = 'Nettora') AS msk_nettora
+              WHERE r2.region_name = 'Tokyo' AND p2.brand = 'Nettora') AS tokyo_nettora
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id`);
-  const [total, nettora, mskTotal, mskNettora] = r.rows[0];
+  const [total, nettora, tokyoTotal, tokyoNettora] = r.rows[0];
   const share = Math.round((nettora / total) * 1000) / 10;
-  const mskShare = Math.round((mskNettora / mskTotal) * 1000) / 10;
+  const tokyoShare = Math.round((tokyoNettora / tokyoTotal) * 1000) / 10;
   if (nettora !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Nettora в тексте 12.7% (16 165 815 ¥), в базе ${share}% (${nettora} ¥)`);
-  if (mskNettora !== 1691942 || mskTotal !== 8876489 || mskShare !== 19.1) {
-    fail('mdl-016/020', `доля по Москве в тексте 19.1% (1 691 942 из 8 876 489), в базе ${mskShare}% (${mskNettora} из ${mskTotal})`);
-  } else console.log(`  ok   mdl-016/020: доля Nettora ${share}% всего, ${mskShare}% по Москве`);
+  if (tokyoNettora !== 1691942 || tokyoTotal !== 8876489 || tokyoShare !== 19.1) {
+    fail('mdl-016/020', `доля по Токио в тексте 19.1% (1 691 942 из 8 876 489), в базе ${tokyoShare}% (${tokyoNettora} из ${tokyoTotal})`);
+  } else console.log(`  ok   mdl-016/020: доля Nettora ${share}% всего, ${tokyoShare}% по Токио`);
 
   const byRegion = runSql(`
     SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
@@ -1622,7 +1622,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   else console.log('  ok   mdl-021: сумма по регионам сходится с общим итогом Nettora');
 }
 
-// mdl-019: конкретная ячейка матрицы — Москва × 2025 × Nettora против Москвы
+// mdl-019: конкретная ячейка матрицы — Токио × 2025 × Nettora против Токио
 // без среза по бренду. На двух этих числах держится весь разбор фильтр-контекста.
 {
   const r = runSql(`
@@ -1639,7 +1639,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const [withBrand, allBrands] = r.rows[0];
   if (withBrand !== 819771 || allBrands !== 3718723) {
     fail('mdl-019', `в задании 819 771 ¥ со срезом и 3 718 723 ¥ без него, в базе ${withBrand} и ${allBrands}`);
-  } else console.log(`  ok   mdl-019: Москва×2025×Nettora ${withBrand} ¥, без среза по бренду ${allBrands} ¥`);
+  } else console.log(`  ok   mdl-019: Токио×2025×Nettora ${withBrand} ¥, без среза по бренду ${allBrands} ¥`);
 }
 
 // mdl-023: три первые строки fact_sellout — на их revenue/units держится
@@ -1754,28 +1754,28 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   }
 }
 
-// mdl-037, mdl-038, mdl-039: выручка брендов и срез по Москве — на них стоят
+// mdl-037, mdl-038, mdl-039: выручка брендов и срез по Токио — на них стоят
 // разборы про замену фильтра и про долю через ALL.
 {
   const r = runSql(`
     SELECT
-      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Aqualis') AS klyuch,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Aqualis') AS aqualis,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Nettora') AS nettora,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
          JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Tokyo' AND p.brand = 'Aqualis') AS klyuch_msk,
-      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Fruvia') AS frutta,
+         WHERE rg.region_name = 'Tokyo' AND p.brand = 'Aqualis') AS aqualis_tokyo,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Fruvia') AS fruvia,
       (SELECT ROUND(SUM(revenue)) FROM fact_sellout) AS total`);
-  const [klyuch, nettora, klyuchMsk, frutta, total] = r.rows[0];
-  if (klyuch !== 18841733 || klyuchMsk !== 1323959) {
-    fail('mdl-037/038', `в заданиях «Aqualis» 18 841 733 ¥ и 1 323 959 ¥ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
-  } else console.log(`  ok   mdl-037/038: «Aqualis» ${klyuch} ¥ всего, ${klyuchMsk} ¥ в Москве`);
-  if (klyuch + nettora !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${klyuch + nettora}`);
+  const [aqualis, nettora, aqualisTokyo, fruvia, total] = r.rows[0];
+  if (aqualis !== 18841733 || aqualisTokyo !== 1323959) {
+    fail('mdl-037/038', `в заданиях «Aqualis» 18 841 733 ¥ и 1 323 959 ¥ по Токио, в базе ${aqualis} и ${aqualisTokyo}`);
+  } else console.log(`  ok   mdl-037/038: «Aqualis» ${aqualis} ¥ всего, ${aqualisTokyo} ¥ в Токио`);
+  if (aqualis + nettora !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${aqualis + nettora}`);
   // mdl-039: доля «Fruvia» в разборе названа как 20.1%.
-  const share = Math.round((frutta / total) * 1000) / 10;
-  if (frutta !== 25465980 || share !== 20.1) {
-    fail('mdl-039', `в разборе «Fruvia» 25 465 980 ¥ и доля 20.1%, в базе ${frutta} и ${share}%`);
-  } else console.log(`  ok   mdl-039/040: «Fruvia» ${frutta} ¥ — доля ${share}% от ${total} ¥`);
+  const share = Math.round((fruvia / total) * 1000) / 10;
+  if (fruvia !== 25465980 || share !== 20.1) {
+    fail('mdl-039', `в разборе «Fruvia» 25 465 980 ¥ и доля 20.1%, в базе ${fruvia} и ${share}%`);
+  } else console.log(`  ok   mdl-039/040: «Fruvia» ${fruvia} ¥ — доля ${share}% от ${total} ¥`);
 }
 
 // mdl-043, mdl-044: YTD к марту 2025 и сравнение с мартом 2024.
