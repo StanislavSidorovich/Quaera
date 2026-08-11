@@ -1774,6 +1774,72 @@
           "why": "What is needed is not the whole column but its significant part. The cost is mandatory for the precision actually used, and kopecks in reports that deal in millions are never used."
         }
       ]
+    },
+    {
+      "id": "mdl-058",
+      "title": "A share that is no longer one hundred percent",
+      "brief": "A matrix by brand: every row shows that brand’s share of total revenue. The denominator has to stay the overall total even though the matrix row already filters by brand.",
+      "goal": "Fill in the CALCULATE argument that clears the brand filter from the denominator without touching the other filters on the page.",
+      "hints": [
+        "The denominator has to be computed as if no brand filter existed at all.",
+        "Clear the filter from one column rather than the whole product table: a category slicer on the page has to survive."
+      ],
+      "explain": "The numerator and the denominator are computed in different contexts, and that is the whole technique. The matrix row already filters brand, so without intervention the denominator would repeat the numerator and every row would show exactly 100%. ALL(dim_product[brand]) clears the filter from a single column and leaves every other one in place: a category or region slicer on the page keeps working, and the share is computed inside the selected category rather than against the entire database. The difference between ALL(table) and ALL(column) matters here. The first would also clear category, and the denominator would silently become the revenue of all products whatever. A third option, ALLSELECTED, keeps the filters a person picked in slicers and clears only those coming from the rows of the matrix itself. Choosing between it and ALL decides what the whole is measured against."
+    },
+    {
+      "id": "mdl-059",
+      "title": "A filter that is combined with the slicer",
+      "brief": "An Aqualis revenue measure on a page with a brand slicer shows Aqualis revenue even when the slicer has Nettora selected. The measure should respect what the person picked and return blank when the brands do not overlap.",
+      "goal": "Fill in the function that makes the measure’s condition intersect with the page filter instead of replacing it.",
+      "hints": [
+        "By default a CALCULATE condition replaces whatever already filtered that column. You need a wrapper that cancels this.",
+        "The name of the function says plainly what it does with the filters that already exist."
+      ],
+      "explain": "A plain condition inside CALCULATE does not add to the filter, it replaces the whole thing on its own column. That is exactly why the measure kept showing Aqualis while the slicer had Nettora selected. KEEPFILTERS switches the rule to intersection: what survives is whatever satisfies both conditions at once, and with Nettora selected the measure honestly returns blank. There is a practical tell for spotting this in a report. The number does not move when a person clicks through the slicer, and that reads as stability rather than as a bug, which is why it survives in reports for months. The choice between the two behaviours is a matter of meaning, not of style: replacement is what you want when a measure must always show its own brand, for instance as a benchmark to compare against, and intersection is what you want when it must obey the page."
+    },
+    {
+      "id": "mdl-060",
+      "title": "Accumulating from the start of the year",
+      "brief": "A matrix by month needs revenue accumulated from January up to the current row. In the March row that should be January plus February plus March.",
+      "goal": "Fill in the function that widens the date filter from the start of the year to the end of the current period.",
+      "hints": [
+        "The function takes a date column and returns the set of dates from the start of the year to the end of the current filter.",
+        "The name carries the abbreviation for year to date."
+      ],
+      "explain": "DATESYTD sums nothing by itself. It returns the set of dates from 1 January to the last date in the current filter, and CALCULATE does the adding over that set. One consequence separates an accumulating measure from an ordinary one: in the March row the filter is widened rather than replaced, so the number is bound to exceed the revenue of March alone. This only works on a continuous calendar marked as a date table in the model, because the set of dates is worked out arithmetically and a gap in the calendar silently shortens the period. A fiscal year deserves its own note. DATESYTD takes an optional second argument with the year end date, and without it the accumulation always starts on 1 January even when the company closes its year in March."
+    },
+    {
+      "id": "mdl-061",
+      "title": "Growth against last year",
+      "brief": "You need the growth percentage against the same period a year earlier. The first blank is the period shift, the second is the denominator of the fraction, and the second is where people usually get it wrong.",
+      "goal": "Fill in the shift back by one year and the denominator the growth is measured from.",
+      "hints": [
+        "The first blank is the function that shifts the current set of dates back exactly one year, preserving the length of the period.",
+        "Growth is measured from the baseline, not from the result. Work out which of the two variables belongs in the denominator."
+      ],
+      "explain": "The second blank matters more than the first. Growth of 10% means there is 10% more than there was, so you divide by the past rather than by the present. With revenue of 110 against 100 the right answer is 10%, while dividing by the current value gives 9.1%: a plausible number, close to the right one and wrong, which is why it raises no suspicion in a report. VAR is not decoration here. Without it the last year expression would have to be written twice, and editing one of the two places would make the measure contradict itself. The edge case is the same as for any comparison with the past. In the earliest period of the model there is no previous year, PreviousRevenue returns blank, and DIVIDE with a blank denominator returns blank instead of a division error. In the report that is a gap in the first row, and it has to be either explained or handled on purpose."
+    },
+    {
+      "id": "mdl-062",
+      "title": "Average revenue per outlet",
+      "brief": "You need average revenue per retail outlet. The iterator walks through outlets, but the sum over the whole fact table inside it has no idea the walk is happening row by row.",
+      "goal": "Fill in the expression that turns the iterator’s current row into a filter for the sum.",
+      "hints": [
+        "SUM on its own inside an iterator adds up the entire table, identically for every row of the walk.",
+        "Exactly one function turns row context into filter context, and it needs no second argument to do it."
+      ],
+      "explain": "Row context and filter context are different things, and aggregate functions only see the second. So SUM(fact_sellout[revenue]) written inside AVERAGEX with no wrapper would return the same number for every outlet: the revenue of the whole database, and the average would match the grand total. CALCULATE performs context transition even with no condition at all. It turns the current row of the walk into a filter, and the sum starts being computed for one outlet. The same thing explains why referring to an existing measure inside an iterator works without a wrapper: a measure carries an implicit CALCULATE, which is precisely why a measure and an expression of apparently identical content behave differently. A practical tell in a report: a column showing the same number in every row usually means a missing context transition rather than uniform data."
+    },
+    {
+      "id": "mdl-063",
+      "title": "The region total in every city row",
+      "brief": "In a matrix by city you need the total for that city’s region next to the city revenue, so that a city share of the region can be computed. The city filter has to go while the region filter stays.",
+      "goal": "Fill in the function that clears every filter from the customer table except the one on region.",
+      "hints": [
+        "You need a function that clears filters from an entire table but leaves the listed columns untouched.",
+        "The name reads literally: everything except what is listed."
+      ],
+      "explain": "ALLEXCEPT clears filters from the whole table named in it and puts back only the listed columns. It is shorthand for listing every column you would otherwise have to clear one by one. The result: in a city row the city filter disappears, the region filter stays, and the measure shows the region total next to the city revenue. The trap here lives in the snowflake. Region sits in a separate lookup table, and a filter arriving from a slicer on dim_region[region_name] is not cleared by this function at all, because it only works with columns of dim_customer. That is exactly why the argument is dim_customer[region_id] and not dim_region[region_name]. You clear and keep on the table you are working with, and confusing the key in the fact with the name in the lookup gives a silently wrong denominator."
     }
   ]
 }
