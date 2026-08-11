@@ -15,23 +15,23 @@ export const en = {
   app: {
     name: 'Querium',
     /** См. комментарий в ru.ts: вкладка — последнее русское место в английском интерфейсе. */
-    documentTitle: 'Querium — a data analyst trainer',
+    documentTitle: 'Querium: a data analyst trainer',
     back: 'Back',
     exitHint: 'Press back again to exit',
     streakSuffix: (days: number) => `${days}-day streak`,
   },
   welcome: {
-    headline: 'Not a course — a trainer where the code actually runs',
+    headline: 'A trainer, not a course: the code you write really runs',
     body:
-      "SQL and pandas execute for real in the browser, not against a template: the answer is checked by the query's actual result, the way it works on the job. Four tracks — analytics as a profession, SQL, pandas, and the data model — work through the same business cases on one continuous dataset of a fictional FMCG and OTC-pharma distributor: find a distribution loss, untangle a warehouse overstock, explain a seasonal sales dip.",
+      "SQL and pandas execute for real in the browser, not against a template: the answer is checked by the query's real result, the way it works on the job. Four tracks (analytics as a profession, SQL, pandas, and the data model) work through the same business cases on one continuous dataset of a fictional FMCG and OTC-pharma distributor: find a distribution loss, untangle a warehouse overstock, explain a seasonal sales dip.",
     proofPoints: [
       {
-        title: 'Code actually runs',
-        body: "SQLite and pandas (via Pyodide) execute right in the browser — the answer is checked against the query's real result, not its text.",
+        title: 'The code really runs',
+        body: "SQLite and pandas (via Pyodide) execute right in the browser, so the answer is checked against the query's real result, not its text.",
       },
       {
         title: 'Numbers and conclusions in explanations are build conditions',
-        body: "If a number or a conclusion in a task's writeup drifts from the dataset, an automated check catches it — the writeup is held to the same standard as the code.",
+        body: "If a number or a conclusion in a task's writeup drifts from the dataset, an automated check catches it: the writeup is held to the same standard as the code.",
       },
       {
         title: 'One dataset, four tracks',
@@ -93,14 +93,14 @@ export const en = {
     resumeNote: (step: string) => `Left unfinished: ${step.toLowerCase()}. Everything you did is still there.`,
     loading: 'Loading data…',
     heroNote:
-      'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Code actually runs — on 2.5 years of FMCG and OTC-pharma distributor data.',
+      'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your code really runs, against 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
     /** См. комментарий в ru.ts: подпись называет то, что меряется, а не долю сделанного. */
     overallProgressLabel: 'Memory strength in this track',
     /** См. комментарий в ru.ts: объяснение жило в `title=`, то есть на телефоне не жило вовсе. */
     overallProgressHint:
-      'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it — a low number early on is by design.',
+      'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it. A low number early on is by design.',
     skillMapTitle: 'Skill map',
     /** См. комментарий в ru.ts: совет по порядку, а не запрет — карта открыта для любой темы. */
     unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
@@ -114,13 +114,13 @@ export const en = {
   consent: {
     title: 'Python engine download needed',
     body: (mb: number) =>
-      `Pandas tasks run right in the browser — that needs a Python runtime with pandas, about ${mb} MB. Downloaded once, then served from the device cache; offline works just like the other tracks.`,
-    note: 'Wi-Fi is best — on mobile data this is a noticeable chunk of traffic.',
+      `Pandas tasks run right in the browser, and that needs a Python runtime with pandas, about ${mb} MB. Downloaded once, then served from the device cache; offline works just like the other tracks.`,
+    note: 'Wi-Fi is best: on mobile data this is a noticeable chunk of traffic.',
     confirmBtn: 'Download and continue',
     /** См. комментарий в ru.ts: отказ должен быть таким же явным действием, как согласие. */
     laterBtn: 'Later',
     deferredNote:
-      'The engine is not downloaded — pandas code cannot run yet. The skill map and the reference work without it.',
+      'The engine is not downloaded, so pandas code cannot run yet. The skill map and the reference work without it.',
     resumeBtn: (mb: number) => `Download the Python engine (~${mb} MB)`,
   },
   about: {
@@ -133,7 +133,7 @@ export const en = {
     audienceTitle: 'Who this is for, and how far it goes',
     audienceWhoLabel: 'Who it suits',
     audienceWhoBody:
-      "Anyone already working with data or heading that way: a product or commercial analyst, a reporting specialist, a finance person tired of waiting on someone else's export. There is no syntax-for-its-own-sake here — every task grew out of a question analysts actually get asked.",
+      "Anyone already working with data or heading that way: a product or commercial analyst, a reporting specialist, a finance person tired of waiting on someone else's export. There is no syntax-for-its-own-sake here: every task grew out of a question analysts get asked.",
     audienceStartLabel: 'Where it starts',
     audienceStartBody:
       'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed.',
@@ -145,27 +145,27 @@ export const en = {
       'Database administration, query plan tuning, data engineering, and machine learning. Those are adjacent professions: they begin where this trainer ends, and promising them in passing would be a lie.',
     structureTitle: 'Structure',
     structureIntro: (skills: number, tasks: number) =>
-      `Right now the tracks add up to ${skills} skills and ${tasks} tasks — the numbers grow with every sprint, and the counter on each track tile is always accurate.`,
+      `Right now the tracks add up to ${skills} skills and ${tasks} tasks. The numbers grow with every sprint, and the counter on each track tile is always accurate.`,
     howTitle: 'How it works',
     howSrs:
-      "The system decides on its own what to show: a new topic or one that's due for review. The interval is assigned to the skill, not the task — so if you just worked through one window-function problem, what comes back isn't that same task but a different one on the same technique. It guards against the illusion of understanding: remembering the wording of a task isn't the same as remembering the technique.",
+      "The system decides on its own what to show: a new topic or one that's due for review. The interval is assigned to the skill, not the task, so if you just worked through one window-function problem, what comes back isn't that same task but a different one on the same technique. It guards against the illusion of understanding: remembering the wording of a task isn't the same as remembering the technique.",
     howModes:
-      'Three input modes for different circumstances: predict the result — readable one-handed on the go; fill in the gaps in a query — an intermediate step; write it from scratch — for the desk. The same skill moves through all three as you master it.',
+      'Three input modes for different circumstances: predict the result (readable one-handed on the go), fill in the gaps in a query (an intermediate step), write it from scratch (for the desk). The same skill moves through all three as you master it.',
     howData:
-      "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart — every skill is trained on its own concrete situation, not an abstract example.",
+      "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart. Every skill is trained on its own concrete situation, not an abstract example.",
     privacyTitle: 'Privacy',
     privacyBody:
-      "No account needed. All progress is stored on the device and never sent anywhere — close the tab and pick up where you left off a month later, or clear the site data and start over.",
+      "No account needed. All progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later, or clear the site data and start over.",
     backupTitle: 'Backup',
     backupBody:
       "Progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a simple safeguard against that.",
     exportBtn: 'Download progress file',
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
-    importError: "Doesn't look like a Querium progress file — check you picked the right one",
+    importError: "Doesn't look like a Querium progress file. Check you picked the right one",
     authorTitle: 'Author and licence',
     authorBody:
-      'Querium was built by Stanislav Sidorovich — an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
+      'Querium was built by Stanislav Sidorovich, an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
     linkedinBtn: "Author's LinkedIn",
     repoBtn: 'Source code on GitHub',
     licenseBody:
@@ -173,9 +173,9 @@ export const en = {
     tracksWhyTitle: 'Why these tracks, in this order',
     /** См. комментарий в ru.ts: единственное место, где цепочка объяснена прозой, а не нарисована. */
     chainBody:
-      'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools cover the middle; the path breaks at its ends, and the start is the more dangerous of the two: a misread question yields a flawlessly computed wrong answer, and no later step will catch it — every one of them adds up perfectly. The middle has something to check it against — the query result is visible at once; the ends are checked only by the questions you ask the person who requested the work.',
+      'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools cover the middle; the path breaks at its ends, and the start is the more dangerous of the two: a misread question yields a flawlessly computed wrong answer, and no later step will catch it, because every one of them adds up perfectly. The middle has something to check it against: the query result is visible at once. The ends are checked only by the questions you ask the person who requested the work.',
     tracksWhyBody:
-      "The order of the tracks follows that path. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
+      "The order of the tracks follows that path. Start with the profession itself: what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped. Modeling it before that exists would put the roof on before the walls.",
   },
   /**
    * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает
@@ -187,23 +187,23 @@ export const en = {
     title: 'Where to start',
     entryLink: 'First time here? Where to start →',
     intro:
-      "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. Freedom helps only when it's clear what you're choosing between — that's what this page is for. How the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
+      "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. Freedom helps only when it's clear what you're choosing between, and that's what this page is for. How the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
 
     toolsTitle: 'Four tools, and how to choose between them',
     toolsIntro:
-      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Nettora»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers have to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
+      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case, brand «Nettora»'s revenue falling by almost half, is worked through on all four tracks, because the data is the same and the answers have to agree. When they don't, it isn't that \"the tools count differently\": it's that someone made a mistake.",
     toolsWhenLabel: 'When this is your tool',
     /** См. довод у toolsCostLabel в ru.ts: подпись про отказы, а не про цену. */
     toolsCostLabel: 'Where it lets you down',
     toolsWhen: {
       domain:
-        "Before everything else. Before counting sales you have to know whose: shipments to the distributor or sales at the till, before discounts or after. This track isn't about a tool — it's about what the number you computed means and who needs it.",
+        "Before everything else. Before counting sales you have to know whose: shipments to the distributor or sales at the till, before discounts or after. This track isn't about a tool: it's about what the number you computed means and who needs it.",
       sql:
-        "The answer is needed once and the data sits in a database. Pull, join, group — the shortest path from question to numbers, and the first line of requirements in analyst job ads.",
+        "The answer is needed once and the data sits in a database. Pull, join, group: the shortest path from question to numbers, and the first line of requirements in analyst job ads.",
       python:
-        "A calculation that takes several steps — with intermediate states, branching, or statistics — which is exactly where a single query stops being comfortable. The result stays an object in memory you can keep working with.",
+        "A calculation that takes several steps (intermediate states, branching, statistics), which is exactly where a single query stops being comfortable. The result stays an object in memory you can keep working with.",
       model:
-        "The same number is needed every day and under different slices. You build the model once, and from then on the report recalculates itself — no new query for each new question.",
+        "The same number is needed every day and under different slices. You build the model once, and from then on the report recalculates itself, with no new query for each new question.",
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
     /** См. комментарий в ru.ts: код и пояснения к нему живут в content/tools-compare.json, здесь только облицовка. */
     compareTitle: 'One question, three answers',
@@ -213,16 +213,16 @@ export const en = {
     compareRunnable: 'runs in the trainer',
     compareNotRunnable: 'cannot be run',
     compareFooter:
-      'The build actually executes the first two fragments and checks their results against each other: had they disagreed, this page would not have built. The third one there is nothing to check with — and that is exactly the difference between the tools worth knowing in advance.',
+      'The build executes the first two fragments and checks their results against each other: had they disagreed, this page would not have built. For the third there is nothing to check against, and that is exactly the difference between the tools worth knowing in advance.',
     toolsCost: {
       domain:
         'Not a line of code, and no automatic checking: no engine will confirm that a judgement about the business is right. Everything expressible as a number is reconciled against the dataset, but a conclusion stays a conclusion.',
       sql:
-        "A mistake in SQL rarely breaks the query — more often it runs without a single complaint and returns the wrong thing. And dialects diverge: a technique is worth remembering together with the engine it works on.",
+        "A mistake in SQL rarely breaks the query. More often it runs without a single complaint and returns the wrong thing. And dialects diverge: a technique is worth remembering together with the engine it works on.",
       python:
         'The data is held in memory in full, so on large extracts it hits the limits of the machine long before a database would. This is a tool for exploration and one-off calculations, not for a report people open every day.',
       model:
-        'DAX outside a model is meaningless: the formula leans on the relationships between tables. And the model itself is not free — an extra relationship or an extra high-cardinality column slows the report down.',
+        'DAX outside a model is meaningless: the formula leans on the relationships between tables. And the model itself is not free: an extra relationship or an extra high-cardinality column slows the report down.',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
 
     stepsTitle: 'How to work through it',
@@ -232,7 +232,7 @@ export const en = {
       {
         title: "Start with whatever is on fire",
         /* См. комментарий в ru.ts: шаг советует, а не пересказывает about.audienceStartBody и about.chainBody. */
-        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they are listed above — it follows the path from question to decision, and each one builds on the last.',
+        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they are listed above: it follows the path from question to decision, and each one builds on the last.',
       },
       {
         title: "Read the track's intro",
@@ -244,31 +244,31 @@ export const en = {
       },
       {
         title: 'Forgot a technique? Open the reference',
-        body: "Every technique is there with its minimal form, a worked example and the mistake people usually make — and the example runs right inside the card. Looking it up mid-session isn't cheating: on the job you open the documentation too.",
+        body: "Every technique is there with its minimal form, a worked example and the mistake people usually make, and the example runs right inside the card. Looking it up mid-session isn't cheating: on the job you open the documentation too.",
       },
       {
         title: 'Test your own hunch in the sandbox',
-        body: "Free mode on the same data: any query, no task and no hints, with a list of questions beside it for when you have nothing to ask. It's the one place in the trainer where the answer is checked against nothing — so check it yourself.",
+        body: "Free mode on the same data: any query, no task and no hints, with a list of questions beside it for when you have nothing to ask. It's the one place in the trainer where the answer is checked against nothing, so check it yourself.",
       },
       {
         title: 'Come back tomorrow',
-        body: 'The "memory strength" bar grows from returning to a topic across days, not from how much you cleared in one evening — one evening cannot fill it, by design. Three short days do more than one long one.',
+        body: 'The "memory strength" bar grows from returning to a topic across days, not from how much you cleared in one evening. One evening cannot fill it, by design: three short days do more than one long one.',
       },
     ],
     /** См. довод в ru.ts: приватность и бэкап сказаны на «О тренажёре», здесь — что делать. */
     stepsNote:
-      'If you switch devices or clear site data, download the progress file from the About page — that is the only way to carry it over.',
+      'If you switch devices or clear site data, download the progress file from the About page: that is the only way to carry it over.',
 
     extraTitle: 'What to learn elsewhere',
     extraIntro:
-      "The trainer covers four tools and a way of thinking around them — an analyst's job is not exhausted by that. An honest list of what isn't here: first the gaps next door, the ones you'll be asked about in the same role, then the adjacent professions this trainer does not lead to.",
+      "The trainer covers four tools and a way of thinking around them, and an analyst's job is not exhausted by that. An honest list of what isn't here: first the gaps next door, the ones you'll be asked about in the same role, then the adjacent professions this trainer does not lead to.",
     /** См. комментарий в ru.ts: зона без описаний, она нужна ради границы, а не содержимого. */
     extraInsideLabel: 'The trainer covers',
     extraNearLabel: "Next door: asked for on the job, absent here",
     extraNear: [
       {
         title: 'Python as a language',
-        body: 'The pandas track is not "Python from scratch": it is about dataframes and is built on comparison with SQL. Functions, loops, working with files, virtual environments and pip stay outside the boundary — and without them you cannot assemble anything more complex than a single table.',
+        body: 'The pandas track is not "Python from scratch": it is about dataframes and is built on comparison with SQL. Functions, loops, working with files, virtual environments and pip stay outside the boundary, and without them you cannot assemble anything more complex than a single table.',
       },
       {
         title: 'Spreadsheets',
@@ -276,11 +276,11 @@ export const en = {
       },
       {
         title: 'Power BI by hand',
-        body: "On the model track you read finished measures and predict their result, but you never write one: the DAX engine is closed and does not port to a browser. Install Power BI Desktop and build a model on your own data — mistakes in relationships and in filter direction only become visible by hand.",
+        body: "On the model track you read finished measures and predict their result, but you never write one: the DAX engine is closed and does not port to a browser. Install Power BI Desktop and build a model on your own data: mistakes in relationships and in filter direction only become visible by hand.",
       },
       {
         title: 'Statistics',
-        body: 'Significance, confidence intervals, outliers, A/B tests — none of it is in the trainer yet, and BI and DA interviews ask about it. The place to start is not the formulas but the question "is this difference distinguishable from noise at all?"',
+        body: 'Significance, confidence intervals, outliers, A/B tests: none of it is in the trainer yet, and BI and DA interviews ask about it. The place to start is not the formulas but the question "is this difference distinguishable from noise at all?"',
       },
       {
         title: 'Visualisation',
@@ -304,7 +304,7 @@ export const en = {
     ],
     /* См. комментарий в ru.ts: не повтор хвоста about.audienceNotBody, а ответ на вопрос «что с этим списком делать». */
     extraClosing:
-      'The list is not a curriculum: close these gaps one at a time, and when the work actually runs into them — otherwise it turns into a permanent "let me prepare first". And the two lists are not equally expensive: what sits next door is learned on top of what you already have, while an adjacent profession is a door you open deliberately.',
+      'The list is not a curriculum: close these gaps one at a time, and when the work runs into them. Otherwise it turns into a permanent "let me prepare first". And the two lists are not equally expensive: what sits next door is learned on top of what you already have, while an adjacent profession is a door you open deliberately.',
 
     startBtn: 'Pick a track and begin →',
   },
@@ -337,7 +337,7 @@ export const en = {
   sandbox: {
     title: 'Sandbox',
     intro:
-      'Free mode: any query against the same "Nordwind Trade" data — no task, no hints, no reference answer. The schema is one click away; results come as a table or a chart.',
+      'Free mode: any query against the same "Nordwind Trade" data, with no task, no hints and no reference answer. The schema is one click away; results come as a table or a chart.',
     envLabel: 'Environment',
     envSql: 'SQL',
     envPython: 'Python (pandas)',
@@ -345,10 +345,10 @@ export const en = {
     running: 'Running…',
     clearBtn: 'Clear',
     errorTitle: 'Execution failed',
-    emptyResult: 'Results will show up here. Hit Run — nothing can break, the data is read-only.',
+    emptyResult: 'Results will show up here. Hit Run: nothing can break, the data is read-only.',
     disclaimerTitle: 'Nothing here checks your answer',
     disclaimerBody:
-      '"The query ran" is not the same as "the number is right". The engine will report a syntax error, but it stays silent when a join has multiplied your rows and tripled the total, or when you have averaged something that was already an average. This is the only place in the trainer where a discrepancy is caught by neither a reference answer nor a writeup: check the result yourself — against the order of magnitude, a control total, a second way of counting.',
+      '"The query ran" is not the same as "the number is right". The engine will report a syntax error, but it stays silent when a join has multiplied your rows and tripled the total, or when you have averaged something that was already an average. This is the only place in the trainer where a discrepancy is caught by neither a reference answer nor a writeup: check the result yourself, against the order of magnitude, a control total, a second way of counting.',
     /** См. комментарий в ru.ts: «что тут вообще есть» — вопрос более ранний, чем «что спросить». */
     tablesTitle: 'What tables are here',
     tablesIntro:
@@ -356,7 +356,7 @@ export const en = {
     tableOpenAria: (table: string) => `Open the schema for ${table}`,
     questionsTitle: 'Where to start',
     questionsIntro:
-      'Questions analysts genuinely get asked — and every one of them has an answer in this data. Clicking inserts the question into the editor as a comment.',
+      'Questions analysts genuinely get asked, and every one of them has an answer in this data. Clicking inserts the question into the editor as a comment.',
     /** Подписи групп из SandboxGroup (content/sandbox.ts) — порядок задан там же, не здесь. */
     groups: {
       overview: 'Get oriented',
@@ -378,7 +378,7 @@ export const en = {
     saveConfirmBtn: 'Save',
     saveCancelBtn: 'Cancel',
     savedTitle: 'Saved scripts',
-    savedEmpty: 'Empty. A query worth keeping can be saved — it stays on this device.',
+    savedEmpty: 'Empty. A query worth keeping can be saved, and it stays on this device.',
     savedNote: 'Scripts live in this browser, just like your progress, and disappear the same way if you clear site data.',
     /** См. комментарий в ru.ts: сообщение о факте, а не вопрос задним числом. */
     replacedNote: 'Previous code replaced',
@@ -393,7 +393,7 @@ export const en = {
     lessonStep: 'Theory',
     doneTitle: 'Session done',
     doneBody: (n: number) =>
-      `Tasks completed: ${n}. The skills they touched will come back for review — the interval depends on how confidently you got them.`,
+      `Tasks completed: ${n}. The skills they touched will come back for review, and the interval depends on how confidently you got them.`,
     moreBtn: 'Another session',
     homeBtn: 'Home',
     prevAria: 'Previous step',
@@ -424,17 +424,17 @@ export const en = {
     schemaBtn: 'Data schema',
     checkBtn: 'Check',
     runBtn: 'Run',
-    runNote: '"Run" just shows the result — try things, mistakes cost nothing here.',
+    runNote: '"Run" just shows the result. Try things: mistakes cost nothing here.',
     placeholder: (track: 'sql' | 'model' | 'python' | 'domain'): string =>
       track === 'python' ? 'Write your code…' : 'Write your query…',
-    hintWait: (s: number) => `Hint unlocks in ${s}s — try it yourself first`,
+    hintWait: (s: number) => `Hint unlocks in ${s}s (try it yourself first)`,
     hintShow: (shown: number, total: number) => `Show hint (${shown} of ${total})`,
     correctTitle: 'Correct',
     wrongOptionTitle: 'Not quite',
     wrongOptionBody: 'The breakdown of every option is below.',
     giveUpTitle: "Let's break it down",
     giveUpBody: "Below is the breakdown and the reference solution. The skill will come back for review today, on a different task.",
-    giveUpBtn: "Stuck — show the breakdown",
+    giveUpBtn: "Stuck? Show the breakdown",
     explainTitle: 'Breakdown',
     solutionSummary: 'Show reference solution',
     nextBtn: 'Next',
@@ -454,14 +454,14 @@ export const en = {
     ariaLabel: 'Data schema',
     copyAria: (name: string) => `Copy "${name}"`,
     copied: 'Copied',
-    periodLabel: (from: string, to: string) => `Data period: ${from} — ${to}`,
-    sampleCaption: (n: number) => `${n} rows from different parts of the table — what the data actually looks like`,
+    periodLabel: (from: string, to: string) => `Data period: ${from} – ${to}`,
+    sampleCaption: (n: number) => `${n} rows from different parts of the table: what the data looks like in practice`,
   },
   /** См. комментарий в ru.ts: деление на факты и справочники названо словами, а не отдано префиксу имени. */
   data: {
     title: 'Data',
     intro: (tables: number) =>
-      `${tables} tables from one fictional distributor. Every track runs on them: a SQL task, a pandas walkthrough and a data-model question all pull the same rows. Open a table to see its columns and three real rows — enough to show the date format, the order of magnitude and where values go missing.`,
+      `${tables} tables from one fictional distributor. Every track runs on them: a SQL task, a pandas walkthrough and a data-model question all pull the same rows. Open a table to see its columns and three real rows, enough to show the date format, the order of magnitude and where values go missing.`,
     searchPlaceholder: 'Search tables and columns…',
     searchAria: 'Search the data schema',
     searchFound: (n: number) => `Found ${n} ${n === 1 ? 'table' : 'tables'}`,
@@ -471,31 +471,31 @@ export const en = {
     /** См. довод у mapTitle в ru.ts: подписи колонок здесь, геометрия — в schemaMap.ts. */
     mapTitle: 'How the tables connect',
     mapIntro:
-      'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star — and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names. Click a table to open its description below.',
+      'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star, and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names. Click a table to open its description below.',
     mapAria: 'Diagram of the links between tables',
     mapFactsLabel: 'Facts',
     mapDimsLabel: 'Lookups',
     mapOpenAria: (table: string) => `Open the description of ${table}`,
     mapLegendStar:
-      'A fact points at a lookup — the ordinary link of a star: the event stores the key, the description lives in the lookup and is edited in one place.',
+      'A fact points at a lookup, the ordinary link of a star: the event stores the key, the description lives in the lookup and is edited in one place.',
     mapLegendSnowflake:
-      'A lookup points at another lookup — a snowflake: an outlet stores the region key, not the region name. The name is still edited in one place, at the cost of one more hop.',
+      'A lookup points at another lookup, a snowflake: an outlet stores the region key, not the region name. The name is still edited in one place, at the cost of one more hop.',
     mapLegendSelf:
-      '↻ — a table pointing at itself: a hierarchy inside a lookup (an outlet has its distributor, a rep has a manager). Such a link does not affect the fact-or-lookup split.',
+      '↻ marks a table pointing at itself: a hierarchy inside a lookup (an outlet has its distributor, a rep has a manager). Such a link does not affect the fact-or-lookup split.',
     mapLegendStandalone:
       'The raw layer stands apart: it has no keys at all, and it can only be joined to the rest once it has been put in order.',
     groups: {
       fact: {
-        title: 'Facts — what happened',
+        title: 'Facts: what happened',
         body: 'Events and measurements: a shipment, a sale, stock on hand, a target. One row is one fact, and almost everything in them is numbers and keys. This is where the totals in a report come from; the lookups explain what those totals are about.',
       },
       dimension: {
-        title: 'Lookups — who and what',
-        body: 'Products, customers, regions, staff, promotions, the calendar. No totals here — only descriptions: a brand name, an outlet city, an opening date. They join onto facts by key, and without them a number has no name.',
+        title: 'Lookups: who and what',
+        body: 'Products, customers, regions, staff, promotions, the calendar. No totals here, only descriptions: a brand name, an outlet city, an opening date. They join onto facts by key, and without them a number has no name.',
       },
       standalone: {
-        title: 'Raw layer — before cleaning',
-        body: 'An export as it arrived, tied to nothing by keys: dates as text in several formats, numbers with a comma, one chain spelled three ways. This is how data actually shows up at work, and putting it in order is a skill of its own.',
+        title: 'Raw layer: before cleaning',
+        body: 'An export as it arrived, tied to nothing by keys: dates as text in several formats, numbers with a comma, one chain spelled three ways. This is how data shows up at work, and putting it in order is a skill of its own.',
       },
     },
   },
@@ -527,13 +527,13 @@ export const en = {
     switchAriaLabel: 'Language',
     /** См. комментарий в ru.ts: строка сторожевая, показывается только при частичном переводе пака. */
     partialNote:
-      "Part of this track's content is not translated yet: task wording and breakdowns show in Russian. The translation is catching up with the content — the interface itself is fully in English.",
+      "Part of this track's content is not translated yet: task wording and breakdowns show in Russian. The translation is catching up with the content; the interface itself is fully in English.",
   },
   fontSize: {
-    aria: 'Font size — tap to switch',
+    aria: 'Font size: tap to switch',
   },
   theme: {
     aria: (current: 'system' | 'light' | 'dark') =>
-      `Theme: ${current === 'system' ? 'system default' : current} — tap to switch`,
+      `Theme: ${current === 'system' ? 'system default' : current} (tap to switch)`,
   },
 };
