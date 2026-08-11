@@ -173,7 +173,7 @@ export const en = {
     tracksWhyTitle: 'Why these tracks, in this order',
     /** См. комментарий в ru.ts: единственное место, где цепочка объяснена прозой, а не нарисована. */
     chainBody:
-      'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools live in the middle of that path, but it breaks most often at the ends: a misread question yields a flawlessly computed wrong answer, and a calculation nobody drew a conclusion from changes nothing. No engine will warn you about either — the ends of the path are checked by nothing except common sense and the questions you ask the person who requested the work.',
+      'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools cover the middle; the path breaks at its ends, and the start is the more dangerous of the two: a misread question yields a flawlessly computed wrong answer, and no later step will catch it — every one of them adds up perfectly. The middle has something to check it against — the query result is visible at once; the ends are checked only by the questions you ask the person who requested the work.',
     tracksWhyBody:
       "The order of the tracks follows that path. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
   },
@@ -231,7 +231,7 @@ export const en = {
       {
         title: "Start with whatever is on fire",
         /* См. комментарий в ru.ts: шаг советует, а не пересказывает about.audienceStartBody и about.chainBody. */
-        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they sit in on the home screen — it follows the path from question to decision, and each one builds on the last.',
+        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they are listed above — it follows the path from question to decision, and each one builds on the last.',
       },
       {
         title: "Read the track's intro",
@@ -302,7 +302,7 @@ export const en = {
     ],
     /* См. комментарий в ru.ts: не повтор хвоста about.audienceNotBody, а ответ на вопрос «что с этим списком делать». */
     extraClosing:
-      'The list is not a curriculum: close these gaps one at a time, and when the work actually runs into them — otherwise it turns into a permanent "let me prepare first". And the two lists are not equally expensive: the near one is skills adjacent to what you already have, the far one is a second profession, entered deliberately.',
+      'The list is not a curriculum: close these gaps one at a time, and when the work actually runs into them — otherwise it turns into a permanent "let me prepare first". And the two lists are not equally expensive: what sits next door is learned on top of what you already have, while an adjacent profession is a door you open deliberately.',
 
     startBtn: 'Pick a track and begin →',
   },

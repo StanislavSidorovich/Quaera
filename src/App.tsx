@@ -1236,7 +1236,24 @@ function WelcomeHero({ onOnboarding }: { onOnboarding: () => void }) {
   return (
     <div className="card welcome-hero">
       <h2 style={{ marginTop: 0 }}>{t.welcome.headline}</h2>
-      <p className="brief" style={{ margin: '8px 0 14px' }}>{t.welcome.body}</p>
+      <p className="brief" style={{ margin: '8px 0 10px' }}>{t.welcome.body}</p>
+      {/*
+       * Ссылка стоит сразу после абзаца-питча, а не в конце карточки, и это
+       * не вопрос вкуса. В конце она оказывалась впритык к постоянному ряду
+       * «Что входит в тренажёр» — тот идёт следом за карточкой, и на экране
+       * это снова читалось как два ряда ссылок подряд, ровно тот дефект,
+       * ради которого их и разводили: граница карточки в тёмной теме тоньше,
+       * чем расстояние между строками. Здесь между ними остаются три довода
+       * и диаграмма цепочки.
+       */}
+      <button
+        type="button"
+        className="link-row"
+        onClick={onOnboarding}
+        style={{ margin: '0 0 14px' }}
+      >
+        {t.onboarding.entryLink}
+      </button>
       <div className="proof-list">
         {t.welcome.proofPoints.map((p, i) => (
           <div className="proof-item" key={i}>
@@ -1246,14 +1263,6 @@ function WelcomeHero({ onOnboarding }: { onOnboarding: () => void }) {
         ))}
       </div>
       <ChainDiagram />
-      <button
-        type="button"
-        className="link-row"
-        onClick={onOnboarding}
-        style={{ margin: '14px 0 0' }}
-      >
-        {t.onboarding.entryLink}
-      </button>
     </div>
   );
 }
@@ -1872,21 +1881,35 @@ function About({
           );
         })}
         </div>
+        {/*
+         * Два блока, а не один абзац с подзаголовком: первый объясняет сам
+         * путь «вопрос → решение» (диаграмма в WelcomeHero его рисует, но
+         * нигде не сказано, зачем различать шаги), второй — почему треки
+         * разложены вдоль него именно так. Порядок обязателен: без пути
+         * порядок треков нечем обосновать, кроме «так принято».
+         *
+         * Заголовок первого — тот же t.welcome.chainTitle, что подписывает
+         * диаграмму в питче: читатель встречает знакомое название и получает
+         * к картинке объяснение, а не второе имя того же самого.
+         *
+         * Набран в полную силу, а не .muted, — и это исправление после ревью
+         * глазами. Приглушённым 13px он читался как сноска о порядке треков,
+         * хотя рядом, в карточке «Как это устроено», текст той же смысловой
+         * важности идёт 14px обычным цветом. Приглушённым остаётся только
+         * второй абзац: он и правда примечание к списку выше.
+         */}
         <p
           className="muted"
-          style={{ margin: '14px 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+          style={{ margin: '14px 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
+        >
+          {t.welcome.chainTitle}
+        </p>
+        <p style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.6 }}>{t.about.chainBody}</p>
+        <p
+          className="muted"
+          style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
           {t.about.tracksWhyTitle}
-        </p>
-        {/*
-         * Два абзаца, а не один: первый объясняет сам путь «вопрос → решение»
-         * (диаграмма в WelcomeHero его рисует, но нигде не сказано, зачем
-         * различать шаги), второй — почему треки разложены вдоль него именно
-         * так. Порядок обязателен: без пути порядок треков нечем обосновать,
-         * кроме «так принято».
-         */}
-        <p className="muted" style={{ margin: '0 0 8px', fontSize: 13, lineHeight: 1.5 }}>
-          {t.about.chainBody}
         </p>
         <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
           {t.about.tracksWhyBody}
