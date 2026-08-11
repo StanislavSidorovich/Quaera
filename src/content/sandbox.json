@@ -89,11 +89,11 @@
       ],
       "ru": {
         "title": "Как раскатывалась новинка",
-        "question": "«Витамакс Форте №30» вывели на рынок осенью 2025-го. Посмотрите помесячно, в скольких точках он появлялся, и оцените: раскатка продолжается или упёрлась в потолок?"
+        "question": "«Vitanor Forte x30» вывели на рынок осенью 2025-го. Посмотрите помесячно, в скольких точках он появлялся, и оцените: раскатка продолжается или упёрлась в потолок?"
       },
       "en": {
         "title": "How the new SKU rolled out",
-        "question": "\"Витамакс Форте №30\" launched in the autumn of 2025. Track month by month how many outlets picked it up, and judge whether the rollout is still going or has hit a ceiling."
+        "question": "\"Vitanor Forte x30\" launched in the autumn of 2025. Track month by month how many outlets picked it up, and judge whether the rollout is still going or has hit a ceiling."
       }
     },
     {
@@ -105,12 +105,12 @@
         "dim_customer"
       ],
       "ru": {
-        "title": "Почему падает «Чистовъ»",
-        "question": "Выручка бренда «Чистовъ» снижается второй год подряд. Разберите, что именно упало: в скольких точках бренд продаётся сейчас против начала 2024 года и сколько выручки приходится на одну точку тогда и теперь."
+        "title": "Почему падает «Nettora»",
+        "question": "Выручка бренда «Nettora» снижается второй год подряд. Разберите, что именно упало: в скольких точках бренд продаётся сейчас против начала 2024 года и сколько выручки приходится на одну точку тогда и теперь."
       },
       "en": {
-        "title": "Why \"Чистовъ\" is sliding",
-        "question": "Revenue for the \"Чистовъ\" brand has been falling for two years running. Work out what actually dropped: how many outlets carry the brand now versus early 2024, and how much revenue each outlet brings then and now."
+        "title": "Why \"Nettora\" is sliding",
+        "question": "Revenue for the \"Nettora\" brand has been falling for two years running. Work out what actually dropped: how many outlets carry the brand now versus early 2024, and how much revenue each outlet brings then and now."
       }
     },
     {
@@ -122,11 +122,11 @@
       ],
       "ru": {
         "title": "Три точки против пяти",
-        "question": "У Wildberries три точки, у «Дикси» — пять. Постройте по всем сетям пару «число точек — выручка»: на чём на самом деле держится бизнес и почему считать одни точки недостаточно?"
+        "question": "У Bazario три точки, у «Prima» — пять. Постройте по всем сетям пару «число точек — выручка»: на чём на самом деле держится бизнес и почему считать одни точки недостаточно?"
       },
       "en": {
         "title": "Three outlets versus five",
-        "question": "Wildberries has three outlets, \"Дикси\" has five. Build the pair \"outlet count — revenue\" across all chains: what does the business actually rest on, and why is counting outlets alone not enough?"
+        "question": "Bazario has three outlets, \"Prima\" has five. Build the pair \"outlet count — revenue\" across all chains: what does the business actually rest on, and why is counting outlets alone not enough?"
       }
     },
     {
@@ -171,11 +171,11 @@
       ],
       "ru": {
         "title": "Во что обошёлся объём",
-        "question": "По бренду «Молочный Дом» акции со скидкой 30% дали кратный рост в штуках. Сравните их с акциями по мелкой скидке и с обычными неделями без промо: сколько выручки принесла каждая проданная штука в каждом случае?"
+        "question": "По бренду «Milvara» акции со скидкой 30% дали кратный рост в штуках. Сравните их с акциями по мелкой скидке и с обычными неделями без промо: сколько выручки принесла каждая проданная штука в каждом случае?"
       },
       "en": {
         "title": "What the volume cost",
-        "question": "For the \"Молочный Дом\" brand, the 30%-discount promos produced a multiple jump in units. Compare them against shallow-discount promos and against ordinary non-promo weeks: how much revenue did each unit sold bring in each case?"
+        "question": "For the \"Milvara\" brand, the 30%-discount promos produced a multiple jump in units. Compare them against shallow-discount promos and against ordinary non-promo weeks: how much revenue did each unit sold bring in each case?"
       }
     },
     {

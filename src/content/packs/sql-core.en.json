@@ -7,7 +7,7 @@
     "where": "Pulling data for a report that no longer fits in Excel. Testing a hypothesis before building a dashboard — a query takes minutes, assembling a model takes half a day. Answering \"why did it dip in March\" while the question is still someone's problem. Finding where two numbers that were supposed to match diverged.\n\nSQL is asked for in analyst job postings more than any other tool, and technical interviews usually start with it.",
     "idea": "A query doesn't work with a row, it works with the whole table — a set. That's why SQL has no \"loop through and check\": there's \"filter\", \"group\", \"join\", and each step turns one table into another. You have to think in terms of the result, not the path to it.\n\nThe second thing worth accepting right away: the order you write things in doesn't match the order they execute in. SELECT is written first and runs almost last — after FROM, WHERE and GROUP BY. That alone answers half of a beginner's questions: why an alias from SELECT isn't visible in WHERE, how HAVING differs from WHERE, and why a filter put in the wrong place silently changes the result.",
     "limits": "SQL fetches and aggregates — it doesn't explain. Asked \"why did it drop\", it answers \"by this much, and here's where\" — the reason has to be pieced together yourself; that's what the \"Analytics as a profession\" track is for.\n\nIt's clumsy wherever the calculation is iterative, branches, or needs intermediate state, or needs statistics beyond an average — that's pandas territory.\n\nAnd every engine has its own dialect. SQLite, PostgreSQL, ClickHouse and BigQuery diverge on window functions, on date handling, and even on small things like whether LOWER understands Cyrillic — in SQLite it doesn't, and a search quietly breaks exactly where everything looked fine. A technique is worth remembering together with the engine it works on.",
-    "bridge": "The same working question runs through all four tracks, and the answers have to agree — it's the same data underneath.\n\nBrand «Чистовъ»'s revenue falling by almost half: here you'll pull the numbers with a query; in pandas you'll assemble the same thing through groupby and merge, except the result stays an object in memory you can keep working with; in \"Analytics as a profession\" you'll work out why numeric distribution fell harder than weighted distribution and what that means for negotiations; in Power BI you'll wrap it as a measure that recalculates under any slice.\n\nIf the answers disagree, that's not a difference between tools — it's somebody's mistake."
+    "bridge": "The same working question runs through all four tracks, and the answers have to agree — it's the same data underneath.\n\nBrand «Nettora»'s revenue falling by almost half: here you'll pull the numbers with a query; in pandas you'll assemble the same thing through groupby and merge, except the result stays an object in memory you can keep working with; in \"Analytics as a profession\" you'll work out why numeric distribution fell harder than weighted distribution and what that means for negotiations; in Power BI you'll wrap it as a measure that recalculates under any slice.\n\nIf the answers disagree, that's not a difference between tools — it's somebody's mistake."
   },
   "tierNames": {
     "1": "Foundation",
@@ -142,7 +142,7 @@
     {
       "id": "sql-003",
       "title": "Selection for the promo catalog",
-      "brief": "Only «Ключевая» and «Фрутта» brand drinks go into the summer catalog, and only items priced above 100 ₽ — cheap ones don't work for promo.",
+      "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ₽ — cheap ones don't work for promo.",
       "goal": "Return sku_code, product_name, brand, list_price for items of these two brands priced strictly above 100.",
       "hints": [
         "Listing several values of one column is shorter with IN than with OR.",
@@ -164,8 +164,8 @@
     {
       "id": "sql-024",
       "title": "Discount for the «Rigla» negotiation",
-      "brief": "The category manager is weighing a 10% discount for the «Ринофлекс» brand ahead of negotiations with the «Ригла» chain, and wants to see discounted prices right next to the current ones.",
-      "goal": "Return for all products of the «Ринофлекс» brand: product_name, list_price and discount_price — the price with a 10% discount, rounded to two decimals.",
+      "brief": "The category manager is weighing a 10% discount for the «Rhinolar» brand ahead of negotiations with the «Farmalux» chain, and wants to see discounted prices right next to the current ones.",
+      "goal": "Return for all products of the «Rhinolar» brand: product_name, list_price and discount_price — the price with a 10% discount, rounded to two decimals.",
       "hints": [
         "A 10% discount is multiplying the price by 0.9, not a separate percentage-subtraction formula.",
         "Like in sql-001, the computed result needs a clear name via AS."
@@ -175,7 +175,7 @@
     {
       "id": "sql-025",
       "title": "Column name without an alias",
-      "brief": "An intern sent over an export for the «Гастрокалм» brand and can't explain to their manager what the odd name on the second column in the file means.",
+      "brief": "An intern sent over an export for the «Gastrivo» brand and can't explain to their manager what the odd name on the second column in the file means.",
       "goal": "Determine what the result column will be called.",
       "predictQuestion": "What will the second column in the result be called, if no alias is given?",
       "options": [
@@ -204,50 +204,50 @@
     },
     {
       "id": "sql-026",
-      "title": "All items in the «Форте» line",
-      "brief": "A brand manager is planning a separate «Форте» sub-line and wants every product across the company with that word in its name — regardless of which brand it belongs to.",
-      "goal": "Return product_name, brand, list_price for all products whose name contains «Форте».",
+      "title": "All items in the «Forte» line",
+      "brief": "A brand manager is planning a separate «Forte» sub-line and wants every product across the company with that word in its name — regardless of which brand it belongs to.",
+      "goal": "Return product_name, brand, list_price for all products whose name contains «Forte».",
       "hints": [
         "An exact match (=) won't work here: the full names differ, the only thing in common is a word inside the string.",
         "A substring search is LIKE with the pattern '%text%' — the percent signs mean \"anything before and after\"."
       ],
-      "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Форте%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...' — irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
+      "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Forte%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...' — irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
     },
     {
       "id": "sql-027",
-      "title": "LIKE and Cyrillic case",
-      "brief": "A colleague who used to work with MySQL is searching for «Ключевая» brand items, typing the name in lowercase, and expects LIKE, unlike =, to ignore case.",
-      "goal": "Determine whether the query returns a result.",
-      "predictQuestion": "Does the query return a non-zero result, if the database stores the name as «Ключевая негаз. 0.5 л» — capitalized?",
+      "title": "LIKE and case",
+      "brief": "A colleague is checking volumes for SKU code AQUA001 in the raw export. They know the source sends some rows in lowercase and want to catch both spellings at once — so they write the condition with LIKE rather than =.",
+      "goal": "Determine how many rows the query returns.",
+      "predictQuestion": "There are 163 rows for this SKU code in staging_raw_sellout: 107 written as AQUA001 and 56 as aqua001. What does the query return?",
       "options": [
         {
-          "label": "No, n = 0 — for Cyrillic, LIKE in SQLite is case-sensitive by default",
-          "why": "SQLite's built-in case-insensitivity for LIKE only works for ASCII Latin letters. Cyrillic is compared byte for byte, just like with =."
+          "label": "n = 163 — LIKE in SQLite does not distinguish case for Latin letters",
+          "why": "A pattern with no «%» requires the whole string to match, but it still compares characters by LIKE's rules, and those ignore case for Latin letters. Both spellings of the code land in the answer."
         },
         {
-          "label": "Yes, n = 6 — LIKE always ignores case, that's its key difference from =",
-          "why": "True only for the Latin alphabet. Outside ASCII, without the ICU extension, LIKE is just as case-sensitive as an ordinary comparison."
+          "label": "n = 107 — with no wildcards, LIKE behaves just like =",
+          "why": "Dropping the «%» only removes matching against an arbitrary substring. The character comparison rule doesn't change with it: = compares byte for byte, LIKE is case-insensitive for ASCII."
         },
         {
-          "label": "The query fails with an error because of the Cyrillic in the pattern",
-          "why": "Cyrillic in string literals and LIKE patterns is ordinary text — there's no syntax issue here."
+          "label": "n = 56 — an uppercase pattern only finds the opposite spelling",
+          "why": "The case of the pattern makes no difference: the comparison is symmetric, so both spellings match, not one of them."
         },
         {
-          "label": "Yes, but not all six brand items come back, only some of them",
-          "why": "If the case matched, all six would be found — the comparison doesn't depend on the particular SKU, only on the case of the whole substring."
+          "label": "n = 0 — without a % character, a LIKE pattern matches nothing",
+          "why": "LIKE with no wildcards is a perfectly valid pattern. It simply requires the whole string to match, like =, and differs from it only in the comparison rule."
         }
       ],
       "hints": [
-        "Try the same condition with a capital letter — the result differs by exactly that one character.",
-        "LIKE's case-insensitivity in SQLite is historically an ASCII-range-only feature."
+        "The difference between = and LIKE here isn't the wildcard, it's the character comparison rule.",
+        "LIKE's case-insensitivity in SQLite only covers the ASCII range."
       ],
-      "explain": "This is a quirk of the engine, not the SQL standard: SQLite by default treats only the letters a-z/A-Z as case-insensitive, and compares any other Unicode letters, Cyrillic included, byte for byte. The first fix that comes to mind — lowering both sides — doesn't help here: SQLite's LOWER and UPPER are limited to that same ASCII range, and LOWER('Ключевая') returns «Ключевая» completely unchanged. A query with LOWER(product_name) LIKE LOWER('%ключевая%') still finds zero rows — it looks like a fix and leaves the bug exactly where it was. SQLite has no built-in case-insensitive Cyrillic search without the ICU extension: either you search using the exact casing the value is stored in, or you normalize case on the way in — a separate column, computed outside SQLite. In PostgreSQL and ClickHouse, the same LOWER works with Cyrillic as expected, so this trick is worth remembering together with the engine it holds true on. The failure is silent: the query doesn't fail, it just finds nothing, and it's easy to mistake that for \"no such text in the database\"."
+      "explain": "= and LIKE use different comparison rules, and it only shows on dirty data. = compares strings byte for byte, so sku_code = 'AQUA001' misses the 56 rows written in lowercase. LIKE treats Latin letters of either case as equal by default and finds all 163. Two lessons follow, both about portability. First: the trick works exactly up to the ASCII boundary. As soon as values carry letters beyond it — Cyrillic, umlauts, diacritics — LIKE in SQLite becomes case-sensitive again, and LOWER and UPPER are no help: they are limited to the same range. Second: another engine flips it. In PostgreSQL, LIKE respects case and there's a separate ILIKE for the other behaviour — the same query silently changes meaning when it moves. So nobody leans on LIKE's case-insensitivity as a rule: case gets normalized on the way in, by the very cleanup the raw-layer tasks are about. The failure here is silent — the query with = doesn't fail, it returns 107 rows and looks like it works, and the missing third of the volume surfaces later, in a report."
     },
     {
       "id": "sql-029",
       "title": "Second-priciest item of a brand",
-      "brief": "Ahead of a price revision, the CFO doesn't want the most expensive item of the «Витамакс» brand — that one's already clear — but the one right behind it.",
-      "goal": "Return product_name and list_price of the second most expensive product of the «Витамакс» brand.",
+      "brief": "Ahead of a price revision, the CFO doesn't want the most expensive item of the «Vitanor» brand — that one's already clear — but the one right behind it.",
+      "goal": "Return product_name and list_price of the second most expensive product of the «Vitanor» brand.",
       "hints": [
         "Sort by price from high to low first — like in sql-004.",
         "LIMIT 1 takes the first row after sorting. To skip the most expensive one and take the next, add OFFSET 1."
@@ -337,8 +337,8 @@
           "why": "SQLite, like most DBMSes by default, treats NULL as the smallest possible value in ascending sort — such rows end up first."
         },
         {
-          "label": "The 'Ozon' chain — it's first alphabetically among the filled-in values",
-          "why": "Among non-null values, 'Ozon' really would come first — Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\" — it's smaller than any text."
+          "label": "The 'Marketo' chain — it's first alphabetically among the filled-in values",
+          "why": "Among non-null values, 'Marketo' really would come first — Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\" — it's smaller than any text."
         },
         {
           "label": "The order is unpredictable: NULL can't be compared, and ORDER BY ignores it",
@@ -648,8 +648,8 @@
     {
       "id": "sql-014",
       "title": "Where did the new product reach",
-      "brief": "«Витамакс Форте №30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report — it's built specifically for them, so they must not disappear.",
-      "goal": "Return for all 16 regions: region_name and units — total unit sales of «Витамакс Форте №30» across all time. Where there were no sales, show 0.",
+      "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report — it's built specifically for them, so they must not disappear.",
+      "goal": "Return for all 16 regions: region_name and units — total unit sales of «Vitanor Forte x30» across all time. Where there were no sales, show 0.",
       "hints": [
         "Start from the table whose rows all need to survive — the region directory.",
         "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product — the ones the report exists to show.",
@@ -660,7 +660,7 @@
     {
       "id": "sql-039",
       "title": "A product filter that landed in the wrong place",
-      "brief": "A colleague copies the sql-014 query about «Витамакс Форте №30» coverage by region, but to add the product filter, puts the condition in WHERE instead of ON for brevity.",
+      "brief": "A colleague copies the sql-014 query about «Vitanor Forte x30» coverage by region, but to add the product filter, puts the condition in WHERE instead of ON for brevity.",
       "goal": "Determine how many regions the modified query returns.",
       "predictQuestion": "How many regions end up in the result, given there are 16 total and the new product isn't sold at all in five of them?",
       "options": [
@@ -689,9 +689,9 @@
     },
     {
       "id": "sql-040",
-      "title": "Outlets that never bought «Чистовъ»",
-      "brief": "Trade marketing is preparing a win-back program for the «Чистовъ» brand and asks for a list of outlets that have never sold it at all — they need to be approached separately, ahead of the general visit plan.",
-      "goal": "Return customer_name and city for outlets (customer_type ≠ 'distributor') with zero sales rows for «Чистовъ» brand products in fact_sellout.",
+      "title": "Outlets that never bought «Nettora»",
+      "brief": "Trade marketing is preparing a win-back program for the «Nettora» brand and asks for a list of outlets that have never sold it at all — they need to be approached separately, ahead of the general visit plan.",
+      "goal": "Return customer_name and city for outlets (customer_type ≠ 'distributor') with zero sales rows for «Nettora» brand products in fact_sellout.",
       "hints": [
         "The brand condition must stay in ON — otherwise outlets without this product get filtered out before you even get a chance to find them.",
         "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found, and the fact_sellout columns are empty."
@@ -732,18 +732,18 @@
       "id": "sql-041",
       "title": "Proving the fan-out with numbers",
       "brief": "Before including the join to dim_promo in a standing report (as in sql-013), an analyst wants to formally show that it multiplies facts, rather than rely on intuition.",
-      "goal": "For the «Чистовъ» brand in 2025, return one row: rows_before — the number of fact_sellout rows after an ordinary join to dim_product, rows_after — the number of rows that would result from also joining dim_promo on brand (JOIN dim_promo m ON m.brand = p.brand).",
+      "goal": "For the «Nettora» brand in 2025, return one row: rows_before — the number of fact_sellout rows after an ordinary join to dim_product, rows_after — the number of rows that would result from also joining dim_promo on brand (JOIN dim_promo m ON m.brand = p.brand).",
       "hints": [
         "Both counts are essentially the same query, differing by exactly one JOIN — insert it as a second subquery in SELECT.",
         "No grouping needed: both parts simply count COUNT(*) over the whole selection."
       ],
-      "explain": "This is the before/after check described in the sql-013 explanation: if adding a JOIN changes the row count and you didn't plan for that, the join key isn't unique and facts got multiplied. Here rows_after is exactly 10 times rows_before — because the «Чистовъ» brand has exactly 10 promotions in dim_promo, and every sales row matched every one of them. Turn this check into a reflex before adding any new JOIN to an existing report, not only once the numbers already look suspicious."
+      "explain": "This is the before/after check described in the sql-013 explanation: if adding a JOIN changes the row count and you didn't plan for that, the join key isn't unique and facts got multiplied. Here rows_after is exactly 10 times rows_before — because the «Nettora» brand has exactly 10 promotions in dim_promo, and every sales row matched every one of them. Turn this check into a reflex before adding any new JOIN to an existing report, not only once the numbers already look suspicious."
     },
     {
       "id": "sql-050",
-      "title": "«Чистовъ» promo revenue without duplication",
-      "brief": "After the sql-013 walkthrough, it's clear why joining dim_promo on brand doubled up revenue. Trade marketing still wants the real breakdown of «Чистовъ» brand sales for 2025 by promo mechanic.",
-      "goal": "For 2025, return for the «Чистовъ» brand: mechanic and revenue — the sum of revenue for that mechanic, rounded to whole numbers. Ordered by revenue descending.",
+      "title": "«Nettora» promo revenue without duplication",
+      "brief": "After the sql-013 walkthrough, it's clear why joining dim_promo on brand doubled up revenue. Trade marketing still wants the real breakdown of «Nettora» brand sales for 2025 by promo mechanic.",
+      "goal": "For 2025, return for the «Nettora» brand: mechanic and revenue — the sum of revenue for that mechanic, rounded to whole numbers. Ordered by revenue descending.",
       "hints": [
         "The key that unambiguously links a sale to a specific promotion already exists in the fact table itself — it's promo_id, not brand.",
         "Every fact_sellout row has exactly one promo_id value (or NULL), so this join can't multiply rows — unlike the join on brand in sql-013."
@@ -764,9 +764,9 @@
     {
       "id": "sql-042",
       "title": "CASE without a branch for every case",
-      "brief": "An analyst is building a Russian lookup for sales channels and lists translations only for the channels that show up most often in FMCG reports.",
-      "goal": "Determine what ends up in channel_ru for channels that have no explicit branch.",
-      "predictQuestion": "What ends up in channel_ru for rows with channel = 'ecom' and channel = 'distributor'?",
+      "brief": "An analyst is building a lookup of readable labels for sales channels and lists translations only for the channels that show up most often in FMCG reports.",
+      "goal": "Determine what ends up in channel_label for channels that have no explicit branch.",
+      "predictQuestion": "What ends up in channel_label for rows with channel = 'ecom' and channel = 'distributor'?",
       "options": [
         {
           "label": "NULL — no WHEN branch matched, and there is no ELSE",
@@ -795,12 +795,12 @@
       "id": "sql-043",
       "title": "Price-list tiers",
       "brief": "A category manager wants to see the portfolio not by brand but by price tier — this feeds a conversation with procurement about where the lineup is concentrated.",
-      "goal": "Return tier — 'Бюджетный' (list_price < 100), 'Средний' (100 ≤ list_price < 300), or 'Премиум' (list_price ≥ 300), and sku_count — the number of products in each tier.",
+      "goal": "Return tier — 'Budget' (list_price < 100), 'Mid' (100 ≤ list_price < 300), or 'Premium' (list_price ≥ 300), and sku_count — the number of products in each tier.",
       "hints": [
         "You can group directly on the CASE expression's alias — shorter than repeating the whole construct in GROUP BY.",
         "Branch order matters: WHEN conditions are checked in sequence, and once one matches, the rest are never evaluated."
       ],
-      "explain": "Here CASE isn't doing conditional aggregation — it's binning: turning a continuous value into named categories that any later segmentation is built on. The order of conditions is critical: if 'Средний' (< 300) came before 'Бюджетный' (< 100), budget products would also pass the wider condition first and never reach their own branch. The general rule: from the narrowest condition to the widest."
+      "explain": "Here CASE isn't doing conditional aggregation — it's binning: turning a continuous value into named categories that any later segmentation is built on. The order of conditions is critical: if 'Mid' (< 300) came before 'Budget' (< 100), budget products would also pass the wider condition first and never reach their own branch. The general rule: from the narrowest condition to the widest."
     },
     {
       "id": "sql-016",
@@ -868,13 +868,13 @@
     {
       "id": "sql-046",
       "title": "A chain spelled two ways",
-      "brief": "In staging_raw_sellout the «Пятёрочка» chain is sometimes recorded as «Пятерочка» — missing the «ё». Before normalizing the lookup, you need to gauge the scale of the problem.",
-      "goal": "Return one row: written_yo — the number of rows where customer_name contains «Пятёрочка» (with ё), written_e — where it contains «Пятерочка» (without ё), total_chain — their sum: both groups belong to the same chain.",
+      "brief": "In staging_raw_sellout the «Yarmarka» chain is sometimes recorded as «Iarmarka»: two source systems transliterated one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
+      "goal": "Return one row: written_ya — the number of rows where customer_name contains «Yarmarka», written_ia — where it contains «Iarmarka», total_chain — their sum: both groups belong to the same chain.",
       "hints": [
-        "The two spellings differ only in the letter «ё»/«е» — catch both variants with separate LIKE conditions.",
-        "The sum of written_yo and written_e should match total_chain — that's the check that the variants don't overlap and nothing is lost."
+        "The two spellings differ in their first letter — Ya against Ia. Catch both variants with separate LIKE conditions.",
+        "The sum of written_ya and written_ia should match total_chain — that's the check that the variants don't overlap and nothing is lost."
       ],
-      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts: the source system doesn't always render «ё», and manual entry even less so. If you group by customer_name as-is, GROUP BY will silently create two separate rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. Before aggregating, such variants are normalized once at the start of the pipeline — for example, REPLACE(customer_name, 'Пятерочка', 'Пятёрочка') — and after that you can group without worry."
+      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent transliteration is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Iarmarka', 'Yarmarka'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
     },
     {
       "id": "sql-047",
@@ -1003,7 +1003,7 @@
       "id": "sql-019",
       "title": "Smoothing a weekly series",
       "brief": "Water sales jump around week to week because of promotions and deliveries. For a presentation chart, you need a smoothed series so the seasonal trend shows through instead of the noise.",
-      "goal": "For 2025, for the «Ключевая» brand, return week_start, units — sum of units for the week, and ma4 — a moving average over the current and three preceding weeks, rounded to one decimal place. Ordered by week ascending.",
+      "goal": "For 2025, for the «Aqualis» brand, return week_start, units — sum of units for the week, and ma4 — a moving average over the current and three preceding weeks, rounded to one decimal place. Ordered by week ascending.",
       "hints": [
         "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
@@ -1024,11 +1024,11 @@
     {
       "id": "sql-054",
       "title": "A distributor's quarterly running shipments",
-      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Волга-Трейд» distributor by the end of each month.",
+      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Volga-Trade» distributor by the end of each month.",
       "goal": "For October–December 2025, return month_start, units — shipped that month, and running_units — the running total since the start of the quarter. Ordered by month ascending.",
       "hints": [
         "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
-        "distributor_id = 1 is «Волга-Трейд» — you can check this against dim_customer."
+        "distributor_id = 1 is «Volga-Trade» — you can check this against dim_customer."
       ],
       "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in sql-019, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period — exactly what's needed here to track quarterly running shipments."
     },
@@ -1036,7 +1036,7 @@
       "id": "sql-055",
       "title": "Price growth since the start of the year",
       "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year — and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
-      "goal": "For 2025, for the «Ключевая негаз. 1.5 л» product, return month_start, list_price, jan_price — the price in January of that year, and growth_pct — growth vs. January in percent, rounded to one decimal place. Ordered by month ascending.",
+      "goal": "For 2025, for the «Aqualis Still 1.5 L» product, return month_start, list_price, jan_price — the price in January of that year, and growth_pct — growth vs. January in percent, rounded to one decimal place. Ordered by month ascending.",
       "hints": [
         "FIRST_VALUE(list_price) OVER (ORDER BY month_start) returns the price of the window's very first row for every result row — that's the January price.",
         "FIRST_VALUE can be called several times with the same OVER (...) — that's not separate computations, it's the same result each time."
@@ -1088,7 +1088,7 @@
     {
       "id": "sql-023",
       "title": "Why the brand fell",
-      "brief": "«Чистовъ» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture by quarter.",
+      "brief": "«Nettora» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture by quarter.",
       "goal": "Determine the cause of the decline from the decomposition results.",
       "predictQuestion": "What was the main cause of the drop in brand sales?",
       "options": [
@@ -1118,8 +1118,8 @@
     {
       "id": "sql-057",
       "title": "Weeks of cover at a distributor",
-      "brief": "The CFO is worried about write-offs: the «Волга-Трейд» distributor is showing large warehouse stock of the «Ключевая» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
-      "goal": "Return one row: units_on_hand — stock of «Ключевая негаз. 0.5 л» at the «Волга-Трейд» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
+      "brief": "The CFO is worried about write-offs: the «Volga-Trade» distributor is showing large warehouse stock of the «Aqualis» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
+      "goal": "Return one row: units_on_hand — stock of «Aqualis Still 0.5 L» at the «Volga-Trade» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
       "hints": [
         "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
         "Compute the weekly sales pace only from this distributor's outlets — filter on c.served_by_distributor_id, not on all sales of the product nationwide."
@@ -1139,10 +1139,10 @@
     },
     {
       "id": "sql-059",
-      "title": "Why «Ключевая» revenue holds up even as volume falls",
-      "brief": "The «Ключевая» brand's unit sales volume in Q1 2025 dropped noticeably compared to Q1 2024, but in the presentation revenue looks almost unscathed. The CFO wants the discrepancy explained.",
+      "title": "Why «Aqualis» revenue holds up even as volume falls",
+      "brief": "The «Aqualis» brand's unit sales volume in Q1 2025 dropped noticeably compared to Q1 2024, but in the presentation revenue looks almost unscathed. The CFO wants the discrepancy explained.",
       "goal": "Determine the cause from the decomposition results.",
-      "predictQuestion": "What happened to the «Ключевая» brand between Q1 2024 and Q1 2025?",
+      "predictQuestion": "What happened to the «Aqualis» brand between Q1 2024 and Q1 2025?",
       "options": [
         {
           "label": "Price was raised by almost 20%, which offset a nearly quarter-size drop in volume — revenue holds up on price, not demand",
@@ -1153,7 +1153,7 @@
           "why": "Revenue is price times volume, and it can hold steady even under falling demand if price rises faster than volume falls. That's exactly what happened here."
         },
         {
-          "label": "The brand lost distribution, like «Чистовъ» in sql-023",
+          "label": "The brand lost distribution, like «Nettora» in sql-023",
           "why": "Outlet count didn't change — 88 in both years. That's exactly the difference that separates this case from sql-023: there the cause was losing shelf space; here the shelf space is intact, and price is what changed."
         },
         {

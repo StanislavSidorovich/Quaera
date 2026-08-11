@@ -13,7 +13,7 @@
     "where": "A dashboard that different people open every day and slice differently — today by region, tomorrow by product group — and the number has to agree both times without hand-editing the query for each slice. A report built on a single flat extract, where joining the fact to a lookup table multiplied rows and quietly doubled revenue: a model with correctly set relationships and cardinality keeps that from happening structurally, not because whoever built the extract was careful enough.\n\nAt a BI-analyst interview this doesn't come up as DAX syntax trivia — it comes up as walking through an actual model: why did this double, why does a measure give the wrong thing under a slice, where should this column have lived. The same style of reasoning underlies the PL-300 exam, which this track uses as its anchor for topic coverage.",
     "idea": "A measure doesn't store a number — it gets computed at the moment the report already knows which slice is asking for it: that's the filter context. The same formula written as a calculated column computes once, at data refresh, and freezes — a measure recomputes for every cell of a pivot table, with its own set of filters from rows, columns and slicers.\n\nThat's where CALCULATE comes from — not an analogue of WHERE, but a tool that changes the filter context already in place, before the formula ever sees it. Until that difference settles, time intelligence (YTD, comparison to the prior period) looks like a set of spells to memorise; after it, the same one action applied to different date filters.",
     "limits": "DAX means nothing without a model around it: a formula relies on relationships between tables, and cut off from them it's just text. The model itself, though, travels — the same language and the same mechanics work in Power BI, in Power Pivot inside Excel, and in Analysis Services, so the skill is learned once, not relearned per tool.\n\nA model doesn't replace SQL and pandas: it takes facts and dimensions that are already prepared, not raw data — if the source is dirty, that gets cleaned earlier, before the model.\n\nAnd it isn't free: every extra relationship, every extra high-cardinality column, every extra calculated column grows the model and slows the report down. Later in the track we work through what's worth its cost and what didn't need to go into the model at all.",
-    "bridge": "The same working question as in SQL, domain and pandas: the «Чистовъ» brand's revenue falling by nearly half. Here the same number is packaged as a measure that recomputes on its own under any slice — by region, by month, by channel — with no new query and no dataframe rebuilt for every new question.\n\nIf a measure, a query and a dataframe on the same data suddenly disagree, that's — as everywhere in this trainer — not a difference between tools, but a mistake in one of the three."
+    "bridge": "The same working question as in SQL, domain and pandas: the «Nettora» brand's revenue falling by nearly half. Here the same number is packaged as a measure that recomputes on its own under any slice — by region, by month, by channel — with no new query and no dataframe rebuilt for every new question.\n\nIf a measure, a query and a dataframe on the same data suddenly disagree, that's — as everywhere in this trainer — not a difference between tools, but a mistake in one of the three."
   },
   "skills": [
     {
@@ -149,7 +149,7 @@
       "title": "Five tables for one category",
       "brief": "You open the source schema to see where to pull the product category from for a report. The category turns out to be a tree, not a column.",
       "goal": "Work out why the source is structured this way.",
-      "scenario": "Source schema:\n\n  order_lines → products\n  products → product_categories\n  product_categories → cat_tree\n  cat_tree → cat_tree (parent)\n\nTo get «Напитки», you have to\nwalk the tree up to the root.",
+      "scenario": "Source schema:\n\n  order_lines → products\n  products → product_categories\n  product_categories → cat_tree\n  cat_tree → cat_tree (parent)\n\nTo get «Beverages», you have to\nwalk the tree up to the root.",
       "predictQuestion": "Why is the source built this way, and why is it awkward for a report?",
       "hints": [
         "Ask what this schema optimizes for. It has an intended reader, and it isn't the analyst.",
@@ -385,7 +385,7 @@
       "title": "Which way the filter runs",
       "brief": "A report has a brand slicer set. Next to it sit two measures: revenue from the fact table, and a product count from the lookup.",
       "goal": "Work out what the slicer actually affects.",
-      "scenario": "dim_product (47 rows)\n  product_id is unique\n      │  one-to-many\n      ▼\nfact_sellout (118,449 rows)\n\nThe slicer picks brand «Чистовъ».\nIt has 5 products.",
+      "scenario": "dim_product (47 rows)\n  product_id is unique\n      │  one-to-many\n      ▼\nfact_sellout (118,449 rows)\n\nThe slicer picks brand «Nettora».\nIt has 5 products.",
       "predictQuestion": "What will revenue and product count show?",
       "hints": [
         "Find the table where the \"brand\" column physically lives. That's where the filter starts.",
@@ -412,7 +412,7 @@
       "title": "A relationship on brand",
       "brief": "A colleague wants to link the promo lookup to the product lookup directly by brand — \"the field is in both, why not.\"",
       "goal": "Work out this relationship's cardinality.",
-      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nFor brand «Чистовъ»:\n  5 products, 10 promos",
+      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nFor brand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What cardinality results from a relationship on the brand column?",
       "hints": [
         "Cardinality is about the key's uniqueness on each side, not about what the word \"brand\" means.",
@@ -421,7 +421,7 @@
       "explain": "Cardinality reads mechanically: take the relationship's key and check whether it's unique in the table. Unique on one side — one-to-many. Not unique on either — many-to-many. The singular word \"brand\" and the phrase \"a product has one brand\" nudge you toward the wrong answer because they describe meaning, not structure: a product really does have one brand, but in the product table brand repeats forty-seven times across nine values. A many-to-many relationship isn't a ban, it's a warning: you can't join tables like this directly, they need a bridge between them, or every pair inside a group turns into its own row.",
       "options": [
         {
-          "label": "Many-to-many: brand isn't unique in either table — «Чистовъ»'s five products correspond to its ten promos",
+          "label": "Many-to-many: brand isn't unique in either table — «Nettora»'s five products correspond to its ten promos",
           "why": "Cardinality is set by the key's uniqueness on each side. Here it's 47 products across 9 brands and 89 promos across 9 brands — repeats on both sides. A relationship like this doesn't match row to row, it matches group to group, and every pair inside a group counts as a match."
         },
         {
@@ -561,9 +561,9 @@
     {
       "id": "mdl-016",
       "title": "Brand share got hard-coded as a number",
-      "brief": "Brand «Чистовъ»'s share of revenue is 12.7% across the whole database. A colleague set it up as a calculated column: computed once and put 12.7% into every fact row.",
+      "brief": "Brand «Nettora»'s share of revenue is 12.7% across the whole database. A colleague set it up as a calculated column: computed once and put 12.7% into every fact row.",
       "goal": "Work out what the report shows after a region slicer is applied.",
-      "scenario": "dim_product → fact_sellout\nColumn: Chistov Share — 12.7%\n(written once, into every\nfact row)\n\nA slicer for region «Москва»\nwas added to the report.\nCorrect share for Moscow: 19.1%",
+      "scenario": "dim_product → fact_sellout\nColumn: Nettora Share — 12.7%\n(written once, into every\nfact row)\n\nA slicer for region «Moscow»\nwas added to the report.\nCorrect share for Moscow: 19.1%",
       "predictQuestion": "What will the column show after the Moscow slicer?",
       "hints": [
         "Remember: a calculated column computes once at refresh, a measure recomputes every time it's displayed.",
@@ -641,9 +641,9 @@
     {
       "id": "mdl-019",
       "title": "What a cell's filter is made of",
-      "brief": "In a matrix report, a cell sits at the intersection of row «Москва» and a page-level slicer for «Чистовъ». The measure is Revenue.",
+      "brief": "In a matrix report, a cell sits at the intersection of row «Moscow» and a page-level slicer for «Nettora». The measure is Revenue.",
       "goal": "Work out what makes up this cell's filter context.",
-      "scenario": "Matrix:\n  row = region («Москва»)\n  page slicer = brand «Чистовъ»\n\nMeasure: Revenue = SUM(revenue)\nRevenue in the cell: ₽819,771",
+      "scenario": "Matrix:\n  row = region («Moscow»)\n  page slicer = brand «Nettora»\n\nMeasure: Revenue = SUM(revenue)\nRevenue in the cell: ₽819,771",
       "predictQuestion": "Which of the following is part of this cell's filter context?",
       "hints": [
         "Mentally remove one of the two sources — the slicer or the row — and ask whether the number in the cell changes.",
@@ -652,7 +652,7 @@
       "explain": "A report cell isn't one condition — it's the intersection of every condition currently acting on it. Here there are two: the row sets the region, the page slicer sets the brand, and the measure sees both at once, as if joined with AND. Remove either source and the number in the cell changes — that's the practical test: remove the slicer and keep the row, and you get all of Moscow's revenue across every brand, ₽3,718,723 instead of ₽819,771. The habit of listing filter sources one at a time — row, column, slicers, filters baked into the measure itself — saves more time than any other report-reading skill.",
       "options": [
         {
-          "label": "Both the row's condition (region = «Москва») and the page slicer's condition (brand = «Чистовъ») — both apply at once",
+          "label": "Both the row's condition (region = «Moscow») and the page slicer's condition (brand = «Nettora») — both apply at once",
           "why": "A cell's filter context is made up of every source at once, not just one. A matrix row and a page slicer are two independent sources, and both narrow the data down to what meets both conditions."
         },
         {
@@ -661,29 +661,29 @@
         },
         {
           "label": "Only the slicer's condition — a matrix row sets a label, not a filter",
-          "why": "A matrix row isn't just a label: every row by region physically filters the data down to that region, otherwise the «Москва» and «Санкт-Петербург» rows would show the same number. Here, labeling and filtering are one and the same action."
+          "why": "A matrix row isn't just a label: every row by region physically filters the data down to that region, otherwise the «Moscow» and «Saint Petersburg» rows would show the same number. Here, labeling and filtering are one and the same action."
         }
       ]
     },
     {
       "id": "mdl-020",
       "title": "A measure with its own filter inside",
-      "brief": "The \"Chistov Revenue\" measure already has a brand condition baked into its formula. It gets put into a by-region matrix with no slicer on the page at all.",
-      "goal": "Work out what the \"Москва\" cell shows.",
-      "predictQuestion": "What does the \"Москва\" row show, if there's no brand slicer on the page at all?",
+      "brief": "The \"Nettora Revenue\" measure already has a brand condition baked into its formula. It gets put into a by-region matrix with no slicer on the page at all.",
+      "goal": "Work out what the \"Moscow\" cell shows.",
+      "predictQuestion": "What does the \"Moscow\" row show, if there's no brand slicer on the page at all?",
       "hints": [
         "The brand condition sits inside CALCULATE, not outside the measure. Does it need an external slicer to fire?",
         "Compare with mdl-019: there the condition came from a page slicer. Where does it come from here?"
       ],
-      "explain": "A cell's filter context isn't made up only of rows, columns and page slicers — there's a fourth source: conditions baked into the measure itself via CALCULATE. A filter like this doesn't depend on what's selected outside it: it applies every time the measure is invoked, whether there's a brand slicer on the page or not. The practical takeaway: two measures shown side by side on a report (\"Revenue\" and \"Chistov Revenue\") can behave differently under the exact same set of external slicers — and understanding why takes more than looking at the report page, you have to look inside the measure's own formula.",
+      "explain": "A cell's filter context isn't made up only of rows, columns and page slicers — there's a fourth source: conditions baked into the measure itself via CALCULATE. A filter like this doesn't depend on what's selected outside it: it applies every time the measure is invoked, whether there's a brand slicer on the page or not. The practical takeaway: two measures shown side by side on a report (\"Revenue\" and \"Nettora Revenue\") can behave differently under the exact same set of external slicers — and understanding why takes more than looking at the report page, you have to look inside the measure's own formula.",
       "options": [
         {
-          "label": "₽1,691,942 — Chistov's revenue for Moscow. The brand filter always applies, because it's part of the measure itself, not an external slicer",
-          "why": "The condition dim_product[brand]=\"Чистовъ\" is baked inside CALCULATE and acts as a fourth source of filter context — the measure's own filter. It doesn't need a page slicer: it applies every time the measure is invoked, regardless of what's selected outside it."
+          "label": "₽1,691,942 — Nettora's revenue for Moscow. The brand filter always applies, because it's part of the measure itself, not an external slicer",
+          "why": "The condition dim_product[brand]=\"Nettora\" is baked inside CALCULATE and acts as a fourth source of filter context — the measure's own filter. It doesn't need a page slicer: it applies every time the measure is invoked, regardless of what's selected outside it."
         },
         {
           "label": "₽8,876,489 — Moscow's full revenue across every brand, because there's no brand slicer on the page",
-          "why": "That would be true for a measure with no internal filter, like a plain Revenue. But Chistov Revenue has the brand condition built into its formula, and it doesn't depend on whether there's a page slicer — it's always there."
+          "why": "That would be true for a measure with no internal filter, like a plain Revenue. But Nettora Revenue has the brand condition built into its formula, and it doesn't depend on whether there's a page slicer — it's always there."
         },
         {
           "label": "Blank — without an external brand slicer, CALCULATE can't evaluate the condition inside it",
@@ -694,18 +694,18 @@
     {
       "id": "mdl-021",
       "title": "The \"Total\" row at the bottom",
-      "brief": "The same by-region matrix has a \"Total\" row underneath it. A slicer for brand «Чистовъ» is set on the page.",
+      "brief": "The same by-region matrix has a \"Total\" row underneath it. A slicer for brand «Nettora» is set on the page.",
       "goal": "Work out what filter context applies in the \"Total\" row.",
-      "scenario": "Matrix with a «Чистовъ» slicer:\n\n  Москва          1,691,942\n  Ростовская обл. 2,441,558\n  ...\n  Total          16,165,815",
+      "scenario": "Matrix with a «Nettora» slicer:\n\n  Moscow          1,691,942\n  Rostov Region 2,441,558\n  ...\n  Total          16,165,815",
       "predictQuestion": "What filter context applies in the \"Total\" row?",
       "hints": [
         "Ask: does a region value \"Total\" exist in the dim_region lookup? If not, what is this row's filter resting on?",
-        "Compare the \"Total\" row to the \"Москва\" row by the number of filter sources, not by the final figure."
+        "Compare the \"Total\" row to the \"Moscow\" row by the number of filter sources, not by the final figure."
       ],
       "explain": "\"Total\" isn't a sum of the displayed rows computed separately by the visual — it's the same measure invoked under its own filter context, one condition lighter. An ordinary row combines the page slicer with a condition on its own region; the \"Total\" row sees only the page slicer, with no region condition at all. This explains behavior that would otherwise look strange: \"Total\" recomputes on its own when new regions are added to the lookup, because it doesn't store a list of what to add up — it simply computes in a context with fewer restrictions.",
       "options": [
         {
-          "label": "Only the page slicer (brand = «Чистовъ») — with no region condition, because the \"Total\" row isn't tied to any specific region",
+          "label": "Only the page slicer (brand = «Nettora») — with no region condition, because the \"Total\" row isn't tied to any specific region",
           "why": "\"Total\" isn't another region — it's a row with no region condition of its own: only the page slicer remains in its filter context. That's why it shows the sum across every region at once — the same figure a brand slicer alone would give, with no row breakdown at all."
         },
         {
@@ -713,7 +713,7 @@
           "why": "Formally that would give the same result, but in fact the \"Total\" row isn't built as a list of region conditions — it's built as the absence of any region condition at all. The difference is practical: add a seventeenth region to the lookup, and the \"Total\" row picks it up on its own, while an \"all sixteen joined with OR\" list would need rewriting."
         },
         {
-          "label": "The same filter context as the \"Москва\" row, plus an extra condition \"region = Total\"",
+          "label": "The same filter context as the \"Moscow\" row, plus an extra condition \"region = Total\"",
           "why": "\"Total\" is an element of the visual, not a lookup value — no such region value exists in any table in the model. A row can't have a condition on a value that doesn't exist; it's more accurate to say the row simply has no region condition at all."
         }
       ]
@@ -1056,17 +1056,17 @@
       "title": "The key isn't unique anywhere",
       "brief": "You need to link the product lookup to the promo lookup, to filter sales by a promo's brand. There's a shared column — brand.",
       "goal": "Work out the cardinality, and what to do about it.",
-      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nBrand «Чистовъ»:\n  5 products, 10 promos",
+      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nBrand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What does a direct relationship on brand give you, and what's the right way to link these?",
       "hints": [
         "Count rows and distinct key values in both tables. Do they match anywhere?",
-        "How many rows would joining «Чистовъ»'s five products to its ten promos produce?"
+        "How many rows would joining «Nettora»'s five products to its ten promos produce?"
       ],
       "explain": "The tell for many-to-many is mechanical and needs no understanding of what the data means: take the relationship's key and compare row count to distinct-value count in each table. Matches in at least one — an ordinary one-to-many relationship. Matches in neither — many-to-many, and it can't be built directly. A bridge solves this by pulling the pairs out into a separate table: 465 unique \"product × promo\" combinations across all nine brands, to which both dim_product and dim_promo connect the way lookups connect to a fact table. The key point is that a bridge isn't a workaround — it's an honest description of the relationship: a \"this product took part in this promo\" pair genuinely exists as an entity in its own right.",
       "options": [
         {
           "label": "Many-to-many: every product will match all of its brand's promos. You need a bridge table of unique \"product × promo\" pairs",
-          "why": "The key repeats on both sides — 47 rows across 9 brands, and 89 across the same 9. A direct relationship matches group to group: «Чистовъ»'s five products would each produce ten pairs — fifty rows instead of five. A bridge fixes these pairs explicitly, and both relationships to it become one-to-many."
+          "why": "The key repeats on both sides — 47 rows across 9 brands, and 89 across the same 9. A direct relationship matches group to group: «Nettora»'s five products would each produce ten pairs — fifty rows instead of five. A bridge fixes these pairs explicitly, and both relationships to it become one-to-many."
         },
         {
           "label": "One-to-many: a product has one brand, so dim_product will be the \"one\" side",
@@ -1083,16 +1083,16 @@
       "title": "How many rows are in the bridge",
       "brief": "The bridge between products and promos is going to get built. You need to work out its size and what's in it.",
       "goal": "Work out the bridge table's contents and size.",
-      "scenario": "9 brands. For each:\n  4 to 6 products\n  9 to 11 promos\n\n«Чистовъ»: 5 products, 10 promos\nTotal: 47 products, 89 promos.\n\nThe bridge has 465 rows.",
+      "scenario": "9 brands. For each:\n  4 to 6 products\n  9 to 11 promos\n\n«Nettora»: 5 products, 10 promos\nTotal: 47 products, 89 promos.\n\nThe bridge has 465 rows.",
       "predictQuestion": "What does one bridge row represent, and where does 465 come from?",
       "hints": [
         "Within a brand, every product pairs with every promo. What operation is that?",
-        "Check it against «Чистовъ»: 5 products and 10 promos. How many pairs?"
+        "Check it against «Nettora»: 5 products and 10 promos. How many pairs?"
       ],
       "explain": "A bridge is a materialized list of valid combinations, one row per pair. Its size is the sum of the products within each group: nine brands, each with its own products and its own promos, and each one's contribution is the product of those two counts. That gives 465 rows out of 47 products and 89 promos. It matters that the bridge is bigger than both source tables — that's normal, and it's the price of correctness: without it, the same combinations would still arise, just not inside a separate table under control, but inside a calculation, multiplying sums. Both source tables connect to the bridge as one-to-many, and the key no longer repeats on either of the two relationships.",
       "options": [
         {
-          "label": "One row is one \"this product belongs to this promo's brand\" pair. 465 is the sum, across brands, of products times promos — for «Чистовъ» that's 5 × 10 = 50",
+          "label": "One row is one \"this product belongs to this promo's brand\" pair. 465 is the sum, across brands, of products times promos — for «Nettora» that's 5 × 10 = 50",
           "why": "A bridge lists every valid combination explicitly. Within a brand, every one of its products pairs with every one of its promos, so a brand's contribution is a product of two counts, and the total size is the sum of those products across all nine brands."
         },
         {
@@ -1143,7 +1143,7 @@
     {
       "id": "mdl-037",
       "title": "CALCULATE isn't WHERE",
-      "brief": "A measure computes brand «Ключевая»'s revenue. Someone puts a slicer for brand «Чистовъ» on the page — two different brands at once.",
+      "brief": "A measure computes brand «Aqualis»'s revenue. Someone puts a slicer for brand «Nettora» on the page — two different brands at once.",
       "goal": "Work out what the measure returns.",
       "predictQuestion": "What does the measure return with a slicer on a different brand?",
       "hints": [
@@ -1153,15 +1153,15 @@
       "explain": "This is the main difference between CALCULATE and WHERE, and the source of most confusion when reading someone else's measures. WHERE adds a condition to whatever's already there; CALCULATE replaces the filter on the column it mentions, and leaves filters on other columns alone. The practical consequence: a measure with a baked-in brand condition will keep showing the same brand no matter what's chosen in a brand slicer — but it will honestly narrow under a region or date slicer. If you actually need an intersection — keep the external filter and add your own condition on top — there's KEEPFILTERS, which changes CALCULATE's behaviour to exactly that: combining conditions.",
       "options": [
         {
-          "label": "«Ключевая»'s full revenue — ₽18,841,733. The condition inside CALCULATE replaced the brand filter, rather than adding to it",
-          "why": "CALCULATE doesn't intersect its condition with an existing filter on the same column — it replaces it. The «Чистовъ» slicer disappears for this measure entirely, and it computes as if there were no brand slicer at all."
+          "label": "«Aqualis»'s full revenue — ₽18,841,733. The condition inside CALCULATE replaced the brand filter, rather than adding to it",
+          "why": "CALCULATE doesn't intersect its condition with an existing filter on the same column — it replaces it. The «Nettora» slicer disappears for this measure entirely, and it computes as if there were no brand slicer at all."
         },
         {
-          "label": "Zero — a product can't be both «Ключевая» and «Чистовъ» at once, the intersection is empty",
+          "label": "Zero — a product can't be both «Aqualis» and «Nettora» at once, the intersection is empty",
           "why": "No intersection happens: that's how WHERE behaves in SQL, where conditions combine with AND. CALCULATE works differently — its condition on a column displaces whatever was already set on that column."
         },
         {
-          "label": "«Чистовъ»'s revenue — ₽16,165,815, because the page slicer takes priority over the measure's formula",
+          "label": "«Nettora»'s revenue — ₽16,165,815, because the page slicer takes priority over the measure's formula",
           "why": "The priority runs the other way: a filter set inside CALCULATE applies after the external context and overwrites it on its own column. That's exactly why a measure with a baked-in condition behaves the same regardless of slicers on that same column."
         },
         {
@@ -1173,21 +1173,21 @@
     {
       "id": "mdl-038",
       "title": "The filter on a different column survives",
-      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand — «Москва».",
+      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand — «Moscow».",
       "goal": "Work out which filters act on the calculation.",
       "predictQuestion": "What does the measure return with a region slicer?",
       "hints": [
         "Compare with mdl-037: there the condition and the slicer were on the same column, here they're on different ones.",
         "CALCULATE replaces filters selectively. On which columns exactly?"
       ],
-      "explain": "This shows the other half of the rule, without which the first half looks alarming. CALCULATE doesn't \"break the context\" wholesale — it acts precisely, only on the columns mentioned in its conditions. Filters on every other column pass straight through and combine with the measure's condition. This is exactly what makes measures with baked-in conditions practically useful: \"Klyuchevaya Revenue\" stays «Ключевая»'s revenue under any brand slicer, while still honestly breaking down by region, month and channel. To remove the external filter entirely you need an explicit ALL — a different technique, with a different meaning and different consequences.",
+      "explain": "This shows the other half of the rule, without which the first half looks alarming. CALCULATE doesn't \"break the context\" wholesale — it acts precisely, only on the columns mentioned in its conditions. Filters on every other column pass straight through and combine with the measure's condition. This is exactly what makes measures with baked-in conditions practically useful: \"Aqualis Revenue\" stays «Aqualis»'s revenue under any brand slicer, while still honestly breaking down by region, month and channel. To remove the external filter entirely you need an explicit ALL — a different technique, with a different meaning and different consequences.",
       "options": [
         {
-          "label": "₽1,323,959 — «Ключевая»'s revenue in Moscow. Both filters apply: brand from the measure, region from the slicer",
+          "label": "₽1,323,959 — «Aqualis»'s revenue in Moscow. Both filters apply: brand from the measure, region from the slicer",
           "why": "CALCULATE only replaces the filter on the columns its conditions mention. Brand and region are different columns of different tables, so the brand condition did nothing to the region slicer, and both narrowed the calculation at once."
         },
         {
-          "label": "₽18,841,733 — «Ключевая»'s full revenue, because CALCULATE wipes out the entire external context",
+          "label": "₽18,841,733 — «Aqualis»'s full revenue, because CALCULATE wipes out the entire external context",
           "why": "CALCULATE doesn't wipe the entire context — only filters on the columns it mentions. Wiping the whole external filter takes an explicit instruction, ALL for instance, and that's exactly the difference between \"replace the brand filter\" and \"remove every filter.\""
         },
         {
@@ -1203,14 +1203,14 @@
       "goal": "Work out the cause and how to fix it.",
       "predictQuestion": "Why is the share 100%, and what needs to change?",
       "hints": [
-        "In the «Фрутта» row, what are the numerator and denominator individually?",
+        "In the «Fruvia» row, what are the numerator and denominator individually?",
         "The denominator needs a context with no brand filter. Which function removes a filter from a column?"
       ],
-      "explain": "Any share is a ratio of a value in the current context to a value in a wider one, and the whole difficulty is setting that wider context explicitly. Without CALCULATE, both halves of the formula live in the same row-level filter context and give identical numbers. ALL removes the filter from the specified column, giving the denominator full reach: in the «Фрутта» row the numerator stays ₽25,465,980, the denominator becomes ₽126,911,191, and the share comes out to 20.1%. Notice the difference from the constant in mdl-017: ALL recomputes along with every other slicer — filter by Moscow and the denominator becomes Moscow's revenue, and the shares still sum to a hundred percent. That's exactly why shares are written with ALL, not a hard-coded number.",
+      "explain": "Any share is a ratio of a value in the current context to a value in a wider one, and the whole difficulty is setting that wider context explicitly. Without CALCULATE, both halves of the formula live in the same row-level filter context and give identical numbers. ALL removes the filter from the specified column, giving the denominator full reach: in the «Fruvia» row the numerator stays ₽25,465,980, the denominator becomes ₽126,911,191, and the share comes out to 20.1%. Notice the difference from the constant in mdl-017: ALL recomputes along with every other slicer — filter by Moscow and the denominator becomes Moscow's revenue, and the shares still sum to a hundred percent. That's exactly why shares are written with ALL, not a hard-coded number.",
       "options": [
         {
           "label": "The numerator and denominator compute in the same row-level filter context. The denominator needs freeing from the brand filter, via CALCULATE with ALL",
-          "why": "In the «Фрутта» row, both halves of the formula see the same filter and both give ₽25,465,980 — the ratio is inevitably one. The denominator needs a different context: CALCULATE(SUM(revenue), ALL(dim_product[brand])) removes the brand filter and gives the full ₽126,911,191."
+          "why": "In the «Fruvia» row, both halves of the formula see the same filter and both give ₽25,465,980 — the ratio is inevitably one. The denominator needs a different context: CALCULATE(SUM(revenue), ALL(dim_product[brand])) removes the brand filter and gives the full ₽126,911,191."
         },
         {
           "label": "A DIVIDE bug: shares need a special percentage-calculating function",
@@ -1239,7 +1239,7 @@
       "explain": "This is exactly where the two kinds of context meet. Row context gives a formula access to the current row's values, but aggregating functions don't read it — they only look at filter context. Context transition turns one into the other: inside CALCULATE, the current row becomes a filter, \"every row where the key columns match.\" Invoking a measure is implicitly wrapped in CALCULATE, so a measure in a matrix automatically picks up the brand filter and gives ₽25,465,980. A calculated column has no such wrapping — its SUM sees an empty filter and aggregates everything, ₽126,911,191 in every one of the lookup's 47 rows. To make a column behave like a measure, wrapping its formula in CALCULATE by hand is enough.",
       "options": [
         {
-          "label": "Invoking a measure is implicitly wrapped in CALCULATE, and row context turns into a filter \"brand = «Фрутта».\" The column has no such transition, and SUM aggregates the whole table",
+          "label": "Invoking a measure is implicitly wrapped in CALCULATE, and row context turns into a filter \"brand = «Fruvia».\" The column has no such transition, and SUM aggregates the whole table",
           "why": "Context transition happens inside CALCULATE, and invoking any measure is implicitly wrapped in it. So a measure in a matrix row sees the brand filter, while a calculated column doesn't: it has row context, but SUM doesn't respond to it."
         },
         {
@@ -1247,8 +1247,8 @@
           "why": "The difference isn't about timing — that would matter for changing data, but here the data is identical. The gap would exist right after a refresh too: the column aggregates the whole table by the very nature of its context."
         },
         {
-          "label": "The measure is wrong: 25,465,980 is the revenue of just one «Фрутта» product, not the whole brand",
-          "why": "₽25,465,980 is the whole «Фрутта» brand's revenue, and that's the correct number for a brand row. It's the column that's wrong — showing ₽126,911,191, the full database total, in every row of the lookup indiscriminately."
+          "label": "The measure is wrong: 25,465,980 is the revenue of just one «Fruvia» product, not the whole brand",
+          "why": "₽25,465,980 is the whole «Fruvia» brand's revenue, and that's the correct number for a brand row. It's the column that's wrong — showing ₽126,911,191, the full database total, in every row of the lookup indiscriminately."
         },
         {
           "label": "A column can't reference another table, so it returns a default total",
@@ -1408,13 +1408,13 @@
       "title": "One outlet, four spellings",
       "brief": "In the raw staging layer, the name of one and the same retail outlet is written several different ways. The by-outlet report shows it four times, splitting its revenue between the variants.",
       "goal": "Work out where this should be fixed.",
-      "scenario": "staging_raw_sellout, 3,110 rows.\nOne outlet appears as:\n\n  «Пятёрочка #1026»\n  «  Пятёрочка #1026 »\n  «Пятерочка #1026»\n  «  Пятерочка #1026 »\n\nDifferences: the letter ё vs е\nand leading/trailing spaces.",
+      "scenario": "staging_raw_sellout, 3,110 rows.\nOne outlet appears as:\n\n  «Yarmarka #1026»\n  «  Yarmarka #1026 »\n  «Iarmarka #1026»\n  «  Iarmarka #1026 »\n\nDifferences: Ya vs Ia transliteration\nand leading/trailing spaces.",
       "predictQuestion": "Where should this be cleaned, and why not in a measure?",
       "hints": [
         "Ask: does the result of this cleanup depend on what is selected in the report slicers?",
         "Think not only about the number in a measure, but about what a person sees in the filter list."
       ],
-      "explain": "The rule for choosing where to clean comes down to one question: does the result depend on the evaluation context. Normalising «Пятерочка» and «Пятёрочка» to a single form depends on no slicer at all, so it belongs in the preparation layer — in Power Query, or in the source itself if you have any influence there. What stays in a measure is only what evaluates differently under different filters. Cleaning in Power Query has a second advantage people forget: it fixes not only the numbers but the value lists in slicers — a person sees one «Пятёрочка» instead of four. A measure cannot do that in principle, because a filter is built from the model's data, not from measure formulas.",
+      "explain": "The rule for choosing where to clean comes down to one question: does the result depend on the evaluation context. Normalising «Iarmarka» and «Yarmarka» to a single form depends on no slicer at all, so it belongs in the preparation layer — in Power Query, or in the source itself if you have any influence there. What stays in a measure is only what evaluates differently under different filters. Cleaning in Power Query has a second advantage people forget: it fixes not only the numbers but the value lists in slicers — a person sees one «Yarmarka» instead of four. A measure cannot do that in principle, because a filter is built from the model's data, not from measure formulas.",
       "options": [
         {
           "label": "In Power Query at load time: the result does not depend on what is selected in the report, and it should be computed once before the data ever enters the model",
@@ -1422,7 +1422,7 @@
         },
         {
           "label": "In the measure, wrapping the name in TRIM and SUBSTITUTE — that way the fix needs no model refresh",
-          "why": "It needs no refresh, true, but it repeats in every measure the outlet appears in, and one day those copies will disagree. Worse: the outlet slicer will still show four «Пятёрочка» entries — a measure fixes its own calculation, not what the person sees in the filter list."
+          "why": "It needs no refresh, true, but it repeats in every measure the outlet appears in, and one day those copies will disagree. Worse: the outlet slicer will still show four «Yarmarka» entries — a measure fixes its own calculation, not what the person sees in the filter list."
         },
         {
           "label": "Nowhere: this is the data as it is, and changing it distorts the source",
@@ -1499,9 +1499,9 @@
     {
       "id": "mdl-049",
       "title": "An outlet moved to another region",
-      "brief": "A retail outlet changed regions: it used to be in «Москва», now it is listed in «Московская обл.». One field in the lookup table was updated.",
+      "brief": "A retail outlet changed regions: it used to be in «Moscow», now it is listed in «Moscow Region». One field in the lookup table was updated.",
       "goal": "Work out what happens to last year's report.",
-      "scenario": "dim_customer — 144 outlets,\n16 regions; an outlet has one\nregion — the current one.\n\nWas:  outlet → «Москва»\nNow:  outlet → «Моск. обл.»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
+      "scenario": "dim_customer — 144 outlets,\n16 regions; an outlet has one\nregion — the current one.\n\nWas:  outlet → «Moscow»\nNow:  outlet → «Moscow Region»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
       "predictQuestion": "What does the 2024 report show after the lookup table is edited?",
       "hints": [
         "Where is the region of a sale physically stored — in the fact row, or in the lookup table?",
@@ -1510,7 +1510,7 @@
       "explain": "An ordinary lookup table answers the question \"which region is this outlet in now\" — and that is the only question it can answer. A report for last year asks a different one: \"which region was it in at the time of the sale.\" The difference between these questions is invisible while nothing changes, and it surfaces silently on the day the lookup gets edited: the regional total changes retroactively, nothing breaks, nobody gets a warning. This is the same class of error as the frozen column in mdl-016, only mirrored — there a value failed to recompute when it should have, here it recomputed when it should not have. The fix is versioning the lookup table, where each state has its own period of validity and the fact references the version that was current on the date of the event.",
       "options": [
         {
-          "label": "This outlet's entire 2024 sales history moves to «Московская обл.», as if it had always been there",
+          "label": "This outlet's entire 2024 sales history moves to «Moscow Region», as if it had always been there",
           "why": "The fact stores a reference to the outlet, not to a region: the region is taken from the lookup table at the moment the report is built. The lookup only knows the current value, so the whole history is recomputed against it — silently and retroactively."
         },
         {
@@ -1532,7 +1532,7 @@
       "title": "A \"previous region\" column",
       "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table — then the old value would be preserved.",
       "goal": "Work out whether this actually solves the problem.",
-      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Москва»\n  until 2025-03 — «Моск. обл.»\n  now — «Калужская обл.»",
+      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Moscow»\n  until 2025-03 — «Moscow Region»\n  now — «Kaluga Region»",
       "predictQuestion": "What does this solution fail to solve?",
       "hints": [
         "The outlet moved twice. How many states fit into two columns?",
@@ -1542,7 +1542,7 @@
       "options": [
         {
           "label": "Neither: the first move is already lost, and more importantly, the column cannot answer which region was in effect on a specific sale date",
-          "why": "Two columns cover one change, and there were two — «Москва» has already been pushed out. But even with a single move an unanswerable question remains: does a sale from January 15th 2025 belong to the \"current\" region or the \"previous\" one? Without validity dates there is no answer."
+          "why": "Two columns cover one change, and there were two — «Moscow» has already been pushed out. But even with a single move an unanswerable question remains: does a sale from January 15th 2025 belong to the \"current\" region or the \"previous\" one? Without validity dates there is no answer."
         },
         {
           "label": "It solves it completely: a measure just picks the right column depending on the report year",

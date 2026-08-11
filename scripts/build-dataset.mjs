@@ -1,7 +1,7 @@
 /**
  * Генератор учебного датасета Querium.
  *
- * Одна вымышленная компания «Нордвинд Трейд»: дистрибуция FMCG + OTC-фарма.
+ * Одна вымышленная компания «Nordwind Trade»: дистрибуция FMCG + OTC-фарма.
  * Схема — классическая звезда, данные согласованы между собой:
  * sell-out агрегируется в sell-in, sell-in минус sell-out даёт остатки,
  * планы строятся от факта. Это принципиально: задания разных треков
@@ -10,9 +10,9 @@
  *
  * В данные намеренно зашиты сюжеты для аналитических заданий:
  *  - сезонность (вода и соки — лето, простуда и витамины — зима);
- *  - падающий бренд «Чистовъ»: причина не в цене и не в спросе, а в потере дистрибуции;
- *  - затоваривание дистрибьютора «Волга-Трейд» в Q4 2025 (sell-in >> sell-out);
- *  - запуск SKU «Витамакс Форте» в сентябре 2025;
+ *  - падающий бренд «Nettora»: причина не в цене и не в спросе, а в потере дистрибуции;
+ *  - затоваривание дистрибьютора «Volga-Trade» в Q4 2025 (sell-in >> sell-out);
+ *  - запуск SKU «Vitanor Forte» в сентябре 2025;
  *  - отсутствие строки = не было продаж (OOS), а не ноль — ловушка на LEFT JOIN;
  *  - staging_raw_sellout — грязный слой под задачи на очистку.
  *
@@ -65,23 +65,38 @@ const END = parseISO('2026-06-30');
 
 // ------------------------------------------------------------- измерения
 
+/**
+ * Значения в данных — латиницей на обе локали.
+ *
+ * Датасет один, эталоны считаются по нему же, поэтому `WHERE region_name =
+ * 'Moscow'` обязано быть одним и тем же запросом в русском и английском
+ * задании (см. шапку src/i18n/ru.ts). Кириллица в значениях делала английскую
+ * локаль наполовину русской ровно там, где человек пишет код.
+ *
+ * Топонимы — настоящие, в общепринятой английской передаче: город и регион
+ * не торговая марка, использовать их можно, а выдуманная география ломала бы
+ * то, на чём держится проза заданий (федеральные округа, tier-регионы).
+ * Всё остальное — торговые марки, сети, дистрибьюторы, ФИО — выдумано
+ * целиком: реальная сеть в выдуманной истории про падение продаж это ровно
+ * то, чего в учебном датасете быть не должно.
+ */
 const REGIONS = [
-  ['Москва', 'Центральный', 13100000, 1],
-  ['Московская область', 'Центральный', 8600000, 1],
-  ['Санкт-Петербург', 'Северо-Западный', 5600000, 1],
-  ['Воронежская область', 'Центральный', 2280000, 2],
-  ['Краснодарский край', 'Южный', 5800000, 1],
-  ['Ростовская область', 'Южный', 4160000, 2],
-  ['Волгоградская область', 'Южный', 2450000, 3],
-  ['Свердловская область', 'Уральский', 4260000, 2],
-  ['Челябинская область', 'Уральский', 3400000, 2],
-  ['Тюменская область', 'Уральский', 1600000, 3],
-  ['Новосибирская область', 'Сибирский', 2790000, 2],
-  ['Красноярский край', 'Сибирский', 2850000, 3],
-  ['Республика Татарстан', 'Приволжский', 3900000, 2],
-  ['Республика Башкортостан', 'Приволжский', 4000000, 2],
-  ['Самарская область', 'Приволжский', 3150000, 2],
-  ['Приморский край', 'Дальневосточный', 1840000, 3],
+  ['Moscow', 'Central', 13100000, 1],
+  ['Moscow Region', 'Central', 8600000, 1],
+  ['Saint Petersburg', 'Northwestern', 5600000, 1],
+  ['Voronezh Region', 'Central', 2280000, 2],
+  ['Krasnodar Krai', 'Southern', 5800000, 1],
+  ['Rostov Region', 'Southern', 4160000, 2],
+  ['Volgograd Region', 'Southern', 2450000, 3],
+  ['Sverdlovsk Region', 'Ural', 4260000, 2],
+  ['Chelyabinsk Region', 'Ural', 3400000, 2],
+  ['Tyumen Region', 'Ural', 1600000, 3],
+  ['Novosibirsk Region', 'Siberian', 2790000, 2],
+  ['Krasnoyarsk Krai', 'Siberian', 2850000, 3],
+  ['Republic of Tatarstan', 'Volga', 3900000, 2],
+  ['Republic of Bashkortostan', 'Volga', 4000000, 2],
+  ['Samara Region', 'Volga', 3150000, 2],
+  ['Primorsky Krai', 'Far Eastern', 1840000, 3],
 ].map(([region_name, federal_district, population, tier], i) => ({
   region_id: i + 1,
   region_name,
@@ -91,22 +106,22 @@ const REGIONS = [
 }));
 
 const CITY_BY_REGION = {
-  'Москва': ['Москва'],
-  'Московская область': ['Химки', 'Подольск', 'Балашиха', 'Мытищи'],
-  'Санкт-Петербург': ['Санкт-Петербург'],
-  'Воронежская область': ['Воронеж', 'Борисоглебск'],
-  'Краснодарский край': ['Краснодар', 'Сочи', 'Новороссийск'],
-  'Ростовская область': ['Ростов-на-Дону', 'Таганрог'],
-  'Волгоградская область': ['Волгоград', 'Волжский'],
-  'Свердловская область': ['Екатеринбург', 'Нижний Тагил'],
-  'Челябинская область': ['Челябинск', 'Магнитогорск'],
-  'Тюменская область': ['Тюмень'],
-  'Новосибирская область': ['Новосибирск', 'Бердск'],
-  'Красноярский край': ['Красноярск', 'Норильск'],
-  'Республика Татарстан': ['Казань', 'Набережные Челны'],
-  'Республика Башкортостан': ['Уфа', 'Стерлитамак'],
-  'Самарская область': ['Самара', 'Тольятти'],
-  'Приморский край': ['Владивосток', 'Уссурийск'],
+  'Moscow': ['Moscow'],
+  'Moscow Region': ['Khimki', 'Podolsk', 'Balashikha', 'Mytishchi'],
+  'Saint Petersburg': ['Saint Petersburg'],
+  'Voronezh Region': ['Voronezh', 'Borisoglebsk'],
+  'Krasnodar Krai': ['Krasnodar', 'Sochi', 'Novorossiysk'],
+  'Rostov Region': ['Rostov-on-Don', 'Taganrog'],
+  'Volgograd Region': ['Volgograd', 'Volzhsky'],
+  'Sverdlovsk Region': ['Yekaterinburg', 'Nizhny Tagil'],
+  'Chelyabinsk Region': ['Chelyabinsk', 'Magnitogorsk'],
+  'Tyumen Region': ['Tyumen'],
+  'Novosibirsk Region': ['Novosibirsk', 'Berdsk'],
+  'Krasnoyarsk Krai': ['Krasnoyarsk', 'Norilsk'],
+  'Republic of Tatarstan': ['Kazan', 'Naberezhnye Chelny'],
+  'Republic of Bashkortostan': ['Ufa', 'Sterlitamak'],
+  'Samara Region': ['Samara', 'Tolyatti'],
+  'Primorsky Krai': ['Vladivostok', 'Ussuriysk'],
 };
 
 // seasonality: множитель по номеру месяца (1..12)
@@ -119,74 +134,78 @@ const SEASON = {
 
 const BRANDS = [
   {
-    brand: 'Ключевая', division: 'FMCG', category: 'Напитки', subcategory: 'Вода',
+    brand: 'Aqualis', division: 'FMCG', category: 'Beverages', subcategory: 'Water',
     season: 'summer', trend: 0.07, weight: 1.35,
-    skus: [['Ключевая негаз. 0.5 л', 0.5, 'л', 38], ['Ключевая негаз. 1.5 л', 1.5, 'л', 62],
-           ['Ключевая газ. 0.5 л', 0.5, 'л', 38], ['Ключевая газ. 1.5 л', 1.5, 'л', 62],
-           ['Ключевая негаз. 5 л', 5, 'л', 128], ['Ключевая Спорт 0.75 л', 0.75, 'л', 79]],
+    skus: [['Aqualis Still 0.5 L', 0.5, 'L', 38], ['Aqualis Still 1.5 L', 1.5, 'L', 62],
+           ['Aqualis Sparkling 0.5 L', 0.5, 'L', 38], ['Aqualis Sparkling 1.5 L', 1.5, 'L', 62],
+           ['Aqualis Still 5 L', 5, 'L', 128], ['Aqualis Sport 0.75 L', 0.75, 'L', 79]],
   },
   {
-    brand: 'Фрутта', division: 'FMCG', category: 'Напитки', subcategory: 'Соки',
+    brand: 'Fruvia', division: 'FMCG', category: 'Beverages', subcategory: 'Juices',
     season: 'summer', trend: 0.02, weight: 1.0,
-    skus: [['Фрутта Апельсин 1 л', 1, 'л', 145], ['Фрутта Яблоко 1 л', 1, 'л', 132],
-           ['Фрутта Мультифрукт 1 л', 1, 'л', 141], ['Фрутта Томат 1 л', 1, 'л', 128],
-           ['Фрутта Апельсин 0.2 л', 0.2, 'л', 42], ['Фрутта Вишня 1 л', 1, 'л', 149]],
+    skus: [['Fruvia Orange 1 L', 1, 'L', 145], ['Fruvia Apple 1 L', 1, 'L', 132],
+           ['Fruvia Multifruit 1 L', 1, 'L', 141], ['Fruvia Tomato 1 L', 1, 'L', 128],
+           ['Fruvia Orange 0.2 L', 0.2, 'L', 42], ['Fruvia Cherry 1 L', 1, 'L', 149]],
   },
   {
-    brand: 'Хрустик', division: 'FMCG', category: 'Снеки', subcategory: 'Чипсы',
+    brand: 'Krosti', division: 'FMCG', category: 'Snacks', subcategory: 'Chips',
     season: 'none', trend: 0.05, weight: 0.95,
-    skus: [['Хрустик Соль 90 г', 90, 'г', 98], ['Хрустик Сметана-лук 90 г', 90, 'г', 98],
-           ['Хрустик Паприка 90 г', 90, 'г', 98], ['Хрустик Соль 150 г', 150, 'г', 152],
-           ['Хрустик Краб 90 г', 90, 'г', 102], ['Хрустик Микс 40 г', 40, 'г', 55]],
+    skus: [['Krosti Salt 90 g', 90, 'g', 98], ['Krosti Sour Cream-Onion 90 g', 90, 'g', 98],
+           ['Krosti Paprika 90 g', 90, 'g', 98], ['Krosti Salt 150 g', 150, 'g', 152],
+           ['Krosti Crab 90 g', 90, 'g', 102], ['Krosti Mix 40 g', 40, 'g', 55]],
   },
   {
     // Сюжет: бренд падает. Спрос в точках держится, но точки перестают его брать.
-    brand: 'Чистовъ', division: 'FMCG', category: 'Бытовая химия', subcategory: 'Уход за домом',
+    brand: 'Nettora', division: 'FMCG', category: 'Home care', subcategory: 'Household cleaning',
     season: 'spring', trend: -0.04, weight: 0.72, losingDistribution: true,
-    skus: [['Чистовъ Универсал 500 мл', 500, 'мл', 189], ['Чистовъ Для стекол 500 мл', 500, 'мл', 175],
-           ['Чистовъ Антижир 500 мл', 500, 'мл', 214], ['Чистовъ Для пола 1 л', 1, 'л', 232],
-           ['Чистовъ Сантехника 750 мл', 750, 'мл', 198]],
+    skus: [['Nettora Universal 500 ml', 500, 'ml', 189], ['Nettora Glass 500 ml', 500, 'ml', 175],
+           ['Nettora Degreaser 500 ml', 500, 'ml', 214], ['Nettora Floor 1 L', 1, 'L', 232],
+           ['Nettora Bath 750 ml', 750, 'ml', 198]],
   },
   {
-    brand: 'Молочный Дом', division: 'FMCG', category: 'Молочная продукция', subcategory: 'Йогурты',
+    brand: 'Milvara', division: 'FMCG', category: 'Dairy', subcategory: 'Yogurts',
     season: 'none', trend: 0.01, weight: 1.1,
-    skus: [['Молочный Дом Клубника 290 г', 290, 'г', 74], ['Молочный Дом Персик 290 г', 290, 'г', 74],
-           ['Молочный Дом Натуральный 290 г', 290, 'г', 68], ['Молочный Дом Питьевой 430 г', 430, 'г', 92],
-           ['Молочный Дом Детский 100 г', 100, 'г', 41], ['Молочный Дом Греческий 200 г', 200, 'г', 105]],
+    skus: [['Milvara Strawberry 290 g', 290, 'g', 74], ['Milvara Peach 290 g', 290, 'g', 74],
+           ['Milvara Natural 290 g', 290, 'g', 68], ['Milvara Drinking 430 g', 430, 'g', 92],
+           ['Milvara Kids 100 g', 100, 'g', 41], ['Milvara Greek 200 g', 200, 'g', 105]],
   },
   {
-    brand: 'Тераферм', division: 'Pharma', category: 'OTC', subcategory: 'Жаропонижающие',
+    brand: 'Pyrexan', division: 'Pharma', category: 'OTC', subcategory: 'Antipyretics',
     season: 'winter', trend: 0.03, weight: 1.2,
-    skus: [['Тераферм 500 мг №10', 10, 'таб', 218], ['Тераферм 500 мг №20', 20, 'таб', 372],
-           ['Тераферм Форте №10', 10, 'таб', 298], ['Тераферм порошок №5', 5, 'саше', 264],
-           ['Тераферм Детский сироп 100 мл', 100, 'мл', 341]],
+    skus: [['Pyrexan 500 mg x10', 10, 'tab', 218], ['Pyrexan 500 mg x20', 20, 'tab', 372],
+           ['Pyrexan Forte x10', 10, 'tab', 298], ['Pyrexan Powder x5', 5, 'sachet', 264],
+           ['Pyrexan Kids Syrup 100 ml', 100, 'ml', 341]],
   },
   {
-    brand: 'Гастрокалм', division: 'Pharma', category: 'OTC', subcategory: 'ЖКТ',
+    brand: 'Gastrivo', division: 'Pharma', category: 'OTC', subcategory: 'Digestive health',
     season: 'none', trend: 0.06, weight: 0.9,
-    skus: [['Гастрокалм №20', 20, 'таб', 412], ['Гастрокалм №40', 40, 'таб', 705],
-           ['Гастрокалм суспензия 200 мл', 200, 'мл', 488], ['Гастрокалм Экспресс №10', 10, 'таб', 268]],
+    skus: [['Gastrivo x20', 20, 'tab', 412], ['Gastrivo x40', 40, 'tab', 705],
+           ['Gastrivo Suspension 200 ml', 200, 'ml', 488], ['Gastrivo Express x10', 10, 'tab', 268]],
   },
   {
-    brand: 'Витамакс', division: 'Pharma', category: 'OTC', subcategory: 'Витамины',
+    brand: 'Vitanor', division: 'Pharma', category: 'OTC', subcategory: 'Vitamins',
     season: 'winter', trend: 0.09, weight: 1.05,
-    skus: [['Витамакс Мульти №30', 30, 'таб', 596], ['Витамакс D3 №60', 60, 'капс', 458],
-           ['Витамакс Омега-3 №60', 60, 'капс', 812], ['Витамакс Магний В6 №50', 50, 'таб', 524],
-           ['Витамакс Форте №30', 30, 'таб', 742, '2025-09-01']],
+    skus: [['Vitanor Multi x30', 30, 'tab', 596], ['Vitanor D3 x60', 60, 'caps', 458],
+           ['Vitanor Omega-3 x60', 60, 'caps', 812], ['Vitanor Magnesium B6 x50', 50, 'tab', 524],
+           ['Vitanor Forte x30', 30, 'tab', 742, '2025-09-01']],
   },
   {
-    brand: 'Ринофлекс', division: 'Pharma', category: 'OTC', subcategory: 'Простуда и грипп',
+    brand: 'Rhinolar', division: 'Pharma', category: 'OTC', subcategory: 'Cold and flu',
     season: 'winter', trend: 0.02, weight: 0.85,
-    skus: [['Ринофлекс спрей 15 мл', 15, 'мл', 285], ['Ринофлекс капли 10 мл', 10, 'мл', 224],
-           ['Ринофлекс Детский спрей 10 мл', 10, 'мл', 262], ['Ринофлекс Актив спрей 15 мл', 15, 'мл', 348]],
+    skus: [['Rhinolar Spray 15 ml', 15, 'ml', 285], ['Rhinolar Drops 10 ml', 10, 'ml', 224],
+           ['Rhinolar Kids Spray 10 ml', 10, 'ml', 262], ['Rhinolar Active Spray 15 ml', 15, 'ml', 348]],
   },
 ];
 
 const products = [];
 {
   let pid = 0;
+  // Четыре первые буквы бренда — и потому имена брендов подобраны так, чтобы
+  // эти четвёрки не совпадали: AQUA, FRUV, KROS, NETT, MILV, PYRE, GAST, VITA,
+  // RHIN. Совпадение сделало бы sku_code неоднозначным, а он в заданиях
+  // используется как человекочитаемый ключ.
   const codeOf = (brand, i) =>
-    brand.replace(/[^А-Яа-яA-Za-z]/g, '').slice(0, 4).toUpperCase() + String(i + 1).padStart(3, '0');
+    brand.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() + String(i + 1).padStart(3, '0');
   for (const b of BRANDS) {
     b.skus.forEach((sku, i) => {
       const [product_name, pack_size, unit, list_price, launch] = sku;
@@ -213,14 +232,23 @@ const products = [];
 }
 const productById = new Map(products.map((p) => [p.product_id, p]));
 
+/**
+ * Дистрибьюторы, сети, аптеки и маркетплейсы — выдуманы целиком.
+ *
+ * Раньше здесь стояли настоящие марки (пять федеральных сетей, три аптечных,
+ * четыре маркетплейса), и датасет приписывал им выдуманные обороты, падения
+ * и затоваривание — то есть сообщал о реальных компаниях то, чего не было.
+ * Учебному датасету это не нужно ни для одного сюжета: роль сети в задании
+ * играет её тип и канал, а не имя на вывеске.
+ */
 const DISTRIBUTOR_NAMES = [
-  'ООО «Волга-Трейд»', 'ООО «Северный Путь»', 'ООО «Юг-Логистик»', 'АО «Уралснаб»',
-  'ООО «Сибирь-Опт»', 'ООО «Столица-Дистрибуция»', 'ООО «Невский Опт»', 'ООО «Кубань-Трейд»',
-  'ООО «Прикамье-Групп»', 'ООО «Дальторг»', 'ООО «Черноземье-Опт»', 'ООО «Магнит-Урал»',
+  'Volga-Trade LLC', 'Nordway LLC', 'South-Logistic LLC', 'Uralsnab JSC',
+  'Sibir-Opt LLC', 'Capital Distribution LLC', 'Nevsky Opt LLC', 'Kuban-Trade LLC',
+  'Prikamye Group LLC', 'Daltorg LLC', 'Chernozem-Opt LLC', 'Gorizont-Ural LLC',
 ];
-const CHAINS = ['Пятёрочка', 'Магнит', 'Перекрёсток', 'Лента', 'Дикси'];
-const PHARMA_CHAINS = ['Ригла', 'Аптека 36,6', 'Планета Здоровья'];
-const ECOM = ['Ozon', 'Wildberries', 'СберМаркет', 'Яндекс Лавка'];
+const CHAINS = ['Yarmarka', 'Bereg', 'Kolos', 'Volna', 'Prima'];
+const PHARMA_CHAINS = ['Farmalux', 'Apteka 24', 'Vitalika'];
+const ECOM = ['Marketo', 'Bazario', 'Domsklad', 'Bystro'];
 
 const customers = [];
 let cid = 0;
@@ -247,14 +275,14 @@ function addOutlet(kind) {
     return { ...base, customer_name: `${chain} #${1000 + cid}`, customer_type: 'chain', channel: 'modern_trade', chain_name: chain, size: between(2.4, 4.6) };
   }
   if (kind === 'traditional') {
-    return { ...base, customer_name: `Магазин «${pick(['Родник', 'Уют', 'Продукты 24', 'Берёзка', 'Заря', 'Меркурий', 'Колосок'])}» #${1000 + cid}`, customer_type: 'traditional', channel: 'traditional_trade', chain_name: null, size: between(0.5, 1.3) };
+    return { ...base, customer_name: `${pick(['Rodnik', 'Uyut', 'Produkty 24', 'Beryozka', 'Zarya', 'Merkury', 'Rassvet'])} Store #${1000 + cid}`, customer_type: 'traditional', channel: 'traditional_trade', chain_name: null, size: between(0.5, 1.3) };
   }
   if (kind === 'pharmacy') {
     const chain = rnd() < 0.62 ? pick(PHARMA_CHAINS) : null;
-    return { ...base, customer_name: chain ? `${chain} #${1000 + cid}` : `Аптека «${pick(['Здоровье', 'Панацея', 'Айболит', 'Вита'])}» #${1000 + cid}`, customer_type: 'pharmacy', channel: 'pharmacy', chain_name: chain, size: between(1.0, 2.6) };
+    return { ...base, customer_name: chain ? `${chain} #${1000 + cid}` : `${pick(['Zdorovie', 'Panacea', 'Aibolit', 'Salus'])} Pharmacy #${1000 + cid}`, customer_type: 'pharmacy', channel: 'pharmacy', chain_name: chain, size: between(1.0, 2.6) };
   }
   const shop = pick(ECOM);
-  return { ...base, customer_name: `${shop} (склад ${base.city})`, customer_type: 'ecom', channel: 'ecom', chain_name: shop, size: between(3.0, 6.0) };
+  return { ...base, customer_name: `${shop} (warehouse ${base.city})`, customer_type: 'ecom', channel: 'ecom', chain_name: shop, size: between(3.0, 6.0) };
 }
 for (let i = 0; i < 42; i++) customers.push(addOutlet('chain'));
 for (let i = 0; i < 44; i++) customers.push(addOutlet('traditional'));
@@ -263,9 +291,9 @@ for (let i = 0; i < 8; i++) customers.push(addOutlet('ecom'));
 const outlets = customers.filter((c) => c.customer_type !== 'distributor');
 
 // Торговые представители: 5 руководителей + линейные, self-join по manager_id.
-const FIRST = ['Анна', 'Игорь', 'Мария', 'Дмитрий', 'Ольга', 'Сергей', 'Екатерина', 'Павел', 'Наталья', 'Алексей', 'Ирина', 'Роман', 'Юлия', 'Артём', 'Светлана', 'Максим'];
-const LAST = ['Ковалёв', 'Соколова', 'Морозов', 'Лебедева', 'Волков', 'Зайцева', 'Орлов', 'Гусева', 'Титов', 'Белова', 'Егоров', 'Смирнова', 'Панов', 'Крылова', 'Фомин', 'Дьякова'];
-const TEAMS = ['FMCG Центр', 'FMCG Юг', 'FMCG Урал-Сибирь', 'Pharma Центр', 'Pharma Регионы'];
+const FIRST = ['Anna', 'Igor', 'Maria', 'Dmitry', 'Olga', 'Sergey', 'Ekaterina', 'Pavel', 'Natalia', 'Alexey', 'Irina', 'Roman', 'Yulia', 'Artem', 'Svetlana', 'Maxim'];
+const LAST = ['Kovalev', 'Sokolova', 'Morozov', 'Lebedeva', 'Volkov', 'Zaytseva', 'Orlov', 'Guseva', 'Titov', 'Belova', 'Egorov', 'Smirnova', 'Panov', 'Krylova', 'Fomin', 'Dyakova'];
+const TEAMS = ['FMCG Central', 'FMCG South', 'FMCG Ural-Siberia', 'Pharma Central', 'Pharma Regions'];
 const reps = [];
 TEAMS.forEach((team, i) => {
   reps.push({ rep_id: i + 1, rep_name: `${pick(FIRST)} ${pick(LAST)}`, team, role: 'manager', region_id: REGIONS[i].region_id, hired_date: iso(addDays(START, -intBetween(900, 2600))), manager_id: null });
@@ -280,7 +308,7 @@ outlets.forEach((o) => {
 });
 
 // Промо-акции: механика, период, глубина скидки.
-const MECHANICS = ['Скидка 20%', 'Скидка 30%', '2+1', 'Жёлтый ценник', 'Кросс-категория'];
+const MECHANICS = ['Discount 20%', 'Discount 30%', '2+1', 'Yellow tag', 'Cross-category'];
 const promos = [];
 {
   let pmid = 0;
@@ -296,7 +324,7 @@ const promos = [];
         mechanic: mech,
         start_date: iso(d),
         end_date: iso(addDays(d, len)),
-        discount_pct: mech === '2+1' ? 33 : mech === 'Скидка 30%' ? 30 : mech === 'Скидка 20%' ? 20 : intBetween(8, 15),
+        discount_pct: mech === '2+1' ? 33 : mech === 'Discount 30%' ? 30 : mech === 'Discount 20%' ? 20 : intBetween(8, 15),
         channel: b.division === 'Pharma' ? 'pharmacy' : pick(['modern_trade', 'traditional_trade', 'all']),
       });
       d = addDays(d, len + intBetween(35, 110));
@@ -315,7 +343,7 @@ function activePromo(brand, wStart, channel) {
 
 // --------------------------------------------------------------- календарь
 
-const MONTH_RU = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const dates = [];
 for (let d = new Date(START); d <= END; d = addDays(d, 1)) {
   const dow = (d.getUTCDay() + 6) % 7; // 0 = понедельник
@@ -327,12 +355,12 @@ for (let d = new Date(START); d <= END; d = addDays(d, 1)) {
     year: d.getUTCFullYear(),
     quarter: Math.floor(d.getUTCMonth() / 3) + 1,
     month: d.getUTCMonth() + 1,
-    month_name: MONTH_RU[d.getUTCMonth()],
+    month_name: MONTH_NAMES[d.getUTCMonth()],
     month_start: iso(monthStart(d)),
     week_start: iso(ws),
     iso_week: Math.ceil(((thursday - yearStart) / DAY + 1) / 7),
     day_of_week: dow + 1,
-    day_name: ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'][dow],
+    day_name: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][dow],
     is_weekend: dow >= 5 ? 1 : 0,
   });
 }
@@ -350,8 +378,8 @@ for (const o of outlets) {
   const target = Math.round(Math.min(pool.length, o.size * (o.channel === 'ecom' ? 5.5 : 3.4) + intBetween(2, 5)));
   const shuffled = pool.slice().sort(() => rnd() - 0.5);
   o.assortment = shuffled.slice(0, Math.max(3, target)).map((p) => p.product_id);
-  // Дата, с которой точка перестала брать падающий бренд (сюжет «Чистовъ»).
-  o.dropsChistovAfter = rnd() < 0.55 ? iso(addDays(parseISO('2025-01-01'), intBetween(0, 420))) : null;
+  // Дата, с которой точка перестала брать падающий бренд (сюжет «Nettora»).
+  o.dropsNettoraAfter = rnd() < 0.55 ? iso(addDays(parseISO('2025-01-01'), intBetween(0, 420))) : null;
   // Новинка приходит в точки не одномоментно: дистрибуция раскатывается волной.
   o.listedFrom = {};
   for (const pid of o.assortment) {
@@ -376,7 +404,7 @@ for (const o of outlets) {
     for (const ws of weeks) {
       if (ws < (o.listedFrom[pid] ?? p.launch_date)) continue;
       if (ws < o.opened_date) continue;
-      if (p.losingDistribution && o.dropsChistovAfter && ws >= o.dropsChistovAfter) continue; // точка вывела бренд из матрицы
+      if (p.losingDistribution && o.dropsNettoraAfter && ws >= o.dropsNettoraAfter) continue; // точка вывела бренд из матрицы
       const m = parseISO(ws).getUTCMonth() + 1;
       const promo = activePromo(p.brand, ws, o.channel);
       const seasonMul = SEASON[p.season](m);
@@ -415,7 +443,7 @@ for (const r of sellout) {
   const key = `${dist}|${mth}|${r.product_id}`;
   sellinAgg.set(key, (sellinAgg.get(key) ?? 0) + r.units);
 }
-const OVERSTOCK_DIST = distributors[0].customer_id; // «Волга-Трейд»
+const OVERSTOCK_DIST = distributors[0].customer_id; // «Volga-Trade»
 
 /**
  * Отдельный поток случайных чисел — только под задержку отгрузки.
@@ -566,8 +594,16 @@ const dirty = [];
   for (const r of sample) {
     const p = productById.get(r.product_id);
     let name = custName.get(r.customer_id);
-    // одна сеть записана в двух вариантах написания — классическая ловушка на GROUP BY
-    if (name.startsWith('Пятёрочка') && rnd() < 0.45) name = name.replace('Пятёрочка', 'Пятерочка');
+    /*
+     * Одна сеть записана в двух вариантах — классическая ловушка на GROUP BY.
+     *
+     * Различие держится на транслитерации (я → ya против я → ia), а не
+     * на опечатке: несогласованная транслитерация — это системная беда
+     * выгрузок из разных источников, а опечатка была бы случайностью
+     * одной строки. Прежний вариант стоял на русской «ё», и в английской
+     * локали урок опирался на букву, которой в его же данных не было.
+     */
+    if (name.startsWith('Yarmarka') && rnd() < 0.45) name = name.replace('Yarmarka', 'Iarmarka');
     if (rnd() < 0.3) name = `  ${name} `;
     const unitsRaw =
       rnd() < 0.03 ? null : rnd() < 0.04 ? String(-r.units) : rnd() < 0.05 ? `${r.units},0` : String(r.units);
@@ -626,7 +662,7 @@ const stripFkNote = (description) =>
 
 /** Кто эти данные «собрал» — единственное человеческое поле схемы вне таблиц. */
 const COMPANY = {
-  ru: 'Нордвинд Трейд — дистрибуция FMCG и OTC-фармы',
+  ru: 'Nordwind Trade — дистрибуция FMCG и OTC-фармы',
   en: 'Nordwind Trade — FMCG and OTC pharma distribution',
 };
 

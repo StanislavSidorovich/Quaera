@@ -31,8 +31,8 @@ function check(name, ok, detail) {
   if (!ok) failed++;
 }
 
-// --- Сюжет 1: «Чистовъ» падает из-за дистрибуции, а не из-за спроса или цены.
-const chistov = rows(`
+// --- Сюжет 1: «Nettora» падает из-за дистрибуции, а не из-за спроса или цены.
+const nettora = rows(`
   SELECT d.year || '-Q' || d.quarter AS period, SUM(f.units) units,
          COUNT(DISTINCT f.customer_id) outlets,
          ROUND(1.0*SUM(f.units)/COUNT(DISTINCT f.customer_id), 2) per_outlet,
@@ -40,18 +40,18 @@ const chistov = rows(`
   FROM fact_sellout f
   JOIN dim_product p ON p.product_id = f.product_id
   JOIN dim_date d ON d.date_id = f.week_start
-  WHERE p.brand = 'Чистовъ' GROUP BY 1 ORDER BY 1`);
-console.table(chistov);
+  WHERE p.brand = 'Nettora' GROUP BY 1 ORDER BY 1`);
+console.table(nettora);
 // Сравниваем одноимённые кварталы: у бренда выражена весенняя сезонность,
 // и сравнение Q1 с Q2 показало бы рост там, где на деле идёт падение.
-const byPeriod = Object.fromEntries(chistov.map((r) => [r.period, r]));
+const byPeriod = Object.fromEntries(nettora.map((r) => [r.period, r]));
 const first = byPeriod['2024-Q1'];
 const last = byPeriod['2026-Q1'];
-check('Чистовъ: объём падает год к году', last.units < first.units * 0.75,
+check('Nettora: объём падает год к году', last.units < first.units * 0.75,
   `${first.period}: ${first.units} → ${last.period}: ${last.units}`);
-check('Чистовъ: причина — потеря точек', last.outlets < first.outlets * 0.7,
+check('Nettora: причина — потеря точек', last.outlets < first.outlets * 0.7,
   `точек ${first.outlets} → ${last.outlets}`);
-check('Чистовъ: продажи на точку НЕ рухнули (спрос жив)', last.per_outlet > first.per_outlet * 0.75,
+check('Nettora: продажи на точку НЕ рухнули (спрос жив)', last.per_outlet > first.per_outlet * 0.75,
   `на точку ${first.per_outlet} → ${last.per_outlet}`);
 
 // --- Сюжет 2: затоваривание одного дистрибьютора в Q4 2025.
@@ -72,8 +72,8 @@ check('Затоваривание: лидер отрывается от оста
 // --- Сюжет 3: сезонность разнонаправлена у FMCG и фармы.
 const season = rows(`
   SELECT d.month,
-         SUM(CASE WHEN p.brand='Ключевая' THEN f.units END) voda,
-         SUM(CASE WHEN p.brand='Витамакс' THEN f.units END) vitaminy
+         SUM(CASE WHEN p.brand='Aqualis' THEN f.units END) voda,
+         SUM(CASE WHEN p.brand='Vitanor' THEN f.units END) vitaminy
   FROM fact_sellout f JOIN dim_product p ON p.product_id=f.product_id
   JOIN dim_date d ON d.date_id=f.week_start WHERE d.year=2025 GROUP BY 1 ORDER BY 1`);
 console.table(season);
@@ -88,7 +88,7 @@ check('Витамины: зима > лета', winterVit > summerVit * 1.4, `${w
 const launch = rows(`
   SELECT substr(f.week_start,1,7) m, SUM(f.units) units, COUNT(DISTINCT f.customer_id) outlets
   FROM fact_sellout f JOIN dim_product p ON p.product_id=f.product_id
-  WHERE p.product_name LIKE 'Витамакс Форте%' GROUP BY 1 ORDER BY 1`);
+  WHERE p.product_name LIKE 'Vitanor Forte%' GROUP BY 1 ORDER BY 1`);
 console.table(launch.slice(0, 8));
 check('Запуск: первых продаж нет раньше сентября 2025', launch[0].m >= '2025-09', `первый месяц ${launch[0]?.m}`);
 check('Запуск: дистрибуция раскатывается', launch.length > 5 && launch[4].outlets > launch[0].outlets,
@@ -118,7 +118,13 @@ check('Промо снижает цену', pro.avg_price < base.avg_price, `${b
 // --- Грязный слой: ловушки на месте.
 const dup = rows(`SELECT COUNT(*) - COUNT(DISTINCT sale_date||'|'||customer_name||'|'||sku_code||'|'||COALESCE(units,'~')) dups FROM staging_raw_sellout`)[0].dups;
 const nulls = rows(`SELECT SUM(units IS NULL) u, SUM(revenue IS NULL) r FROM staging_raw_sellout`)[0];
-const spellings = rows(`SELECT COUNT(DISTINCT CASE WHEN TRIM(customer_name) LIKE 'Пят%' THEN substr(TRIM(customer_name),1,9) END) v FROM staging_raw_sellout`)[0].v;
+/*
+ * Два написания одной сети. Сравнение идёт по хвосту имени («armarka»),
+ * потому что различаются как раз первые буквы: транслитерация я → ya или ia
+ * (Yarmarka против Iarmarka). Проверка на общее начало имени, стоявшая здесь
+ * при русской «ё», на такой паре не сработала бы вовсе.
+ */
+const spellings = rows(`SELECT COUNT(DISTINCT substr(TRIM(customer_name),1,8)) v FROM staging_raw_sellout WHERE TRIM(customer_name) LIKE '%armarka%'`)[0].v;
 const negatives = rows(`SELECT COUNT(*) n FROM staging_raw_sellout WHERE units LIKE '-%'`)[0].n;
 const formats = rows(`SELECT COUNT(DISTINCT CASE WHEN sale_date LIKE '__.__.____' THEN 'dot' WHEN sale_date LIKE '__/__/____' THEN 'slash' WHEN length(sale_date)=10 THEN 'iso' ELSE 'short' END) f FROM staging_raw_sellout`)[0].f;
 check('Грязный слой: есть дубли', dup > 30, `${dup}`);

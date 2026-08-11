@@ -188,7 +188,7 @@ export const en = {
 
     toolsTitle: 'Four tools, and how to choose between them',
     toolsIntro:
-      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Чистовъ»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers are required to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
+      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Nettora»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers are required to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
     toolsWhenLabel: 'When this is your tool',
     toolsCostLabel: 'What it costs you',
     toolsWhen: {
@@ -330,7 +330,7 @@ export const en = {
   sandbox: {
     title: 'Sandbox',
     intro:
-      'Free mode: any query against the same "Нордвинд Трейд" data — no task, no hints, no reference answer. The schema is one click away; results come as a table or a chart.',
+      'Free mode: any query against the same "Nordwind Trade" data — no task, no hints, no reference answer. The schema is one click away; results come as a table or a chart.',
     envLabel: 'Environment',
     envSql: 'SQL',
     envPython: 'Python (pandas)',

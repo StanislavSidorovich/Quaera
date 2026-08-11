@@ -7,7 +7,7 @@
     "where": "Computing something a single query handles awkwardly: a rolling average with a window that changes by condition, or a chain of ten transformations that isn't worth cramming into one SELECT. Bringing together data from two sources that don't live in the same database — a file from an ERP and an export from an ad platform. Quickly checking a hypothesis in a notebook before turning it into a standing query or a dashboard.\n\nAnalyst job postings ask for Python constantly — and what they almost always mean is pandas specifically, not the language at large: nobody asks an analyst to write classes and services, but everybody asks them to take an export apart.",
     "idea": "An operation applies to the whole column at once, not row by row — that's vectorisation, and pandas's entire performance story is built around it. A loop over rows works, but on even medium-sized data it's slower by orders of magnitude, and that's not a style preference — it's the difference between a second and several minutes.\n\nThe second thing worth accepting right away: a DataFrame has an index — a structure separate from the data itself that decides which rows get matched to which when two objects are combined. After a groupby, the column you grouped by doesn't disappear — it moves into the index, and that's the first thing that trips up anyone arriving from SQL, where no such concept exists at all.",
     "limits": "pandas keeps the entire dataset in the process's memory — on an export of hundreds of millions of rows that hits the machine's limits far sooner than a real database would. It's a tool for exploration and one-off calculation, not for a standing report people check every day: a calculation that has to recompute itself under any slice gets written as a measure in a data model — there's a separate track for that.\n\nAnd it doesn't replace SQL, it complements it: if the data already lives in a database and the aggregation fits in one query, pulling it into pandas for the same result is an extra step with an extra point of failure.",
-    "bridge": "The same working question as in SQL: brand «Чистовъ»'s revenue falling by almost half. Here you'll assemble it through groupby and merge — with the same meaning as INNER JOIN and GROUP BY — but the result doesn't vanish after one query; it stays an object you can keep turning: build a chart from it, run it through another filter, save it as an intermediate step.\n\nIn the data model, that same number becomes a measure that isn't computed once but recalculates itself under any slice — and that's the next step once the pandas version already makes sense to you step by step."
+    "bridge": "The same working question as in SQL: brand «Nettora»'s revenue falling by almost half. Here you'll assemble it through groupby and merge — with the same meaning as INNER JOIN and GROUP BY — but the result doesn't vanish after one query; it stays an object you can keep turning: build a chart from it, run it through another filter, save it as an intermediate step.\n\nIn the data model, that same number becomes a measure that isn't computed once but recalculates itself under any slice — and that's the next step once the pandas version already makes sense to you step by step."
   },
   "tierNames": {
     "1": "DataFrame and data",
@@ -91,13 +91,13 @@
     {
       "id": "py-001",
       "title": "Price list for a promo",
-      "brief": "The summer catalog only takes drinks from the «Ключевая» and «Фрутта» brands, and only items priced above 100 ₽ — cheap ones don't go into a promo.",
+      "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ₽ — cheap ones don't go into a promo.",
       "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
       "hints": [
         "A list of values for one column is conveniently checked with .isin([...]) — the pandas equivalent of SQL IN.",
         "\"Strictly above\" is >, not >=. Conditions are combined with & (ampersand), not and — and doesn't work on a pandas column."
       ],
-      "explain": "& and | are not and/or: and/or in Python expect a single boolean value, while a column is a Series of thousands of True/False at once, and and has no way to decide what to do with it. & and | compute logic element-wise, and that's the only option that works for a pandas filter. Hence the parentheses around each condition: & binds tighter than ==, so without parentheses Python would first evaluate 'Ключевая' & (list_price > 100) and fail with a TypeError about \"rand_\" — a message that gives no hint at the cause unless you remember operator precedence."
+      "explain": "& and | are not and/or: and/or in Python expect a single boolean value, while a column is a Series of thousands of True/False at once, and and has no way to decide what to do with it. & and | compute logic element-wise, and that's the only option that works for a pandas filter. Hence the parentheses around each condition: & binds tighter than ==, so without parentheses Python would first evaluate 'Aqualis' & (list_price > 100) and fail with a TypeError about \"rand_\" — a message that gives no hint at the cause unless you remember operator precedence."
     },
     {
       "id": "py-002",
@@ -107,7 +107,7 @@
       "predictQuestion": "What happens when this code runs, if dim_product has more than one row?",
       "options": [
         {
-          "label": "Returns products of the «Ключевая» brand priced above 100 ₽",
+          "label": "Returns products of the «Aqualis» brand priced above 100 ₽",
           "why": "That's what would happen with & instead of and. and tries to reduce each condition to a single True/False before the comparison even happens — and that's exactly the step where everything fails."
         },
         {
@@ -142,12 +142,12 @@
     },
     {
       "id": "py-004",
-      "title": "The «Форте» line for the category report",
-      "brief": "The category manager is pulling the strengthened «Форте» line into a separate section of the quarterly report — there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
-      "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Форте'.",
+      "title": "The «Forte» line for the category report",
+      "brief": "The category manager is pulling the strengthened «Forte» line into a separate section of the quarterly report — there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
+      "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Forte'.",
       "hints": [
         "Text methods on a string column are called through .str — the pandas equivalent of LIKE '%...%'.",
-        ".str.contains('Форте') returns a boolean column, which you can plug straight into .loc as a mask."
+        ".str.contains('Forte') returns a boolean column, which you can plug straight into .loc as a mask."
       ],
       "explain": ".str isn't decoration, it's a necessity: without it Python would try to call .contains() on the whole column at once and fail, because a Series as a whole has no such method. .str opens access to string methods element by element, for each value of the column separately — the pandas equivalent of how SQL applies LIKE to every row of a table."
     },
@@ -326,7 +326,7 @@
       "predictQuestion": "dim_product has 47 rows, brands appear in mixed order. In what order will the first three brands land in the result?",
       "options": [
         {
-          "label": "Alphabetically: «Витамакс», «Гастрокалм», «Ключевая» — that is, in order of the key's values, not the order of rows in the source table",
+          "label": "Alphabetically: «Vitanor», «Gastrivo», «Aqualis» — that is, in order of the key's values, not the order of rows in the source table",
           "why": "groupby sorts groups by the key's value by default (sort=True) — this behavior is always on unless sort=False is passed explicitly. The row order in the source table has no effect on the result."
         },
         {
@@ -468,11 +468,11 @@
       "title": "110,480 sales instead of 11,048",
       "brief": "An analyst joins fact_sellout to dim_promo by brand, to mark the promo period next to every sale — and afterward revenue is off by multiples from the report.",
       "goal": "Understand what happens when you join on a key that's non-unique on both sides.",
-      "predictQuestion": "The «Чистовъ» brand has 11,048 rows in fact_sellout and 10 different promos in dim_promo (all with brand = 'Чистовъ'). How many rows will merged give for this brand?",
+      "predictQuestion": "The «Nettora» brand has 11,048 rows in fact_sellout and 10 different promos in dim_promo (all with brand = 'Nettora'). How many rows will merged give for this brand?",
       "options": [
         {
           "label": "110,480 — each of the 11,048 sales got glued to each of the brand's 10 promos",
-          "why": "merge doesn't check key uniqueness on either side by default: if there are 11,048 rows on the left with brand = 'Чистовъ' and 10 on the right, every pair with a matching brand produces a separate result row — 11,048 × 10."
+          "why": "merge doesn't check key uniqueness on either side by default: if there are 11,048 rows on the left with brand = 'Nettora' and 10 on the right, every pair with a matching brand produces a separate result row — 11,048 × 10."
         },
         {
           "label": "11,048 — one per source sale, with the promo just noted alongside",
@@ -524,7 +524,7 @@
         "value_counts() is a Series method, not a DataFrame one: first select one column with single brackets.",
         "Descending order is the default behavior, nothing extra needs to be called."
       ],
-      "explain": "value_counts() is groupby(column).size(), sorted descending, in one short call. Unlike groupby, it's purpose-built for one task — counting how often values occur — and it's almost always the first step of exploration: not computing the metric right away, but seeing how the categories that will be used to slice the data are distributed in the first place. There are nine brands here, and the catalogue is spread evenly across them: from six items (Хрустик, Фрутта, Молочный Дом, Ключевая) down to four (Ринофлекс, Гастрокалм). The breadth of a line says nothing about its sales, though: a four-item brand can well out-earn a six-item one. value_counts counts rows in the reference table, not money, and confusing those two questions is the most common mistake at this very first step of exploration."
+      "explain": "value_counts() is groupby(column).size(), sorted descending, in one short call. Unlike groupby, it's purpose-built for one task — counting how often values occur — and it's almost always the first step of exploration: not computing the metric right away, but seeing how the categories that will be used to slice the data are distributed in the first place. There are nine brands here, and the catalogue is spread evenly across them: from six items (Aqualis, Fruvia, Krosti, Milvara) down to four (Gastrivo, Rhinolar). The breadth of a line says nothing about its sales, though: a four-item brand can well out-earn a six-item one. value_counts counts rows in the reference table, not money, and confusing those two questions is the most common mistake at this very first step of exploration."
     },
     {
       "id": "py-027",
@@ -622,48 +622,48 @@
     {
       "id": "py-032",
       "title": "58 codes instead of 29 products",
-      "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs — some of the codes are duplicated in a different case: \"чист005\" and \"ЧИСТ005\" are the same product.",
+      "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs — some of the codes are duplicated in a different case: \"nett005\" and \"NETT005\" are the same product.",
       "goal": "Count how many unique product codes will remain in staging_raw_sellout if sku_code is cast to a single case.",
       "hints": [
-        ".str.upper() upper-cases every string in the column in one call — and, unlike the equivalent function in SQLite, it works with Cyrillic.",
+        ".str.upper() upper-cases every string in the column in one call.",
         "nunique() counts the number of unique values — exactly what's needed to see how many codes remain after normalization."
       ],
-      "explain": "58 → 29: exactly half of the codes were the same product, written in a different case. What happens here is exactly what didn't work in SQL (sql-027): SQLite's UPPER()/LOWER() are limited to ASCII and don't touch Cyrillic, while pandas's .str.upper() operates on full Unicode and correctly handles any alphabet."
+      "explain": "58 → 29: exactly half of the codes were the same product, written in a different case. Casting to a single case before counting isn't cosmetic: nunique() compares strings character by character, and to it «nett005» is not the same product as «NETT005». SQL has the same idea — COUNT(DISTINCT UPPER(sku_code)) — but SQLite's UPPER and LOWER are limited to the ASCII range (see sql-027), while pandas's .str.upper() follows full Unicode rules. You can't see the difference on these codes, because they're Latin; it shows up on the first reference table with diacritics or Cyrillic, and it shows up silently — as under-merging, not as an error. Hence the working habit: test case normalization on data whose alphabet isn't only English.rrectly handles any alphabet."
     },
     {
       "id": "py-033",
-      "title": "The same trick as in SQL — but it works differently here",
-      "brief": "A colleague who recently worked through sql-027 suggests reusing the same trick: wrap the code comparison in an upper-case conversion. Before carrying a solution from one tool to another, it's worth checking whether it behaves the same way here.",
-      "goal": "Understand whether .str.upper() in pandas behaves the same as UPPER() in SQLite on Cyrillic text.",
-      "predictQuestion": "In sql-027 it turned out that UPPER and LOWER in SQLite don't touch Cyrillic at all. On this table you can see it directly: SELECT COUNT(DISTINCT UPPER(sku_code)) returns the same 58 codes as without UPPER — \"чист005\" and \"ЧИСТ005\" stay distinct. How many unique codes will the same idea give in pandas?",
+      "title": "Case and spaces aren't normalization yet",
+      "brief": "After the product codes, a colleague moves on to customer names and applies the same trick: strip the edges, raise the case. Before counting anything over that column, it's worth checking whether it merged every duplicate.",
+      "goal": "Understand whether string normalization is enough to make one outlet into one row.",
+      "predictQuestion": "The export holds 104 different spellings of customer names, while the real number of outlets in it is 45. What does this code return?",
       "options": [
         {
-          "label": "29 — unlike SQLite, pandas's .str.upper() works with Cyrillic under full Unicode rules and merges the case variants",
-          "why": "pandas and Python in general operate on Unicode strings with no SQLite-style ASCII restriction — 'чист005'.upper() correctly gives 'ЧИСТ005', and the case variants collapse into one code."
+          "label": "52 — case and spaces collapsed, but seven outlets are written in two transliterations and stayed distinct",
+          "why": "«Yarmarka #1026» and «Iarmarka #1026» are one outlet, but a string method compares characters, and their first letters differ. It removes case and spaces; a differently spelled name it cannot."
         },
         {
-          "label": "58 — the same limitation as SQLite: .str.upper() is also built on top of ASCII and doesn't touch Cyrillic",
-          "why": "The sql-027 limitation is a property of SQLite, not a universal rule: PostgreSQL and ClickHouse's UPPER understands Cyrillic just fine. And pandas doesn't call into the database engine at all — it calls Python string methods, and those work with full Unicode regardless of alphabet."
+          "label": "45 — casting to one form gives exactly the real number of outlets",
+          "why": "That would hold if every discrepancy came down to the form of the record. There's a third kind here — one name in two transliterations — and string normalization doesn't cure it."
         },
         {
-          "label": "The code will fail with an error — .str.upper() is only defined for Latin script",
-          "why": ".str.upper() doesn't check the alphabet and isn't limited to Latin script — it's defined for any Unicode string and can't fail because of Cyrillic."
+          "label": "104 — .str.upper() changes nothing, because customer names are already in one case",
+          "why": "The case in this column really is uniform, but .str.strip() in the same chain removes the edge spaces, and that alone takes 104 spellings down to 52."
         },
         {
-          "label": "29 names in alphabetical order, but each printed twice — in its original and upper case — so 58 rows in the result",
-          "why": "nunique() returns a single number — the count of unique values, not the values themselves. Casting to one case and counting unique values here brings the final number down to 29."
+          "label": "The code fails: .str.strip() and .str.upper() can't be chained",
+          "why": "Both methods return a Series of strings, so the chain is valid — .str can be applied as many times in a row as you need."
         }
       ],
       "hints": [
-        "SQLite's ASCII limitation in UPPER/LOWER is a quirk of that specific engine, not a universal rule for every tool.",
-        "pandas string methods run through Python, and Python strings are Unicode with full support for any alphabet."
+        "Look at what exactly differs between two spellings of one outlet: the case, the spaces — or the letters themselves.",
+        "A string method has no way of knowing that two dissimilar names mean the same thing."
       ],
-      "explain": "The same idea in spirit — \"convert to a single case before comparing\" — behaves differently depending on the engine: SQLite implements UPPER/LOWER for ASCII only, while Python and pandas operate on full Unicode. Carrying a trick between tools without checking is a source of quiet bugs precisely where two engines look interchangeable."
+      "explain": "52, not 45. Edge spaces and case are discrepancies of form: a string function removes them because it can see that the strings differ by nothing else. A different transliteration is a discrepancy of content: «Yarmarka» and «Iarmarka» are made of different letters, and no amount of case folding brings them together. This is the boundary where string cleaning ends and entity matching begins: you need a mapping table, or a rule that folds the variants into one canonical form — that is, outside knowledge that these are one chain. The data itself doesn't carry that knowledge. The practical consequence is worse than it looks: after .str.strip().str.upper() the numbers look clean and are therefore more dangerous than the raw ones. A report over 52 customers will agree with itself, while seven outlets in it are counted twice, each with half of its turnover — and no duplicate check will show it. bugs precisely where two engines look interchangeable."
     },
     {
       "id": "py-034",
       "title": "One customer, two spellings",
-      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Перекрёсток #1013 \" and \"Перекрёсток #1013\" — these are two different values here, even though it's the same outlet.",
+      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Kolos #1013 \" and \"Kolos #1013\" — these are two different values here, even though it's the same outlet.",
       "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
       "hints": [
         ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",
@@ -674,7 +674,7 @@
     {
       "id": "py-035",
       "title": "Weekly sales into monthly",
-      "brief": "The «Ключевая» category manager wants monthly sales dynamics rather than weekly — weekly numbers swing too much to discuss in a meeting.",
+      "brief": "The «Aqualis» category manager wants monthly sales dynamics rather than weekly — weekly numbers swing too much to discuss in a meeting.",
       "goal": "From the weekly series weekly (already with a datetime index), return the monthly sum of units via resample('MS').",
       "hints": [
         "resample('MS') re-buckets a time series onto month-start boundaries (Month Start) — similar to GROUP BY month in SQL, but it requires the index to already be datetime.",
@@ -715,7 +715,7 @@
     {
       "id": "py-037",
       "title": "A smoothed series next to the source",
-      "brief": "The same «Ключевая» weekly series is needed with 4-week smoothing next to the source data, so the chart doesn't show a weekly sawtooth.",
+      "brief": "The same «Aqualis» weekly series is needed with 4-week smoothing next to the source data, so the chart doesn't show a weekly sawtooth.",
       "goal": "Add a rolling4 column to weekly — the rolling mean of units over the last 4 weeks.",
       "hints": [
         "rolling(4) sets a 4-observation rolling-average window — the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL (sql-window-frame).",

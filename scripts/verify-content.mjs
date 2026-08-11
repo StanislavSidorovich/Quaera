@@ -655,7 +655,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     LEFT JOIN dim_customer c ON c.region_id = r.region_id
     LEFT JOIN fact_sellout f
            ON f.customer_id = c.customer_id
-          AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Витамакс Форте №30')
+          AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Vitanor Forte x30')
     GROUP BY r.region_name`);
   const zeros = r.rows.filter((row) => row[1] === 0).length;
   if (r.rows.length !== 16) fail('sql-014', `ожидается 16 регионов, вернулось ${r.rows.length}`);
@@ -684,7 +684,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     FROM fact_sellout f
     JOIN dim_product p ON p.product_id = f.product_id
     JOIN dim_date d ON d.date_id = f.week_start
-    WHERE p.brand = 'Чистовъ' AND d.quarter = 1
+    WHERE p.brand = 'Nettora' AND d.quarter = 1
     GROUP BY d.year ORDER BY d.year`);
   const quoted = [
     [2024, 10101, 79, 127.9, 184.7],
@@ -711,7 +711,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     FROM fact_sellout f
     JOIN dim_product p ON p.product_id = f.product_id
     JOIN dim_date d ON d.date_id = f.week_start
-    WHERE p.brand = 'Ключевая' AND d.quarter = 1 AND d.year IN (2024, 2025)
+    WHERE p.brand = 'Aqualis' AND d.quarter = 1 AND d.year IN (2024, 2025)
     GROUP BY d.year ORDER BY d.year`);
   const quoted = [
     [2024, 26531, 1406408, 53.0, 88],
@@ -737,17 +737,17 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 // любой правки генератора.
 
 // sql-041: разбор утверждает, что соединение с dim_promo по бренду раздувает
-// выборку «Чистовъ» ровно в 10 раз — это и есть весь смысл задания.
+// выборку «Nettora» ровно в 10 раз — это и есть весь смысл задания.
 {
   const r = runSql(`
     SELECT
       (SELECT COUNT(*) FROM fact_sellout f
        JOIN dim_product p ON p.product_id = f.product_id
-       WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS before,
+       WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS before,
       (SELECT COUNT(*) FROM fact_sellout f
        JOIN dim_product p ON p.product_id = f.product_id
        JOIN dim_promo m ON m.brand = p.brand
-       WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS after`);
+       WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS after`);
   const [before, after] = r.rows[0];
   if (before === 0 || after !== before * 10) {
     fail('sql-041', `в разборе «ровно в 10 раз», в базе ${before} → ${after}`);
@@ -828,19 +828,19 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT f.week_start, SUM(f.units) AS units
       FROM fact_sellout f
       JOIN dim_customer c ON c.customer_id = f.customer_id
-      WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
-        AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+      WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+        AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
         AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'
       GROUP BY f.week_start
     )
     SELECT
       (SELECT units_on_hand FROM fact_stock
-         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
-           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
            AND month_start = '2025-12-01') AS on_hand,
       ROUND((SELECT units_on_hand FROM fact_stock
-         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'ООО «Волга-Трейд»')
-           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Ключевая негаз. 0.5 л')
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+           AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
            AND month_start = '2025-12-01') * 1.0 / AVG(units), 1) AS cover
     FROM weekly`);
   const [onHand, cover] = r.rows[0];
@@ -874,16 +874,23 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   } else console.log(`  ok   sql-060: половину выручки дают ${leaders} товаров из ${total} (как в разборе)`);
 }
 
-// sql-027: разбор утверждает не про данные, а про движок — что LOWER в SQLite
-// не понижает кириллицу и потому не чинит регистронезависимый поиск. Проверка
-// стоит копейки и переживёт смену версии sql.js, где поведение могло бы измениться.
+// sql-027: разбор утверждает не про данные, а про движок — что LIKE в SQLite
+// сравнивает латиницу без учёта регистра, а `=` с учётом. Проверка стоит копейки
+// и переживёт смену версии sql.js, где поведение могло бы измениться. Числа
+// в тексте задания (163 строки, из них 107 и 56) сверяются здесь же: у predict
+// нет исполнимого эталона, и разойтись с базой они могут только молча.
 {
-  const r = runSql(`SELECT lower('Ключевая') AS cyr, lower('ABC') AS lat`);
-  const [cyr, lat] = r.rows[0];
-  if (lat !== 'abc') fail('sql-027', 'LOWER перестал работать даже на латинице — разбор надо перечитывать целиком');
-  else if (cyr !== 'Ключевая') {
-    fail('sql-027', `в разборе LOWER не трогает кириллицу, но эта сборка SQLite вернула «${cyr}»`);
-  } else console.log('  ok   sql-027: LOWER в SQLite по-прежнему понижает только латиницу');
+  const r = runSql(`
+    SELECT SUM(sku_code = 'AQUA001') AS eq,
+           SUM(sku_code LIKE 'AQUA001') AS lk,
+           SUM(sku_code = 'aqua001') AS lower_eq
+    FROM staging_raw_sellout`);
+  const [eq, lk, lowerEq] = r.rows[0];
+  if (lk !== 163 || eq !== 107 || lowerEq !== 56) {
+    fail('sql-027', `в тексте 163 строки (107 + 56), в базе LIKE ${lk}, = ${eq}, строчных ${lowerEq}`);
+  } else if (lk === eq) {
+    fail('sql-027', 'LIKE перестал отличаться от = по регистру — задание держится ровно на этой разнице');
+  } else console.log(`  ok   sql-027: LIKE находит ${lk} строк там, где = находит ${eq}`);
 }
 
 // Трек domain цитирует опорные числа бизнеса в тексте заданий и карточек.
@@ -939,7 +946,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     JOIN dim_region r ON r.region_id = c.region_id
     WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'
     GROUP BY 1 ORDER BY rev DESC LIMIT 3`);
-  const quotedRegions = [['Ростовская область', 622299], ['Краснодарский край', 527583], ['Самарская область', 407593]];
+  const quotedRegions = [['Rostov Region', 622299], ['Krasnodar Krai', 527583], ['Samara Region', 407593]];
   regions.rows.forEach((row, i) => {
     const q = quotedRegions[i];
     if (!q) return;
@@ -974,12 +981,12 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     ORDER BY ratio DESC`);
   const top = ratios.rows[0];
   const rest = ratios.rows.slice(1).map((r) => r[3]);
-  if (top[0] !== 'ООО «Волга-Трейд»' || !near(top[3], 2.44, 0.01) || !near(top[1], 28203) || !near(top[2], 11574)) {
-    fail('dom-019', `лидер по затовариванию разошёлся с текстом: в базе ${top.join(' / ')}, в тексте Волга-Трейд / 28203 / 11574 / 2.44`);
+  if (top[0] !== 'Volga-Trade LLC' || !near(top[3], 2.44, 0.01) || !near(top[1], 28203) || !near(top[2], 11574)) {
+    fail('dom-019', `лидер по затовариванию разошёлся с текстом: в базе ${top.join(' / ')}, в тексте Volga-Trade / 28203 / 11574 / 2.44`);
   } else if (Math.max(...rest) > 1.06 || Math.min(...rest) < 1.03) {
     fail('dom-019', `остальные дистрибьюторы вышли из коридора 1.03–1.06 (${Math.min(...rest)}–${Math.max(...rest)}) — контраст в задании пропал`);
   } else {
-    console.log(`  ok   dom-019: Волга-Трейд ${top[3]} против коридора ${Math.min(...rest)}–${Math.max(...rest)} у остальных одиннадцати`);
+    console.log(`  ok   dom-019: Volga-Trade ${top[3]} против коридора ${Math.min(...rest)}–${Math.max(...rest)} у остальных одиннадцати`);
   }
 
   // dom-021 держится на том, что поток вернулся к норме, а остатки — нет.
@@ -1002,27 +1009,27 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const vitamins = runSql(`
     SELECT substr(f.week_start, 1, 7) AS m, SUM(f.units) AS units
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.brand = 'Витамакс' AND substr(f.week_start, 6, 2) IN ('08', '09')
+    WHERE p.brand = 'Vitanor' AND substr(f.week_start, 6, 2) IN ('08', '09')
       AND substr(f.week_start, 1, 4) IN ('2024', '2025')
     GROUP BY 1 ORDER BY 1`);
   const v = Object.fromEntries(vitamins.rows);
   const quotedV = { '2024-08': 481, '2024-09': 862, '2025-08': 282, '2025-09': 1174 };
   for (const [m, q] of Object.entries(quotedV)) {
-    if (v[m] !== q) fail('dom-025', `Витамакс ${m}: в базе ${v[m]}, в тексте ${q}`);
+    if (v[m] !== q) fail('dom-025', `Vitanor ${m}: в базе ${v[m]}, в тексте ${q}`);
   }
   const vYears = runSql(`
     SELECT substr(f.week_start, 1, 4) AS y, SUM(f.units) AS units
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.brand = 'Витамакс' AND f.week_start BETWEEN '2024-01-01' AND '2025-12-31'
+    WHERE p.brand = 'Vitanor' AND f.week_start BETWEEN '2024-01-01' AND '2025-12-31'
     GROUP BY 1 ORDER BY 1`);
   const quotedYears = [['2024', 9126], ['2025', 9419]];
   vYears.rows.forEach((row, i) => {
     if (row[0] !== quotedYears[i][0] || row[1] !== quotedYears[i][1]) {
-      fail('dom-025', `Витамакс за ${row[0]}: в базе ${row[1]}, в тексте ${quotedYears[i][1]}`);
+      fail('dom-025', `Vitanor за ${row[0]}: в базе ${row[1]}, в тексте ${quotedYears[i][1]}`);
     }
   });
   if (!failed) {
-    console.log(`  ok   dom-025: Витамакс +316% за месяц / +36% год к году / +3.2% за год — все три базы совпали`);
+    console.log(`  ok   dom-025: Vitanor +316% за месяц / +36% год к году / +3.2% за год — все три базы совпали`);
   }
 
   // dom-027 сравнивает воду и витамины в августе — задание живо, только пока
@@ -1030,11 +1037,11 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const water = runSql(`
     SELECT substr(f.week_start, 1, 7) AS m, SUM(f.units) AS units
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.brand = 'Ключевая' AND substr(f.week_start, 1, 7) IN ('2025-07', '2025-08')
+    WHERE p.brand = 'Aqualis' AND substr(f.week_start, 1, 7) IN ('2025-07', '2025-08')
     GROUP BY 1 ORDER BY 1`);
   const w = Object.fromEntries(water.rows);
   if (w['2025-07'] !== 15792 || w['2025-08'] !== 11711) {
-    fail('dom-027', `Ключевая июль/август: в базе ${w['2025-07']}/${w['2025-08']}, в тексте 15792/11711`);
+    fail('dom-027', `Aqualis июль/август: в базе ${w['2025-07']}/${w['2025-08']}, в тексте 15792/11711`);
   } else if (!(w['2025-08'] < w['2025-07'] && v['2025-09'] > v['2025-08'])) {
     fail('dom-027', 'сезоны воды и витаминов перестали расходиться — задание потеряло смысл');
   } else {
@@ -1043,7 +1050,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 }
 
 // Tier 3 трека domain — «Метрики рынка». Здесь исполнимого эталона нет вообще,
-// а числа стоят прямо в тексте заданий и карточек: обвал дистрибуции «Чистовъ»,
+// а числа стоят прямо в тексте заданий и карточек: обвал дистрибуции «Nettora»,
 // две акции, доля рынка в фарме, раскатка новинки, ABC и вариация спроса.
 // Проверяется не только совпадение цифр, но и условия, при которых задание
 // вообще осмысленно: что численная и взвешенная дистрибуция расходятся, что
@@ -1052,7 +1059,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const near = (a, b, tol = 0.005) => Math.abs(a - b) <= Math.max(0.05, Math.abs(b) * tol);
   const rowsBy = (res, key = 0) => Object.fromEntries(res.rows.map((r) => [r[key], r]));
 
-  // --- dom-028, dom-030, карточка dom-fmcg-distribution: обвал дистрибуции «Чистовъ».
+  // --- dom-028, dom-030, карточка dom-fmcg-distribution: обвал дистрибуции «Nettora».
   // Взвешенная считается по обороту точки во всём дивизионе FMCG — это ACV.
   const dist = runSql(`
     WITH acv AS (
@@ -1063,7 +1070,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     m AS (
       SELECT substr(f.week_start, 1, 7) AS ym, f.customer_id AS cid
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-      WHERE p.brand = 'Чистовъ' GROUP BY 1, 2)
+      WHERE p.brand = 'Nettora' GROUP BY 1, 2)
     SELECT m.ym AS month,
            ROUND(100.0 * COUNT(*) / tn, 1) AS numeric_d,
            ROUND(100.0 * SUM(acv.w) / tw, 1) AS weighted_d
@@ -1094,11 +1101,11 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     cur AS (
       SELECT DISTINCT f.customer_id AS cid
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-      WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01'),
+      WHERE p.brand = 'Nettora' AND f.week_start >= '2026-04-01'),
     base AS (
       SELECT DISTINCT f.customer_id AS cid
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-      WHERE p.brand = 'Чистовъ' AND f.week_start BETWEEN '2024-04-01' AND '2024-06-30'),
+      WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2024-04-01' AND '2024-06-30'),
     lost AS (
       SELECT a.cid, a.w FROM acv a
       WHERE a.cid IN (SELECT cid FROM base) AND a.cid NOT IN (SELECT cid FROM cur)),
@@ -1128,7 +1135,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     FROM c GROUP BY sku`);
   const vm = rowsBy(velocity);
   const quotedVel = {
-    'ФРУТ001': [46, 36.5, 13.09, 21972], 'ФРУТ002': [52, 33.0, 9.87, 16934],
+    'FRUV001': [46, 36.5, 13.09, 21972], 'FRUV002': [52, 33.0, 9.87, 16934],
   };
   for (const [sku, q] of Object.entries(quotedVel)) {
     const r = vm[sku];
@@ -1137,12 +1144,12 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     }
   }
   // Задание живо, только пока у Яблока дистрибуция шире, а объём меньше.
-  if (!(vm['ФРУТ002'][1] > vm['ФРУТ001'][1] && vm['ФРУТ002'][4] < vm['ФРУТ001'][4])) {
+  if (!(vm['FRUV002'][1] > vm['FRUV001'][1] && vm['FRUV002'][4] < vm['FRUV001'][4])) {
     fail('dom-031', 'Яблоко перестало быть шире по дистрибуции и меньше по объёму — парадокс задания исчез');
   }
   const quotedRos = {
-    'КЛЮЧ001': [41, 13.16], 'КЛЮЧ002': [52, 10.79], 'КЛЮЧ005': [40, 8.80],
-    'КЛЮЧ003': [46, 8.73], 'КЛЮЧ004': [48, 6.97], 'КЛЮЧ006': [46, 4.48],
+    'AQUA001': [41, 13.16], 'AQUA002': [52, 10.79], 'AQUA005': [40, 8.80],
+    'AQUA003': [46, 8.73], 'AQUA004': [48, 6.97], 'AQUA006': [46, 4.48],
   };
   for (const [sku, [pts, ros]] of Object.entries(quotedRos)) {
     if (vm[sku][1] !== pts || !near(vm[sku][5], ros, 0.01)) {
@@ -1150,13 +1157,13 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     }
   }
   // Вся соль dom-033 — что у «Спорта» дистрибуция как у лидеров, а скорость худшая.
-  if (vm['КЛЮЧ006'][5] !== Math.min(...Object.keys(quotedRos).map((s) => vm[s][5]))) {
+  if (vm['AQUA006'][5] !== Math.min(...Object.keys(quotedRos).map((s) => vm[s][5]))) {
     fail('dom-033', '«Спорт 0.75 л» больше не самый медленный в портфеле — задание теряет ответ');
   } else {
-    console.log(`  ok   dom-033: «Спорт» ${vm['КЛЮЧ006'][1]} точек при скорости ${vm['КЛЮЧ006'][5]} против ${vm['КЛЮЧ003'][5]} у газированной 0.5 л с тем же числом точек`);
+    console.log(`  ok   dom-033: «Спорт» ${vm['AQUA006'][1]} точек при скорости ${vm['AQUA006'][5]} против ${vm['AQUA003'][5]} у газированной 0.5 л с тем же числом точек`);
   }
 
-  // --- dom-034, dom-061 и карточка dom-fmcg-promo: акция «Молочный Дом», август 2025.
+  // --- dom-034, dom-061 и карточка dom-fmcg-promo: акция «Milvara», август 2025.
   // dom-061 цитирует те же три пары чисел: там они уже не предмет расчёта,
   // а плохая новость, которую надо сообщить автору акции.
   const promoWeekly = (brand, from, to) => runSql(`
@@ -1165,9 +1172,9 @@ await checkLessons(readPack('python-core'), 'python-lessons');
           FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
           WHERE p.brand = '${brand}' AND f.week_start BETWEEN '${from}' AND '${to}'
           GROUP BY 1)`).rows[0];
-  const milkPre = promoWeekly('Молочный Дом', '2025-07-07', '2025-07-28');
-  const milkOn = promoWeekly('Молочный Дом', '2025-08-04', '2025-08-18');
-  const milkPost = promoWeekly('Молочный Дом', '2025-08-25', '2025-09-15');
+  const milkPre = promoWeekly('Milvara', '2025-07-07', '2025-07-28');
+  const milkOn = promoWeekly('Milvara', '2025-08-04', '2025-08-18');
+  const milkPost = promoWeekly('Milvara', '2025-08-25', '2025-09-15');
   const quotedMilk = [[1353.3, 104645, 77.33], [3327.0, 180157, 54.15], [1376.0, 106344, 77.28]];
   [milkPre, milkOn, milkPost].forEach((row, i) => {
     if (row.some((v, j) => !near(v, quotedMilk[i][j]))) {
@@ -1181,14 +1188,14 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     console.log(`  ok   dom-034: штуки ×${(milkOn[0] / milkPre[0]).toFixed(2)}, выручка ×${(milkOn[1] / milkPre[1]).toFixed(2)}, после акции ${(100 * milkPost[0] / milkPre[0] - 100).toFixed(1)}% к базе`);
   }
 
-  // dom-035: акция «Хрустик» только в сетях — эффект на бренде разбавлен каналами вне охвата.
+  // dom-035: акция «Krosti» только в сетях — эффект на бренде разбавлен каналами вне охвата.
   const crispChannels = runSql(`
     WITH w AS (
       SELECT f.week_start AS ws, c.customer_type AS ct, SUM(f.units) AS u
       FROM fact_sellout f
       JOIN dim_product p ON p.product_id = f.product_id
       JOIN dim_customer c ON c.customer_id = f.customer_id
-      WHERE p.brand = 'Хрустик' GROUP BY 1, 2)
+      WHERE p.brand = 'Krosti' GROUP BY 1, 2)
     SELECT ct AS channel,
            ROUND(AVG(CASE WHEN ws BETWEEN '2025-07-07' AND '2025-08-04' THEN u END), 1) AS before_promo,
            ROUND(AVG(CASE WHEN ws BETWEEN '2025-08-11' AND '2025-09-08' THEN u END), 1) AS during_promo
@@ -1222,7 +1229,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     t AS (SELECT ym, SUM(u) AS tu, SUM(mat) AS tmat FROM b GROUP BY ym)
     SELECT b.ym AS month, ROUND(100.0 * b.u / t.tu, 1) AS month_share,
            CASE WHEN b.n = 12 THEN ROUND(100.0 * b.mat / t.tmat, 1) END AS mat_share
-    FROM b JOIN t ON t.ym = b.ym WHERE b.brand = 'Витамакс' ORDER BY b.ym`);
+    FROM b JOIN t ON t.ym = b.ym WHERE b.brand = 'Vitanor' ORDER BY b.ym`);
   const sm = rowsBy(share);
   const quotedShare = {
     '2024-03': [11.0, null], '2025-02': [49.5, null], '2025-08': [13.5, null], '2026-06': [24.4, 26.1],
@@ -1246,7 +1253,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     SELECT substr(f.week_start, 1, 7) AS month, SUM(f.units) AS units,
            COUNT(DISTINCT f.customer_id) AS pharmacies
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.sku_code = 'ВИТА005' GROUP BY 1 ORDER BY 1`);
+    WHERE p.sku_code = 'VITA005' GROUP BY 1 ORDER BY 1`);
   const lm = rowsBy(launch);
   const quotedLaunch = {
     '2025-09': [1, 1], '2025-10': [9, 4], '2025-11': [19, 7], '2025-12': [41, 10],
@@ -1261,16 +1268,16 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const brandPharmacies = runSql(`
     SELECT COUNT(DISTINCT f.customer_id) AS pharmacies
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.brand = 'Витамакс' AND p.sku_code <> 'ВИТА005'`).rows[0][0];
+    WHERE p.brand = 'Vitanor' AND p.sku_code <> 'VITA005'`).rows[0][0];
   if (brandPharmacies !== 36) {
-    fail('dom-039', `остальные препараты «Витамакс» продаются в ${brandPharmacies} аптеках, в тексте 36`);
+    fail('dom-039', `остальные препараты «Vitanor» продаются в ${brandPharmacies} аптеках, в тексте 36`);
   } else if (!(lm['2026-06'][2] < brandPharmacies / 1.5)) {
     fail('dom-039', 'новинка доехала почти до всех аптек бренда — вывод «раскатка встала на полпути» пропал');
   } else {
     console.log(`  ok   dom-039: новинка в ${lm['2026-06'][2]} аптеках из ${brandPharmacies}, число не двигается с февраля`);
   }
 
-  // --- dom-043, dom-044 и карточка dom-decomposition: разложение падения «Чистовъ».
+  // --- dom-043, dom-044 и карточка dom-decomposition: разложение падения «Nettora».
   // На эти же числа опираются конфликтные задания dom-063, dom-064 и dom-065:
   // средняя выбывшей точки против оставшейся (24 738 / 29 810) и сопоставимый
   // рост 9.7% там не пересчитываются, а цитируются как результат разбора.
@@ -1278,7 +1285,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     WITH b AS (
       SELECT substr(f.week_start, 1, 4) AS y, f.customer_id AS cid, SUM(f.revenue) AS r, SUM(f.units) AS u
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-      WHERE p.brand = 'Чистовъ' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2)
+      WHERE p.brand = 'Nettora' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2)
     SELECT y AS year, COUNT(*) AS points, ROUND(SUM(r)) AS revenue,
            ROUND(SUM(r) / COUNT(*)) AS revenue_per_point, ROUND(SUM(r) / SUM(u), 2) AS price
     FROM b WHERE y IN ('2024', '2026') GROUP BY y ORDER BY y`);
@@ -1299,7 +1306,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     WITH b AS (
       SELECT substr(f.week_start, 1, 4) AS y, f.customer_id AS cid, SUM(f.revenue) AS r
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-      WHERE p.brand = 'Чистовъ' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2),
+      WHERE p.brand = 'Nettora' AND substr(f.week_start, 6, 2) IN ('04', '05', '06') GROUP BY 1, 2),
     a AS (SELECT cid, r FROM b WHERE y = '2024'),
     c AS (SELECT cid, r FROM b WHERE y = '2026')
     SELECT (SELECT COUNT(*) FROM a JOIN c ON c.cid = a.cid) AS same_points,
@@ -1324,9 +1331,9 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const activePoints = runSql(`
     SELECT
       (SELECT COUNT(DISTINCT f.customer_id) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-        WHERE p.brand = 'Чистовъ' AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01') AS rolling_year,
+        WHERE p.brand = 'Nettora' AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01') AS rolling_year,
       (SELECT COUNT(DISTINCT f.customer_id) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-        WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01') AS quarter`);
+        WHERE p.brand = 'Nettora' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01') AS quarter`);
   const [rollingYear, quarterPoints] = activePoints.rows[0];
   if (rollingYear !== 60 || quarterPoints !== 33) {
     fail('dom-062', `в базе ${rollingYear} точек за скользящий год и ${quarterPoints} за квартал, в тексте 60 и 33`);
@@ -1344,7 +1351,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       FROM fact_sellout f
       JOIN dim_product p ON p.product_id = f.product_id
       JOIN dim_customer cu ON cu.customer_id = f.customer_id
-      WHERE p.brand = 'Чистовъ' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01'
+      WHERE p.brand = 'Nettora' AND f.week_start >= '2026-04-01' AND f.week_start < '2026-07-01'
       GROUP BY 1)
     SELECT ch, ROUND(r / 1000) AS thousands, ROUND(100.0 * r / (SELECT SUM(r) FROM c), 1) AS share,
            ROUND(100.0 * r / (SELECT SUM(r) FROM c WHERE ch <> 'ecom'), 1) AS share_without_ecom
@@ -1397,7 +1404,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   } else {
     console.log(`  ok   dom-046: верхние 20% SKU дают ${top20pct}%, до 80% выручки нужно ${abc.rows.findIndex((r) => r[3] >= 80) + 1} SKU из ${abc.rows.length}`);
   }
-  const quotedCv = { 'КЛЮЧ005': 28.5, 'ХРУС002': 35.1, 'МОЛО005': 16.9 };
+  const quotedCv = { 'AQUA005': 28.5, 'KROS002': 35.1, 'MILV005': 16.9 };
   for (const [sku, cv] of Object.entries(quotedCv)) {
     if (!near(bySku[sku][4], cv, 0.02)) fail('dom-047', `${sku}: коэффициент вариации в базе ${bySku[sku][4]}, в тексте ${cv}`);
   }
@@ -1406,12 +1413,12 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const series = runSql(`
     SELECT p.sku_code AS sku, substr(f.week_start, 1, 7) AS month, ROUND(SUM(f.revenue) / 1000) AS thousands
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
-    WHERE p.sku_code IN ('КЛЮЧ005', 'ХРУС002')
+    WHERE p.sku_code IN ('AQUA005', 'KROS002')
       AND f.week_start >= '2025-07-01' AND f.week_start < '2026-07-01'
     GROUP BY 1, 2 ORDER BY 1, 2`);
   const quotedSeries = {
-    'КЛЮЧ005': [277, 231, 253, 157, 123, 168, 165, 131, 156, 154, 182, 285],
-    'ХРУС002': [89, 113, 131, 92, 85, 112, 94, 90, 114, 85, 88, 230],
+    'AQUA005': [277, 231, 253, 157, 123, 168, 165, 131, 156, 154, 182, 285],
+    'KROS002': [89, 113, 131, 92, 85, 112, 94, 90, 114, 85, 88, 230],
   };
   for (const [sku, values] of Object.entries(quotedSeries)) {
     const got = series.rows.filter((r) => r[0] === sku).map((r) => r[2]);
@@ -1422,9 +1429,9 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   // Задание держится на том, что всплеск снека приходится на собственную акцию.
   const promoJune = runSql(`
     SELECT COUNT(*) AS promos FROM dim_promo
-    WHERE brand = 'Хрустик' AND start_date <= '2026-06-30' AND end_date >= '2026-06-01'`).rows[0][0];
+    WHERE brand = 'Krosti' AND start_date <= '2026-06-30' AND end_date >= '2026-06-01'`).rows[0][0];
   if (!promoJune) {
-    fail('dom-047', 'июньского всплеска «Хрустика» больше нечем объяснить — акции в dim_promo на этот месяц нет');
+    fail('dom-047', 'июньского всплеска «Krosti» больше нечем объяснить — акции в dim_promo на этот месяц нет');
   } else {
     console.log(`  ok   dom-047: вода даёт сезонную волну, снек — один всплеск в месяц собственной акции`);
   }
@@ -1488,15 +1495,15 @@ await checkLessons(readPack('python-core'), 'python-lessons');
            (SELECT COUNT(DISTINCT category) FROM dim_product) AS cats,
            (SELECT COUNT(*) FROM dim_promo) AS promos,
            (SELECT COUNT(DISTINCT brand) FROM dim_promo) AS promo_brands,
-           (SELECT COUNT(*) FROM dim_product WHERE brand = 'Чистовъ') AS chistov_products,
-           (SELECT COUNT(*) FROM dim_promo WHERE brand = 'Чистовъ') AS chistov_promos`);
+           (SELECT COUNT(*) FROM dim_product WHERE brand = 'Nettora') AS nettora_products,
+           (SELECT COUNT(*) FROM dim_promo WHERE brand = 'Nettora') AS nettora_promos`);
   const [products, prodBrands, customers, cats, promos, promoBrands, cProd, cPromo] = r.rows[0];
   const quoted = { products: 47, prodBrands: 9, customers: 144, cats: 5, promos: 89, promoBrands: 9, cProd: 5, cPromo: 10 };
   const actual = { products, prodBrands, customers, cats, promos, promoBrands, cProd, cPromo };
   const bad = Object.keys(quoted).filter((k) => quoted[k] !== actual[k]);
   if (bad.length) {
     fail('mdl-007/008/011', `цифры справочников разошлись: ${bad.map((k) => `${k} ${quoted[k]}→${actual[k]}`).join(', ')}`);
-  } else console.log(`  ok   mdl-007/008/011: справочники ${products}/${customers}/${promos}, «Чистовъ» — ${cProd} товаров и ${cPromo} акций`);
+  } else console.log(`  ok   mdl-007/008/011: справочники ${products}/${customers}/${promos}, «Nettora» — ${cProd} товаров и ${cPromo} акций`);
   // Многие-ко-многим требует неуникальности С ОБЕИХ сторон: станет ключ
   // уникальным хоть где-то — и mdl-011 будет учить несуществующему случаю.
   if (prodBrands >= products || promoBrands >= promos) {
@@ -1536,38 +1543,38 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 // аддитивность, таблица дат. Тот же приём, что и на tier 1 mdl-013: числа
 // в задании закрепляются запросом к той же базе.
 
-// mdl-016, mdl-020, mdl-021: доля Чистовъ в выручке — 12.7% по всей базе,
+// mdl-016, mdl-020, mdl-021: доля Nettora в выручке — 12.7% по всей базе,
 // 19.1% по Москве. На них стоит и mdl-016 (мера vs колонка), и разбивка
 // по регионам в mdl-021, где сумма регионов обязана сойтись с общим итогом.
 {
   const r = runSql(`
     SELECT ROUND(SUM(f.revenue)) AS total,
-           ROUND(SUM(CASE WHEN p.brand = 'Чистовъ' THEN f.revenue ELSE 0 END)) AS chistov,
+           ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue ELSE 0 END)) AS nettora,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
-              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Москва') AS msk_total,
+              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Moscow') AS msk_total,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_product p2 ON p2.product_id = f2.product_id
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
               JOIN dim_region r2 ON r2.region_id = c2.region_id
-              WHERE r2.region_name = 'Москва' AND p2.brand = 'Чистовъ') AS msk_chistov
+              WHERE r2.region_name = 'Moscow' AND p2.brand = 'Nettora') AS msk_nettora
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id`);
-  const [total, chistov, mskTotal, mskChistov] = r.rows[0];
-  const share = Math.round((chistov / total) * 1000) / 10;
-  const mskShare = Math.round((mskChistov / mskTotal) * 1000) / 10;
-  if (chistov !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Чистовъ в тексте 12.7% (16 165 815 ₽), в базе ${share}% (${chistov} ₽)`);
-  if (mskChistov !== 1691942 || mskTotal !== 8876489 || mskShare !== 19.1) {
-    fail('mdl-016/020', `доля по Москве в тексте 19.1% (1 691 942 из 8 876 489), в базе ${mskShare}% (${mskChistov} из ${mskTotal})`);
-  } else console.log(`  ok   mdl-016/020: доля Чистовъ ${share}% всего, ${mskShare}% по Москве`);
+  const [total, nettora, mskTotal, mskNettora] = r.rows[0];
+  const share = Math.round((nettora / total) * 1000) / 10;
+  const mskShare = Math.round((mskNettora / mskTotal) * 1000) / 10;
+  if (nettora !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Nettora в тексте 12.7% (16 165 815 ₽), в базе ${share}% (${nettora} ₽)`);
+  if (mskNettora !== 1691942 || mskTotal !== 8876489 || mskShare !== 19.1) {
+    fail('mdl-016/020', `доля по Москве в тексте 19.1% (1 691 942 из 8 876 489), в базе ${mskShare}% (${mskNettora} из ${mskTotal})`);
+  } else console.log(`  ok   mdl-016/020: доля Nettora ${share}% всего, ${mskShare}% по Москве`);
 
   const byRegion = runSql(`
     SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
-      JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Чистовъ'`);
-  if (byRegion.rows[0][0] !== chistov) fail('mdl-021', 'сумма выручки Чистовъ разошлась сама с собой между запросами');
-  else console.log('  ok   mdl-021: сумма по регионам сходится с общим итогом Чистовъ');
+      JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Nettora'`);
+  if (byRegion.rows[0][0] !== nettora) fail('mdl-021', 'сумма выручки Nettora разошлась сама с собой между запросами');
+  else console.log('  ok   mdl-021: сумма по регионам сходится с общим итогом Nettora');
 }
 
-// mdl-019: конкретная ячейка матрицы — Москва × 2025 × Чистовъ против Москвы
+// mdl-019: конкретная ячейка матрицы — Москва × 2025 × Nettora против Москвы
 // без среза по бренду. На двух этих числах держится весь разбор фильтр-контекста.
 {
   const r = runSql(`
@@ -1576,15 +1583,15 @@ await checkLessons(readPack('python-core'), 'python-lessons');
          JOIN dim_product p ON p.product_id = f.product_id
          JOIN dim_customer c ON c.customer_id = f.customer_id
          JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Москва' AND f.week_start LIKE '2025%' AND p.brand = 'Чистовъ') AS with_brand,
+         WHERE rg.region_name = 'Moscow' AND f.week_start LIKE '2025%' AND p.brand = 'Nettora') AS with_brand,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
          JOIN dim_customer c ON c.customer_id = f.customer_id
          JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Москва' AND f.week_start LIKE '2025%') AS all_brands`);
+         WHERE rg.region_name = 'Moscow' AND f.week_start LIKE '2025%') AS all_brands`);
   const [withBrand, allBrands] = r.rows[0];
   if (withBrand !== 819771 || allBrands !== 3718723) {
     fail('mdl-019', `в задании 819 771 ₽ со срезом и 3 718 723 ₽ без него, в базе ${withBrand} и ${allBrands}`);
-  } else console.log(`  ok   mdl-019: Москва×2025×Чистовъ ${withBrand} ₽, без среза по бренду ${allBrands} ₽`);
+  } else console.log(`  ok   mdl-019: Москва×2025×Nettora ${withBrand} ₽, без среза по бренду ${allBrands} ₽`);
 }
 
 // mdl-023: три первые строки fact_sellout — на их revenue/units держится
@@ -1682,18 +1689,18 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 }
 
 // mdl-034, mdl-035: размер моста «товар × акция». 465 пар — сумма произведений
-// внутри каждого бренда, у «Чистовъ» это 5 × 10 = 50.
+// внутри каждого бренда, у «Nettora» это 5 × 10 = 50.
 {
   const r = runSql(`
     SELECT
       (SELECT COUNT(*) FROM dim_product p JOIN dim_promo m ON m.brand = p.brand) AS bridge,
-      (SELECT COUNT(*) FROM dim_product p JOIN dim_promo m ON m.brand = p.brand WHERE p.brand = 'Чистовъ') AS chistov_pairs,
+      (SELECT COUNT(*) FROM dim_product p JOIN dim_promo m ON m.brand = p.brand WHERE p.brand = 'Nettora') AS nettora_pairs,
       (SELECT MIN(c) FROM (SELECT COUNT(*) c FROM dim_product GROUP BY brand)) AS min_products,
       (SELECT MAX(c) FROM (SELECT COUNT(*) c FROM dim_product GROUP BY brand)) AS max_products`);
-  const [bridge, chistovPairs, minProducts, maxProducts] = r.rows[0];
-  if (bridge !== 465 || chistovPairs !== 50) {
-    fail('mdl-035', `в задании мост 465 строк и 50 пар у «Чистовъ», в базе ${bridge} и ${chistovPairs}`);
-  } else console.log(`  ok   mdl-035: мост товар×акция — ${bridge} пар, у «Чистовъ» ${chistovPairs}`);
+  const [bridge, nettoraPairs, minProducts, maxProducts] = r.rows[0];
+  if (bridge !== 465 || nettoraPairs !== 50) {
+    fail('mdl-035', `в задании мост 465 строк и 50 пар у «Nettora», в базе ${bridge} и ${nettoraPairs}`);
+  } else console.log(`  ok   mdl-035: мост товар×акция — ${bridge} пар, у «Nettora» ${nettoraPairs}`);
   if (minProducts !== 4 || maxProducts !== 6) {
     fail('mdl-035', `в задании «товаров от 4 до 6» на бренд, в базе от ${minProducts} до ${maxProducts}`);
   }
@@ -1704,23 +1711,23 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 {
   const r = runSql(`
     SELECT
-      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Ключевая') AS klyuch,
-      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Чистовъ') AS chistov,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Aqualis') AS klyuch,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Nettora') AS nettora,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
          JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Москва' AND p.brand = 'Ключевая') AS klyuch_msk,
-      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Фрутта') AS frutta,
+         WHERE rg.region_name = 'Moscow' AND p.brand = 'Aqualis') AS klyuch_msk,
+      (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Fruvia') AS frutta,
       (SELECT ROUND(SUM(revenue)) FROM fact_sellout) AS total`);
-  const [klyuch, chistov, klyuchMsk, frutta, total] = r.rows[0];
+  const [klyuch, nettora, klyuchMsk, frutta, total] = r.rows[0];
   if (klyuch !== 18841733 || klyuchMsk !== 1323959) {
-    fail('mdl-037/038', `в заданиях «Ключевая» 18 841 733 ₽ и 1 323 959 ₽ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
-  } else console.log(`  ok   mdl-037/038: «Ключевая» ${klyuch} ₽ всего, ${klyuchMsk} ₽ в Москве`);
-  if (klyuch + chistov !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${klyuch + chistov}`);
-  // mdl-039: доля «Фрутты» в разборе названа как 20.1%.
+    fail('mdl-037/038', `в заданиях «Aqualis» 18 841 733 ₽ и 1 323 959 ₽ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
+  } else console.log(`  ok   mdl-037/038: «Aqualis» ${klyuch} ₽ всего, ${klyuchMsk} ₽ в Москве`);
+  if (klyuch + nettora !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${klyuch + nettora}`);
+  // mdl-039: доля «Fruvia» в разборе названа как 20.1%.
   const share = Math.round((frutta / total) * 1000) / 10;
   if (frutta !== 25465980 || share !== 20.1) {
-    fail('mdl-039', `в разборе «Фрутта» 25 465 980 ₽ и доля 20.1%, в базе ${frutta} и ${share}%`);
-  } else console.log(`  ok   mdl-039/040: «Фрутта» ${frutta} ₽ — доля ${share}% от ${total} ₽`);
+    fail('mdl-039', `в разборе «Fruvia» 25 465 980 ₽ и доля 20.1%, в базе ${frutta} и ${share}%`);
+  } else console.log(`  ok   mdl-039/040: «Fruvia» ${frutta} ₽ — доля ${share}% от ${total} ₽`);
 }
 
 // mdl-043, mdl-044: YTD к марту 2025 и сравнение с мартом 2024.
@@ -1760,7 +1767,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 {
   const spellings = runSql(`
     SELECT COUNT(DISTINCT customer_name) FROM staging_raw_sellout
-    WHERE REPLACE(REPLACE(TRIM(customer_name), 'ё', 'е'), 'Ё', 'Е') = 'Пятерочка #1026'`);
+    WHERE REPLACE(TRIM(customer_name), 'Iarmarka', 'Yarmarka') = 'Yarmarka #1026'`);
   const formats = runSql(`
     SELECT COUNT(*) FROM (SELECT DISTINCT
       CASE WHEN sale_date LIKE '__.__.____' THEN 'dot'
@@ -1768,7 +1775,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
            WHEN length(sale_date) = 10 THEN 'iso' ELSE 'short' END AS f FROM staging_raw_sellout)`);
   const rows = runSql(`SELECT COUNT(*) FROM staging_raw_sellout`);
   if (spellings.rows[0][0] !== 4) {
-    fail('mdl-046', `в задании «Пятёрочка #1026» в четырёх написаниях, в базе их ${spellings.rows[0][0]}`);
+    fail('mdl-046', `в задании «Yarmarka #1026» в четырёх написаниях, в базе их ${spellings.rows[0][0]}`);
   } else console.log(`  ok   mdl-046: одна точка в ${spellings.rows[0][0]} написаниях (ё/е × пробелы)`);
   if (formats.rows[0][0] !== 4 || rows.rows[0][0] !== 3110) {
     fail('mdl-047', `в задании 4 формата даты на 3110 строк, в базе ${formats.rows[0][0]} на ${rows.rows[0][0]}`);
@@ -1841,8 +1848,8 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   {
     const all = runSql(`
       SELECT substr(f.week_start, 1, 7) AS month,
-             SUM(CASE WHEN p.brand = 'Ключевая' THEN f.units ELSE 0 END) AS water,
-             SUM(CASE WHEN p.brand = 'Фрутта' THEN f.units ELSE 0 END) AS juice
+             SUM(CASE WHEN p.brand = 'Aqualis' THEN f.units ELSE 0 END) AS water,
+             SUM(CASE WHEN p.brand = 'Fruvia' THEN f.units ELSE 0 END) AS juice
       FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
       GROUP BY 1 ORDER BY 1`);
     const byMonth = Object.fromEntries(all.rows.map((r) => [r[0], { w: r[1], j: r[2] }]));
@@ -1881,7 +1888,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT r.rep_name, rr.outlets, ROUND(rr.rev) AS rev
       FROM rep_rev rr JOIN dim_rep r ON r.rep_id = rr.rep_id
       WHERE r.role = 'rep' ORDER BY rr.rev DESC LIMIT 3`);
-    const quotedTop = [['Анна Егоров', 8, 5042930], ['Юлия Ковалёв', 2, 4616915], ['Екатерина Дьякова', 7, 4335843]];
+    const quotedTop = [['Anna Egorov', 8, 5042930], ['Yulia Kovalev', 2, 4616915], ['Ekaterina Dyakova', 7, 4335843]];
     quotedTop.forEach((q, i) => {
       const row = reps.rows[i];
       if (!row || row[0] !== q[0] || row[1] !== q[1] || !near(row[2], q[2])) {
@@ -1892,7 +1899,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT c.customer_name, ROUND(SUM(f.revenue)) AS rev
       FROM dim_customer c JOIN fact_sellout f ON f.customer_id = c.customer_id
       JOIN dim_rep r ON r.rep_id = c.rep_id
-      WHERE r.rep_name = 'Юлия Ковалёв' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      WHERE r.rep_name = 'Yulia Kovalev' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
       GROUP BY c.customer_id ORDER BY rev DESC`);
     if (portfolio.rows.length !== 2 || !near(portfolio.rows[0][1], 4591844) || !near(portfolio.rows[1][1], 25071)) {
       fail('dom-050', `портфель в базе ${JSON.stringify(portfolio.rows)}, в тексте 4591844 и 25071`);
@@ -1916,13 +1923,13 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   {
     const period = (from, to) => `SUM(CASE WHEN f.week_start BETWEEN '${from}' AND '${to}' THEN f.units ELSE 0 END)`;
     const r = runSql(`
-      SELECT CASE WHEN p.brand = 'Хрустик' THEN c.channel ELSE 'other_mt' END AS grp,
+      SELECT CASE WHEN p.brand = 'Krosti' THEN c.channel ELSE 'other_mt' END AS grp,
              ${period('2025-07-07', '2025-08-04')} AS before,
              ${period('2025-08-11', '2025-09-08')} AS during
       FROM fact_sellout f
       JOIN dim_product p ON p.product_id = f.product_id
       JOIN dim_customer c ON c.customer_id = f.customer_id
-      WHERE p.division = 'FMCG' AND (p.brand = 'Хрустик' OR c.channel = 'modern_trade')
+      WHERE p.division = 'FMCG' AND (p.brand = 'Krosti' OR c.channel = 'modern_trade')
       GROUP BY 1`);
     const got = Object.fromEntries(r.rows.map((row) => [row[0], [row[1], row[2]]]));
     const quoted = { modern_trade: [1515, 4869], traditional_trade: [130, 127], ecom: [4262, 4486], other_mt: [13809, 11448] };
@@ -1938,7 +1945,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     else console.log(`  ok   dom-051: акция ×${lift.toFixed(2)} в сетях, все три контрольные группы не выросли`);
   }
 
-  // dom-052 и dom-053 пересказывают декомпозицию «Чистовъ» из dom-043 словами —
+  // dom-052 и dom-053 пересказывают декомпозицию «Nettora» из dom-043 словами —
   // те же четыре числа, но уже внутри текста письма, где их никто не пересчитает.
   {
     const r = runSql(`
@@ -1946,7 +1953,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       FROM fact_sellout f
       JOIN dim_product p ON p.product_id = f.product_id
       JOIN dim_date d ON d.date_id = f.week_start
-      WHERE p.brand = 'Чистовъ' AND d.quarter = 2 AND d.year IN (2024, 2026)
+      WHERE p.brand = 'Nettora' AND d.quarter = 2 AND d.year IN (2024, 2026)
       GROUP BY d.year ORDER BY d.year`);
     const quoted = [[2024, 2121702, 79], [2026, 1079055, 33]];
     quoted.forEach((q, i) => {
@@ -2018,17 +2025,17 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   // py-002: вариант ответа цитирует сообщение ValueError дословно.
   await pyExpect('py-002', `
 try:
-    dim_product[(dim_product['list_price'] > 100) and (dim_product['brand'] == 'Ключевая')]
+    dim_product[(dim_product['list_price'] > 100) and (dim_product['brand'] == 'Aqualis')]
     result = 'ошибки не было'
 except Exception as e:
     result = f'{type(e).__name__}: {str(e).split(".")[0]}'
 `, 'ValueError: The truth value of a Series is ambiguous', 'and на Series по-прежнему даёт процитированный ValueError');
 
-  // py-001: разбор объясняет, что без скобок первым вычисляется 'Ключевая' & (...)
+  // py-001: разбор объясняет, что без скобок первым вычисляется 'Aqualis' & (...)
   // и это именно TypeError, а не тихо неверная выборка.
   await pyExpect('py-001', `
 try:
-    dim_product[dim_product['brand'] == 'Ключевая' & (dim_product['list_price'] > 100)]
+    dim_product[dim_product['brand'] == 'Aqualis' & (dim_product['list_price'] > 100)]
     result = 'ошибки не было'
 except Exception as e:
     result = type(e).__name__
@@ -2084,7 +2091,7 @@ vc = dim_product['brand'].value_counts()
 top = sorted(vc[vc == vc.max()].index)
 bottom = sorted(vc[vc == vc.min()].index)
 result = f"{len(vc)}/{vc.max()}:{','.join(top)}/{vc.min()}:{','.join(bottom)}"
-`, '9/6:Ключевая,Молочный Дом,Фрутта,Хрустик/4:Гастрокалм,Ринофлекс', 'девять брендов, от шести позиций до четырёх — совпадает с разбором');
+`, '9/6:Aqualis,Fruvia,Krosti,Milvara/4:Gastrivo,Rhinolar', 'девять брендов, от шести позиций до четырёх — совпадает с разбором');
 
   // py-030: вариант ответа цитирует сообщение ValueError дословно.
   await pyExpect('py-030', `
@@ -2099,18 +2106,23 @@ except Exception as e:
     result = f'{type(e).__name__}: {e}'
 `, 'ValueError: Index contains duplicate entries, cannot reshape', 'pivot на сырых данных по-прежнему падает процитированным сообщением');
 
-  // py-032/py-033: весь смысл пары заданий — в контрасте двух движков на одних
-  // и тех же данных. Если он исчезнет, задания начнут учить неверному.
-  await pyExpect('py-033', `
+  // py-032: числа 58 → 29 напечатаны в условии и в разборе.
+  await pyExpect('py-032', `
 result = f"{staging_raw_sellout['sku_code'].nunique()}/{staging_raw_sellout['sku_code'].str.upper().nunique()}"
-`, '58/29', 'pandas схлопывает 58 кодов в 29 (полный Unicode)');
-  {
-    const r = runSql(`SELECT COUNT(DISTINCT sku_code) AS raw, COUNT(DISTINCT UPPER(sku_code)) AS up FROM staging_raw_sellout`);
-    const [raw, up] = r.rows[0];
-    if (raw !== 58 || up !== 58) {
-      fail('py-033', `в разборе UPPER в SQLite не меняет ничего (58 → 58), в базе ${raw} → ${up}`);
-    } else console.log('  ok   py-033: UPPER в SQLite оставляет те же 58 кодов — контраст с pandas на месте');
-  }
+`, '58/29', 'приведение регистра схлопывает 58 кодов в 29');
+
+  /*
+   * py-033 держится на разрыве между двумя числами: строковая нормализация
+   * даёт 52, а реальных точек 45. Разрыв создают семь точек сети, записанных
+   * в двух транслитерациях, — его и проверяем отдельно. Совпади эти числа,
+   * задание начнёт учить обратному тому, ради чего написано: что регистр
+   * и пробелы — это ещё не нормализация сущности.
+   */
+  await pyExpect('py-033', `
+s = staging_raw_sellout['customer_name']
+canon = s.str.strip().str.upper().str.replace('IARMARKA', 'YARMARKA', regex=False)
+result = f"{s.nunique()}/{s.str.strip().str.upper().nunique()}/{canon.nunique()}"
+`, '104/52/45', 'нормализация формы даёт 52 при 45 настоящих точках');
 
   // py-038: разбор держится на том, что pandas предупреждает, но не падает,
   // и колонка не появляется. В pandas 3 с copy-on-write это поведение меняется —
@@ -2203,7 +2215,7 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
       const rows = runSql(`
         SELECT CAST(strftime('%m', s.week_start) AS INT) mon, SUM(s.units) units
         FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
-        WHERE p.subcategory = 'Вода' GROUP BY mon ORDER BY units DESC`).rows;
+        WHERE p.subcategory = 'Water' GROUP BY mon ORDER BY units DESC`).rows;
       if (rows.length !== 12) return { ok: false, why: `месяцев с продажами воды ${rows.length}, а не 12` };
       const ratio = rows[0][1] / rows[rows.length - 1][1];
       if (ratio < 2) return { ok: false, why: `пик выше провала лишь в ${ratio.toFixed(1)} раза — сезона, о котором спрашивают, больше нет` };
@@ -2221,8 +2233,8 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
         one(`
           WITH m AS (
             SELECT strftime('%Y-%m', s.week_start) ym,
-              SUM(CASE WHEN p.subcategory = 'Вода' THEN s.units ELSE 0 END) w,
-              SUM(CASE WHEN p.subcategory = 'Соки' THEN s.units ELSE 0 END) j
+              SUM(CASE WHEN p.subcategory = 'Water' THEN s.units ELSE 0 END) w,
+              SUM(CASE WHEN p.subcategory = 'Juices' THEN s.units ELSE 0 END) j
             FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
             WHERE s.week_start BETWEEN '${from}' AND '${to}' GROUP BY ym)
           SELECT COUNT(*), (AVG(w * j) - AVG(w) * AVG(j)) /
@@ -2239,12 +2251,12 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
 
     'q-launch': () => {
       const newest = one(`SELECT product_name, launch_date FROM dim_product ORDER BY launch_date DESC LIMIT 1`);
-      if (newest[0] !== 'Витамакс Форте №30') return { ok: false, why: `самая новая позиция теперь «${newest[0]}», а вопрос называет «Витамакс Форте №30»` };
+      if (newest[0] !== 'Vitanor Forte x30') return { ok: false, why: `самая новая позиция теперь «${newest[0]}», а вопрос называет «Vitanor Forte x30»` };
       if (!String(newest[1]).startsWith('2025-09')) return { ok: false, why: `дата вывода ${newest[1]}, а вопрос говорит «осенью 2025-го»` };
       const pts = runSql(`
         SELECT strftime('%Y-%m', s.week_start) m, COUNT(DISTINCT s.customer_id) pts
         FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
-        WHERE p.product_name = 'Витамакс Форте №30' GROUP BY m ORDER BY m`).rows;
+        WHERE p.product_name = 'Vitanor Forte x30' GROUP BY m ORDER BY m`).rows;
       if (pts.length < 6) return { ok: false, why: `месяцев продаж новинки ${pts.length} — раскатку не разглядеть` };
       const first = pts[0][1];
       const last = pts[pts.length - 1][1];
@@ -2257,12 +2269,12 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
         WITH b AS (
           SELECT strftime('%Y-%m', s.week_start) m, COUNT(DISTINCT s.customer_id) pts, SUM(s.revenue) rev
           FROM fact_sellout s JOIN dim_product p ON p.product_id = s.product_id
-          WHERE p.brand = 'Чистовъ' AND s.units > 0 GROUP BY m)
+          WHERE p.brand = 'Nettora' AND s.units > 0 GROUP BY m)
         SELECT (SELECT pts FROM b ORDER BY m LIMIT 1), (SELECT rev FROM b ORDER BY m LIMIT 1),
                (SELECT pts FROM b ORDER BY m DESC LIMIT 1), (SELECT rev FROM b ORDER BY m DESC LIMIT 1)`);
       const [pts0, rev0, pts1, rev1] = r;
       const dropPts = 1 - pts1 / pts0;
-      if (dropPts < 0.3) return { ok: false, why: `точек «Чистовъ» стало меньше лишь на ${(dropPts * 100).toFixed(0)}% — падения, о котором спрашивают, нет` };
+      if (dropPts < 0.3) return { ok: false, why: `точек «Nettora» стало меньше лишь на ${(dropPts * 100).toFixed(0)}% — падения, о котором спрашивают, нет` };
       // Главное в вопросе — что выручка на точку при этом не упала, иначе
       // разложение «точки против объёма» перестаёт что-либо различать.
       const perPoint0 = rev0 / pts0;
@@ -2278,13 +2290,13 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
       const rows = runSql(`
         SELECT c.chain_name, COUNT(DISTINCT c.customer_id) pts, SUM(s.revenue) rev
         FROM fact_sellout s JOIN dim_customer c ON c.customer_id = s.customer_id
-        WHERE c.chain_name IN ('Wildberries', 'Дикси') GROUP BY c.chain_name`).rows;
-      const wb = rows.find((r) => r[0] === 'Wildberries');
-      const dixy = rows.find((r) => r[0] === 'Дикси');
-      if (!wb || !dixy) return { ok: false, why: 'в данных больше нет сети Wildberries или «Дикси», а вопрос называет обе' };
-      if (wb[1] !== 3 || dixy[1] !== 5) return { ok: false, why: `точек Wildberries ${wb[1]} и «Дикси» ${dixy[1]}, а в тексте вопроса три и пять` };
-      if (!(wb[2] > dixy[2] * 3)) return { ok: false, why: 'выручка Wildberries больше не превышает «Дикси» втрое — парадокс «меньше точек, больше денег» исчез' };
-      return { ok: true, note: `Wildberries ${wb[1]} точки / ${Math.round(wb[2])}, «Дикси» ${dixy[1]} точек / ${Math.round(dixy[2])}` };
+        WHERE c.chain_name IN ('Bazario', 'Prima') GROUP BY c.chain_name`).rows;
+      const wb = rows.find((r) => r[0] === 'Bazario');
+      const dixy = rows.find((r) => r[0] === 'Prima');
+      if (!wb || !dixy) return { ok: false, why: 'в данных больше нет сети Bazario или «Prima», а вопрос называет обе' };
+      if (wb[1] !== 3 || dixy[1] !== 5) return { ok: false, why: `точек Bazario ${wb[1]} и «Prima» ${dixy[1]}, а в тексте вопроса три и пять` };
+      if (!(wb[2] > dixy[2] * 3)) return { ok: false, why: 'выручка Bazario больше не превышает «Prima» втрое — парадокс «меньше точек, больше денег» исчез' };
+      return { ok: true, note: `Bazario ${wb[1]} точки / ${Math.round(wb[2])}, «Prima» ${dixy[1]} точек / ${Math.round(dixy[2])}` };
     },
 
     'q-weeks-of-supply': () => {
@@ -2329,16 +2341,16 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
       const rows = runSql(`
         SELECT pr.discount_pct, SUM(s.units) units, SUM(s.revenue) / SUM(s.units) per_unit
         FROM fact_sellout s JOIN dim_promo pr ON pr.promo_id = s.promo_id
-        WHERE pr.brand = 'Молочный Дом' GROUP BY pr.discount_pct`).rows;
+        WHERE pr.brand = 'Milvara' GROUP BY pr.discount_pct`).rows;
       const deep = rows.find((r) => r[0] === 30);
       const shallow = rows.filter((r) => r[0] <= 10).sort((a, b) => b[1] - a[1])[0];
-      if (!deep) return { ok: false, why: 'у «Молочный Дом» больше нет акции со скидкой 30%, которую называет вопрос' };
-      if (!shallow) return { ok: false, why: 'у «Молочный Дом» не осталось акции с мелкой скидкой — сравнивать глубокую не с чем' };
+      if (!deep) return { ok: false, why: 'у «Milvara» больше нет акции со скидкой 30%, которую называет вопрос' };
+      if (!shallow) return { ok: false, why: 'у «Milvara» не осталось акции с мелкой скидкой — сравнивать глубокую не с чем' };
       if (!(deep[1] > shallow[1] * 3)) return { ok: false, why: `глубокая скидка дала ${deep[1]} штук против ${shallow[1]} — «кратного роста в штуках» больше нет` };
       const base = one(`
         SELECT SUM(s.revenue) / SUM(s.units) FROM fact_sellout s
         JOIN dim_product p ON p.product_id = s.product_id
-        WHERE p.brand = 'Молочный Дом' AND s.promo_id IS NULL`)[0];
+        WHERE p.brand = 'Milvara' AND s.promo_id IS NULL`)[0];
       // Порядок «глубокая < мелкая < без промо» и есть ответ на вопрос
       // «во что обошёлся объём»: каждая ступень скидки срезает выручку со штуки.
       if (!(deep[2] < shallow[2] && shallow[2] < base)) {
@@ -2408,14 +2420,18 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
       const [total, unmatched, comma, dotted, padded] = r;
       if (!(unmatched > 0)) return { ok: false, why: 'выгрузка полностью сходится с dim_product — считать «сколько строк не находит пару» нечего' };
       if (!(comma > 0 && dotted > 0 && padded > 0)) return { ok: false, why: `грязь ушла из выгрузки: запятых ${comma}, дат через точку ${dotted}, строк с пробелами ${padded}` };
-      // Опорное свойство движка, на которое человек наткнётся при первой же
-      // попытке починить регистр: в SQLite UPPER/LOWER не трогают кириллицу,
-      // поэтому «привести к одному регистру» здесь не работает (та же история,
-      // что sql-027 — см. §2 ROADMAP). Если движок однажды это исправит,
-      // вопрос останется верным, но перестанет быть тем, чем задуман.
-      const caseNoop = one(`SELECT COUNT(*) FROM staging_raw_sellout WHERE UPPER(sku_code) = LOWER(sku_code)`)[0];
-      if (caseNoop !== total) return { ok: false, why: `UPPER/LOWER перестали быть пустышкой на кириллице (${caseNoop} из ${total}) — ловушка вопроса изменилась` };
-      return { ok: true, note: `${unmatched} из ${total} строк не находят пару по регистру, UPPER/LOWER кириллицу не трогают` };
+      /*
+       * Ловушка вопроса — в том, что несовпадение объясняется регистром
+       * и лечится приведением к нему, а не потерянными товарами. Проверяем
+       * обе половины: строки без пары есть, и после UPPER их не остаётся.
+       * Провал второй половины означал бы, что часть кодов не находит пару
+       * по другой причине, — и «разберитесь почему» вело бы не туда.
+       */
+      const byUpper = one(`
+        SELECT COUNT(*) FROM staging_raw_sellout r
+        LEFT JOIN dim_product p ON UPPER(p.sku_code) = UPPER(r.sku_code) WHERE p.sku_code IS NULL`)[0];
+      if (byUpper !== 0) return { ok: false, why: `после приведения регистра без пары остаются ${byUpper} строк — причина расхождения уже не только в регистре` };
+      return { ok: true, note: `${unmatched} из ${total} строк не находят пару по регистру, после UPPER не остаётся ни одной` };
     },
   };
 
