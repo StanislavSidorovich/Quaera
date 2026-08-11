@@ -193,7 +193,8 @@ export const en = {
     toolsIntro:
       "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Nettora»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers have to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
     toolsWhenLabel: 'When this is your tool',
-    toolsCostLabel: 'What it costs you',
+    /** См. довод у toolsCostLabel в ru.ts: подпись про отказы, а не про цену. */
+    toolsCostLabel: 'Where it lets you down',
     toolsWhen: {
       domain:
         "Before everything else. Before counting sales you have to know whose: shipments to the distributor or sales at the till, before discounts or after. This track isn't about a tool — it's about what the number you computed means and who needs it.",
