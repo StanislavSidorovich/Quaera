@@ -696,7 +696,7 @@
       "title": "The \"Total\" row at the bottom",
       "brief": "The same by-region matrix has a \"Total\" row underneath it. A slicer for brand «Nettora» is set on the page.",
       "goal": "Work out what filter context applies in the \"Total\" row.",
-      "scenario": "Matrix with a «Nettora» slicer:\n\n  Tokyo          1,691,942\n  Saitama 2,441,558\n  ...\n  Total          16,165,815",
+      "scenario": "Matrix with a «Nettora» slicer:\n\n  Tokyo      1,691,942\n  Saitama    2,441,558\n  ...\n  Total     16,165,815",
       "predictQuestion": "What filter context applies in the \"Total\" row?",
       "hints": [
         "Ask: does a region value \"Total\" exist in the dim_region lookup? If not, what is this row's filter resting on?",
@@ -1408,7 +1408,7 @@
       "title": "One outlet, four spellings",
       "brief": "In the raw staging layer, the name of one and the same retail outlet is written several different ways. The by-outlet report shows it four times, splitting its revenue between the variants.",
       "goal": "Work out where this should be fixed.",
-      "scenario": "staging_raw_sellout, 3,110 rows.\nOne outlet appears as:\n\n  «Ichiba #1026»\n  «  Ichiba #1026 »\n  «Itiba #1026»\n  «  Itiba #1026 »\n\nDifferences: Ya vs Ia transliteration\nand leading/trailing spaces.",
+      "scenario": "staging_raw_sellout, 3,110 rows.\nOne outlet appears as:\n\n  «Ichiba #1026»\n  «  Ichiba #1026 »\n  «Itiba #1026»\n  «  Itiba #1026 »\n\nDifferences: Ichiba/Itiba romanisation\nand leading/trailing spaces.",
       "predictQuestion": "Where should this be cleaned, and why not in a measure?",
       "hints": [
         "Ask: does the result of this cleanup depend on what is selected in the report slicers?",
@@ -1532,7 +1532,7 @@
       "title": "A \"previous region\" column",
       "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table — then the old value would be preserved.",
       "goal": "Work out whether this actually solves the problem.",
-      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Tokyo»\n  until 2025-03 — «Kanagawa»\n  now — «Kaluga Region»",
+      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Tokyo»\n  until 2025-03 — «Kanagawa»\n  now — «Osaka»",
       "predictQuestion": "What does this solution fail to solve?",
       "hints": [
         "The outlet moved twice. How many states fit into two columns?",

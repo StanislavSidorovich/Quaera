@@ -868,13 +868,13 @@
     {
       "id": "sql-046",
       "title": "A chain spelled two ways",
-      "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems transliterated one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
+      "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems romanised one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
       "goal": "Return one row: written_ya — the number of rows where customer_name contains «Ichiba», written_ia — where it contains «Itiba», total_chain — their sum: both groups belong to the same chain.",
       "hints": [
         "The two spellings differ in their first letter — Ya against Ia. Catch both variants with separate LIKE conditions.",
         "The sum of written_ya and written_ia should match total_chain — that's the check that the variants don't overlap and nothing is lost."
       ],
-      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent transliteration is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
+      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent romanisation is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
     },
     {
       "id": "sql-047",

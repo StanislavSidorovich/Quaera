@@ -1775,8 +1775,8 @@ await checkLessons(readPack('python-core'), 'python-lessons');
            WHEN length(sale_date) = 10 THEN 'iso' ELSE 'short' END AS f FROM staging_raw_sellout)`);
   const rows = runSql(`SELECT COUNT(*) FROM staging_raw_sellout`);
   if (spellings.rows[0][0] !== 4) {
-    fail('mdl-046', `в задании «Yarmarka #1026» в четырёх написаниях, в базе их ${spellings.rows[0][0]}`);
-  } else console.log(`  ok   mdl-046: одна точка в ${spellings.rows[0][0]} написаниях (ё/е × пробелы)`);
+    fail('mdl-046', `в задании «Ichiba #1026» в четырёх написаниях, в базе их ${spellings.rows[0][0]}`);
+  } else console.log(`  ok   mdl-046: одна точка в ${spellings.rows[0][0]} написаниях (романизация × пробелы)`);
   if (formats.rows[0][0] !== 4 || rows.rows[0][0] !== 3110) {
     fail('mdl-047', `в задании 4 формата даты на 3110 строк, в базе ${formats.rows[0][0]} на ${rows.rows[0][0]}`);
   } else console.log(`  ok   mdl-047: ${formats.rows[0][0]} формата даты на ${rows.rows[0][0]} строк грязного слоя`);

@@ -638,12 +638,12 @@
       "predictQuestion": "The export holds 104 different spellings of customer names, while the real number of outlets in it is 45. What does this code return?",
       "options": [
         {
-          "label": "52 — case and spaces collapsed, but seven outlets are written in two transliterations and stayed distinct",
+          "label": "52 — case and spaces collapsed, but seven outlets are written in two romanisations and stayed distinct",
           "why": "«Ichiba #1026» and «Itiba #1026» are one outlet, but a string method compares characters, and their first letters differ. It removes case and spaces; a differently spelled name it cannot."
         },
         {
           "label": "45 — casting to one form gives exactly the real number of outlets",
-          "why": "That would hold if every discrepancy came down to the form of the record. There's a third kind here — one name in two transliterations — and string normalization doesn't cure it."
+          "why": "That would hold if every discrepancy came down to the form of the record. There's a third kind here — one name in two romanisations — and string normalization doesn't cure it."
         },
         {
           "label": "104 — .str.upper() changes nothing, because customer names are already in one case",
@@ -658,7 +658,7 @@
         "Look at what exactly differs between two spellings of one outlet: the case, the spaces — or the letters themselves.",
         "A string method has no way of knowing that two dissimilar names mean the same thing."
       ],
-      "explain": "52, not 45. Edge spaces and case are discrepancies of form: a string function removes them because it can see that the strings differ by nothing else. A different transliteration is a discrepancy of content: «Ichiba» and «Itiba» are made of different letters, and no amount of case folding brings them together. This is the boundary where string cleaning ends and entity matching begins: you need a mapping table, or a rule that folds the variants into one canonical form — that is, outside knowledge that these are one chain. The data itself doesn't carry that knowledge. The practical consequence is worse than it looks: after .str.strip().str.upper() the numbers look clean and are therefore more dangerous than the raw ones. A report over 52 customers will agree with itself, while seven outlets in it are counted twice, each with half of its turnover — and no duplicate check will show it. bugs precisely where two engines look interchangeable."
+      "explain": "52, not 45. Edge spaces and case are discrepancies of form: a string function removes them because it can see that the strings differ by nothing else. A different romanisation is a discrepancy of content: «Ichiba» and «Itiba» are made of different letters, and no amount of case folding brings them together. This is the boundary where string cleaning ends and entity matching begins: you need a mapping table, or a rule that folds the variants into one canonical form — that is, outside knowledge that these are one chain. The data itself doesn't carry that knowledge. The practical consequence is worse than it looks: after .str.strip().str.upper() the numbers look clean and are therefore more dangerous than the raw ones. A report over 52 customers will agree with itself, while seven outlets in it are counted twice, each with half of its turnover — and no duplicate check will show it. bugs precisely where two engines look interchangeable."
     },
     {
       "id": "py-034",

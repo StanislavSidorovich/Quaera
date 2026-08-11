@@ -681,7 +681,7 @@
       "title": "One distributor out of twelve",
       "brief": "An analyst rolls up the ratio of shipments to outlet sales across all distributors for Q4. Eleven sit close to one; one stands out.",
       "goal": "Determine what the outlying value means.",
-      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  «Setouchi Trading» LLC\n    28,203 / 11,574 = 2.44\n  «Hokuriku Supply» JSC\n    9,216 / 8,760 = 1.05\n  «Hokusei Trading» LLC\n    12,018 / 11,509 = 1.04\n  «Tokai Group» LLC\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
+      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  Setouchi Trading Co.\n    28,203 / 11,574 = 2.44\n  Hokuriku Supply K.K.\n    9,216 / 8,760 = 1.05\n  Hokusei Trading Co.\n    12,018 / 11,509 = 1.04\n  Tokai Group K.K.\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
       "predictQuestion": "What does «Setouchi Trading»'s 2.44 mean against the rest?",
       "options": [
         {
@@ -743,7 +743,7 @@
       "title": "The ratio came back to normal",
       "brief": "Six months after «Setouchi Trading»'s purchasing spike, the sell-in to sell-out ratio has returned to its usual level. The department head considers the matter closed.",
       "goal": "Determine whether the problem is actually solved.",
-      "scenario": "«Setouchi Trading» LLC, sell-in / sell-out\nratio:\n\n  2025-Q1   1.04\n  2025-Q2   1.04\n  2025-Q3   1.03\n  2025-Q4   2.44   ← spike\n  2026-Q1   1.06\n  2026-Q2   1.05\n\nWarehouse stock, units:\n\n  Aug 2025    3,949\n  Dec 2025   20,846\n  Jan 2026   21,120\n  Apr 2026   21,757",
+      "scenario": "Setouchi Trading Co., sell-in / sell-out\nratio:\n\n  2025-Q1   1.04\n  2025-Q2   1.04\n  2025-Q3   1.03\n  2025-Q4   2.44   ← spike\n  2026-Q1   1.06\n  2026-Q2   1.05\n\nWarehouse stock, units:\n\n  Aug 2025    3,949\n  Dec 2025   20,846\n  Jan 2026   21,120\n  Apr 2026   21,757",
       "predictQuestion": "The ratio is back to 1.05. Is the problem solved?",
       "options": [
         {
