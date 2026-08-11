@@ -35,7 +35,7 @@ export const en = {
       },
       {
         title: 'One dataset, four tracks',
-        body: 'SQL, pandas, analytics-as-a-profession, and the data model all work through the same business cases, and the answers are required to agree.',
+        body: 'SQL, pandas, analytics-as-a-profession, and the data model all work through the same business cases, and the answers have to agree.',
       },
     ],
     chainTitle: 'From question to decision',
@@ -171,8 +171,11 @@ export const en = {
     licenseBody:
       'The application code is under Apache-2.0. The learning content (tasks, explanations, technique cards, the dataset storylines) is under CC BY-NC-SA 4.0: you may reuse it with attribution to the author, for non-commercial purposes, and keeping the same licence on anything derived from it.',
     tracksWhyTitle: 'Why these tracks, in this order',
+    /** См. комментарий в ru.ts: единственное место, где цепочка объяснена прозой, а не нарисована. */
+    chainBody:
+      'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools live in the middle of that path, but it breaks most often at the ends: a misread question yields a flawlessly computed wrong answer, and a calculation nobody drew a conclusion from changes nothing. No engine will warn you about either — the ends of the path are checked by nothing except common sense and the questions you ask the person who requested the work.',
     tracksWhyBody:
-      "This mirrors how the work actually flows. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
+      "The order of the tracks follows that path. Start with the profession itself — what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped — modeling it before that exists would put the roof on before the walls.",
   },
   /**
    * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает
@@ -188,7 +191,7 @@ export const en = {
 
     toolsTitle: 'Four tools, and how to choose between them',
     toolsIntro:
-      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Nettora»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers are required to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
+      "The tracks are named after tools, but they all teach the same thing: a working question can almost always be answered several ways, and picking the way is a skill in itself. One and the same case — brand «Nettora»'s revenue falling by almost half — is worked through on all four tracks, because the data is the same and the answers have to agree. When they don't, it isn't that \"the tools count differently\" — it's that someone made a mistake.",
     toolsWhenLabel: 'When this is your tool',
     toolsCostLabel: 'What it costs you',
     toolsWhen: {
@@ -227,7 +230,8 @@ export const en = {
     steps: [
       {
         title: "Start with whatever is on fire",
-        body: 'The tracks are independent and each starts from zero: SQL opens with SELECT, pandas with what a DataFrame even is, the model with why a star schema exists. If nothing is on fire, follow the chain: profession → SQL → pandas → model. In that order each one builds on the last.',
+        /* См. комментарий в ru.ts: шаг советует, а не пересказывает about.audienceStartBody и about.chainBody. */
+        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they sit in on the home screen — it follows the path from question to decision, and each one builds on the last.',
       },
       {
         title: "Read the track's intro",
@@ -296,8 +300,9 @@ export const en = {
         body: 'Features, models, quality metrics. A neighbouring road from the same junction: the maths partly overlaps, the day-to-day work does not.',
       },
     ],
+    /* См. комментарий в ru.ts: не повтор хвоста about.audienceNotBody, а ответ на вопрос «что с этим списком делать». */
     extraClosing:
-      'The boundary is drawn deliberately, not by oversight: these professions begin where the trainer ends, and promising them in passing would be a lie.',
+      'The list is not a curriculum: close these gaps one at a time, and when the work actually runs into them — otherwise it turns into a permanent "let me prepare first". And the two lists are not equally expensive: the near one is skills adjacent to what you already have, the far one is a second profession, entered deliberately.',
 
     startBtn: 'Pick a track and begin →',
   },
