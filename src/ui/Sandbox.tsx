@@ -315,10 +315,40 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
               placeholder={t.task.placeholder(env)}
             />
 
-            <div className="row" style={{ marginTop: 12 }}>
+            {/*
+             * Сохранение — кнопка в этом же ряду, рядом с «Выполнить», а не
+             * текстовая ссылка строкой ниже: действие над кодом равноправно
+             * с запуском, а link-row выглядела сноской и терялась на экране.
+             * `.sandbox-inline-btn` держит её по ширине текста, а не растягивает
+             * по `.row > * { flex: 1 }`, как Clear и Run.
+             *
+             * Три кнопки в упор не влезают в 390px: замер дал переполнение
+             * 401 > 390 (169px «Сохранить скрипт» + 84 + 96 + два зазора
+             * по 10 + отступы карточки). Поэтому строка размечена отдельным
+             * классом `.sandbox-actions`, и на ≤479px (см. styles.css) кнопка
+             * сохранения переносится на свою строку под Clear/Run, а не жмётся
+             * в общий flex:1 и не режет им текст переносом.
+             *
+             * Пока открыта форма названия, кнопка скрыта — незачем открывать
+             * её повторно поверх уже открытой.
+             */}
+            <div className="row sandbox-actions" style={{ marginTop: 12 }}>
               <button type="button" className="btn secondary" onClick={handleClear} disabled={running}>
                 {t.sandbox.clearBtn}
               </button>
+              {!savingOpen && (
+                <button
+                  type="button"
+                  className="btn secondary sandbox-inline-btn"
+                  onClick={() => {
+                    setSaveName('');
+                    setSavingOpen(true);
+                  }}
+                  disabled={!code.trim()}
+                >
+                  {t.sandbox.saveBtn}
+                </button>
+              )}
               <button type="button" className="btn" onClick={handleRun} disabled={running || notReady || !code.trim()}>
                 {running ? t.sandbox.running : t.sandbox.runBtn}
               </button>
@@ -329,13 +359,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
               </div>
             )}
 
-            {/*
-             * Сохранение живёт здесь, а не отдельной карточкой под результатом.
-             * Там оно стояло после таблицы и читалось как «сохранить результат»,
-             * хотя сохраняется код: действие над кодом обязано стоять рядом
-             * с кодом, а не за блоком, который к нему не относится.
-             */}
-            {savingOpen ? (
+            {savingOpen && (
               <div className="row" style={{ marginTop: 10 }}>
                 <input
                   type="text"
@@ -353,19 +377,6 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                   {t.sandbox.saveCancelBtn}
                 </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                className="link-row"
-                style={{ marginTop: 10 }}
-                onClick={() => {
-                  setSaveName('');
-                  setSavingOpen(true);
-                }}
-                disabled={!code.trim()}
-              >
-                {t.sandbox.saveBtn}
-              </button>
             )}
 
             {/* Обратный ход после замены кода — см. replaced выше. */}
