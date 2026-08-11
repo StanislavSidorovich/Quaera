@@ -136,7 +136,7 @@ export const en = {
       "Anyone already working with data or heading that way: a product or commercial analyst, a reporting specialist, a finance person tired of waiting on someone else's export. There is no syntax-for-its-own-sake here — every task grew out of a question analysts actually get asked.",
     audienceStartLabel: 'Where it starts',
     audienceStartBody:
-      'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed. The tracks are independent — start with whatever is on fire, not with the first one listed.',
+      'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed.',
     audienceCeilingLabel: 'Where it gets you',
     audienceCeilingBody:
       'To a confident mid-level: window functions with frames, CTEs and query decomposition, filter context and time intelligence in DAX, reshaping data in pandas. That is the level at which an analyst closes most business requests without handing them onward.',
@@ -255,8 +255,9 @@ export const en = {
         body: 'The "memory strength" bar grows from returning to a topic across days, not from how much you cleared in one evening — one evening cannot fill it, by design. Three short days do more than one long one.',
       },
     ],
+    /** См. довод в ru.ts: приватность и бэкап сказаны на «О тренажёре», здесь — что делать. */
     stepsNote:
-      'Progress lives only in this browser: there is no account and nothing is sent to a server. If you switch devices or clear site data, download the progress file from the About page — that is the only way to carry it over.',
+      'If you switch devices or clear site data, download the progress file from the About page — that is the only way to carry it over.',
 
     extraTitle: 'What to learn elsewhere',
     extraIntro:
