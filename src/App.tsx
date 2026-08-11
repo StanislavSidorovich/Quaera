@@ -977,6 +977,7 @@ export default function App() {
           {screen.name === 'about' && (
             <About
               onSelectTrack={(track) => { switchTrack(track); }}
+              onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onExportProgress={downloadProgress}
               onImportProgress={importProgressFile}
             />
@@ -1220,8 +1221,17 @@ function TrackCards({
  * поэтому текст ведёт не с описания структуры («четыре трека»), а с того,
  * что в тренажёре редко: код исполняется по-настоящему и числа в разборах
  * закреплены проверкой сборки, а не оставлены на честное слово.
+ *
+ * Здесь же живёт вход в «С чего начать» — раньше он был вторым серым рядом
+ * ссылок на главной, прямо над ссылкой на «О тренажёре». Два ряда заставляли
+ * выбирать между «что это» и «что мне делать» до того, как известно хоть
+ * одно из двух. Теперь на главной один постоянный ряд («О тренажёре»),
+ * а совет новичку стоит внутри карточки, которую новичок в этот момент
+ * и читает. Обратный вход тоже цел: WelcomeHero открывает экран «О тренажёре»,
+ * то есть с телефона (бокового меню там нет) обе страницы достижимы
+ * с любой из них.
  */
-function WelcomeHero() {
+function WelcomeHero({ onOnboarding }: { onOnboarding: () => void }) {
   const { t } = useI18n();
   return (
     <div className="card welcome-hero">
@@ -1236,6 +1246,14 @@ function WelcomeHero() {
         ))}
       </div>
       <ChainDiagram />
+      <button
+        type="button"
+        className="link-row"
+        onClick={onOnboarding}
+        style={{ margin: '14px 0 0' }}
+      >
+        {t.onboarding.entryLink}
+      </button>
     </div>
   );
 }
@@ -1374,33 +1392,22 @@ function Home({
 
   return (
     <>
-      {isNewUser && <WelcomeHero />}
+      {isNewUser && <WelcomeHero onOnboarding={onOpenOnboarding} />}
 
       {/*
-       * Постоянная ссылка, а не разовая карточка новичка: та показывается один
-       * раз и исчезает после первой решённой задачи, а вопрос «что вообще
-       * входит в тренажёр и как это устроено» у человека может возникнуть
-       * и на второй, и на десятой сессии — особенно если он открывает
-       * приложение по ссылке, а не проходит его сам с нуля. Стоит над
+       * Единственная постоянная ссылка главной, а не разовая карточка новичка:
+       * та показывается один раз и исчезает после первой решённой задачи,
+       * а вопрос «что вообще входит в тренажёр и как это устроено» у человека
+       * может возникнуть и на второй, и на десятой сессии — особенно если он
+       * открывает приложение по ссылке, а не проходит его сам с нуля. Стоит над
        * переключателем треков: это вопрос про тренажёр целиком, до выбора
        * конкретного трека, а не после.
+       *
+       * Вход в «С чего начать» стоял здесь же вторым рядом и уехал внутрь
+       * WelcomeHero (см. комментарий там): постоянный ряд навигации нужен
+       * тому, кто возвращается, а «с чего начать» — тому, кто пришёл впервые,
+       * и он в этот момент читает как раз карточку выше.
        */}
-      {/*
-       * Стоит над about.entryLink: тот отвечает «что это и как устроено»,
-       * этот — «что мне делать», и второй вопрос актуальнее для того, кто
-       * только открыл приложение. Тоже постоянная ссылка, не разовая карточка:
-       * см. рассуждение у about.entryLink ниже — вопрос «с чего начать»
-       * возникает не только на первом визите.
-       */}
-      <button
-        type="button"
-        className="link-row"
-        onClick={onOpenOnboarding}
-        style={{ margin: '0 0 4px' }}
-      >
-        {t.onboarding.entryLink}
-      </button>
-
       <button
         type="button"
         className="link-row"
@@ -1746,10 +1753,12 @@ function Home({
  */
 function About({
   onSelectTrack,
+  onOpenOnboarding,
   onExportProgress,
   onImportProgress,
 }: {
   onSelectTrack: (track: Track) => void;
+  onOpenOnboarding: () => void;
   onExportProgress: () => void;
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
   onImportProgress: (file: File) => Promise<boolean>;
@@ -1769,7 +1778,7 @@ function About({
 
   return (
     <>
-      <WelcomeHero />
+      <WelcomeHero onOnboarding={onOpenOnboarding} />
 
       {/*
        * Три плитки того же вида, что hero-счётчики на главной, — не декор,
@@ -1868,6 +1877,16 @@ function About({
           style={{ margin: '14px 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}
         >
           {t.about.tracksWhyTitle}
+        </p>
+        {/*
+         * Два абзаца, а не один: первый объясняет сам путь «вопрос → решение»
+         * (диаграмма в WelcomeHero его рисует, но нигде не сказано, зачем
+         * различать шаги), второй — почему треки разложены вдоль него именно
+         * так. Порядок обязателен: без пути порядок треков нечем обосновать,
+         * кроме «так принято».
+         */}
+        <p className="muted" style={{ margin: '0 0 8px', fontSize: 13, lineHeight: 1.5 }}>
+          {t.about.chainBody}
         </p>
         <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
           {t.about.tracksWhyBody}
