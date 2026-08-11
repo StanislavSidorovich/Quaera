@@ -1,7 +1,7 @@
 /**
  * Генератор учебного датасета Querium.
  *
- * Одна вымышленная компания «Nordwind Trade»: дистрибуция FMCG + OTC-фарма.
+ * Одна вымышленная компания «Kaiyo Trading»: дистрибуция FMCG + OTC-фарма.
  * Схема — классическая звезда, данные согласованы между собой:
  * sell-out агрегируется в sell-in, sell-in минус sell-out даёт остатки,
  * планы строятся от факта. Это принципиально: задания разных треков
@@ -11,7 +11,7 @@
  * В данные намеренно зашиты сюжеты для аналитических заданий:
  *  - сезонность (вода и соки — лето, простуда и витамины — зима);
  *  - падающий бренд «Nettora»: причина не в цене и не в спросе, а в потере дистрибуции;
- *  - затоваривание дистрибьютора «Volga-Trade» в Q4 2025 (sell-in >> sell-out);
+ *  - затоваривание дистрибьютора «Setouchi Trading» в Q4 2025 (sell-in >> sell-out);
  *  - запуск SKU «Vitanor Forte» в сентябре 2025;
  *  - отсутствие строки = не было продаж (OOS), а не ноль — ловушка на LEFT JOIN;
  *  - staging_raw_sellout — грязный слой под задачи на очистку.
@@ -75,53 +75,66 @@ const END = parseISO('2026-06-30');
  *
  * Топонимы — настоящие, в общепринятой английской передаче: город и регион
  * не торговая марка, использовать их можно, а выдуманная география ломала бы
- * то, на чём держится проза заданий (федеральные округа, tier-регионы).
+ * то, на чём держится проза заданий (макрорегионы, tier-регионы).
  * Всё остальное — торговые марки, сети, дистрибьюторы, ФИО — выдумано
  * целиком: реальная сеть в выдуманной истории про падение продаж это ровно
  * то, чего в учебном датасете быть не должно.
+ *
+ * География — японская (2026-08-11). Прежде тут была российская, и сама
+ * по себе она ничему не мешала; сменена ради читателя, которому тренажёр
+ * показывают как портфолио: датасет приписывает вымышленным компаниям
+ * падение продаж и затоваривание, и делать это на фоне узнаваемой страны
+ * — лишний повод для прочтения, которого в учебной задаче быть не должно.
+ * Выбор Японии, а не любой другой страны, продиктован числами: полочные
+ * цены (38–450) и пороги выручки в прозе заданий правдоподобны в иенах
+ * и потребовали бы пересчёта всех ~380 сумм в любой валюте другого
+ * масштаба. Структура сохранена нарочно — 16 регионов, 7 макрорегионов,
+ * те же 4/8/4 по tier и те же количества городов в регионе: у ГПСЧ
+ * детерминированный порядок, и совпадение длин оставляет распределения
+ * прежними, а значит ломает минимум эталонов.
  */
 const REGIONS = [
-  ['Moscow', 'Central', 13100000, 1],
-  ['Moscow Region', 'Central', 8600000, 1],
-  ['Saint Petersburg', 'Northwestern', 5600000, 1],
-  ['Voronezh Region', 'Central', 2280000, 2],
-  ['Krasnodar Krai', 'Southern', 5800000, 1],
-  ['Rostov Region', 'Southern', 4160000, 2],
-  ['Volgograd Region', 'Southern', 2450000, 3],
-  ['Sverdlovsk Region', 'Ural', 4260000, 2],
-  ['Chelyabinsk Region', 'Ural', 3400000, 2],
-  ['Tyumen Region', 'Ural', 1600000, 3],
-  ['Novosibirsk Region', 'Siberian', 2790000, 2],
-  ['Krasnoyarsk Krai', 'Siberian', 2850000, 3],
-  ['Republic of Tatarstan', 'Volga', 3900000, 2],
-  ['Republic of Bashkortostan', 'Volga', 4000000, 2],
-  ['Samara Region', 'Volga', 3150000, 2],
-  ['Primorsky Krai', 'Far Eastern', 1840000, 3],
-].map(([region_name, federal_district, population, tier], i) => ({
+  ['Tokyo', 'Kanto', 14100000, 1],
+  ['Kanagawa', 'Kanto', 9200000, 1],
+  ['Osaka', 'Kansai', 8800000, 1],
+  ['Ibaraki', 'Kanto', 2840000, 2],
+  ['Aichi', 'Chubu', 7480000, 1],
+  ['Saitama', 'Kanto', 7340000, 2],
+  ['Kyoto', 'Kansai', 2550000, 3],
+  ['Chiba', 'Kanto', 6280000, 2],
+  ['Hyogo', 'Kansai', 5400000, 2],
+  ['Niigata', 'Chubu', 2130000, 3],
+  ['Fukuoka', 'Kyushu', 5100000, 2],
+  ['Hokkaido', 'Hokkaido', 5090000, 3],
+  ['Shizuoka', 'Chubu', 3560000, 2],
+  ['Hiroshima', 'Chugoku', 2740000, 2],
+  ['Miyagi', 'Tohoku', 2260000, 2],
+  ['Okinawa', 'Kyushu', 1470000, 3],
+].map(([region_name, macro_region, population, tier], i) => ({
   region_id: i + 1,
   region_name,
-  federal_district,
+  macro_region,
   population,
   tier,
 }));
 
 const CITY_BY_REGION = {
-  'Moscow': ['Moscow'],
-  'Moscow Region': ['Khimki', 'Podolsk', 'Balashikha', 'Mytishchi'],
-  'Saint Petersburg': ['Saint Petersburg'],
-  'Voronezh Region': ['Voronezh', 'Borisoglebsk'],
-  'Krasnodar Krai': ['Krasnodar', 'Sochi', 'Novorossiysk'],
-  'Rostov Region': ['Rostov-on-Don', 'Taganrog'],
-  'Volgograd Region': ['Volgograd', 'Volzhsky'],
-  'Sverdlovsk Region': ['Yekaterinburg', 'Nizhny Tagil'],
-  'Chelyabinsk Region': ['Chelyabinsk', 'Magnitogorsk'],
-  'Tyumen Region': ['Tyumen'],
-  'Novosibirsk Region': ['Novosibirsk', 'Berdsk'],
-  'Krasnoyarsk Krai': ['Krasnoyarsk', 'Norilsk'],
-  'Republic of Tatarstan': ['Kazan', 'Naberezhnye Chelny'],
-  'Republic of Bashkortostan': ['Ufa', 'Sterlitamak'],
-  'Samara Region': ['Samara', 'Tolyatti'],
-  'Primorsky Krai': ['Vladivostok', 'Ussuriysk'],
+  'Tokyo': ['Tokyo'],
+  'Kanagawa': ['Yokohama', 'Kawasaki', 'Sagamihara', 'Fujisawa'],
+  'Osaka': ['Osaka'],
+  'Ibaraki': ['Mito', 'Tsukuba'],
+  'Aichi': ['Nagoya', 'Toyota', 'Okazaki'],
+  'Saitama': ['Saitama', 'Kawaguchi'],
+  'Kyoto': ['Kyoto', 'Uji'],
+  'Chiba': ['Chiba', 'Funabashi'],
+  'Hyogo': ['Kobe', 'Himeji'],
+  'Niigata': ['Niigata'],
+  'Fukuoka': ['Fukuoka', 'Kitakyushu'],
+  'Hokkaido': ['Sapporo', 'Asahikawa'],
+  'Shizuoka': ['Shizuoka', 'Hamamatsu'],
+  'Hiroshima': ['Hiroshima', 'Fukuyama'],
+  'Miyagi': ['Sendai', 'Ishinomaki'],
+  'Okinawa': ['Naha', 'Okinawa'],
 };
 
 // seasonality: множитель по номеру месяца (1..12)
@@ -242,13 +255,13 @@ const productById = new Map(products.map((p) => [p.product_id, p]));
  * играет её тип и канал, а не имя на вывеске.
  */
 const DISTRIBUTOR_NAMES = [
-  'Volga-Trade LLC', 'Nordway LLC', 'South-Logistic LLC', 'Uralsnab JSC',
-  'Sibir-Opt LLC', 'Capital Distribution LLC', 'Nevsky Opt LLC', 'Kuban-Trade LLC',
-  'Prikamye Group LLC', 'Daltorg LLC', 'Chernozem-Opt LLC', 'Gorizont-Ural LLC',
+  'Setouchi Trading Co.', 'Kanto Logistics Co.', 'Nangoku Trading Co.', 'Hokuriku Supply K.K.',
+  'Sanyo Wholesale Co.', 'Capital Distribution Co.', 'Bayside Wholesale Co.', 'Kyushu Trading Co.',
+  'Tokai Group K.K.', 'Hokusei Trading Co.', 'Midori Wholesale Co.', 'Asahi Line K.K.',
 ];
-const CHAINS = ['Yarmarka', 'Bereg', 'Kolos', 'Volna', 'Prima'];
-const PHARMA_CHAINS = ['Farmalux', 'Apteka 24', 'Vitalika'];
-const ECOM = ['Marketo', 'Bazario', 'Domsklad', 'Bystro'];
+const CHAINS = ['Ichiba', 'Kaigan', 'Minori', 'Nagisa', 'Prima'];
+const PHARMA_CHAINS = ['Farmalux', 'Kusuri 24', 'Vitalika'];
+const ECOM = ['Marketo', 'Bazario', 'Sokuhai', 'Hakobu'];
 
 const customers = [];
 let cid = 0;
@@ -275,11 +288,11 @@ function addOutlet(kind) {
     return { ...base, customer_name: `${chain} #${1000 + cid}`, customer_type: 'chain', channel: 'modern_trade', chain_name: chain, size: between(2.4, 4.6) };
   }
   if (kind === 'traditional') {
-    return { ...base, customer_name: `${pick(['Rodnik', 'Uyut', 'Produkty 24', 'Beryozka', 'Zarya', 'Merkury', 'Rassvet'])} Store #${1000 + cid}`, customer_type: 'traditional', channel: 'traditional_trade', chain_name: null, size: between(0.5, 1.3) };
+    return { ...base, customer_name: `${pick(['Izumi', 'Yasuragi', 'Konbini 24', 'Kaede', 'Akebono', 'Marusan', 'Hinode'])} Store #${1000 + cid}`, customer_type: 'traditional', channel: 'traditional_trade', chain_name: null, size: between(0.5, 1.3) };
   }
   if (kind === 'pharmacy') {
     const chain = rnd() < 0.62 ? pick(PHARMA_CHAINS) : null;
-    return { ...base, customer_name: chain ? `${chain} #${1000 + cid}` : `${pick(['Zdorovie', 'Panacea', 'Aibolit', 'Salus'])} Pharmacy #${1000 + cid}`, customer_type: 'pharmacy', channel: 'pharmacy', chain_name: chain, size: between(1.0, 2.6) };
+    return { ...base, customer_name: chain ? `${chain} #${1000 + cid}` : `${pick(['Kenko', 'Panacea', 'Wakaba', 'Salus'])} Pharmacy #${1000 + cid}`, customer_type: 'pharmacy', channel: 'pharmacy', chain_name: chain, size: between(1.0, 2.6) };
   }
   const shop = pick(ECOM);
   return { ...base, customer_name: `${shop} (warehouse ${base.city})`, customer_type: 'ecom', channel: 'ecom', chain_name: shop, size: between(3.0, 6.0) };
@@ -291,9 +304,9 @@ for (let i = 0; i < 8; i++) customers.push(addOutlet('ecom'));
 const outlets = customers.filter((c) => c.customer_type !== 'distributor');
 
 // Торговые представители: 5 руководителей + линейные, self-join по manager_id.
-const FIRST = ['Anna', 'Igor', 'Maria', 'Dmitry', 'Olga', 'Sergey', 'Ekaterina', 'Pavel', 'Natalia', 'Alexey', 'Irina', 'Roman', 'Yulia', 'Artem', 'Svetlana', 'Maxim'];
-const LAST = ['Kovalev', 'Sokolova', 'Morozov', 'Lebedeva', 'Volkov', 'Zaytseva', 'Orlov', 'Guseva', 'Titov', 'Belova', 'Egorov', 'Smirnova', 'Panov', 'Krylova', 'Fomin', 'Dyakova'];
-const TEAMS = ['FMCG Central', 'FMCG South', 'FMCG Ural-Siberia', 'Pharma Central', 'Pharma Regions'];
+const FIRST = ['Haruka', 'Kenji', 'Yui', 'Takeshi', 'Aoi', 'Satoshi', 'Miyu', 'Ryo', 'Nanami', 'Daiki', 'Rina', 'Hiroshi', 'Sakura', 'Yuto', 'Emi', 'Kaito'];
+const LAST = ['Tanaka', 'Suzuki', 'Sato', 'Watanabe', 'Ito', 'Yamamoto', 'Nakamura', 'Kobayashi', 'Kato', 'Yoshida', 'Yamada', 'Sasaki', 'Matsumoto', 'Inoue', 'Kimura', 'Hayashi'];
+const TEAMS = ['FMCG Kanto', 'FMCG Kansai', 'FMCG West', 'Pharma Kanto', 'Pharma Regions'];
 const reps = [];
 TEAMS.forEach((team, i) => {
   reps.push({ rep_id: i + 1, rep_name: `${pick(FIRST)} ${pick(LAST)}`, team, role: 'manager', region_id: REGIONS[i].region_id, hired_date: iso(addDays(START, -intBetween(900, 2600))), manager_id: null });
@@ -597,13 +610,15 @@ const dirty = [];
     /*
      * Одна сеть записана в двух вариантах — классическая ловушка на GROUP BY.
      *
-     * Различие держится на транслитерации (я → ya против я → ia), а не
-     * на опечатке: несогласованная транслитерация — это системная беда
-     * выгрузок из разных источников, а опечатка была бы случайностью
-     * одной строки. Прежний вариант стоял на русской «ё», и в английской
-     * локали урок опирался на букву, которой в его же данных не было.
+     * Различие держится на системе романизации (Хепбёрн «Ichiba» против
+     * кунрэй-сики «Itiba»), а не на опечатке: несогласованная романизация —
+     * это системная беда выгрузок из разных источников, а опечатка была бы
+     * случайностью одной строки. Прежние варианты урока стояли сперва
+     * на русской «ё», потом на паре ya/ia, и оба раза буква уезжала вместе
+     * с датасетом; японские данные дают ту же ловушку без привязки к языку
+     * интерфейса — обе записи латиница, обе законны, свести их всё равно надо.
      */
-    if (name.startsWith('Yarmarka') && rnd() < 0.45) name = name.replace('Yarmarka', 'Iarmarka');
+    if (name.startsWith('Ichiba') && rnd() < 0.45) name = name.replace('Ichiba', 'Itiba');
     if (rnd() < 0.3) name = `  ${name} `;
     const unitsRaw =
       rnd() < 0.03 ? null : rnd() < 0.04 ? String(-r.units) : rnd() < 0.05 ? `${r.units},0` : String(r.units);
@@ -662,8 +677,8 @@ const stripFkNote = (description) =>
 
 /** Кто эти данные «собрал» — единственное человеческое поле схемы вне таблиц. */
 const COMPANY = {
-  ru: 'Nordwind Trade — дистрибуция FMCG и OTC-фармы',
-  en: 'Nordwind Trade — FMCG and OTC pharma distribution',
+  ru: 'Kaiyo Trading — дистрибуция FMCG и OTC-фармы',
+  en: 'Kaiyo Trading: FMCG and OTC pharma distribution',
 };
 
 /**
@@ -724,7 +739,7 @@ const SCHEMA = [
       division: { ru: 'Дивизион: FMCG или Pharma', en: 'Division: FMCG or Pharma' },
       pack_size: { ru: 'Размер упаковки', en: 'Pack size' },
       unit: { ru: 'Единица измерения', en: 'Unit of measure' },
-      list_price: { ru: 'Базовая полочная цена, ₽', en: 'Base shelf price, ₽' },
+      list_price: { ru: 'Базовая полочная цена, ¥', en: 'Base shelf price, ¥' },
       launch_date: { ru: 'Дата запуска SKU — до неё продаж быть не может', en: 'SKU launch date — no sales can exist before it' },
     },
     rows: products.map((p) => ({
@@ -738,11 +753,11 @@ const SCHEMA = [
     title: { ru: 'География', en: 'Geography' },
     grain: { ru: 'один регион', en: 'one region' },
     ddl: `CREATE TABLE dim_region (
-      region_id INTEGER PRIMARY KEY, region_name TEXT, federal_district TEXT, population INTEGER, tier INTEGER)`,
+      region_id INTEGER PRIMARY KEY, region_name TEXT, macro_region TEXT, population INTEGER, tier INTEGER)`,
     cols: {
       region_id: { ru: 'Ключ региона', en: 'Region key' },
-      region_name: { ru: 'Регион', en: 'Region' },
-      federal_district: { ru: 'Федеральный округ', en: 'Federal district' },
+      region_name: { ru: 'Префектура', en: 'Prefecture' },
+      macro_region: { ru: 'Макрорегион', en: 'Macro-region' },
       population: { ru: 'Население', en: 'Population' },
       tier: { ru: 'Приоритет региона: 1 — ключевой, 3 — периферия', en: 'Region priority: 1 — key, 3 — periphery' },
     },
@@ -829,8 +844,8 @@ const SCHEMA = [
       customer_id: { ru: 'FK → dim_customer', en: 'FK → dim_customer' },
       product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
       units: { ru: 'Продано штук', en: 'Units sold' },
-      revenue: { ru: 'Выручка, ₽', en: 'Revenue, ₽' },
-      avg_price: { ru: 'Средняя цена продажи, ₽', en: 'Average selling price, ₽' },
+      revenue: { ru: 'Выручка, ¥', en: 'Revenue, ¥' },
+      avg_price: { ru: 'Средняя цена продажи, ¥', en: 'Average selling price, ¥' },
       promo_id: { ru: 'NULL, если продажа вне акции — FK → dim_promo', en: 'NULL if the sale was outside a promotion — FK → dim_promo' },
     },
     rows: sellout,
@@ -860,9 +875,9 @@ const SCHEMA = [
       },
       product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
       units: { ru: 'Отгружено штук', en: 'Units shipped' },
-      gross_amount: { ru: 'Сумма до скидок, ₽', en: 'Amount before discounts, ₽' },
-      discount_amount: { ru: 'Скидки, ₽', en: 'Discounts, ₽' },
-      net_amount: { ru: 'Сумма к оплате, ₽', en: 'Amount payable, ₽' },
+      gross_amount: { ru: 'Сумма до скидок, ¥', en: 'Amount before discounts, ¥' },
+      discount_amount: { ru: 'Скидки, ¥', en: 'Discounts, ¥' },
+      net_amount: { ru: 'Сумма к оплате, ¥', en: 'Amount payable, ¥' },
     },
     rows: sellin,
   },
@@ -897,7 +912,7 @@ const SCHEMA = [
       rep_id: { ru: 'FK → dim_rep', en: 'FK → dim_rep' },
       division: { ru: 'FMCG или Pharma', en: 'FMCG or Pharma' },
       target_units: { ru: 'План, шт', en: 'Target, units' },
-      target_revenue: { ru: 'План, ₽', en: 'Target, ₽' },
+      target_revenue: { ru: 'План, ¥', en: 'Target, ¥' },
     },
     rows: targets,
   },
@@ -912,8 +927,8 @@ const SCHEMA = [
       price_id: { ru: 'Ключ строки', en: 'Row key' },
       month_start: { ru: 'Месяц', en: 'Month' },
       product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
-      list_price: { ru: 'Рекомендованная полочная цена, ₽', en: 'Recommended shelf price, ₽' },
-      promo_price: { ru: 'Средняя промо-цена, ₽', en: 'Average promo price, ₽' },
+      list_price: { ru: 'Рекомендованная полочная цена, ¥', en: 'Recommended shelf price, ¥' },
+      promo_price: { ru: 'Средняя промо-цена, ¥', en: 'Average promo price, ¥' },
     },
     rows: prices,
   },

@@ -14,7 +14,7 @@
       "title": "Selecting and filtering",
       "why": "Almost every working question sounds like \"show me these rows and these columns\": products above a threshold, customers on one channel, pharmacies in one region. In pandas both halves happen in one call to .loc — rows to the left of the comma, columns to the right. The mask doesn't have to be one comparison: column.isin([...]) checks membership in a list in one call instead of a chain of == joined by |, and column.str.contains('text') searches for a substring — the pandas equivalents of SQL's IN and LIKE.",
       "form": "df.loc[mask, ['column_a', 'column_b']]\n\ndf['column'].isin(['a', 'b', 'c'])   # membership in a list, like IN\ndf['column'].str.contains('text')    # substring, like LIKE '%text%'",
-      "reads": "«Fruvia» juices priced above 130 ₽ — what would go onto the catalog's premium shelf. The mask on the left selects rows, the list on the right keeps three columns out of eleven.",
+      "reads": "«Fruvia» juices priced above 130 ¥ — what would go onto the catalog's premium shelf. The mask on the left selects rows, the list on the right keeps three columns out of eleven.",
       "wrongWhy": "Parentheses around each condition aren't a style choice. The & operator binds tighter than == and >, so without parentheses Python first evaluates 'Fruvia' & dim_product['list_price'] and fails with a TypeError before it ever gets to the comparison. The error surfaces nowhere near where the actual problem is.",
       "selfCheck": "Is every condition inside .loc wrapped in its own parentheses? And is & or | placed between them, rather than and or or — those don't work on a column. A separate note on .str.contains(): by default it reads its argument as a regular expression, not as literal text. For a word like «Forte» that makes no difference, but .str.contains('.') matches all 47 products instead of the seven that actually contain a dot — the query won't fail, it will just answer a different question. Looking for a character rather than a pattern? Add regex=False."
     },
@@ -41,7 +41,7 @@
       "title": "groupby and agg",
       "why": "A \"by slice\" summary is the most common request in the job: revenue by channel, SKU count by division, average ticket by region. groupby does the same thing SQL's GROUP BY does, with two quirks: the key is sorted by default, and it goes into the index by default rather than staying an ordinary column (see py-index).",
       "form": "df.groupby('key', as_index=False).agg(\n    name=('column', 'function'),\n)",
-      "reads": "For each division — SKU count and the average price list: 29 FMCG products averaging 110.7 ₽, 18 Pharma products at 423.2 ₽. Pharma prices are several times higher, and an overall average across the whole catalog describes neither group.",
+      "reads": "For each division — SKU count and the average price list: 29 FMCG products averaging 110.7 ¥, 18 Pharma products at 423.2 ¥. Pharma prices are several times higher, and an overall average across the whole catalog describes neither group.",
       "wrongWhy": "Without named aggregation and without picking a specific column, agg(['count', 'mean']) applies both functions to every numeric column of the table at once, not just list_price — and it creates MultiIndex columns like ('list_price', 'mean'), which are awkward to work with afterward. Named aggregation, agg(name=('column', 'function')), gives flat, predictable names right away.",
       "selfCheck": "After groupby(...).agg(...), the first thing to check is df.columns. Tuples like ('list_price', 'mean') instead of plain strings are a sign agg was called without naming."
     },
@@ -78,7 +78,7 @@
       "why": "Before computing a metric, it's worth looking at the data itself: value_counts() shows how categories are distributed, describe() shows the shape of a numeric column. Skipping exploration means the first sign of a problem won't be describe(), it'll be a wrong report a week later.",
       "form": "df['column'].value_counts()             # category frequencies\ndf.groupby('slice')['measure'].describe()  # statistics by group",
       "reads": "Customer count by sales channel: 44 in traditional trade, 42 in modern trade, 38 in pharmacies, 12 with distributors, 8 in e-com. Already you can see that e-com is a small channel by outlet count, though it may well be the largest by average ticket.",
-      "wrongWhy": "Not a mistake on its own, but not thorough exploration either: describe() over the whole catalog at once gives an average price of 230 ₽ — one no real product has, because the column quietly mixes FMCG (averaging 111 ₽) and Pharma (averaging 423 ₽). Exploration without a slice by the key category can look complete while actually hiding the main thing.",
+      "wrongWhy": "Not a mistake on its own, but not thorough exploration either: describe() over the whole catalog at once gives an average price of 230 ¥ — one no real product has, because the column quietly mixes FMCG (averaging 111 ¥) and Pharma (averaging 423 ¥). Exploration without a slice by the key category can look complete while actually hiding the main thing.",
       "selfCheck": "If describe() gave a spread that's suspiciously wide relative to the mean, check it by group through groupby(...).describe() before computing the metric any further."
     },
     {
@@ -122,7 +122,7 @@
       "title": "Vectorization",
       "why": "apply(..., axis=1) and a vectorized operation (np.where, arithmetic on columns) often give an identical result — you can't tell them apart by value. The difference is an order of magnitude in speed: apply calls a Python function separately on every row, while a vectorized operation computes the whole column at once in optimized NumPy code.",
       "form": "df.apply(lambda row: value_if_true if condition else value_if_false, axis=1)  # slow — a Python loop over rows\nnp.where(condition, if_true, if_false)   # fast — the whole column at once\ncolumn_a + column_b                       # instead of row-by-row string formatting",
-      "reads": "A price segment for every product: 'premium' above 300 ₽, otherwise 'mass' — 11 premium and 36 mass items, computed with a single vectorized comparison and not one call to apply.",
+      "reads": "A price segment for every product: 'premium' above 300 ¥, otherwise 'mass' — 11 premium and 36 mass items, computed with a single vectorized comparison and not one call to apply.",
       "wrongWhy": "Python's ordinary if expects a single True/False, while result['list_price'] > 300 is a Series of 47 values at once, and Python can't decide what to treat as \"true\" here. The code fails with ValueError 'The truth value of a Series is ambiguous' — the same error as in py-select-filter when and is used instead of &. np.where is precisely the vectorized if, built for a condition that arrives as a whole column rather than a single value.",
       "selfCheck": "See apply(lambda row: ..., axis=1)? Ask whether the same thing can be expressed as a comparison or arithmetic directly on the columns (np.where, +, >, &) — it almost always can, and it's orders of magnitude faster on a large table."
     }

@@ -142,7 +142,7 @@
     {
       "id": "sql-003",
       "title": "Selection for the promo catalog",
-      "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ₽ — cheap ones don't work for promo.",
+      "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ¥ — cheap ones don't work for promo.",
       "goal": "Return sku_code, product_name, brand, list_price for items of these two brands priced strictly above 100.",
       "hints": [
         "Listing several values of one column is shorter with IN than with OR.",
@@ -257,9 +257,9 @@
     {
       "id": "sql-048",
       "title": "Paginated price list and a tied price",
-      "brief": "The price list is displayed 3 items per page, sorted from expensive to cheap. A manager is paging through it and can't understand why an item priced 98 ₽, which they just saw, isn't on the current page anymore.",
-      "goal": "Determine how many products priced 98 ₽ end up in this query's result.",
-      "predictQuestion": "How many products priced 98 ₽ will be in the result, if there are three such products in the whole price list?",
+      "brief": "The price list is displayed 3 items per page, sorted from expensive to cheap. A manager is paging through it and can't understand why an item priced 98 ¥, which they just saw, isn't on the current page anymore.",
+      "goal": "Determine how many products priced 98 ¥ end up in this query's result.",
+      "predictQuestion": "How many products priced 98 ¥ will be in the result, if there are three such products in the whole price list?",
       "options": [
         {
           "label": "Two — the third one stayed on the previous page",
@@ -270,7 +270,7 @@
           "why": "Next to each other in the sorted list — yes, but \"next to each other\" doesn't mean \"inside the same group of three\" if there are more rows at that price than fit before the current LIMIT window ends."
         },
         {
-          "label": "None — OFFSET 33 has already skipped past all the 98 ₽ items",
+          "label": "None — OFFSET 33 has already skipped past all the 98 ¥ items",
           "why": "OFFSET 33 skips the first 33 rows after sorting, and the group of items priced 98 starts right at that boundary, not before it."
         },
         {
@@ -279,10 +279,10 @@
         }
       ],
       "hints": [
-        "Start with ROW_NUMBER() OVER (ORDER BY list_price DESC) to see where each of the three 98 ₽ items lands in the overall list.",
+        "Start with ROW_NUMBER() OVER (ORDER BY list_price DESC) to see where each of the three 98 ¥ items lands in the overall list.",
         "OFFSET 33 means \"skip the first 33 rows\" — check which row number lands 34th."
       ],
-      "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit — on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ₽, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering — add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
+      "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit — on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ¥, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering — add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
     },
     {
       "id": "sql-005",
@@ -586,7 +586,7 @@
       "id": "sql-049",
       "title": "High-revenue brands with wide coverage",
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets — either trait alone proves nothing.",
-      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets — the count of distinct outlets with sales, for brands with revenue above 5,000,000 ₽ and present in at least 80 outlets. Ordered by revenue descending.",
+      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets — the count of distinct outlets with sales, for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
         "Count distinct customers with the same function as in SELECT — DISTINCT customer_id.",
         "After HAVING, sorting goes from higher revenue to lower — the keyword goes after the column name."
@@ -868,13 +868,13 @@
     {
       "id": "sql-046",
       "title": "A chain spelled two ways",
-      "brief": "In staging_raw_sellout the «Yarmarka» chain is sometimes recorded as «Iarmarka»: two source systems transliterated one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
-      "goal": "Return one row: written_ya — the number of rows where customer_name contains «Yarmarka», written_ia — where it contains «Iarmarka», total_chain — their sum: both groups belong to the same chain.",
+      "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems transliterated one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
+      "goal": "Return one row: written_ya — the number of rows where customer_name contains «Ichiba», written_ia — where it contains «Itiba», total_chain — their sum: both groups belong to the same chain.",
       "hints": [
         "The two spellings differ in their first letter — Ya against Ia. Catch both variants with separate LIKE conditions.",
         "The sum of written_ya and written_ia should match total_chain — that's the check that the variants don't overlap and nothing is lost."
       ],
-      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent transliteration is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Iarmarka', 'Yarmarka'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
+      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent transliteration is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
     },
     {
       "id": "sql-047",
@@ -1024,11 +1024,11 @@
     {
       "id": "sql-054",
       "title": "A distributor's quarterly running shipments",
-      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Volga-Trade» distributor by the end of each month.",
+      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Setouchi Trading» distributor by the end of each month.",
       "goal": "For October–December 2025, return month_start, units — shipped that month, and running_units — the running total since the start of the quarter. Ordered by month ascending.",
       "hints": [
         "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
-        "distributor_id = 1 is «Volga-Trade» — you can check this against dim_customer."
+        "distributor_id = 1 is «Setouchi Trading» — you can check this against dim_customer."
       ],
       "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in sql-019, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period — exactly what's needed here to track quarterly running shipments."
     },
@@ -1118,8 +1118,8 @@
     {
       "id": "sql-057",
       "title": "Weeks of cover at a distributor",
-      "brief": "The CFO is worried about write-offs: the «Volga-Trade» distributor is showing large warehouse stock of the «Aqualis» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
-      "goal": "Return one row: units_on_hand — stock of «Aqualis Still 0.5 L» at the «Volga-Trade» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
+      "brief": "The CFO is worried about write-offs: the «Setouchi Trading» distributor is showing large warehouse stock of the «Aqualis» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
+      "goal": "Return one row: units_on_hand — stock of «Aqualis Still 0.5 L» at the «Setouchi Trading» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
       "hints": [
         "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
         "Compute the weekly sales pace only from this distributor's outlets — filter on c.served_by_distributor_id, not on all sales of the product nationwide."

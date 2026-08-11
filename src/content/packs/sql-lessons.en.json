@@ -15,7 +15,7 @@
       "title": "Filtering rows",
       "why": "A task statement almost always carries constraints: which period, which division, which channel. Turning those words into conditions is half the work, and it's also where most discrepancies between two reports on the same thing come from. Each phrasing has its own operator: \"for these three brands\" — IN with a list instead of a chain of ORs; \"for the first half-year\" — BETWEEN, whose both bounds are included, which people regularly forget; \"anything with 'Forte' in the name\" — LIKE, where % stands in for any stretch of text. The cheapest way to check that the filter caught anything at all is COUNT(*): zero rows here almost never means \"there are none in the database\" — it means the condition is written wrong.",
       "form": "SELECT ...\nFROM table\nWHERE condition\n  AND other_condition\n\ncolumn = 'value'                -- exact match\ncolumn > 100                    -- numeric comparison\ncolumn IN ('Aqualis','Fruvia')  -- any of a list\ncolumn BETWEEN '2025-01-01' AND '2025-12-31'  -- range, bounds included\ncolumn LIKE '%Forte%'           -- substring, % is any text\nSELECT COUNT(*) FROM ... WHERE ... -- how many rows passed the filter",
-      "reads": "Pharma-division items priced above 500 ₽. Both conditions must hold at once — that's what AND does.",
+      "reads": "Pharma-division items priced above 500 ¥. Both conditions must hold at once — that's what AND does.",
       "wrongWhy": "Zero rows come back: text comparison is case-sensitive, and the database holds «Pharma». The query doesn't fail — it runs cleanly and returns nothing. The most expensive mistakes in analytics are exactly this kind: not the ones that fail, but the ones that quietly understate the numbers.",
       "selfCheck": "Before filtering on a text column, look at what's actually in it: SELECT DISTINCT division FROM dim_product. Five seconds versus an hour of confusion. LIKE has a case trap of its own, in the opposite direction: in SQLite it ignores case for Latin letters, so «AQUA001» and «aqua001» are one and the same to it, while = keeps them apart. Convenient here, and a silent bug the moment the query moves to PostgreSQL."
     },
@@ -34,7 +34,7 @@
       "why": "NULL means \"value unknown\", not \"zero\" and not \"empty\". That distinction quietly eats rows out of reports every day: they don't disappear with an error, they just don't show up, and the only way to notice the shortfall is to reconcile against the source.",
       "form": "WHERE column IS NULL\nWHERE column IS NOT NULL\nCOALESCE(column, default_value)",
       "reads": "Total customers, how many are in chains, and how many aren't. The difference between the two counts is exactly the number of empty values in the column.",
-      "wrongWhy": "Non-chain outlets won't make it into the answer. Comparing NULL to anything gives neither true nor false, but NULL, and WHERE only lets true through. In plain language an empty value is definitely \"not Bereg\" — by the SQL standard, it's unknown.",
+      "wrongWhy": "Non-chain outlets won't make it into the answer. Comparing NULL to anything gives neither true nor false, but NULL, and WHERE only lets true through. In plain language an empty value is definitely \"not Kaigan\" — by the SQL standard, it's unknown.",
       "selfCheck": "If a column can hold empty values, any condition with <>, NOT IN or > needs to be deliberately extended: OR column IS NULL, or COALESCE."
     },
     {

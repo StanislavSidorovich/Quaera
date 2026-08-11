@@ -91,7 +91,7 @@
     {
       "id": "py-001",
       "title": "Price list for a promo",
-      "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ₽ — cheap ones don't go into a promo.",
+      "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥ — cheap ones don't go into a promo.",
       "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
       "hints": [
         "A list of values for one column is conveniently checked with .isin([...]) — the pandas equivalent of SQL IN.",
@@ -107,7 +107,7 @@
       "predictQuestion": "What happens when this code runs, if dim_product has more than one row?",
       "options": [
         {
-          "label": "Returns products of the «Aqualis» brand priced above 100 ₽",
+          "label": "Returns products of the «Aqualis» brand priced above 100 ¥",
           "why": "That's what would happen with & instead of and. and tries to reduce each condition to a single True/False before the comparison even happens — and that's exactly the step where everything fails."
         },
         {
@@ -195,7 +195,7 @@
     {
       "id": "py-007",
       "title": "Regions for a demographic summary",
-      "brief": "A demographics report needs a short slice of regions — just the name and population, no federal district or tier.",
+      "brief": "A demographics report needs a short slice of regions — just the name and population, no macro-region or tier.",
       "goal": "Return region_name and population for all regions.",
       "hints": [
         "Both blanks are column names, each in quotes, separated by a comma.",
@@ -528,22 +528,22 @@
     },
     {
       "id": "py-027",
-      "title": "An average price of 230 ₽ that doesn't exist",
-      "brief": "A category manager looks at .describe() over list_price for the whole product reference table and reports upstairs: \"the average SKU price is 230 ₽.\" A colleague from pharma is surprised: isn't our average around 400?",
+      "title": "An average price of 230 ¥ that doesn't exist",
+      "brief": "A category manager looks at .describe() over list_price for the whole product reference table and reports upstairs: \"the average SKU price is 230 ¥.\" A colleague from pharma is surprised: isn't our average around 400?",
       "goal": "Understand what's behind the discrepancy, given that describe()'s own number isn't wrong.",
-      "predictQuestion": "The mean in the output really is 230.3 ₽ — describe() didn't lie. What's behind the mismatch the colleague noticed?",
+      "predictQuestion": "The mean in the output really is 230.3 ¥ — describe() didn't lie. What's behind the mismatch the colleague noticed?",
       "options": [
         {
-          "label": "The column actually mixes two different divisions — FMCG with an average of 110.7 ₽ and Pharma with an average of 423.2 ₽ — the overall average describes neither",
-          "why": "describe() computes statistics over all 47 values at once, with no idea they belong to two dissimilar groups. 230.3 ₽ is the real average across the whole catalog, but it sits between the two real averages, at a point with no product at all."
+          "label": "The column actually mixes two different divisions — FMCG with an average of 110.7 ¥ and Pharma with an average of 423.2 ¥ — the overall average describes neither",
+          "why": "describe() computes statistics over all 47 values at once, with no idea they belong to two dissimilar groups. 230.3 ¥ is the real average across the whole catalog, but it sits between the two real averages, at a point with no product at all."
         },
         {
-          "label": "describe() was computed wrong — with prices ranging from 38 to 812 ₽, the function should have split the column into groups itself",
+          "label": "describe() was computed wrong — with prices ranging from 38 to 812 ¥, the function should have split the column into groups itself",
           "why": "describe() knows nothing about categories inside a column, and it shouldn't: that's a limitation by design, not a computation error. Splitting into groups is a separate, deliberate step through groupby."
         },
         {
           "label": "It's a rounding error: 230.3 is actually the average for FMCG only",
-          "why": "The numbers don't match: FMCG's average is 110.7 ₽, not 230.3. 230.3 ₽ is the honest average across all 47 products at once, it just doesn't resemble either of the two real groups within the column."
+          "why": "The numbers don't match: FMCG's average is 110.7 ¥, not 230.3. 230.3 ¥ is the honest average across all 47 products at once, it just doesn't resemble either of the two real groups within the column."
         },
         {
           "label": "describe()'s std would have flagged the problem right away, so if the colleague didn't look at it, that's on them",
@@ -639,7 +639,7 @@
       "options": [
         {
           "label": "52 — case and spaces collapsed, but seven outlets are written in two transliterations and stayed distinct",
-          "why": "«Yarmarka #1026» and «Iarmarka #1026» are one outlet, but a string method compares characters, and their first letters differ. It removes case and spaces; a differently spelled name it cannot."
+          "why": "«Ichiba #1026» and «Itiba #1026» are one outlet, but a string method compares characters, and their first letters differ. It removes case and spaces; a differently spelled name it cannot."
         },
         {
           "label": "45 — casting to one form gives exactly the real number of outlets",
@@ -658,12 +658,12 @@
         "Look at what exactly differs between two spellings of one outlet: the case, the spaces — or the letters themselves.",
         "A string method has no way of knowing that two dissimilar names mean the same thing."
       ],
-      "explain": "52, not 45. Edge spaces and case are discrepancies of form: a string function removes them because it can see that the strings differ by nothing else. A different transliteration is a discrepancy of content: «Yarmarka» and «Iarmarka» are made of different letters, and no amount of case folding brings them together. This is the boundary where string cleaning ends and entity matching begins: you need a mapping table, or a rule that folds the variants into one canonical form — that is, outside knowledge that these are one chain. The data itself doesn't carry that knowledge. The practical consequence is worse than it looks: after .str.strip().str.upper() the numbers look clean and are therefore more dangerous than the raw ones. A report over 52 customers will agree with itself, while seven outlets in it are counted twice, each with half of its turnover — and no duplicate check will show it. bugs precisely where two engines look interchangeable."
+      "explain": "52, not 45. Edge spaces and case are discrepancies of form: a string function removes them because it can see that the strings differ by nothing else. A different transliteration is a discrepancy of content: «Ichiba» and «Itiba» are made of different letters, and no amount of case folding brings them together. This is the boundary where string cleaning ends and entity matching begins: you need a mapping table, or a rule that folds the variants into one canonical form — that is, outside knowledge that these are one chain. The data itself doesn't carry that knowledge. The practical consequence is worse than it looks: after .str.strip().str.upper() the numbers look clean and are therefore more dangerous than the raw ones. A report over 52 customers will agree with itself, while seven outlets in it are counted twice, each with half of its turnover — and no duplicate check will show it. bugs precisely where two engines look interchangeable."
     },
     {
       "id": "py-034",
       "title": "One customer, two spellings",
-      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Kolos #1013 \" and \"Kolos #1013\" — these are two different values here, even though it's the same outlet.",
+      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Minori #1013 \" and \"Minori #1013\" — these are two different values here, even though it's the same outlet.",
       "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
       "hints": [
         ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",

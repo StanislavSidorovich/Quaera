@@ -337,7 +337,7 @@ export const en = {
   sandbox: {
     title: 'Sandbox',
     intro:
-      'Free mode: any query against the same "Nordwind Trade" data, with no task, no hints and no reference answer. The schema is one click away; results come as a table or a chart.',
+      'Free mode: any query against the same "Kaiyo Trading" data, with no task, no hints and no reference answer. The schema is one click away; results come as a table or a chart.',
     envLabel: 'Environment',
     envSql: 'SQL',
     envPython: 'Python (pandas)',

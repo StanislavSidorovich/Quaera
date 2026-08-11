@@ -210,7 +210,7 @@
       "level": 1,
       "mode": "write",
       "title": "Отбор для промо-каталога",
-      "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ₽ — дешёвые в промо не идут.",
+      "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ¥ — дешёвые в промо не идут.",
       "goal": "Вернуть sku_code, product_name, brand, list_price для товаров этих двух брендов с ценой строго больше 100.",
       "starter": "SELECT sku_code, product_name, brand, list_price\nFROM dim_product\nWHERE ",
       "solution": "SELECT sku_code, product_name, brand, list_price FROM dim_product WHERE brand IN ('Aqualis', 'Fruvia') AND list_price > 100",
@@ -245,19 +245,19 @@
       "level": 2,
       "mode": "predict",
       "title": "Неравенство и пустое значение",
-      "brief": "Нужен список точек, которые не относятся к сети «Bereg». У несетевых точек в колонке chain_name лежит NULL.",
+      "brief": "Нужен список точек, которые не относятся к сети «Kaigan». У несетевых точек в колонке chain_name лежит NULL.",
       "goal": "Определить, попадут ли несетевые точки в результат.",
-      "predictSql": "SELECT customer_name, chain_name\nFROM dim_customer\nWHERE chain_name <> 'Bereg'",
+      "predictSql": "SELECT customer_name, chain_name\nFROM dim_customer\nWHERE chain_name <> 'Kaigan'",
       "predictQuestion": "Попадут ли в результат точки, у которых chain_name = NULL?",
       "options": [
         {
           "label": "Нет — строки с NULL отсеются",
           "correct": true,
-          "why": "NULL <> 'Bereg' даёт не истину и не ложь, а NULL. WHERE пропускает только истину, поэтому такие строки молча выпадают."
+          "why": "NULL <> 'Kaigan' даёт не истину и не ложь, а NULL. WHERE пропускает только истину, поэтому такие строки молча выпадают."
         },
         {
-          "label": "Да, ведь NULL — это точно не «Bereg»",
-          "why": "Логично по-человечески, но неверно по стандарту SQL. NULL означает «значение неизвестно», а про неизвестное нельзя утверждать, что оно не равно «Bereg»."
+          "label": "Да, ведь NULL — это точно не «Kaigan»",
+          "why": "Логично по-человечески, но неверно по стандарту SQL. NULL означает «значение неизвестно», а про неизвестное нельзя утверждать, что оно не равно «Kaigan»."
         },
         {
           "label": "Да, они вернутся с пустым значением в колонке",
@@ -272,7 +272,7 @@
         "Результат сравнения с NULL — тоже NULL.",
         "WHERE пропускает строку только если условие истинно."
       ],
-      "explain": "Это самая частая причина «недостачи» строк в отчёте. Правильная формулировка: WHERE chain_name <> 'Bereg' OR chain_name IS NULL, либо WHERE COALESCE(chain_name, '') <> 'Bereg'. Проверочный рефлекс: если в колонке бывают пустые значения, любое условие с <>, NOT IN или > надо сознательно дополнить обработкой NULL."
+      "explain": "Это самая частая причина «недостачи» строк в отчёте. Правильная формулировка: WHERE chain_name <> 'Kaigan' OR chain_name IS NULL, либо WHERE COALESCE(chain_name, '') <> 'Kaigan'. Проверочный рефлекс: если в колонке бывают пустые значения, любое условие с <>, NOT IN или > надо сознательно дополнить обработкой NULL."
     },
     {
       "id": "sql-006",
@@ -745,7 +745,7 @@
       "level": 2,
       "mode": "write",
       "title": "Расшифровка продаж одной точки",
-      "brief": "Торговый представитель разбирает недельный отчёт по точке «Kolos #1013» и просит расшифровать коды товаров человеческими названиями.",
+      "brief": "Торговый представитель разбирает недельный отчёт по точке «Minori #1013» и просит расшифровать коды товаров человеческими названиями.",
       "goal": "Вернуть product_name, units и revenue для точки с customer_id = 13 за неделю 2026-06-15.",
       "starter": "SELECT p.product_name, f.units, f.revenue\nFROM fact_sellout f\nJOIN dim_product p ON \nWHERE ",
       "solution": "SELECT p.product_name, f.units, f.revenue FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE f.customer_id = 13 AND f.week_start = '2026-06-15'",
@@ -1216,15 +1216,15 @@
       "level": 3,
       "mode": "write",
       "title": "Сеть в двух написаниях",
-      "brief": "В staging_raw_sellout сеть «Yarmarka» иногда записана как «Iarmarka»: два источника транслитерировали одно название по-разному. Перед тем как нормализовать справочник, нужно оценить масштаб проблемы.",
-      "goal": "Вернуть одну строку: written_ya — число строк, где customer_name содержит «Yarmarka», written_ia — где содержит «Iarmarka», total_chain — их сумму: обе группы относятся к одной и той же сети.",
-      "starter": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Yarmarka%' THEN 1 ELSE 0 END) AS written_ya,\n  \nFROM staging_raw_sellout",
-      "solution": "SELECT SUM(CASE WHEN customer_name LIKE '%Yarmarka%' THEN 1 ELSE 0 END) AS written_ya, SUM(CASE WHEN customer_name LIKE '%Iarmarka%' THEN 1 ELSE 0 END) AS written_ia, SUM(CASE WHEN customer_name LIKE '%Yarmarka%' OR customer_name LIKE '%Iarmarka%' THEN 1 ELSE 0 END) AS total_chain FROM staging_raw_sellout",
+      "brief": "В staging_raw_sellout сеть «Ichiba» иногда записана как «Itiba»: два источника транслитерировали одно название по-разному. Перед тем как нормализовать справочник, нужно оценить масштаб проблемы.",
+      "goal": "Вернуть одну строку: written_ya — число строк, где customer_name содержит «Ichiba», written_ia — где содержит «Itiba», total_chain — их сумму: обе группы относятся к одной и той же сети.",
+      "starter": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya,\n  \nFROM staging_raw_sellout",
+      "solution": "SELECT SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya, SUM(CASE WHEN customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS written_ia, SUM(CASE WHEN customer_name LIKE '%Ichiba%' OR customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS total_chain FROM staging_raw_sellout",
       "hints": [
         "Два написания различаются первой буквой — Ya против Ia. Ловите оба варианта отдельными LIKE.",
         "Сумма written_ya и written_ia должна совпасть с total_chain — это и есть проверка, что варианты не пересекаются и ничего не потеряно."
       ],
-      "explain": "Разное написание одного и того же значения — рутинная проблема сырых выгрузок, и несогласованная транслитерация здесь первая по частоте: у одной системы-источника один стандарт, у другой другой, а часть названий вводили руками. Если сгруппировать по customer_name как есть, GROUP BY молча заведёт для одной сети два ряда, и её доля в отчёте окажется заниженной ровно на объём второго написания. По самому отчёту это не увидеть: обе строки выглядят законными названиями. Перед агрегацией такие варианты сводят к одному в начале конвейера — например, REPLACE(customer_name, 'Iarmarka', 'Yarmarka'). Стоит заметить, чем эта чистка отличается от TRIM и приведения регистра: те снимают различия формы записи, а здесь нужно знание, что два разных слова означают одну сеть. В данных такого знания нет — его приносят справочником соответствий."
+      "explain": "Разное написание одного и того же значения — рутинная проблема сырых выгрузок, и несогласованная транслитерация здесь первая по частоте: у одной системы-источника один стандарт, у другой другой, а часть названий вводили руками. Если сгруппировать по customer_name как есть, GROUP BY молча заведёт для одной сети два ряда, и её доля в отчёте окажется заниженной ровно на объём второго написания. По самому отчёту это не увидеть: обе строки выглядят законными названиями. Перед агрегацией такие варианты сводят к одному в начале конвейера — например, REPLACE(customer_name, 'Itiba', 'Ichiba'). Стоит заметить, чем эта чистка отличается от TRIM и приведения регистра: те снимают различия формы записи, а здесь нужно знание, что два разных слова означают одну сеть. В данных такого знания нет — его приносят справочником соответствий."
     },
     {
       "id": "sql-047",
@@ -1326,10 +1326,10 @@
       "level": 2,
       "mode": "predict",
       "title": "Постраничный прайс-лист и одинаковая цена",
-      "brief": "Витрину прайс-листа выводят по 3 позиции на страницу, сортируя от дорогой к дешёвой. Менеджер листает список и не понимает, почему товар с ценой 98 ₽, который он только что видел, снова не находится на текущей странице.",
-      "goal": "Определить, сколько товаров с ценой 98 ₽ попадёт в результат этого запроса.",
+      "brief": "Витрину прайс-листа выводят по 3 позиции на страницу, сортируя от дорогой к дешёвой. Менеджер листает список и не понимает, почему товар с ценой 98 ¥, который он только что видел, снова не находится на текущей странице.",
+      "goal": "Определить, сколько товаров с ценой 98 ¥ попадёт в результат этого запроса.",
       "predictSql": "SELECT product_name, list_price\nFROM dim_product\nORDER BY list_price DESC\nLIMIT 3 OFFSET 33",
-      "predictQuestion": "Сколько товаров с ценой 98 ₽ окажется в результате, если всего таких товаров в прайсе три?",
+      "predictQuestion": "Сколько товаров с ценой 98 ¥ окажется в результате, если всего таких товаров в прайсе три?",
       "options": [
         {
           "label": "Два — третий остался на предыдущей странице",
@@ -1341,8 +1341,8 @@
           "why": "Рядом в отсортированном списке — да, но «рядом» не значит «внутри одной тройки», если строк с этой ценой больше, чем помещается до конца текущего окна LIMIT."
         },
         {
-          "label": "Ни одного — OFFSET 33 уже пропустил все товары по 98 ₽",
-          "why": "OFFSET 33 пропускает первые 33 строки после сортировки, а группа товаров по 98 ₽ начинается как раз на этой границе, а не раньше."
+          "label": "Ни одного — OFFSET 33 уже пропустил все товары по 98 ¥",
+          "why": "OFFSET 33 пропускает первые 33 строки после сортировки, а группа товаров по 98 ¥ начинается как раз на этой границе, а не раньше."
         },
         {
           "label": "Запрос упадёт с ошибкой — несколько строк с одинаковым list_price нельзя сортировать",
@@ -1353,7 +1353,7 @@
         "Начните с ROW_NUMBER() OVER (ORDER BY list_price DESC), чтобы увидеть, на каком месте в общем списке стоит каждый из трёх товаров с ценой 98.",
         "OFFSET 33 значит «пропустить первые 33 строки» — посмотрите, какая по счёту строка идёт 34-й."
       ],
-      "explain": "ORDER BY list_price DESC сортирует только по цене, а между строками с одинаковой ценой порядок ничем не закреплён явно — в этой конкретной базе он получается стабильным от запуска к запуску, но никаким контрактом не гарантирован. Из трёх товаров по 98 ₽ два оказываются в этом окне LIMIT, а третий — в предыдущем, просто потому что группа с одинаковой ценой не помещается целиком в тройку строк. Практический вывод для пагинации: LIMIT/OFFSET безопасны только с полностью уникальным порядком — добавьте вторичный ключ вроде product_id к ORDER BY, иначе при изменении данных строки на границе страниц могут задваиваться или пропадать."
+      "explain": "ORDER BY list_price DESC сортирует только по цене, а между строками с одинаковой ценой порядок ничем не закреплён явно — в этой конкретной базе он получается стабильным от запуска к запуску, но никаким контрактом не гарантирован. Из трёх товаров по 98 ¥ два оказываются в этом окне LIMIT, а третий — в предыдущем, просто потому что группа с одинаковой ценой не помещается целиком в тройку строк. Практический вывод для пагинации: LIMIT/OFFSET безопасны только с полностью уникальным порядком — добавьте вторичный ключ вроде product_id к ORDER BY, иначе при изменении данных строки на границе страниц могут задваиваться или пропадать."
     },
     {
       "id": "sql-049",
@@ -1364,7 +1364,7 @@
       "mode": "fill",
       "title": "Бренды с высокой выручкой и широким покрытием",
       "brief": "Категорийный менеджер расширяет полку под бренды-локомотивы: нужны те, что одновременно дают большую выручку и стоят в большом числе точек — только один из двух признаков ничего не доказывает.",
-      "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ₽ и не менее чем в 80 точках. По убыванию выручки.",
+      "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ¥ и не менее чем в 80 точках. По убыванию выручки.",
       "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT ___) >= 80\nORDER BY revenue ___",
       "blanks": ["f.customer_id", "DESC"],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
@@ -1476,7 +1476,7 @@
       "level": 4,
       "mode": "fill",
       "title": "Накопительные отгрузки дистрибьютора за квартал",
-      "brief": "Финансы хотят видеть не только отгрузки за каждый месяц, но и нарастающий итог за квартал — сколько уже отгружено дистрибьютору «Volga-Trade» на конец каждого месяца.",
+      "brief": "Финансы хотят видеть не только отгрузки за каждый месяц, но и нарастающий итог за квартал — сколько уже отгружено дистрибьютору «Setouchi Trading» на конец каждого месяца.",
       "goal": "За октябрь–декабрь 2025 вернуть month_start, units — отгружено за месяц, и running_units — нарастающий итог с начала квартала. По возрастанию месяца.",
       "template": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ___ UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
       "blanks": ["ROWS BETWEEN"],
@@ -1484,7 +1484,7 @@
       "orderMatters": true,
       "hints": [
         "Рамка окна для нарастающего итога — это ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, а не 3 PRECEDING, как в скользящем среднем sql-019.",
-        "distributor_id = 1 — это «Volga-Trade», можно свериться по dim_customer."
+        "distributor_id = 1 — это «Setouchi Trading», можно свериться по dim_customer."
       ],
       "explain": "UNBOUNDED PRECEDING значит «от самого начала окна», в отличие от 3 PRECEDING в sql-019, которое брало фиксированное число предыдущих строк. Разница в один аргумент рамки полностью меняет смысл расчёта: скользящее среднее сглаживает локальный шум, а накопительный итог с UNBOUNDED PRECEDING показывает рост показателя с начала периода — здесь именно то, что нужно для контроля отгрузок нарастающим итогом за квартал."
     },
@@ -1551,10 +1551,10 @@
       "level": 5,
       "mode": "write",
       "title": "Запас в неделях у дистрибьютора",
-      "brief": "Финансовый директор беспокоится о списаниях: у дистрибьютора «Volga-Trade» видны большие остатки бренда «Aqualis» на складе. Нужно понять, на сколько недель продаж их хватит при текущем темпе продаж точек, которые он обслуживает.",
-      "goal": "Вернуть одну строку: units_on_hand — остаток товара «Aqualis Still 0.5 L» у дистрибьютора «Volga-Trade» на конец декабря 2025, avg_weekly_units — средние недельные продажи этого товара в точках, которые обслуживает дистрибьютор, за октябрь–декабрь 2025 (округлить до одного знака), и weeks_cover — во сколько недель хватит остатка при таком темпе продаж (округлить до одного знака).",
-      "starter": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\n",
-      "solution": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\nSELECT\n  (SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') AS units_on_hand,\n  ROUND(AVG(w.units), 1) AS avg_weekly_units,\n  ROUND((SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') * 1.0 / AVG(w.units), 1) AS weeks_cover\nFROM weekly w",
+      "brief": "Финансовый директор беспокоится о списаниях: у дистрибьютора «Setouchi Trading» видны большие остатки бренда «Aqualis» на складе. Нужно понять, на сколько недель продаж их хватит при текущем темпе продаж точек, которые он обслуживает.",
+      "goal": "Вернуть одну строку: units_on_hand — остаток товара «Aqualis Still 0.5 L» у дистрибьютора «Setouchi Trading» на конец декабря 2025, avg_weekly_units — средние недельные продажи этого товара в точках, которые обслуживает дистрибьютор, за октябрь–декабрь 2025 (округлить до одного знака), и weeks_cover — во сколько недель хватит остатка при таком темпе продаж (округлить до одного знака).",
+      "starter": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\n",
+      "solution": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\nSELECT\n  (SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') AS units_on_hand,\n  ROUND(AVG(w.units), 1) AS avg_weekly_units,\n  ROUND((SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') * 1.0 / AVG(w.units), 1) AS weeks_cover\nFROM weekly w",
       "hints": [
         "Остаток на складе лежит в отдельной таблице fact_stock, у неё нет прямой связи с fact_sellout: достаньте нужное число отдельным скалярным подзапросом, как в sql-014.",
         "Недельный темп продаж считайте только по точкам этого дистрибьютора — фильтр c.served_by_distributor_id, а не по всем продажам товара в стране."

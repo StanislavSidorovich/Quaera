@@ -11,9 +11,9 @@
   "intro": {
     "what": "This track is about what's left once the tools are stripped away: whose question you're answering, what a computed number actually means, and why the business works the way it does rather than some other way. This isn't \"soft skills\" — there's no less specificity here than in SQL, it's just that the checker isn't an engine, it's the consequences.\n\nThe domain is FMCG and OTC-pharma distribution: how a product travels from factory to shelf, and what metrics measure that journey. The way of reasoning carries over to any industry; the specific set of metrics doesn't, and wherever that boundary falls, the tasks call it out directly.",
     "where": "A request comes in: \"work out sales for the quarter\" — and before opening the editor, you need to know whose sales: shipments to distributors, or retail sales, before discounts or after. You bring back the correct number and it's rejected, because a neighboring department computes it differently. A report shows growth, and in the meeting it turns out that's a low-base effect.\n\nAnd the most common case of all: the question sounds like \"give me an export\", but what's needed is an answer to a question nobody asked out loud.",
-    "idea": "A number by itself asserts nothing — the assertion only appears together with a definition. \"2025 revenue\" in our dataset has at least three equally correct values: 51.5M ₽ in retail, 42.7M in shipments before discounts, and 39.1M after. None of them is wrong — it's the questions that diverge, not the arithmetic.\n\nThat's where the habit that holds the whole track together comes from: before computing, agree on exactly what's being computed; before comparing, make sure the comparison bases match. A good share of the \"data errors\" people argue about in meetings turn out to be a mismatch of definitions, not of arithmetic.",
+    "idea": "A number by itself asserts nothing — the assertion only appears together with a definition. \"2025 revenue\" in our dataset has at least three equally correct values: 51.5M ¥ in retail, 42.7M in shipments before discounts, and 39.1M after. None of them is wrong — it's the questions that diverge, not the arithmetic.\n\nThat's where the habit that holds the whole track together comes from: before computing, agree on exactly what's being computed; before comparing, make sure the comparison bases match. A good share of the \"data errors\" people argue about in meetings turn out to be a mismatch of definitions, not of arithmetic.",
     "limits": "There are no ready-made answers here that apply without looking. Distribution metrics live in FMCG and pharma; in banking, on a marketplace, or in industrial construction the set would be different — what carries over is the way of working it out, not a table of formulas.\n\nThis track doesn't teach tools either: you won't write a single line of code here — tasks are built as picking a decision and seeing why the other options fall short.\n\nAnd the main limitation, worth stating honestly: correctness of a business judgment is never checked automatically by anything. Whatever can be expressed as a number, we lock down against the dataset — but a conclusion stays a conclusion, and it's worth checking against real colleagues, not just the trainer.",
-    "bridge": "This track comes first not out of politeness: it sets up the questions the other three answer. Until it's clear how sell-in differs from sell-out, SUM(units) in a query is arithmetic, not an answer.\n\nThe reverse also holds: half the tasks here are built on the same numbers you'll pull with a query in SQL and with a dataframe in pandas. The «Volga-Trade» warehouse overstock is worked out here as a distinction between flow and stock — the flow returned to normal, but the level stayed — and the same thing takes a few lines in SQL.\n\nThe trainer gives you meaning and tool separately, so you connect them yourself."
+    "bridge": "This track comes first not out of politeness: it sets up the questions the other three answer. Until it's clear how sell-in differs from sell-out, SUM(units) in a query is arithmetic, not an answer.\n\nThe reverse also holds: half the tasks here are built on the same numbers you'll pull with a query in SQL and with a dataframe in pandas. The «Setouchi Trading» warehouse overstock is worked out here as a distinction between flow and stock — the flow returned to normal, but the level stayed — and the same thing takes a few lines in SQL.\n\nThe trainer gives you meaning and tool separately, so you connect them yourself."
   },
   "skills": [
     {
@@ -121,9 +121,9 @@
     {
       "id": "dom-001",
       "title": "Once, or every Monday",
-      "brief": "The commercial director asks you to check how brands performed in Ural-Siberia. A week later, asks the same thing for a new period. A week after that — again.",
+      "brief": "The commercial director asks you to check how brands performed in Kansai. A week later, asks the same thing for a new period. A week after that — again.",
       "goal": "Determine what actually changed about the task by the third time.",
-      "scenario": "Week 1:\n  \"Check how brands performed\n  in Ural-Siberia\"\nWeek 2:\n  \"Now for last week\"\nWeek 3:\n  \"One more time, please\"",
+      "scenario": "Week 1:\n  \"Check how brands performed\n  in Kansai\"\nWeek 2:\n  \"Now for last week\"\nWeek 3:\n  \"One more time, please\"",
       "predictQuestion": "By the third time, the task changed in substance. In what way, exactly?",
       "options": [
         {
@@ -154,7 +154,7 @@
       "title": "Doesn't reconcile with the accounting system",
       "brief": "Accounting complains: March revenue in the dashboard is lower than in the accounting system. The analyst checked their query three times — filters, period, and granularity are all correct.",
       "goal": "Determine what to check next.",
-      "scenario": "March 2025:\n\n  Dashboard         4,503,200 ₽\n  Accounting system 4,694,330 ₽\n  Gap                −191,130 ₽\n    (−4.1%)\n\nQuery checked three times: logic\nis correct.\nThe mart is refreshed by a nightly\npipeline.",
+      "scenario": "March 2025:\n\n  Dashboard         4,503,200 ¥\n  Accounting system 4,694,330 ¥\n  Gap                −191,130 ¥\n    (−4.1%)\n\nQuery checked three times: logic\nis correct.\nThe mart is refreshed by a nightly\npipeline.",
       "predictQuestion": "The query's logic is confirmed correct, but the numbers still diverge. What to check next?",
       "options": [
         {
@@ -167,7 +167,7 @@
         },
         {
           "label": "Chalk it up to rounding and methodology differences — 4% is within normal range",
-          "why": "4% here is 191 thousand rubles, not a rounding error. A gap of this size always has a specific cause, and \"within normal range\" just means nobody went looking for it."
+          "why": "4% here is 191 thousand yen, not a rounding error. A gap of this size always has a specific cause, and \"within normal range\" just means nobody went looking for it."
         },
         {
           "label": "Recompute it in the accounting system — the error is probably on their end",
@@ -402,7 +402,7 @@
       "title": "Eleven months",
       "brief": "An analyst is preparing an annual sales-by-month report. The query ran, the numbers look reasonable, the trend resembles last year's.",
       "goal": "Find the defect in the result.",
-      "scenario": "Report: sales by month, 2025\n\n  2025-01    3,717K ₽\n  2025-02    4,155K ₽\n  2025-03    4,694K ₽\n  ...\n  2025-12    4,408K ₽\n\nRows in result:  11\nTotal:           47,663K ₽",
+      "scenario": "Report: sales by month, 2025\n\n  2025-01    3,717K ¥\n  2025-02    4,155K ¥\n  2025-03    4,694K ¥\n  ...\n  2025-12    4,408K ¥\n\nRows in result:  11\nTotal:           47,663K ¥",
       "predictQuestion": "What's wrong here?",
       "options": [
         {
@@ -433,7 +433,7 @@
       "title": "One region's revenue exceeds the whole year",
       "brief": "After a mart update, an analyst checks the regional report for December. One row stands out sharply from the rest.",
       "goal": "Determine what to do with this number.",
-      "scenario": "Revenue by region, December\n2025:\n\n  Rostov Oblast\n    38,214,500,000 ₽\n  Krasnodar Krai\n    527,583 ₽\n  Samara Oblast\n    407,593 ₽\n  ...\n\nCompany-wide annual revenue:\nabout 51.5M ₽",
+      "scenario": "Revenue by region, December\n2025:\n\n  Saitama\n    38,214,500,000 ¥\n  Aichi\n    527,583 ¥\n  Miyagi\n    407,593 ¥\n  ...\n\nCompany-wide annual revenue:\nabout 51.5M ¥",
       "predictQuestion": "What should be done with this number?",
       "options": [
         {
@@ -457,7 +457,7 @@
         "Compare this number not against the neighboring rows, but against the overall scale of the business.",
         "Ask yourself whether any business explanation exists where one month exceeds a whole year."
       ],
-      "explain": "Checking the order of magnitude is the cheapest check of all: it needs no recomputation and no access to the source, just knowing what scale the business actually operates at. An analyst who remembers the company does about 50M a year spots 38B in a split second; one who doesn't keep the scale in their head will send the number onward. Hence a requirement for yourself: know three or four anchor numbers of your business by heart — annual revenue, outlet count, average price, unit volume. Typical causes of anomalies like this: row duplication from a join, a lost period filter, and mixed-up units (rubles vs. thousands of rubles). And a rule with no exceptions: a number you can't explain doesn't get sent — not with a caveat, not without one."
+      "explain": "Checking the order of magnitude is the cheapest check of all: it needs no recomputation and no access to the source, just knowing what scale the business actually operates at. An analyst who remembers the company does about 50M a year spots 38B in a split second; one who doesn't keep the scale in their head will send the number onward. Hence a requirement for yourself: know three or four anchor numbers of your business by heart — annual revenue, outlet count, average price, unit volume. Typical causes of anomalies like this: row duplication from a join, a lost period filter, and mixed-up units (yen vs. thousands of yen). And a rule with no exceptions: a number you can't explain doesn't get sent — not with a caveat, not without one."
     },
     {
       "id": "dom-012",
@@ -524,9 +524,9 @@
     {
       "id": "dom-014",
       "title": "Market share from our own data",
-      "brief": "The marketing director asks for the market share of the «Nettora» brand in Rostov Oblast — \"we have all the sales data, don't we?\"",
+      "brief": "The marketing director asks for the market share of the «Nettora» brand in Saitama — \"we have all the sales data, don't we?\"",
       "goal": "Determine what this calculation actually measures.",
-      "scenario": "Request: «Nettora» market share\nin Rostov Oblast\n\nHave: fact_sellout — sales at\noutlets we have a data-sharing\nagreement with\n\nDon't have: competitor sales,\nsales at outlets without a\ndata-sharing agreement,\nmarketplaces, chains' own retail",
+      "scenario": "Request: «Nettora» market share\nin Saitama\n\nHave: fact_sellout — sales at\noutlets we have a data-sharing\nagreement with\n\nDon't have: competitor sales,\nsales at outlets without a\ndata-sharing agreement,\nmarketplaces, chains' own retail",
       "predictQuestion": "What do you get by dividing «Nettora» sales by all sales in fact_sellout?",
       "options": [
         {
@@ -557,7 +557,7 @@
       "title": "Zero sales and an empty shelf",
       "brief": "One outlet has sold zero units of the \"«Nettora» Anti-Grease 500ml\" SKU for the third week running. The sales rep asks what happened to demand.",
       "goal": "Determine what can actually be learned from the sales data.",
-      "scenario": "Outlet \"Yarmarka #204\"\nSKU \"«Nettora» Anti-Grease 500ml\"\nThird week in a row:\nsell-out = 0\n\nPossible causes:\n  A  product is on the shelf,\n     nobody buys it\n  B  product isn't there —\n     never delivered\n  C  product is in the outlet's\n     back room, not on the shelf",
+      "scenario": "Outlet \"Ichiba #204\"\nSKU \"«Nettora» Anti-Grease 500ml\"\nThird week in a row:\nsell-out = 0\n\nPossible causes:\n  A  product is on the shelf,\n     nobody buys it\n  B  product isn't there —\n     never delivered\n  C  product is in the outlet's\n     back room, not on the shelf",
       "predictQuestion": "Which of these can be told apart using fact_sellout data?",
       "options": [
         {
@@ -588,7 +588,7 @@
       "title": "Three numbers for one March",
       "brief": "The CFO asks for March sales for a revenue report. The accounting system has three different sums for March, and all three are correct.",
       "goal": "Pick the number that answers the question actually asked.",
-      "scenario": "March:\n\n  Orders placed\n    4,910K ₽\n  Shipped\n    4,694K ₽\n  Landed in the account\n    3,380K ₽\n\nRequest: March sales for a\nrevenue report",
+      "scenario": "March:\n\n  Orders placed\n    4,910K ¥\n  Shipped\n    4,694K ¥\n  Landed in the account\n    3,380K ¥\n\nRequest: March sales for a\nrevenue report",
       "predictQuestion": "Which number to use?",
       "options": [
         {
@@ -619,7 +619,7 @@
       "title": "Shipped on the 31st, received on the 2nd",
       "brief": "A large batch left the warehouse on March 31, the customer received it on April 2. Per the contract, title transfers at receipt.",
       "goal": "Determine which month the amount lands in.",
-      "scenario": "Shipped from warehouse   March 31\nReceived by customer     April 2\nInvoiced                 April 2\nAmount                   380K ₽\n\nPer the contract, title\ntransfers at the moment\nthe customer receives the\ngoods.",
+      "scenario": "Shipped from warehouse   March 31\nReceived by customer     April 2\nInvoiced                 April 2\nAmount                   380K ¥\n\nPer the contract, title\ntransfers at the moment\nthe customer receives the\ngoods.",
       "predictQuestion": "Which month does this amount land in on the revenue report?",
       "options": [
         {
@@ -648,9 +648,9 @@
     {
       "id": "dom-018",
       "title": "Sold 4.7 million, but no cash",
-      "brief": "The owner looks at a report: March revenue is 4,694K ₽, but only 3,380K landed in the account that same month. They ask where the difference went.",
+      "brief": "The owner looks at a report: March revenue is 4,694K ¥, but only 3,380K landed in the account that same month. They ask where the difference went.",
       "goal": "Explain the gap between revenue and cash receipts.",
-      "scenario": "March:\n\n  Revenue (shipped)\n    4,694K ₽\n  Landed in the account\n    3,380K ₽\n  Difference\n    1,314K ₽\n\nPayment terms with chains:\n45 days",
+      "scenario": "March:\n\n  Revenue (shipped)\n    4,694K ¥\n  Landed in the account\n    3,380K ¥\n  Difference\n    1,314K ¥\n\nPayment terms with chains:\n45 days",
       "predictQuestion": "Where did the difference go?",
       "options": [
         {
@@ -681,8 +681,8 @@
       "title": "One distributor out of twelve",
       "brief": "An analyst rolls up the ratio of shipments to outlet sales across all distributors for Q4. Eleven sit close to one; one stands out.",
       "goal": "Determine what the outlying value means.",
-      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  «Volga-Trade» LLC\n    28,203 / 11,574 = 2.44\n  «Uralsnab» JSC\n    9,216 / 8,760 = 1.05\n  «Daltorg» LLC\n    12,018 / 11,509 = 1.04\n  «Prikamye Group» LLC\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
-      "predictQuestion": "What does «Volga-Trade»'s 2.44 mean against the rest?",
+      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  «Setouchi Trading» LLC\n    28,203 / 11,574 = 2.44\n  «Hokuriku Supply» JSC\n    9,216 / 8,760 = 1.05\n  «Hokusei Trading» LLC\n    12,018 / 11,509 = 1.04\n  «Tokai Group» LLC\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
+      "predictQuestion": "What does «Setouchi Trading»'s 2.44 mean against the rest?",
       "options": [
         {
           "label": "It took in twice as much product as its outlets sold: channel stock grew, and that's a deferred problem",
@@ -690,11 +690,11 @@
         },
         {
           "label": "It's outperforming the rest: it has the largest sales",
-          "why": "It has the largest purchases, not the largest sales. Its outlets sold 11,574 units — on par with «Daltorg» (11,509), whose shipments are half the size. What differs is the purchase, not the sale."
+          "why": "It has the largest purchases, not the largest sales. Its outlets sold 11,574 units — on par with «Hokusei Trading» (11,509), whose shipments are half the size. What differs is the purchase, not the sale."
         },
         {
           "label": "It just has more outlets, hence the higher numbers",
-          "why": "Size explains the absolute figures, but the ratio specifically normalizes for size: the much larger «Daltorg» sits at 1.04, same as the much smaller «Gorizont-Ural»."
+          "why": "Size explains the absolute figures, but the ratio specifically normalizes for size: the much larger «Hokusei Trading» sits at 1.04, same as the much smaller «Asahi Line»."
         },
         {
           "label": "A data error: sell-in and sell-out should match",
@@ -703,7 +703,7 @@
       ],
       "hints": [
         "Compare the ratio, not the absolute figures — it already accounts for the difference in distributor size.",
-        "Look at «Volga-Trade»'s outlet sales separately from its purchases: did they grow the same way shipments did?"
+        "Look at «Setouchi Trading»'s outlet sales separately from its purchases: did they grow the same way shipments did?"
       ],
       "explain": "The sell-in to sell-out ratio is a basic distribution diagnostic precisely because it normalizes for size: it lets you compare anyone against anyone. A value near one means the channel's stock is stable; a noticeable excess means the channel is building up inventory. The causes can be legitimate (gearing up for a promo, entering a season), but each one has to be named in advance, or you're looking at a purchase made to hit an annual bonus — the distributor picks a volume to earn a retro discount, and the manufacturer is left to deal with the consequences. The key move here is comparison against the rest: eleven values in a tight 1.04–1.05 band turn one outlier from \"maybe that's just how it is\" into a fact demanding an explanation."
     },
@@ -741,9 +741,9 @@
     {
       "id": "dom-021",
       "title": "The ratio came back to normal",
-      "brief": "Six months after «Volga-Trade»'s purchasing spike, the sell-in to sell-out ratio has returned to its usual level. The department head considers the matter closed.",
+      "brief": "Six months after «Setouchi Trading»'s purchasing spike, the sell-in to sell-out ratio has returned to its usual level. The department head considers the matter closed.",
       "goal": "Determine whether the problem is actually solved.",
-      "scenario": "«Volga-Trade» LLC, sell-in / sell-out\nratio:\n\n  2025-Q1   1.04\n  2025-Q2   1.04\n  2025-Q3   1.03\n  2025-Q4   2.44   ← spike\n  2026-Q1   1.06\n  2026-Q2   1.05\n\nWarehouse stock, units:\n\n  Aug 2025    3,949\n  Dec 2025   20,846\n  Jan 2026   21,120\n  Apr 2026   21,757",
+      "scenario": "«Setouchi Trading» LLC, sell-in / sell-out\nratio:\n\n  2025-Q1   1.04\n  2025-Q2   1.04\n  2025-Q3   1.03\n  2025-Q4   2.44   ← spike\n  2026-Q1   1.06\n  2026-Q2   1.05\n\nWarehouse stock, units:\n\n  Aug 2025    3,949\n  Dec 2025   20,846\n  Jan 2026   21,120\n  Apr 2026   21,757",
       "predictQuestion": "The ratio is back to 1.05. Is the problem solved?",
       "options": [
         {
@@ -1084,7 +1084,7 @@
       "title": "Everyone tried it, few came back",
       "brief": "A new snack flavor launched six months ago with a big ad campaign and free samples. The household panel shows penetration grew from 4% to 11%. Market share in money stayed unchanged. Marketing asks you to explain why.",
       "goal": "Determine which of market share's three factors failed to deliver.",
-      "scenario": "Household panel, before\nlaunch and 6 months later:\n\n  penetration\n    (bought at least once)\n    was 4%  →  now 11%\n  purchases per buyer\n    was 3.4  →  now 1.3\n  average purchase size, ₽\n    was 180  →  now 185\n\n  market share in money\n    was 2.1%  →  now 2.1%\n\nShelf space and price were\nunchanged.",
+      "scenario": "Household panel, before\nlaunch and 6 months later:\n\n  penetration\n    (bought at least once)\n    was 4%  →  now 11%\n  purchases per buyer\n    was 3.4  →  now 1.3\n  average purchase size, ¥\n    was 180  →  now 185\n\n  market share in money\n    was 2.1%  →  now 2.1%\n\nShelf space and price were\nunchanged.",
       "predictQuestion": "What happened to the brand?",
       "options": [
         {
@@ -1146,12 +1146,12 @@
       "title": "Plus 146, or plus 72",
       "brief": "Trade marketing reported on the «Milvara» August promo: sales grew two and a half times. The financial controller looks at the same promo and talks about 72% growth. Both numbers are computed correctly from the same data.",
       "goal": "Explain the discrepancy and say which number is needed for the repeat-promo decision.",
-      "scenario": "«Milvara», 30% discount,\nall channels, three weeks of\nAugust 2025.\nWeekly averages:\n\n  4 weeks before\n    1,353.3 units, 104,645 ₽\n    price 77.33 ₽\n  3 weeks of promo\n    3,327.0 units, 180,157 ₽\n    price 54.15 ₽\n  4 weeks after\n    1,376.0 units, 106,344 ₽\n    price 77.28 ₽\n\n  units:   +146%\n  revenue:  +72%\n  price:    −30%",
+      "scenario": "«Milvara», 30% discount,\nall channels, three weeks of\nAugust 2025.\nWeekly averages:\n\n  4 weeks before\n    1,353.3 units, 104,645 ¥\n    price 77.33 ¥\n  3 weeks of promo\n    3,327.0 units, 180,157 ¥\n    price 54.15 ¥\n  4 weeks after\n    1,376.0 units, 106,344 ¥\n    price 77.28 ¥\n\n  units:   +146%\n  revenue:  +72%\n  price:    −30%",
       "predictQuestion": "Why is unit growth twice revenue growth, and what follows from that?",
       "options": [
         {
           "label": "The discount cut the price of every unit sold by 30%, including ones that would have sold without the promo: part of the volume growth was paid for by our own revenue, so money grows slower than units",
-          "why": "Revenue is units times price, and the promo moves both factors in opposite directions. The discount doesn't just apply to the extra buyers — it applies to the entire baseline sale too: about 1,353 units a week would have sold anyway, but at 77 rubles instead of 54."
+          "why": "Revenue is units times price, and the promo moves both factors in opposite directions. The discount doesn't just apply to the extra buyers — it applies to the entire baseline sale too: about 1,353 units a week would have sold anyway, but at 77 yen instead of 54."
         },
         {
           "label": "Some buyers stocked up, so the effect in money spread out into future weeks",
@@ -1170,14 +1170,14 @@
         "Revenue is a product of two numbers. What did the promo do to each of them?",
         "Think about the buyers who would have bought the product at full price anyway."
       ],
-      "explain": "The gap between unit growth and revenue growth is a mandatory feature of any price promo, not a quirk of this one. A discount applies to the entire unit sold, not just the incremental one: baseline sales that would have happened anyway now go at a reduced price. In money, this looks like part of the growth was self-funded.\n\nLet's compute it directly. Without the promo, three weeks would have brought roughly 313,935 ₽ (three times 104,645). Actual revenue was 540,471 ₽ — an extra 226,536 ₽ and 5,921 extra units. But on the baseline 1,353 units a week, we gave up 23 rubles each — about 94 thousand over three weeks. That 94 thousand is the price paid for the growth, and it doesn't show up in either of the two headline numbers.\n\nWhich number is needed for the repeat decision: neither +146% nor +72%, but incremental gross margin. It's computed as extra volume times promo margin, minus the margin lost on the baseline volume, minus the promo's own costs — flyers, endcap space, chain compensation. A promo showing +146% in units can easily be unprofitable at a deep discount and a thin margin, and vice versa.\n\nOn the baseline. Here it's taken as the average of the four weeks before the promo — that works because August doesn't break from trend for the dairy category. For a seasonal product, the four preceding weeks would lie, and the baseline is taken from the same period last year or from non-promoted SKUs in the same category.\n\nAnd last: no post-promo dip isn't a general rule, it's a property of this product. Short-shelf-life yogurt isn't something people stock up on. For laundry detergent or canned goods, the same three weeks of discount would almost certainly produce a drop afterward — people would simply have pulled forward future purchases into the promo period."
+      "explain": "The gap between unit growth and revenue growth is a mandatory feature of any price promo, not a quirk of this one. A discount applies to the entire unit sold, not just the incremental one: baseline sales that would have happened anyway now go at a reduced price. In money, this looks like part of the growth was self-funded.\n\nLet's compute it directly. Without the promo, three weeks would have brought roughly 313,935 ¥ (three times 104,645). Actual revenue was 540,471 ¥ — an extra 226,536 ¥ and 5,921 extra units. But on the baseline 1,353 units a week, we gave up 23 yen each — about 94 thousand over three weeks. That 94 thousand is the price paid for the growth, and it doesn't show up in either of the two headline numbers.\n\nWhich number is needed for the repeat decision: neither +146% nor +72%, but incremental gross margin. It's computed as extra volume times promo margin, minus the margin lost on the baseline volume, minus the promo's own costs — flyers, endcap space, chain compensation. A promo showing +146% in units can easily be unprofitable at a deep discount and a thin margin, and vice versa.\n\nOn the baseline. Here it's taken as the average of the four weeks before the promo — that works because August doesn't break from trend for the dairy category. For a seasonal product, the four preceding weeks would lie, and the baseline is taken from the same period last year or from non-promoted SKUs in the same category.\n\nAnd last: no post-promo dip isn't a general rule, it's a property of this product. Short-shelf-life yogurt isn't something people stock up on. For laundry detergent or canned goods, the same three weeks of discount would almost certainly produce a drop afterward — people would simply have pulled forward future purchases into the promo period."
     },
     {
       "id": "dom-035",
       "title": "A promo that barely happened",
       "brief": "The \"2+1\" mechanic on «Krosti» is effectively a third of the product for free. Brand-wide, the promo delivered +61% in units. The manager calls it a failure: \"we gave away a third of the price and got sixty percent.\" You open the details and see the brand isn't the level to be judging this promo at.",
       "goal": "Determine the right slice to evaluate the promo on, and recompute its result.",
-      "scenario": "«Krosti», 2+1 mechanic,\nfive weeks of August–\nSeptember 2025. Promo\nterms: chains only\n(modern trade).\n\nWeekly averages, units:\n\n  chains\n    before 303  →  in promo 974\n    +221%\n  online stores\n    before 852  →  in promo 897\n    +5%\n  traditional retail\n    before 26  →  in promo 25\n    −2%\n  whole brand\n    before 1,181  →  in promo 1,896\n    +61%\n\nRevenue in chains: 31,537 ₽ →\n67,016 ₽ per week (+113%).",
+      "scenario": "«Krosti», 2+1 mechanic,\nfive weeks of August–\nSeptember 2025. Promo\nterms: chains only\n(modern trade).\n\nWeekly averages, units:\n\n  chains\n    before 303  →  in promo 974\n    +221%\n  online stores\n    before 852  →  in promo 897\n    +5%\n  traditional retail\n    before 26  →  in promo 25\n    −2%\n  whole brand\n    before 1,181  →  in promo 1,896\n    +61%\n\nRevenue in chains: 31,537 ¥ →\n67,016 ¥ per week (+113%).",
       "predictQuestion": "What is the correct way to evaluate this promo?",
       "options": [
         {
@@ -1283,7 +1283,7 @@
         },
         {
           "label": "Both series are useless: share in packs doesn't reflect market position, share in money is needed",
-          "why": "Share in money is a different, also useful metric, but that's not the slide's problem. Share in rubles, computed monthly, would swing just as much, for the same reason."
+          "why": "Share in money is a different, also useful metric, but that's not the slide's problem. Share in yen, computed monthly, would swing just as much, for the same reason."
         },
         {
           "label": "The drop from 49.5% to 24.4% is the key fact, and MAT is smoothing it away",
@@ -1425,7 +1425,7 @@
       "title": "Sales down by half, the average outlet sells more",
       "brief": "«Nettora» revenue in Q2 2026 is half of the same quarter in 2024. Meanwhile the average outlet sells more than it did two years ago. The category manager asks for one sentence about what happened.",
       "goal": "Break the revenue drop into two factors and name the source.",
-      "scenario": "«Nettora» brand, Q2:\n\n  revenue, ₽\n    2024-Q2   2,121,702\n    2026-Q2   1,079,055\n    change        −49%\n  outlets\n    2024-Q2         79\n    2026-Q2         33\n    change        −58%\n  revenue per outlet, ₽\n    2024-Q2     26,857\n    2026-Q2     32,699\n    change        +22%\n  average price, ₽\n    2024-Q2     199.43\n    2026-Q2     194.42\n    change         −3%\n\nCheck:\n33/79 × 32,699/26,857 = 0.51",
+      "scenario": "«Nettora» brand, Q2:\n\n  revenue, ¥\n    2024-Q2   2,121,702\n    2026-Q2   1,079,055\n    change        −49%\n  outlets\n    2024-Q2         79\n    2026-Q2         33\n    change        −58%\n  revenue per outlet, ¥\n    2024-Q2     26,857\n    2026-Q2     32,699\n    change        +22%\n  average price, ¥\n    2024-Q2     199.43\n    2026-Q2     194.42\n    change         −3%\n\nCheck:\n33/79 × 32,699/26,857 = 0.51",
       "predictQuestion": "What happened to the brand?",
       "options": [
         {
@@ -1456,7 +1456,7 @@
       "title": "Who actually grew 22%",
       "brief": "A deck line reads: \"revenue per outlet grew 22% — the remaining outlets are selling better.\" Before publishing it, you decide to check the figure on a like-for-like basis: comparing the same 33 outlets against themselves two years ago.",
       "goal": "Separate real growth from the effect of losing weak outlets.",
-      "scenario": "«Nettora» brand, Q2,\n2024 vs. 2026:\n\n  all outlets\n    79 → 33 outlets\n    revenue per outlet\n    26,857 → 32,699 ₽ +22%\n\n  same 33 outlets that\n  remained in 2026:\n    revenue in 2024-Q2\n      983,740 ₽\n    revenue in 2026-Q2\n      1,079,055 ₽   +9.7%\n\n  average outlet revenue\n  in 2024-Q2:\n    those that stayed\n      29,810 ₽\n    those that left\n      24,738 ₽",
+      "scenario": "«Nettora» brand, Q2,\n2024 vs. 2026:\n\n  all outlets\n    79 → 33 outlets\n    revenue per outlet\n    26,857 → 32,699 ¥ +22%\n\n  same 33 outlets that\n  remained in 2026:\n    revenue in 2024-Q2\n      983,740 ¥\n    revenue in 2026-Q2\n      1,079,055 ¥   +9.7%\n\n  average outlet revenue\n  in 2024-Q2:\n    those that stayed\n      29,810 ¥\n    those that left\n      24,738 ¥",
       "predictQuestion": "How much of this 22% is genuine growth from the outlets that remained?",
       "options": [
         {
@@ -1469,7 +1469,7 @@
         },
         {
           "label": "There's no growth at all: the full 22% is explained by the loss of weak outlets",
-          "why": "It can't be fully explained that way: the comparable 33 outlets went from 983,740 ₽ to 1,079,055 ₽ — almost ten percent of real growth. The composition effect is large, but not the whole story."
+          "why": "It can't be fully explained that way: the comparable 33 outlets went from 983,740 ¥ to 1,079,055 ¥ — almost ten percent of real growth. The composition effect is large, but not the whole story."
         },
         {
           "label": "The question is invalid: with outlet count falling, \"revenue per outlet\" can't be compared across periods at all",
@@ -1480,7 +1480,7 @@
         "Compare the average revenue of the departed outlets against the average of the ones that stayed, back in 2024.",
         "What happens to a group's average when you remove the members below that average?"
       ],
-      "explain": "A group average changes for two reasons: its members changed, or its composition changed. The second is called the composition effect, and it can paint growth where there is none.\n\nHere the composition effect is bigger than the real growth. The departed outlets averaged 24,738 ₽, the ones that stayed averaged 29,810 ₽; their departure alone lifts the average by 11%. Genuine growth among the comparable outlets is 9.7%. Multiplied together they reproduce the observed 22%, and both parts need to be named separately, because they mean different things. The nine percent is credit for work with those outlets. The eleven is an arithmetic consequence of losing forty-six addresses, and there's nothing to be proud of in it.\n\nHence a technique worth applying whenever composition changes: like-for-like comparison on a matched base. Retail computes it as sales from stores open more than a year; subscription businesses compute it as revenue from a cohort of customers present the whole period; here it's outlets that sold the brand in both quarters. One rule: fix the composition, then compare.\n\nWhy this matters more than it looks. \"Revenue per outlet\" grows this quarter with every small outlet lost, meaning it rewards exactly what we consider a problem. A metric that improves from bad events eventually lands in someone's KPI and starts driving decisions — and then shrinking distribution starts to look like a gain in efficiency.\n\nA phrasing for the deck: \"like-for-like outlets grew 9.7%; the remaining 11% of the brand-wide average came from losing small outlets, and isn't growth.\" Longer than \"+22%\", but nobody makes a decision off it that they'll regret."
+      "explain": "A group average changes for two reasons: its members changed, or its composition changed. The second is called the composition effect, and it can paint growth where there is none.\n\nHere the composition effect is bigger than the real growth. The departed outlets averaged 24,738 ¥, the ones that stayed averaged 29,810 ¥; their departure alone lifts the average by 11%. Genuine growth among the comparable outlets is 9.7%. Multiplied together they reproduce the observed 22%, and both parts need to be named separately, because they mean different things. The nine percent is credit for work with those outlets. The eleven is an arithmetic consequence of losing forty-six addresses, and there's nothing to be proud of in it.\n\nHence a technique worth applying whenever composition changes: like-for-like comparison on a matched base. Retail computes it as sales from stores open more than a year; subscription businesses compute it as revenue from a cohort of customers present the whole period; here it's outlets that sold the brand in both quarters. One rule: fix the composition, then compare.\n\nWhy this matters more than it looks. \"Revenue per outlet\" grows this quarter with every small outlet lost, meaning it rewards exactly what we consider a problem. A metric that improves from bad events eventually lands in someone's KPI and starts driving decisions — and then shrinking distribution starts to look like a gain in efficiency.\n\nA phrasing for the deck: \"like-for-like outlets grew 9.7%; the remaining 11% of the brand-wide average came from losing small outlets, and isn't growth.\" Longer than \"+22%\", but nobody makes a decision off it that they'll regret."
     },
     {
       "id": "dom-045",
@@ -1549,7 +1549,7 @@
       "title": "Unstable on a schedule",
       "brief": "A buying planner brings an XYZ classification: SKUs with a coefficient of variation above 25% go into group Z, demand is flagged unpredictable, safety stock goes up. Before signing off, you look at the monthly series of two items from that group.",
       "goal": "Understand what the coefficient of variation is actually measuring on these series.",
-      "scenario": "Monthly revenue, thousand ₽:\n\n  Aqualis still 5L\n  (CV 28.5%)\n  Jul Aug Sep Oct Nov Dec\n  277 231 253 157 123 168\n  Jan Feb Mar Apr May Jun\n  165 131 156 154 182 285\n\n  Krosti Sour Cream & Onion\n  (CV 35.1%)\n  Jul Aug Sep Oct Nov Dec\n   89 113 131  92  85 112\n  Jan Feb Mar Apr May Jun\n   94  90 114  85  88 230\n                        ↑\n       \"yellow tag\" promo\n       from June 4",
+      "scenario": "Monthly revenue, thousand ¥:\n\n  Aqualis still 5L\n  (CV 28.5%)\n  Jul Aug Sep Oct Nov Dec\n  277 231 253 157 123 168\n  Jan Feb Mar Apr May Jun\n  165 131 156 154 182 285\n\n  Krosti Sour Cream & Onion\n  (CV 35.1%)\n  Jul Aug Sep Oct Nov Dec\n   89 113 131  92  85 112\n  Jan Feb Mar Apr May Jun\n   94  90 114  85  88 230\n                        ↑\n       \"yellow tag\" promo\n       from June 4",
       "predictQuestion": "What's wrong with this classification?",
       "options": [
         {
@@ -1640,25 +1640,25 @@
     {
       "id": "dom-050",
       "title": "Salesperson of the year",
-      "brief": "The head of sales pays bonuses on the absolute revenue of the outlets a rep serves. For 2025, rep Yulia Kovalev came first in the FMCG Central team and second in the company. The manager wants to unpack what she does and roll it out to everyone else.",
+      "brief": "The head of sales pays bonuses on the absolute revenue of the outlets a rep serves. For 2025, rep Sakura Tanaka came first in the FMCG Kanto team and second in the company. The manager wants to unpack what she does and roll it out to everyone else.",
       "goal": "Determine what this ranking actually measures.",
-      "scenario": "Reps ranked by revenue of the\noutlets they serve, 2025:\n\n  1  Anna Egorov          8 outlets\n     FMCG South       5 042 930 ₽\n  2  Yulia Kovalev         2 outlets\n     FMCG Central      4 616 915 ₽\n  3  Ekaterina Dyakova    7 outlets\n     FMCG Central      4 335 843 ₽\n\nSecond place's portfolio:\n\n  Domsklad (Taganrog\n  warehouse), e-com    4 591 844 ₽\n  Uyut Store #1057,\n  Khimki                  25 071 ₽\n\nAverage 2025 revenue per outlet\nby channel:\n\n  e-com                3 222 912 ₽\n  pharmacy               345 636 ₽\n  chain                  277 651 ₽\n  traditional retail      21 706 ₽",
+      "scenario": "Reps ranked by revenue of the\noutlets they serve, 2025:\n\n  1  Haruka Yamada          8 outlets\n     FMCG Kansai       5 042 930 ¥\n  2  Sakura Tanaka         2 outlets\n     FMCG Kanto      4 616 915 ¥\n  3  Miyu Hayashi    7 outlets\n     FMCG Kanto      4 335 843 ¥\n\nSecond place's portfolio:\n\n  Sokuhai (Kawaguchi\n  warehouse), e-com    4 591 844 ¥\n  Yasuragi Store #1057,\n  Yokohama                  25 071 ¥\n\nAverage 2025 revenue per outlet\nby channel:\n\n  e-com                3 222 912 ¥\n  pharmacy               345 636 ¥\n  chain                  277 651 ¥\n  traditional retail      21 706 ¥",
       "predictQuestion": "What does this ranking measure?",
       "options": [
         {
           "label": "The make-up of the territory, not the person's work: 99.5% of the result came from a single e-com warehouse, where the average outlet brings in 148 times more than in traditional retail",
-          "why": "The reps didn't land in this ranking at random: one had a federal marketplace's warehouse in the portfolio, another had eight ordinary stores. The gap between channels is larger than any gap in quality of work, so the ranking ranks territories."
+          "why": "The reps didn't land in this ranking at random: one had a nationwide marketplace's warehouse in the portfolio, another had eight ordinary stores. The gap between channels is larger than any gap in quality of work, so the ranking ranks territories."
         },
         {
           "label": "The work: this person hit record revenue off just two outlets — that's efficiency in its purest form",
-          "why": "Revenue per outlet here is set by the channel, not by anything the person did. The same warehouse in someone else's portfolio would produce roughly the same result — and that's a checkable claim, not a guess: the other seven e-com outlets average 3.2M ₽ each."
+          "why": "Revenue per outlet here is set by the channel, not by anything the person did. The same warehouse in someone else's portfolio would produce roughly the same result — and that's a checkable claim, not a guess: the other seven e-com outlets average 3.2M ¥ each."
         },
         {
           "label": "The ranking is right, it just needs normalizing by the number of outlets",
-          "why": "Dividing by outlet count doesn't fix it, it makes it worse: the same portfolio gives 2.3M ₽ per outlet against 630 thousand for first place. The problem isn't the number of outlets, it's that the channels aren't comparable — the comparison has to be made within a channel."
+          "why": "Dividing by outlet count doesn't fix it, it makes it worse: the same portfolio gives 2.3M ¥ per outlet against 630 thousand for first place. The problem isn't the number of outlets, it's that the channels aren't comparable — the comparison has to be made within a channel."
         },
         {
-          "label": "There's an error in the data: one outlet can't produce 4.6M ₽ when the whole company's revenue is 51.5M ₽",
+          "label": "There's an error in the data: one outlet can't produce 4.6M ¥ when the whole company's revenue is 51.5M ¥",
           "why": "It can, and it isn't an error. An e-com warehouse ships to a whole region, so in a report it looks like a single \"outlet\" with the turnover of a small chain. It should be set against another warehouse, not against a store."
         }
       ],
@@ -1666,7 +1666,7 @@
         "Look not at the total but at what it's made of: how much did each outlet in the portfolio contribute?",
         "Ask what would have happened if that warehouse had gone to a different rep."
       ],
-      "explain": "This is the selection trap: objects didn't land in the groups being compared at random, and the difference between the groups arose before the thing you're measuring. Here territories were handed out before the year began, and along with a territory a person got a channel — and channel fixes the order of magnitude of revenue harder than anything else does: 3.2M ₽ per e-com outlet against 21.7 thousand in traditional retail, a gap of a hundred and forty-eight times.\n\nWhat makes it treacherous is that the ranking isn't technically broken. The numbers are right, the formula is transparent, there's nothing to argue with. What's wrong is the step from number to conclusion: \"higher in the ranking\" turns into \"works better,\" though an unobserved assumption sits between them — that the territories are comparable. Say it out loud and the whole construction collapses.\n\nThe consequences of a KPI like this are worse than an unfair bonus. First, unpacking the leader's practice will come up empty: there's nothing to copy, the advantage isn't in technique. Second, the metric starts steering behavior — reps will compete for territory rather than for sales, and that's rational behavior under this rule. Third, genuinely strong people in weak channels will never come into view.\n\nWhat gets fixed is the comparison, not the formula. Compare like with like: within a channel, and better still against itself over time (growth of the portfolio's outlets versus last year), because a person's territory doesn't change over the year while the result does. Good practice is to look at an indicator the person actually influences: plan fulfillment on their own territory, brand presence, the number of outlets that started stocking a new product.\n\nThe general reflex: when you see a ranking of people, units or regions, ask what set them apart before the measurement began. If it set them apart strongly, the ranking measures that difference rather than merit, and no amount of normalizing cures it."
+      "explain": "This is the selection trap: objects didn't land in the groups being compared at random, and the difference between the groups arose before the thing you're measuring. Here territories were handed out before the year began, and along with a territory a person got a channel — and channel fixes the order of magnitude of revenue harder than anything else does: 3.2M ¥ per e-com outlet against 21.7 thousand in traditional retail, a gap of a hundred and forty-eight times.\n\nWhat makes it treacherous is that the ranking isn't technically broken. The numbers are right, the formula is transparent, there's nothing to argue with. What's wrong is the step from number to conclusion: \"higher in the ranking\" turns into \"works better,\" though an unobserved assumption sits between them — that the territories are comparable. Say it out loud and the whole construction collapses.\n\nThe consequences of a KPI like this are worse than an unfair bonus. First, unpacking the leader's practice will come up empty: there's nothing to copy, the advantage isn't in technique. Second, the metric starts steering behavior — reps will compete for territory rather than for sales, and that's rational behavior under this rule. Third, genuinely strong people in weak channels will never come into view.\n\nWhat gets fixed is the comparison, not the formula. Compare like with like: within a channel, and better still against itself over time (growth of the portfolio's outlets versus last year), because a person's territory doesn't change over the year while the result does. Good practice is to look at an indicator the person actually influences: plan fulfillment on their own territory, brand presence, the number of outlets that started stocking a new product.\n\nThe general reflex: when you see a ranking of people, units or regions, ask what set them apart before the measurement began. If it set them apart strongly, the ranking measures that difference rather than merit, and no amount of normalizing cures it."
     },
     {
       "id": "dom-051",
@@ -1704,7 +1704,7 @@
       "title": "The first paragraph of the email",
       "brief": "The «Nettora» decline analysis is done: revenue fell 49% because the brand went off the shelf in 46 outlets out of 79, and where it stayed it sells 22% more than before. The email goes to the commercial director, who will read the first two lines on his phone between meetings.",
       "goal": "Choose the first paragraph that makes a decision possible.",
-      "scenario": "Four versions of the opening paragraph:\n\nA  Sending over the analysis of the\n   «Nettora» decline for Q2. Attached\n   is the extract by outlet, channel\n   and region, plus the calculation\n   methodology. Happy to discuss.\n\nB  «Nettora» revenue in Q2 2026 was\n   1 079 055 ₽ against 2 121 702 ₽\n   in Q2 2024. Outlets: 33 against 79.\n   Revenue per outlet: 32 699 ₽\n   against 26 857 ₽.\n\nC  «Nettora» lost half its revenue\n   purely by going off the shelf:\n   we are no longer stocked in 46 of\n   79 outlets, and where we remain we\n   sell 22% more. I suggest starting\n   with the five largest lost outlets —\n   they bring weighted distribution\n   back to 80%, whereas the other\n   forty-three together add as much.\n   I need your decision on the budget\n   for the negotiations.\n\nD  The «Nettora» situation is alarming.\n   I believe we urgently need to rethink\n   our approach to the brand as a whole —\n   from packaging to pricing — or we\n   risk losing the category.",
+      "scenario": "Four versions of the opening paragraph:\n\nA  Sending over the analysis of the\n   «Nettora» decline for Q2. Attached\n   is the extract by outlet, channel\n   and region, plus the calculation\n   methodology. Happy to discuss.\n\nB  «Nettora» revenue in Q2 2026 was\n   1 079 055 ¥ against 2 121 702 ¥\n   in Q2 2024. Outlets: 33 against 79.\n   Revenue per outlet: 32 699 ¥\n   against 26 857 ¥.\n\nC  «Nettora» lost half its revenue\n   purely by going off the shelf:\n   we are no longer stocked in 46 of\n   79 outlets, and where we remain we\n   sell 22% more. I suggest starting\n   with the five largest lost outlets —\n   they bring weighted distribution\n   back to 80%, whereas the other\n   forty-three together add as much.\n   I need your decision on the budget\n   for the negotiations.\n\nD  The «Nettora» situation is alarming.\n   I believe we urgently need to rethink\n   our approach to the brand as a whole —\n   from packaging to pricing — or we\n   risk losing the category.",
       "predictQuestion": "Which paragraph is written correctly?",
       "options": [
         {
@@ -1890,7 +1890,7 @@
       "title": "Three revenues at one meeting",
       "brief": "At the annual committee, three departments state 2025 revenue, and all three numbers differ. Each cites its own extract and is certain the others got it wrong. The meeting turns into an argument about numbers instead of a discussion of the plan.",
       "goal": "Determine what is actually broken here, and at what level it gets fixed.",
-      "scenario": "What the three departments said:\n\n  sales           51 533 887 ₽\n    outlet revenue at retail\n    (sell-out)\n  commercial      42 713 947 ₽\n    shipments to distributors\n    before discounts\n  finance         39 104 808 ₽\n    shipments after discounts\n    (discounts 3 609 138 ₽, i.e. 8.4%)\n\nAll three extracts were made correctly\nand are reproducible.",
+      "scenario": "What the three departments said:\n\n  sales           51 533 887 ¥\n    outlet revenue at retail\n    (sell-out)\n  commercial      42 713 947 ¥\n    shipments to distributors\n    before discounts\n  finance         39 104 808 ¥\n    shipments after discounts\n    (discounts 3 609 138 ¥, i.e. 8.4%)\n\nAll three extracts were made correctly\nand are reproducible.",
       "predictQuestion": "What's broken here?",
       "options": [
         {
@@ -1919,9 +1919,9 @@
     {
       "id": "dom-059",
       "title": "The reference table rewrote last year",
-      "brief": "In June the outlet #1042 moved from the «Prima» chain to «Yarmarka». The customer reference table was dutifully updated — the value in the chain-name column was replaced. In July a manager opens the annual report by chain for last year and can't understand why the numbers differ from the ones seen in January.",
+      "brief": "In June the outlet #1042 moved from the «Prima» chain to «Ichiba». The customer reference table was dutifully updated — the value in the chain-name column was replaced. In July a manager opens the annual report by chain for last year and can't understand why the numbers differ from the ones seen in January.",
       "goal": "Understand what happened to history, and how a reference table that doesn't do this is built.",
-      "scenario": "What changed in the report\nfor last year:\n\n  in January it was\n    «Prima»          8 400 000 ₽\n    «Yarmarka»     12 100 000 ₽\n  in July it became\n    «Prima»          7 900 000 ₽\n    «Yarmarka»     12 600 000 ₽\n\nLast year's sales did not change.\nOne attribute in the customer reference\ntable changed — and the outlet's sales\nfor the whole of last year moved to the\nnew chain retroactively.",
+      "scenario": "What changed in the report\nfor last year:\n\n  in January it was\n    «Prima»          8 400 000 ¥\n    «Ichiba»     12 100 000 ¥\n  in July it became\n    «Prima»          7 900 000 ¥\n    «Ichiba»     12 600 000 ¥\n\nLast year's sales did not change.\nOne attribute in the customer reference\ntable changed — and the outlet's sales\nfor the whole of last year moved to the\nnew chain retroactively.",
       "predictQuestion": "What's the defect here?",
       "options": [
         {
@@ -1945,7 +1945,7 @@
         "Sales didn't change — so what changed is the thing they're joined to. What exactly?",
         "Ask which question the report is asking: \"how much did this chain sell back then\" or \"how much do the outlets that are in this chain today sell.\""
       ],
-      "explain": "This is the classic slowly-changing-dimension trap. The facts are immutable — last year's sales are what they always were. What changes is the reference table they're joined to, and with it all the history computed through that table.\n\nIt's important to see that both answers are legitimately needed. \"How much did the «Prima» chain sell last year\" is a question about history, and the outlet should count under «Prima», because that's where it was then. \"How much do the outlets that belong to «Yarmarka» today sell\" is a question about today's portfolio, and here it's right to assign the whole history to the new chain: that's how you assess what was acquired. The defect isn't that the second option was chosen, it's that nobody made a choice — the report silently answered the second question when the first was asked.\n\nThe technical fix: the reference row gains validity dates and a current-version flag, and the old version isn't overwritten but closed off. The join between fact and dimension goes not by key alone but by date too: a March sale looks up the version of the outlet that was in force in March. That's what's called a historical dimension, and it costs more — more versions, a more complex join — so historization is switched on where an attribute really does change and does affect reports: chain, channel, region, assigned rep, product category.\n\nA separate takeaway for an analyst who isn't building the warehouse: if history has changed on its own, look first for an edit to a reference table, not for an error in the query. The signature is distinctive — the company total still reconciles while the breakdowns have drifted apart.\n\nAnd a practical habit, cheap and always useful: state in the report the date the reference data were taken as of. A line reading \"chain structure as of 01.07.2026\" removes half the questions and explains at once why the January version differs."
+      "explain": "This is the classic slowly-changing-dimension trap. The facts are immutable — last year's sales are what they always were. What changes is the reference table they're joined to, and with it all the history computed through that table.\n\nIt's important to see that both answers are legitimately needed. \"How much did the «Prima» chain sell last year\" is a question about history, and the outlet should count under «Prima», because that's where it was then. \"How much do the outlets that belong to «Ichiba» today sell\" is a question about today's portfolio, and here it's right to assign the whole history to the new chain: that's how you assess what was acquired. The defect isn't that the second option was chosen, it's that nobody made a choice — the report silently answered the second question when the first was asked.\n\nThe technical fix: the reference row gains validity dates and a current-version flag, and the old version isn't overwritten but closed off. The join between fact and dimension goes not by key alone but by date too: a March sale looks up the version of the outlet that was in force in March. That's what's called a historical dimension, and it costs more — more versions, a more complex join — so historization is switched on where an attribute really does change and does affect reports: chain, channel, region, assigned rep, product category.\n\nA separate takeaway for an analyst who isn't building the warehouse: if history has changed on its own, look first for an edit to a reference table, not for an error in the query. The signature is distinctive — the company total still reconciles while the breakdowns have drifted apart.\n\nAnd a practical habit, cheap and always useful: state in the report the date the reference data were taken as of. A line reading \"chain structure as of 01.07.2026\" removes half the questions and explains at once why the January version differs."
     },
     {
       "id": "dom-060",
@@ -2045,7 +2045,7 @@
       "title": "A metric someone else's report rests on",
       "brief": "You have been with the company three months. The weekly commercial report carries a metric called \"average revenue per outlet\": the team reports growth on it, and part of the quarterly bonus is tied to it. For «Nettora» it shows +22% — while the brand's revenue halved: the outlets that dropped out were smaller than the ones that stayed, and their departure lifts the average by itself.",
       "goal": "Choose how to challenge a metric that is long established and not yours.",
-      "scenario": "Metric: average revenue per\noutlet. For «Nettora», +22%.\n\nWhat is behind it:\n\n  outlets that dropped out\n  averaged 24 738 ₽\n  those that stayed — 29 810 ₽\n  like-for-like outlets grew\n  by 9.7%\n  the rest is the mix effect\n\nThe setup:\n\n  the metric has been in the\n  report for three years\n  a bonus is tied to it\n  its owner heads commercial\n  analytics\n  you have been here three\n  months",
+      "scenario": "Metric: average revenue per\noutlet. For «Nettora», +22%.\n\nWhat is behind it:\n\n  outlets that dropped out\n  averaged 24 738 ¥\n  those that stayed — 29 810 ¥\n  like-for-like outlets grew\n  by 9.7%\n  the rest is the mix effect\n\nThe setup:\n\n  the metric has been in the\n  report for three years\n  a bonus is tied to it\n  its owner heads commercial\n  analytics\n  you have been here three\n  months",
       "predictQuestion": "How do you challenge this metric?",
       "options": [
         {
@@ -2093,7 +2093,7 @@
         },
         {
           "label": "Take the brand's average revenue per outlet and multiply by 46: simple, and it needs no caveats",
-          "why": "That is precisely the error the analysis was done to avoid: the outlets that dropped out are smaller than the ones that stayed (24 738 ₽ against 29 810 ₽), so the brand average will overstate the loss. A simple calculation is no reason to compute off the wrong base."
+          "why": "That is precisely the error the analysis was done to avoid: the outlets that dropped out are smaller than the ones that stayed (24 738 ¥ against 29 810 ¥), so the brand average will overstate the loss. A simple calculation is no reason to compute off the wrong base."
         }
       ],
       "hints": [

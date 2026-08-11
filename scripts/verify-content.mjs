@@ -754,7 +754,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   } else console.log(`  ok   sql-041: соединение по бренду раздувает выборку ${before} → ${after} (×10, как в разборе)`);
 }
 
-// sql-048: разбор говорит, что из трёх товаров по 98 ₽ на страницу LIMIT 3 OFFSET 33
+// sql-048: разбор говорит, что из трёх товаров по 98 ¥ на страницу LIMIT 3 OFFSET 33
 // попадают два, а третий остаётся на предыдущей. Держится на местах 33–35 в рейтинге.
 {
   const r = runSql(`
@@ -763,8 +763,8 @@ await checkLessons(readPack('python-core'), 'python-lessons');
              WHERE list_price = 98) AS on_page`);
   const [at98, onPage] = r.rows[0];
   if (at98 !== 3 || onPage !== 2) {
-    fail('sql-048', `в разборе три товара по 98 ₽ и два из них на странице, в базе ${at98} и ${onPage}`);
-  } else console.log('  ok   sql-048: три товара по 98 ₽, на странице OFFSET 33 — два из них');
+    fail('sql-048', `в разборе три товара по 98 ¥ и два из них на странице, в базе ${at98} и ${onPage}`);
+  } else console.log('  ok   sql-048: три товара по 98 ¥, на странице OFFSET 33 — два из них');
 }
 
 // sql-051: разбор объясняет тривиальный результат для Pharma тем, что канал сбыта
@@ -828,18 +828,18 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT f.week_start, SUM(f.units) AS units
       FROM fact_sellout f
       JOIN dim_customer c ON c.customer_id = f.customer_id
-      WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+      WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')
         AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
         AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'
       GROUP BY f.week_start
     )
     SELECT
       (SELECT units_on_hand FROM fact_stock
-         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')
            AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
            AND month_start = '2025-12-01') AS on_hand,
       ROUND((SELECT units_on_hand FROM fact_stock
-         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Volga-Trade LLC')
+         WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')
            AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')
            AND month_start = '2025-12-01') * 1.0 / AVG(units), 1) AS cover
     FROM weekly`);
@@ -904,7 +904,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   if (Math.abs(year.rows[0][0] - 51_533_887) > 51_533_887 * 0.005) {
     fail('domain', `годовая выручка 2025 разошлась с текстом: в базе ${year.rows[0][0]}, в тексте 51 533 887`);
   } else {
-    console.log(`\n  ok   domain: годовая выручка 2025 — ${year.rows[0][0]} ₽ (цифры в тексте совпадают)`);
+    console.log(`\n  ok   domain: годовая выручка 2025 — ${year.rows[0][0]} ¥ (цифры в тексте совпадают)`);
   }
 
   // dom-010 показывает первые три месяца и декабрь конкретными числами.
@@ -946,12 +946,12 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     JOIN dim_region r ON r.region_id = c.region_id
     WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'
     GROUP BY 1 ORDER BY rev DESC LIMIT 3`);
-  const quotedRegions = [['Rostov Region', 622299], ['Krasnodar Krai', 527583], ['Samara Region', 407593]];
+  const quotedRegions = [['Saitama', 622299], ['Aichi', 527583], ['Miyagi', 407593]];
   regions.rows.forEach((row, i) => {
     const q = quotedRegions[i];
     if (!q) return;
     if (row[0] !== q[0]) fail('dom-011', `регион на месте ${i + 1}: в базе «${row[0]}», в тексте «${q[0]}»`);
-    // Ростовская область в тексте задания намеренно искажена (в этом суть задания),
+    // Первый регион в тексте задания намеренно искажён (в этом суть задания),
     // поэтому сверяем только две строки-соседа, которые показаны как нормальные.
     else if (i > 0 && Math.abs(row[1] - q[1]) > q[1] * 0.005) {
       fail('dom-011', `${row[0]}: в базе ${row[1]}, в тексте ${q[1]}`);
@@ -981,7 +981,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
     ORDER BY ratio DESC`);
   const top = ratios.rows[0];
   const rest = ratios.rows.slice(1).map((r) => r[3]);
-  if (top[0] !== 'Volga-Trade LLC' || !near(top[3], 2.44, 0.01) || !near(top[1], 28203) || !near(top[2], 11574)) {
+  if (top[0] !== 'Setouchi Trading Co.' || !near(top[3], 2.44, 0.01) || !near(top[1], 28203) || !near(top[2], 11574)) {
     fail('dom-019', `лидер по затовариванию разошёлся с текстом: в базе ${top.join(' / ')}, в тексте Volga-Trade / 28203 / 11574 / 2.44`);
   } else if (Math.max(...rest) > 1.06 || Math.min(...rest) < 1.03) {
     fail('dom-019', `остальные дистрибьюторы вышли из коридора 1.03–1.06 (${Math.min(...rest)}–${Math.max(...rest)}) — контраст в задании пропал`);
@@ -1552,17 +1552,17 @@ await checkLessons(readPack('python-core'), 'python-lessons');
            ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue ELSE 0 END)) AS nettora,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
-              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Moscow') AS msk_total,
+              JOIN dim_region r2 ON r2.region_id = c2.region_id WHERE r2.region_name = 'Tokyo') AS msk_total,
            (SELECT ROUND(SUM(f2.revenue)) FROM fact_sellout f2
               JOIN dim_product p2 ON p2.product_id = f2.product_id
               JOIN dim_customer c2 ON c2.customer_id = f2.customer_id
               JOIN dim_region r2 ON r2.region_id = c2.region_id
-              WHERE r2.region_name = 'Moscow' AND p2.brand = 'Nettora') AS msk_nettora
+              WHERE r2.region_name = 'Tokyo' AND p2.brand = 'Nettora') AS msk_nettora
     FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id`);
   const [total, nettora, mskTotal, mskNettora] = r.rows[0];
   const share = Math.round((nettora / total) * 1000) / 10;
   const mskShare = Math.round((mskNettora / mskTotal) * 1000) / 10;
-  if (nettora !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Nettora в тексте 12.7% (16 165 815 ₽), в базе ${share}% (${nettora} ₽)`);
+  if (nettora !== 16165815 || share !== 12.7) fail('mdl-016/020', `доля Nettora в тексте 12.7% (16 165 815 ¥), в базе ${share}% (${nettora} ¥)`);
   if (mskNettora !== 1691942 || mskTotal !== 8876489 || mskShare !== 19.1) {
     fail('mdl-016/020', `доля по Москве в тексте 19.1% (1 691 942 из 8 876 489), в базе ${mskShare}% (${mskNettora} из ${mskTotal})`);
   } else console.log(`  ok   mdl-016/020: доля Nettora ${share}% всего, ${mskShare}% по Москве`);
@@ -1583,15 +1583,15 @@ await checkLessons(readPack('python-core'), 'python-lessons');
          JOIN dim_product p ON p.product_id = f.product_id
          JOIN dim_customer c ON c.customer_id = f.customer_id
          JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Moscow' AND f.week_start LIKE '2025%' AND p.brand = 'Nettora') AS with_brand,
+         WHERE rg.region_name = 'Tokyo' AND f.week_start LIKE '2025%' AND p.brand = 'Nettora') AS with_brand,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f
          JOIN dim_customer c ON c.customer_id = f.customer_id
          JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Moscow' AND f.week_start LIKE '2025%') AS all_brands`);
+         WHERE rg.region_name = 'Tokyo' AND f.week_start LIKE '2025%') AS all_brands`);
   const [withBrand, allBrands] = r.rows[0];
   if (withBrand !== 819771 || allBrands !== 3718723) {
-    fail('mdl-019', `в задании 819 771 ₽ со срезом и 3 718 723 ₽ без него, в базе ${withBrand} и ${allBrands}`);
-  } else console.log(`  ok   mdl-019: Москва×2025×Nettora ${withBrand} ₽, без среза по бренду ${allBrands} ₽`);
+    fail('mdl-019', `в задании 819 771 ¥ со срезом и 3 718 723 ¥ без него, в базе ${withBrand} и ${allBrands}`);
+  } else console.log(`  ok   mdl-019: Москва×2025×Nettora ${withBrand} ¥, без среза по бренду ${allBrands} ¥`);
 }
 
 // mdl-023: три первые строки fact_sellout — на их revenue/units держится
@@ -1655,8 +1655,8 @@ await checkLessons(readPack('python-core'), 'python-lessons');
          WHERE f.month_start IN (SELECT DISTINCT month_start FROM dim_date WHERE year = 2025 AND quarter = 1)) AS sellin_q1`);
   const [selloutQ1, sellinQ1] = q1.rows[0];
   if (selloutQ1 !== 13512252 || sellinQ1 !== 9186879) {
-    fail('mdl-030', `в задании продажи Q1 13 512 252 ₽, отгрузки 9 186 879 ₽; в базе ${selloutQ1} и ${sellinQ1}`);
-  } else console.log(`  ok   mdl-030: Q1 2025 через общий календарь — продажи ${selloutQ1} ₽, отгрузки ${sellinQ1} ₽`);
+    fail('mdl-030', `в задании продажи Q1 13 512 252 ¥, отгрузки 9 186 879 ¥; в базе ${selloutQ1} и ${sellinQ1}`);
+  } else console.log(`  ok   mdl-030: Q1 2025 через общий календарь — продажи ${selloutQ1} ¥, отгрузки ${sellinQ1} ¥`);
 }
 
 // --- model-core, tier 3-4: роль календаря, мост, CALCULATE, time intelligence,
@@ -1677,7 +1677,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   const [crossing, total, byOrder, byShip, yearOrder, yearShip] = r.rows[0];
   if (crossing !== 1979 || total !== 15362 || byOrder !== 3303414 || byShip !== 3570458) {
     fail('mdl-031', `в задании 1979 из 15 362 и март 3 303 414 / 3 570 458; в базе ${crossing} из ${total} и ${byOrder} / ${byShip}`);
-  } else console.log(`  ok   mdl-031: март по заказу ${byOrder} ₽, по отгрузке ${byShip} ₽ (${crossing} строк через границу)`);
+  } else console.log(`  ok   mdl-031: март по заказу ${byOrder} ¥, по отгрузке ${byShip} ¥ (${crossing} строк через границу)`);
   if (yearOrder !== 39104808 || yearShip !== 39023501) {
     fail('mdl-031', `в разборе год 39 104 808 / 39 023 501, в базе ${yearOrder} / ${yearShip}`);
   }
@@ -1715,19 +1715,19 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Nettora') AS nettora,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
          JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region rg ON rg.region_id = c.region_id
-         WHERE rg.region_name = 'Moscow' AND p.brand = 'Aqualis') AS klyuch_msk,
+         WHERE rg.region_name = 'Tokyo' AND p.brand = 'Aqualis') AS klyuch_msk,
       (SELECT ROUND(SUM(f.revenue)) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Fruvia') AS frutta,
       (SELECT ROUND(SUM(revenue)) FROM fact_sellout) AS total`);
   const [klyuch, nettora, klyuchMsk, frutta, total] = r.rows[0];
   if (klyuch !== 18841733 || klyuchMsk !== 1323959) {
-    fail('mdl-037/038', `в заданиях «Aqualis» 18 841 733 ₽ и 1 323 959 ₽ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
-  } else console.log(`  ok   mdl-037/038: «Aqualis» ${klyuch} ₽ всего, ${klyuchMsk} ₽ в Москве`);
+    fail('mdl-037/038', `в заданиях «Aqualis» 18 841 733 ¥ и 1 323 959 ¥ по Москве, в базе ${klyuch} и ${klyuchMsk}`);
+  } else console.log(`  ok   mdl-037/038: «Aqualis» ${klyuch} ¥ всего, ${klyuchMsk} ¥ в Москве`);
   if (klyuch + nettora !== 35007548) fail('mdl-037', `в разборе варианта сумма двух брендов 35 007 548, в базе ${klyuch + nettora}`);
   // mdl-039: доля «Fruvia» в разборе названа как 20.1%.
   const share = Math.round((frutta / total) * 1000) / 10;
   if (frutta !== 25465980 || share !== 20.1) {
-    fail('mdl-039', `в разборе «Fruvia» 25 465 980 ₽ и доля 20.1%, в базе ${frutta} и ${share}%`);
-  } else console.log(`  ok   mdl-039/040: «Fruvia» ${frutta} ₽ — доля ${share}% от ${total} ₽`);
+    fail('mdl-039', `в разборе «Fruvia» 25 465 980 ¥ и доля 20.1%, в базе ${frutta} и ${share}%`);
+  } else console.log(`  ok   mdl-039/040: «Fruvia» ${frutta} ¥ — доля ${share}% от ${total} ¥`);
 }
 
 // mdl-043, mdl-044: YTD к марту 2025 и сравнение с мартом 2024.
@@ -1767,7 +1767,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
 {
   const spellings = runSql(`
     SELECT COUNT(DISTINCT customer_name) FROM staging_raw_sellout
-    WHERE REPLACE(TRIM(customer_name), 'Iarmarka', 'Yarmarka') = 'Yarmarka #1026'`);
+    WHERE REPLACE(TRIM(customer_name), 'Itiba', 'Ichiba') = 'Ichiba #1026'`);
   const formats = runSql(`
     SELECT COUNT(*) FROM (SELECT DISTINCT
       CASE WHEN sale_date LIKE '__.__.____' THEN 'dot'
@@ -1888,7 +1888,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT r.rep_name, rr.outlets, ROUND(rr.rev) AS rev
       FROM rep_rev rr JOIN dim_rep r ON r.rep_id = rr.rep_id
       WHERE r.role = 'rep' ORDER BY rr.rev DESC LIMIT 3`);
-    const quotedTop = [['Anna Egorov', 8, 5042930], ['Yulia Kovalev', 2, 4616915], ['Ekaterina Dyakova', 7, 4335843]];
+    const quotedTop = [['Haruka Yamada', 8, 5042930], ['Sakura Tanaka', 2, 4616915], ['Miyu Hayashi', 7, 4335843]];
     quotedTop.forEach((q, i) => {
       const row = reps.rows[i];
       if (!row || row[0] !== q[0] || row[1] !== q[1] || !near(row[2], q[2])) {
@@ -1899,7 +1899,7 @@ await checkLessons(readPack('python-core'), 'python-lessons');
       SELECT c.customer_name, ROUND(SUM(f.revenue)) AS rev
       FROM dim_customer c JOIN fact_sellout f ON f.customer_id = c.customer_id
       JOIN dim_rep r ON r.rep_id = c.rep_id
-      WHERE r.rep_name = 'Yulia Kovalev' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
+      WHERE r.rep_name = 'Sakura Tanaka' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'
       GROUP BY c.customer_id ORDER BY rev DESC`);
     if (portfolio.rows.length !== 2 || !near(portfolio.rows[0][1], 4591844) || !near(portfolio.rows[1][1], 25071)) {
       fail('dom-050', `портфель в базе ${JSON.stringify(portfolio.rows)}, в тексте 4591844 и 25071`);
@@ -2114,13 +2114,13 @@ result = f"{staging_raw_sellout['sku_code'].nunique()}/{staging_raw_sellout['sku
   /*
    * py-033 держится на разрыве между двумя числами: строковая нормализация
    * даёт 52, а реальных точек 45. Разрыв создают семь точек сети, записанных
-   * в двух транслитерациях, — его и проверяем отдельно. Совпади эти числа,
+   * в двух системах романизации, — его и проверяем отдельно. Совпади эти числа,
    * задание начнёт учить обратному тому, ради чего написано: что регистр
    * и пробелы — это ещё не нормализация сущности.
    */
   await pyExpect('py-033', `
 s = staging_raw_sellout['customer_name']
-canon = s.str.strip().str.upper().str.replace('IARMARKA', 'YARMARKA', regex=False)
+canon = s.str.strip().str.upper().str.replace('ITIBA', 'ICHIBA', regex=False)
 result = f"{s.nunique()}/{s.str.strip().str.upper().nunique()}/{canon.nunique()}"
 `, '104/52/45', 'нормализация формы даёт 52 при 45 настоящих точках');
 

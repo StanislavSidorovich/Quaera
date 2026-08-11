@@ -119,12 +119,17 @@ check('Промо снижает цену', pro.avg_price < base.avg_price, `${b
 const dup = rows(`SELECT COUNT(*) - COUNT(DISTINCT sale_date||'|'||customer_name||'|'||sku_code||'|'||COALESCE(units,'~')) dups FROM staging_raw_sellout`)[0].dups;
 const nulls = rows(`SELECT SUM(units IS NULL) u, SUM(revenue IS NULL) r FROM staging_raw_sellout`)[0];
 /*
- * Два написания одной сети. Сравнение идёт по хвосту имени («armarka»),
- * потому что различаются как раз первые буквы: транслитерация я → ya или ia
- * (Yarmarka против Iarmarka). Проверка на общее начало имени, стоявшая здесь
- * при русской «ё», на такой паре не сработала бы вовсе.
+ * Два написания одной сети: Ichiba (Хепбёрн) против Itiba (кунрэй-сики).
+ * Отбор идёт явным перечислением обоих вариантов, а не общей подстрокой:
+ * общая часть у них «iba», а она встречается ещё и в именах e-com складов
+ * («Marketo (warehouse Chiba)») — то есть проверка ловила бы совсем не ту
+ * пару и осталась бы зелёной, даже исчезни ловушка. Третий подряд повод
+ * трогать это место: урок уже переезжал с русской «ё» на пару ya/ia.
  */
-const spellings = rows(`SELECT COUNT(DISTINCT substr(TRIM(customer_name),1,8)) v FROM staging_raw_sellout WHERE TRIM(customer_name) LIKE '%armarka%'`)[0].v;
+const spellings = rows(
+  `SELECT COUNT(DISTINCT substr(TRIM(customer_name), 1, 6)) v FROM staging_raw_sellout
+   WHERE TRIM(customer_name) LIKE 'Ichiba%' OR TRIM(customer_name) LIKE 'Itiba%'`
+)[0].v;
 const negatives = rows(`SELECT COUNT(*) n FROM staging_raw_sellout WHERE units LIKE '-%'`)[0].n;
 const formats = rows(`SELECT COUNT(DISTINCT CASE WHEN sale_date LIKE '__.__.____' THEN 'dot' WHEN sale_date LIKE '__/__/____' THEN 'slash' WHEN length(sale_date)=10 THEN 'iso' ELSE 'short' END) f FROM staging_raw_sellout`)[0].f;
 check('Грязный слой: есть дубли', dup > 30, `${dup}`);
