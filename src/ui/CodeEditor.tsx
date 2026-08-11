@@ -57,6 +57,7 @@ interface Props {
 }
 
 const KEYBOARD_STORAGE_KEY = 'querium-keyboard';
+const TOKENS_STORAGE_KEY = 'querium-tokens';
 
 /**
  * Экранная клавиатура открывается по касанию в textarea всегда, даже когда
@@ -75,10 +76,35 @@ function initialKeyboardOn(): boolean {
   }
 }
 
+/**
+ * Показывать ли панель токенов. Читается **только на десктопе** — правило,
+ * которое прячет панель, живёт в `@media (min-width: 1024px)`, поэтому
+ * на телефоне состояние ни на что не влияет и панель остаётся на месте
+ * при любом значении.
+ *
+ * Разделение по ширине сделано CSS, а не условием в JS, — по той же причине,
+ * что и у боковой навигации: иначе пришлось бы слушать resize и решать
+ * за браузер то, что он и так знает, а на границе брейкпоинта панель бы
+ * размонтировалась вместе с прокруткой.
+ *
+ * По умолчанию скрыта: на десктопе набирают с настоящей клавиатуры, и три
+ * ряда чипов (символы, ключевые слова, до тридцати имён колонок) отодвигают
+ * кнопку «Выполнить» на пол-экрана вниз, ничего не давая взамен. Кому нужны
+ * имена колонок — включает один раз, выбор помнится между заданиями.
+ */
+function initialTokensOn(): boolean {
+  try {
+    return localStorage.getItem(TOKENS_STORAGE_KEY) === 'on';
+  } catch {
+    return false;
+  }
+}
+
 export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder }: Props) {
   const { t } = useI18n();
   const ref = useRef<HTMLTextAreaElement>(null);
   const [keyboardOn, setKeyboardOn] = useState(initialKeyboardOn);
+  const [tokensOn, setTokensOn] = useState(initialTokensOn);
   const isSql = track === 'sql';
 
   const symbols = isSql ? SQL_SYMBOLS : PYTHON_SYMBOLS;
@@ -140,17 +166,43 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
     else el.blur();
   };
 
+  const toggleTokens = () => {
+    const next = !tokensOn;
+    setTokensOn(next);
+    try {
+      localStorage.setItem(TOKENS_STORAGE_KEY, next ? 'on' : 'off');
+    } catch {
+      // localStorage недоступен — просто не запоминаем выбор между заданиями
+    }
+  };
+
   return (
     <div>
-      <button
-        type="button"
-        className="pill"
-        style={{ marginBottom: 8 }}
-        aria-pressed={keyboardOn}
-        onClick={toggleKeyboard}
-      >
-        ⌨ {keyboardOn ? t.editor.keyboardHide : t.editor.keyboardShow}
-      </button>
+      {/*
+       * Два тумблера, и каждый виден там, где ему есть что переключать:
+       * клавиатурный — на узком экране (см. .keyboard-toggle в styles.css:
+       * на десктопе без сенсорного ввода inputMode="none" не значит ничего),
+       * токенный — на широком, где панель как раз и мешает. Оба в одном ряду,
+       * а не в разных местах: это один вопрос «чем я тут набираю».
+       */}
+      <div className="editor-tools">
+        <button
+          type="button"
+          className="pill keyboard-toggle"
+          aria-pressed={keyboardOn}
+          onClick={toggleKeyboard}
+        >
+          ⌨ {keyboardOn ? t.editor.keyboardHide : t.editor.keyboardShow}
+        </button>
+        <button
+          type="button"
+          className="pill tokens-toggle"
+          aria-pressed={tokensOn}
+          onClick={toggleTokens}
+        >
+          {tokensOn ? t.editor.tokensHide : t.editor.tokensShow}
+        </button>
+      </div>
       <textarea
         ref={ref}
         className="sql"
@@ -168,29 +220,37 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         autoComplete="off"
         data-gramm="false"
       />
-      <div className="accessory" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
-        {symbols.map((s) => (
-          <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <div className="accessory" role="toolbar" aria-label={t.editor.keywordsAria(track)}>
-        {keywords.map((k) => (
-          <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
-            {k}
-          </button>
-        ))}
-      </div>
-      {chips.length > 0 && (
-        <div className="accessory" role="toolbar" aria-label={t.editor.chipsAria}>
-          {chips.map((s) => (
+      {/*
+       * Обёртка нужна затем, чтобы тумблер прятал все три ряда одним
+       * правилом. Прячется display:none, а не условием в JSX: панель тогда
+       * не пересобирается при каждом переключении, и на узком экране,
+       * где правило не действует, дерево вообще то же самое, что было.
+       */}
+      <div className="accessory-stack" data-open={tokensOn}>
+        <div className="accessory" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
+          {symbols.map((s) => (
             <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
               {s}
             </button>
           ))}
         </div>
-      )}
+        <div className="accessory" role="toolbar" aria-label={t.editor.keywordsAria(track)}>
+          {keywords.map((k) => (
+            <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
+              {k}
+            </button>
+          ))}
+        </div>
+        {chips.length > 0 && (
+          <div className="accessory" role="toolbar" aria-label={t.editor.chipsAria}>
+            {chips.map((s) => (
+              <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

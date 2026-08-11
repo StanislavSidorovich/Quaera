@@ -495,6 +495,9 @@ export const en = {
     chipsAria: 'Tables and columns',
     keyboardShow: 'Show keyboard',
     keyboardHide: 'Hide keyboard',
+    /** См. комментарий в ru.ts: видны только на десктопе. */
+    tokensShow: 'Show insert panel',
+    tokensHide: 'Hide insert panel',
   },
   loadError: {
     title: 'Failed to load data',
