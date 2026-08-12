@@ -137,57 +137,78 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
         </div>
       )}
 
-      {GROUP_ORDER.map((kind) => {
-        const tables = visible.filter((table) => group.get(table.table) === kind);
-        if (!tables.length) return null;
-        return (
-          <div className="card" key={kind}>
-            <div className={`data-group-head group-${kind}`}>
-              <h2>{t.data.groups[kind].title}</h2>
-              <span className="pill">{t.data.tableCount(tables.length)}</span>
-            </div>
-            <p className="muted" style={{ margin: '2px 0 12px', fontSize: 13, lineHeight: 1.55 }}>
-              {t.data.groups[kind].body}
-            </p>
-            {tables.map((table) => (
-              <TableDoc
-                key={table.table}
-                table={table}
-                open={searching || focused === table.table}
-                detailsRef={(el) => {
-                  if (el) focusRefs.current.set(table.table, el);
-                  else focusRefs.current.delete(table.table);
-                }}
-                highlightColumns={matches.get(table.table)}
-                /*
-                 * Место таблицы в звезде — единственное, что видно, пока она
-                 * свёрнута. У факта показываем, куда он ссылается; у справочника —
-                 * сколько таблиц ссылаются на него: чем больше, тем ближе
-                 * он к центру. У сырого слоя нет ни того, ни другого, и это
-                 * само по себе ответ — он ни с чем не связан.
-                 */
-                links={
-                  kind === 'fact' && outgoing.get(table.table)?.length ? (
-                    <span className="data-links">
-                      {outgoing.get(table.table)!.map((target) => (
-                        <span className="data-link" key={target}>
-                          → <code>{target}</code>
-                        </span>
-                      ))}
-                    </span>
-                  ) : kind === 'dimension' && incoming.get(table.table) ? (
-                    <span className="data-links">
-                      <span className="data-link">
-                        {t.data.incomingLabel(incoming.get(table.table)!)}
-                      </span>
-                    </span>
-                  ) : null
-                }
-              />
-            ))}
-          </div>
-        );
-      })}
+      {/*
+       * Факты и справочники — рядом, сырой слой под ними во всю ширину.
+       *
+       * Не только ради пустоты справа (строка таблицы — имя, зернистость
+       * и чипы связей, это меньше половины ширины на мониторе). Рядом стоит
+       * то, различать что экран и учит: «одна строка = событие, в ней числа»
+       * против «одна строка = описание, сумм нет». Друг под другом эти два
+       * определения разделены шестью строками таблиц, и сравнить их нельзя,
+       * не листая.
+       *
+       * Сырой слой к паре не присоединяется намеренно: он не третий вид
+       * той же природы, а то, что в звезду ещё не разложено, — и стоять
+       * он должен после обоих, а не сбоку от одного из них.
+       */}
+      <div className="data-pair">
+        {GROUP_ORDER.filter((kind) => kind !== 'standalone').map((kind) =>
+          renderGroup(kind)
+        )}
+      </div>
+      {renderGroup('standalone')}
     </>
   );
+
+  function renderGroup(kind: (typeof GROUP_ORDER)[number]) {
+    const tables = visible.filter((table) => group.get(table.table) === kind);
+    if (!tables.length) return null;
+    return (
+      <div className="card" key={kind}>
+        <div className={`data-group-head group-${kind}`}>
+          <h2>{t.data.groups[kind].title}</h2>
+          <span className="pill">{t.data.tableCount(tables.length)}</span>
+        </div>
+        <p className="muted" style={{ margin: '2px 0 12px', fontSize: 13, lineHeight: 1.55 }}>
+          {t.data.groups[kind].body}
+        </p>
+        {tables.map((table) => (
+          <TableDoc
+            key={table.table}
+            table={table}
+            open={searching || focused === table.table}
+            detailsRef={(el) => {
+              if (el) focusRefs.current.set(table.table, el);
+              else focusRefs.current.delete(table.table);
+            }}
+            highlightColumns={matches.get(table.table)}
+            /*
+             * Место таблицы в звезде — единственное, что видно, пока она
+             * свёрнута. У факта показываем, куда он ссылается; у справочника —
+             * сколько таблиц ссылаются на него: чем больше, тем ближе
+             * он к центру. У сырого слоя нет ни того, ни другого, и это
+             * само по себе ответ — он ни с чем не связан.
+             */
+            links={
+              kind === 'fact' && outgoing.get(table.table)?.length ? (
+                <span className="data-links">
+                  {outgoing.get(table.table)!.map((target) => (
+                    <span className="data-link" key={target}>
+                      → <code>{target}</code>
+                    </span>
+                  ))}
+                </span>
+              ) : kind === 'dimension' && incoming.get(table.table) ? (
+                <span className="data-links">
+                  <span className="data-link">
+                    {t.data.incomingLabel(incoming.get(table.table)!)}
+                  </span>
+                </span>
+              ) : null
+            }
+          />
+        ))}
+      </div>
+    );
+  }
 }

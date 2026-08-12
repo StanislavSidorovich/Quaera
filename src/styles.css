@@ -750,6 +750,72 @@ a.btn {
   margin-bottom: 2px;
 }
 
+/*
+ * Свёрнутый вид тех же доводов на главной (ProofSummary в App.tsx).
+ *
+ * Живёт внутри .welcome-intro и берёт её container-type: раскладка
+ * .proof-list в три колонки — контейнерный запрос, и свой container-type
+ * здесь отрезал бы блок от ширины карточки, оставив его в одну колонку.
+ */
+.welcome-proof {
+  margin-top: 16px;
+}
+
+/*
+ * Свёрнутые доводы не растягиваются по высоте строки грида.
+ *
+ * По умолчанию (stretch) раскрытие одного пункта поднимало высоту всей
+ * строки, и два соседних, оставаясь закрытыми, превращались в пустые
+ * коробки той же высоты: замер до правки — 51px у каждого закрытого,
+ * 135px у всех трёх после раскрытия одного. На «О тренажёре» этого нет,
+ * там пункты всегда развёрнуты, поэтому правило и привязано к .welcome-proof.
+ */
+.welcome-proof .proof-list {
+  align-items: start;
+}
+
+.welcome-proof summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 700;
+  /* Своя стрелка вместо системного треугольника: тот везде разной формы
+     и в Safari не поддаётся ни цвету, ни размеру. */
+  list-style: none;
+}
+
+.welcome-proof summary::-webkit-details-marker {
+  display: none;
+}
+
+.welcome-proof summary::after {
+  content: '⌄';
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--text-dim);
+  font-weight: 400;
+  /* Стрелка поднята на пиксель: глиф «⌄» сидит в своей строке низко
+     и без сдвига читается как съехавший вниз относительно заголовка. */
+  transform: translateY(-2px);
+  transition: transform 0.15s ease;
+}
+
+.welcome-proof details[open] summary::after {
+  transform: translateY(-2px) rotate(180deg);
+}
+
+.welcome-proof summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.welcome-proof .proof-item span {
+  margin-top: 6px;
+}
+
 .proof-item span {
   display: block;
   color: var(--text-dim);
@@ -959,6 +1025,43 @@ a.btn {
   font-size: 9px;
   font-weight: 600;
   text-anchor: middle;
+}
+
+/*
+ * Факты и справочники рядом на широком экране (см. DataScreen.tsx).
+ *
+ * auto-fit, а не контейнерный запрос с двумя колонками: во время поиска
+ * одна из двух групп может остаться без единой найденной таблицы, и жёсткие
+ * две колонки оставили бы половину экрана пустой рядом с единственной
+ * карточкой. При одном ребёнке auto-fit сам отдаёт ему всю ширину.
+ *
+ * 420px — не круглое число, а ширина, при которой чипы связей факта
+ * (→ dim_date, → dim_customer, → dim_product, → dim_promo) укладываются
+ * в две строки, а не в четыре.
+ */
+.data-pair {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
+/*
+ * На телефоне auto-fit с minmax(420px) всё равно дал бы одну колонку, но
+ * минимум в 420px заставил бы её переполнять экран шириной 375.
+ *
+ * minmax(0, 1fr), а не 1fr: голое `1fr` — это `minmax(auto, 1fr)`, и auto
+ * здесь считается по max-content содержимого. Замер: пока таблицы свёрнуты,
+ * переполнения нет, но стоит раскрыть одну — примеры строк внутри требуют
+ * ~615px, колонка растягивается под них, и страница на экране 375 уезжает
+ * вбок на 256px. Своя горизонтальная прокрутка у примеров строк при этом
+ * есть и работает — ей просто не давали сработать. На широком экране
+ * тот же дефект не воспроизводится: там минимум трека задан явно (420px),
+ * а не выведен из содержимого.
+ */
+@media (max-width: 599px) {
+  .data-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .hero {

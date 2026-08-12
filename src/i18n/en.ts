@@ -30,8 +30,9 @@ export const en = {
         body: 'SQLite and pandas (via Pyodide) execute right on the page: the query goes against real data, and what gets compared is what it returned, not how it was written.',
       },
       {
-        title: 'Numbers and conclusions in explanations are build conditions',
-        body: "If a number or a conclusion in a task's writeup drifts from the dataset, an automated check catches it: the writeup is held to the same standard as the code.",
+        /** См. комментарий в ru.ts: «build conditions» — слово автора, не читателя. */
+        title: 'The writeup is checked like code',
+        body: "If a number or a conclusion in a task's writeup drifts from the dataset, an automated check catches it.",
       },
       {
         title: 'One dataset, four tracks',
