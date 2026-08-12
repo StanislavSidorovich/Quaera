@@ -2507,7 +2507,9 @@ details.table-doc {
 }
 
 details.table-doc > summary {
-  padding: 12px 14px;
+  position: relative;
+  /* Справа — место под шеврон, иначе он ложится на строку гранулярности. */
+  padding: 12px 34px 12px 14px;
   cursor: pointer;
   list-style: none;
   font-size: 14px;
@@ -2515,6 +2517,61 @@ details.table-doc > summary {
 
 details.table-doc > summary::-webkit-details-marker {
   display: none;
+}
+
+/*
+ * Что таблица раскрылась, обязано быть видно само по себе — и на телефоне
+ * это оказалось не так. Свёрнутая строка и раскрытый список колонок
+ * различались одной высотой: тот же отступ слева (14px), почти тот же
+ * кегль (13 против 14), та же тонкая линия между строками. Нажатие
+ * не давало ответа «что-то произошло», и человек нажимал второй раз,
+ * закрывая только что открытое.
+ *
+ * Три признака, и каждый отвечает на свой вопрос.
+ *
+ * Шеврон — на вопрос «сюда вообще можно нажать?», причём до нажатия:
+ * штатный маркер <details> здесь скрыт ради вёрстки заголовка (см. правило
+ * выше), то есть до этой правки о раскрытии не сообщал вовсе никто.
+ * Поворот вместо смены знака — состояние читается и боковым зрением.
+ */
+details.table-doc > summary::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  /* От первой строки, а не по центру: в summary две-три строки, и высота
+     у соседних таблиц разная — по центру шевроны встали бы вразнобой. */
+  top: 18px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--text-dim);
+  border-bottom: 1.5px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details.table-doc > summary::after {
+    transition: none;
+  }
+}
+
+details.table-doc[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+/* Заливка заголовка — на вопрос «нажато, и раскрылось именно здесь». */
+details.table-doc[open] > summary {
+  background: var(--bg-sunken);
+}
+
+/*
+ * Полоса слева — на вопрос «это содержимое той строки или уже следующая
+ * таблица». Тенью внутрь, а не border-left: рамка сдвинула бы содержимое
+ * на 2px в момент раскрытия, и список из двенадцати строк дёргался бы
+ * при каждом нажатии.
+ */
+details.table-doc[open] {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 details.table-doc > summary small {
@@ -2826,10 +2883,33 @@ table.sample td.null {
  * примеров строк в TableDoc. Вписывание уменьшало бы имена таблиц ровно
  * там, где экран узкий, — а имя таблицы здесь единственный текст.
  */
+/*
+ * Тень у края — единственный признак, что схему можно потянуть вбок.
+ *
+ * Замер на 390px: холст 449px в контейнере 333px, то есть в окно попадает
+ * ровно столбец фактов, а стрелки и справочники остаются за краем. Картинка
+ * без стрелок читается как «связей тут не показывают» — то самое, ради чего
+ * схема и рисуется, на телефоне пропадало молча.
+ *
+ * Приём стандартный (две пары градиентов): «крышки» цветом карточки
+ * прокручиваются вместе с содержимым (background-attachment: local)
+ * и открывают под собой тени, прибитые к краям контейнера (scroll).
+ * Помещается целиком — крышки стоят на тенях, и не видно ничего;
+ * не помещается — тень появляется ровно с той стороны, куда есть куда
+ * ехать. Ни строки JS и ни строки текста: работает в обеих локалях
+ * и не требует перевода.
+ */
 .schema-map-wrap {
   overflow-x: auto;
   margin: 0 -4px;
   padding: 0 4px 4px;
+  background:
+    linear-gradient(to right, var(--bg-raised) 40%, transparent) 0 0 / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--bg-raised) 40%, transparent) 100% 0 / 32px 100% no-repeat local,
+    linear-gradient(to right, color-mix(in srgb, var(--accent) 45%, transparent), transparent) 0 0 / 16px 100% no-repeat
+      scroll,
+    linear-gradient(to left, color-mix(in srgb, var(--accent) 45%, transparent), transparent) 100% 0 / 16px 100%
+      no-repeat scroll;
 }
 
 /*
