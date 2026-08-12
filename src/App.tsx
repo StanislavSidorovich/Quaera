@@ -6,6 +6,7 @@ import { getExecutor } from './engine/executors';
 import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
+import { AUTHOR_LINKEDIN, AUTHOR_REPO } from './links';
 import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
@@ -42,24 +43,6 @@ import {
 } from './session/store';
 
 const SESSION_SIZE = 5;
-
-/**
- * Автор и его публичные ссылки.
- *
- * Живут в коде, а не в i18n: адреса одинаковы на любой локали, а имя
- * различается только транслитерацией — её и держит перевод. Это первые
- * и пока единственные внешние ссылки в приложении, поэтому у них
- * `rel="noreferrer"`: обе ведут на профили, и передавать туда заголовок
- * Referer с адресом приложения незачем.
- *
- * Зачем вообще в интерфейсе, а не только в LICENSE: приложение раздаётся
- * по HTTP отдельно от репозитория, и человек, открывший querium.pages.dev,
- * файлов лицензий не видит вовсе. Без этого блока у него нет ни способа
- * узнать, кто автор, ни способа связаться — при том что контент отдан
- * под CC BY-NC-SA, которая требует указания авторства при переиспользовании.
- */
-const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/stanislavsidorovich';
-const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Querium';
 
 type FontSize = 'md' | 'lg' | 'xl';
 const FONT_SIZE_ORDER: FontSize[] = ['md', 'lg', 'xl'];
@@ -194,22 +177,21 @@ const SCREEN_STORAGE_KEY = 'querium-screen';
  *
  * Хранится не весь `Screen`, а его опознавательные признаки: имя раздела
  * и то немногое, без чего раздел не открыть (навык карточки, трек вводной).
- * Очередь занятия сюда не попадает намеренно — она уже сохраняется целиком
- * своим способом (см. session/store.ts) и поднимается по кнопке «продолжить»
- * на главной. Второй путь к тому же состоянию означал бы два источника правды
- * на одном занятии, и расходиться они начали бы молча.
+ * У занятия признак — только имя: очередь, позиция и черновики лежат отдельно
+ * и целиком (см. session/store.ts), а здесь записано ровно одно — что вкладку
+ * закрыли внутри занятия, а не рядом с ним. Двух источников правды это не
+ * заводит: содержимое занятия по-прежнему в одном месте, здесь только адрес.
  */
 type StoredScreen = { name: Screen['name']; skill?: string; track?: Track };
 
 function screenToStored(screen: Screen): StoredScreen {
   switch (screen.name) {
-    // Занятие и его конец не восстанавливаем (см. выше). Пишем главную,
-    // а не пропускаем запись: иначе перезагрузка посреди занятия подняла бы
-    // тот раздел, где человек был до него, — то есть увела бы дальше от
-    // предложения «продолжить занятие», ради которого он сюда и вернётся.
-    case 'session':
+    // Конец занятия не восстанавливаем: продолжать нечего, само занятие
+    // к этому моменту уже стёрто, и F5 показал бы поздравление с пустотой.
     case 'done':
       return { name: 'home' };
+    case 'session':
+      return { name: 'session' };
     case 'lesson':
       return { name: 'lesson', skill: screen.skill };
     case 'trackIntro':
@@ -220,6 +202,52 @@ function screenToStored(screen: Screen): StoredScreen {
 }
 
 /**
+ * Очередь занятия, собранная из хранимых id по текущим пакам.
+ *
+ * null — если хоть одного шага больше нет (контент переписан, задание
+ * удалено): половина очереди с дырой посреди хуже честного «начните заново».
+ * Общая для двух входов — восстановления при старте вкладки и кнопки
+ * «продолжить» на главной, — потому что правило подъёма у них обязано быть
+ * одно: расходись они, F5 поднимал бы занятие, которое кнопка отвергает.
+ */
+function buildSessionQueue(stored: StoredSession, locale: Locale): Step[] | null {
+  const pack = packForTrack(stored.track, locale);
+  const taskById = pack ? new Map(pack.tasks.map((t) => [t.id, t])) : null;
+  const lessons = lessonBySkillFor(locale);
+  const queue: Step[] = [];
+  for (const s of stored.steps) {
+    if (s.kind === 'lesson') {
+      const lesson = lessons.get(s.skill);
+      if (!lesson) return null;
+      queue.push({ kind: 'lesson', lesson });
+    } else {
+      const task = taskById?.get(s.id);
+      if (!task) return null;
+      queue.push({ kind: 'task', task });
+    }
+  }
+  return queue.length ? queue : null;
+}
+
+/**
+ * Состояние вкладки на старте: раздел плюс — если поднимается занятие — всё,
+ * что живёт ровно одно занятие и обязано появиться до первого рендера.
+ *
+ * Одним объектом, а не тремя вызовами, ровно потому, что решение тут одно:
+ * либо занятие поднялось целиком (очередь, трек, черновики, зачтённые
+ * попытки), либо не поднялось вовсе. Разложи это по отдельным инициализаторам
+ * состояния — и появилась бы промежуточная комбинация «экран занятия есть,
+ * черновиков нет», которую никто не проверяет.
+ */
+type Boot = {
+  screen: Screen;
+  /** Трек восстановленного занятия; null — занятия нет, трек берём из своего ключа. */
+  track: Track | null;
+  drafts: Map<string, TaskDraft>;
+  recorded: Set<string>;
+};
+
+/**
  * Раздел из хранилища — с проверкой, что его ещё есть чем наполнить.
  *
  * Проверка не формальность: карточка приёма и вводная трека отрисовываются
@@ -227,8 +255,12 @@ function screenToStored(screen: Screen): StoredScreen {
  * пустоту, если содержимого не стало. Записанный неделю назад навык, который
  * с тех пор переименовали, встретил бы человека пустым экраном с заголовком —
  * тем же тупиком, что и наполовину поднятое занятие с дырой посреди очереди.
+ *
+ * Занятие, которое не собралось, отдаёт главную, а не пустой экран: там его
+ * ждёт кнопка «продолжить», и она же честно погасит неподъёмную запись.
  */
-function initialScreen(locale: Locale): Screen {
+function initialBoot(locale: Locale): Boot {
+  const empty = { track: null, drafts: new Map<string, TaskDraft>(), recorded: new Set<string>() };
   let stored: StoredScreen | null = null;
   try {
     const raw = localStorage.getItem(SCREEN_STORAGE_KEY);
@@ -236,36 +268,62 @@ function initialScreen(locale: Locale): Screen {
   } catch {
     // localStorage недоступен или запись битая — открываем главную
   }
-  if (!stored) return { name: 'home' };
+  if (!stored) return { screen: { name: 'home' }, ...empty };
   switch (stored.name) {
     case 'reference':
     case 'sandbox':
     case 'data':
     case 'about':
     case 'onboarding':
-      return { name: stored.name };
+      return { screen: { name: stored.name }, ...empty };
+    case 'session': {
+      const session = loadSession();
+      const queue = session ? buildSessionQueue(session, locale) : null;
+      if (!session || !queue) return { screen: { name: 'home' }, ...empty };
+      const maxIndex = Math.min(Math.max(session.maxIndex, 0), queue.length - 1);
+      return {
+        screen: {
+          name: 'session',
+          queue,
+          index: Math.min(Math.max(session.index, 0), maxIndex),
+          maxIndex,
+        },
+        // Трек берём у занятия, а не из своего ключа: они обязаны совпадать
+        // (переключение трека уводит на главную), но если разошлись — прав
+        // тот, чьи задания сейчас на экране, иначе исполнитель будет чужой.
+        track: session.track,
+        drafts: new Map(Object.entries(session.drafts).map(([id, d]) => [id, fromStoredDraft(d)])),
+        recorded: new Set(session.recorded),
+      };
+    }
     case 'lesson':
       // Ключи карточек одинаковы на обеих локалях — меняется только проза
       // внутри (см. lessonBySkillFor), поэтому проверять достаточно по общей карте.
       return stored.skill && lessonBySkill.has(stored.skill)
-        ? { name: 'lesson', skill: stored.skill }
-        : { name: 'home' };
+        ? { screen: { name: 'lesson', skill: stored.skill }, ...empty }
+        : { screen: { name: 'home' }, ...empty };
     case 'trackIntro':
       return stored.track &&
         ALL_TRACKS.includes(stored.track) &&
         packForTrack(stored.track, locale)?.intro
-        ? { name: 'trackIntro', track: stored.track }
-        : { name: 'home' };
+        ? { screen: { name: 'trackIntro', track: stored.track }, ...empty }
+        : { screen: { name: 'home' }, ...empty };
     default:
-      return { name: 'home' };
+      return { screen: { name: 'home' }, ...empty };
   }
 }
 
 export default function App() {
   const { t, locale, setLocale } = useI18n();
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
-  const [screen, setScreen] = useState<Screen>(() => initialScreen(locale));
-  const [activeTrack, setActiveTrack] = useState<Track>(initialActiveTrack);
+  /**
+   * Снимок хранилища на момент открытия вкладки — читается ровно один раз
+   * (см. initialBoot). Дальше не обновляется и обновляться не должен: это
+   * не состояние приложения, а то, с чего оно началось.
+   */
+  const [boot] = useState<Boot>(() => initialBoot(locale));
+  const [screen, setScreen] = useState<Screen>(boot.screen);
+  const [activeTrack, setActiveTrack] = useState<Track>(boot.track ?? initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   /**
    * Готовность Python-рантайма отдельно от activeTrack — нужна ровно для
@@ -305,9 +363,10 @@ export default function App() {
    *
    * Живут ровно одно занятие: новое начинается с чистого листа, иначе
    * задание, попавшее в подбор повторно через неделю, встретило бы человека
-   * своим прошлым ответом.
+   * своим прошлым ответом. Занятие, поднятое при старте вкладки, — то же
+   * самое занятие, поэтому черновики приезжают вместе с ним (см. Boot).
    */
-  const taskDraftsRef = useRef(new Map<string, TaskDraft>());
+  const taskDraftsRef = useRef(boot.drafts);
 
   /**
    * Незаконченное занятие из хранилища — то, что предлагаем продолжить
@@ -350,9 +409,10 @@ export default function App() {
    * и повторное «Дальше» не должны считаться второй попыткой: SRS сдвинул бы
    * интервал повторения дважды за один и тот же ответ. Раньше это было почти
    * недостижимо (возврат обнулял экран, и задание пришлось бы решать заново),
-   * теперь — один клик.
+   * теперь — один клик. После перезагрузки страницы тем более: без переноса
+   * этого множества F5 на решённом шаге сдвигал бы интервал второй раз.
    */
-  const recordedTasksRef = useRef(new Set<string>());
+  const recordedTasksRef = useRef(boot.recorded);
 
   const cycleFontSize = () => {
     const next = FONT_SIZE_ORDER[(FONT_SIZE_ORDER.indexOf(fontSize) + 1) % FONT_SIZE_ORDER.length];
@@ -623,30 +683,18 @@ export default function App() {
   }
 
   /**
-   * Восстановление занятия из хранилища.
+   * Восстановление занятия из хранилища по кнопке на главной.
    *
-   * Очередь собирается из id по текущим пакам, и если хоть одного шага
-   * больше нет (контент переписан, задание удалено), занятие не поднимается
-   * вовсе — половина очереди с дырой посреди хуже честного «начните заново».
+   * Очередь собирает buildSessionQueue — та же функция, что поднимает занятие
+   * при старте вкладки (см. initialBoot): если хоть одного шага больше нет
+   * (контент переписан, задание удалено), занятие не поднимается вовсе —
+   * половина очереди с дырой посреди хуже честного «начните заново».
    */
   function resumeSession() {
     const stored = pendingSession;
     if (!stored) return;
-    const pack = packForTrack(stored.track, locale);
-    const taskById = pack ? new Map(pack.tasks.map((t) => [t.id, t])) : null;
-    const queue: Step[] = [];
-    for (const s of stored.steps) {
-      if (s.kind === 'lesson') {
-        const lesson = lessonBySkill.get(s.skill);
-        if (!lesson) break;
-        queue.push({ kind: 'lesson', lesson });
-      } else {
-        const task = taskById?.get(s.id);
-        if (!task) break;
-        queue.push({ kind: 'task', task });
-      }
-    }
-    if (queue.length !== stored.steps.length) {
+    const queue = buildSessionQueue(stored, locale);
+    if (!queue) {
       // Снимок гасим вместе с записью: иначе отложенная запись или флаш
       // на закрытии вкладки восстановили бы из памяти ровно то занятие,
       // которое мы только что признали неподъёмным.
