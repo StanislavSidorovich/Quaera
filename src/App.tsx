@@ -8,6 +8,7 @@ import type { LoadState } from './engine/types';
 import { useI18n } from './i18n/context';
 import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
+import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, type SidebarSection } from './ui/Sidebar';
@@ -1427,8 +1428,22 @@ function Home({
        * «С чего начать», три довода и цепочка.
        */}
       {isNewUser && (
-        <div className="card">
-          <WelcomeIntroBody />
+        <div className="card welcome-intro">
+          <div className="welcome-intro-grid">
+            <div>
+              <WelcomeIntroBody />
+            </div>
+            {/*
+             * Картинка только здесь, не в WelcomeHero: на «О тренажёре»
+             * справа от этого же абзаца стоят три доказательства в ряд
+             * и цепочка, там пустоты нет. Прячется на узком экране через
+             * CSS (.welcome-intro-figure), а не развилкой по ширине в JS, —
+             * тот же приём, что у .track-cards и .tabs.tracks.
+             */}
+            <div className="welcome-intro-figure">
+              <QueryLoop />
+            </div>
+          </div>
         </div>
       )}
 

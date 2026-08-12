@@ -41,6 +41,15 @@ export const en = {
     chainTitle: 'From question to decision',
     chainIntro: 'The same path for every business case, and each step has its own track.',
     chainSteps: ['business question', 'requirements', 'metric', 'data', 'analysis', 'model', 'insight', 'decision'],
+    /** См. комментарий в ru.ts: подписи к картинке рядом с заголовком. */
+    loop: {
+      queryLabel: 'your query',
+      resultLabel: 'what came back',
+      expectedLabel: 'expected',
+      matchLabel: 'they agree',
+      aria:
+        'The query runs against the dataset, and the table it returned is checked row by row against the expected table.',
+    },
   },
   /** См. комментарий в ru.ts: боковая навигация существует только на десктопе. */
   nav: {

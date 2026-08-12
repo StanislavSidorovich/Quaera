@@ -781,12 +781,35 @@ a.btn {
   font-size: 12px;
 }
 
+/*
+ * Легенда треков — в столбик на узком экране, в две колонки на широком.
+ *
+ * Тот же довод, что у .proof-list и .track-summary-list: строк ровно четыре,
+ * самая длинная («Аналитика как профессия · вопрос → постановка → метрика ·
+ * вывод → решение») занимает меньше половины ширины карточки, и в один
+ * столбец правая половина оставалась пустой на всю высоту блока. Это четыре
+ * независимых подписи, а не текст, который читают строго сверху вниз.
+ *
+ * Две колонки, а не четыре в ряд: подпись каждого трека — фраза со стрелками
+ * внутри, в четверть ширины она переносилась бы по словам, и стрелки цепочки
+ * перестали бы читаться как цепочка.
+ *
+ * Контейнерный запрос, а не медиа, и порог тот же 860px — карточка живёт
+ * и на главной, и на «О тренажёре», где слева боковое меню (подробнее
+ * у .proof-list выше).
+ */
 .chain-legend {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 6px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
+}
+
+@container (min-width: 860px) {
+  .chain-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 24px;
+  }
 }
 
 .chain-legend-item {
@@ -823,6 +846,119 @@ a.btn {
 
 .chain-legend-dot.track-model {
   background: var(--track-model);
+}
+
+/*
+ * Карточка-питч на главной: текст слева, картинка справа.
+ *
+ * Абзац упёрт в 68ch ради читаемости (.card p), поэтому на широком экране
+ * справа оставалась пустота во всю высоту карточки.
+ *
+ * Порог 860px — тот же, что у .proof-list, и он выбран замером, а не на глаз.
+ * Первая попытка ставила 980 «с запасом под картинку», и это ровно тот случай,
+ * когда запас съедает саму фичу: с боковым меню контейнер карточки на окне
+ * 1280 (самая частая ширина ноутбука и та, на которой сняты README-скриншоты)
+ * равен 927px, то есть картинка не показывалась бы там, где её и просили
+ * показать. При 860 текстовой колонке остаётся 451px на 1280 — абзац
+ * набирается плотнее, но упирается в свои 68ch только на широких окнах,
+ * где место и так есть.
+ */
+.welcome-intro {
+  container-type: inline-size;
+}
+
+.welcome-intro-figure {
+  display: none;
+}
+
+@container (min-width: 860px) {
+  .welcome-intro-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 450px;
+    gap: 28px;
+    align-items: center;
+  }
+
+  .welcome-intro-figure {
+    display: block;
+  }
+}
+
+/*
+ * Картинка «запрос → результат → эталон» (QueryLoop.tsx).
+ *
+ * Ширина фиксирована по viewBox, а не растянута по колонке: подписи набраны
+ * 9px, и любое масштабирование вверх или вниз бьёт по ним первым — растянутая
+ * до 600px картинка выглядит рыхлой, сжатая до 300px нечитаема. Колонка
+ * в сетке выше объявлена ровно этими 448px, поэтому масштабирования и нет.
+ */
+.query-loop {
+  display: block;
+  width: 450px;
+  height: auto;
+}
+
+.query-loop .ql-panel {
+  fill: var(--bg-sunken);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.query-loop .ql-label {
+  fill: var(--text-dim);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.query-loop .ql-code {
+  fill: var(--code);
+  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  white-space: pre;
+}
+
+/* Ключ и значение разными тонами: иначе три пары полосок читаются как один
+   столбец с рваным правым краем, а не как таблица из двух колонок. */
+.query-loop .ql-cell-key {
+  fill: var(--track-sql);
+  opacity: 0.55;
+}
+
+.query-loop .ql-cell {
+  fill: var(--text-dim);
+  opacity: 0.4;
+}
+
+.query-loop .ql-arrow {
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+}
+
+.query-loop .ql-arrow-head {
+  fill: var(--text-dim);
+}
+
+.query-loop .ql-ok {
+  fill: var(--ok);
+}
+
+/* Галочка нарисована цветом карточки, а не белым: в светлой теме --ok тёмный,
+   и белая галочка на нём читается, а в тёмной — --ok светлый, и белое по
+   светлому пропадает. --bg-raised переворачивается вместе с темой. */
+.query-loop .ql-ok-mark {
+  fill: none;
+  stroke: var(--bg-raised);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.query-loop .ql-ok-label {
+  fill: var(--ok);
+  font-size: 9px;
+  font-weight: 600;
+  text-anchor: middle;
 }
 
 .hero {
