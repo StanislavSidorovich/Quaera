@@ -130,6 +130,51 @@ function checkTaskTableNames(pack) {
 }
 
 /**
+ * Кириллица в кодовых полях задания.
+ *
+ * Проверка не результата, а условия, при котором поле честно нелокализовано.
+ * `starter`, `template`, `blanks`, `solution`, `predictSql` — единственные
+ * поля задания, у которых нет пары в `TaskTranslation` вообще (см. types.ts):
+ * они не переводятся не по недосмотру, а по устройству формата, потому что
+ * это исполнимый текст. Условие держится ровно пока в них нет естественного
+ * языка. Как только появился — английский пользователь видит русскую прозу
+ * между английским заголовком и английским разбором, и никакой перевод
+ * этого уже не догонит.
+ *
+ * Тот же гейт уже стоит на `code` в tools-compare.json (см. конец файла).
+ * Здесь он повторён по пакам, потому что первый раз находку не прогнали
+ * по всем файлам того же устройства — и она нашлась ещё в пятнадцати
+ * заданиях: комментарий с условием задачи («На странице срез:», «Вариант Б»)
+ * и дважды имя меры кириллицей.
+ *
+ * Правило для контента, из которого чинились те пятнадцать: проза уезжает
+ * в `brief` (он переводится), в коде остаются идентификаторы, числа
+ * и знаки. Английский комментарий вместо русского — не решение, а тот же
+ * дефект зеркально: русский пользователь получил бы английскую прозу.
+ */
+const CODE_FIELDS = ['starter', 'template', 'solution', 'predictSql'];
+function checkCodeLocaleNeutral(pack) {
+  const before = failed;
+  let checked = 0;
+  for (const t of pack.tasks) {
+    for (const field of CODE_FIELDS) {
+      if (typeof t[field] !== 'string') continue;
+      checked++;
+      if (/[А-Яа-яЁё]/.test(t[field])) {
+        fail(t.id, `в поле ${field} есть кириллица — оно не переводится вовсе, прозе место в brief`);
+      }
+    }
+    for (const [i, blank] of (t.blanks ?? []).entries()) {
+      checked++;
+      if (/[А-Яа-яЁё]/.test(blank)) {
+        fail(t.id, `в пропуске №${i + 1} есть кириллица — blanks не переводятся, значение пропуска обязано быть кодом`);
+      }
+    }
+  }
+  if (failed === before) console.log(`  ok   кодовых полей без естественного языка: ${checked}`);
+}
+
+/**
  * Граф навыков — общая проверка для готовых и черновых паков.
  *
  * Порядок выдачи заданий целиком выводится отсюда: планировщик разворачивает
@@ -320,6 +365,7 @@ for (const packId of packs) {
   checkSkillCoverage(pack);
   checkOptionPositions(pack);
   checkTaskTableNames(pack);
+  checkCodeLocaleNeutral(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
   // --- задания
@@ -2662,11 +2708,27 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
     const { lessons } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', `${lessonsFileId}.json`), 'utf8'));
     const { lessons: lessonsEn } = JSON.parse(readFileSync(enPath, 'utf8'));
     const skillIds = new Set(lessons.map((l) => l.skill));
+    const bySkill = new Map(lessons.map((l) => [l.skill, l]));
     let ok = true;
     for (const l of lessonsEn) {
       if (!skillIds.has(l.skill)) {
         fail(`${lessonsFileId}.en`, `перевод карточки ссылается на несуществующий скилл ${l.skill}`);
         ok = false;
+        continue;
+      }
+      // `example` и `wrong` необязательны в LessonTranslation: у sql и python
+      // это исполнимый код, и переводить там нечего, у model и domain — проза
+      // сценария, и она переведена. Условие то же, что у кодовых полей задания
+      // (checkCodeLocaleNeutral): поле, оставленное без перевода, показывается
+      // англичанину как есть — значит естественного языка в нём быть не может.
+      // Проверяется не «переведи всё», а «не переводишь — держи нейтральным».
+      const ru = bySkill.get(l.skill);
+      for (const field of ['example', 'wrong']) {
+        if (l[field] !== undefined) continue;
+        if (/[А-Яа-яЁё]/.test(ru[field] ?? '')) {
+          fail(`${lessonsFileId}.en`, `у карточки ${l.skill} поле ${field} без перевода, но с кириллицей — англичанин увидит русский текст`);
+          ok = false;
+        }
       }
     }
     if (ok) console.log(`  ok   ${lessonsFileId}.en: перевод покрывает ${lessonsEn.length} из ${lessons.length} карточек, все id существуют`);

@@ -1088,7 +1088,7 @@
     {
       "id": "sql-023",
       "title": "Why the brand fell",
-      "brief": "«Nettora» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture by quarter.",
+      "brief": "«Nettora» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture across the first quarters, shown above the query in abridged form.",
       "goal": "Determine the cause of the decline from the decomposition results.",
       "predictQuestion": "What was the main cause of the drop in brand sales?",
       "options": [
@@ -1140,7 +1140,7 @@
     {
       "id": "sql-059",
       "title": "Why «Aqualis» revenue holds up even as volume falls",
-      "brief": "The «Aqualis» brand's unit sales volume in Q1 2025 dropped noticeably compared to Q1 2024, but in the presentation revenue looks almost unscathed. The CFO wants the discrepancy explained.",
+      "brief": "The «Aqualis» brand's unit sales volume in Q1 2025 dropped noticeably compared to Q1 2024, but in the presentation revenue looks almost unscathed. The CFO wants the discrepancy explained. Above the query are «Aqualis» totals for the first quarters of both years.",
       "goal": "Determine the cause from the decomposition results.",
       "predictQuestion": "What happened to the «Aqualis» brand between Q1 2024 and Q1 2025?",
       "options": [

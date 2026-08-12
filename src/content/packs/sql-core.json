@@ -1290,9 +1290,9 @@
       "level": 5,
       "mode": "predict",
       "title": "Почему упал бренд",
-      "brief": "Продажи бренда «Nettora» в первом квартале 2026 года вдвое ниже, чем в первом квартале 2024. Руководитель требует объяснения. Аналитик разложил падение на составляющие и получил такую картину по кварталам.",
+      "brief": "Продажи бренда «Nettora» в первом квартале 2026 года вдвое ниже, чем в первом квартале 2024. Руководитель требует объяснения. Аналитик разложил падение на составляющие и получил такую картину по первым кварталам — она показана над запросом, сокращённо.",
       "goal": "Определить причину падения по результатам декомпозиции.",
-      "predictSql": "-- Результат декомпозиции (сокращённо):\n--  период    штуки   точек   штук_на_точку   средняя_цена\n--  2024-Q1   10101      79         127.9          184.7\n--  2025-Q1    8158      79         103.3          200.9\n--  2026-Q1    4308      37         116.4          203.8\n\nSELECT d.year, SUM(f.units) AS units,\n       COUNT(DISTINCT f.customer_id) AS outlets,\n       ROUND(1.0 * SUM(f.units) / COUNT(DISTINCT f.customer_id), 1) AS units_per_outlet,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Nettora' AND d.quarter = 1\nGROUP BY d.year",
+      "predictSql": "-- year units outlets per_outlet price\n-- 2024 10101      79      127.9 184.7\n-- 2025  8158      79      103.3 200.9\n-- 2026  4308      37      116.4 203.8\n\nSELECT d.year, SUM(f.units) AS units,\n       COUNT(DISTINCT f.customer_id) AS outlets,\n       ROUND(1.0 * SUM(f.units) / COUNT(DISTINCT f.customer_id), 1) AS per_outlet,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Nettora' AND d.quarter = 1\nGROUP BY d.year",
       "predictQuestion": "Что стало основной причиной падения продаж бренда?",
       "options": [
         {
@@ -1587,9 +1587,9 @@
       "level": 5,
       "mode": "predict",
       "title": "Почему выручка «Aqualis» держится, хотя объём падает",
-      "brief": "У бренда «Aqualis» в первом квартале 2025 года объём продаж в штуках заметно просел по сравнению с первым кварталом 2024-го, но в презентации выручка выглядит почти не пострадавшей. Финансовый директор просит объяснить расхождение.",
+      "brief": "У бренда «Aqualis» в первом квартале 2025 года объём продаж в штуках заметно просел по сравнению с первым кварталом 2024-го, но в презентации выручка выглядит почти не пострадавшей. Финансовый директор просит объяснить расхождение. Над запросом — итоги «Aqualis» по первым кварталам двух лет.",
       "goal": "Определить причину по результатам декомпозиции.",
-      "predictSql": "-- Aqualis, Q1, по годам:\n--  год    штук    выручка    средняя_цена   точек\n--  2024   26531   1406408    53.0           88\n--  2025   20482   1298947    63.4           88\n\nSELECT d.year, SUM(f.units) AS units, ROUND(SUM(f.revenue)) AS revenue,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price,\n       COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Aqualis' AND d.quarter = 1 AND d.year IN (2024, 2025)\nGROUP BY d.year",
+      "predictSql": "-- year units revenue avg_price outlets\n-- 2024 26531 1406408      53.0      88\n-- 2025 20482 1298947      63.4      88\n\nSELECT d.year, SUM(f.units) AS units, ROUND(SUM(f.revenue)) AS revenue,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS avg_price,\n       COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Aqualis' AND d.quarter = 1 AND d.year IN (2024, 2025)\nGROUP BY d.year",
       "predictQuestion": "Что произошло с брендом «Aqualis» между Q1 2024 и Q1 2025?",
       "options": [
         {

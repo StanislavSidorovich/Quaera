@@ -588,7 +588,7 @@
     {
       "id": "mdl-017",
       "title": "One formula, two ways to set it up",
-      "brief": "You're shown two formulas for the same brand share — one set up as a column, the other as a measure. You need to see how they differ in how they compute, not in syntax.",
+      "brief": "You're shown two formulas for the same brand share: A is set up as a calculated column in fact_sellout, B as a measure. You need to see how they differ in how they compute, not in syntax.",
       "goal": "Work out the difference in when each variant computes.",
       "predictQuestion": "What's the main difference between variant A and variant B in how they compute?",
       "hints": [
@@ -721,7 +721,7 @@
     {
       "id": "mdl-022",
       "title": "SUM inside a row-level column",
-      "brief": "A new calculated column gets added to fact_sellout, to look at each individual sale's revenue right next to the row.",
+      "brief": "A new calculated column, RowRevenue, gets added to fact_sellout, to look at each individual sale's revenue right next to the row. In the table's first row, revenue = 398.31.",
       "goal": "Work out what the column shows in the table's first row.",
       "predictQuestion": "What does this column show in the first row?",
       "hints": [
@@ -747,7 +747,7 @@
     {
       "id": "mdl-023",
       "title": "The fix without aggregation",
-      "brief": "You still need revenue per unit for each row — not the table's overall total, but exactly that row's own value.",
+      "brief": "You still need revenue per unit for each row — not the table's overall total, but exactly that row's own value. The first rows of fact_sellout are shown above the formulas.",
       "goal": "Work out which formula solves this correctly.",
       "predictQuestion": "Which variant returns the first row's own price, 199.16, for that row?",
       "hints": [
@@ -1173,7 +1173,7 @@
     {
       "id": "mdl-038",
       "title": "The filter on a different column survives",
-      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand — «Tokyo».",
+      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand: dim_region[region_name] = «Tokyo». Tokyo's revenue across every brand is ¥8,876,489.",
       "goal": "Work out which filters act on the calculation.",
       "predictQuestion": "What does the measure return with a region slicer?",
       "hints": [
@@ -1229,7 +1229,7 @@
     {
       "id": "mdl-040",
       "title": "The same formula, two different numbers",
-      "brief": "The formula SUM(revenue) is written twice: once as a measure, once as a calculated column in the product lookup. In a by-brand matrix they give different results.",
+      "brief": "The formula SUM(revenue) is written twice: once as the measure Total Revenue, once as the calculated column RevCol in the product lookup dim_product. In the matrix's «Fruvia» row the measure shows 25,465,980 and the column shows 126,911,191.",
       "goal": "Work out why the results diverge.",
       "predictQuestion": "Why do a measure and a column with an identical formula give different numbers?",
       "hints": [
@@ -1259,7 +1259,7 @@
     {
       "id": "mdl-041",
       "title": "A measure inside an iterator",
-      "brief": "You need to count how many brands crossed ten million in revenue. The formula iterates brands and invokes a measure inside the iteration.",
+      "brief": "You need to count how many brands crossed ten million in revenue. The formula iterates brands and invokes a measure inside the iteration. There are nine brands in the lookup, and Total Revenue across the whole database is ¥126,911,191.",
       "goal": "Work out what the measure sees at each step of the iteration.",
       "predictQuestion": "What does [Total Revenue] compute at each step of FILTER?",
       "hints": [
@@ -1289,7 +1289,7 @@
     {
       "id": "mdl-042",
       "title": "A column that behaves like a measure",
-      "brief": "A calculated column in the product lookup needs to show its own product's revenue, not the grand total.",
+      "brief": "A calculated column in the product lookup needs to show its own product's revenue, not the grand total: right now it returns 126,911,191 in all 47 rows. Below are the original formula and three fixes.",
       "goal": "Work out which formula fix solves this.",
       "predictQuestion": "Which variant gives exactly its own product's revenue?",
       "hints": [
@@ -1315,7 +1315,7 @@
     {
       "id": "mdl-043",
       "title": "What YTD does to the filter",
-      "brief": "A by-month matrix has a year-to-date revenue measure. In the March 2025 row it shows more than March's own revenue.",
+      "brief": "A by-month matrix has a year-to-date revenue measure. In the March 2025 row, March's own revenue is ¥4,694,330, while RevenueYTD shows ¥12,566,159.",
       "goal": "Work out where the bigger number comes from.",
       "predictQuestion": "What did TOTALYTD do to the date filter?",
       "hints": [
@@ -1345,7 +1345,7 @@
     {
       "id": "mdl-044",
       "title": "Comparing to last year",
-      "brief": "You need month-over-month growth against last year. The measure compares the current period's revenue to the same period a year earlier.",
+      "brief": "You need month-over-month growth against last year. The measure compares the current period's revenue to the same period a year earlier. In the matrix, March 2025 revenue is ¥4,694,330 and March 2024 is ¥4,392,846.",
       "goal": "Work out what the measure returns in the March 2025 row.",
       "predictQuestion": "What does RevenueLY show in the March 2025 row, and what growth does that imply?",
       "hints": [
