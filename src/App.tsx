@@ -5,7 +5,7 @@ import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
-import { useI18n } from './i18n/context';
+import { useI18n, type Locale } from './i18n/context';
 import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
@@ -182,10 +182,89 @@ function backTarget(current: Screen): Screen {
   return { name: 'home' };
 }
 
+const SCREEN_STORAGE_KEY = 'querium-screen';
+
+/**
+ * Открытый раздел переживает перезагрузку страницы.
+ *
+ * До этого его не переживало ничто: `screen` жил только в состоянии React,
+ * и F5 на «Данных» или в песочнице возвращал на главную — при том что трек,
+ * тема и кегль перезагрузку переживали (см. initialActiveTrack выше). Разница
+ * читалась как случайность: часть выбора приложение помнит, часть теряет.
+ *
+ * Хранится не весь `Screen`, а его опознавательные признаки: имя раздела
+ * и то немногое, без чего раздел не открыть (навык карточки, трек вводной).
+ * Очередь занятия сюда не попадает намеренно — она уже сохраняется целиком
+ * своим способом (см. session/store.ts) и поднимается по кнопке «продолжить»
+ * на главной. Второй путь к тому же состоянию означал бы два источника правды
+ * на одном занятии, и расходиться они начали бы молча.
+ */
+type StoredScreen = { name: Screen['name']; skill?: string; track?: Track };
+
+function screenToStored(screen: Screen): StoredScreen {
+  switch (screen.name) {
+    // Занятие и его конец не восстанавливаем (см. выше). Пишем главную,
+    // а не пропускаем запись: иначе перезагрузка посреди занятия подняла бы
+    // тот раздел, где человек был до него, — то есть увела бы дальше от
+    // предложения «продолжить занятие», ради которого он сюда и вернётся.
+    case 'session':
+    case 'done':
+      return { name: 'home' };
+    case 'lesson':
+      return { name: 'lesson', skill: screen.skill };
+    case 'trackIntro':
+      return { name: 'trackIntro', track: screen.track };
+    default:
+      return { name: screen.name };
+  }
+}
+
+/**
+ * Раздел из хранилища — с проверкой, что его ещё есть чем наполнить.
+ *
+ * Проверка не формальность: карточка приёма и вводная трека отрисовываются
+ * по содержимому пака (`lessonBySkill.get`, `pack.intro`), и обе тихо отдают
+ * пустоту, если содержимого не стало. Записанный неделю назад навык, который
+ * с тех пор переименовали, встретил бы человека пустым экраном с заголовком —
+ * тем же тупиком, что и наполовину поднятое занятие с дырой посреди очереди.
+ */
+function initialScreen(locale: Locale): Screen {
+  let stored: StoredScreen | null = null;
+  try {
+    const raw = localStorage.getItem(SCREEN_STORAGE_KEY);
+    stored = raw ? (JSON.parse(raw) as StoredScreen) : null;
+  } catch {
+    // localStorage недоступен или запись битая — открываем главную
+  }
+  if (!stored) return { name: 'home' };
+  switch (stored.name) {
+    case 'reference':
+    case 'sandbox':
+    case 'data':
+    case 'about':
+    case 'onboarding':
+      return { name: stored.name };
+    case 'lesson':
+      // Ключи карточек одинаковы на обеих локалях — меняется только проза
+      // внутри (см. lessonBySkillFor), поэтому проверять достаточно по общей карте.
+      return stored.skill && lessonBySkill.has(stored.skill)
+        ? { name: 'lesson', skill: stored.skill }
+        : { name: 'home' };
+    case 'trackIntro':
+      return stored.track &&
+        ALL_TRACKS.includes(stored.track) &&
+        packForTrack(stored.track, locale)?.intro
+        ? { name: 'trackIntro', track: stored.track }
+        : { name: 'home' };
+    default:
+      return { name: 'home' };
+  }
+}
+
 export default function App() {
   const { t, locale, setLocale } = useI18n();
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = useState<Screen>(() => initialScreen(locale));
   const [activeTrack, setActiveTrack] = useState<Track>(initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   /**
@@ -332,6 +411,15 @@ export default function App() {
   }, []);
 
   useEffect(() => saveProgress(progress), [progress]);
+
+  /** Открытый раздел — на устройство, чтобы пережить перезагрузку (см. initialScreen). */
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCREEN_STORAGE_KEY, JSON.stringify(screenToStored(screen)));
+    } catch {
+      // см. initialScreen
+    }
+  }, [screen]);
 
   /**
    * Аппаратная/жестовая кнопка «назад» на телефоне.
