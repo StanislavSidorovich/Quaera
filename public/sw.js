@@ -124,6 +124,25 @@ self.addEventListener('activate', (event) => {
  */
 const isSchema = (url) => url.pathname === '/data/schema.json';
 
+/**
+ * Данные, которым нельзя верить браузерному HTTP-кешу.
+ *
+ * `fetch()` внутри service worker'а — не «сходить в сеть», а «спросить
+ * сетевой слой», и слой этот сначала смотрит в свой HTTP-кеш. Пока `/data/*`
+ * раздавалось с `max-age=604800`, свежая копия оттуда не запрашивалась
+ * неделю: после переезда датасета на латиницу Chrome ещё сутки показывал
+ * прежние названия брендов, хотя стратегия «сеть вперёд» для схемы уже
+ * стояла и формально работала. Заголовок исправлен (см. public/_headers),
+ * но устройства, успевшие запомнить старое правило, дожили бы с ним
+ * до конца недели — их расколдовывает только явный `cache: 'no-cache'`,
+ * который заставляет спросить сервер независимо от срока годности.
+ *
+ * Не `'reload'`: тот запрещает и условный запрос тоже, то есть тянул бы
+ * 3.5 МБ там, где хватает ETag и ответа 304.
+ */
+const revalidating = (request) => new Request(request, { cache: 'no-cache' });
+const isData = (url) => url.pathname.startsWith('/data/');
+
 /** Файлы, которые можно докладывать в кеш по мере запроса: имя однозначно задаёт содержимое. */
 const isImmutable = (url) =>
   url.pathname.startsWith('/assets/') ||
@@ -173,7 +192,7 @@ self.addEventListener('fetch', (event) => {
   // Схема данных: сеть вперёд, кеш — запасной аэродром на офлайн.
   if (isSchema(url)) {
     event.respondWith(
-      fetch(request)
+      fetch(revalidating(request))
         .then((res) => {
           if (res.ok) {
             const copy = res.clone();
@@ -199,7 +218,10 @@ self.addEventListener('fetch', (event) => {
       if (hit) return hit;
       if (!isImmutable(url)) return fetch(request);
       try {
-        const res = await fetch(request);
+        // Промах кеша воркера у датасета означает «эта сборка хочет свежую
+        // копию» — значит и HTTP-кеш обязан спросить сервер, а не ответить
+        // сам (см. revalidating выше).
+        const res = await fetch(isData(url) ? revalidating(request) : request);
         if (res.ok) {
           const copy = res.clone();
           caches.open(isVendor(url) ? VENDOR : ASSETS).then((c) => c.put(request, copy));
