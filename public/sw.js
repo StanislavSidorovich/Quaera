@@ -107,12 +107,29 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Схема данных — единственный файл, у которого путь постоянный, а содержимое
+ * меняется вместе с датасетом. Отсюда сеть вперёд, как у навигации.
+ *
+ * Кеш вперёд здесь уже стоил ошибки: `/data/schema.json` лежал под тем же
+ * правилом, что бандлы с хешем в имени, и после переезда датасета в Японию
+ * экран «Данные» продолжал показывать российские регионы — притом что
+ * и сайт, и репозиторий были правильные. Форму такого документа приложение
+ * проверяет (isLocalized в SchemaSheet.tsx), но здесь форма совпадала:
+ * устарело именно содержимое, и поймать это может только запрос в сеть.
+ *
+ * Датасет остаётся кешем вперёд: 3.5 МБ по мобильному интернету, и он всё
+ * равно перезапрашивается на каждой сборке вместе с именем кеша ASSETS.
+ * Схема — 33 КБ, её свежесть стоит одного запроса.
+ */
+const isSchema = (url) => url.pathname === '/data/schema.json';
+
 /** Файлы, которые можно докладывать в кеш по мере запроса: имя однозначно задаёт содержимое. */
 const isImmutable = (url) =>
   url.pathname.startsWith('/assets/') ||
   url.pathname.startsWith('/sqljs/') ||
   url.pathname.startsWith('/pyodide/') ||
-  url.pathname.startsWith('/data/') ||
+  (url.pathname.startsWith('/data/') && !isSchema(url)) ||
   url.pathname.startsWith('/icons/');
 
 /**
@@ -152,6 +169,22 @@ self.addEventListener('fetch', (event) => {
   // Сам service worker перехватывать нельзя: браузер должен видеть его свежую
   // версию, иначе приложение навсегда застрянет на текущей сборке.
   if (url.pathname === '/sw.js') return;
+
+  // Схема данных: сеть вперёд, кеш — запасной аэродром на офлайн.
+  if (isSchema(url)) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(async () => (await fromCache(request)) ?? Response.error())
+    );
+    return;
+  }
 
   // Проверка целостности кеша при первом запросе после запуска воркера.
   // Не блокирует ответ: восстановление идёт фоном.
