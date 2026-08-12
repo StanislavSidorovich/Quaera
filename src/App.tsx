@@ -1188,7 +1188,19 @@ function TrackCards({
               <span className="track-card-name">{t.tracks.names[track]}</span>
               <span className="pill">{ready ? t.tracks.readyBadge(total) : t.tracks.draftBadge}</span>
             </div>
-            <p className="muted track-card-chain">{t.tracks.chainStage[track]}</p>
+            <p className="muted track-card-chain">
+              {t.tracks.chainStage[track]}
+              {/*
+               * Метка «код исполняется» — по исполнителю, а не по названию
+               * трека и не по режиму заданий. У model шесть DAX-заданий
+               * в режиме fill: человек там пишет код, но движка нет, ответ
+               * сверяется текстом, — проверка по режиму соврала бы именно
+               * на нём. См. tracks.runsCodeBadge в i18n.
+               */}
+              {getExecutor(track)?.runsCode !== false && (
+                <span className="track-card-runs">{t.tracks.runsCodeBadge}</span>
+              )}
+            </p>
             <p className="muted track-card-desc">{pack.description}</p>
             {ready ? (
               <>
@@ -1284,7 +1296,13 @@ function WelcomeProofBody({ onOnboarding }: { onOnboarding: () => void }) {
  * остаётся — там до карточек треков полэкрана, и легенда читается как ключ
  * к картинке, а не как второй список того же.
  */
-function ProofSummary({ onOnboarding }: { onOnboarding: () => void }) {
+function ProofSummary({
+  onOnboarding,
+  onSandbox,
+}: {
+  onOnboarding: () => void;
+  onSandbox: () => void;
+}) {
   const { t } = useI18n();
   return (
     <div className="welcome-proof">
@@ -1296,14 +1314,27 @@ function ProofSummary({ onOnboarding }: { onOnboarding: () => void }) {
           </details>
         ))}
       </div>
-      <button
-        type="button"
-        className="link-row"
-        onClick={onOnboarding}
-        style={{ margin: '12px 0 0' }}
-      >
-        {t.onboarding.entryLink}
-      </button>
+      {/*
+       * Две ссылки в одном ряду, а не двумя рядами подряд: рядов подряд
+       * уже стоил одной правки (граница карточки в тёмной теме тоньше
+       * межстрочного расстояния, и два ряда читались одним списком).
+       * Здесь они разделены точкой в одной строке — это один ряд и есть.
+       *
+       * Песочница вынесена сюда, хотя она есть и в боковом меню, и под
+       * картой навыков: оба места для того, кто уже внутри, а пришедшему
+       * по ссылке нужен вход, не требующий выбрать трек и начать занятие.
+       */}
+      <div className="welcome-proof-links">
+        <button type="button" className="link-row" onClick={onOnboarding}>
+          {t.onboarding.entryLink}
+        </button>
+        <span className="muted" aria-hidden>
+          ·
+        </span>
+        <button type="button" className="link-row" onClick={onSandbox}>
+          {t.welcome.sandboxLink}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1500,7 +1531,7 @@ function Home({
            * на первый экран ноутбука 1366×768. Смысл тот же: карточка целиком
            * отвечает на «что это», а решение начинается ниже, с треков.
            */}
-          <ProofSummary onOnboarding={onOpenOnboarding} />
+          <ProofSummary onOnboarding={onOpenOnboarding} onSandbox={onOpenSandbox} />
         </div>
       )}
 

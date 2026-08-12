@@ -43,6 +43,8 @@ export const en = {
     chainIntro: 'The same path for every business case, and each step has its own track.',
     chainSteps: ['business question', 'requirements', 'metric', 'data', 'analysis', 'model', 'insight', 'decision'],
     /** См. комментарий в ru.ts: подписи к картинке рядом с заголовком. */
+    /** См. комментарий в ru.ts: вход от вопроса пришедшего, а не от названия раздела. */
+    sandboxLink: 'Just try a query → Sandbox',
     loop: {
       queryLabel: 'your query',
       resultLabel: 'what came back',
@@ -86,6 +88,8 @@ export const en = {
     continueBtn: 'Continue →',
     startBtn: 'Start →',
     openBtn: 'Open skill map →',
+    /** См. комментарий в ru.ts: метка ставится по Executor.runsCode, не по режиму задания. */
+    runsCodeBadge: 'the code runs',
   },
   home: {
     dueLabel: 'due for review',
