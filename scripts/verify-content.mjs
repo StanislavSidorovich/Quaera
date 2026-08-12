@@ -2668,6 +2668,53 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
 // что ловит validateTranslation() в рантайме, но на этапе сборки, без запуска
 // приложения: перевод, ссылающийся на несуществующий id, или расходящееся
 // число вариантов predict-задания.
+/**
+ * Технические якоря перевода — имена функций, таблиц и колонок.
+ *
+ * Гейт выше сверяет **число** вариантов, а не то, что переведён тот самый
+ * текст. Дважды оказалось, что не тот: у `mdl-041` первый вариант ответа
+ * (он же верный) и обе подсказки говорили про `SUMX` и перебор
+ * `fact_sellout`, а русское задание — про переход контекста у `FILTER`;
+ * у `mdl-028` подсказка спрашивала про регион отгрузки вместо связи
+ * двух колонок дат. Англоязычный ученик видел бессмысленный «верный» ответ,
+ * и заметить это можно было только чтением обоих файлов подряд.
+ *
+ * Признак, который работает без знания языка: **идентификаторы перевод
+ * не меняет.** `CALCULATE`, `fact_sellout`, `np.where` обязаны пережить
+ * перевод; если из русского предложения они исчезли, переведено другое
+ * предложение. Числа в сверку не входят намеренно — их запись зависит
+ * от локали (126 911 191 против 126,911,191), а сами значения держатся
+ * блоками сверки с датасетом выше.
+ *
+ * Сверка односторонняя (что было в RU и пропало в EN): английский текст
+ * законно называет вещи, которых в русском нет, — «SKUs», «CTEs» во
+ * множественном числе, раскрытые аббревиатуры. Замер до постановки:
+ * 2083 пары, ноль ложных срабатываний.
+ */
+const anchorsOf = (s) =>
+  [...s.matchAll(/\b[A-Z]{3,}s?\b|\b[a-z]+(?:_[a-z0-9]+)+\b|\b[a-z]+\.[a-z_]+\b/g)].map((m) =>
+    m[0].replace(/([A-Z])s$/, '$1')
+  );
+
+function lostAnchors(ru, en) {
+  if (typeof ru !== 'string' || typeof en !== 'string') return [];
+  const present = anchorsOf(en);
+  return [...new Set(anchorsOf(ru).filter((a) => !present.includes(a)))];
+}
+
+/** Поля, где перевод идёт предложение в предложение и сопоставим позиционно. */
+function translationPairs(orig, tr) {
+  const pairs = [];
+  (tr.options ?? []).forEach((o, i) => {
+    pairs.push([`варианте ${i + 1}`, orig.options?.[i]?.label, o.label]);
+    pairs.push([`разборе варианта ${i + 1}`, orig.options?.[i]?.why, o.why]);
+  });
+  (tr.hints ?? []).forEach((h, i) => pairs.push([`подсказке ${i + 1}`, orig.hints?.[i], h]));
+  if (tr.predictQuestion) pairs.push(['вопросе', orig.predictQuestion, tr.predictQuestion]);
+  if (tr.explain) pairs.push(['разборе', orig.explain, tr.explain]);
+  return pairs;
+}
+
 {
   const checkPackTranslation = (packId) => {
     const enPath = path.join(root, 'src', 'content', 'packs', `${packId}.en.json`);
@@ -2692,6 +2739,12 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
       }
       if (t.options && (orig.options ?? []).length !== t.options.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`);
+        ok = false;
+      }
+      for (const [where, ru, en] of translationPairs(orig, t)) {
+        const lost = lostAnchors(ru, en);
+        if (!lost.length) continue;
+        fail(`${packId}.en`, `у задания ${t.id} в ${where} перевод потерял ${lost.join(', ')} — похоже, переведён не тот текст`);
         ok = false;
       }
     }

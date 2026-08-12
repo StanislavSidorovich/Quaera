@@ -885,8 +885,8 @@
       "scenario": "The slicer is built on:\n  fact_sellout.week_start\n\nThere's no separate relationship\nwith fact_sellin — it has its\nown month_start column, and\nit isn't linked to the\nweek_start slicer.",
       "predictQuestion": "What does the shipment measure (fact_sellin) show with this slicer?",
       "hints": [
-        "Ask what region means in a shipment row: where goods ship from, or where they end up?",
-        "There's no relationship between the two fact tables' date columns — trace whether a filter has any path at all between them."
+        "Ask: are week_start in fact_sellout and month_start in fact_sellin related to each other directly?",
+        "A slicer travels along the model's relationships, not along the resemblance between two columns with a similar purpose."
       ],
       "explain": "Without a shared date table, every fact table is on its own: a slicer built on its own date column filters only that table and whatever is directly connected to it. fact_sellout and fact_sellin have no relationship between them here at all — different columns, different names, different granularity, week_start versus month_start — and a filter placed on one has no path at all to the other. The result is worse than an outright error: the report silently shows a shipments number that ignores the slicer, and it's easy to mistake for correct, because nothing visually signals a problem.",
       "options": [
@@ -1263,13 +1263,13 @@
       "goal": "Work out what the measure sees at each step of the iteration.",
       "predictQuestion": "What does [Total Revenue] compute at each step of FILTER?",
       "hints": [
-        "SUMX isn't an ordinary aggregating function like SUM — it's an iterator: it walks rows one at a time.",
-        "Ask: who creates row context in this example — a calculated column (like mdl-022), or FILTER itself?"
+        "FILTER is an iterator, so it creates a row context. Invoking a measure inside it is wrapped in CALCULATE. What follows from that?",
+        "If the measure returned the grand total, what would the whole formula come out to?"
       ],
       "explain": "The \"iterator plus a measure inside\" construction is DAX's workhorse, and it rests entirely on context transition. FILTER iterates brands, creating a row context for each; invoking [Total Revenue] inside it is implicitly wrapped in CALCULATE, and that CALCULATE translates the row context into a filter, \"brand = current.\" The measure computes exactly that brand's revenue, the condition compares it to the threshold, and FILTER keeps only the ones that qualify. Without context transition, formulas like this would be impossible: the measure would return the same total on every step. The practical tell for spotting this in someone else's code: if a measure is invoked inside an iterator, or there's an explicit CALCULATE, context transition is definitely happening, and the result needs reading with that in mind.",
       "options": [
         {
-          "label": "FILTER itself creates a row context for every row of fact_sellout and evaluates the expression passed to it inside that context — before summing the results at the end",
+          "label": "The current brand's revenue: context transition turns the iteration's row into a brand filter, and the measure counts only that brand's sales",
           "why": "FILTER creates a row context for each brand, and invoking a measure inside it is implicitly wrapped in CALCULATE — meaning context transition happens. The current brand becomes a filter, and the measure returns exactly that brand's revenue, not the grand total."
         },
         {
