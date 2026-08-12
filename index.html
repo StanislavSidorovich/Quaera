@@ -7,7 +7,7 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
     <meta name="theme-color" content="#0b1020" />
-    <meta name="description" content="Тренажёр аналитика данных: SQL, pandas, метрики FMCG и фармы. Запросы выполняются по-настоящему, в браузере и офлайн." />
+    <meta name="description" content="Тренажёр аналитика данных: SQL, pandas, метрики FMCG и фармы. Запрос выполняется в браузере, ответ сверяется с данными. Офлайн, без регистрации." />
 
     <!--
       Авторство в самой странице: приложение раздаётся по HTTP отдельно
@@ -23,16 +23,28 @@
       Карточка ссылки в соцсетях и мессенджерах. og:image обязан быть абсолютным
       URL — относительный путь превью не покажет, поэтому адрес прописан явно
       и завязан на боевой домен. Картинка генерируется scripts/gen-icons.mjs.
+
+      Карточка английская, а страница ниже по-прежнему объявляет lang="ru",
+      и это не рассогласование, а то же решение, что и в initialLocale():
+      русский интерфейс достаётся тому, у кого русский браузер, английский —
+      всем остальным. Ссылку открывают из LinkedIn, то есть чаще всего
+      именно «все остальные», и карточка обязана совпасть с тем экраном,
+      который человек увидит после клика, а не с языком автора.
+
+      Одна карточка на всех — ограничение статики: og-теги отдаются
+      до всякого JavaScript, и подстроиться под Accept-Language без
+      серверной функции нельзя. og:locale:alternate это и говорит.
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Querium" />
     <meta property="og:url" content="https://querium.pages.dev/" />
-    <meta property="og:title" content="Querium — тренажёр аналитика данных" />
-    <meta property="og:description" content="SQL, pandas и метрики FMCG/фармы на одном сквозном датасете дистрибьютора. Запросы выполняются по-настоящему — в браузере, офлайн, без регистрации." />
+    <meta property="og:title" content="Querium — an analytics trainer where the query actually runs" />
+    <meta property="og:description" content="SQL, pandas and FMCG/pharma metrics on one continuous distributor dataset. Queries execute in the browser, offline, with no sign-up." />
     <meta property="og:image" content="https://querium.pages.dev/icons/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ru_RU" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
