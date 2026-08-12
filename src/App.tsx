@@ -7,6 +7,7 @@ import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
 import { AUTHOR_LINKEDIN, AUTHOR_REPO } from './links';
+import { promptInstall, subscribeInstallAvailable } from './pwa/installPrompt';
 import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
@@ -2109,6 +2110,10 @@ function About({
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<'ok' | 'error' | null>(null);
+  // false до первого beforeinstallprompt и снова false после prompt() —
+  // событие одноразовое, см. src/pwa/installPrompt.ts.
+  const [installAvailable, setInstallAvailable] = useState(false);
+  useEffect(() => subscribeInstallAvailable(setInstallAvailable), []);
 
   async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -2247,6 +2252,29 @@ function About({
           {t.about.tracksWhyBody}
         </p>
       </div>
+
+      {/*
+       * Условная карточка, во всю ширину и вне about-columns намеренно:
+       * колонки ниже сбалансированы по высоте под ровно четыре карточки
+       * (см. комментарий у about-columns), и пятая, появляющаяся только
+       * иногда, сдвинула бы баланс и оттеснила «Автора» от низа второй
+       * колонки — то самое, что там прямо запрещено правилом «остаётся
+       * последним и внизу».
+       *
+       * Видна только пока браузер прислал beforeinstallprompt
+       * (Chrome/Edge/Android) и установка ещё не случилась — на iOS Safari
+       * и в уже установленном приложении события нет вовсе, и пустая
+       * кнопка обманывала бы.
+       */}
+      {installAvailable && (
+        <div className="card">
+          <h2>{t.about.installTitle}</h2>
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.installBody}</p>
+          <button type="button" className="btn secondary" onClick={() => { void promptInstall(); }}>
+            {t.about.installBtn}
+          </button>
+        </div>
+      )}
 
       {/*
        * Четыре закрывающие карточки — колоночным потоком, а не сеткой.
@@ -2494,6 +2522,9 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
         </ol>
         <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
           {t.onboarding.stepsNote}
+        </p>
+        <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+          {t.onboarding.installNote}
         </p>
       </div>
 

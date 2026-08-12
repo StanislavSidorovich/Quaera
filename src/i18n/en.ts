@@ -182,6 +182,11 @@ export const en = {
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
     importError: "Doesn't look like a Querium progress file. Check you picked the right one",
+    /** См. комментарий в ru.ts: карточка видна только когда beforeinstallprompt пришёл. */
+    installTitle: 'Install the app',
+    installBody:
+      'You can install the trainer on your device like a regular app: its own icon, its own entry in the app list, no browser tabs around it.',
+    installBtn: 'Install',
     authorTitle: 'Author and licence',
     authorBody:
       'Querium was built by Stanislav Sidorovich, an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
@@ -277,6 +282,9 @@ export const en = {
     /** См. довод в ru.ts: приватность и бэкап сказаны на «О тренажёре», здесь — что делать. */
     stepsNote:
       'If you switch devices or clear site data, download the progress file from the About page: that is the only way to carry it over.',
+    /** См. комментарий в ru.ts: не пересказываем механику, только называем адрес действия. */
+    installNote:
+      'You can install the trainer as an app from the About page, in the Backup section, and download the Python runtime for offline pandas ahead of time, on the Python track itself, without waiting for the first task.',
 
     extraTitle: 'What to learn elsewhere',
     extraIntro:
