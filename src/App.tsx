@@ -377,6 +377,14 @@ export default function App() {
    * от человека, который через неделю вернулся уже по Wi-Fi.
    */
   const [consentDeferred, setConsentDeferred] = useState(false);
+  /**
+   * Трек только что выбран — главной надо подвинуть себя к выбору (см.
+   * switchTrack). Одноразовый сигнал, который Home гасит сам, а не счётчик
+   * и не «прокрутить при монтировании»: Home монтируется и от нажатия
+   * «Главная» в меню, и там двигать экран не за чем — человек попросил
+   * главную целиком, а не трек.
+   */
+  const [pendingChooserScroll, setPendingChooserScroll] = useState(false);
   const schema = useSchema();
 
   /**
@@ -844,6 +852,20 @@ export default function App() {
     // Уход с трека закрывает вопрос о загрузке: вернувшись, человек снова
     // увидит карточку целиком, а не свёрнутую строку от прошлого отказа.
     setConsentDeferred(false);
+    /*
+     * Выбор трека — единственное действие, после которого главную надо
+     * подвинуть: меняется всё ниже переключателя (счётчики, полосы, карта
+     * навыков), а «Начать занятие» при этом стоит ниже сгиба и на 1280×800
+     * не видно ни новичку, ни вернувшемуся (замер: кнопка на y=1318 и y=949
+     * при высоте окна 800). Человек видит, что карта навыков сменилась,
+     * и не догадывается, что действие есть.
+     *
+     * Флаг, а не прокрутка прямо здесь: экран мог быть другим (трек
+     * переключают и из бокового меню), Home в этот момент ещё не смонтирован,
+     * и считать его геометрию неоткуда. Home прокрутит себя сам после
+     * отрисовки и погасит флаг — см. scrollToChooser там же.
+     */
+    setPendingChooserScroll(true);
     try {
       localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
     } catch {
@@ -1148,6 +1170,8 @@ export default function App() {
                */
               resume={pendingSession?.track === activeTrack ? pendingSessionLabel : null}
               onResume={resumeSession}
+              scrollToChooser={pendingChooserScroll}
+              onChooserScrolled={() => setPendingChooserScroll(false)}
             />
           )}
 
@@ -1609,6 +1633,8 @@ function Home({
   onOpenTrackIntro,
   resume,
   onResume,
+  scrollToChooser,
+  onChooserScrolled,
 }: {
   activeTrack: Track;
   activePack: Pack;
@@ -1641,6 +1667,10 @@ function Home({
   /** Подпись шага незаконченного занятия этого трека («Задача 2 из 5»), null — продолжать нечего. */
   resume: string | null;
   onResume: () => void;
+  /** Трек только что выбран — подвинуть экран к выбору (см. switchTrack в App). */
+  scrollToChooser: boolean;
+  /** Сигнал получен и отработан — гасим его, чтобы он не сработал второй раз. */
+  onChooserScrolled: () => void;
 }) {
   const { t, locale } = useI18n();
   const byTier = useMemo(() => {
@@ -1683,6 +1713,54 @@ function Home({
   // Показываем ровно один раз, до первой же решённой задачи или начатого навыка —
   // дальше это уже не «что это такое», а лишняя строчка над картой навыков.
   const isNewUser = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
+
+  /**
+   * Куда двигать экран после выбора трека. Два якоря, а не один, и второй
+   * обязателен — это показал замер, а не осторожность.
+   *
+   * Просили «доводить до ссылки „Что входит в тренажёр“»: над ней стоит только
+   * карточка-питч, и на высоком окне после такой прокрутки видно всё разом —
+   * карточки треков, ссылку на трек и кнопку занятия. Но питч показывается
+   * ровно один раз (isNewUser), и у вернувшегося человека эта ссылка стоит
+   * на y=85: прокрутка к ней не делает ничего, а кнопка как была на y=949
+   * при окне 800, так и осталась за сгибом. То есть один якорь чинил бы
+   * ровно первый визит и ровно на высоком экране.
+   *
+   * Поэтому якорь — нижняя граница: доводим до ссылки, а если кнопка занятия
+   * при этом всё равно не попала в окно, прокручиваем ровно настолько, чтобы
+   * попала. На 1280×800 это стоит верхних ~70px карточек треков — но трек
+   * только что выбран нажатием, а действие, которого человек не находил,
+   * оказывается на экране.
+   */
+  const chooserRef = useRef<HTMLButtonElement>(null);
+  const startRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!scrollToChooser) return;
+    onChooserScrolled();
+    const chooser = chooserRef.current;
+    if (!chooser) return;
+    const pageY = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
+    let top = pageY(chooser) - 12;
+    const start = startRef.current;
+    if (start) {
+      // Нижняя граница кнопки, а не верхняя: показать её наполовину — то же,
+      // что не показать, человек всё равно не прочтёт подпись целиком.
+      const needed = pageY(start) + start.offsetHeight + 16 - window.innerHeight;
+      if (needed > top) top = needed;
+    }
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    /*
+     * Мгновенно, а не плавно, и это замер, а не вкус. Плавную прокрутку
+     * отменяет перерисовка, которую вызывает сам переключатель треков:
+     * при уходе с pandas исчезает карточка согласия на рантайм, документ
+     * садится с 2785 до 2597, браузер пересчитывает якорь прокрутки —
+     * и анимация умирает, не начавшись (замер на 390×844: вызов
+     * scrollTo(627, smooth) есть, scrollY остался 0). То есть плавность
+     * здесь означала бы «иногда не прокрутились вовсе», причём именно
+     * на переходе, который делают чаще прочих.
+     */
+    window.scrollTo({ top: Math.max(0, Math.min(top, maxScroll)), behavior: 'auto' });
+  }, [scrollToChooser, onChooserScrolled]);
 
   return (
     <>
@@ -1733,6 +1811,7 @@ function Home({
        * конкретного трека, а не после.
        */}
       <button
+        ref={chooserRef}
         type="button"
         className="link-row"
         onClick={onOpenAbout}
@@ -1912,7 +1991,12 @@ function Home({
                   </p>
                 </>
               )}
-              <button className={resume ? 'btn secondary' : 'btn'} onClick={onStart} disabled={loading}>
+              <button
+                ref={startRef}
+                className={resume ? 'btn secondary' : 'btn'}
+                onClick={onStart}
+                disabled={loading}
+              >
                 {loading
                   ? heavyRuntime
                     ? t.home.loadingRuntime
