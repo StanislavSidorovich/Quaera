@@ -109,6 +109,8 @@ export const en = {
     resumeBtn: 'Back to your session',
     resumeNote: (step: string) => `Left unfinished: ${step.toLowerCase()}. Everything you did is still there.`,
     loading: 'Loading data…',
+    loadingRuntime: 'Loading Python with pandas…',
+    loadingRuntimeNote: 'Downloaded once, then served from device cache and works offline.',
     heroNote:
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your queries run against 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:

@@ -44,6 +44,32 @@ import {
 
 const SESSION_SIZE = 5;
 
+/**
+ * Просим браузер не вытеснять хранилище этого сайта.
+ *
+ * Кеш рантайма переживает и перезагрузку, и деплой — это проверено замером
+ * (офлайн, при остановленном сервере, pandas поднимается за полсекунды).
+ * Чего он не переживает — уборку по нехватке места: 52 МБ рантайма плюс
+ * 3.5 МБ датасета делают этот источник первым кандидатом на вытеснение,
+ * а согласие на загрузку хранится навсегда, и повторные 52 МБ поедут молча,
+ * возможно по мобильному интернету. `persist()` переводит хранилище
+ * в разряд тех, что убирают последними.
+ *
+ * Зовём ровно в момент согласия на тяжёлую загрузку, а не при старте
+ * приложения: Chrome отвечает молча и решает по «вовлечённости» — установлено
+ * ли приложение, часто ли заходят. На первой секунде первого визита ответом
+ * будет отказ, и второго шанса спросить в этом визите не будет. Момент
+ * согласия — единственный, когда человек уже выразил намерение,
+ * и одновременно единственный, когда есть что беречь.
+ *
+ * Ответ намеренно не показываем: отказ ничего не ломает (всё продолжает
+ * работать, просто с риском уборки), а объяснить его человеку нечем —
+ * решение внутри браузера и от нас не зависит.
+ */
+function requestPersistentStorage(): void {
+  void navigator.storage?.persist?.().catch(() => undefined);
+}
+
 type FontSize = 'md' | 'lg' | 'xl';
 const FONT_SIZE_ORDER: FontSize[] = ['md', 'lg', 'xl'];
 const FONT_SIZE_STORAGE_KEY = 'querium-font-size';
@@ -840,6 +866,15 @@ export default function App() {
     setSchemaOpen(true);
   }
 
+  /**
+   * Нужен ли этому треку тяжёлый рантайм — опознаём по `confirmDownload`:
+   * он есть ровно у того исполнителя, которому есть что спрашивать перед
+   * загрузкой. По имени трека было бы короче и разошлось бы с реальностью
+   * на первом же новом исполнителе — тот же довод, что у метки «код
+   * исполняется», которая берёт `runsCode` у исполнителя, а не у контента.
+   */
+  const heavyRuntime = Boolean(executor?.confirmDownload);
+
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
   /**
@@ -1085,9 +1120,13 @@ export default function App() {
               startedCount={startedCount}
               solvedCount={solvedCount}
               loading={load.phase === 'loading' || load.phase === 'idle'}
+              heavyRuntime={heavyRuntime}
               consent={load.phase === 'consent' ? load.bytes : null}
               consentDeferred={consentDeferred}
-              onConfirmDownload={() => executor?.confirmDownload?.()}
+              onConfirmDownload={() => {
+                requestPersistentStorage();
+                executor?.confirmDownload?.();
+              }}
               onDeferConsent={() => setConsentDeferred(true)}
               onResumeConsent={() => setConsentDeferred(false)}
               onStart={startSession}
@@ -1552,6 +1591,7 @@ function Home({
   startedCount,
   solvedCount,
   loading,
+  heavyRuntime,
   consent,
   consentDeferred,
   onConfirmDownload,
@@ -1577,6 +1617,8 @@ function Home({
   /** Решено заданий в этом треке — не суммарно по всем (см. solvedCount в App). */
   solvedCount: number;
   loading: boolean;
+  /** Треку нужен тяжёлый рантайм (Pyodide) — от этого зависит подпись под кнопкой во время загрузки. */
+  heavyRuntime: boolean;
   /** Байт для скачивания, если исполнитель ждёт согласия (см. LoadState 'consent'), иначе null. */
   consent: number | null;
   /** Человек нажал «Позже» — карточка согласия свёрнута до одной строки. */
@@ -1870,7 +1912,13 @@ function Home({
                 </>
               )}
               <button className={resume ? 'btn secondary' : 'btn'} onClick={onStart} disabled={loading}>
-                {loading ? t.home.loading : dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin}
+                {loading
+                  ? heavyRuntime
+                    ? t.home.loadingRuntime
+                    : t.home.loading
+                  : dueCount > 0
+                    ? t.home.startBtnResume
+                    : t.home.startBtnBegin}
               </button>
               {/*
                * Загрузка Pyodide (~50 МБ) занимает секунды, а не миллисекунды —
@@ -1885,6 +1933,18 @@ function Home({
                 <div className="load-progress" role="presentation">
                   <div className="load-progress-bar" />
                 </div>
+              )}
+              {/*
+               * Подпись только у тяжёлого рантайма. У датасета в 3.5 МБ
+               * полоска исчезает раньше, чем строку успеют прочитать, —
+               * а вот десятки секунд на 52 МБ без объяснения читаются как
+               * «качает заново каждый раз», и это ровно тот вопрос, который
+               * пришёл от человека, прошедшего тренажёр.
+               */}
+              {loading && heavyRuntime && (
+                <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                  {t.home.loadingRuntimeNote}
+                </p>
               )}
               <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
                 {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
