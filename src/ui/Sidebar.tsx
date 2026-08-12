@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { packForTrack } from '../content';
 import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
+import { AUTHOR_LINKEDIN, AUTHOR_NAME, COPYRIGHT_YEAR } from '../links';
 import type { Progress } from '../srs/store';
 
 /**
@@ -191,6 +192,32 @@ export function Sidebar({
             <IconInfo />
             {t.nav.about}
           </button>
+
+          {/*
+           * Копирайт — последней строкой меню, а не пунктом.
+           *
+           * Смысл у него другой, чем у всего, что выше: пункты открывают
+           * разделы, это ничего не открывает внутри приложения и нажимается
+           * раз в жизни. Поэтому и набран прозой на 11px, а не кнопкой:
+           * сделай его кнопкой — и в подвале окажется три равноправных
+           * пункта, один из которых уводит с сайта без предупреждения.
+           *
+           * Ни года, ни имени переводить нечего (см. links.ts), поэтому
+           * строка одна на обе локали; ссылке нужна подпись для скринридера,
+           * потому что «Stanislav Sidorovich» само по себе не говорит, куда
+           * ведёт, — её и берём из уже переведённого about.linkedinBtn.
+           */}
+          <p className="sidebar-legal">
+            © {COPYRIGHT_YEAR}{' '}
+            <a
+              href={AUTHOR_LINKEDIN}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t.about.linkedinBtn}
+            >
+              {AUTHOR_NAME}
+            </a>
+          </p>
         </div>
       </div>
     </nav>
