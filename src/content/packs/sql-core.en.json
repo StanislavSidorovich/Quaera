@@ -165,7 +165,7 @@
       "id": "sql-024",
       "title": "Discount for the «Rigla» negotiation",
       "brief": "The category manager is weighing a 10% discount for the «Rhinolar» brand ahead of negotiations with the «Farmalux» chain, and wants to see discounted prices right next to the current ones.",
-      "goal": "Return for all products of the «Rhinolar» brand: product_name, list_price and discount_price — the price with a 10% discount, rounded to two decimals.",
+      "goal": "Return for all products of the «Rhinolar» brand: product_name, list_price and discount_price (the price with a 10% discount, rounded to two decimals).",
       "hints": [
         "A 10% discount is multiplying the price by 0.9, not a separate percentage-subtraction formula.",
         "Like in sql-001, the computed result needs a clear name via AS."
@@ -318,7 +318,7 @@
       "id": "sql-006",
       "title": "How many outlets are outside chains",
       "brief": "The development department wants to gauge the size of independent retail: how many outlets don't belong to any chain. Distributors don't count here — they aren't points of sale.",
-      "goal": "Return a single row with a single column outlets — the count of customers without a chain, excluding distributors.",
+      "goal": "Return a single row with a single column, outlets (the count of customers without a chain, excluding distributors).",
       "hints": [
         "A null check is written only with IS NULL — the equals sign doesn't work here.",
         "dim_customer holds both distributors and points of sale — check the customer_type column."
@@ -359,7 +359,7 @@
       "id": "sql-030",
       "title": "A label for independent pharmacies",
       "brief": "For a pharmacy-channel summary you need a human-readable list of outlets: chain pharmacies show the chain name, independent ones show a clear label instead of a blank cell.",
-      "goal": "For customer_type = 'pharmacy', return customer_name and chain_display — chain_name, or 'Independent pharmacy' if it's empty.",
+      "goal": "For customer_type = 'pharmacy', return customer_name and chain_display (chain_name, or 'Independent pharmacy' if it's empty).",
       "hints": [
         "The function that returns the first non-null value from a list of arguments is COALESCE(column, fallback_value).",
         "This is a display task, not a filtering one: don't touch WHERE — independent pharmacies should stay in the result."
@@ -430,7 +430,7 @@
       "id": "sql-008",
       "title": "Price-list summary",
       "brief": "Before defending the pricing strategy, you need a single row of numbers about the product catalog.",
-      "goal": "Return one row: products — the number of SKUs, brands — the number of distinct brands, avg_price — the average price, rounded to two decimal places.",
+      "goal": "Return one row: products (the number of SKUs), brands (the number of distinct brands), avg_price (the average price, rounded to two decimal places).",
       "hints": [
         "Distinct brands is COUNT(DISTINCT ...).",
         "Rounding: ROUND(expression, 2)."
@@ -441,7 +441,7 @@
       "id": "sql-032",
       "title": "Price spread in Pharma",
       "brief": "Before a price revision, the CFO asks for a quick estimate of the price spread in the Pharma division: from the cheapest drug to the most expensive.",
-      "goal": "For the Pharma division, return one row: cheapest — the minimum list_price, priciest — the maximum list_price.",
+      "goal": "For the Pharma division, return one row: cheapest (the minimum list_price) and priciest (the maximum list_price).",
       "hints": [
         "Spread is two separate aggregate functions, MIN and MAX, not a single formula.",
         "Like other aggregates, they need an alias — otherwise the report columns will be called MIN(list_price) and MAX(list_price)."
@@ -482,7 +482,7 @@
       "id": "sql-009",
       "title": "Brand assortment",
       "brief": "A category manager wants to know how wide each brand's lineup is in FMCG, and how average price differs.",
-      "goal": "For the FMCG division only, return per brand: brand, sku_count — number of SKUs, avg_price — average price rounded to two decimal places.",
+      "goal": "For the FMCG division only, return per brand: brand, sku_count (number of SKUs), avg_price (average price rounded to two decimal places).",
       "hints": [
         "A non-aggregated column in SELECT must appear in GROUP BY.",
         "The division filter applies before grouping, so it belongs in WHERE."
@@ -493,7 +493,7 @@
       "id": "sql-010",
       "title": "Monthly sales trend",
       "brief": "The department head asks for monthly unit sales for 2025, to see the seasonal profile.",
-      "goal": "Return month in YYYY-MM format and units — the sum of units, ordered ascending by month.",
+      "goal": "Return month in YYYY-MM format and units (the sum of units), ordered ascending by month.",
       "hints": [
         "We're summing units, not counting rows.",
         "You must group by the same expression as the first column. You don't have to repeat it — the column number is enough."
@@ -504,7 +504,7 @@
       "id": "sql-034",
       "title": "Division × category matrix",
       "brief": "A category manager is building an assortment matrix and asks for the SKU count and average price for every combination of division and category.",
-      "goal": "Return division, category, sku_count — the number of products, and avg_price — the average price rounded to two decimal places, for every combination of division and category.",
+      "goal": "Return division, category, sku_count (the number of products) and avg_price (the average price rounded to two decimal places), for every combination of division and category.",
       "hints": [
         "The report's granularity isn't division or category alone — it's their combination.",
         "GROUP BY lists both columns, comma-separated, in the same order as in SELECT."
@@ -586,7 +586,7 @@
       "id": "sql-049",
       "title": "High-revenue brands with wide coverage",
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets — either trait alone proves nothing.",
-      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets — the count of distinct outlets with sales, for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
+      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
         "Count distinct customers with the same function as in SELECT — DISTINCT customer_id.",
         "After HAVING, sorting goes from higher revenue to lower — the keyword goes after the column name."
@@ -597,7 +597,7 @@
       "id": "sql-012",
       "title": "Revenue by brand",
       "brief": "The commercial director's standard Monday query: how brands performed in H1 2026.",
-      "goal": "Return brand and revenue — the sum of revenue for the period 2026-01-01 through 2026-06-30, rounded to whole numbers, ordered by revenue descending.",
+      "goal": "Return brand and revenue (the sum of revenue for the period 2026-01-01 through 2026-06-30, rounded to whole numbers), ordered by revenue descending.",
       "hints": [
         "The fact lives in fact_sellout, the brand name in dim_product. product_id links them.",
         "Filter the period on f.week_start."
@@ -649,7 +649,7 @@
       "id": "sql-014",
       "title": "Where did the new product reach",
       "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report — it's built specifically for them, so they must not disappear.",
-      "goal": "Return for all 16 regions: region_name and units — total unit sales of «Vitanor Forte x30» across all time. Where there were no sales, show 0.",
+      "goal": "Return for all 16 regions: region_name and units (total unit sales of «Vitanor Forte x30» across all time). Where there were no sales, show 0.",
       "hints": [
         "Start from the table whose rows all need to survive — the region directory.",
         "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product — the ones the report exists to show.",
@@ -732,7 +732,7 @@
       "id": "sql-041",
       "title": "Proving the fan-out with numbers",
       "brief": "Before including the join to dim_promo in a standing report (as in sql-013), an analyst wants to formally show that it multiplies facts, rather than rely on intuition.",
-      "goal": "For the «Nettora» brand in 2025, return one row: rows_before — the number of fact_sellout rows after an ordinary join to dim_product, rows_after — the number of rows that would result from also joining dim_promo on brand (JOIN dim_promo m ON m.brand = p.brand).",
+      "goal": "For the «Nettora» brand in 2025, return one row: rows_before (the number of fact_sellout rows after an ordinary join to dim_product) and rows_after (the number of rows that would result from also joining dim_promo on brand, JOIN dim_promo m ON m.brand = p.brand).",
       "hints": [
         "Both counts are essentially the same query, differing by exactly one JOIN — insert it as a second subquery in SELECT.",
         "No grouping needed: both parts simply count COUNT(*) over the whole selection."
@@ -743,7 +743,7 @@
       "id": "sql-050",
       "title": "«Nettora» promo revenue without duplication",
       "brief": "After the sql-013 walkthrough, it's clear why joining dim_promo on brand doubled up revenue. Trade marketing still wants the real breakdown of «Nettora» brand sales for 2025 by promo mechanic.",
-      "goal": "For 2025, return for the «Nettora» brand: mechanic and revenue — the sum of revenue for that mechanic, rounded to whole numbers. Ordered by revenue descending.",
+      "goal": "For 2025, return for the «Nettora» brand: mechanic and revenue (the sum of revenue for that mechanic, rounded to whole numbers). Ordered by revenue descending.",
       "hints": [
         "The key that unambiguously links a sale to a specific promotion already exists in the fact table itself — it's promo_id, not brand.",
         "Every fact_sellout row has exactly one promo_id value (or NULL), so this join can't multiply rows — unlike the join on brand in sql-013."
@@ -754,7 +754,7 @@
       "id": "sql-015",
       "title": "Promo vs. base sales",
       "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
-      "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue — revenue during promotions and outside them, both rounded to whole numbers.",
+      "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue (revenue during promotions and outside them, both rounded to whole numbers).",
       "hints": [
         "A promo is checked with IS NOT NULL, not with a comparison.",
         "CASE goes inside SUM: you're summing not all rows, but only the matching ones."
@@ -795,7 +795,7 @@
       "id": "sql-043",
       "title": "Price-list tiers",
       "brief": "A category manager wants to see the portfolio not by brand but by price tier — this feeds a conversation with procurement about where the lineup is concentrated.",
-      "goal": "Return tier — 'Budget' (list_price < 100), 'Mid' (100 ≤ list_price < 300), or 'Premium' (list_price ≥ 300), and sku_count — the number of products in each tier.",
+      "goal": "Return tier ('Budget' for list_price < 100, 'Mid' for 100 ≤ list_price < 300, 'Premium' for list_price ≥ 300) and sku_count (the number of products in each tier).",
       "hints": [
         "You can group directly on the CASE expression's alias — shorter than repeating the whole construct in GROUP BY.",
         "Branch order matters: WHEN conditions are checked in sequence, and once one matches, the rest are never evaluated."
@@ -806,7 +806,7 @@
       "id": "sql-016",
       "title": "A brand's share within its division",
       "brief": "The annual presentation needs portfolio structure: what share of revenue each brand holds within its own division.",
-      "goal": "For 2025, return: division, brand, revenue (rounded to whole numbers) and share_pct — the brand's share of its division's revenue in percent, rounded to one decimal place.",
+      "goal": "For 2025, return: division, brand, revenue (rounded to whole numbers) and share_pct (the brand's share of its division's revenue in percent, rounded to one decimal place).",
       "hints": [
         "You can build the second CTE directly on the first — no need to re-read the fact table.",
         "Integer division in SQLite truncates the fractional part: multiply by 100.0, not 100."
@@ -847,7 +847,7 @@
       "id": "sql-045",
       "title": "Revenue per active outlet by channel",
       "brief": "The commercial director compares channels not by absolute revenue but by per-outlet efficiency — otherwise a channel with a hundred outlets always looks stronger than a niche one, even if it performs worse.",
-      "goal": "For 2025, return channel, revenue (sum of revenue, rounded to whole numbers), outlets (count of distinct outlets with at least one sale), and revenue_per_outlet — revenue divided by outlet count, rounded to whole numbers.",
+      "goal": "For 2025, return channel, revenue (sum of revenue, rounded to whole numbers), outlets (count of distinct outlets with at least one sale), and revenue_per_outlet (revenue divided by outlet count, rounded to whole numbers).",
       "hints": [
         "Both aggregates — SUM and COUNT(DISTINCT) — are computed in one CTE on the same key, channel.",
         "Revenue divided by outlet count is no longer an aggregate, just ordinary division, so it belongs in the final SELECT, not inside the CTE. Don't forget to multiply by 1.0, or the division will be integer division."
@@ -858,7 +858,7 @@
       "id": "sql-021",
       "title": "Duplicates in a raw extract",
       "brief": "A sales extract arrives from the accounting system, and it regularly contains fully duplicated rows — the export was run twice. Before loading it into the mart, you need to gauge the scale.",
-      "goal": "From the staging_raw_sellout table, return one row: total_rows — total rows, unique_rows — how many unique records remain if a row counts as a duplicate when date, customer, SKU, quantity, and revenue all match, and duplicate_rows — the difference between them. The technical row number raw_id is not part of the comparison.",
+      "goal": "From the staging_raw_sellout table, return one row: total_rows (total rows), unique_rows (how many unique records remain if a row counts as a duplicate when date, customer, SKU, quantity, and revenue all match) and duplicate_rows (the difference between them). The technical row number raw_id is not part of the comparison.",
       "hints": [
         "COUNT(DISTINCT ...) takes only one expression — concatenate the fields into a string with the || operator.",
         "If even one concatenation operand is NULL, the whole concatenation becomes NULL and the row drops out of the count. Replace empty values with a placeholder via COALESCE."
@@ -869,7 +869,7 @@
       "id": "sql-046",
       "title": "A chain spelled two ways",
       "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems romanised one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
-      "goal": "Return one row: written_ya — the number of rows where customer_name contains «Ichiba», written_ia — where it contains «Itiba», total_chain — their sum: both groups belong to the same chain.",
+      "goal": "Return one row: written_ya (the number of rows where customer_name contains «Ichiba»), written_ia (where it contains «Itiba») and total_chain (their sum: both groups belong to the same chain).",
       "hints": [
         "The two spellings differ in their first letter — Ya against Ia. Catch both variants with separate LIKE conditions.",
         "The sum of written_ya and written_ia should match total_chain — that's the check that the variants don't overlap and nothing is lost."
@@ -940,7 +940,7 @@
       "id": "sql-018",
       "title": "Top 3 SKUs within each brand",
       "brief": "A category manager is preparing an assortment cut and wants to see the core: the three best-selling SKUs in each brand.",
-      "goal": "For 2025, return brand, product_name, revenue (rounded to whole numbers), and rnk — the SKU's rank within its brand by revenue. Keep only the top three ranks in each brand.",
+      "goal": "For 2025, return brand, product_name, revenue (rounded to whole numbers), and rnk (the SKU's rank within its brand by revenue). Keep only the top three ranks in each brand.",
       "hints": [
         "\"Within each brand\" is PARTITION BY brand.",
         "A window function can't be used in WHERE at the same query level: compute it in a CTE or subquery first, and filter one level up."
@@ -951,7 +951,7 @@
       "id": "sql-051",
       "title": "Leading sales channel in each division",
       "brief": "The commercial director is preparing a budget defense and wants not the full channel breakdown, but just the leading channel within each division — that's what everything else will be compared against.",
-      "goal": "For 2025, return per division: division, channel, and revenue (rounded to whole numbers) — the channel with the highest revenue within the division.",
+      "goal": "For 2025, return per division: division, channel, and revenue (rounded to whole numbers) for the channel with the highest revenue within the division.",
       "hints": [
         "ROW_NUMBER here is partitioned by division — insert PARTITION BY before division.",
         "The \"top rank only\" filter is rnk = 1, since the rank within its partition is already computed in the ranked CTE."
@@ -962,7 +962,7 @@
       "id": "sql-052",
       "title": "Rep ranking within a team",
       "brief": "A sales manager is preparing 2025 year-end bonuses and wants to see each rep's rank within their team by the revenue of the outlets they cover — managers shouldn't be included in the ranking.",
-      "goal": "For 2025, return team, rep_name, revenue — the sum of revenue from the rep's outlets, rounded to whole numbers, and rnk — the rep's rank within their team by descending revenue. Only role = 'rep'. Sort by team, then by rank.",
+      "goal": "For 2025, return team, rep_name, revenue (the sum of revenue from the rep's outlets, rounded to whole numbers) and rnk (the rep's rank within their team by descending revenue). Only role = 'rep'. Sort by team, then by rank.",
       "hints": [
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep — aggregate by rep_id first.",
         "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
@@ -1003,7 +1003,7 @@
       "id": "sql-019",
       "title": "Smoothing a weekly series",
       "brief": "Water sales jump around week to week because of promotions and deliveries. For a presentation chart, you need a smoothed series so the seasonal trend shows through instead of the noise.",
-      "goal": "For 2025, for the «Aqualis» brand, return week_start, units — sum of units for the week, and ma4 — a moving average over the current and three preceding weeks, rounded to one decimal place. Ordered by week ascending.",
+      "goal": "For 2025, for the «Aqualis» brand, return week_start, units (sum of units for the week), and ma4 (a moving average over the current and three preceding weeks, rounded to one decimal place). Ordered by week ascending.",
       "hints": [
         "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
@@ -1014,7 +1014,7 @@
       "id": "sql-020",
       "title": "Month-over-month change",
       "brief": "The monthly report for management needs not just sales but change vs. the previous month — a number with no trend attached says nothing.",
-      "goal": "For 2025, return month (YYYY-MM format), units — sum of units, prev_units — units for the previous month, and mom_pct — the change vs. the previous month in percent, rounded to one decimal place. The first month is left with empty values. Ordered by month ascending.",
+      "goal": "For 2025, return month (YYYY-MM format), units (sum of units), prev_units (units for the previous month), and mom_pct (the change vs. the previous month in percent, rounded to one decimal place). The first month is left with empty values. Ordered by month ascending.",
       "hints": [
         "LAG retrieves the previous row's value.",
         "The first month has no previous value — LAG returns NULL, and the percentage becomes NULL too. That's expected."
@@ -1025,7 +1025,7 @@
       "id": "sql-054",
       "title": "A distributor's quarterly running shipments",
       "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Setouchi Trading» distributor by the end of each month.",
-      "goal": "For October–December 2025, return month_start, units — shipped that month, and running_units — the running total since the start of the quarter. Ordered by month ascending.",
+      "goal": "For October–December 2025, return month_start, units (shipped that month) and running_units (the running total since the start of the quarter). Ordered by month ascending.",
       "hints": [
         "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
         "distributor_id = 1 is «Setouchi Trading» — you can check this against dim_customer."
@@ -1036,7 +1036,7 @@
       "id": "sql-055",
       "title": "Price growth since the start of the year",
       "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year — and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
-      "goal": "For 2025, for the «Aqualis Still 1.5 L» product, return month_start, list_price, jan_price — the price in January of that year, and growth_pct — growth vs. January in percent, rounded to one decimal place. Ordered by month ascending.",
+      "goal": "For 2025, for the «Aqualis Still 1.5 L» product, return month_start, list_price, jan_price (the price in January of that year) and growth_pct (growth vs. January in percent, rounded to one decimal place). Ordered by month ascending.",
       "hints": [
         "FIRST_VALUE(list_price) OVER (ORDER BY month_start) returns the price of the window's very first row for every result row — that's the January price.",
         "FIRST_VALUE can be called several times with the same OVER (...) — that's not separate computations, it's the same result each time."
@@ -1077,7 +1077,7 @@
       "id": "sql-022",
       "title": "Who overstocked the warehouse",
       "brief": "The CFO is unhappy: Q4 2025 shipments grew, but retail sales didn't. There's a suspicion that one of the distributors loaded up on stock to hit an annual bonus. That kind of stockpile comes back as a shipment drop next quarter, so it needs to be found now.",
-      "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor — name, sell_in — units shipped for the months 2025-10-01 through 2025-12-01, sell_out — units sold at outlets for the weeks 2025-09-29 through 2025-12-28, and ratio — the first divided by the second, rounded to two decimal places. Ordered by ratio descending.",
+      "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor (name), sell_in (units shipped for the months 2025-10-01 through 2025-12-01), sell_out (units sold at outlets for the weeks 2025-09-29 through 2025-12-28), and ratio (the first divided by the second, rounded to two decimal places). Ordered by ratio descending.",
       "hints": [
         "Shipments and sales live at different granularities — compute them in two separate CTEs, then join.",
         "The link between an outlet and its distributor is the served_by_distributor_id column in dim_customer.",
@@ -1119,7 +1119,7 @@
       "id": "sql-057",
       "title": "Weeks of cover at a distributor",
       "brief": "The CFO is worried about write-offs: the «Setouchi Trading» distributor is showing large warehouse stock of the «Aqualis» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
-      "goal": "Return one row: units_on_hand — stock of «Aqualis Still 0.5 L» at the «Setouchi Trading» distributor at the end of December 2025, avg_weekly_units — average weekly sales of this product at the outlets served by the distributor, October–December 2025 (rounded to one decimal place), and weeks_cover — how many weeks the stock will last at that sales pace (rounded to one decimal place).",
+      "goal": "Return one row: units_on_hand (stock of «Aqualis Still 0.5 L» at the «Setouchi Trading» distributor at the end of December 2025), avg_weekly_units (average weekly sales of this product at the outlets served by the distributor, October–December 2025, rounded to one decimal place) and weeks_cover (how many weeks the stock will last at that sales pace, rounded to one decimal place).",
       "hints": [
         "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
         "Compute the weekly sales pace only from this distributor's outlets — filter on c.served_by_distributor_id, not on all sales of the product nationwide."
@@ -1130,7 +1130,7 @@
       "id": "sql-058",
       "title": "Who missed the plan in December",
       "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division — only those under 100% attainment.",
-      "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (rounded to whole numbers) — revenue from the rep's division products at the rep's outlets, and attainment_pct — the plan attainment percentage, rounded to one decimal place. Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
+      "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (revenue from the rep's division products at the rep's outlets, rounded to whole numbers) and attainment_pct (the plan attainment percentage, rounded to one decimal place). Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
       "hints": [
         "The plan is tied to a rep and a division at once — join the fact to the plan on both keys, rep_id and division.",
         "A LEFT JOIN is needed in case a rep had no sales at all in their division in December: then actual should become 0, not vanish from the report — COALESCE(a.revenue, 0), as in sql-014."
@@ -1171,7 +1171,7 @@
       "id": "sql-060",
       "title": "How many products make up half of revenue",
       "brief": "Ahead of an assortment review, a category manager wants to gauge portfolio concentration: if half the annual revenue comes from a handful of SKUs, dropping any one of them is a serious risk; if revenue is spread across the whole lineup, the risk is lower.",
-      "goal": "For 2025, determine the smallest set of top-revenue products that together account for at least 50% of annual revenue. Return product_name, revenue (rounded to whole numbers), and cum_share_pct — the cumulative share of total revenue in percent, rounded to one decimal place. Ordered by revenue descending.",
+      "goal": "For 2025, determine the smallest set of top-revenue products that together account for at least 50% of annual revenue. Return product_name, revenue (rounded to whole numbers) and cum_share_pct (the cumulative share of total revenue in percent, rounded to one decimal place). Ordered by revenue descending.",
       "hints": [
         "Cumulative share is the same trick as the running total in sql-054, just with the result additionally divided by the grand total and converted to a percentage.",
         "To include exactly the rows needed to reach 50%, compare the share accumulated BEFORE the current row (without it) against the threshold — if it was already under 50%, this row is needed."

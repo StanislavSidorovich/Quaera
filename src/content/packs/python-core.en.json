@@ -311,7 +311,7 @@
       "id": "py-014",
       "title": "Assortment and price by division",
       "brief": "The category manager is comparing the price spread between FMCG and Pharma before planning next quarter's price list.",
-      "goal": "Group dim_product by division and return three columns: division, n_sku — the number of products (count on sku_code), avg_price — the average list_price, rounded to one decimal place.",
+      "goal": "Group dim_product by division and return three columns: division, n_sku (the number of products, count on sku_code) and avg_price (the average list_price, rounded to one decimal place).",
       "hints": [
         "Named aggregation: .agg(column_name=('column', 'function')) — gives flat names right away, no MultiIndex headers.",
         "as_index=False returns division as an ordinary column right away, not as an index — no need to call reset_index() separately."
@@ -352,7 +352,7 @@
       "id": "py-016",
       "title": "Division × category matrix",
       "brief": "Before assembling the assortment matrix, someone needs a quick view of how many SKUs fall into each \"division — category\" pair.",
-      "goal": "Group dim_product by two columns at once — division and category — and count sku_code in each pair.",
+      "goal": "Group dim_product by two columns at once, division and category, and count sku_code in each pair.",
       "hints": [
         "Grouping by several columns at once is a list of names inside groupby([...]), not two separate calls.",
         "Both blanks are column names in quotes: division first, then category."
@@ -363,7 +363,7 @@
       "id": "py-017",
       "title": "How concentrated a distributor's purchases are",
       "brief": "The distributor KAM is preparing annual-terms negotiations and wants to understand concentration: whose purchases are spread across the whole assortment, and whose few positions make up the lion's share of volume — the discount conversation goes differently with the latter.",
-      "goal": "Add a line_share column to fact_sellin — this row's share of net_amount in the sum of net_amount for the same distributor_id over the whole period of the table.",
+      "goal": "Add a line_share column to fact_sellin: this row's share of net_amount in the sum of net_amount for the same distributor_id over the whole period of the table.",
       "hints": [
         "transform, unlike agg, returns a result the same length as the source table — good for gluing a summary back onto every row.",
         ".groupby('distributor_id')['net_amount'].transform('sum') is the sum of net_amount for the distributor, repeated in every row of that distributor."
@@ -404,7 +404,7 @@
       "id": "py-019",
       "title": "Each product's biggest sale",
       "brief": "A logistics analyst is looking, for each product, for its single largest delivery — a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
-      "goal": "Add a revenue_rank column — this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
+      "goal": "Add a revenue_rank column with this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
       "hints": [
         ".rank() is the pandas equivalent of the RANK/DENSE_RANK/ROW_NUMBER window functions: it also needs a group and an order, just through the method's parameters instead of an OVER clause.",
         "method='min' gives RANK (tied values get the same rank, the next one jumps over the skipped places); method='dense' would give DENSE_RANK, 'first' would give ROW_NUMBER."
@@ -571,7 +571,7 @@
       "id": "py-029",
       "title": "Revenue by brand, by quarter",
       "brief": "The commercial director wants to see 2025 revenue by brand, by quarter, in one table — brands as rows, quarters as columns, not a long list of thirty-six rows.",
-      "goal": "Build a pivot table off the already-prepared merged/sub: rows — brand, columns — quarter, values — the sum of revenue.",
+      "goal": "Build a pivot table off the already-prepared merged/sub: brand in the rows, quarter in the columns, the sum of revenue in the values.",
       "hints": [
         "pivot_table can aggregate and reshape in one call — aggfunc decides what to do if several rows land on the same brand/quarter intersection (here: many sales of different products and customers).",
         "index becomes the rows, columns becomes the column headers, values ends up in the cells."
@@ -716,7 +716,7 @@
       "id": "py-037",
       "title": "A smoothed series next to the source",
       "brief": "The same «Aqualis» weekly series is needed with 4-week smoothing next to the source data, so the chart doesn't show a weekly sawtooth.",
-      "goal": "Add a rolling4 column to weekly — the rolling mean of units over the last 4 weeks.",
+      "goal": "Add a rolling4 column to weekly with the rolling mean of units over the last 4 weeks.",
       "hints": [
         "rolling(4) sets a 4-observation rolling-average window — the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL (sql-window-frame).",
         "After .rolling(4) you need .mean(), just as after .groupby(...): rolling() on its own only defines the window, it doesn't compute a statistic."
@@ -757,7 +757,7 @@
       "id": "py-039",
       "title": "Large sales as a separate table",
       "brief": "A logistics analyst wants a separate table of sales above the average revenue across all of fact_sellout, marked with is_large — without touching the source table and without relying on pandas warnings to notice it.",
-      "goal": "Return the rows of fact_sellout where revenue is above the average for the whole table, with an extra column is_large=True — as a chain through .copy() and .assign(), with no intermediate assignment into a filtered slice.",
+      "goal": "Return the rows of fact_sellout where revenue is above the average for the whole table, with an extra column is_large=True, as a chain through .copy() and .assign(), with no intermediate assignment into a filtered slice.",
       "hints": [
         ".copy() right after the filter says explicitly: from here on you're working with an independent table, not a view onto the source — and the warning stops appearing.",
         ".assign(name=value) adds a column and returns a new table in that same call — the chain can continue without being broken by an intermediate variable."
@@ -779,7 +779,7 @@
       "id": "py-041",
       "title": "A region's priority without apply",
       "brief": "A colleague wrote the \"region priority\" column through apply(lambda row: ..., axis=1) — on 16 regions that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
-      "goal": "Build a priority column for dim_region: 'key' for tier == 1, otherwise 'rest' — through vectorized np.where, without apply().",
+      "goal": "Build a priority column for dim_region: 'key' for tier == 1, otherwise 'rest', through vectorized np.where and without apply().",
       "hints": [
         "np.where(condition, if_true, if_false) is the vectorized replacement for apply(lambda row: ... if ... else ..., axis=1): the condition is checked for the whole column at once, not row after row.",
         "np is already available in the task's code alongside pd and the tables — you can call it directly as np.where(...)."
