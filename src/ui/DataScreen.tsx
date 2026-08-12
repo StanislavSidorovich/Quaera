@@ -253,7 +253,17 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
               <TableDoc
                 key={table.table}
                 table={table}
-                open={searching || focused === table.table}
+                /*
+                 * Сырой слой раскрыт всегда, а не только при поиске/фокусе:
+                 * абзац рядом обещает «даты текстом в разных форматах, числа
+                 * с запятой, разное написание сети», и это единственная
+                 * таблица, ради примеров строк которой на экран приходят
+                 * специально, — прятать доказательство за нажатием значило
+                 * бы прятать сам смысл раздела. Таблица тут всегда одна,
+                 * поэтому раскрытие не создаёт длинный список, как у фактов
+                 * и справочников.
+                 */
+                open={searching || focused === table.table || kind === 'standalone'}
                 detailsRef={(el) => {
                   if (el) focusRefs.current.set(table.table, el);
                   else focusRefs.current.delete(table.table);
