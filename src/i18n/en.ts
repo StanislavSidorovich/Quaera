@@ -21,13 +21,13 @@ export const en = {
     streakSuffix: (days: number) => `${days}-day streak`,
   },
   welcome: {
-    headline: 'A trainer, not a course: the code you write really runs',
+    headline: 'An analytics trainer: the query runs, the answer is checked against the data',
     body:
-      "SQL and pandas execute for real in the browser, not against a template: the answer is checked by the query's real result, the way it works on the job. Four tracks (analytics as a profession, SQL, pandas, and the data model) work through the same business cases on one continuous dataset of a fictional FMCG and OTC-pharma distributor: find a distribution loss, untangle a warehouse overstock, explain a seasonal sales dip.",
+      "Four tracks on one continuous dataset of a fictional FMCG and OTC-pharma distributor: analytics as a profession, SQL, pandas, the data model. The tasks are the ones an analyst actually gets: find where a brand's distribution went, work out a warehouse overstock, explain a seasonal sales dip.",
     proofPoints: [
       {
-        title: 'The code really runs',
-        body: "SQLite and pandas (via Pyodide) execute right in the browser, so the answer is checked against the query's real result, not its text.",
+        title: 'The code runs in the browser',
+        body: 'SQLite and pandas (via Pyodide) execute right on the page: the query goes against real data, and what gets compared is what it returned, not how it was written.',
       },
       {
         title: 'Numbers and conclusions in explanations are build conditions',
@@ -35,7 +35,7 @@ export const en = {
       },
       {
         title: 'One dataset, four tracks',
-        body: 'SQL, pandas, analytics-as-a-profession, and the data model all work through the same business cases, and the answers have to agree.',
+        body: 'The same case is worked through with a query, a dataframe, and a measure, and the answers have to agree.',
       },
     ],
     chainTitle: 'From question to decision',
@@ -93,7 +93,7 @@ export const en = {
     resumeNote: (step: string) => `Left unfinished: ${step.toLowerCase()}. Everything you did is still there.`,
     loading: 'Loading data…',
     heroNote:
-      'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your code really runs, against 2.5 years of FMCG and OTC-pharma distributor data.',
+      'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your queries run against 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
     /** См. комментарий в ru.ts: подпись называет то, что меряется, а не долю сделанного. */
@@ -187,7 +187,7 @@ export const en = {
     title: 'Where to start',
     entryLink: 'First time here? Where to start →',
     intro:
-      "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. Freedom helps only when it's clear what you're choosing between, and that's what this page is for. How the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
+      "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. But freedom only helps once it's clear what you're choosing between. This page is about that choice: how the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
 
     toolsTitle: 'Four tools, and how to choose between them',
     toolsIntro:
