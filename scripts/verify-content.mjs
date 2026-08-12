@@ -153,6 +153,37 @@ function checkTaskTableNames(pack) {
  * дефект зеркально: русский пользователь получил бы английскую прозу.
  */
 const CODE_FIELDS = ['starter', 'template', 'solution', 'predictSql'];
+
+/**
+ * Ширина строки-комментария в блоке кода.
+ *
+ * `pre.sql-block` — это `white-space: pre-wrap`, и на 375 px в него влезает
+ * 41 знак (замерено `Range.getClientRects` по живому блоку). Длинную строку
+ * кода перенос уродует, но не искажает: `SELECT` остаётся `SELECT`. Таблицу,
+ * выровненную пробелами, он **разрушает** — колонки перестают стоять друг
+ * под другом, а вся задача в `sql-023` и `sql-059` состоит в том, чтобы
+ * прочитать такую таблицу. До правки они были 57–58 знаков, то есть
+ * на телефоне не читались вовсе.
+ *
+ * Лимит проверяется только у комментариев, потому что таблица живёт именно
+ * там; сам код под него не загнать (`ROUND(SUM(...) / SUM(...), 1) AS ...`
+ * длиннее в любом виде). Цифра та же, что у `.scenario` — 39 знаков
+ * с запасом к измеренному 41.
+ */
+const COMMENT_WIDTH = 39;
+const isComment = (line) => /^\s*(--|\/\/|#)/.test(line);
+
+function checkCommentWidth(t) {
+  for (const field of CODE_FIELDS) {
+    if (typeof t[field] !== 'string') continue;
+    for (const line of t[field].split('\n')) {
+      if (isComment(line) && line.length > COMMENT_WIDTH) {
+        fail(t.id, `строка-комментарий в ${field} длиннее ${COMMENT_WIDTH} знаков (${line.length}) — на 375 px она переносится: «${line.trim()}»`);
+      }
+    }
+  }
+}
+
 function checkCodeLocaleNeutral(pack) {
   const before = failed;
   let checked = 0;
@@ -170,6 +201,7 @@ function checkCodeLocaleNeutral(pack) {
         fail(t.id, `в пропуске №${i + 1} есть кириллица — blanks не переводятся, значение пропуска обязано быть кодом`);
       }
     }
+    checkCommentWidth(t);
   }
   if (failed === before) console.log(`  ok   кодовых полей без естественного языка: ${checked}`);
 }
