@@ -84,38 +84,101 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
     return found;
   }, [doc, query, locale]);
 
-  if (!doc) return <p className="muted">{t.schema.loading}</p>;
+  /**
+   * Размер датасета — то, чего экран не говорил вовсе.
+   *
+   * Абзац рядом объясняет, что это за данные, но не отвечает на первый вопрос
+   * к незнакомым данным: сколько их. Обе величины считаются по той же схеме,
+   * что рисует список ниже, — второго источника правды нет, и при добавлении
+   * таблицы они сойдутся сами.
+   *
+   * Числа таблиц здесь нет намеренно: оно стоит первым словом абзаца слева
+   * и в пилюлях групп ниже, и третьим разом было бы тем самым дублем,
+   * который дедупликация умеет заводить заново.
+   */
+  const size = useMemo(
+    () =>
+      doc
+        ? {
+            rows: doc.tables.reduce((sum, table) => sum + table.row_count, 0),
+            columns: doc.tables.reduce((sum, table) => sum + table.columns.length, 0),
+          }
+        : null,
+    [doc]
+  );
+
+  if (!doc || !size) return <p className="muted">{t.schema.loading}</p>;
 
   const searching = query.trim().length > 0;
   const visible = doc.tables.filter((table) => matches.has(table.table));
+  const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
 
   return (
     <>
       {/*
-       * Без заголовка «Данные» внутри карточки: он уже стоит в шапке экрана,
-       * в паре десятков пикселей выше, — тот же задвоенный заголовок, что
-       * когда-то был с логотипом в шапке главной.
+       * Вводная и поиск — одна карточка в две колонки, а не две карточки подряд.
+       *
+       * Порознь экран открывался двумя почти пустыми блоками: абзац ограничен
+       * по длине строки (.card p — 68ch, иначе строка нечитаема) и занимал
+       * чуть больше половины ширины, а поле поиска — целую карточку ради одной
+       * строки ввода. Справа от абзаца встаёт то, ради чего место и освобождалось:
+       * размер датасета и вход в поиск по нему.
+       *
+       * Заголовка «Данные» внутри карточки по-прежнему нет: он стоит в шапке
+       * экрана, в паре десятков пикселей выше, — тот же задвоенный заголовок,
+       * что когда-то был с логотипом в шапке главной.
        */}
-      <div className="card">
-        <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
-          {doc.company[locale]}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
-        </p>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.data.intro(doc.tables.length)}</p>
-      </div>
-
-      <div className="card data-search">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t.data.searchPlaceholder}
-          aria-label={t.data.searchAria}
-        />
-        {searching && (
-          <p className="muted" style={{ margin: '8px 0 0', fontSize: 13 }}>
-            {visible.length ? t.data.searchFound(visible.length) : t.data.searchEmpty(query)}
-          </p>
-        )}
+      <div className="card data-intro">
+        <div className="data-intro-grid">
+          <div>
+            <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
+              {doc.company[locale]}
+            </p>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.data.intro(doc.tables.length)}</p>
+          </div>
+          <div className="data-intro-side">
+            {/*
+             * Период переехал сюда из серой строки над абзацем, а не появился
+             * вторым экземпляром: в шторке схемы (SchemaSheet) он остаётся
+             * в прежнем виде — там нет ни колонки под паспорт, ни повода
+             * заводить её ради одной строки.
+             */}
+            <dl className="data-size">
+              <div>
+                <dt>{t.data.size.period}</dt>
+                <dd>{t.schema.periodRange(doc.period.from, doc.period.to)}</dd>
+              </div>
+              <div>
+                <dt>{t.data.size.rows}</dt>
+                <dd>{size.rows.toLocaleString(numberLocale)}</dd>
+              </div>
+              {/*
+               * Число колонок стоит вплотную над поиском намеренно: поиск
+               * по двенадцати именам таблиц не нужен — их видно целиком, —
+               * а по 96 колонкам нужен, и «Колонок 96» здесь и есть ответ
+               * на вопрос, зачем поле ввода на экране из двенадцати строк.
+               */}
+              <div>
+                <dt>{t.data.size.columns}</dt>
+                <dd>{size.columns.toLocaleString(numberLocale)}</dd>
+              </div>
+            </dl>
+            <div className="data-search">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t.data.searchPlaceholder}
+                aria-label={t.data.searchAria}
+              />
+              {searching && (
+                <p className="muted" style={{ margin: '8px 0 0', fontSize: 13 }}>
+                  {visible.length ? t.data.searchFound(visible.length) : t.data.searchEmpty(query)}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/*
@@ -164,50 +227,66 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
     const tables = visible.filter((table) => group.get(table.table) === kind);
     if (!tables.length) return null;
     return (
-      <div className="card" key={kind}>
-        <div className={`data-group-head group-${kind}`}>
-          <h2>{t.data.groups[kind].title}</h2>
-          <span className="pill">{t.data.tableCount(tables.length)}</span>
-        </div>
-        <p className="muted" style={{ margin: '2px 0 12px', fontSize: 13, lineHeight: 1.55 }}>
-          {t.data.groups[kind].body}
-        </p>
-        {tables.map((table) => (
-          <TableDoc
-            key={table.table}
-            table={table}
-            open={searching || focused === table.table}
-            detailsRef={(el) => {
-              if (el) focusRefs.current.set(table.table, el);
-              else focusRefs.current.delete(table.table);
-            }}
-            highlightColumns={matches.get(table.table)}
-            /*
-             * Место таблицы в звезде — единственное, что видно, пока она
-             * свёрнута. У факта показываем, куда он ссылается; у справочника —
-             * сколько таблиц ссылаются на него: чем больше, тем ближе
-             * он к центру. У сырого слоя нет ни того, ни другого, и это
-             * само по себе ответ — он ни с чем не связан.
-             */
-            links={
-              kind === 'fact' && outgoing.get(table.table)?.length ? (
-                <span className="data-links">
-                  {outgoing.get(table.table)!.map((target) => (
-                    <span className="data-link" key={target}>
-                      → <code>{target}</code>
+      /*
+       * Сырой слой раскладывается в две колонки, факты и справочники — нет,
+       * и разница не в оформлении, а в ширине под ними: те двое стоят в паре
+       * (.data-pair) и получают по половине экрана, а сырой слой — один
+       * во всю ширину, потому что он не третий вид той же природы. Своей
+       * ширины у него оказалось вдвое больше, чем содержимого: описание
+       * упирается в предел длины строки, а таблица под ним ровно одна.
+       * Обёртки стоят у всех трёх групп, чтобы разметка не расходилась;
+       * колонки включает CSS только у сырого слоя.
+       */
+      <div className={`card${kind === 'standalone' ? ' data-standalone' : ''}`} key={kind}>
+        <div className="data-group-grid">
+          <div>
+            <div className={`data-group-head group-${kind}`}>
+              <h2>{t.data.groups[kind].title}</h2>
+              <span className="pill">{t.data.tableCount(tables.length)}</span>
+            </div>
+            <p className="muted" style={{ margin: '2px 0 12px', fontSize: 13, lineHeight: 1.55 }}>
+              {t.data.groups[kind].body}
+            </p>
+          </div>
+          <div className="data-group-tables">
+            {tables.map((table) => (
+              <TableDoc
+                key={table.table}
+                table={table}
+                open={searching || focused === table.table}
+                detailsRef={(el) => {
+                  if (el) focusRefs.current.set(table.table, el);
+                  else focusRefs.current.delete(table.table);
+                }}
+                highlightColumns={matches.get(table.table)}
+                /*
+                 * Место таблицы в звезде — единственное, что видно, пока она
+                 * свёрнута. У факта показываем, куда он ссылается; у справочника —
+                 * сколько таблиц ссылаются на него: чем больше, тем ближе
+                 * он к центру. У сырого слоя нет ни того, ни другого, и это
+                 * само по себе ответ — он ни с чем не связан.
+                 */
+                links={
+                  kind === 'fact' && outgoing.get(table.table)?.length ? (
+                    <span className="data-links">
+                      {outgoing.get(table.table)!.map((target) => (
+                        <span className="data-link" key={target}>
+                          → <code>{target}</code>
+                        </span>
+                      ))}
                     </span>
-                  ))}
-                </span>
-              ) : kind === 'dimension' && incoming.get(table.table) ? (
-                <span className="data-links">
-                  <span className="data-link">
-                    {t.data.incomingLabel(incoming.get(table.table)!)}
-                  </span>
-                </span>
-              ) : null
-            }
-          />
-        ))}
+                  ) : kind === 'dimension' && incoming.get(table.table) ? (
+                    <span className="data-links">
+                      <span className="data-link">
+                        {t.data.incomingLabel(incoming.get(table.table)!)}
+                      </span>
+                    </span>
+                  ) : null
+                }
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

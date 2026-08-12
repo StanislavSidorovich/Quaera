@@ -11,6 +11,9 @@
  */
 const langGenitive = (track: 'sql' | 'model' | 'python' | 'domain') => (track === 'python' ? 'Python' : 'SQL');
 
+/** См. комментарий в ru.ts: одни границы периода на две подписи, тире здесь другое. */
+const periodRange = (from: string, to: string) => `${from} – ${to}`;
+
 export const en = {
   app: {
     name: 'Querium',
@@ -474,7 +477,9 @@ export const en = {
     ariaLabel: 'Data schema',
     copyAria: (name: string) => `Copy "${name}"`,
     copied: 'Copied',
-    periodLabel: (from: string, to: string) => `Data period: ${from} – ${to}`,
+    periodLabel: (from: string, to: string) => `Data period: ${periodRange(from, to)}`,
+    /** См. комментарий в ru.ts: те же границы без подписи — для паспорта датасета. */
+    periodRange,
     sampleCaption: (n: number) => `${n} rows from different parts of the table: what the data looks like in practice`,
   },
   /** См. комментарий в ru.ts: деление на факты и справочники названо словами, а не отдано префиксу имени. */
@@ -482,7 +487,14 @@ export const en = {
     title: 'Data',
     intro: (tables: number) =>
       `${tables} tables from one fictional distributor. Every track runs on them: a SQL task, a pandas walkthrough and a data-model question all pull the same rows. Open a table to see its columns and three real rows, enough to show the date format, the order of magnitude and where values go missing.`,
-    searchPlaceholder: 'Search tables and columns…',
+    /** См. комментарий в ru.ts: колонка названа первой — их 96, а таблиц двенадцать. */
+    searchPlaceholder: 'Search columns and tables…',
+    /** См. комментарий в ru.ts: подписи паспорта датасета, без числа таблиц. */
+    size: {
+      period: 'Data period',
+      rows: 'Rows',
+      columns: 'Columns',
+    },
     searchAria: 'Search the data schema',
     searchFound: (n: number) => `Found ${n} ${n === 1 ? 'table' : 'tables'}`,
     searchEmpty: (query: string) => `Nothing found for "${query}"`,
