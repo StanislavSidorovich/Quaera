@@ -172,6 +172,11 @@ export function diagnoseComparison(cmp: Comparison, locale: Locale): Feedback {
 
   if (cmp.reason === 'columns_count') return withStyle(T.columnsCount(cmp.expectedCols, cmp.userCols.length));
 
+  // Единственный диагноз без стилевой приписки: она сообщает, что имена колонок
+  // на правильность не влияют, а здесь на неё повлияла именно их расстановка —
+  // рядом с основным текстом приписка читалась бы прямым враньём.
+  if (cmp.reason === 'columns_order') return T.columnsOrder(cmp.expectedCols);
+
   if (cmp.reason === 'order') return withStyle(T.wrongOrder());
 
   if (cmp.reason === 'values' && cmp.sampleMismatch.length) {

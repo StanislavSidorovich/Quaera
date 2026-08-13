@@ -53,7 +53,15 @@ export interface Mismatch {
   ratio: number | null;
 }
 
-export type CompareReason = 'columns_count' | 'order' | 'values' | 'extra' | 'missing' | 'both' | null;
+export type CompareReason =
+  | 'columns_count'
+  | 'columns_order'
+  | 'order'
+  | 'values'
+  | 'extra'
+  | 'missing'
+  | 'both'
+  | null;
 
 export interface Comparison {
   ok: boolean;

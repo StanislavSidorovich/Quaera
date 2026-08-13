@@ -61,6 +61,7 @@ export interface DiagnoseText {
   deflatedVaried: (min: number, max: number) => Feedback;
   wrongValues: (key: string, column: string, expected: unknown, got: unknown) => Feedback;
   columnsCount: (expectedCols: string[], userColsCount: number) => Feedback;
+  columnsOrder: (expectedCols: string[]) => Feedback;
   wrongOrder: () => Feedback;
   missingRows: (n: number) => Feedback;
   extraRows: (n: number, multiple: number | null) => Feedback;
@@ -240,6 +241,15 @@ const ru: DiagnoseText = {
     title: `Ожидается ${expectedCols.length} ${pluralRu(expectedCols.length, 'колонка', 'колонки', 'колонок')}, вернулось ${userColsCount}`,
     body: `Эталон возвращает: ${expectedCols.join(', ')}.`,
     nudges: ['Лишние колонки в SELECT так же плохи, как недостающие: результат должен точно соответствовать постановке.'],
+  }),
+
+  columnsOrder: (expectedCols) => ({
+    tone: 'warn',
+    title: 'Колонки не в том порядке',
+    body: `Данные сошлись с эталоном полностью, расходится только последовательность колонок. Ожидается: ${expectedCols.join(', ')}.`,
+    nudges: [
+      'Порядок колонок в SELECT — часть ответа: отчёт отдают в том виде, в каком его перечислили в постановке.',
+    ],
   }),
 
   wrongOrder: () => ({
@@ -462,6 +472,15 @@ const en: DiagnoseText = {
     title: `${expectedCols.length} ${expectedCols.length === 1 ? 'column' : 'columns'} expected, ${userColsCount} returned`,
     body: `The reference returns: ${expectedCols.join(', ')}.`,
     nudges: ['Extra columns in SELECT are as wrong as missing ones: the result has to match the brief exactly.'],
+  }),
+
+  columnsOrder: (expectedCols) => ({
+    tone: 'warn',
+    title: 'The columns are in the wrong order',
+    body: `The data matches the reference exactly; only the sequence of columns differs. Expected: ${expectedCols.join(', ')}.`,
+    nudges: [
+      'Column order in SELECT is part of the answer: a report is handed over in the order the brief lists.',
+    ],
   }),
 
   wrongOrder: () => ({

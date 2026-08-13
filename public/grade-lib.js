@@ -57,6 +57,88 @@ function keyColumnIndexes(columns, rows) {
   return idx.length ? idx : [0];
 }
 
+/**
+ * Те же данные, но колонки переставлены.
+ *
+ * Случай стоит отдельным диагнозом, потому что сравнение строк позиционное:
+ * rowKey склеивает значения в порядке колонок, поэтому перестановка двух
+ * колонок расходит разом все строки. Дальше расхождение попадало в 'both'
+ * («часть строк лишняя, часть отсутствует» при равном числе строк) с
+ * подсказкой про GROUP BY — на задании, где никакой группировки нет вовсе.
+ *
+ * Перестановка ищется сначала по именам колонок, потом по значениям (имён
+ * может не быть вовсе — человек забыл алиас), и в обоих случаях проверяется
+ * пересборкой: диагноз ставится, только если после перестановки строки
+ * сходятся с эталоном. Без этой проверки сопоставление по именам приняло бы
+ * за перестановку и по-настоящему неверный ответ, где алиас навешен
+ * не на ту колонку.
+ */
+const MAX_PERM_ROWS = 5000;
+
+/** Сигнатура колонки — её значения в порядке строк, тем же каноном, что rowKey. */
+function columnKey(rows, c) {
+  return rows
+    .map((r) => (r[c] === null ? ' ' : isNum(r[c]) ? (Math.round(r[c] * 1e6) / 1e6).toString() : String(r[c]).trim()))
+    .join('');
+}
+
+function permByNames(userCols, expectedCols) {
+  const norm = (s) => String(s).trim().toLowerCase();
+  const used = new Array(userCols.length).fill(false);
+  const perm = [];
+  for (const want of expectedCols) {
+    const i = userCols.findIndex((c, k) => !used[k] && norm(c) === norm(want));
+    if (i === -1) return null;
+    used[i] = true;
+    perm.push(i);
+  }
+  return perm;
+}
+
+function permByValues(user, expected) {
+  const userSigs = user.columns.map((_, c) => columnKey(user.rows, c));
+  const used = new Array(user.columns.length).fill(false);
+  const perm = [];
+  for (let c = 0; c < expected.columns.length; c++) {
+    const want = columnKey(expected.rows, c);
+    const i = userSigs.findIndex((s, k) => !used[k] && s === want);
+    if (i === -1) return null;
+    used[i] = true;
+    perm.push(i);
+  }
+  return perm;
+}
+
+function rowsEqual(a, b, orderMatters) {
+  if (a.length !== b.length) return false;
+  if (orderMatters) return a.every((r, i) => sameRow(r, b[i]));
+  const counts = new Map();
+  for (const r of a) {
+    const k = rowKey(r);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  for (const r of b) {
+    const k = rowKey(r);
+    const n = counts.get(k) ?? 0;
+    if (!n) return false;
+    counts.set(k, n - 1);
+  }
+  return true;
+}
+
+function findColumnOrder(user, expected, orderMatters) {
+  if (user.rows.length !== expected.rows.length) return null;
+  if (!user.rows.length || user.rows.length > MAX_PERM_ROWS) return null;
+  const candidates = [permByNames(user.columns, expected.columns), permByValues(user, expected)];
+  for (const perm of candidates) {
+    if (!perm) continue;
+    if (perm.every((i, j) => i === j)) continue;
+    const reordered = user.rows.map((r) => perm.map((i) => r[i]));
+    if (rowsEqual(reordered, expected.rows, orderMatters)) return perm;
+  }
+  return null;
+}
+
 function compare(user, expected, opts) {
   const orderMatters = !!opts.orderMatters;
   const result = {
@@ -129,6 +211,14 @@ function compare(user, expected, opts) {
     }
     result.sameSetWrongOrder = true;
     result.reason = 'order';
+    return result;
+  }
+
+  // 1а. Те же данные, но колонки переставлены — см. findColumnOrder. Проверка
+  // стоит до разбора мер: перестановка числовых колонок при неизменных разрезах
+  // иначе уходит в 'values' и объясняется расхождением цифр, которого нет.
+  if (findColumnOrder(user, expected, orderMatters)) {
+    result.reason = 'columns_order';
     return result;
   }
 
