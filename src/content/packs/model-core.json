@@ -2296,7 +2296,7 @@
     {
       "id": "mdl-063",
       "track": "model",
-      "skill": "model-filter-context",
+      "skill": "model-calculate",
       "level": 3,
       "mode": "fill",
       "title": "Итог региона в строке каждого города",

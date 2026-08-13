@@ -86,7 +86,7 @@
       "skill": "sql-fanout",
       "title": "Row multiplication from a join",
       "why": "A join doesn't add facts, but it can count the same fact several times over. Totals blow up by a multiple, and the query looks correct the whole time, with no sign anything is wrong.",
-      "form": "One row of the left table must match exactly one\nrow of the right table. Otherwise the measures duplicate.",
+      "form": "One row of the left table must match exactly one\nrow of the right table. Otherwise the measures duplicate.\n\nCounts before and after, as two subqueries in one row:\n\nSELECT (SELECT COUNT(*) FROM fact) AS rows_before,\n       (SELECT COUNT(*) FROM fact JOIN lookup ...)\n         AS rows_after",
       "reads": "The correct version: product_id is unique in the dimension table, every sales row finds exactly one match, the row count doesn't change.",
       "wrongWhy": "A brand can have up to eleven promotions, and every sales row matches every one of them. Revenue grows by exactly a factor of eleven. A suspiciously round integer multiplier is close to a sure sign that a join duplicated facts.",
       "selfCheck": "Compare COUNT(*) before and after adding a JOIN. Changed, and you didn't plan for it — the measures can no longer be trusted as-is."
@@ -121,8 +121,8 @@
     {
       "skill": "sql-window-frame",
       "title": "Window functions: frames and shifts",
-      "why": "A single number says nothing on its own: you need a trend, change versus the previous period, a running total. Window frames and shift functions cover almost all of that without self-joins, which also break on missing periods.",
-      "form": "AVG(measure) OVER (ORDER BY period\n                ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)\n\nLAG(measure)  OVER (ORDER BY period)  -- previous value\nLEAD(measure) OVER (ORDER BY period)  -- next value",
+      "why": "A single number says nothing on its own: you need a trend, change versus the previous period, a running total. Window frames and shift functions cover almost all of that without self-joins, which also break on missing periods. On their own these functions only fetch the neighbouring value; the arithmetic is what turns it into a trend: the difference from the previous value, divided by that previous value, times 100. Write the multiplier as 100.0 rather than 100, or SQLite divides two integers and returns zero.",
+      "form": "AVG(measure) OVER (ORDER BY period\n                ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)\n\nLAG(measure)  OVER (ORDER BY period)  -- previous value\nLEAD(measure) OVER (ORDER BY period)  -- next value\nFIRST_VALUE(measure) OVER (ORDER BY period)  -- first\n\n-- growth over the previous period, %\nROUND(100.0 * (measure - LAG(measure) OVER (ORDER BY period))\n             / LAG(measure) OVER (ORDER BY period), 1)",
       "reads": "Monthly sales, last month's value, and a smoothed three-month series. The first row has no previous value — LAG honestly returns NULL.",
       "wrongWhy": "Without specifying a frame, once ORDER BY is present the window defaults to everything from the start of the series to the current row. The result isn't a moving average, it's a running total — the numbers look plausible and mean something else entirely.",
       "selfCheck": "Wrote ORDER BY inside OVER — deliberately decide whether you need a frame. And separately, on meaning: comparing month over month on a seasonal product is misleading; that calls for year over year."
