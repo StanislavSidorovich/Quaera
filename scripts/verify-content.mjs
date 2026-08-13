@@ -619,7 +619,9 @@ function checkTaskLessonDuplicate(pack, lessons) {
  * В python-списке нет .head()/.tail()/.copy(): это не пробел в объяснении,
  * а операции, самоочевидные по названию, — они не создают того риска, ради
  * которого существует эта проверка (сравнение с SQL: сам SELECT тоже
- * не входит в SQL_CONSTRUCTS).
+ * не входит в SQL_CONSTRUCTS). По тому же правилу отклонён `pd.DataFrame(`:
+ * замер 2026-08-13 дал на нём ровно одну находку — py-031, где литеральный
+ * датафрейм стоит лесами в шаблоне `fill`, а спрашивают в задании melt.
  */
 const SQL_CONSTRUCTS = [
   'like', 'offset', 'coalesce', 'ifnull', 'nullif', 'distinct', 'between',
@@ -628,7 +630,7 @@ const SQL_CONSTRUCTS = [
   'over (', 'partition by', 'row_number', 'rank(', 'dense_rank', 'lag(',
   'lead(', 'ntile', 'sum(', 'avg(', 'count(', 'min(', 'max(', 'having',
   'left join', 'inner join', 'group by', 'order by', 'limit', 'with ',
-  'as (', 'abs(', 'length(',
+  'as (', 'abs(', 'length(', 'first_value(', 'last_value(', 'nth_value(',
 ];
 
 const PYTHON_CONSTRUCTS = [
@@ -639,13 +641,68 @@ const PYTHON_CONSTRUCTS = [
   '.dt.', '.isna(', '.reset_index(', '.set_index(', '.sort_index(',
   '.sort_values(', 'validate=', '.describe(', '.duplicated(',
   '.drop_duplicates(', '.shift(', '.diff(', '.cumsum(', '.clip(',
-  '.replace(', '.map(', '.query(',
+  '.replace(', '.map(', '.query(', '.to_period(',
 ];
 
-const TRACK_CONSTRUCTS = { sql: SQL_CONSTRUCTS, python: PYTHON_CONSTRUCTS };
+/**
+ * DAX-функции трека model. Список полный по замеру: собран не из головы,
+ * а перечислением всего, что вообще встречается в `template`/`predictSql`
+ * заданий пака, — иначе он повторил бы прежнюю ошибку sql-списка, где
+ * FIRST_VALUE не проверялась потому, что о ней не вспомнили.
+ *
+ * Предикат здесь другой, чем у sql и python, и это не поблажка,
+ * а следствие устройства трека: **в model нет исполнителя, и кода,
+ * который «видно целиком и можно выполнить кнопкой», не существует
+ * нигде** — `form` карточки объясняет функцию предложением
+ * («TOTALYTD заменяет текущий период на „с начала года по текущую дату“»),
+ * а не показывает вызов со скобками. Требовать `NAME(` значило бы завалить
+ * весь трек за его честный жанр. Защита от «упомянули в самопроверке»
+ * при этом остаётся: корпус тот же, form/example/wrong, а не вся карточка.
+ */
+const MODEL_CONSTRUCTS = [
+  'calculate', 'divide', 'sum(', 'sumx', 'averagex', 'countrows', 'values(',
+  'related', 'filter(', 'keepfilters', 'allexcept', 'all(', 'totalytd',
+  'datesytd', 'sameperiodlastyear', 'datesinperiod',
+];
+
+const TRACK_CONSTRUCTS = { sql: SQL_CONSTRUCTS, python: PYTHON_CONSTRUCTS, model: MODEL_CONSTRUCTS };
+
+/**
+ * Формы выражений — второй род того же вопроса, и добавлен он по жалобе
+ * 2026-08-13, которую списком имён не поймать в принципе.
+ *
+ * Имя функции ищется подстрокой; «умножить колонку на число» именем
+ * не называется вовсе. Между тем задание «посчитайте цену со скидкой 10%»
+ * требует от новичка ровно этого, и вопрос «а как вообще пишется процент
+ * от колонки» законен: в SELECT до сих пор стояли только имена колонок.
+ * Здесь проверяется, что человек хотя бы раз видел саму форму — выражение
+ * над колонкой, склейку строк, сравнение по диапазону, — а не только
+ * функции, которые в ней участвуют.
+ *
+ * Регулярное выражение прогоняется по тому же корпусу, что и имена:
+ * form/example/wrong карточки навыка и всех его предпосылок.
+ */
+const SQL_FORMS = [
+  { label: 'арифметику над колонкой (колонка * число)', re: /[a-z_)\]]\s*[*/]\s*[\d(]|[\d)]\s*\*\s*[a-z_(]/ },
+  { label: 'сложение или вычитание колонок', re: /[a-z_)\]]\s*[+-]\s*[a-z_(]/ },
+  { label: 'склейку строк ||', re: /\|\|/ },
+  { label: 'сравнение по границе (>=, <=, >, <)', re: /[<>]=?/ },
+  { label: 'проверку на пусто (is null / is not null)', re: /\bis\s+(not\s+)?null\b/ },
+  { label: 'подзапрос в скобках', re: /\(\s*select\b/ },
+];
+
+const PYTHON_FORMS = [
+  { label: 'арифметику над колонкой', re: /\]\s*[*/]\s*[\d(a-z]|\)\s*[*/]\s*[\d(a-z]/ },
+  { label: 'логическое И/ИЛИ в маске (& или |)', re: /\)\s*[&|]\s*\(/ },
+  { label: 'отрицание маски (~)', re: /~\s*[\w(]/ },
+  { label: 'выбор нескольких колонок ([[...]])', re: /\[\[/ },
+];
+
+const TRACK_FORMS = { sql: SQL_FORMS, python: PYTHON_FORMS };
 
 function checkTheoryIntroducesConstructs(pack, lessons) {
   const constructs = TRACK_CONSTRUCTS[pack.track];
+  const forms = TRACK_FORMS[pack.track] ?? [];
   if (!constructs) return;
   const skillById = new Map(pack.skills.map((s) => [s.id, s]));
   const lessonBySkill = new Map(lessons.map((l) => [l.skill, l]));
@@ -683,6 +740,11 @@ function checkTheoryIntroducesConstructs(pack, lessons) {
     for (const kw of constructs) {
       if (code.includes(kw) && !available.includes(kw.trim())) {
         fail(t.id, `использует «${kw.trim()}», но эта конструкция не встречается в теории навыка «${t.skill}» и его предпосылок`);
+      }
+    }
+    for (const { label, re } of forms) {
+      if (re.test(code) && !re.test(available)) {
+        fail(t.id, `требует ${label}, но такой формы нет в теории навыка «${t.skill}» и его предпосылок`);
       }
     }
   }
