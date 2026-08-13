@@ -682,9 +682,18 @@ const TRACK_CONSTRUCTS = { sql: SQL_CONSTRUCTS, python: PYTHON_CONSTRUCTS, model
  * Регулярное выражение прогоняется по тому же корпусу, что и имена:
  * form/example/wrong карточки навыка и всех его предпосылок.
  */
+/*
+ * Буквенные классы включают кириллицу, и это обязательно, а не запас
+ * на будущее: в задании код латинский (за этим следит checkCodeLocaleNeutral),
+ * а в `form` карточки на месте колонок стоят русские слова — «мера», «период».
+ * Без «а-яё» проверка сравнивала бы латинское задание с корпусом, в котором
+ * искомой формы «не видно» никогда, и держала бы находку вечно.
+ */
+const WORD = 'a-zа-яё_';
+
 const SQL_FORMS = [
-  { label: 'арифметику над колонкой (колонка * число)', re: /[a-z_)\]]\s*[*/]\s*[\d(]|[\d)]\s*\*\s*[a-z_(]/ },
-  { label: 'сложение или вычитание колонок', re: /[a-z_)\]]\s*[+-]\s*[a-z_(]/ },
+  { label: 'арифметику над колонкой (колонка * число)', re: new RegExp(`[${WORD})\\]]\\s*[*/]\\s*[\\d(]|[\\d)]\\s*\\*\\s*[${WORD}(]`) },
+  { label: 'сложение или вычитание колонок', re: new RegExp(`[${WORD})\\]]\\s*[+-]\\s*[${WORD}(]`) },
   { label: 'склейку строк ||', re: /\|\|/ },
   { label: 'сравнение по границе (>=, <=, >, <)', re: /[<>]=?/ },
   { label: 'проверку на пусто (is null / is not null)', re: /\bis\s+(not\s+)?null\b/ },
@@ -692,13 +701,16 @@ const SQL_FORMS = [
 ];
 
 const PYTHON_FORMS = [
-  { label: 'арифметику над колонкой', re: /\]\s*[*/]\s*[\d(a-z]|\)\s*[*/]\s*[\d(a-z]/ },
+  { label: 'арифметику над колонкой', re: new RegExp(`[)\\]]\\s*[*/]\\s*[\\d(${WORD}]`) },
   { label: 'логическое И/ИЛИ в маске (& или |)', re: /\)\s*[&|]\s*\(/ },
   { label: 'отрицание маски (~)', re: /~\s*[\w(]/ },
   { label: 'выбор нескольких колонок ([[...]])', re: /\[\[/ },
 ];
 
 const TRACK_FORMS = { sql: SQL_FORMS, python: PYTHON_FORMS };
+
+/** Хвост строки после `--` или `#` — проза, а не показанная форма. */
+const stripComments = (s) => s.replace(/(--|#).*$/gm, '');
 
 function checkTheoryIntroducesConstructs(pack, lessons) {
   const constructs = TRACK_CONSTRUCTS[pack.track];
@@ -728,8 +740,11 @@ function checkTheoryIntroducesConstructs(pack, lessons) {
     const skill = skillById.get(skillId);
     if (!skill) return '';
     const l = lessonBySkill.get(skillId);
-    let text = l ? [l.form, l.example, l.wrong].filter(Boolean).join(' ') : '';
-    for (const p of skill.prereqs) text += ' ' + corpus(p, seen);
+    // Через перевод строки, а не пробел: ниже из корпуса вырезаются
+    // комментарии «до конца строки», и склейка в одну строку съедала бы
+    // вместе с комментарием весь остаток карточки.
+    let text = l ? [l.form, l.example, l.wrong].filter(Boolean).join('\n') : '';
+    for (const p of skill.prereqs) text += '\n' + corpus(p, seen);
     return text.toLowerCase();
   }
 
@@ -742,8 +757,20 @@ function checkTheoryIntroducesConstructs(pack, lessons) {
         fail(t.id, `использует «${kw.trim()}», но эта конструкция не встречается в теории навыка «${t.skill}» и его предпосылок`);
       }
     }
+    /*
+     * Формы ищутся по коду без комментариев, и это не мелочь — на этом
+     * замер один раз соврал зелёным. Проверка «сложение или вычитание
+     * колонок» проходила у sql-020 и sql-055 потому, что в карточке
+     * «Выборка и алиасы» стоял комментарий «-- выражение + алиас»:
+     * буква, плюс, буква. То есть гейт удовлетворялся русской фразой
+     * вместо показанной формулы — ровно тот способ обойти проверку,
+     * ради закрытия которого корпус когда-то сузили до form/example/wrong.
+     * Комментарий — это проза внутри кода, и для форм её надо снимать.
+     */
+    const codeOnly = stripComments(code);
+    const availableCode = stripComments(available);
     for (const { label, re } of forms) {
-      if (re.test(code) && !re.test(available)) {
+      if (re.test(codeOnly) && !re.test(availableCode)) {
         fail(t.id, `требует ${label}, но такой формы нет в теории навыка «${t.skill}» и его предпосылок`);
       }
     }
