@@ -1640,6 +1640,70 @@ function ChainDiagram() {
   );
 }
 
+/** События, любое из которых означает «человек взялся за экран сам». */
+const SCROLL_INTERRUPTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+
+/**
+ * Плавная прокрутка, переживающая перерисовку страницы.
+ *
+ * Нативный `behavior: 'smooth'` здесь не годится, и это замер, а не вкус:
+ * браузер отменяет свою анимацию, если позицию прокрутки меняет кто-то
+ * ещё, — а её меняет якорь прокрутки при любом изменении высоты документа.
+ * На главной высота меняется ровно тем действием, ради которого прокрутка
+ * и затевалась (см. вызов в Home). Здесь позицию каждый кадр назначаем мы,
+ * поэтому отменять нечего.
+ *
+ * `goalAt` — функция, а не число: она читает якорь заново на каждом кадре,
+ * так что переехавшая цель просто уводит анимацию за собой, а не оставляет
+ * её ехать в старую точку.
+ *
+ * Прерывается любым собственным движением человека: догонять палец
+ * анимацией — худшее, что можно сделать с прокруткой.
+ */
+function smoothScrollTo(goalAt: () => number): () => void {
+  const clamp = (top: number) =>
+    Math.max(0, Math.min(top, document.documentElement.scrollHeight - window.innerHeight));
+
+  // Уважаем системную настройку: там, где движение мешает, оно и здесь мешает.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.scrollTo({ top: clamp(goalAt()), behavior: 'auto' });
+    return () => {};
+  }
+
+  const from = window.scrollY;
+  const distance = Math.abs(clamp(goalAt()) - from);
+  if (distance < 2) return () => {};
+  /*
+   * Длительность от расстояния, но с потолком: постоянные 320 мс на сдвиге
+   * в полсотни пикселей выглядят вязко, а на полутора тысячах — щелчком.
+   * Верхняя граница важнее нижней — прокрутка не должна успеть надоесть.
+   */
+  const ms = Math.max(220, Math.min(460, 180 + distance * 0.35));
+  const started = performance.now();
+  let frame = 0;
+  let running = true;
+
+  const stop = () => {
+    if (!running) return;
+    running = false;
+    cancelAnimationFrame(frame);
+    for (const ev of SCROLL_INTERRUPTS) window.removeEventListener(ev, stop);
+  };
+
+  const tick = (now: number) => {
+    if (!running) return;
+    const t = Math.min(1, (now - started) / ms);
+    const eased = 1 - Math.pow(1 - t, 3); // ease-out: быстро трогается, мягко доводит
+    window.scrollTo(0, from + (clamp(goalAt()) - from) * eased);
+    if (t < 1) frame = requestAnimationFrame(tick);
+    else stop();
+  };
+
+  for (const ev of SCROLL_INTERRUPTS) window.addEventListener(ev, stop, { passive: true });
+  frame = requestAnimationFrame(tick);
+  return stop;
+}
+
 function Home({
   activeTrack,
   activePack,
@@ -1766,32 +1830,48 @@ function Home({
    */
   const chooserRef = useRef<HTMLButtonElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
+  /*
+   * Отмена анимации живёт в ref, а не в возврате эффекта, и это не стиль,
+   * а починка: `onChooserScrolled` — стрелка, создаваемая заново на каждом
+   * рендере, поэтому эффект перезапускается при любом обновлении Home,
+   * а его cleanup гасит то, что запустил предыдущий заход. Мгновенная
+   * прокрутка это переживала — она заканчивалась внутри одного кадра;
+   * анимация умирала на втором (замер: два вызова scrollTo вместо
+   * полутора десятков, scrollY остался нулём). Отменяем только при
+   * размонтировании и при новом сигнале.
+   */
+  const scrollAnimRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => scrollAnimRef.current?.(), []);
   useEffect(() => {
     if (!scrollToChooser) return;
     onChooserScrolled();
-    const chooser = chooserRef.current;
-    if (!chooser) return;
-    const pageY = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
-    let top = pageY(chooser) - 12;
-    const start = startRef.current;
-    if (start) {
-      // Нижняя граница кнопки, а не верхняя: показать её наполовину — то же,
-      // что не показать, человек всё равно не прочтёт подпись целиком.
-      const needed = pageY(start) + start.offsetHeight + 16 - window.innerHeight;
-      if (needed > top) top = needed;
-    }
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (!chooserRef.current) return;
+    scrollAnimRef.current?.();
     /*
-     * Мгновенно, а не плавно, и это замер, а не вкус. Плавную прокрутку
-     * отменяет перерисовка, которую вызывает сам переключатель треков:
-     * при уходе с pandas исчезает карточка согласия на рантайм, документ
-     * садится с 2785 до 2597, браузер пересчитывает якорь прокрутки —
-     * и анимация умирает, не начавшись (замер на 390×844: вызов
-     * scrollTo(627, smooth) есть, scrollY остался 0). То есть плавность
-     * здесь означала бы «иногда не прокрутились вовсе», причём именно
-     * на переходе, который делают чаще прочих.
+     * Цель — функция, а не число, и пересчитывается каждый кадр. Ровно
+     * из-за этого прежняя правка отказалась от плавности вовсе: перерисовка,
+     * которую вызывает сам переключатель треков, отменяла нативную анимацию
+     * (при уходе с pandas исчезает карточка согласия на рантайм, документ
+     * садится с 2785 до 2597, браузер пересчитывает якорь прокрутки — замер
+     * на 390×844 показал вызов scrollTo(627, smooth) при scrollY, оставшемся
+     * нулём). Своя анимация, читающая якорь заново на каждом кадре, к этому
+     * безразлична: страница подросла или села — цель просто переехала,
+     * и доводить её всё равно докуда надо. См. smoothScrollTo.
      */
-    window.scrollTo({ top: Math.max(0, Math.min(top, maxScroll)), behavior: 'auto' });
+    scrollAnimRef.current = smoothScrollTo(() => {
+      const chooser = chooserRef.current;
+      if (!chooser) return window.scrollY;
+      const pageY = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
+      let top = pageY(chooser) - 12;
+      const start = startRef.current;
+      if (start) {
+        // Нижняя граница кнопки, а не верхняя: показать её наполовину — то же,
+        // что не показать, человек всё равно не прочтёт подпись целиком.
+        const needed = pageY(start) + start.offsetHeight + 16 - window.innerHeight;
+        if (needed > top) top = needed;
+      }
+      return top;
+    });
   }, [scrollToChooser, onChooserScrolled]);
 
   return (
