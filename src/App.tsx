@@ -25,6 +25,7 @@ import {
 } from './srs/scheduler';
 import {
   applyAttempt,
+  emptyProgress,
   exportProgress,
   loadProgress,
   parseImportedProgress,
@@ -830,6 +831,36 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Сброс прогресса — единственное необратимое действие в приложении.
+   *
+   * Занятие стирается вместе с прогрессом, а не остаётся жить отдельно:
+   * очередь собрана планировщиком по состоянию навыков, которого больше нет,
+   * и «Вернуться к занятию» на чистой главной поднимало бы шаги, выбранные
+   * для человека, которого только что не стало.
+   *
+   * Снимок в памяти гасим первым — иначе флаш на `pagehide` перепишет
+   * хранилище тем самым занятием, которое мы только что стёрли
+   * (`sessionSnapshotRef` не обнуляется при уходе с экрана занятия,
+   * см. эффект персиста ниже). Отложенный таймер черновиков — по той же
+   * причине: он сработал бы через 600 мс уже после сброса.
+   *
+   * Чего сброс не трогает намеренно: сохранённые скрипты песочницы (они
+   * не прогресс, а работа человека), тему, кегль, локаль и согласие
+   * на Pyodide — снятое согласие означало бы 52 МБ заново, возможно
+   * по мобильному интернету.
+   */
+  function resetProgress() {
+    sessionSnapshotRef.current = null;
+    window.clearTimeout(flushDraftsRef.current);
+    flushDraftsRef.current = undefined;
+    taskDraftsRef.current.clear();
+    recordedTasksRef.current.clear();
+    clearSession();
+    setPendingSession(null);
+    setProgress(emptyProgress());
+  }
+
   /** true — файл распознан и прогресс заменён; false — не тот файл или битый JSON. */
   async function importProgressFile(file: File): Promise<boolean> {
     const raw = await file.text();
@@ -1181,6 +1212,7 @@ export default function App() {
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onExportProgress={downloadProgress}
               onImportProgress={importProgressFile}
+              onResetProgress={resetProgress}
             />
           )}
 
@@ -2182,18 +2214,30 @@ function About({
   onOpenOnboarding,
   onExportProgress,
   onImportProgress,
+  onResetProgress,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
   onExportProgress: () => void;
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
   onImportProgress: (file: File) => Promise<boolean>;
+  onResetProgress: () => void;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<'ok' | 'error' | null>(null);
+  /**
+   * Три состояния, а не два: 'idle' — обычная кнопка, 'confirm' — вопрос
+   * с двумя ответами вместо неё, 'done' — подтверждение, что сброс прошёл.
+   *
+   * Подтверждение в самой карточке, а не `confirm()`: системный диалог в PWA
+   * выглядит чужим окном браузера ровно там, где важнее всего, чтобы человек
+   * прочитал текст, а не отмахнулся от привычной коробки. Заодно тот же приём,
+   * что у импорта строкой ниже, — результат остаётся на экране.
+   */
+  const [resetStage, setResetStage] = useState<'idle' | 'confirm' | 'done'>('idle');
   // false до первого beforeinstallprompt и снова false после prompt() —
   // событие одноразовое, см. src/pwa/installPrompt.ts.
   const [installAvailable, setInstallAvailable] = useState(false);
@@ -2417,6 +2461,63 @@ function About({
             style={{ margin: '10px 0 0', fontSize: 13, color: importStatus === 'ok' ? 'var(--ok)' : 'var(--err)' }}
           >
             {importStatus === 'ok' ? t.about.importSuccess : t.about.importError}
+          </p>
+        )}
+
+        {/*
+         * Сброс — раздел этой же карточки, а не пятая карточка рядом,
+         * и это замер, а не вкус.
+         *
+         * Пятой карточкой он вставал в верх правой колонки `about-columns`
+         * (x=764, y=1850 при 1280×800) — то есть выше и «Приватности»,
+         * и самой «Резервной копии», на которую ссылается его текст. Заодно
+         * ломался баланс потока: 788 против 602, и под «Автором» зияли 186px,
+         * хотя ровно про этот блок сказано, что он остаётся последним и внизу.
+         *
+         * Довод «необратимое не мешать с сохраняющим» при этом не нарушен:
+         * возражение было против третьей кнопки в том же ряду, где две
+         * безопасных отличались бы от неё только подписью. Здесь другое —
+         * своя черта, свой заголовок, красная кнопка и вопрос перед ней.
+         * По смыслу это один и тот же вопрос «что делать с накопленным»:
+         * файл выше и есть единственный способ отменить сброс ниже.
+         */}
+        <hr className="card-rule" />
+        <h3 className="card-subhead">{t.about.resetTitle}</h3>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.resetBody}</p>
+        {resetStage === 'confirm' ? (
+          <>
+            {/*
+             * Вопрос стоит над кнопками, а не вместо подписи на них: подпись
+             * «Да, сбросить» отвечает на вопрос, но сама его не задаёт,
+             * и человеку, нажавшему случайно, читать было бы нечего.
+             */}
+            <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
+              {t.about.resetConfirm}
+            </p>
+            <div className="row">
+              <button
+                type="button"
+                className="btn danger"
+                onClick={() => {
+                  onResetProgress();
+                  setResetStage('done');
+                }}
+              >
+                {t.about.resetConfirmBtn}
+              </button>
+              <button type="button" className="btn secondary" onClick={() => setResetStage('idle')}>
+                {t.about.resetCancelBtn}
+              </button>
+            </div>
+          </>
+        ) : (
+          <button type="button" className="btn secondary" onClick={() => setResetStage('confirm')}>
+            {t.about.resetBtn}
+          </button>
+        )}
+        {resetStage === 'done' && (
+          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ok)' }}>
+            {t.about.resetDone}
           </p>
         )}
       </div>

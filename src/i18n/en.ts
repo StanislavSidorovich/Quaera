@@ -174,7 +174,7 @@ export const en = {
       "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart. Every skill is trained on its own concrete situation, not an abstract example.",
     privacyTitle: 'Privacy',
     privacyBody:
-      "No account needed. All progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later, or clear the site data and start over.",
+      "No account needed. All progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later, or reset your progress and start over.",
     backupTitle: 'Backup',
     backupBody:
       "Progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a simple safeguard against that.",
@@ -182,6 +182,15 @@ export const en = {
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
     importError: "Doesn't look like a Querium progress file. Check you picked the right one",
+    /** См. комментарий в ru.ts: текст называет обе границы, что исчезнет и что останется. */
+    resetTitle: 'Reset progress',
+    resetBody:
+      'Start from a clean slate: the streak, the review history and every solved-task mark go away, and so does an unfinished session. Sandbox scripts, settings and the Python runtime you already downloaded stay where they are, so there are no 52 MB to fetch again. A reset cannot be undone, so download the progress file first.',
+    resetBtn: 'Reset progress',
+    resetConfirm: 'Reset for good? The only way back is the progress file.',
+    resetConfirmBtn: 'Yes, reset',
+    resetCancelBtn: 'Cancel',
+    resetDone: 'Progress reset',
     /** См. комментарий в ru.ts: карточка видна только когда beforeinstallprompt пришёл. */
     installTitle: 'Install the app',
     installBody:
