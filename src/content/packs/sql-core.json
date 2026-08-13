@@ -157,12 +157,12 @@
       "mode": "write",
       "title": "Прайс-лист для маркетинга",
       "brief": "Бренд-менеджер просит выгрузить справочник товаров, чтобы свериться с полочными ценами перед пересмотром прайса.",
-      "goal": "Вернуть по всем товарам: sku_code, product_name, brand и list_price. Последнюю колонку назвать price_rub.",
+      "goal": "Вернуть по всем товарам: sku_code, product_name, brand и list_price. Последнюю колонку назвать price.",
       "starter": "SELECT\nFROM dim_product",
-      "solution": "SELECT sku_code, product_name, brand, list_price AS price_rub FROM dim_product",
+      "solution": "SELECT sku_code, product_name, brand, list_price AS price FROM dim_product",
       "hints": [
         "Все нужные поля лежат в одной таблице — dim_product, соединять ничего не надо.",
-        "Переименование колонки делается через AS: list_price AS price_rub."
+        "Переименование колонки делается через AS: list_price AS price."
       ],
       "explain": "Алиас — не косметика. Отчёт, где колонка называется list_price или, хуже, SUM(revenue), заставляет получателя догадываться, что это. Имя колонки — часть ответа на вопрос, и правило простое: колонка называется так, как её назвал бы заказчик."
     },

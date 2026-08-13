@@ -102,10 +102,10 @@
       "id": "sql-001",
       "title": "Price list for marketing",
       "brief": "The brand manager asks for the product catalog exported, to check it against shelf prices before a price revision.",
-      "goal": "Return for all products: sku_code, product_name, brand and list_price. Name the last column price_rub.",
+      "goal": "Return for all products: sku_code, product_name, brand and list_price. Name the last column price.",
       "hints": [
         "All the needed fields live in one table — dim_product, nothing to join.",
-        "Renaming a column is done with AS: list_price AS price_rub."
+        "Renaming a column is done with AS: list_price AS price."
       ],
       "explain": "An alias isn't decoration. A report where a column is called list_price or, worse, SUM(revenue), forces the reader to guess what it is. A column's name is part of the answer to the question, and the rule is simple: a column is named the way the requester would name it."
     },
