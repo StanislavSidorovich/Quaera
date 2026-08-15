@@ -215,6 +215,17 @@ export const en = {
     /** См. довод в ru.ts: отказ сети не потеря, и текст обязан это сказать. */
     syncError: 'Could not reach the server. Your progress is saved on this device, and we will try again later',
     signInError: 'Could not start sign-in. Check your connection and try again',
+    /** См. довод в ru.ts: текст называет границу удаления, а не только последствие. */
+    deleteTitle: 'Delete account',
+    deleteBody:
+      'Your Google account is unlinked from the trainer, and the server copy of your progress goes with it. Practice on this device stays: deleting removes what sits on the server, not what is in the browser. For the local copy there is the reset in the card below.',
+    deleteBtn: 'Delete account',
+    deleteConfirm: 'Delete the account for good? The server copy cannot be brought back, and signing in again means starting a new account from scratch.',
+    deleteConfirmBtn: 'Yes, delete',
+    deleteCancelBtn: 'Cancel',
+    deleting: 'Deleting the account…',
+    deleteDone: 'Account deleted. Your progress on this device is still here',
+    deleteError: 'Could not delete the account. Check your connection and try again',
     backupTitle: 'Backup',
     backupBody:
       'Without signing in, progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a safeguard that works without an account too.',

@@ -37,7 +37,7 @@ import {
 } from './srs/store';
 import type { Session } from '@supabase/supabase-js';
 import { signInWithGoogle, signOut, subscribeSession } from './sync/client';
-import { pushProgress, syncProgress } from './sync/progressSync';
+import { deleteAccount, pushProgress, syncProgress } from './sync/progressSync';
 
 /** Состояние сведения прогресса с сервером — для подписи в карточке аккаунта. */
 type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
@@ -1315,6 +1315,23 @@ export default function App() {
                 await signOut();
                 syncedForRef.current = null;
                 setSyncStatus('idle');
+              }}
+              /*
+               * Выход после удаления обязателен, и именно локальный:
+               * на сервере пользователя уже нет, но `supabase-js` держит
+               * в хранилище его токены и продолжает их обновлять — до
+               * первого отказа, который случится не здесь и будет выглядеть
+               * поломкой на ровном месте. Всё остальное — то же, что
+               * при обычном выходе: без сброса `syncedForRef` следующий
+               * вход под другим аккаунтом отправил бы на сервер копию,
+               * ещё не сведённую с его собственной.
+               */
+              onDeleteAccount={async () => {
+                if (!(await deleteAccount())) return false;
+                await signOut();
+                syncedForRef.current = null;
+                setSyncStatus('idle');
+                return true;
               }}
             />
           )}
@@ -2671,6 +2688,7 @@ function AccountScreen({
   syncStatus,
   onSignIn,
   onSignOut,
+  onDeleteAccount,
 }: {
   onExportProgress: () => void;
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
@@ -2681,6 +2699,8 @@ function AccountScreen({
   syncStatus: SyncStatus;
   onSignIn: () => Promise<{ error: string | null }>;
   onSignOut: () => Promise<void>;
+  /** true — аккаунт удалён и сессия закрыта; false — сервер не ответил. */
+  onDeleteAccount: () => Promise<boolean>;
 }) {
   const { t } = useI18n();
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -2702,6 +2722,19 @@ function AccountScreen({
    * там, где ему не удалось даже нажать кнопку.
    */
   const [signInError, setSignInError] = useState(false);
+  /**
+   * Пять состояний против трёх у сброса — из-за сети.
+   *
+   * Сброс локальный и происходит мгновенно, поэтому там между «да»
+   * и «готово» нет ничего. Здесь между ними запрос к серверной функции:
+   * без 'pending' человек секунду смотрит на кнопку, не понимая, нажалась
+   * ли она, и жмёт второй раз. 'error' отдельно от 'idle' по той же
+   * причине, что и у входа: молча вернуться к кнопке — значит сказать,
+   * что ничего не произошло, хотя произошла неудача.
+   */
+  const [deleteStage, setDeleteStage] = useState<'idle' | 'confirm' | 'pending' | 'done' | 'error'>(
+    'idle'
+  );
 
   async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -2769,6 +2802,80 @@ function AccountScreen({
                 ? t.account.synced
                 : t.account.syncError}
           </p>
+        )}
+
+        {/*
+         * Удаление — раздел карточки аккаунта, а не своя карточка, и это
+         * тот же довод, по которому сброс живёт внутри «Резервной копии»:
+         * необратимое действие стоит рядом с тем, что оно уничтожает,
+         * и под своей чертой. Экран получается симметричным — в каждой
+         * карточке сверху безопасное действие, под чертой необратимое.
+         *
+         * Видно только вошедшему: без входа удалять нечего, и кнопка,
+         * которая ничего не делает, объясняла бы себя дольше, чем стоит.
+         * Исключение — 'done': после удаления сессия закрыта, `accountEmail`
+         * стал null, и по общему правилу раздел исчез бы вместе
+         * с подтверждением ровно в ту секунду, когда его читают. Тогда
+         * остаётся один текст без кнопки — над ним карточка уже
+         * предлагает войти заново, и это правда: аккаунта больше нет.
+         */}
+        {(accountEmail || deleteStage === 'done') && (
+          <>
+            <hr className="card-rule" />
+            <h3 className="card-subhead">{t.account.deleteTitle}</h3>
+            {deleteStage !== 'done' && (
+              <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>
+                {t.account.deleteBody}
+              </p>
+            )}
+            {deleteStage === 'confirm' ? (
+              <>
+                <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
+                  {t.account.deleteConfirm}
+                </p>
+                <div className="row">
+                  <button
+                    type="button"
+                    className="btn danger"
+                    onClick={async () => {
+                      setDeleteStage('pending');
+                      setDeleteStage((await onDeleteAccount()) ? 'done' : 'error');
+                    }}
+                  >
+                    {t.account.deleteConfirmBtn}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => setDeleteStage('idle')}
+                  >
+                    {t.account.deleteCancelBtn}
+                  </button>
+                </div>
+              </>
+            ) : deleteStage === 'pending' ? (
+              <p role="status" style={{ margin: 0, fontSize: 13, color: 'var(--text-dim)' }}>
+                {t.account.deleting}
+              </p>
+            ) : deleteStage === 'done' ? (
+              <p role="status" style={{ margin: 0, fontSize: 13, color: 'var(--ok)' }}>
+                {t.account.deleteDone}
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setDeleteStage('confirm')}
+              >
+                {t.account.deleteBtn}
+              </button>
+            )}
+            {deleteStage === 'error' && (
+              <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
+                {t.account.deleteError}
+              </p>
+            )}
+          </>
         )}
       </div>
 
