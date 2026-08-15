@@ -137,7 +137,7 @@
         "The values in the column start with a capital letter.",
         "The = operator isn't the same as LIKE."
       ],
-      "explain": "The most expensive mistakes in analytics are the ones that don't fail. The query ran, returned a number, the number made it into the deck. Hence the working habit: on a suspiciously round or suspiciously small result, first check what values are actually in the column — SELECT DISTINCT division FROM dim_product takes five seconds."
+      "explain": "The most expensive mistakes in analytics are the ones that don't fail. The query ran, returned a number, the number made it into the deck. Hence the working habit: on a suspiciously round or suspiciously small result, first check what values are actually in the column, SELECT DISTINCT division FROM dim_product takes five seconds."
     },
     {
       "id": "sql-003",
@@ -159,7 +159,7 @@
         "Sort first, then limit the count.",
         "Descending order is the DESC keyword after the column name."
       ],
-      "explain": "LIMIT without ORDER BY isn't \"the first ten\" — it's \"some ten\": the database engine is free to return rows in any sequence, and on a different data volume or after reindexing, the answer changes. If the task has the word \"top\" in it, ORDER BY is mandatory."
+      "explain": "LIMIT without ORDER BY isn't \"the first ten\"; it's \"some ten\": the database engine is free to return rows in any sequence, and on a different data volume or after reindexing, the answer changes. If the task has the word \"top\" in it, ORDER BY is mandatory."
     },
     {
       "id": "sql-024",
@@ -200,7 +200,7 @@
         "Think about where the database could even get a header from for a column nobody named.",
         "Compare this with sql-024: there, the same formula got the name discount_price, precisely through AS."
       ],
-      "explain": "A missing alias isn't a syntax error — it's a quiet readability problem: a file with a column called \"list_price * 0.9\" looks like raw debug output, not a business report. Getting into the habit of labeling every computed field saves time for whoever reads the report, and for you a month later, trying to remember what that formula meant."
+      "explain": "A missing alias isn't a syntax error; it's a quiet readability problem: a file with a column called \"list_price * 0.9\" looks like raw debug output, not a business report. Getting into the habit of labeling every computed field saves time for whoever reads the report, and for you a month later, trying to remember what that formula meant."
     },
     {
       "id": "sql-026",
@@ -211,7 +211,7 @@
         "An exact match (=) won't work here: the full names differ, the only thing in common is a word inside the string.",
         "A substring search is LIKE with the pattern '%text%'; the percent signs mean \"anything before and after\"."
       ],
-      "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Forte%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...' — irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
+      "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Forte%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...', irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
     },
     {
       "id": "sql-027",
@@ -241,7 +241,7 @@
         "The difference between = and LIKE here isn't the wildcard, it's the character comparison rule.",
         "LIKE's case-insensitivity in SQLite only covers the ASCII range."
       ],
-      "explain": "= and LIKE use different comparison rules, and it only shows on dirty data. = compares strings byte for byte, so sku_code = 'AQUA001' misses the 56 rows written in lowercase. LIKE treats Latin letters of either case as equal by default and finds all 163. Two lessons follow, both about portability. First: the trick works exactly up to the ASCII boundary. As soon as values carry letters beyond it — Cyrillic, umlauts, diacritics — LIKE in SQLite becomes case-sensitive again, and LOWER and UPPER are no help: they are limited to the same range. Second: another engine flips it. In PostgreSQL, LIKE respects case and there's a separate ILIKE for the other behaviour — the same query silently changes meaning when it moves. So nobody leans on LIKE's case-insensitivity as a rule: case gets normalized on the way in, by the very cleanup the raw-layer tasks are about. The failure here is silent — the query with = doesn't fail, it returns 107 rows and looks like it works, and the missing third of the volume surfaces later, in a report."
+      "explain": "= and LIKE use different comparison rules, and it only shows on dirty data. = compares strings byte for byte, so sku_code = 'AQUA001' misses the 56 rows written in lowercase. LIKE treats Latin letters of either case as equal by default and finds all 163. Two lessons follow, both about portability. First: the trick works exactly up to the ASCII boundary. As soon as values carry letters beyond it (Cyrillic, umlauts, diacritics), LIKE in SQLite becomes case-sensitive again, and LOWER and UPPER are no help: they are limited to the same range. Second: another engine flips it. In PostgreSQL, LIKE respects case and there's a separate ILIKE for the other behaviour, the same query silently changes meaning when it moves. So nobody leans on LIKE's case-insensitivity as a rule: case gets normalized on the way in, by the very cleanup the raw-layer tasks are about. The failure here is silent; the query with = doesn't fail, it returns 107 rows and looks like it works, and the missing third of the volume surfaces later, in a report."
     },
     {
       "id": "sql-029",
@@ -252,7 +252,7 @@
         "Sort by price from high to low first, like in sql-004.",
         "LIMIT 1 takes the first row after sorting. To skip the most expensive one and take the next, add OFFSET 1."
       ],
-      "explain": "OFFSET shifts LIMIT's starting point: LIMIT 1 OFFSET 1 means \"one row, starting from the second\". This trick comes in handy anywhere you need not the top of a ranking but a specific spot in it — \"the second-biggest customer\", \"the third quarter in the count\". Just like with plain LIMIT, without ORDER BY the result of OFFSET is undefined — a guaranteed spot in the list only exists together with a sort."
+      "explain": "OFFSET shifts LIMIT's starting point: LIMIT 1 OFFSET 1 means \"one row, starting from the second\". This trick comes in handy anywhere you need not the top of a ranking but a specific spot in it: \"the second-biggest customer\", \"the third quarter in the count\". Just like with plain LIMIT, without ORDER BY the result of OFFSET is undefined; a guaranteed spot in the list only exists together with a sort."
     },
     {
       "id": "sql-048",
@@ -282,7 +282,7 @@
         "Start with ROW_NUMBER() OVER (ORDER BY list_price DESC) to see where each of the three 98 ¥ items lands in the overall list.",
         "OFFSET 33 means \"skip the first 33 rows.\" Check which row number lands 34th."
       ],
-      "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit — on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ¥, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering — add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
+      "explain": "ORDER BY list_price DESC only sorts by price, and the order between rows with the same price isn't fixed by anything explicit; on this particular database it happens to come out stable between runs, but nothing guarantees that. Of the three items priced 98 ¥, two land inside this LIMIT window and the third lands in the previous one, simply because the tied-price group doesn't fit entirely inside a three-row window. Practical takeaway for pagination: LIMIT/OFFSET is only safe with a fully unique ordering. Add a secondary key like product_id to ORDER BY, or rows on page boundaries can duplicate or disappear whenever the data changes."
     },
     {
       "id": "sql-005",
@@ -364,7 +364,7 @@
         "The function that returns the first non-null value from a list of arguments is COALESCE(column, fallback_value).",
         "This is a display task, not a filtering one: don't touch WHERE. Independent pharmacies should stay in the result."
       ],
-      "explain": "COALESCE(a, b) returns a if it's not NULL, and b otherwise — you can pass more than two arguments, and it takes the first non-null one in order. Unlike sql-006, where NULL needed to be accounted for in a filter, here the task is different: NULL should stay in the result set, but shouldn't reach the report's reader in raw form. Both scenarios — filtering and display — require different handling of the same NULL."
+      "explain": "COALESCE(a, b) returns a if it's not NULL, and b otherwise; you can pass more than two arguments, and it takes the first non-null one in order. Unlike sql-006, where NULL needed to be accounted for in a filter, here the task is different: NULL should stay in the result set, but shouldn't reach the report's reader in raw form. Both scenarios (filtering and display) require different handling of the same NULL."
     },
     {
       "id": "sql-031",
@@ -394,7 +394,7 @@
         "Same principle as sql-005: NULL is never the result of a genuine comparison via =.",
         "The correct form of the condition is promo_id IS NULL, not promo_id = NULL."
       ],
-      "explain": "This is the costliest version of this mistake: the result isn't an empty list or a runtime error, but a plausible-looking number — 0. Seeing 0, an analyst might conclude the company doesn't sell anything outside promotions at all, and that could end up in a presentation as fact. Rule of thumb going forward: any null check is IS NULL or IS NOT NULL — the equals sign never works for NULL, whether it's in WHERE, HAVING, or inside a CASE."
+      "explain": "This is the costliest version of this mistake: the result isn't an empty list or a runtime error, but a plausible-looking number, 0. Seeing 0, an analyst might conclude the company doesn't sell anything outside promotions at all, and that could end up in a presentation as fact. Rule of thumb going forward: any null check is IS NULL or IS NOT NULL; the equals sign never works for NULL, whether it's in WHERE, HAVING, or inside a CASE."
     },
     {
       "id": "sql-007",
@@ -435,7 +435,7 @@
         "Distinct brands is COUNT(DISTINCT ...).",
         "Rounding: ROUND(expression, 2)."
       ],
-      "explain": "A query without GROUP BY but with aggregates always returns exactly one row — the whole table is treated as a single group. It's a handy trick for quickly sanity-checking data before building a report on top of it."
+      "explain": "A query without GROUP BY but with aggregates always returns exactly one row; the whole table is treated as a single group. It's a handy trick for quickly sanity-checking data before building a report on top of it."
     },
     {
       "id": "sql-032",
@@ -446,7 +446,7 @@
         "Spread is two separate aggregate functions, MIN and MAX, not a single formula.",
         "Like other aggregates, they need an alias; otherwise the report columns will be called MIN(list_price) and MAX(list_price)."
       ],
-      "explain": "MIN and MAX are aggregates just like COUNT, SUM, and AVG: they're computed over the whole set of rows and, like the others, ignore NULL. The MIN/MAX pair is a standard first step in profiling any numeric column: before building a report on price, it's useful to see what range it actually falls in — that immediately reveals outliers like a price of 0 or an accidentally extra digit."
+      "explain": "MIN and MAX are aggregates just like COUNT, SUM, and AVG: they're computed over the whole set of rows and, like the others, ignore NULL. The MIN/MAX pair is a standard first step in profiling any numeric column: before building a report on price, it's useful to see what range it actually falls in; that immediately reveals outliers like a price of 0 or an accidentally extra digit."
     },
     {
       "id": "sql-033",
@@ -476,7 +476,7 @@
         "Recall the difference between COUNT(*) and COUNT(column) from sql-007. The same principle applies here, just comparing COUNT and AVG.",
         "For SUM, AVG, MIN, and MAX, the result is only defined when there is at least one value to compute over."
       ],
-      "explain": "COUNT(*) counts rows, and zero rows is a legitimate, meaningful answer for it. The other aggregates compute something over row values, and when there are no values, they have nothing to answer with — hence NULL, not 0. Practical consequence: code like \"if avg_price equals 0, there's no data\" will behave incorrectly — the correct check for missing data looks at COUNT or at IS NULL on the aggregate itself."
+      "explain": "COUNT(*) counts rows, and zero rows is a legitimate, meaningful answer for it. The other aggregates compute something over row values, and when there are no values, they have nothing to answer with, hence NULL, not 0. Practical consequence: code like \"if avg_price equals 0, there's no data\" will behave incorrectly; the correct check for missing data looks at COUNT or at IS NULL on the aggregate itself."
     },
     {
       "id": "sql-009",
@@ -498,7 +498,7 @@
         "We're summing units, not counting rows.",
         "You must group by the same expression as the first column. You don't have to repeat it; the column number is enough."
       ],
-      "explain": "Dates here are stored as text in YYYY-MM-DD format, and that's not an accident: this format sorts correctly as a string, and substr(date, 1, 7) instantly gives the month. Practical rule: if you can store a date in ISO format, do — half of all period operations become trivial."
+      "explain": "Dates here are stored as text in YYYY-MM-DD format, and that's not an accident: this format sorts correctly as a string, and substr(date, 1, 7) instantly gives the month. Practical rule: if you can store a date in ISO format, do. Half of all period operations become trivial."
     },
     {
       "id": "sql-034",
@@ -539,7 +539,7 @@
         "The SQL standard forbids queries like this, but SQLite is an extension on top of the standard, and this is a case where it's more lenient.",
         "\"One of the group's rows\" means exactly that: even the SQLite developers don't guarantee which one."
       ],
-      "explain": "This is a long-standing SQLite liberty (historically MySQL allowed the same thing without strict mode): a non-aggregated column outside GROUP BY isn't forbidden — it's silently allowed, with an unpredictable value. The query doesn't fail and looks like it works, which is more alarming than an error: the same code on PostgreSQL or strict MySQL would fail immediately, while here it silently returns a plausible-looking but random number. Practical rule: every column in an aggregate query's SELECT is either in GROUP BY or under an aggregate function, no exceptions, even when the engine happens to allow one."
+      "explain": "This is a long-standing SQLite liberty (historically MySQL allowed the same thing without strict mode): a non-aggregated column outside GROUP BY isn't forbidden; it's silently allowed, with an unpredictable value. The query doesn't fail and looks like it works, which is more alarming than an error: the same code on PostgreSQL or strict MySQL would fail immediately, while here it silently returns a plausible-looking but random number. Practical rule: every column in an aggregate query's SELECT is either in GROUP BY or under an aggregate function, no exceptions, even when the engine happens to allow one."
     },
     {
       "id": "sql-011",
@@ -580,7 +580,7 @@
         "Query execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. But in some DBMSes HAVING gets an exception specifically for names from SELECT.",
         "Compare with the explicit version of the same check: HAVING COUNT(*) > 5. Both give the same answer."
       ],
-      "explain": "Strictly speaking, the SQL standard doesn't require HAVING to understand SELECT aliases — under strict execution logic, those names don't exist yet at the HAVING stage. But SQLite (like MySQL) allows this liberty. Practical takeaway: if a query needs to keep working on another DBMS, it's safer to duplicate the explicit expression in HAVING, as in sql-011, rather than rely on the alias being picked up — the exact same principle as the non-aggregated column outside GROUP BY (sql-035): the engine allows more than the standard guarantees."
+      "explain": "Strictly speaking, the SQL standard doesn't require HAVING to understand SELECT aliases, under strict execution logic, those names don't exist yet at the HAVING stage. But SQLite (like MySQL) allows this liberty. Practical takeaway: if a query needs to keep working on another DBMS, it's safer to duplicate the explicit expression in HAVING, as in sql-011, rather than rely on the alias being picked up, the exact same principle as the non-aggregated column outside GROUP BY (sql-035): the engine allows more than the standard guarantees."
     },
     {
       "id": "sql-049",
@@ -591,7 +591,7 @@
         "Count distinct customers with the same function as in SELECT: DISTINCT customer_id.",
         "After HAVING, sorting goes from higher revenue to lower; the keyword goes after the column name."
       ],
-      "explain": "One condition in HAVING checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each. Unlike sql-011, which had a single threshold condition, here you can see how combining metrics screens out brands that are strong on only one dimension — exactly what a category manager needs for a shelf-expansion decision."
+      "explain": "One condition in HAVING checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each. Unlike sql-011, which had a single threshold condition, here you can see how combining metrics screens out brands that are strong on only one dimension, exactly what a category manager needs for a shelf-expansion decision."
     },
     {
       "id": "sql-012",
@@ -613,7 +613,7 @@
         "The join key is product_id: it exists in both fact_sellout and dim_product, but since the column is named the same in both tables, you need to qualify it with a table alias in ON.",
         "Filters on the outlet and on the week apply to the fact (f.customer_id, f.week_start); they're already available there; the JOIN is only needed to add the product name."
       ],
-      "explain": "This is the basic mechanics of a JOIN without aggregation: one result row is one fact row, enriched with columns from a dimension table. The join doesn't sum or group anything — it just extends each row with data matched by its key. This same mechanism underlies sql-012 and every more complex join query further on — they just add GROUP BY, a period filter, and sorting on top."
+      "explain": "This is the basic mechanics of a JOIN without aggregation: one result row is one fact row, enriched with columns from a dimension table. The join doesn't sum or group anything; it just extends each row with data matched by its key. This same mechanism underlies sql-012 and every more complex join query further on; they just add GROUP BY, a period filter, and sorting on top."
     },
     {
       "id": "sql-037",
@@ -643,7 +643,7 @@
         "Check which customer_type values actually appear among customers who have rows in fact_sellout. Do distributors sell directly to end buyers?",
         "144 minus the 12 distributors is exactly the number of outlets that can physically appear in fact_sellout."
       ],
-      "explain": "INNER JOIN shows only the intersection: a dim_customer row for which fact_sellout has at least one matching sale. Distributors serve outlets but don't sell to the end buyer themselves, so they have zero rows in the sales fact — and they silently drop out of the report. This is exactly the mechanism that will later call for a LEFT JOIN (sql-014): if a report needs to show \"every customer, even those with no sales\", INNER JOIN is structurally the wrong tool for that — not because anything is broken, but because it's designed as an intersection, not a union."
+      "explain": "INNER JOIN shows only the intersection: a dim_customer row for which fact_sellout has at least one matching sale. Distributors serve outlets but don't sell to the end buyer themselves, so they have zero rows in the sales fact, and they silently drop out of the report. This is exactly the mechanism that will later call for a LEFT JOIN (sql-014): if a report needs to show \"every customer, even those with no sales\", INNER JOIN is structurally the wrong tool for that, not because anything is broken, but because it's designed as an intersection, not a union."
     },
     {
       "id": "sql-014",
@@ -655,7 +655,7 @@
         "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product, the ones the report exists to show.",
         "You can look up the product's key by name with a scalar subquery right inside the join condition: (SELECT product_id FROM dim_product WHERE product_name = '...'). COALESCE turns an empty sum into zero."
       ],
-      "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\" — both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN — the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0 — in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent — zero sales, unvisited outlets, SKUs with no stock — are their own genre. They're almost always built outward from the dimension table, not from the fact."
+      "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\", both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN, the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0, in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent (zero sales, unvisited outlets, SKUs with no stock) are their own genre. They're almost always built outward from the dimension table, not from the fact."
     },
     {
       "id": "sql-039",
@@ -685,7 +685,7 @@
         "Compare with sql-014: the same business question, but the product filter moved from ON to WHERE.",
         "WHERE applies to the result of the join, and where there was no match, LEFT JOIN has already substituted NULL."
       ],
-      "explain": "This is exactly the mistake sql-014's hint warned about: a condition on a LEFT JOIN's right-hand table must go in ON. Here you can see live what happens if you ignore that — the query is syntactically fine, the JOIN in the text is still LEFT, but it behaves like INNER in practice: the five regions the report exists for silently vanish, with no error at all. Verification reflex: if a LEFT JOIN query returns fewer rows than the left table should provide, the first thing to check is whether a filter on the right-hand table has moved into WHERE."
+      "explain": "This is exactly the mistake sql-014's hint warned about: a condition on a LEFT JOIN's right-hand table must go in ON. Here you can see live what happens if you ignore that; the query is syntactically fine, the JOIN in the text is still LEFT, but it behaves like INNER in practice: the five regions the report exists for silently vanish, with no error at all. Verification reflex: if a LEFT JOIN query returns fewer rows than the left table should provide, the first thing to check is whether a filter on the right-hand table has moved into WHERE."
     },
     {
       "id": "sql-040",
@@ -696,7 +696,7 @@
         "The brand condition must stay in ON; otherwise outlets without this product get filtered out before you even get a chance to find them.",
         "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found, and the fact_sellout columns are empty."
       ],
-      "explain": "This is a second way to use LEFT JOIN — not to compute a value for each left-table row, but to find the left-table rows for which the right-hand table had nothing at all. The technique is called an anti-join: LEFT JOIN plus an IS NULL check on a mandatory right-table column, usually its key. INNER JOIN is fundamentally the wrong tool for this task — it would immediately discard exactly the rows you're trying to find."
+      "explain": "This is a second way to use LEFT JOIN, not to compute a value for each left-table row, but to find the left-table rows for which the right-hand table had nothing at all. The technique is called an anti-join: LEFT JOIN plus an IS NULL check on a mandatory right-table column, usually its key. INNER JOIN is fundamentally the wrong tool for this task; it would immediately discard exactly the rows you're trying to find."
     },
     {
       "id": "sql-013",
@@ -737,7 +737,7 @@
         "Both counts are essentially the same query, differing by exactly one JOIN. Insert it as a second subquery in SELECT.",
         "No grouping needed: both parts simply count COUNT(*) over the whole selection."
       ],
-      "explain": "This is the before/after check described in the sql-013 explanation: if adding a JOIN changes the row count and you didn't plan for that, the join key isn't unique and facts got multiplied. Here rows_after is exactly 10 times rows_before — because the «Nettora» brand has exactly 10 promotions in dim_promo, and every sales row matched every one of them. Turn this check into a reflex before adding any new JOIN to an existing report, not only once the numbers already look suspicious."
+      "explain": "This is the before/after check described in the sql-013 explanation: if adding a JOIN changes the row count and you didn't plan for that, the join key isn't unique and facts got multiplied. Here rows_after is exactly 10 times rows_before, because the «Nettora» brand has exactly 10 promotions in dim_promo, and every sales row matched every one of them. Turn this check into a reflex before adding any new JOIN to an existing report, not only once the numbers already look suspicious."
     },
     {
       "id": "sql-050",
@@ -748,7 +748,7 @@
         "The key that unambiguously links a sale to a specific promotion already exists in the fact table itself; it's promo_id, not brand.",
         "Every fact_sellout row has exactly one promo_id value (or NULL), so this join can't multiply rows, unlike the join on brand in sql-013."
       ],
-      "explain": "This is the fix for the mistake in sql-013: dim_promo should be joined on the key that exists in the fact table itself and uniquely identifies a specific promotion — promo_id. Joining on brand duplicated facts because a brand has several promotions at once; joining on promo_id is safe because each sale has at most one associated promotion. The same principle resolves any fan-out: look for a ready-made foreign key in the fact table pointing to the dimension you need, instead of joining on a descriptive field like a name or a brand."
+      "explain": "This is the fix for the mistake in sql-013: dim_promo should be joined on the key that exists in the fact table itself and uniquely identifies a specific promotion, promo_id. Joining on brand duplicated facts because a brand has several promotions at once; joining on promo_id is safe because each sale has at most one associated promotion. The same principle resolves any fan-out: look for a ready-made foreign key in the fact table pointing to the dimension you need, instead of joining on a descriptive field like a name or a brand."
     },
     {
       "id": "sql-015",
@@ -759,7 +759,7 @@
         "A promo is checked with IS NOT NULL, not with a comparison.",
         "CASE goes inside SUM: you're summing not all rows, but only the matching ones."
       ],
-      "explain": "Conditional aggregation is an analyst's workhorse. SUM(CASE WHEN condition THEN measure ELSE 0 END) unfolds a metric into columns in a single pass over the data, instead of writing two queries and then joining them. The same trick gives you a share: SUM(CASE ...) * 1.0 / SUM(measure). And the same idea in Power BI is called CALCULATE with a filter — same concept, different syntax."
+      "explain": "Conditional aggregation is an analyst's workhorse. SUM(CASE WHEN condition THEN measure ELSE 0 END) unfolds a metric into columns in a single pass over the data, instead of writing two queries and then joining them. The same trick gives you a share: SUM(CASE ...) * 1.0 / SUM(measure). And the same idea in Power BI is called CALCULATE with a filter, same concept, different syntax."
     },
     {
       "id": "sql-042",
@@ -789,7 +789,7 @@
         "There's no ELSE in this CASE, and without one, unmatched branches have exactly one behavior.",
         "Compare with IF/ELSE in other languages: a missing branch there isn't equivalent to an empty string either."
       ],
-      "explain": "A CASE WHEN ... END with no ELSE is an implicit ELSE NULL: it's not an error and not an empty string, but a genuine absence of value, visually indistinguishable from a \"real\" gap in the data. Rule of thumb: if a lookup doesn't enumerate every value, add an ELSE — either with an explicit label like 'Other', so such rows are visible, or deliberately leave ELSE NULL as a conscious decision rather than an oversight."
+      "explain": "A CASE WHEN ... END with no ELSE is an implicit ELSE NULL: it's not an error and not an empty string, but a genuine absence of value, visually indistinguishable from a \"real\" gap in the data. Rule of thumb: if a lookup doesn't enumerate every value, add an ELSE, either with an explicit label like 'Other', so such rows are visible, or deliberately leave ELSE NULL as a conscious decision rather than an oversight."
     },
     {
       "id": "sql-043",
@@ -800,7 +800,7 @@
         "You can group directly on the CASE expression's alias, shorter than repeating the whole construct in GROUP BY.",
         "Branch order matters: WHEN conditions are checked in sequence, and once one matches, the rest are never evaluated."
       ],
-      "explain": "Here CASE isn't doing conditional aggregation — it's binning: turning a continuous value into named categories that any later segmentation is built on. The order of conditions is critical: if 'Mid' (< 300) came before 'Budget' (< 100), budget products would also pass the wider condition first and never reach their own branch. The general rule: from the narrowest condition to the widest."
+      "explain": "Here CASE isn't doing conditional aggregation; it's binning: turning a continuous value into named categories that any later segmentation is built on. The order of conditions is critical: if 'Mid' (< 300) came before 'Budget' (< 100), budget products would also pass the wider condition first and never reach their own branch. The general rule: from the narrowest condition to the widest."
     },
     {
       "id": "sql-016",
@@ -811,7 +811,7 @@
         "You can build the second CTE directly on the first, no need to re-read the fact table.",
         "Integer division in SQLite truncates the fractional part: multiply by 100.0, not 100."
       ],
-      "explain": "A CTE is just naming an intermediate result. The value isn't that it's shorter (it's often longer) — it's that each step can be run on its own and checked: did brand revenues compute correctly, does the division total add up. A query written step by step gets debugged in minutes; a subquery nested four levels deep takes hours."
+      "explain": "A CTE is just naming an intermediate result. The value isn't that it's shorter (it's often longer); it's that each step can be run on its own and checked: did brand revenues compute correctly, does the division total add up. A query written step by step gets debugged in minutes; a subquery nested four levels deep takes hours."
     },
     {
       "id": "sql-044",
@@ -841,7 +841,7 @@
         "FROM a, b with no condition is the same as CROSS JOIN a, b.",
         "The row count of a Cartesian product is the product of the row counts, not their sum."
       ],
-      "explain": "With ordinary tables this mistake usually jumps out — thousands of rows instead of hundreds. But with CTEs, where both sides are small, the result looks plausible: 18 isn't an alarmingly large number, and it's easy to mistake for a slightly bloated but reasonable-looking list. Same rule as with ordinary tables (sql-013): joining CTEs to each other needs the same explicit ON as joining ordinary tables — the WITH syntax doesn't exempt you from that."
+      "explain": "With ordinary tables this mistake usually jumps out, thousands of rows instead of hundreds. But with CTEs, where both sides are small, the result looks plausible: 18 isn't an alarmingly large number, and it's easy to mistake for a slightly bloated but reasonable-looking list. Same rule as with ordinary tables (sql-013): joining CTEs to each other needs the same explicit ON as joining ordinary tables; the WITH syntax doesn't exempt you from that."
     },
     {
       "id": "sql-045",
@@ -852,7 +852,7 @@
         "Both aggregates (SUM and COUNT(DISTINCT)) are computed in one CTE on the same key, channel.",
         "Revenue divided by outlet count is no longer an aggregate, just ordinary division, so it belongs in the final SELECT, not inside the CTE. Don't forget to multiply by 1.0, or the division will be integer division."
       ],
-      "explain": "Here the CTE isn't so much splitting the calculation into steps as honestly fixing two related measures at the same granularity level, once — and everything after that, i.e. dividing one by the other, happens separately, on the CTE's result. Same principle as sql-016: compute the components in one place first, then combine them as a separate, simpler step, rather than one long formula."
+      "explain": "Here the CTE isn't so much splitting the calculation into steps as honestly fixing two related measures at the same granularity level, once, and everything after that, i.e. dividing one by the other, happens separately, on the CTE's result. Same principle as sql-016: compute the components in one place first, then combine them as a separate, simpler step, rather than one long formula."
     },
     {
       "id": "sql-021",
@@ -863,7 +863,7 @@
         "COUNT(DISTINCT ...) takes only one expression. Concatenate the fields into a string with the || operator.",
         "If even one concatenation operand is NULL, the whole concatenation becomes NULL and the row drops out of the count. Replace empty values with a placeholder via COALESCE."
       ],
-      "explain": "The reflex matters more than the technique here: every incoming extract gets profiled first — row count, duplicates, share of nulls, date range, list of distinct values in key columns. Five minutes of profiling saves a day of figuring out why the dashboard's revenue is higher than the accounting system's. And separately, remember how concatenation with NULL behaves — it silently breaks composite keys."
+      "explain": "The reflex matters more than the technique here: every incoming extract gets profiled first: row count, duplicates, share of nulls, date range, list of distinct values in key columns. Five minutes of profiling saves a day of figuring out why the dashboard's revenue is higher than the accounting system's. And separately, remember how concatenation with NULL behaves; it silently breaks composite keys."
     },
     {
       "id": "sql-046",
@@ -874,7 +874,7 @@
         "The two spellings differ in their first letter, Ya against Ia. Catch both variants with separate LIKE conditions.",
         "The sum of written_ya and written_ia should match total_chain; that's the check that the variants don't overlap and nothing is lost."
       ],
-      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent romanisation is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline — for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data — it comes from a mapping table."
+      "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent romanisation is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline, for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data; it comes from a mapping table."
     },
     {
       "id": "sql-047",
@@ -904,7 +904,7 @@
         "Before comparing dates as a range, they need to be brought to one format, for example, to ISO via a combination of substr and concatenation.",
         "Look at a few sale_date rows from the same week. The formats will differ between neighboring rows."
       ],
-      "explain": "A >= / <= comparison on a TEXT column is always byte-by-byte, not calendar-aware — it only works when the data format lexicographically matches chronological order, as with ISO YYYY-MM-DD. The moment the format differs even slightly — day before month, no leading zero — the comparison stops meaning what it looks like it means. Before any period filter on a raw text field, normalize the format first, and only then compare."
+      "explain": "A >= / <= comparison on a TEXT column is always byte-by-byte, not calendar-aware; it only works when the data format lexicographically matches chronological order, as with ISO YYYY-MM-DD. The moment the format differs even slightly (day before month, no leading zero), the comparison stops meaning what it looks like it means. Before any period filter on a raw text field, normalize the format first, and only then compare."
     },
     {
       "id": "sql-017",
@@ -934,7 +934,7 @@
         "One of the functions must give every row a unique number.",
         "The other two differ in whether they leave a gap in the numbering after tied values."
       ],
-      "explain": "The choice of function is driven by the question. \"Pick one row per group\" (e.g. a customer's last sale) — ROW_NUMBER, it guarantees exactly one. \"Podium places\" — RANK: with two second places, there's no third. \"Price tiers, categories\" — DENSE_RANK, where gaps would be meaningless. Separately, remember: with ROW_NUMBER and an ambiguous sort, the result is non-deterministic — add a second key to ORDER BY."
+      "explain": "The choice of function is driven by the question. \"Pick one row per group\" (e.g. a customer's last sale): ROW_NUMBER, it guarantees exactly one. \"Podium places\" (RANK): with two second places, there's no third. \"Price tiers, categories\" (DENSE_RANK), where gaps would be meaningless. Separately, remember: with ROW_NUMBER and an ambiguous sort, the result is non-deterministic. Add a second key to ORDER BY."
     },
     {
       "id": "sql-018",
@@ -945,7 +945,7 @@
         "\"Within each brand\" is PARTITION BY brand.",
         "A window function can't be used in WHERE at the same query level: compute it in a CTE or subquery first, and filter one level up."
       ],
-      "explain": "A window function is computed after WHERE and GROUP BY, but before ORDER BY and LIMIT — so you can't filter on its result at the same level; you need an extra layer. This is the most common working pattern: compute the window in a CTE, filter outside it. It solves almost any \"top N per group\", \"latest record per customer\", or \"customer's first order\" question."
+      "explain": "A window function is computed after WHERE and GROUP BY, but before ORDER BY and LIMIT, so you can't filter on its result at the same level; you need an extra layer. This is the most common working pattern: compute the window in a CTE, filter outside it. It solves almost any \"top N per group\", \"latest record per customer\", or \"customer's first order\" question."
     },
     {
       "id": "sql-051",
@@ -956,7 +956,7 @@
         "ROW_NUMBER here is partitioned by division. Insert PARTITION BY before division.",
         "The \"top rank only\" filter is rnk = 1, since the rank within its partition is already computed in the ranked CTE."
       ],
-      "explain": "PARTITION BY division starts a separate ROW_NUMBER counter for each division: the numbering of FMCG channels doesn't continue into Pharma channels, it restarts at one — the same principle as sql-018 with brands, the only difference being that there we kept the top three ranks, and here one is enough. Pharma has only a single sales channel in the database — pharmacy — so the result for it is trivial, but the query stays correct: it looks for the leader, it doesn't assume competition between channels within a division."
+      "explain": "PARTITION BY division starts a separate ROW_NUMBER counter for each division: the numbering of FMCG channels doesn't continue into Pharma channels, it restarts at one, the same principle as sql-018 with brands, the only difference being that there we kept the top three ranks, and here one is enough. Pharma has only a single sales channel in the database (pharmacy), so the result for it is trivial, but the query stays correct: it looks for the leader, it doesn't assume competition between channels within a division."
     },
     {
       "id": "sql-052",
@@ -967,7 +967,7 @@
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep. Aggregate by rep_id first.",
         "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
       ],
-      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers — there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
+      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers, there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
     },
     {
       "id": "sql-053",
@@ -997,7 +997,7 @@
         "PARTITION BY isn't a filter or a sort on the result; it splits the window into independent groups for computation.",
         "retail has three rows, ecom has two. Each partition is numbered from 1 on its own."
       ],
-      "explain": "PARTITION BY channel starts its own, independent ROW_NUMBER counter for each channel — as if you'd run the query separately for retail and separately for ecom and just combined the results. The order of rows in the source table doesn't matter: the numbering obeys only PARTITION BY and the ORDER BY inside the partition. This mirrors the mistake in sql-056: there, PARTITION BY was forgotten, several series merged — as far as the window was concerned — into one continuous one, and the function stepped across the channel boundary without noticing it. Here PARTITION BY is in place, but the expectation stayed the old, continuous one: the intern expects the overall count to continue and is surprised that ecom starts at one. In both cases the answer reads straight off the window's definition — it's the exhaustive description of what the function sees and what it doesn't."
+      "explain": "PARTITION BY channel starts its own, independent ROW_NUMBER counter for each channel, as if you'd run the query separately for retail and separately for ecom and just combined the results. The order of rows in the source table doesn't matter: the numbering obeys only PARTITION BY and the ORDER BY inside the partition. This mirrors the mistake in sql-056: there, PARTITION BY was forgotten, several series merged (as far as the window was concerned) into one continuous one, and the function stepped across the channel boundary without noticing it. Here PARTITION BY is in place, but the expectation stayed the old, continuous one: the intern expects the overall count to continue and is surprised that ecom starts at one. In both cases the answer reads straight off the window's definition; it's the exhaustive description of what the function sees and what it doesn't."
     },
     {
       "id": "sql-019",
@@ -1008,7 +1008,7 @@
         "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
       ],
-      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row — the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window — such values are usually hidden in a report."
+      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row; the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window, such values are usually hidden in a report."
     },
     {
       "id": "sql-020",
@@ -1019,7 +1019,7 @@
         "LAG retrieves the previous row's value.",
         "The first month has no previous value; LAG returns NULL, and the percentage becomes NULL too. That's expected."
       ],
-      "explain": "LAG and LEAD remove the need to self-join a table against a shifted period — and that kind of self-join also breaks on missing months. An important caveat about meaning: month-over-month on a seasonal product is almost always misleading, because it mixes seasonality with trend. For seasonal categories you compare year over year (the same month last year) or use a rolling year. The technique gives you a number — the correctness of the comparison is still your responsibility."
+      "explain": "LAG and LEAD remove the need to self-join a table against a shifted period, and that kind of self-join also breaks on missing months. An important caveat about meaning: month-over-month on a seasonal product is almost always misleading, because it mixes seasonality with trend. For seasonal categories you compare year over year (the same month last year) or use a rolling year. The technique gives you a number; the correctness of the comparison is still your responsibility."
     },
     {
       "id": "sql-054",
@@ -1030,7 +1030,7 @@
         "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
         "distributor_id = 1 is «Setouchi Trading»; you can check this against dim_customer."
       ],
-      "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in sql-019, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period — exactly what's needed here to track quarterly running shipments."
+      "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in sql-019, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period, exactly what's needed here to track quarterly running shipments."
     },
     {
       "id": "sql-055",
@@ -1071,7 +1071,7 @@
         "Compare with sql-020: there LAG worked over a single continuous time series, and PARTITION BY was never needed at all.",
         "Here there are several series (one per channel) and without PARTITION BY they look like one continuous series to LAG."
       ],
-      "explain": "LAG and LEAD don't see the table as a whole with its meaningful groups — they see a linear sequence of rows defined by the ORDER BY inside OVER. A single time series, as in sql-020, never exposes this problem — there are no other series whose boundary you could cross. The moment there are several series (channels, regions, customers), LAG without PARTITION BY silently takes the last row of the previous group instead of NULL, and the first month-over-month calculation for each new group ends up being a comparison against someone else's data. The rule is simple: anywhere the ORDER BY inside OVER runs across several entities at once, PARTITION BY on that entity is mandatory, not optional."
+      "explain": "LAG and LEAD don't see the table as a whole with its meaningful groups; they see a linear sequence of rows defined by the ORDER BY inside OVER. A single time series, as in sql-020, never exposes this problem; there are no other series whose boundary you could cross. The moment there are several series (channels, regions, customers), LAG without PARTITION BY silently takes the last row of the previous group instead of NULL, and the first month-over-month calculation for each new group ends up being a comparison against someone else's data. The rule is simple: anywhere the ORDER BY inside OVER runs across several entities at once, PARTITION BY on that entity is mandatory, not optional."
     },
     {
       "id": "sql-022",
@@ -1083,7 +1083,7 @@
         "The link between an outlet and its distributor is the served_by_distributor_id column in dim_customer.",
         "Dividing two integers in SQLite gives an integer: multiply the numerator by 1.0."
       ],
-      "explain": "The gap between sell-in and sell-out is a basic diagnostic metric in distribution. Shipments only mean the product left the manufacturer's warehouse; it becomes a sale only once an end buyer actually buys it. A steady ratio around one is a healthy picture. A sharp spike means the channel's stockpile is growing, and that's a deferred problem: the distributor will spend next quarter selling down inventory rather than ordering new stock. The opposite situation, a ratio noticeably below one, is also a signal — the channel is draining its stock and will soon hit a shortage."
+      "explain": "The gap between sell-in and sell-out is a basic diagnostic metric in distribution. Shipments only mean the product left the manufacturer's warehouse; it becomes a sale only once an end buyer actually buys it. A steady ratio around one is a healthy picture. A sharp spike means the channel's stockpile is growing, and that's a deferred problem: the distributor will spend next quarter selling down inventory rather than ordering new stock. The opposite situation, a ratio noticeably below one, is also a signal; the channel is draining its stock and will soon hit a shortage."
     },
     {
       "id": "sql-023",
@@ -1124,7 +1124,7 @@
         "Warehouse stock lives in a separate table, fact_stock, with no direct link to fact_sellout: pull the needed number with a separate scalar subquery, as in sql-014.",
         "Compute the weekly sales pace only from this distributor's outlets; filter on c.served_by_distributor_id, not on all sales of the product nationwide."
       ],
-      "explain": "Weeks of cover is a standard way to see stock not in units, but in time: 1,315 units mean nothing on their own, but nearly 22 weeks of cover at the average sales pace signals serious overstocking — on FMCG products with limited shelf life, that's a direct write-off risk. A healthy level is usually 3–6 weeks depending on the category; anything noticeably higher means either an ordering mistake or a sharp slowdown in outlet sales that the warehouse hasn't reflected yet. This is the same diagnostic move as sell-in/sell-out in sql-022, just for stock instead of the shipment flow."
+      "explain": "Weeks of cover is a standard way to see stock not in units, but in time: 1,315 units mean nothing on their own, but nearly 22 weeks of cover at the average sales pace signals serious overstocking, on FMCG products with limited shelf life, that's a direct write-off risk. A healthy level is usually 3–6 weeks depending on the category; anything noticeably higher means either an ordering mistake or a sharp slowdown in outlet sales that the warehouse hasn't reflected yet. This is the same diagnostic move as sell-in/sell-out in sql-022, just for stock instead of the shipment flow."
     },
     {
       "id": "sql-058",
@@ -1135,7 +1135,7 @@
         "The plan is tied to a rep and a division at once. Join the fact to the plan on both keys, rep_id and division.",
         "A LEFT JOIN is needed in case a rep had no sales at all in their division in December: then actual should become 0, not vanish from the report, COALESCE(a.revenue, 0), as in sql-014."
       ],
-      "explain": "The plan and the actuals sit at different granularities that aren't obvious at first glance: fact_target holds one row per rep and division per month, while fact_sellout is a scatter of sales across outlets and products, from which the rep's division still has to be assembled through two joins. LEFT JOIN is essential here for the same reason as in sql-014: a rep with zero sales in December shouldn't disappear from the report — on the contrary, that's precisely the most interesting case, 0% attainment. The filter attainment_pct < 100 belongs in WHERE, not HAVING, because the calculation runs over ordinary columns of the join result: the aggregates are already computed inside the actual CTE, and there's no grouping at this level of the query."
+      "explain": "The plan and the actuals sit at different granularities that aren't obvious at first glance: fact_target holds one row per rep and division per month, while fact_sellout is a scatter of sales across outlets and products, from which the rep's division still has to be assembled through two joins. LEFT JOIN is essential here for the same reason as in sql-014: a rep with zero sales in December shouldn't disappear from the report, on the contrary, that's precisely the most interesting case, 0% attainment. The filter attainment_pct < 100 belongs in WHERE, not HAVING, because the calculation runs over ordinary columns of the join result: the aggregates are already computed inside the actual CTE, and there's no grouping at this level of the query."
     },
     {
       "id": "sql-059",
@@ -1165,7 +1165,7 @@
         "Compare the rate of change in units against the rate of change in average price, which is larger in magnitude?",
         "The outlet count is identical in both years; that immediately rules out one of the usual causes."
       ],
-      "explain": "Revenue is a deceptive front: it can barely move while two opposing shifts happen underneath it and cancel each other out. Here a 23% drop in physical volume is almost entirely masked by a 20% price increase — the resulting 7.6% revenue dip looks like \"everything's fine\", even though the real problem, lost sales volume, hasn't gone anywhere. The outlets figure is worth noting separately: it's identical in both years, which is exactly why the distribution-loss story (as in sql-023) doesn't apply here — there the cause was vanishing shelf space, here the shelf space is intact and it's the price and volume on it that changed. Practical takeaway: always break stable-looking revenue down into price and volume separately before concluding a brand is holding steady."
+      "explain": "Revenue is a deceptive front: it can barely move while two opposing shifts happen underneath it and cancel each other out. Here a 23% drop in physical volume is almost entirely masked by a 20% price increase; the resulting 7.6% revenue dip looks like \"everything's fine\", even though the real problem, lost sales volume, hasn't gone anywhere. The outlets figure is worth noting separately: it's identical in both years, which is exactly why the distribution-loss story (as in sql-023) doesn't apply here; there the cause was vanishing shelf space, here the shelf space is intact and it's the price and volume on it that changed. Practical takeaway: always break stable-looking revenue down into price and volume separately before concluding a brand is holding steady."
     },
     {
       "id": "sql-060",
@@ -1176,7 +1176,7 @@
         "Cumulative share is the same trick as the running total in sql-054, just with the result additionally divided by the grand total and converted to a percentage.",
         "To include exactly the rows needed to reach 50%, compare the share accumulated BEFORE the current row (without it) against the threshold. If it was already under 50%, this row is needed."
       ],
-      "explain": "The idea is to include the minimal set of leaders in the report, not an arbitrary top N: what's compared isn't the current row's own cumulative share, but the share accumulated BEFORE it (prev_share_pct) — that's what decides whether this row was necessary to cross 50%. The result: 15 out of 47 products, roughly a third of the lineup, together account for just over half of revenue — moderate, not extreme concentration; not the case of five hits carrying the whole company, but not a perfectly even spread either. It's easy to go wrong here by expecting the classic \"20% of products drive 80% of revenue\" rule: this portfolio doesn't bear it out, and forcing a conclusion to match someone else's heuristic instead of reading your own numbers is a typical interpretation mistake."
+      "explain": "The idea is to include the minimal set of leaders in the report, not an arbitrary top N: what's compared isn't the current row's own cumulative share, but the share accumulated BEFORE it (prev_share_pct); that's what decides whether this row was necessary to cross 50%. The result: 15 out of 47 products, roughly a third of the lineup, together account for just over half of revenue, moderate, not extreme concentration; not the case of five hits carrying the whole company, but not a perfectly even spread either. It's easy to go wrong here by expecting the classic \"20% of products drive 80% of revenue\" rule: this portfolio doesn't bear it out, and forcing a conclusion to match someone else's heuristic instead of reading your own numbers is a typical interpretation mistake."
     }
   ]
 }
