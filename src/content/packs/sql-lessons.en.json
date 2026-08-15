@@ -59,7 +59,7 @@
       "skill": "sql-having",
       "title": "HAVING vs. WHERE",
       "why": "A condition on a group and a condition on a row are different things, and confusing them gives either a runtime error or a wrong answer. Once you've worked through the query's execution order, you stop guessing where the condition goes.",
-      "form": "FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY\n\nWHERE  — picks rows before grouping\nHAVING — picks groups after",
+      "form": "FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY\n\nWHERE  : picks rows before grouping\nHAVING : picks groups after",
       "reads": "Brands with a lineup of at least six items. The condition is checked for each group only after it has already been assembled.",
       "wrongWhy": "\"Misuse of aggregate\" error. WHERE runs before grouping, when there are no groups yet to count over. This is exactly the case where the database failing honestly is a stroke of luck.",
       "selfCheck": "Ask yourself what the condition applies to: a single source row, or an already-computed total. The first is WHERE, the second is HAVING."
@@ -113,7 +113,7 @@
       "skill": "sql-window-rank",
       "title": "Window functions: rankings",
       "why": "\"Top 3 items in each brand\", \"each customer's last order\", \"first purchase\" — questions that need clunky self-joins without windows. With windows, it's four lines.",
-      "form": "ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC)\nRANK()       OVER (PARTITION BY group ORDER BY measure DESC)\nDENSE_RANK() OVER (PARTITION BY group ORDER BY measure DESC)\n\nROW_NUMBER() — sequential, breaks ties arbitrarily\nRANK()       — same rank for ties, next number is skipped\nDENSE_RANK() — same rank for ties, no gaps",
+      "form": "ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC)\nRANK()       OVER (PARTITION BY group ORDER BY measure DESC)\nDENSE_RANK() OVER (PARTITION BY group ORDER BY measure DESC)\n\nROW_NUMBER() : sequential, breaks ties arbitrarily\nRANK()       : same rank for ties, next number is skipped\nDENSE_RANK() : same rank for ties, no gaps",
       "reads": "The three best-selling items within each brand. PARTITION BY sets the boundaries inside which numbering starts over.",
       "wrongWhy": "Error: the rnk column doesn't exist yet at this level. A window function is computed after WHERE, so filtering on its result is only possible one level up — in a CTE or subquery.",
       "selfCheck": "Picking one row per group calls for ROW_NUMBER — it guarantees exactly one. And add a second key to ORDER BY: with ties, the result is otherwise non-deterministic."
