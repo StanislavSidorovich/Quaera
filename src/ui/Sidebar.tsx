@@ -16,7 +16,15 @@ import type { Progress } from '../srs/store';
  * они открываются изнутри разделов и своего пункта меню не имеют — иначе
  * меню обещало бы вход туда, куда попадают только по ходу занятия.
  */
-export type SidebarSection = 'home' | 'reference' | 'sandbox' | 'data' | 'about' | 'onboarding' | null;
+export type SidebarSection =
+  | 'home'
+  | 'reference'
+  | 'sandbox'
+  | 'data'
+  | 'about'
+  | 'account'
+  | 'onboarding'
+  | null;
 
 export function Sidebar({
   section,
@@ -24,11 +32,13 @@ export function Sidebar({
   activeTrack,
   progress,
   streakDays,
+  accountEmail,
   onHome,
   onReference,
   onSandbox,
   onData,
   onAbout,
+  onAccount,
   onOnboarding,
   onSelectTrack,
 }: {
@@ -38,11 +48,14 @@ export function Sidebar({
   activeTrack: Track;
   progress: Progress;
   streakDays: number;
+  /** Почта вошедшего или null. Печатается подписью под пунктом «Аккаунт и данные». */
+  accountEmail: string | null;
   onHome: () => void;
   onReference: () => void;
   onSandbox: () => void;
   onData: () => void;
   onAbout: () => void;
+  onAccount: () => void;
   onOnboarding: () => void;
   onSelectTrack: (track: Track) => void;
 }) {
@@ -192,6 +205,31 @@ export function Sidebar({
             <IconInfo />
             {t.nav.about}
           </button>
+          {/*
+           * Аккаунт — последним в подвале и с подписью состояния.
+           *
+           * Внизу, а не в «Обучении»: разделы выше — то, чем занимаются,
+           * этот — про сам аккаунт и накопленное, и открывают его редко.
+           * Последним из трёх, потому что два соседних объясняют тренажёр,
+           * а этот — единственный, который про самого человека.
+           *
+           * Подпись обязательна: пункт без неё не отличить от «О тренажёре»,
+           * и вошёл ли ты — не видно нигде вообще. Почта в ней важнее
+           * названия раздела, поэтому обрезается по ширине колонки,
+           * а не переносится (см. .side-item-note).
+           */}
+          <button
+            type="button"
+            className="side-item side-account"
+            aria-current={section === 'account' ? 'page' : undefined}
+            onClick={onAccount}
+          >
+            <IconAccount />
+            <span className="side-account-text">
+              {t.nav.account}
+              <small className="side-item-note">{accountEmail ?? t.nav.accountSignedOut}</small>
+            </span>
+          </button>
         </div>
 
         {/*
@@ -287,5 +325,18 @@ const IconTable = () => (
     <rect x="2.4" y="3" width="11.2" height="10" rx="1.2" />
     <path d="M2.4 6.4h11.2" />
     <path d="M6.6 6.4V13" />
+  </svg>
+);
+
+/**
+ * Единственная иконка отсюда, которая нужна не только меню: на телефоне
+ * бокового меню нет вовсе, и вход в «Аккаунт и данные» стоит в шапке
+ * (см. .topbar-account в App.tsx). Экспортируется, а не копируется туда,
+ * чтобы у одного раздела не завелось двух разных значков.
+ */
+export const IconAccount = () => (
+  <svg {...iconProps}>
+    <circle cx="8" cy="5.8" r="2.6" />
+    <path d="M3.2 13.4c.6-2.2 2.5-3.4 4.8-3.4s4.2 1.2 4.8 3.4" />
   </svg>
 );

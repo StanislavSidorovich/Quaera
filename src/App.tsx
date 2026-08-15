@@ -13,7 +13,7 @@ import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
-import { Sidebar, type SidebarSection } from './ui/Sidebar';
+import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -167,6 +167,7 @@ type Screen =
   | { name: 'data' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
+  | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
 
@@ -308,6 +309,7 @@ function initialBoot(locale: Locale): Boot {
     case 'sandbox':
     case 'data':
     case 'about':
+    case 'account':
     case 'onboarding':
       return { screen: { name: stored.name }, ...empty };
     case 'session': {
@@ -1044,9 +1046,11 @@ export default function App() {
             ? 'data'
             : screen.name === 'about'
               ? 'about'
-              : screen.name === 'onboarding'
-                ? 'onboarding'
-                : null;
+              : screen.name === 'account'
+                ? 'account'
+                : screen.name === 'onboarding'
+                  ? 'onboarding'
+                  : null;
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -1068,6 +1072,8 @@ export default function App() {
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
+        onAccount={() => setScreen({ name: 'account' })}
+        accountEmail={session?.user.email ?? null}
         onOnboarding={() => setScreen({ name: 'onboarding' })}
         onSelectTrack={switchTrack}
       />
@@ -1099,6 +1105,8 @@ export default function App() {
                     ? t.lesson.pill
                     : screen.name === 'about'
                       ? t.about.title
+                      : screen.name === 'account'
+                        ? t.account.title
                       : screen.name === 'onboarding'
                         ? t.onboarding.title
                       : screen.name === 'trackIntro'
@@ -1141,6 +1149,8 @@ export default function App() {
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
+                      : screen.name === 'account'
+                        ? t.app.name
                       : screen.name === 'onboarding'
                         ? t.app.name
                       : screen.name === 'trackIntro'
@@ -1194,6 +1204,27 @@ export default function App() {
            * заголовок до нечитаемой колонки (было на 390px до этой правки).
            */}
           <div className="topbar-tools">
+            {/*
+             * Вход в «Аккаунт и данные» — только там, где нет бокового меню
+             * (скрыт от 1024px, см. .topbar-account в styles.css). Тем же
+             * приёмом шапка договаривает название приложения на телефоне
+             * (.brand-word) и серию дней (.ctx-streak): на десктопе это
+             * стоит в меню в трёхстах пикселях левее, и второй вход был бы
+             * дублем навигации, которого Sidebar сознательно избегает.
+             *
+             * На телефоне постоянного меню нет вовсе, и без этой иконки
+             * единственной дорогой к входу оставалась бы ссылка в конце
+             * «О тренажёре» — два с половиной экрана прокрутки. Высоты она
+             * не занимает: строка инструментов в шапке уже есть.
+             */}
+            <button
+              className="icon-btn topbar-account"
+              aria-label={t.nav.account}
+              aria-current={screen.name === 'account' ? 'page' : undefined}
+              onClick={() => setScreen({ name: 'account' })}
+            >
+              <IconAccount />
+            </button>
             <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
               {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
             </button>
@@ -1268,6 +1299,12 @@ export default function App() {
             <About
               onSelectTrack={(track) => { switchTrack(track); }}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
+              onOpenAccount={() => setScreen({ name: 'account' })}
+            />
+          )}
+
+          {screen.name === 'account' && (
+            <AccountScreen
               onExportProgress={downloadProgress}
               onImportProgress={importProgressFile}
               onResetProgress={resetProgress}
@@ -2358,59 +2395,19 @@ function Home({
 function About({
   onSelectTrack,
   onOpenOnboarding,
-  onExportProgress,
-  onImportProgress,
-  onResetProgress,
-  accountEmail,
-  syncStatus,
-  onSignIn,
-  onSignOut,
+  onOpenAccount,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
-  onExportProgress: () => void;
-  /** true — файл распознан и прогресс заменён, false — не тот файл. */
-  onImportProgress: (file: File) => Promise<boolean>;
-  onResetProgress: () => void;
-  /** null — не вошли; иначе почта аккаунта, которым вошли. */
-  accountEmail: string | null;
-  syncStatus: SyncStatus;
-  onSignIn: () => Promise<{ error: string | null }>;
-  onSignOut: () => Promise<void>;
+  onOpenAccount: () => void;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
   const totalSkills = packs.reduce((n, p) => n + p.skills.length, 0);
-  const importInputRef = useRef<HTMLInputElement>(null);
-  const [importStatus, setImportStatus] = useState<'ok' | 'error' | null>(null);
-  /**
-   * Три состояния, а не два: 'idle' — обычная кнопка, 'confirm' — вопрос
-   * с двумя ответами вместо неё, 'done' — подтверждение, что сброс прошёл.
-   *
-   * Подтверждение в самой карточке, а не `confirm()`: системный диалог в PWA
-   * выглядит чужим окном браузера ровно там, где важнее всего, чтобы человек
-   * прочитал текст, а не отмахнулся от привычной коробки. Заодно тот же приём,
-   * что у импорта строкой ниже, — результат остаётся на экране.
-   */
-  const [resetStage, setResetStage] = useState<'idle' | 'confirm' | 'done'>('idle');
   // false до первого beforeinstallprompt и снова false после prompt() —
   // событие одноразовое, см. src/pwa/installPrompt.ts.
   const [installAvailable, setInstallAvailable] = useState(false);
   useEffect(() => subscribeInstallAvailable(setInstallAvailable), []);
-  /*
-   * Отдельно от syncStatus: та ошибка про сведение уже вошедшего, эта —
-   * про то, что вход не начался вовсе. Смешав их в одну подпись, человек
-   * с отвалившейся сетью прочитал бы «прогресс сохранён на устройстве»
-   * там, где ему не удалось даже нажать кнопку.
-   */
-  const [signInError, setSignInError] = useState(false);
-
-  async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // тот же файл можно выбрать повторно, если первая попытка не удалась
-    if (!file) return;
-    setImportStatus((await onImportProgress(file)) ? 'ok' : 'error');
-  }
 
   return (
     <>
@@ -2545,11 +2542,10 @@ function About({
 
       {/*
        * Условная карточка, во всю ширину и вне about-columns намеренно:
-       * колонки ниже сбалансированы по высоте под ровно четыре карточки
-       * (см. комментарий у about-columns), и пятая, появляющаяся только
-       * иногда, сдвинула бы баланс и оттеснила «Автора» от низа второй
-       * колонки — то самое, что там прямо запрещено правилом «остаётся
-       * последним и внизу».
+       * колонки ниже балансируются по высоте, и карточка, появляющаяся
+       * только иногда, сдвигала бы баланс и оттесняла «Автора» от низа
+       * второй колонки — то самое, что там прямо запрещено правилом
+       * «остаётся последним и внизу».
        *
        * Видна только пока браузер прислал beforeinstallprompt
        * (Chrome/Edge/Android) и установка ещё не случилась — на iOS Safari
@@ -2567,7 +2563,7 @@ function About({
       )}
 
       {/*
-       * Четыре закрывающие карточки — колоночным потоком, а не сеткой.
+       * Три закрывающие карточки — колоночным потоком, а не сеткой.
        *
        * Рядом, а не друг под другом, они стоят по той же причине, что
        * карточки в TrackIntroScreen: абзац ограничен 68ch ради читаемости,
@@ -2580,11 +2576,25 @@ function About({
        * было бы хуже: та же дыра, только внутри рамки.
        *
        * `columns` раскладывает карточки потоком и балансирует высоту колонок
-       * сам — здесь это даёт почти ровные 581 и 555. Порядок чтения при этом
-       * меняется с «слева направо» на «сверху вниз по колонке», и это
-       * допустимо ровно потому, что карточки независимы: четыре ответа
-       * на четыре разных вопроса, а не абзацы одного текста. «Автор
-       * и лицензия» остаётся последним и внизу — см. ниже, почему это важно.
+       * сам. Порядок чтения при этом меняется с «слева направо» на «сверху
+       * вниз по колонке», и это допустимо ровно потому, что карточки
+       * независимы: три ответа на три разных вопроса, а не абзацы одного
+       * текста. «Автор и лицензия» остаётся последним и внизу — см. ниже,
+       * почему это важно.
+       *
+       * Карточек было пять: аккаунт и резервная копия со сбросом уехали
+       * на свой экран (см. AccountScreen). Здесь от них осталась ссылка
+       * под «Приватностью» — не пересказ, а адрес.
+       *
+       * Замер после переезда (1280×800): 424 слева против 592 справа,
+       * то есть низы колонок разошлись на 168px. Ровнее с этими тремя
+       * высотами не выйдет ничем, кроме растягивания карточки, — порядок
+       * в потоке последовательный, и второе возможное разбиение (940/334)
+       * заметно хуже. Оставлено как есть по двум причинам: дыра приходится
+       * на конец страницы, где под ней ничего нет, а высота «Приватности»
+       * скоро изменится — полная проза приватности (что хранится, где
+       * и как удалить) удлинит её вдвое. Подгонять раскладку под текст,
+       * который переписывается следующим шагом, значит делать работу дважды.
        */}
       <div className="about-columns">
         <div className="card">
@@ -2596,153 +2606,17 @@ function About({
 
         <div className="card">
           <h2>{t.about.privacyTitle}</h2>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
-        </div>
-
-      {/*
-       * Аккаунт — своя карточка перед «Резервной копией», а не раздел
-       * внутри неё. Обе про «что будет с накопленным», но отвечают
-       * по-разному: вход убирает проблему, файл её страхует. Слитые
-       * в одну карточку, они читались бы двумя равными кнопками
-       * с одинаковым весом — а веса у них разные, и порядок это говорит.
-       */}
-      <div className="card">
-        <h2>{t.about.accountTitle}</h2>
-        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.accountBody}</p>
-        {accountEmail ? (
-          <>
-            <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>
-              {t.about.accountSignedInAs(accountEmail)}
-            </p>
-            <button type="button" className="btn secondary" onClick={() => void onSignOut()}>
-              {t.about.accountSignOutBtn}
-            </button>
-          </>
-        ) : (
-          /*
-           * secondary, а не акцентная. Полноширинная синяя кнопка была
-           * единственной акцентной на всём экране и читалась главным
-           * действием «О тренажёре» — то есть настаивала ровно там, где
-           * текст двумя строками выше обещает, что вход добровольный.
-           * Заметности хватает собственного заголовка карточки.
-           */
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={async () => {
-              setSignInError(Boolean((await onSignIn()).error));
-            }}
-          >
-            {t.about.accountSignInBtn}
-          </button>
-        )}
-        {signInError && (
-          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
-            {t.about.accountSignInError}
-          </p>
-        )}
-        {accountEmail && syncStatus !== 'idle' && (
-          <p
-            role="status"
-            style={{
-              margin: '10px 0 0',
-              fontSize: 13,
-              color: syncStatus === 'error' ? 'var(--err)' : syncStatus === 'synced' ? 'var(--ok)' : 'var(--text-dim)',
-            }}
-          >
-            {syncStatus === 'syncing'
-              ? t.about.accountSyncing
-              : syncStatus === 'synced'
-                ? t.about.accountSynced
-                : t.about.accountSyncError}
-          </p>
-        )}
-      </div>
-
-      <div className="card">
-        <h2>{t.about.backupTitle}</h2>
-        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.backupBody}</p>
-        <div className="row">
-          <button type="button" className="btn secondary" onClick={onExportProgress}>
-            {t.about.exportBtn}
-          </button>
-          <button type="button" className="btn secondary" onClick={() => importInputRef.current?.click()}>
-            {t.about.importBtn}
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+          {/*
+           * `link-row`, а не кнопка: это переход в соседний раздел, а не
+           * действие с данными, — тот же вид, что у входа на «О тренажёре»
+           * с главной. Кнопкой она встала бы в один ряд с «Установить»
+           * и «Скачать файл» и обещала бы, что здесь что-то произойдёт.
+           */}
+          <button type="button" className="link-row" onClick={onOpenAccount}>
+            {t.about.accountLink}
           </button>
         </div>
-        <input
-          ref={importInputRef}
-          type="file"
-          accept="application/json"
-          hidden
-          onChange={handleImportPick}
-        />
-        {importStatus && (
-          <p
-            role="status"
-            style={{ margin: '10px 0 0', fontSize: 13, color: importStatus === 'ok' ? 'var(--ok)' : 'var(--err)' }}
-          >
-            {importStatus === 'ok' ? t.about.importSuccess : t.about.importError}
-          </p>
-        )}
-
-        {/*
-         * Сброс — раздел этой же карточки, а не пятая карточка рядом,
-         * и это замер, а не вкус.
-         *
-         * Пятой карточкой он вставал в верх правой колонки `about-columns`
-         * (x=764, y=1850 при 1280×800) — то есть выше и «Приватности»,
-         * и самой «Резервной копии», на которую ссылается его текст. Заодно
-         * ломался баланс потока: 788 против 602, и под «Автором» зияли 186px,
-         * хотя ровно про этот блок сказано, что он остаётся последним и внизу.
-         *
-         * Довод «необратимое не мешать с сохраняющим» при этом не нарушен:
-         * возражение было против третьей кнопки в том же ряду, где две
-         * безопасных отличались бы от неё только подписью. Здесь другое —
-         * своя черта, свой заголовок, красная кнопка и вопрос перед ней.
-         * По смыслу это один и тот же вопрос «что делать с накопленным»:
-         * файл выше и есть единственный способ отменить сброс ниже.
-         */}
-        <hr className="card-rule" />
-        <h3 className="card-subhead">{t.about.resetTitle}</h3>
-        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.resetBody}</p>
-        {resetStage === 'confirm' ? (
-          <>
-            {/*
-             * Вопрос стоит над кнопками, а не вместо подписи на них: подпись
-             * «Да, сбросить» отвечает на вопрос, но сама его не задаёт,
-             * и человеку, нажавшему случайно, читать было бы нечего.
-             */}
-            <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
-              {t.about.resetConfirm}
-            </p>
-            <div className="row">
-              <button
-                type="button"
-                className="btn danger"
-                onClick={() => {
-                  onResetProgress();
-                  setResetStage('done');
-                }}
-              >
-                {t.about.resetConfirmBtn}
-              </button>
-              <button type="button" className="btn secondary" onClick={() => setResetStage('idle')}>
-                {t.about.resetCancelBtn}
-              </button>
-            </div>
-          </>
-        ) : (
-          <button type="button" className="btn secondary" onClick={() => setResetStage('confirm')}>
-            {t.about.resetBtn}
-          </button>
-        )}
-        {resetStage === 'done' && (
-          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ok)' }}>
-            {t.about.resetDone}
-          </p>
-        )}
-      </div>
 
       {/*
        * Автор, связь и лицензия — закрывающий блок экрана.
@@ -2769,6 +2643,214 @@ function About({
       </div>
       </div>
     </>
+  );
+}
+
+/**
+ * «Аккаунт и данные» — экран, а не хвост «О тренажёре», где всё это жило
+ * до 2026-08-15.
+ *
+ * Причина та же, по которой отдельным экраном вынесен онбординг: разный жанр.
+ * About объясняет, что это такое, читается в любом порядке и раскладывается
+ * колонками; здесь человек не читает, а делает — входит, скачивает файл,
+ * сбрасывает, — и порядок обязан быть один, сверху вниз. Замер прежней
+ * раскладки: до кнопки входа надо было пролистать два с половиной экрана,
+ * а порядок карточек в потоке `columns` определялся длиной их текстов,
+ * то есть не задавался вовсе.
+ *
+ * Отсюда и `.settings-column`: одна колонка фиксированной ширины вместо
+ * двух балансируемых. Ровная левая кромка и одинаковая ширина карточек
+ * получаются по построению, а не подбором высот, и добавление четвёртой
+ * карточки (удаление аккаунта — следующий шаг) ничего не сдвинет.
+ */
+function AccountScreen({
+  onExportProgress,
+  onImportProgress,
+  onResetProgress,
+  accountEmail,
+  syncStatus,
+  onSignIn,
+  onSignOut,
+}: {
+  onExportProgress: () => void;
+  /** true — файл распознан и прогресс заменён, false — не тот файл. */
+  onImportProgress: (file: File) => Promise<boolean>;
+  onResetProgress: () => void;
+  /** null — не вошли; иначе почта аккаунта, которым вошли. */
+  accountEmail: string | null;
+  syncStatus: SyncStatus;
+  onSignIn: () => Promise<{ error: string | null }>;
+  onSignOut: () => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<'ok' | 'error' | null>(null);
+  /**
+   * Три состояния, а не два: 'idle' — обычная кнопка, 'confirm' — вопрос
+   * с двумя ответами вместо неё, 'done' — подтверждение, что сброс прошёл.
+   *
+   * Подтверждение в самой карточке, а не `confirm()`: системный диалог в PWA
+   * выглядит чужим окном браузера ровно там, где важнее всего, чтобы человек
+   * прочитал текст, а не отмахнулся от привычной коробки. Заодно тот же приём,
+   * что у импорта строкой ниже, — результат остаётся на экране.
+   */
+  const [resetStage, setResetStage] = useState<'idle' | 'confirm' | 'done'>('idle');
+  /*
+   * Отдельно от syncStatus: та ошибка про сведение уже вошедшего, эта —
+   * про то, что вход не начался вовсе. Смешав их в одну подпись, человек
+   * с отвалившейся сетью прочитал бы «прогресс сохранён на устройстве»
+   * там, где ему не удалось даже нажать кнопку.
+   */
+  const [signInError, setSignInError] = useState(false);
+
+  async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // тот же файл можно выбрать повторно, если первая попытка не удалась
+    if (!file) return;
+    setImportStatus((await onImportProgress(file)) ? 'ok' : 'error');
+  }
+
+  return (
+    <div className="settings-column">
+      {/*
+       * Аккаунт — своя карточка перед «Резервной копией», а не раздел
+       * внутри неё. Обе про «что будет с накопленным», но отвечают
+       * по-разному: вход убирает проблему, файл её страхует. Слитые
+       * в одну карточку, они читались бы двумя равными кнопками
+       * с одинаковым весом — а веса у них разные, и порядок это говорит.
+       */}
+      <div className="card">
+        <h2>{t.account.syncTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.account.syncBody}</p>
+        {accountEmail ? (
+          <>
+            <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>
+              {t.account.signedInAs(accountEmail)}
+            </p>
+            <button type="button" className="btn secondary" onClick={() => void onSignOut()}>
+              {t.account.signOutBtn}
+            </button>
+          </>
+        ) : (
+          /*
+           * secondary, а не акцентная, и правило пережило переезд: на этом
+           * экране акцентной кнопки нет вовсе. Синяя кнопка настаивала бы
+           * ровно там, где текст двумя строками выше обещает, что вход
+           * добровольный, — а заметности хватает и заголовка карточки,
+           * которая теперь стоит первой на своём экране.
+           */
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={async () => {
+              setSignInError(Boolean((await onSignIn()).error));
+            }}
+          >
+            {t.account.signInBtn}
+          </button>
+        )}
+        {signInError && (
+          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
+            {t.account.signInError}
+          </p>
+        )}
+        {accountEmail && syncStatus !== 'idle' && (
+          <p
+            role="status"
+            style={{
+              margin: '10px 0 0',
+              fontSize: 13,
+              color: syncStatus === 'error' ? 'var(--err)' : syncStatus === 'synced' ? 'var(--ok)' : 'var(--text-dim)',
+            }}
+          >
+            {syncStatus === 'syncing'
+              ? t.account.syncing
+              : syncStatus === 'synced'
+                ? t.account.synced
+                : t.account.syncError}
+          </p>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>{t.account.backupTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.account.backupBody}</p>
+        <div className="row">
+          <button type="button" className="btn secondary" onClick={onExportProgress}>
+            {t.account.exportBtn}
+          </button>
+          <button type="button" className="btn secondary" onClick={() => importInputRef.current?.click()}>
+            {t.account.importBtn}
+          </button>
+        </div>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json"
+          hidden
+          onChange={handleImportPick}
+        />
+        {importStatus && (
+          <p
+            role="status"
+            style={{ margin: '10px 0 0', fontSize: 13, color: importStatus === 'ok' ? 'var(--ok)' : 'var(--err)' }}
+          >
+            {importStatus === 'ok' ? t.account.importSuccess : t.account.importError}
+          </p>
+        )}
+
+        {/*
+         * Сброс — раздел этой же карточки, а не карточка рядом.
+         *
+         * Довод пережил переезд, но опирается теперь на смысл, а не на замер
+         * колонок: по смыслу это один и тот же вопрос «что делать
+         * с накопленным», и файл выше — единственный способ отменить сброс
+         * ниже. Возражение «необратимое не мешать с сохраняющим» при этом
+         * не нарушено: оно было против третьей кнопки в том же ряду, где две
+         * безопасных отличались бы от неё только подписью. Здесь другое —
+         * своя черта, свой заголовок, красная кнопка и вопрос перед ней.
+         */}
+        <hr className="card-rule" />
+        <h3 className="card-subhead">{t.account.resetTitle}</h3>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.account.resetBody}</p>
+        {resetStage === 'confirm' ? (
+          <>
+            {/*
+             * Вопрос стоит над кнопками, а не вместо подписи на них: подпись
+             * «Да, сбросить» отвечает на вопрос, но сама его не задаёт,
+             * и человеку, нажавшему случайно, читать было бы нечего.
+             */}
+            <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
+              {t.account.resetConfirm}
+            </p>
+            <div className="row">
+              <button
+                type="button"
+                className="btn danger"
+                onClick={() => {
+                  onResetProgress();
+                  setResetStage('done');
+                }}
+              >
+                {t.account.resetConfirmBtn}
+              </button>
+              <button type="button" className="btn secondary" onClick={() => setResetStage('idle')}>
+                {t.account.resetCancelBtn}
+              </button>
+            </div>
+          </>
+        ) : (
+          <button type="button" className="btn secondary" onClick={() => setResetStage('confirm')}>
+            {t.account.resetBtn}
+          </button>
+        )}
+        {resetStage === 'done' && (
+          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ok)' }}>
+            {t.account.resetDone}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

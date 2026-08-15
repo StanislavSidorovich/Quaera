@@ -69,6 +69,9 @@ export const en = {
     /** См. комментарий в ru.ts: пункт живёт в подвале меню, а не первым в «Обучении». */
     onboarding: 'Where to start',
     about: 'About',
+    account: 'Account and data',
+    /** См. комментарий в ru.ts: подпись называет состояние, а не требует действия. */
+    accountSignedOut: 'On this device only',
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
   },
   tracks: {
@@ -176,34 +179,8 @@ export const en = {
     /** См. довод в ru.ts: прежний текст обещал «никуда не отправляется», и это перестало быть правдой. */
     privacyBody:
       'The account is optional. Without one, all progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later. If you do sign in, the only thing sent to the server is the progress itself: skills, review intervals and which tasks you solved. Nothing you write in the sandbox ever goes there, and only you can see any of it.',
-    backupTitle: 'Backup',
-    backupBody:
-      'Without signing in, progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a safeguard that works without an account too.',
-    /** См. довод в ru.ts: заголовок называет пользу, а не механику. */
-    accountTitle: 'Your progress on every device',
-    accountBody:
-      'Signing in ties your progress to your Google account: sessions from your phone and your laptop merge into one, and clearing site data stops being the end of the story. You can keep practising without signing in, in which case everything stays on this device.',
-    accountSignInBtn: 'Sign in with Google',
-    accountSignOutBtn: 'Sign out',
-    accountSignedInAs: (email: string) => `Signed in as ${email}`,
-    accountSyncing: 'Merging progress…',
-    accountSynced: 'Progress merged and saved',
-    /** См. довод в ru.ts: отказ сети не потеря, и текст обязан это сказать. */
-    accountSyncError: 'Could not reach the server. Your progress is saved on this device, and we will try again later',
-    accountSignInError: 'Could not start sign-in. Check your connection and try again',
-    exportBtn: 'Download progress file',
-    importBtn: 'Load progress from file',
-    importSuccess: 'Progress loaded from file',
-    importError: "Doesn't look like a Querium progress file. Check you picked the right one",
-    /** См. комментарий в ru.ts: текст называет обе границы, что исчезнет и что останется. */
-    resetTitle: 'Reset progress',
-    resetBody:
-      'Start from a clean slate: the streak, the review history and every solved-task mark go away, and so does an unfinished session. Sandbox scripts, settings and the Python runtime you already downloaded stay where they are, so there are no 52 MB to fetch again. A reset cannot be undone, so download the progress file first.',
-    resetBtn: 'Reset progress',
-    resetConfirm: 'Reset for good? The only way back is the progress file.',
-    resetConfirmBtn: 'Yes, reset',
-    resetCancelBtn: 'Cancel',
-    resetDone: 'Progress reset',
+    /** См. довод в ru.ts: ссылка стоит под «Приватностью» и называет действия, а не раздел. */
+    accountLink: 'Sign-in, backup and reset →',
     /** См. комментарий в ru.ts: карточка видна только когда beforeinstallprompt пришёл. */
     installTitle: 'Install the app',
     installBody:
@@ -222,6 +199,38 @@ export const en = {
       'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools cover the middle; the path breaks at its ends, and the start is the more dangerous of the two: a misread question yields a flawlessly computed wrong answer, and no later step will catch it, because every one of them adds up perfectly. The middle has something to check it against: the query result is visible at once. The ends are checked only by the questions you ask the person who requested the work.',
     tracksWhyBody:
       "The order of the tracks follows that path. Start with the profession itself: what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped. Modeling it before that exists would put the roof on before the walls.",
+  },
+  /** См. комментарий в ru.ts: свой экран, потому что здесь не читают, а делают. */
+  account: {
+    title: 'Account and data',
+    /** См. довод в ru.ts: заголовок карточки называет пользу, а не механику. */
+    syncTitle: 'Your progress on every device',
+    syncBody:
+      'Signing in ties your progress to your Google account: sessions from your phone and your laptop merge into one, and clearing site data stops being the end of the story. You can keep practising without signing in, in which case everything stays on this device.',
+    signInBtn: 'Sign in with Google',
+    signOutBtn: 'Sign out',
+    signedInAs: (email: string) => `Signed in as ${email}`,
+    syncing: 'Merging progress…',
+    synced: 'Progress merged and saved',
+    /** См. довод в ru.ts: отказ сети не потеря, и текст обязан это сказать. */
+    syncError: 'Could not reach the server. Your progress is saved on this device, and we will try again later',
+    signInError: 'Could not start sign-in. Check your connection and try again',
+    backupTitle: 'Backup',
+    backupBody:
+      'Without signing in, progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a safeguard that works without an account too.',
+    exportBtn: 'Download progress file',
+    importBtn: 'Load progress from file',
+    importSuccess: 'Progress loaded from file',
+    importError: "Doesn't look like a Querium progress file. Check you picked the right one",
+    /** См. комментарий в ru.ts: текст называет обе границы, что исчезнет и что останется. */
+    resetTitle: 'Reset progress',
+    resetBody:
+      'Start from a clean slate: the streak, the review history and every solved-task mark go away, and so does an unfinished session. Sandbox scripts, settings and the Python runtime you already downloaded stay where they are, so there are no 52 MB to fetch again. A reset cannot be undone, so download the progress file first.',
+    resetBtn: 'Reset progress',
+    resetConfirm: 'Reset for good? The only way back is the progress file.',
+    resetConfirmBtn: 'Yes, reset',
+    resetCancelBtn: 'Cancel',
+    resetDone: 'Progress reset',
   },
   /**
    * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает
@@ -303,10 +312,10 @@ export const en = {
     ],
     /** См. довод в ru.ts: приватность и бэкап сказаны на «О тренажёре», здесь — что делать. */
     stepsNote:
-      'If you switch devices or clear site data, sign in with Google or download the progress file from the About page: without one of the two it will not survive the move.',
+      'If you switch devices or clear site data, sign in with Google or download the progress file from the Account and data page: without one of the two it will not survive the move.',
     /** См. комментарий в ru.ts: не пересказываем механику, только называем адрес действия. */
     installNote:
-      'You can install the trainer as an app from the About page, in the Backup section, and download the Python runtime for offline pandas ahead of time, on the Python track itself, without waiting for the first task.',
+      'You can install the trainer as an app from the About page, and download the Python runtime for offline pandas ahead of time, on the Python track itself, without waiting for the first task.',
 
     extraTitle: 'What to learn elsewhere',
     extraIntro:
