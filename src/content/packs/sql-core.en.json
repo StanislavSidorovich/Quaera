@@ -126,7 +126,7 @@
         },
         {
           "label": "A runtime error",
-          "why": "The query is syntactically valid. It runs and honestly returns zero — which is exactly why this kind of mistake is dangerous: it doesn't fail, it quietly understates the numbers."
+          "why": "The query is syntactically valid. It runs and honestly returns zero, which is exactly why this kind of mistake is dangerous: it doesn't fail, it quietly understates the numbers."
         },
         {
           "label": "All products, because the condition is always true",
@@ -181,19 +181,19 @@
       "options": [
         {
           "label": "The literal text of the expression: \"list_price * 0.9\", exactly as written in the query",
-          "why": "If a column isn't given a name via AS, the database uses the expression's own text as the header — exactly what you wrote in SELECT."
+          "why": "If a column isn't given a name via AS, the database uses the expression's own text as the header, exactly what you wrote in SELECT."
         },
         {
           "label": "\"discount_price\": the database will pick a sensible name based on what the calculation means",
-          "why": "The database doesn't analyze what a formula means and can't invent business-friendly names — it takes exactly the text that's in the query."
+          "why": "The database doesn't analyze what a formula means and can't invent business-friendly names; it takes exactly the text that's in the query."
         },
         {
           "label": "\"list_price\": the same name as the original column",
-          "why": "That would be true if the column were left untouched. But here it's already a different value — multiplied by 0.9 — and the old name doesn't reflect that."
+          "why": "That would be true if the column were left untouched. But here it's already a different value (multiplied by 0.9), and the old name doesn't reflect that."
         },
         {
           "label": "The query will fail without an alias on the computed column",
-          "why": "An alias on a SELECT expression isn't syntactically required — the query runs fine, just with an inconvenient column name."
+          "why": "An alias on a SELECT expression isn't syntactically required; the query runs fine, just with an inconvenient column name."
         }
       ],
       "hints": [
@@ -267,7 +267,7 @@
         },
         {
           "label": "All three: a matching price guarantees they end up next to each other on one page",
-          "why": "Next to each other in the sorted list — yes, but \"next to each other\" doesn't mean \"inside the same group of three\" if there are more rows at that price than fit before the current LIMIT window ends."
+          "why": "Next to each other in the sorted list, yes, but \"next to each other\" doesn't mean \"inside the same group of three\" if there are more rows at that price than fit before the current LIMIT window ends."
         },
         {
           "label": "None: OFFSET 33 has already skipped past all the 98 ¥ items",
@@ -275,7 +275,7 @@
         },
         {
           "label": "The query fails with an error: several rows with the same list_price can't be sorted",
-          "why": "Sorting a column with repeated values is an ordinary operation — there's no error here."
+          "why": "Sorting a column with repeated values is an ordinary operation; there's no error here."
         }
       ],
       "hints": [
@@ -305,7 +305,7 @@
         },
         {
           "label": "The query will fail with a comparison error",
-          "why": "Comparing against NULL is perfectly legal — it just evaluates to NULL."
+          "why": "Comparing against NULL is perfectly legal; it just evaluates to NULL."
         }
       ],
       "hints": [
@@ -334,19 +334,19 @@
       "options": [
         {
           "label": "Outlets without a chain: NULL sorts before any text here",
-          "why": "SQLite, like most DBMSes by default, treats NULL as the smallest possible value in ascending sort — such rows end up first."
+          "why": "SQLite, like most DBMSes by default, treats NULL as the smallest possible value in ascending sort; such rows end up first."
         },
         {
           "label": "The 'Marketo' chain: it's first alphabetically among the filled-in values",
-          "why": "Among non-null values, 'Marketo' really would come first — Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\" — it's smaller than any text."
+          "why": "Among non-null values, 'Marketo' really would come first; Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\"; it's smaller than any text."
         },
         {
           "label": "The order is unpredictable: NULL can't be compared, and ORDER BY ignores it",
-          "why": "NULL has a clear, documented place in sorting — it just doesn't match the intuition that \"unknown can't be compared\"."
+          "why": "NULL has a clear, documented place in sorting; it just doesn't match the intuition that \"unknown can't be compared\"."
         },
         {
           "label": "The query will fail: you can't sort a column with nulls",
-          "why": "ORDER BY on a column with NULL is a perfectly ordinary operation — there's no error here."
+          "why": "ORDER BY on a column with NULL is a perfectly ordinary operation; there's no error here."
         }
       ],
       "hints": [
@@ -387,7 +387,7 @@
         },
         {
           "label": "The query will fail: comparing against NULL is a syntax error",
-          "why": "Syntactically, = NULL is completely legal. The problem isn't that the query fails — it's that it silently returns the wrong answer."
+          "why": "Syntactically, = NULL is completely legal. The problem isn't that the query fails; it's that it silently returns the wrong answer."
         }
       ],
       "hints": [
@@ -405,7 +405,7 @@
       "options": [
         {
           "label": "a > b > c",
-          "why": "COUNT(*) counts all rows; COUNT(column) skips NULL; COUNT(DISTINCT column) keeps only distinct non-null values — there are necessarily fewer chains than chain outlets."
+          "why": "COUNT(*) counts all rows; COUNT(column) skips NULL; COUNT(DISTINCT column) keeps only distinct non-null values. There are necessarily fewer chains than chain outlets."
         },
         {
           "label": "a = b > c",
@@ -413,7 +413,7 @@
         },
         {
           "label": "a = b = c",
-          "why": "They'd match only if the column were fully populated and every row had a unique value — that is, if chain_name were a primary key."
+          "why": "They'd match only if the column were fully populated and every row had a unique value, that is, if chain_name were a primary key."
         },
         {
           "label": "b > a",
@@ -465,7 +465,7 @@
         },
         {
           "label": "Both return NULL: with no rows, there's nothing to count at all",
-          "why": "COUNT(*) was designed exactly to answer \"how many rows\", including the answer \"zero\" — it never turns into NULL."
+          "why": "COUNT(*) was designed exactly to answer \"how many rows\", including the answer \"zero\"; it never turns into NULL."
         },
         {
           "label": "The query returns an empty result with no rows at all",
@@ -520,7 +520,7 @@
       "options": [
         {
           "label": "It runs and returns one row per division, but list_price isn't an aggregate: it's the value from some single row in the group",
-          "why": "SQLite allows this liberty: it doesn't forbid a column outside GROUP BY and outside an aggregate — it substitutes the value from one arbitrary row of the group. The standard leaves this undefined, and you can't rely on the specific value."
+          "why": "SQLite allows this liberty: it doesn't forbid a column outside GROUP BY and outside an aggregate; it substitutes the value from one arbitrary row of the group. The standard leaves this undefined, and you can't rely on the specific value."
         },
         {
           "label": "The query fails with an error: the column must be in GROUP BY or under an aggregate",
@@ -528,11 +528,11 @@
         },
         {
           "label": "list_price comes back as NULL: since the column isn't aggregated, there's no value to show",
-          "why": "SQLite doesn't replace a non-aggregated column with NULL — it takes an actual value from one of the group's rows."
+          "why": "SQLite doesn't replace a non-aggregated column with NULL; it takes an actual value from one of the group's rows."
         },
         {
           "label": "list_price comes back as a comma-separated list of all the group's prices",
-          "why": "That behavior would require a separate function like GROUP_CONCAT — by default the column returns a single value, not a list."
+          "why": "That behavior would require a separate function like GROUP_CONCAT; by default the column returns a single value, not a list."
         }
       ],
       "hints": [
@@ -569,7 +569,7 @@
         },
         {
           "label": "Yes, but the result will be wrong: the condition will apply to rows before grouping",
-          "why": "HAVING always runs after GROUP BY regardless — the only question is whether it can reference an alias, not at what stage the check happens."
+          "why": "HAVING always runs after GROUP BY regardless; the only question is whether it can reference an alias, not at what stage the check happens."
         },
         {
           "label": "No: HAVING, like WHERE, never sees SELECT aliases",
@@ -624,7 +624,7 @@
       "options": [
         {
           "label": "132 (distributors drop out): they don't sell to end buyers and never appear in fact_sellout",
-          "why": "fact_sellout records sales at points of sale. Distributors are not points of sale — they have zero rows in this table, and INNER JOIN discards customers with no match."
+          "why": "fact_sellout records sales at points of sale. Distributors are not points of sale; they have zero rows in this table, and INNER JOIN discards customers with no match."
         },
         {
           "label": "144: INNER JOIN keeps all rows from the left table",
@@ -632,7 +632,7 @@
         },
         {
           "label": "Only the 12 distributors with shipments will remain",
-          "why": "Distributor shipments live in a separate table, fact_sellin, not in fact_sellout — that table has nothing to do with this JOIN."
+          "why": "Distributor shipments live in a separate table, fact_sellin, not in fact_sellout; that table has nothing to do with this JOIN."
         },
         {
           "label": "0: customer_id has different data types in the two tables and never matches",
@@ -666,7 +666,7 @@
       "options": [
         {
           "label": "11: regions with no sales of this product disappear, even though the JOIN in the text is still LEFT",
-          "why": "For regions without the target product, f.product_id is NULL after the join. The condition WHERE f.product_id = ... is never true for NULL, and such rows get filtered out — LEFT JOIN behaves like INNER here."
+          "why": "For regions without the target product, f.product_id is NULL after the join. The condition WHERE f.product_id = ... is never true for NULL, and such rows get filtered out; LEFT JOIN behaves like INNER here."
         },
         {
           "label": "16: LEFT JOIN keeps all regions regardless of where the filter sits",
@@ -678,7 +678,7 @@
         },
         {
           "label": "0: a subquery in WHERE is incompatible with LEFT JOIN",
-          "why": "A subquery and LEFT JOIN have no technical conflict — the query runs and returns some of the regions."
+          "why": "A subquery and LEFT JOIN have no technical conflict; the query runs and returns some of the regions."
         }
       ],
       "hints": [
@@ -707,15 +707,15 @@
       "options": [
         {
           "label": "A brand has multiple promotions, and every sales row matched every one of them",
-          "why": "The join on brand isn't unique: brands in this database have 9–11 promotions each, and every sales row matches every one of them — so it enters the sum as many times as the brand has promotions."
+          "why": "The join on brand isn't unique: brands in this database have 9–11 promotions each, and every sales row matches every one of them, so it enters the sum as many times as the brand has promotions."
         },
         {
           "label": "The JOIN added sales rows that never existed in the fact table",
-          "why": "A JOIN doesn't create new facts, it only matches existing ones. But one fact row can match several dimension rows — and then it gets counted multiple times."
+          "why": "A JOIN doesn't create new facts, it only matches existing ones. But one fact row can match several dimension rows, and then it gets counted multiple times."
         },
         {
           "label": "Promo revenue is counted twice: once in the base row, once in the promo row",
-          "why": "Each sale is recorded once in fact_sellout — there is no separate promo row, just a promo_id reference."
+          "why": "Each sale is recorded once in fact_sellout; there is no separate promo row, just a promo_id reference."
         },
         {
           "label": "A LEFT JOIN should have been used instead",
@@ -778,11 +778,11 @@
         },
         {
           "label": "The original channel value: 'ecom' and 'distributor' as-is",
-          "why": "CASE doesn't automatically fall back to the unhandled input value — only an explicit ELSE channel would behave that way."
+          "why": "CASE doesn't automatically fall back to the unhandled input value; only an explicit ELSE channel would behave that way."
         },
         {
           "label": "The query fails with an error because not all values are listed",
-          "why": "An incomplete CASE is not a syntax error. The query runs fine — some rows just get NULL where no branch matched."
+          "why": "An incomplete CASE is not a syntax error. The query runs fine; some rows just get NULL where no branch matched."
         }
       ],
       "hints": [
@@ -830,11 +830,11 @@
         },
         {
           "label": "11: the rows of both CTEs line up one to one, and any extras get appended at the end",
-          "why": "That's how a vertical UNION ALL behaves. A comma-separated FROM is a horizontal join with no condition — it multiplies row counts rather than adding them."
+          "why": "That's how a vertical UNION ALL behaves. A comma-separated FROM is a horizontal join with no condition; it multiplies row counts rather than adding them."
         },
         {
           "label": "The query fails with an error: CTEs can't be comma-separated in FROM",
-          "why": "Syntactically this is perfectly legal — the same thing can be written for ordinary tables too. That's exactly why the mistake slips through unnoticed."
+          "why": "Syntactically this is perfectly legal; the same thing can be written for ordinary tables too. That's exactly why the mistake slips through unnoticed."
         }
       ],
       "hints": [
@@ -885,7 +885,7 @@
       "options": [
         {
           "label": "No: it only works for rows in YYYY-MM-DD format; the other formats compare as text and almost always give the wrong result",
-          "why": "A text comparison of '15.06.2026' against '2026-06-01' proceeds byte by byte through the string's leading characters, not by the meaning of the date — it has nothing to do with which month the date actually belongs to."
+          "why": "A text comparison of '15.06.2026' against '2026-06-01' proceeds byte by byte through the string's leading characters, not by the meaning of the date; it has nothing to do with which month the date actually belongs to."
         },
         {
           "label": "Yes: SQLite recognizes a date in any of these formats and compares by value",
@@ -893,11 +893,11 @@
         },
         {
           "label": "It will find all the rows, but add extra ones from neighboring months",
-          "why": "The problem isn't extra rows — it's that some of the needed rows in non-standard formats never land in the range at all; the comparison for them is simply meaningless, not \"too generous\"."
+          "why": "The problem isn't extra rows. It's that some of the needed rows in non-standard formats never land in the range at all; the comparison for them is simply meaningless, not \"too generous\"."
         },
         {
           "label": "The query fails with a type-mismatch comparison error",
-          "why": "All the values are TEXT, the comparison is syntactically valid and runs without errors — the result just won't match real June."
+          "why": "All the values are TEXT, the comparison is syntactically valid and runs without errors; the result just won't match real June."
         }
       ],
       "hints": [
@@ -978,11 +978,11 @@
       "options": [
         {
           "label": "1 and 2: numbering restarts in each partition, regardless of where the rows sit in the table",
-          "why": "PARTITION BY splits the row set into independent groups, and within each one ROW_NUMBER counts from one — the physical order of rows in the source table has no effect on this."
+          "why": "PARTITION BY splits the row set into independent groups, and within each one ROW_NUMBER counts from one; the physical order of rows in the source table has no effect on this."
         },
         {
           "label": "4 and 5: the numbering continues across the whole table after retail",
-          "why": "That's how ordinary numbering without PARTITION BY would behave. PARTITION BY's whole role is to split a single counter into several — one per channel."
+          "why": "That's how ordinary numbering without PARTITION BY would behave. PARTITION BY's whole role is to split a single counter into several, one per channel."
         },
         {
           "label": "Undefined: PARTITION BY requires the rows to already be sorted by channel",
@@ -990,7 +990,7 @@
         },
         {
           "label": "1 and 1: without sorting inside the partition, ROW_NUMBER can't tell the rows apart",
-          "why": "There is an ORDER BY revenue DESC inside OVER here — it's exactly what determines which row is first and which is second within the ecom partition."
+          "why": "There is an ORDER BY revenue DESC inside OVER here; it's exactly what determines which row is first and which is second within the ecom partition."
         }
       ],
       "hints": [
@@ -1060,7 +1060,7 @@
         },
         {
           "label": "751734: modern_trade's January revenue gets duplicated as its own previous-row value",
-          "why": "LAG never looks at the current row against itself — only at the previous row in the given order, and here the previous one belongs to ecom."
+          "why": "LAG never looks at the current row against itself, only at the previous row in the given order, and here the previous one belongs to ecom."
         },
         {
           "label": "0: LAG substitutes zero when the previous row belongs to a different channel",
@@ -1094,15 +1094,15 @@
       "options": [
         {
           "label": "Loss of distribution: more than half the outlets stopped carrying the brand",
-          "why": "The outlet count dropped from 79 to 37 — more than half — while sales per outlet barely changed: 127.9 vs. 116.4. Demand is alive wherever the brand is still on the shelf; what disappeared was shelf access itself."
+          "why": "The outlet count dropped from 79 to 37 (more than half), while sales per outlet barely changed: 127.9 vs. 116.4. Demand is alive wherever the brand is still on the shelf; what disappeared was shelf access itself."
         },
         {
           "label": "A drop in demand: shoppers switched to other brands",
-          "why": "A demand drop would first show up as lower sales per outlet. Here that figure stays within about ten percent — within normal fluctuation."
+          "why": "A demand drop would first show up as lower sales per outlet. Here that figure stays within about ten percent, within normal fluctuation."
         },
         {
           "label": "A price too high pushed buyers away",
-          "why": "Price rose from 184.7 to 203.8 — about 10% over two years — which is below inflation and doesn't explain a halving. A price effect would also have shown up in sales per outlet."
+          "why": "Price rose from 184.7 to 203.8 (about 10% over two years), which is below inflation and doesn't explain a halving. A price effect would also have shown up in sales per outlet."
         },
         {
           "label": "Seasonality: Q1 is weak for household chemicals",
@@ -1146,7 +1146,7 @@
       "options": [
         {
           "label": "Price was raised by almost 20%, which offset a nearly quarter-size drop in volume: revenue holds up on price, not demand",
-          "why": "Units fell from 26,531 to 20,482 (−23%), while the average price rose from 53 to 63.4 (+20%) — as a result revenue dipped only 7.6%, even though the real physical sales volume shrank much more sharply."
+          "why": "Units fell from 26,531 to 20,482 (−23%), while the average price rose from 53 to 63.4 (+20%); as a result revenue dipped only 7.6%, even though the real physical sales volume shrank much more sharply."
         },
         {
           "label": "Demand grew, since revenue barely changed",
@@ -1154,11 +1154,11 @@
         },
         {
           "label": "The brand lost distribution, like «Nettora» in sql-023",
-          "why": "Outlet count didn't change — 88 in both years. That's exactly the difference that separates this case from sql-023: there the cause was losing shelf space; here the shelf space is intact, and price is what changed."
+          "why": "Outlet count didn't change, 88 in both years. That's exactly the difference that separates this case from sql-023: there the cause was losing shelf space; here the shelf space is intact, and price is what changed."
         },
         {
           "label": "The figures fell because of Q1 seasonality",
-          "why": "Seasonality is ruled out by comparing the same quarter across different years — the same reasoning as in sql-023."
+          "why": "Seasonality is ruled out by comparing the same quarter across different years, the same reasoning as in sql-023."
         }
       ],
       "hints": [

@@ -128,11 +128,11 @@
       "options": [
         {
           "label": "Recalculating the dashboard starts competing for resources with checkout, and shoppers will hit delays",
-          "why": "A two-year query across four million rows reads about half the table, and it does that every five minutes. The production database is busy at that exact moment doing the thing that makes money. Read-only doesn't save you: the right to \"only read\" doesn't mean \"read for free\" — the contention is over disk, memory and CPU."
+          "why": "A two-year query across four million rows reads about half the table, and it does that every five minutes. The production database is busy at that exact moment doing the thing that makes money. Read-only doesn't save you: the right to \"only read\" doesn't mean \"read for free\"; the contention is over disk, memory and CPU."
         },
         {
           "label": "The dashboard will show wrong numbers, because the production database has no history",
-          "why": "The history is right there — two years of orders haven't gone anywhere. The problem isn't completeness of data, it's that it has to be read from the same place new data is being written. Wrong numbers will show up later, for a different reason: the source's structure changes to fit the application's needs."
+          "why": "The history is right there; two years of orders haven't gone anywhere. The problem isn't completeness of data, it's that it has to be read from the same place new data is being written. Wrong numbers will show up later, for a different reason: the source's structure changes to fit the application's needs."
         },
         {
           "label": "There won't be enough disk space: the dashboard will start creating temp tables",
@@ -140,7 +140,7 @@
         },
         {
           "label": "Nothing will break: read-only access can't change data",
-          "why": "It really won't change data — but an incident isn't only about corrupted data. Slowing down the production database during peak hours costs the business more than a wrong number on a report, and it happens without a single error in the logs."
+          "why": "It really won't change data, but an incident isn't only about corrupted data. Slowing down the production database during peak hours costs the business more than a wrong number on a report, and it happens without a single error in the logs."
         }
       ]
     },
@@ -159,15 +159,15 @@
       "options": [
         {
           "label": "It's cheaper to change this way: editing a category touches one row. A report needs the opposite (read everything at once), and every hop up the tree makes that more expensive",
-          "why": "Normalization optimizes for writes: one change in one place, no copies to drift apart. A report lives by different rules — it reads millions of rows at once, and every join on that path multiplies by volume. What makes writing cheap makes reading expensive, and the other way around."
+          "why": "Normalization optimizes for writes: one change in one place, no copies to drift apart. A report lives by different rules; it reads millions of rows at once, and every join on that path multiplies by volume. What makes writing cheap makes reading expensive, and the other way around."
         },
         {
           "label": "The source is designed wrong: the category tree should have been stored as one column",
-          "why": "For the application it's actually the right call. The tree lets you add a subcategory without touching products, and guarantees the category name exists in exactly one place. The mistake isn't the source schema — it's trying to build a report on it with no layer in between."
+          "why": "For the application it's actually the right call. The tree lets you add a subcategory without touching products, and guarantees the category name exists in exactly one place. The mistake isn't the source schema; it's trying to build a report on it with no layer in between."
         },
         {
           "label": "The only difference is how fast the query is to write: the result is the same, the SQL is just longer",
-          "why": "Query length is the smallest of the costs. A recursive climb up the tree for every fact row costs execution time, not writing time. And you'd have to repeat that logic in every new report that touches category — with the risk that it ends up different in two places."
+          "why": "Query length is the smallest of the costs. A recursive climb up the tree for every fact row costs execution time, not writing time. And you'd have to repeat that logic in every new report that touches category, with the risk that it ends up different in two places."
         }
       ]
     },
@@ -186,15 +186,15 @@
       "options": [
         {
           "label": "That fourteen reports know the source structure directly. A preparation layer would have reduced the fix to one place",
-          "why": "Renaming a column is ordinary life for an application — you can't forbid it. The defect isn't the release, it's that every report keeps its own copy of knowledge about the source schema: one change over there turns into fourteen fixes over here. A layer in between turns that into one."
+          "why": "Renaming a column is ordinary life for an application; you can't forbid it. The defect isn't the release, it's that every report keeps its own copy of knowledge about the source schema: one change over there turns into fourteen fixes over here. A layer in between turns that into one."
         },
         {
           "label": "The release process: developers must clear any schema change with analytics first",
-          "why": "Sign-off looks like a solution and works like a tax: it slows the app team down for the sake of a consumer they shouldn't have to think about. And it rests on people remembering — the first change made in a hurry slips through. A technical seam is more reliable than an agreement."
+          "why": "Sign-off looks like a solution and works like a tax: it slows the app team down for the sake of a consumer they shouldn't have to think about. And it rests on people remembering; the first change made in a hurry slips through. A technical seam is more reliable than an agreement."
         },
         {
           "label": "Nothing: it's a one-off accident, fixing the fourteen queries is enough",
-          "why": "It only looks like a one-off the first time. The source schema will keep changing — that's its normal behaviour, not a malfunction. Fixing the fourteen queries just returns the system to the exact state it already broke from once."
+          "why": "It only looks like a one-off the first time. The source schema will keep changing; that's its normal behaviour, not a malfunction. Fixing the fourteen queries just returns the system to the exact state it already broke from once."
         }
       ]
     },
@@ -217,7 +217,7 @@
         },
         {
           "label": "One purchase: one person buying one item",
-          "why": "Then there would be many rows per SKU at one outlet in a week — one per receipt. Distinct \"week × outlet × SKU\" combinations would be noticeably fewer than 118,449, and they match the row count exactly. This table can't answer \"how many purchases\" at all — the receipts are already summed inside it."
+          "why": "Then there would be many rows per SKU at one outlet in a week, one per receipt. Distinct \"week × outlet × SKU\" combinations would be noticeably fewer than 118,449, and they match the row count exactly. This table can't answer \"how many purchases\" at all; the receipts are already summed inside it."
         },
         {
           "label": "One delivery of goods to an outlet",
@@ -244,11 +244,11 @@
       "options": [
         {
           "label": "Plan won't break down by SKU: it has no product dimension at all. Every report row will repeat the same division plan total",
-          "why": "Plan is recorded by rep and division; product doesn't exist in it in any form. A breakdown by SKU doesn't exist for it, so a product filter doesn't narrow it — every row gets the full plan, regardless of which SKU is selected. And the number looks perfectly normal while doing it."
+          "why": "Plan is recorded by rep and division; product doesn't exist in it in any form. A breakdown by SKU doesn't exist for it, so a product filter doesn't narrow it; every row gets the full plan, regardless of which SKU is selected. And the number looks perfectly normal while doing it."
         },
         {
           "label": "The report will refuse to compute: the model won't let you combine tables of different grain",
-          "why": "Nothing refuses. Both tables connect to the calendar, and that's enough to put them side by side. The danger is exactly that the report builds silently and shows a number — just not the one the requester meant."
+          "why": "Nothing refuses. Both tables connect to the calendar, and that's enough to put them side by side. The danger is exactly that the report builds silently and shows a number, just not the one the requester meant."
         },
         {
           "label": "Plan will get allocated across SKUs in proportion to sales",
@@ -256,7 +256,7 @@
         },
         {
           "label": "Plan will come out blank for every row, because there's no product relationship",
-          "why": "It would be blank if the product filter reached fact_target and found nothing there. But this table has no product dimension at all, so there's nothing to filter — instead of blank you get the full total, which is far more dangerous: blank gets noticed right away."
+          "why": "It would be blank if the product filter reached fact_target and found nothing there. But this table has no product dimension at all, so there's nothing to filter, instead of blank you get the full total, which is far more dangerous: blank gets noticed right away."
         }
       ]
     },
@@ -283,11 +283,11 @@
         },
         {
           "label": "By month and by outlet: an outlet unambiguously belongs to its distributor",
-          "why": "The relationship really is unambiguous, but the direction is wrong. A distributor serves many outlets, so its shipment can only be summed upward — to the distributor — and can't be split back down to outlets: fact_sellin simply has no data on how much of a shipment went to each outlet."
+          "why": "The relationship really is unambiguous, but the direction is wrong. A distributor serves many outlets, so its shipment can only be summed upward (to the distributor) and can't be split back down to outlets: fact_sellin simply has no data on how much of a shipment went to each outlet."
         },
         {
           "label": "At any level: both tables connect to the calendar, and the report sorts the rest out on its own",
-          "why": "The report builds at any level and shows a number — that's exactly the danger. Along a breakdown missing from one of the tables, that table's measure stops narrowing and repeats in full on every row. Connecting to the calendar is enough to get a number, but not enough for it to mean what you need."
+          "why": "The report builds at any level and shows a number; that's exactly the danger. Along a breakdown missing from one of the tables, that table's measure stops narrowing and repeats in full on every row. Connecting to the calendar is enough to get a number, but not enough for it to mean what you need."
         }
       ]
     },
@@ -306,15 +306,15 @@
       "options": [
         {
           "label": "Consistency: the product name is stored 118,449 times instead of 47, and any edit has to hit every row at once",
-          "why": "Repetition isn't about disk space — it's that the same value exists in thousands of copies and can drift from itself. Miss some rows during a rename, and an extra category shows up in the filter, with the sum split between two spellings of the same brand."
+          "why": "Repetition isn't about disk space; it's that the same value exists in thousands of copies and can drift from itself. Miss some rows during a rename, and an extra category shows up in the filter, with the sum split between two spellings of the same brand."
         },
         {
           "label": "Size: the table will take up too much space and the model won't fit in memory",
-          "why": "Space is the smallest of the problems here. Low-cardinality columns compress very well — 47 values across 118,449 rows the engine stores efficiently. What bloats a model is high cardinality, not forty-seven repeated names."
+          "why": "Space is the smallest of the problems here. Low-cardinality columns compress very well: 47 values across 118,449 rows the engine stores efficiently. What bloats a model is high cardinality, not forty-seven repeated names."
         },
         {
           "label": "Speed: queries against a wide table are always slower than against a star",
-          "why": "Not always — a flat table has no joins to pay for and can even be faster on simple queries. A flat table's problem isn't performance, and selling a star schema on speed alone means eventually losing a benchmark."
+          "why": "Not always; a flat table has no joins to pay for and can even be faster on simple queries. A flat table's problem isn't performance, and selling a star schema on speed alone means eventually losing a benchmark."
         },
         {
           "label": "Nothing significant: as long as data arrives as one extract, there's no reason to split it into a fact and lookups",
@@ -345,11 +345,11 @@
         },
         {
           "label": "The report will get faster: the engine won't have to read the category column for all 118,449 rows",
-          "why": "It never read it that way to begin with: category lived in a 47-row lookup table, not in the fact table. This is splitting one small lookup table into three even smaller ones — an operation that has zero effect on how fast the fact table reads."
+          "why": "It never read it that way to begin with: category lived in a 47-row lookup table, not in the fact table. This is splitting one small lookup table into three even smaller ones, an operation that has zero effect on how fast the fact table reads."
         },
         {
           "label": "You gain the ability to filter by division, which wasn't there before",
-          "why": "It was already there: division was a column in the same product lookup and worked as a slicer exactly the same way. Splitting into tables doesn't add breakdowns — it only changes where a value physically lives and how many hops it takes to reach it."
+          "why": "It was already there: division was a column in the same product lookup and worked as a slicer exactly the same way. Splitting into tables doesn't add breakdowns; it only changes where a value physically lives and how many hops it takes to reach it."
         }
       ]
     },
@@ -372,11 +372,11 @@
         },
         {
           "label": "List price changes over time, and the lookup only holds the current one: that's enough if the model refreshes daily",
-          "why": "A daily refresh doesn't restore the past — it just replaces yesterday's price with today's, and the whole history recomputes under the new one. Tracking an attribute's changes over time is a separate problem (slowly changing dimensions), and it doesn't substitute for the sale price in the fact table."
+          "why": "A daily refresh doesn't restore the past; it just replaces yesterday's price with today's, and the whole history recomputes under the new one. Tracking an attribute's changes over time is a separate problem (slowly changing dimensions), and it doesn't substitute for the sale price in the fact table."
         },
         {
           "label": "For speed: reading price from the fact table is faster than going to fetch it from the lookup",
-          "why": "Speed has nothing to do with it, and it isn't why this decision gets made. Even if the join were free, list_price still wouldn't answer the question about actual revenue — because it's simply a different number, not the same one fetched at a higher cost."
+          "why": "Speed has nothing to do with it, and it isn't why this decision gets made. Even if the join were free, list_price still wouldn't answer the question about actual revenue, because it's simply a different number, not the same one fetched at a higher cost."
         }
       ]
     },
@@ -399,11 +399,11 @@
         },
         {
           "label": "Revenue narrows, but product count stays at 47: the lookup doesn't obey the filter",
-          "why": "It's the other way around: the lookup is the table the slicer is set on directly, and it's the first to narrow. The direction that doesn't obey the filter by default is fact to lookup — but there's no such hop here at all."
+          "why": "It's the other way around: the lookup is the table the slicer is set on directly, and it's the first to narrow. The direction that doesn't obey the filter by default is fact to lookup, but there's no such hop here at all."
         },
         {
           "label": "Product count becomes 5, but revenue stays at the full total: the filter from lookup to fact is off by default",
-          "why": "That's exactly the direction that's on by default — the whole mechanics of slicers rests on it. What's off is the reverse: many-to-one. Mixing up these two directions is the most common reason for being surprised by a number on a report."
+          "why": "That's exactly the direction that's on by default; the whole mechanics of slicers rests on it. What's off is the reverse: many-to-one. Mixing up these two directions is the most common reason for being surprised by a number on a report."
         }
       ]
     },
@@ -422,15 +422,15 @@
       "options": [
         {
           "label": "Many-to-many: brand isn't unique in either table, since «Nettora»'s five products correspond to its ten promos",
-          "why": "Cardinality is set by the key's uniqueness on each side. Here it's 47 products across 9 brands and 89 promos across 9 brands — repeats on both sides. A relationship like this doesn't match row to row, it matches group to group, and every pair inside a group counts as a match."
+          "why": "Cardinality is set by the key's uniqueness on each side. Here it's 47 products across 9 brands and 89 promos across 9 brands, repeats on both sides. A relationship like this doesn't match row to row, it matches group to group, and every pair inside a group counts as a match."
         },
         {
           "label": "One-to-many: a product has one brand, so the product lookup is the \"one\" side",
-          "why": "A product really does have one brand, but the \"one\" side isn't determined by that — it's determined by whether the key is unique in the table. dim_product has 47 rows across 9 brands, meaning the same brand repeats — there's no uniqueness, and this table can't be the \"one\" side."
+          "why": "A product really does have one brand, but the \"one\" side isn't determined by that; it's determined by whether the key is unique in the table. dim_product has 47 rows across 9 brands, meaning the same brand repeats; there's no uniqueness, and this table can't be the \"one\" side."
         },
         {
           "label": "One-to-one: nine brands on one side and nine on the other",
-          "why": "The matching count of distinct values says nothing about cardinality — it's set by row uniqueness, not by how many distinct values exist. One-to-one would hold if brand appeared exactly once in each table, meaning each would have exactly nine rows."
+          "why": "The matching count of distinct values says nothing about cardinality; it's set by row uniqueness, not by how many distinct values exist. One-to-one would hold if brand appeared exactly once in each table, meaning each would have exactly nine rows."
         }
       ]
     },
@@ -449,15 +449,15 @@
       "options": [
         {
           "label": "A distributor's own region in the lookup is where the distributor sits, not where the goods end up. A shipment has no idea which region the goods travel on to",
-          "why": "The region filter does reach fact_sellin and does narrow it — but by the distributor's own region, not the region of sale. Twelve distributors deliver goods across sixteen regions, and that link doesn't exist in the shipments table — it only appears one step later, in shelf sales."
+          "why": "The region filter does reach fact_sellin and does narrow it, but by the distributor's own region, not the region of sale. Twelve distributors deliver goods across sixteen regions, and that link doesn't exist in the shipments table; it only appears one step later, in shelf sales."
         },
         {
           "label": "The relationship between dim_customer and fact_sellin isn't set up, so the filter never gets there",
-          "why": "The relationship exists — distributor_id references the same lookup table. If it didn't, shipments wouldn't narrow by any customer breakdown at all, but the question here is different: why the narrowing happens differently than expected."
+          "why": "The relationship exists; distributor_id references the same lookup table. If it didn't, shipments wouldn't narrow by any customer breakdown at all, but the question here is different: why the narrowing happens differently than expected."
         },
         {
           "label": "The filter direction is set backwards, flowing from the fact table into the lookup",
-          "why": "The reverse direction really is off by default, but it isn't needed here: the path runs from the region lookup, through the customer lookup, into the fact table — the whole way from the \"one\" side to the \"many\" side. Direction has nothing to do with it."
+          "why": "The reverse direction really is off by default, but it isn't needed here: the path runs from the region lookup, through the customer lookup, into the fact table, the whole way from the \"one\" side to the \"many\" side. Direction has nothing to do with it."
         },
         {
           "label": "Shipment grain is too coarse: month versus week",
@@ -480,19 +480,19 @@
       "options": [
         {
           "label": "Every sales row matched all of its brand's promos at once (9 to 11 of them), and that row's revenue got counted just as many times",
-          "why": "A join on a key that's non-unique on both sides multiplies rows by the number of matches. Row count became 1,173,847 instead of 118,449 — almost exactly tenfold — and each one carries the full revenue of its original row. The sum grew by the same factor, because the same value gets summed over and over."
+          "why": "A join on a key that's non-unique on both sides multiplies rows by the number of matches. Row count became 1,173,847 instead of 118,449 (almost exactly tenfold), and each one carries the full revenue of its original row. The sum grew by the same factor, because the same value gets summed over and over."
         },
         {
           "label": "Non-promo sales made it into the report, ones that were filtered out before",
-          "why": "That would grow the total at most to the full ¥126,911,191 — the entire table's volume, there simply isn't more in it. The resulting number is ten times more than the total revenue there is, so the explanation isn't which rows got added, it's that existing ones got counted repeatedly."
+          "why": "That would grow the total at most to the full ¥126,911,191, the entire table's volume, there simply isn't more in it. The resulting number is ten times more than the total revenue there is, so the explanation isn't which rows got added, it's that existing ones got counted repeatedly."
         },
         {
           "label": "Double counting: revenue got summed along both the first path and the second",
-          "why": "That would make the result roughly double, and it's ten times bigger. It isn't about the number of paths — it's that the second path runs through a key that's non-unique on either side; the multiplier is the number of promos per brand, not the number of paths."
+          "why": "That would make the result roughly double, and it's ten times bigger. It isn't about the number of paths. It's that the second path runs through a key that's non-unique on either side; the multiplier is the number of promos per brand, not the number of paths."
         },
         {
           "label": "A data error: duplicates appeared in the promo lookup",
-          "why": "There are no duplicates there — 89 promos across 9 brands is a normal two-year promo history. The data is fine; the model is wrong: it joins a group of products to a group of promos, when what should be linked is a sales row to its specific promo."
+          "why": "There are no duplicates there; 89 promos across 9 brands is a normal two-year promo history. The data is fine; the model is wrong: it joins a group of products to a group of promos, when what should be linked is a sales row to its specific promo."
         }
       ]
     },
@@ -515,15 +515,15 @@
         },
         {
           "label": "The second relationship is redundant: it leads to the same rows as the first, just by a longer route",
-          "why": "It doesn't lead to the same rows — that's the whole point. The direct relationship matches a sale to its own promo; the path via brand matches it to all of that brand's promos at once. These are different sets of rows and different numbers, not a long and a short route to the same answer."
+          "why": "It doesn't lead to the same rows; that's the whole point. The direct relationship matches a sale to its own promo; the path via brand matches it to all of that brand's promos at once. These are different sets of rows and different numbers, not a long and a short route to the same answer."
         },
         {
           "label": "It saves resources: two active relationships between the tables would slow down recalculation",
-          "why": "The restriction exists for unambiguity, not performance. Even if recalculation were free, a model with two active paths couldn't say what its measure means — and that costs more than any slowdown."
+          "why": "The restriction exists for unambiguity, not performance. Even if recalculation were free, a model with two active paths couldn't say what its measure means, and that costs more than any slowdown."
         },
         {
           "label": "It's a temporary restriction: the relationship will start working after a data refresh",
-          "why": "A data refresh changes nothing — the ambiguity is built into the model's structure, not its content. Dashed doesn't mean \"not ready yet\" — it's a deliberate state: the relationship exists and can be invoked explicitly from a measure, but doesn't apply by default."
+          "why": "A data refresh changes nothing; the ambiguity is built into the model's structure, not its content. Dashed doesn't mean \"not ready yet\"; it's a deliberate state: the relationship exists and can be invoked explicitly from a measure, but doesn't apply by default."
         }
       ]
     },
@@ -542,11 +542,11 @@
       "options": [
         {
           "label": "Keep the direct relationship active for measure A, and write a separate measure for B that invokes the second relationship explicitly",
-          "why": "The relationship that most measures need stays active — it sets the default behaviour. The second measure gets its own formula, inside which the second path is switched on explicitly, and its name says outright that it computes something different. No ambiguity: every measure has exactly one interpretation."
+          "why": "The relationship that most measures need stays active; it sets the default behaviour. The second measure gets its own formula, inside which the second path is switched on explicitly, and its name says outright that it computes something different. No ambiguity: every measure has exactly one interpretation."
         },
         {
           "label": "Activate both relationships and pick the one you need in each report",
-          "why": "\"Choosing in the report\" is precisely what a model can't do — that's exactly what explicit invocation inside a measure is for. There's no picking to be done: with two active paths the model doesn't ask which one was meant, it either refuses to create them, or starts computing off one of them silently."
+          "why": "\"Choosing in the report\" is precisely what a model can't do; that's exactly what explicit invocation inside a measure is for. There's no picking to be done: with two active paths the model doesn't ask which one was meant, it either refuses to create them, or starts computing off one of them silently."
         },
         {
           "label": "Delete the promo_id relationship and keep only the brand one: it gives both pictures at once",
@@ -554,7 +554,7 @@
         },
         {
           "label": "Add a second copy of the promo lookup to the model and link it by brand",
-          "why": "A copy removes the ambiguity formally — there are no longer two paths to one table — but it moves the problem elsewhere: two lookups with identical content will drift apart at the first refresh, and the field list will show two \"promo\" tables for a person to guess between. This technique gets used, but as a last resort, not a first one."
+          "why": "A copy removes the ambiguity formally (there are no longer two paths to one table), but it moves the problem elsewhere: two lookups with identical content will drift apart at the first refresh, and the field list will show two \"promo\" tables for a person to guess between. This technique gets used, but as a last resort, not a first one."
         }
       ]
     },
@@ -577,11 +577,11 @@
         },
         {
           "label": "19.1%: the column recomputes along with the slicer, like any number on the report",
-          "why": "What recomputes under a slicer is a measure, not a calculated column — that's exactly the difference between them. The column holds the result of one calculation, made at data refresh, before it ever knew about the slicer."
+          "why": "What recomputes under a slicer is a measure, not a calculated column; that's exactly the difference between them. The column holds the result of one calculation, made at data refresh, before it ever knew about the slicer."
         },
         {
           "label": "Blank: the column breaks, because it was computed without accounting for future slicers",
-          "why": "The column doesn't break and doesn't go blank: it holds a perfectly working number, just not the one you need after the slicer. It's a modeling mistake, not a display one — so there's no error message either."
+          "why": "The column doesn't break and doesn't go blank: it holds a perfectly working number, just not the one you need after the slicer. It's a modeling mistake, not a display one, so there's no error message either."
         }
       ]
     },
@@ -599,15 +599,15 @@
       "options": [
         {
           "label": "A computes once at data refresh and is stored per row; B computes fresh every time it's shown, under the current filter",
-          "why": "That's exactly the defining difference between a column and a measure — it isn't about DIVIDE's syntax, it's about when the computation happens. A column has one such moment, at data refresh; a measure has one every time it's displayed."
+          "why": "That's exactly the defining difference between a column and a measure; it isn't about DIVIDE's syntax, it's about when the computation happens. A column has one such moment, at data refresh; a measure has one every time it's displayed."
         },
         {
           "label": "A runs faster, because it contains the number 126911191 directly instead of referencing another measure",
-          "why": "The number inside formula A has nothing to do with how fast it runs. Speed isn't the main difference here at all — the main difference is when the formula computes: once at refresh, or fresh every time it's shown."
+          "why": "The number inside formula A has nothing to do with how fast it runs. Speed isn't the main difference here at all; the main difference is when the formula computes: once at refresh, or fresh every time it's shown."
         },
         {
           "label": "A and B give the same result in any report; the difference is purely cosmetic",
-          "why": "The results only match in one special case — a report with no slicers at all. Add any filter by region or brand, and A keeps showing the number computed at refresh, while B recomputes."
+          "why": "The results only match in one special case: a report with no slicers at all. Add any filter by region or brand, and A keeps showing the number computed at refresh, while B recomputes."
         }
       ]
     },
@@ -626,15 +626,15 @@
       "options": [
         {
           "label": "For a slicer nobody set up a column for in advance, there will be no correct number at all: the columns only cover the combinations that were planned",
-          "why": "A column computes once for a specific, known-in-advance combination of conditions. The moment the requester asks for a slicer by month or by sales channel that no column was set up for, there's nothing to answer with — a column for that case simply doesn't exist."
+          "why": "A column computes once for a specific, known-in-advance combination of conditions. The moment the requester asks for a slicer by month or by sales channel that no column was set up for, there's nothing to answer with; a column for that case simply doesn't exist."
         },
         {
           "label": "Nothing serious: there'll be more columns, but each keeps showing the correct number for its own combination",
-          "why": "True for combinations already planned for, but the plan is fragile at exactly the moment a combination shows up that wasn't foreseen. And foreseeing every possible slicer a report might ever need is impossible in principle — there are too many combinations."
+          "why": "True for combinations already planned for, but the plan is fragile at exactly the moment a combination shows up that wasn't foreseen. And foreseeing every possible slicer a report might ever need is impossible in principle; there are too many combinations."
         },
         {
           "label": "The model will refuse to create the third column, because combining two dimensions isn't supported in DAX",
-          "why": "There's no technical limit on a formula like this — DIVIDE with two filter conditions writes freely. The problem isn't that the column can't be created — it's that the whole approach doesn't scale to slicers nobody planned for."
+          "why": "There's no technical limit on a formula like this; DIVIDE with two filter conditions writes freely. The problem isn't that the column can't be created; it's that the whole approach doesn't scale to slicers nobody planned for."
         }
       ]
     },
@@ -657,7 +657,7 @@
         },
         {
           "label": "Only the row's condition: page slicers don't affect individual matrix cells",
-          "why": "A page slicer applies to the whole page, including every cell of every matrix on it — that's exactly what it's for. If the slicer didn't reach the cells, the number in them wouldn't change when a brand is picked, but it does: without the slicer it would be ¥3,718,723."
+          "why": "A page slicer applies to the whole page, including every cell of every matrix on it; that's exactly what it's for. If the slicer didn't reach the cells, the number in them wouldn't change when a brand is picked, but it does: without the slicer it would be ¥3,718,723."
         },
         {
           "label": "Only the slicer's condition: a matrix row sets a label, not a filter",
@@ -679,15 +679,15 @@
       "options": [
         {
           "label": "¥1,691,942: Nettora's revenue for Tokyo. The brand filter always applies, because it's part of the measure itself, not an external slicer",
-          "why": "The condition dim_product[brand]=\"Nettora\" is baked inside CALCULATE and acts as a fourth source of filter context — the measure's own filter. It doesn't need a page slicer: it applies every time the measure is invoked, regardless of what's selected outside it."
+          "why": "The condition dim_product[brand]=\"Nettora\" is baked inside CALCULATE and acts as a fourth source of filter context, the measure's own filter. It doesn't need a page slicer: it applies every time the measure is invoked, regardless of what's selected outside it."
         },
         {
           "label": "¥8,876,489: Tokyo's full revenue across every brand, because there's no brand slicer on the page",
-          "why": "That would be true for a measure with no internal filter, like a plain Revenue. But Nettora Revenue has the brand condition built into its formula, and it doesn't depend on whether there's a page slicer — it's always there."
+          "why": "That would be true for a measure with no internal filter, like a plain Revenue. But Nettora Revenue has the brand condition built into its formula, and it doesn't depend on whether there's a page slicer; it's always there."
         },
         {
           "label": "Blank: without an external brand slicer, CALCULATE can't evaluate the condition inside it",
-          "why": "CALCULATE exists precisely to set filter conditions explicitly, without external slicers. The formula here is complete and working — it evaluates its own condition; the filter's source is simply different, the measure itself rather than a page slicer."
+          "why": "CALCULATE exists precisely to set filter conditions explicitly, without external slicers. The formula here is complete and working: it evaluates its own condition; the filter's source is simply different, the measure itself rather than a page slicer."
         }
       ]
     },
@@ -706,15 +706,15 @@
       "options": [
         {
           "label": "Only the page slicer (brand = «Nettora»): with no region condition, because the \"Total\" row isn't tied to any specific region",
-          "why": "\"Total\" isn't another region — it's a row with no region condition of its own: only the page slicer remains in its filter context. That's why it shows the sum across every region at once — the same figure a brand slicer alone would give, with no row breakdown at all."
+          "why": "\"Total\" isn't another region; it's a row with no region condition of its own: only the page slicer remains in its filter context. That's why it shows the sum across every region at once, the same figure a brand slicer alone would give, with no row breakdown at all."
         },
         {
           "label": "Region = all sixteen at once, joined with OR: the same as an ordinary row, just with the full list",
-          "why": "Formally that would give the same result, but in fact the \"Total\" row isn't built as a list of region conditions — it's built as the absence of any region condition at all. The difference is practical: add a seventeenth region to the lookup, and the \"Total\" row picks it up on its own, while an \"all sixteen joined with OR\" list would need rewriting."
+          "why": "Formally that would give the same result, but in fact the \"Total\" row isn't built as a list of region conditions; it's built as the absence of any region condition at all. The difference is practical: add a seventeenth region to the lookup, and the \"Total\" row picks it up on its own, while an \"all sixteen joined with OR\" list would need rewriting."
         },
         {
           "label": "The same filter context as the \"Tokyo\" row, plus an extra condition \"region = Total\"",
-          "why": "\"Total\" is an element of the visual, not a lookup value — no such region value exists in any table in the model. A row can't have a condition on a value that doesn't exist; it's more accurate to say the row simply has no region condition at all."
+          "why": "\"Total\" is an element of the visual, not a lookup value; no such region value exists in any table in the model. A row can't have a condition on a value that doesn't exist; it's more accurate to say the row simply has no region condition at all."
         }
       ]
     },
@@ -732,15 +732,15 @@
       "options": [
         {
           "label": "126,911,191: the sum of revenue across the whole table. SUM ignores row context and aggregates whatever isn't filtered, and here nothing is filtered",
-          "why": "SUM is an aggregating function — it responds to the filter context, not the row context. At the moment the column computes, no filter is in effect, so SUM adds up every row in the table — and gets the same result in every row."
+          "why": "SUM is an aggregating function; it responds to the filter context, not the row context. At the moment the column computes, no filter is in effect, so SUM adds up every row in the table, and gets the same result in every row."
         },
         {
           "label": "398.31: this row's own revenue value, because the column computes in row context",
-          "why": "That's how a plain reference to the column would work — \"=fact_sellout[revenue]\" with no SUM. But SUM inside the formula changes things: aggregating functions don't read row context directly, they aggregate over the filter context, which here is empty and restricts nothing."
+          "why": "That's how a plain reference to the column would work: \"=fact_sellout[revenue]\" with no SUM. But SUM inside the formula changes things: aggregating functions don't read row context directly, they aggregate over the filter context, which here is empty and restricts nothing."
         },
         {
           "label": "A calculation error: SUM can't be used inside a calculated column",
-          "why": "The formula is syntactically fine, there's no error. SUM inside a calculated column is entirely legal — it's just that the result is almost never what people expect: it equals the sum across the whole table, not the current row."
+          "why": "The formula is syntactically fine, there's no error. SUM inside a calculated column is entirely legal; it's just that the result is almost never what people expect: it equals the sum across the whole table, not the current row."
         }
       ]
     },
@@ -758,15 +758,15 @@
       "options": [
         {
           "label": "Variant A: direct references to revenue and units, with no aggregating functions, naturally use row context",
-          "why": "DIVIDE here just divides two values, and the values themselves are direct references to the current row's columns. Nothing stops row context from doing its job: for the first row that's 398.31 and 2, giving 199.16 — that specific sale's own price."
+          "why": "DIVIDE here just divides two values, and the values themselves are direct references to the current row's columns. Nothing stops row context from doing its job: for the first row that's 398.31 and 2, giving 199.16, that specific sale's own price."
         },
         {
           "label": "Variant B: SUM inside DIVIDE sums exactly the row the formula is applied to",
-          "why": "SUM behaves the same regardless of what wraps around it — it still responds to filter context, not row context. Variant B returns the same number in every row: the overall price per unit across the whole table."
+          "why": "SUM behaves the same regardless of what wraps around it; it still responds to filter context, not row context. Variant B returns the same number in every row: the overall price per unit across the whole table."
         },
         {
           "label": "Both variants give the same result: DIVIDE normalizes the difference between them",
-          "why": "DIVIDE is an ordinary division function — it doesn't change how its arguments compute. If one argument is aggregated across the whole table and the other isn't, DIVIDE can't magically reconcile them into the same context."
+          "why": "DIVIDE is an ordinary division function; it doesn't change how its arguments compute. If one argument is aggregated across the whole table and the other isn't, DIVIDE can't magically reconcile them into the same context."
         }
       ]
     },
@@ -788,11 +788,11 @@
         },
         {
           "label": "SUM inside SUMX always refers to the current row: a special exception to the general rule about SUM",
-          "why": "There's no separate SUM function inside the expression at all — just direct column references multiplied and divided against each other. The rule about SUM (responds to filter context, ignores row context) doesn't change; what changes is that SUMX itself supplies a row context that wouldn't exist in an ordinary column."
+          "why": "There's no separate SUM function inside the expression at all, just direct column references multiplied and divided against each other. The rule about SUM (responds to filter context, ignores row context) doesn't change; what changes is that SUMX itself supplies a row context that wouldn't exist in an ordinary column."
         },
         {
           "label": "The formula is flawed: units*revenue/units always equals revenue, and you can't write it this redundantly",
-          "why": "The formula really does reduce to revenue mathematically — but the question isn't about writing it efficiently, it's about the computation mechanism. Even written redundantly, it demonstrates exactly how SUMX creates a row-by-row context, which is the whole point of the task."
+          "why": "The formula really does reduce to revenue mathematically, but the question isn't about writing it efficiently, it's about the computation mechanism. Even written redundantly, it demonstrates exactly how SUMX creates a row-by-row context, which is the whole point of the task."
         }
       ]
     },
@@ -811,15 +811,15 @@
       "options": [
         {
           "label": "Only Revenue: revenue accumulates over a period and sums equally honestly by product, region and month",
-          "why": "Revenue is a classic additive quantity: every unit of it belongs to a specific sale, and a sum across any set of sales means exactly what it should — total revenue for that set, regardless of whether you slice it by product, region or time."
+          "why": "Revenue is a classic additive quantity: every unit of it belongs to a specific sale, and a sum across any set of sales means exactly what it should: total revenue for that set, regardless of whether you slice it by product, region or time."
         },
         {
           "label": "Only StockOnHand: stock on hand physically exists at every moment, so it can be summed across any period",
-          "why": "Physically existing at every moment is exactly why stock CAN'T be summed across time: adding up several snapshots of the same inventory doesn't mean anything meaningful. Summed across products and regions at the same point in time, stock works fine — that's the \"semi\" in semi-additive."
+          "why": "Physically existing at every moment is exactly why stock CAN'T be summed across time: adding up several snapshots of the same inventory doesn't mean anything meaningful. Summed across products and regions at the same point in time, stock works fine; that's the \"semi\" in semi-additive."
         },
         {
           "label": "Only AvgPrice: average price is the same across any breakdown, so summing it isn't distorted",
-          "why": "Average price is the opposite of \"the same across any breakdown\": it's usually different for every product, region and period. Adding up several different average prices and getting a meaningful number is impossible along any breakdown at all — it's a non-additive quantity."
+          "why": "Average price is the opposite of \"the same across any breakdown\": it's usually different for every product, region and period. Adding up several different average prices and getting a meaningful number is impossible along any breakdown at all; it's a non-additive quantity."
         }
       ]
     },
@@ -838,15 +838,15 @@
       "options": [
         {
           "label": "Not valid: it's the sum of three separate point-in-time snapshots of the same inventory, and no such stock level ever existed at any single moment",
-          "why": "Stock on hand isn't something that accumulates over a month — it's something that exists at a specific moment, usually period end. Adding up three snapshots of goods that partly sat in the warehouse across all three months counts the same physical goods more than once."
+          "why": "Stock on hand isn't something that accumulates over a month; it's something that exists at a specific moment, usually period end. Adding up three snapshots of goods that partly sat in the warehouse across all three months counts the same physical goods more than once."
         },
         {
           "label": "Valid: it's the distributor's total stock for the quarter, exactly what the requester asked for",
-          "why": "The requester asked about stock \"for the quarter\", but the meaningful answer to that isn't a sum of monthly snapshots — it's the value at quarter end, meaning December's 20,846 units. \"For the quarter\" here means the moment the period ends, not accumulation inside it."
+          "why": "The requester asked about stock \"for the quarter\", but the meaningful answer to that isn't a sum of monthly snapshots; it's the value at quarter end, meaning December's 20,846 units. \"For the quarter\" here means the moment the period ends, not accumulation inside it."
         },
         {
           "label": "Valid, but the result needs dividing by three to get the average stock",
-          "why": "Dividing by three gives the average monthly stock — a metric in its own right, sometimes useful, but not what people usually mean by \"stock on hand for the quarter.\" The answer to the original question is the ending stock at the cutoff date, December's 20,846, not an average of three snapshots."
+          "why": "Dividing by three gives the average monthly stock, a metric in its own right, sometimes useful, but not what people usually mean by \"stock on hand for the quarter.\" The answer to the original question is the ending stock at the cutoff date, December's 20,846, not an average of three snapshots."
         }
       ]
     },
@@ -873,7 +873,7 @@
         },
         {
           "label": "The dashboard is computing off the wrong distributor: check the distributor_id filter",
-          "why": "A wrong distributor filter would give a different number, but not necessarily one that's a clean multiple bigger — just a different warehouse's stock. Here the tell points elsewhere: the total is roughly the sum of the climbing monthly stock levels, which points straight at semi-additivity, not a mixed-up filter."
+          "why": "A wrong distributor filter would give a different number, but not necessarily one that's a clean multiple bigger, just a different warehouse's stock. Here the tell points elsewhere: the total is roughly the sum of the climbing monthly stock levels, which points straight at semi-additivity, not a mixed-up filter."
         }
       ]
     },
@@ -892,11 +892,11 @@
       "options": [
         {
           "label": "The full total, ignoring the slicer: a slicer built on one fact table's column doesn't affect another fact table that has no relationship to that column",
-          "why": "A slicer filters the table its column is built on, and everything connected to it. fact_sellin has no relationship whatsoever to fact_sellout's week_start — it has its own date column, and without a shared date table there's no path between the two facts a filter could travel along."
+          "why": "A slicer filters the table its column is built on, and everything connected to it. fact_sellin has no relationship whatsoever to fact_sellout's week_start; it has its own date column, and without a shared date table there's no path between the two facts a filter could travel along."
         },
         {
           "label": "The same total as sales: both fact tables are, in the end, about the same product and period",
-          "why": "A shared topic (sales and shipments of the same product) doesn't create a relationship in the model automatically. A model filters along explicitly defined relationships between tables, not by how semantically close the data is — and there's currently no relationship between these two columns."
+          "why": "A shared topic (sales and shipments of the same product) doesn't create a relationship in the model automatically. A model filters along explicitly defined relationships between tables, not by how semantically close the data is, and there's currently no relationship between these two columns."
         },
         {
           "label": "An error: DAX won't let you build a slicer on a column that isn't connected to other tables",
@@ -919,15 +919,15 @@
       "options": [
         {
           "label": "Through two separate relationships to the same table: date_id to week_start for one fact, date_id to month_start for the other, and both paths lead into one calendar",
-          "why": "dim_date is stored by day, and it has separate columns for different granularities — its own week_start and its own month_start, in the same row. Each fact table connects to its own dim_date column, and both relationships ultimately lead to the same calendar, with shared year and quarter."
+          "why": "dim_date is stored by day, and it has separate columns for different granularities: its own week_start and its own month_start, in the same row. Each fact table connects to its own dim_date column, and both relationships ultimately lead to the same calendar, with shared year and quarter."
         },
         {
           "label": "It can't: since the date values are literally different (2025-03-03 and 2025-03-01), there can be no shared slicer for the two facts",
-          "why": "The values really are literally different, but dim_date doesn't require a literal match between the two facts directly — it's an intermediary with a separate column for each granularity. That's exactly why one and the same quarter on dim_date filters both facts, even though their own dates never coincide."
+          "why": "The values really are literally different, but dim_date doesn't require a literal match between the two facts directly; it's an intermediary with a separate column for each granularity. That's exactly why one and the same quarter on dim_date filters both facts, even though their own dates never coincide."
         },
         {
           "label": "By converting month_start in fact_sellin to a weekly format before building the relationship",
-          "why": "No conversion is needed at all — dim_date already holds both required granularities in the same table, just in different columns of the same row. The task is solved with relationships to existing columns, not by transforming the fact table's data."
+          "why": "No conversion is needed at all; dim_date already holds both required granularities in the same table, just in different columns of the same row. The task is solved with relationships to existing columns, not by transforming the fact table's data."
         }
       ]
     },
@@ -946,15 +946,15 @@
       "options": [
         {
           "label": "Expected: both figures are honestly computed over the same quarter, through one calendar, and the gap between them is the gap between shelf sales and warehouse shipments, not a relationship bug",
-          "why": "A shared calendar guarantees both reports answer the question \"what happened in Q1 2025\" — and that's the only thing it guarantees. It doesn't promise that sell-in and sell-out will turn out equal: these are different business processes (retail sales and warehouse replenishment), and it's natural to expect their totals over the same period to diverge."
+          "why": "A shared calendar guarantees both reports answer the question \"what happened in Q1 2025\", and that's the only thing it guarantees. It doesn't promise that sell-in and sell-out will turn out equal: these are different business processes (retail sales and warehouse replenishment), and it's natural to expect their totals over the same period to diverge."
         },
         {
           "label": "A relationship bug: if the calendar is shared, both reports have to show the same number for one period",
-          "why": "A shared calendar ties both facts to the same time window — but it doesn't turn different quantities into one. Shelf sales and warehouse shipments measure fundamentally different events, and their being equal would be a suspicious coincidence rather than the norm."
+          "why": "A shared calendar ties both facts to the same time window, but it doesn't turn different quantities into one. Shelf sales and warehouse shipments measure fundamentally different events, and their being equal would be a suspicious coincidence rather than the norm."
         },
         {
           "label": "A relationship bug: fact_sellin should filter through week_start, not month_start, and the numbers would match",
-          "why": "fact_sellin has no week_start column at all — only monthly granularity, shipments aren't detailed by week in this model. Even if that relationship existed technically, sales and shipments would still be different processes with different totals, because they measure two different things."
+          "why": "fact_sellin has no week_start column at all, only monthly granularity, shipments aren't detailed by week in this model. Even if that relationship existed technically, sales and shipments would still be different processes with different totals, because they measure two different things."
         }
       ]
     },
@@ -981,11 +981,11 @@
         },
         {
           "label": "The difference means lost orders: ¥267,000 was ordered but never shipped",
-          "why": "Nothing is lost — late-March orders simply ship in April and land in April's figure. The balance reconciles over a long enough horizon: across all of 2025, orders total ¥39,104,808, shipments ¥39,023,501, and the difference is just the tail at year end."
+          "why": "Nothing is lost; late-March orders simply ship in April and land in April's figure. The balance reconciles over a long enough horizon: across all of 2025, orders total ¥39,104,808, shipments ¥39,023,501, and the difference is just the tail at year end."
         },
         {
           "label": "This is a modeling error: two dates can't connect to one calendar, you need two date tables",
-          "why": "Two date tables would actually be the mistake — the field list would end up with two \"Year\" columns and two slicers to guess between. One date playing two roles gets solved with an active and an inactive relationship to a single calendar."
+          "why": "Two date tables would actually be the mistake; the field list would end up with two \"Year\" columns and two slicers to guess between. One date playing two roles gets solved with an active and an inactive relationship to a single calendar."
         }
       ]
     },
@@ -1004,19 +1004,19 @@
       "options": [
         {
           "label": "¥3,303,414: by order date, because the filter only travels along the active relationship. The inactive one plays no part until it's switched on explicitly",
-          "why": "The active relationship sets the default behaviour: the filter from the calendar travels along it and no other. The inactive one exists in the model but doesn't carry the filter — it's waiting for a specific measure to invoke it via USERELATIONSHIP."
+          "why": "The active relationship sets the default behaviour: the filter from the calendar travels along it and no other. The inactive one exists in the model but doesn't carry the filter; it's waiting for a specific measure to invoke it via USERELATIONSHIP."
         },
         {
           "label": "¥3,570,458: by ship date, because ship_date is later and the model uses the more recent date",
-          "why": "The model doesn't pick the \"more recent\" date — it has no such concept. The choice is made by the author, by marking one relationship active; everything else follows from that."
+          "why": "The model doesn't pick the \"more recent\" date; it has no such concept. The choice is made by the author, by marking one relationship active; everything else follows from that."
         },
         {
           "label": "The sum of both figures, because the March filter travels along both relationships",
-          "why": "If both relationships were active at once, the model simply wouldn't let you create them — that would be the ambiguity from mdl-014. That's exactly why the second one is marked inactive: to keep the filter's path singular."
+          "why": "If both relationships were active at once, the model simply wouldn't let you create them; that would be the ambiguity from mdl-014. That's exactly why the second one is marked inactive: to keep the filter's path singular."
         },
         {
           "label": "An ambiguity error: two relationships between the same pair of tables aren't allowed",
-          "why": "Two relationships between one pair of tables are allowed precisely on the condition that only one of them is active. The error would occur if you tried to make both active — that's exactly what the dashed line prevents."
+          "why": "Two relationships between one pair of tables are allowed precisely on the condition that only one of them is active. The error would occur if you tried to make both active; that's exactly what the dashed line prevents."
         }
       ]
     },
@@ -1035,19 +1035,19 @@
       "options": [
         {
           "label": "A slicer from one calendar narrows only one of the two measures: the other, computing off the other calendar, stays unfiltered and shows every year's data",
-          "why": "Each calendar only filters the column connected to it. A slicer set on dim_date never reaches ship_date — the shipment measure stays at its full total. Two numbers for different periods end up sitting side by side, and there's nothing about it that visually looks different from a normal report."
+          "why": "Each calendar only filters the column connected to it. A slicer set on dim_date never reaches ship_date; the shipment measure stays at its full total. Two numbers for different periods end up sitting side by side, and there's nothing about it that visually looks different from a normal report."
         },
         {
           "label": "Both measures narrow correctly: the calendars contain the same dates, so a year slicer works the same way on both",
-          "why": "Identical content doesn't create a relationship. A filter propagates along the model's relationships, and a slicer on dim_date is connected only to order_date — there's no path at all to ship_date, however many identical dates sit in the second table."
+          "why": "Identical content doesn't create a relationship. A filter propagates along the model's relationships, and a slicer on dim_date is connected only to order_date; there's no path at all to ship_date, however many identical dates sit in the second table."
         },
         {
           "label": "The model will refuse to work: two calendars in one model aren't allowed",
-          "why": "Two calendars are technically allowed and sometimes even needed — different fiscal years, for instance. The problem isn't a ban — it's that here the second calendar describes the exact same time axis, and its existence only misleads people."
+          "why": "Two calendars are technically allowed and sometimes even needed, different fiscal years, for instance. The problem isn't a ban; it's that here the second calendar describes the exact same time axis, and its existence only misleads people."
         },
         {
           "label": "The report will get twice as slow, because the model will recompute both calendars",
-          "why": "A 912-row calendar isn't going to slow anything down noticeably — it's one of the smallest tables in the model. The cost of this choice isn't speed — it's that the report starts silently showing incomparable numbers side by side."
+          "why": "A 912-row calendar isn't going to slow anything down noticeably; it's one of the smallest tables in the model. The cost of this choice isn't speed; it's that the report starts silently showing incomparable numbers side by side."
         }
       ]
     },
@@ -1066,15 +1066,15 @@
       "options": [
         {
           "label": "Many-to-many: every product will match all of its brand's promos. You need a bridge table of unique \"product × promo\" pairs",
-          "why": "The key repeats on both sides — 47 rows across 9 brands, and 89 across the same 9. A direct relationship matches group to group: «Nettora»'s five products would each produce ten pairs — fifty rows instead of five. A bridge fixes these pairs explicitly, and both relationships to it become one-to-many."
+          "why": "The key repeats on both sides, 47 rows across 9 brands, and 89 across the same 9. A direct relationship matches group to group: «Nettora»'s five products would each produce ten pairs, fifty rows instead of five. A bridge fixes these pairs explicitly, and both relationships to it become one-to-many."
         },
         {
           "label": "One-to-many: a product has one brand, so dim_product will be the \"one\" side",
-          "why": "The \"one\" side is determined by the key's uniqueness in the table, not by how many brands one product has. In dim_product, brand repeats — 47 rows across 9 values — so there's no uniqueness, and this table can't be the \"one\" side."
+          "why": "The \"one\" side is determined by the key's uniqueness in the table, not by how many brands one product has. In dim_product, brand repeats (47 rows across 9 values), so there's no uniqueness, and this table can't be the \"one\" side."
         },
         {
           "label": "No relationship is needed at all: fact_sellout is already connected to dim_promo via promo_id",
-          "why": "promo_id answers a different question — \"which promo did this specific sale take part in.\" The question here is different: which products even belong to the brand that had a promo. This is a relationship between two lookup tables, and promo_id doesn't answer it."
+          "why": "promo_id answers a different question: \"which promo did this specific sale take part in.\" The question here is different: which products even belong to the brand that had a promo. This is a relationship between two lookup tables, and promo_id doesn't answer it."
         }
       ]
     },
@@ -1097,7 +1097,7 @@
         },
         {
           "label": "One row is one brand with a list of its products and promos. 465 is the total number of brand mentions across both tables",
-          "why": "A list inside a row would mean one cell holds a list — that isn't how a relational table works. A bridge lays combinations out one per row, which is exactly why there end up being more of them than rows in the original lookups."
+          "why": "A list inside a row would mean one cell holds a list; that isn't how a relational table works. A bridge lays combinations out one per row, which is exactly why there end up being more of them than rows in the original lookups."
         },
         {
           "label": "One row is one product with its most recent promo. 465 is the number of products times the number of months of history",
@@ -1105,7 +1105,7 @@
         },
         {
           "label": "465 is 47 products plus 89 promos plus 329 sales that fell under a promo",
-          "why": "A bridge links two lookups and knows nothing about sales — the fact table connects to the model separately, via promo_id. Adding up the rows of two tables also doesn't give you their relationship's cardinality: that's set by combinations, not a sum."
+          "why": "A bridge links two lookups and knows nothing about sales; the fact table connects to the model separately, via promo_id. Adding up the rows of two tables also doesn't give you their relationship's cardinality: that's set by combinations, not a sum."
         }
       ]
     },
@@ -1124,15 +1124,15 @@
       "options": [
         {
           "label": "Expected: a brand has several promos, and its revenue lands in the row of every one of them. The total is recomputed with no per-promo breakdown, so it doesn't double-count",
-          "why": "Through the bridge, one sale belongs to several promos of the same brand, and its revenue legitimately shows up in every such row. The Total row lives in a different filter context — with no promo condition — so it counts every sale exactly once."
+          "why": "Through the bridge, one sale belongs to several promos of the same brand, and its revenue legitimately shows up in every such row. The Total row lives in a different filter context (with no promo condition), so it counts every sale exactly once."
         },
         {
           "label": "A bridge bug: duplicate pairs are left in it, and that's doubling the revenue",
-          "why": "The pairs in the bridge are unique — otherwise it wouldn't do its job. The excess doesn't come from duplicates — it comes from the same product honestly belonging to several different promos of its brand."
+          "why": "The pairs in the bridge are unique; otherwise it wouldn't do its job. The excess doesn't come from duplicates; it comes from the same product honestly belonging to several different promos of its brand."
         },
         {
           "label": "A measure bug: revenue needs dividing by the brand's promo count, so the rows sum to the total",
-          "why": "Dividing would turn an understandable quantity (\"revenue of the brand this promo belonged to\") into a share whose meaning would need explaining separately. If the business genuinely needs a non-duplicating sum, what needs to change is the question, not the measure — compute by promo_id, not by brand."
+          "why": "Dividing would turn an understandable quantity (\"revenue of the brand this promo belonged to\") into a share whose meaning would need explaining separately. If the business genuinely needs a non-duplicating sum, what needs to change is the question, not the measure; compute by promo_id, not by brand."
         },
         {
           "label": "A total bug: it should equal the sum of the rows, or the report shouldn't be shown",
@@ -1154,11 +1154,11 @@
       "options": [
         {
           "label": "«Aqualis»'s full revenue: ¥18,841,733. The condition inside CALCULATE replaced the brand filter, rather than adding to it",
-          "why": "CALCULATE doesn't intersect its condition with an existing filter on the same column — it replaces it. The «Nettora» slicer disappears for this measure entirely, and it computes as if there were no brand slicer at all."
+          "why": "CALCULATE doesn't intersect its condition with an existing filter on the same column; it replaces it. The «Nettora» slicer disappears for this measure entirely, and it computes as if there were no brand slicer at all."
         },
         {
           "label": "Zero: a product can't be both «Aqualis» and «Nettora» at once, the intersection is empty",
-          "why": "No intersection happens: that's how WHERE behaves in SQL, where conditions combine with AND. CALCULATE works differently — its condition on a column displaces whatever was already set on that column."
+          "why": "No intersection happens: that's how WHERE behaves in SQL, where conditions combine with AND. CALCULATE works differently; its condition on a column displaces whatever was already set on that column."
         },
         {
           "label": "«Nettora»'s revenue: ¥16,165,815, because the page slicer takes priority over the measure's formula",
@@ -1166,7 +1166,7 @@
         },
         {
           "label": "The sum of both brands: ¥35,007,548, because the conditions combine with OR",
-          "why": "No combining happens either. CALCULATE doesn't combine its condition with the external one via AND or OR — it fully replaces the filter on that column, leaving filters on every other column untouched."
+          "why": "No combining happens either. CALCULATE doesn't combine its condition with the external one via AND or OR; it fully replaces the filter on that column, leaving filters on every other column untouched."
         }
       ]
     },
@@ -1188,7 +1188,7 @@
         },
         {
           "label": "¥18,841,733: «Aqualis»'s full revenue, because CALCULATE wipes out the entire external context",
-          "why": "CALCULATE doesn't wipe the entire context — only filters on the columns it mentions. Wiping the whole external filter takes an explicit instruction, ALL for instance, and that's exactly the difference between \"replace the brand filter\" and \"remove every filter.\""
+          "why": "CALCULATE doesn't wipe the entire context, only filters on the columns it mentions. Wiping the whole external filter takes an explicit instruction, ALL for instance, and that's exactly the difference between \"replace the brand filter\" and \"remove every filter.\""
         },
         {
           "label": "¥8,876,489: all of Tokyo's revenue, because the page slicer beats the condition in the formula",
@@ -1210,11 +1210,11 @@
       "options": [
         {
           "label": "The numerator and denominator compute in the same row-level filter context. The denominator needs freeing from the brand filter, via CALCULATE with ALL",
-          "why": "In the «Fruvia» row, both halves of the formula see the same filter and both give ¥25,465,980 — the ratio is inevitably one. The denominator needs a different context: CALCULATE(SUM(revenue), ALL(dim_product[brand])) removes the brand filter and gives the full ¥126,911,191."
+          "why": "In the «Fruvia» row, both halves of the formula see the same filter and both give ¥25,465,980; the ratio is inevitably one. The denominator needs a different context: CALCULATE(SUM(revenue), ALL(dim_product[brand])) removes the brand filter and gives the full ¥126,911,191."
         },
         {
           "label": "A DIVIDE bug: shares need a special percentage-calculating function",
-          "why": "DIVIDE has nothing to do with it — it honestly divides whatever it's handed. The problem is that it was handed two identical numbers, and no other division function would change that."
+          "why": "DIVIDE has nothing to do with it; it honestly divides whatever it's handed. The problem is that it was handed two identical numbers, and no other division function would change that."
         },
         {
           "label": "The denominator needs replacing with the constant 126911191: total revenue across the database",
@@ -1222,7 +1222,7 @@
         },
         {
           "label": "The matrix is built wrong: shares should be computed at the visual level, not the measure level",
-          "why": "A visual can show percent-of-total with a built-in setting, but that only solves the display case. A measure with ALL gives a quantity usable anywhere — inside another measure, in conditional formatting, in a value filter."
+          "why": "A visual can show percent-of-total with a built-in setting, but that only solves the display case. A measure with ALL gives a quantity usable anywhere: inside another measure, in conditional formatting, in a value filter."
         }
       ]
     },
@@ -1244,15 +1244,15 @@
         },
         {
           "label": "The column computes at data refresh and the measure at display time, so the column's data is stale",
-          "why": "The difference isn't about timing — that would matter for changing data, but here the data is identical. The gap would exist right after a refresh too: the column aggregates the whole table by the very nature of its context."
+          "why": "The difference isn't about timing; that would matter for changing data, but here the data is identical. The gap would exist right after a refresh too: the column aggregates the whole table by the very nature of its context."
         },
         {
           "label": "The measure is wrong: 25,465,980 is the revenue of just one «Fruvia» product, not the whole brand",
-          "why": "¥25,465,980 is the whole «Fruvia» brand's revenue, and that's the correct number for a brand row. It's the column that's wrong — showing ¥126,911,191, the full database total, in every row of the lookup indiscriminately."
+          "why": "¥25,465,980 is the whole «Fruvia» brand's revenue, and that's the correct number for a brand row. It's the column that's wrong, showing ¥126,911,191, the full database total, in every row of the lookup indiscriminately."
         },
         {
           "label": "A column can't reference another table, so it returns a default total",
-          "why": "A column can reference another table — the relationship between dim_product and fact_sellout exists and works. The problem isn't data access — it's that SUM without CALCULATE is bounded by nothing except filter context, and the column has none."
+          "why": "A column can reference another table; the relationship between dim_product and fact_sellout exists and works. The problem isn't data access; it's that SUM without CALCULATE is bounded by nothing except filter context, and the column has none."
         }
       ]
     },
@@ -1270,7 +1270,7 @@
       "options": [
         {
           "label": "The current brand's revenue: context transition turns the iteration's row into a brand filter, and the measure counts only that brand's sales",
-          "why": "FILTER creates a row context for each brand, and invoking a measure inside it is implicitly wrapped in CALCULATE — meaning context transition happens. The current brand becomes a filter, and the measure returns exactly that brand's revenue, not the grand total."
+          "why": "FILTER creates a row context for each brand, and invoking a measure inside it is implicitly wrapped in CALCULATE, meaning context transition happens. The current brand becomes a filter, and the measure returns exactly that brand's revenue, not the grand total."
         },
         {
           "label": "The grand total ¥126,911,191 on every step: the measure doesn't know what iteration it was invoked inside",
@@ -1282,7 +1282,7 @@
         },
         {
           "label": "The first brand's revenue alphabetically: FILTER evaluates the condition once and applies it to everyone",
-          "why": "FILTER is an iterator — it evaluates the condition fresh for every row of the table being iterated. Evaluating once would make filtering pointless: the result wouldn't depend on which rows are being iterated at all."
+          "why": "FILTER is an iterator; it evaluates the condition fresh for every row of the table being iterated. Evaluating once would make filtering pointless: the result wouldn't depend on which rows are being iterated at all."
         }
       ]
     },
@@ -1304,7 +1304,7 @@
         },
         {
           "label": "Variant B: RELATED fetches the related value from the fact table",
-          "why": "RELATED works in the opposite direction: it pulls a value from the \"one\" side to the \"many\" side — meaning from a lookup into a fact table. It doesn't look from lookup into fact at all — there, one lookup row corresponds to many fact rows, and a single value simply doesn't exist."
+          "why": "RELATED works in the opposite direction: it pulls a value from the \"one\" side to the \"many\" side, meaning from a lookup into a fact table. It doesn't look from lookup into fact at all; there, one lookup row corresponds to many fact rows, and a single value simply doesn't exist."
         },
         {
           "label": "Variant C: SUMX iterates the fact table row by row and so sees only its own rows",
@@ -1330,11 +1330,11 @@
         },
         {
           "label": "Added prior years' data for the same month to the March filter",
-          "why": "That's what a different function does — SAMEPERIODLASTYEAR — and it would return March 2024, meaning ¥4,392,846. TOTALYTD works within the current year and never crosses its boundary."
+          "why": "That's what a different function does (SAMEPERIODLASTYEAR), and it would return March 2024, meaning ¥4,392,846. TOTALYTD works within the current year and never crosses its boundary."
         },
         {
           "label": "Didn't change the filter: it pulled a stored cumulative value from a separate column in the model",
-          "why": "No such separate column exists — all time intelligence computes on the fly from the same SUM(revenue). That's exactly why measures like this work correctly under any additional slicer: they don't store pre-computed totals."
+          "why": "No such separate column exists; all time intelligence computes on the fly from the same SUM(revenue). That's exactly why measures like this work correctly under any additional slicer: they don't store pre-computed totals."
         },
         {
           "label": "Multiplied March's revenue by the month number to get a cumulative total",
@@ -1360,15 +1360,15 @@
         },
         {
           "label": "¥4,694,330: the same March 2025 revenue, because the measure computes off the same fact table",
-          "why": "The fact table really is the same, but the date filter has been swapped — that's the whole point of the function. An identical result would mean the shift didn't work, and the usual cause of that is an incomplete date lookup, or one not marked as a date table."
+          "why": "The fact table really is the same, but the date filter has been swapped; that's the whole point of the function. An identical result would mean the shift didn't work, and the usual cause of that is an incomplete date lookup, or one not marked as a date table."
         },
         {
           "label": "¥49,518,071: all of 2024's revenue, because SAMEPERIODLASTYEAR shifts the filter to the entire year",
-          "why": "The function preserves the period's length and position — it doesn't expand it to a full year. From March 2025 it makes March 2024, from Q1 it makes last year's Q1, and a full year would only come out of a full year."
+          "why": "The function preserves the period's length and position; it doesn't expand it to a full year. From March 2025 it makes March 2024, from Q1 it makes last year's Q1, and a full year would only come out of a full year."
         },
         {
           "label": "Blank: there's no data for March 2024, because the model starts in 2025",
-          "why": "Data starts on January 1st 2024 and covers two and a half years. It would be blank for January 2024, where the model genuinely has no prior year — and that's an important edge case worth checking in the first row of any report like this."
+          "why": "Data starts on January 1st 2024 and covers two and a half years. It would be blank for January 2024, where the model genuinely has no prior year, and that's an important edge case worth checking in the first row of any report like this."
         }
       ]
     },
@@ -1387,11 +1387,11 @@
       "options": [
         {
           "label": "They compute the prior period by date arithmetic, not by looking up a neighbouring row. A missing day silently shifts the interval's boundaries",
-          "why": "Functions like SAMEPERIODLASTYEAR and TOTALYTD build a new set of dates by computation — shifting by a year, counting from the start of the year. If some days are missing from the calendar, the interval comes out incomplete, and the result silently ends up smaller than the real one, with no warning at all."
+          "why": "Functions like SAMEPERIODLASTYEAR and TOTALYTD build a new set of dates by computation, shifting by a year, counting from the start of the year. If some days are missing from the calendar, the interval comes out incomplete, and the result silently ends up smaller than the real one, with no warning at all."
         },
         {
           "label": "A calendar like this contains duplicates, because one week appears in the facts many times",
-          "why": "DISTINCT is exactly what removes repeats, so there won't be duplicates in a table like this. The problem is the opposite — not extra rows, but missing ones: days with no sales never make it into the calendar at all."
+          "why": "DISTINCT is exactly what removes repeats, so there won't be duplicates in a table like this. The problem is the opposite, not extra rows, but missing ones: days with no sales never make it into the calendar at all."
         },
         {
           "label": "The functions require the calendar to hold future dates at least a year ahead",
@@ -1422,7 +1422,7 @@
         },
         {
           "label": "In the measure, wrapping the name in TRIM and SUBSTITUTE: that way the fix needs no model refresh",
-          "why": "It needs no refresh, true, but it repeats in every measure the outlet appears in, and one day those copies will disagree. Worse: the outlet slicer will still show four «Ichiba» entries — a measure fixes its own calculation, not what the person sees in the filter list."
+          "why": "It needs no refresh, true, but it repeats in every measure the outlet appears in, and one day those copies will disagree. Worse: the outlet slicer will still show four «Ichiba» entries; a measure fixes its own calculation, not what the person sees in the filter list."
         },
         {
           "label": "Nowhere: this is the data as it is, and changing it distorts the source",
@@ -1449,11 +1449,11 @@
       "options": [
         {
           "label": "What 03/17/2025 means: which of the two numbers is the month. The slashed format is ambiguous, and getting the order wrong yields wrong dates wherever both numbers are twelve or less",
-          "why": "March 17th parses unambiguously only because 17 cannot be a month. But in something like 03/07/2025 both readings are valid — July 3rd and March 7th — and the choice is settled by the source's convention, not by the data. The error here is silent: the dates come out valid, just not the right ones."
+          "why": "March 17th parses unambiguously only because 17 cannot be a month. But in something like 03/07/2025 both readings are valid (July 3rd and March 7th), and the choice is settled by the source's convention, not by the data. The error here is silent: the dates come out valid, just not the right ones."
         },
         {
           "label": "What type to give the units column (text or number): without that the dates will not parse",
-          "why": "The types of units and sale_date are independent, and the order in which they are handled does not matter. Parsing the dates gets neither easier nor harder depending on whether units has been converted — that is a separate job in the same preparation layer."
+          "why": "The types of units and sale_date are independent, and the order in which they are handled does not matter. Parsing the dates gets neither easier nor harder depending on whether units has been converted; that is a separate job in the same preparation layer."
         },
         {
           "label": "How many rows are in each format: so you can keep the most common one and discard the rest",
@@ -1484,15 +1484,15 @@
         },
         {
           "label": "A year filter does not work on a text column; it needs to be written as a string comparison",
-          "why": "By the time the filter runs, step 2 has already parsed the date, and comparing by year is correct. The problem is not that the filter failed — it worked and gave the right result — but where it was applied."
+          "why": "By the time the filter runs, step 2 has already parsed the date, and comparing by year is correct. The problem is not that the filter failed (it worked and gave the right result) but where it was applied."
         },
         {
           "label": "Twenty minutes is normal for five years; a filter never affects load speed",
-          "why": "It affects it a great deal — but only if it reaches the source. A properly folded filter makes the database return far fewer rows, and that is exactly what keeps refresh times acceptable on large models."
+          "why": "It affects it a great deal, but only if it reaches the source. A properly folded filter makes the database return far fewer rows, and that is exactly what keeps refresh times acceptable on large models."
         },
         {
           "label": "Swap the filter and the date parsing around: then it will make it into the SQL",
-          "why": "The instinct is right, but phrased this way the step will not work: you cannot filter by year before parsing, the column is still text. The fix is to express the condition so it translates into SQL before parsing — by comparing a substring, say, or filtering on the source column directly."
+          "why": "The instinct is right, but phrased this way the step will not work: you cannot filter by year before parsing, the column is still text. The fix is to express the condition so it translates into SQL before parsing, by comparing a substring, say, or filtering on the source column directly."
         }
       ]
     },
@@ -1511,19 +1511,19 @@
       "options": [
         {
           "label": "This outlet's entire 2024 sales history moves to «Kanagawa», as if it had always been there",
-          "why": "The fact stores a reference to the outlet, not to a region: the region is taken from the lookup table at the moment the report is built. The lookup only knows the current value, so the whole history is recomputed against it — silently and retroactively."
+          "why": "The fact stores a reference to the outlet, not to a region: the region is taken from the lookup table at the moment the report is built. The lookup only knows the current value, so the whole history is recomputed against it, silently and retroactively."
         },
         {
           "label": "The 2024 report will not change: it was built against the old lookup and stores the region as saved",
-          "why": "Nothing is saved — the report is recomputed every time it is opened, and the region is fetched from the lookup each time. That is precisely the problem: the past gets rewritten along with the lookup table."
+          "why": "Nothing is saved; the report is recomputed every time it is opened, and the region is fetched from the lookup each time. That is precisely the problem: the past gets rewritten along with the lookup table."
         },
         {
           "label": "This outlet's 2024 sales will disappear: the link to the old region is broken",
-          "why": "The relationship runs through customer_id, which did not change — the sales are not going anywhere. Only the region they land in when grouped changes, and that is more dangerous than disappearing: a disappearance would be noticed immediately."
+          "why": "The relationship runs through customer_id, which did not change; the sales are not going anywhere. Only the region they land in when grouped changes, and that is more dangerous than disappearing: a disappearance would be noticed immediately."
         },
         {
           "label": "The model will refuse to refresh and demand a date for the change",
-          "why": "An ordinary lookup table knows nothing about time at all — it has neither a date field nor a versioning mechanism. Demanding a change date is exactly what SCD2 does, but it has to be designed first: the model will not ask for it on its own."
+          "why": "An ordinary lookup table knows nothing about time at all; it has neither a date field nor a versioning mechanism. Demanding a change date is exactly what SCD2 does, but it has to be designed first: the model will not ask for it on its own."
         }
       ]
     },
@@ -1542,11 +1542,11 @@
       "options": [
         {
           "label": "Neither: the first move is already lost, and more importantly, the column cannot answer which region was in effect on a specific sale date",
-          "why": "Two columns cover one change, and there were two — «Tokyo» has already been pushed out. But even with a single move an unanswerable question remains: does a sale from January 15th 2025 belong to the \"current\" region or the \"previous\" one? Without validity dates there is no answer."
+          "why": "Two columns cover one change, and there were two; «Tokyo» has already been pushed out. But even with a single move an unanswerable question remains: does a sale from January 15th 2025 belong to the \"current\" region or the \"previous\" one? Without validity dates there is no answer."
         },
         {
           "label": "It solves it completely: a measure just picks the right column depending on the report year",
-          "why": "You can only pick by year if you know when the move happened — and that information is not in the lookup table. And even if it were, a rule of \"one column before this year, another after\" falls apart on the second change."
+          "why": "You can only pick by year if you know when the move happened, and that information is not in the lookup table. And even if it were, a rule of \"one column before this year, another after\" falls apart on the second change."
         },
         {
           "label": "The only thing it fails to solve is performance: two columns double the size of the lookup",
@@ -1581,11 +1581,11 @@
         },
         {
           "label": "By how often it changes: what changes often is expensive to version, so it should not be",
-          "why": "Frequency determines the size of the lookup table, not the need for history. An attribute that changes often and matters for historical reporting needs versioning all the more — that is exactly where the drift accumulates fastest."
+          "why": "Frequency determines the size of the lookup table, not the need for history. An attribute that changes often and matters for historical reporting needs versioning all the more; that is exactly where the drift accumulates fastest."
         },
         {
           "label": "By data type: text attributes get versioned, numbers and keys do not",
-          "why": "A data type says nothing about the meaning of a change. Region is stored as a numeric key and does need versioning, while a name is text — and for a typo correction, precisely no version is wanted."
+          "why": "A data type says nothing about the meaning of a change. Region is stored as a numeric key and does need versioning, while a name is text, and for a typo correction, precisely no version is wanted."
         }
       ]
     },
@@ -1604,7 +1604,7 @@
       "options": [
         {
           "label": "About a tenth: the 11,353 rows from the last three months. The other 107,000 have not changed and are reread for nothing",
-          "why": "Only what changes could have arrived in needs refreshing. Given that history is not edited, that means the recent months: 11,353 rows out of 118,449 — less than a tenth of the work instead of all of it."
+          "why": "Only what changes could have arrived in needs refreshing. Given that history is not edited, that means the recent months: 11,353 rows out of 118,449, less than a tenth of the work instead of all of it."
         },
         {
           "label": "All 118,449: otherwise the integrity of the model cannot be guaranteed",
@@ -1643,7 +1643,7 @@
         },
         {
           "label": "The refresh will fail with a data mismatch error",
-          "why": "There is nothing to fail on — the model does not know anything changed in the source and does not try to find out. The absence of an error is the real danger here: the discrepancy looks like normal operation."
+          "why": "There is nothing to fail on; the model does not know anything changed in the source and does not try to find out. The absence of an error is the real danger here: the discrepancy looks like normal operation."
         },
         {
           "label": "Blank: the March 2025 partition will be flagged as stale and excluded from reports",
@@ -1666,15 +1666,15 @@
       "options": [
         {
           "label": "By order_date: a row lands in its partition once and never changes it. Partitioning by ship_date means a row can move between partitions when the shipment is filled in",
-          "why": "A partition is determined at the moment the row is loaded. order_date is known immediately and does not change, so the row stays in its partition forever. ship_date is filled in later — a row loaded as a March one would have to end up in the April partition once shipment is recorded, and the mechanism has no provision for such a move."
+          "why": "A partition is determined at the moment the row is loaded. order_date is known immediately and does not change, so the row stays in its partition forever. ship_date is filled in later; a row loaded as a March one would have to end up in the April partition once shipment is recorded, and the mechanism has no provision for such a move."
         },
         {
           "label": "By ship_date: a shipment is a completed event, whereas an order can be cancelled",
-          "why": "How complete an event is matters for the meaning of a report, but not for partitioning. What is critical for partitions is a different property — immutability: the column must determine the partition once and for all, otherwise rows start migrating between partitions."
+          "why": "How complete an event is matters for the meaning of a report, but not for partitioning. What is critical for partitions is a different property, immutability: the column must determine the partition once and for all, otherwise rows start migrating between partitions."
         },
         {
           "label": "By either: partitions get rebuilt on every refresh anyway",
-          "why": "Partitions specifically do not get rebuilt — that is the entire point of the mechanism: the old ones stay untouched. Which is exactly why the choice of column is irreversible and determines correctness for the whole life of the model."
+          "why": "Partitions specifically do not get rebuilt; that is the entire point of the mechanism: the old ones stay untouched. Which is exactly why the choice of column is irreversible and determines correctness for the whole life of the model."
         },
         {
           "label": "By both at once: build a two-dimensional partitioning to cover either scenario",
@@ -1705,7 +1705,7 @@
         },
         {
           "label": "revenue: 86,389 values and a fractional type, the most expensive of the lot",
-          "why": "revenue really is the second most expensive column, and it is worth discussing — rounding to kopecks or to whole roubles if that precision is not needed. But at least it is used in reports, unlike a row identifier."
+          "why": "revenue really is the second most expensive column, and it is worth discussing, rounding to kopecks or to whole roubles if that precision is not needed. But at least it is used in reports, unlike a row identifier."
         },
         {
           "label": "All roughly the same: space is determined by row count, and that is identical for every column",
@@ -1728,15 +1728,15 @@
       "options": [
         {
           "label": "Noticeably less than 41%: the number of distinct values in the expensive columns barely changes. And year-over-year comparison is lost for good",
-          "why": "Size is determined by dictionaries of distinct values, and those overlap between years: the same 47 products, largely repeating prices and amounts. Rows drop by 41%, dictionaries barely shrink. In exchange, the ability to compute growth against last year disappears — the single most common request in reporting."
+          "why": "Size is determined by dictionaries of distinct values, and those overlap between years: the same 47 products, largely repeating prices and amounts. Rows drop by 41%, dictionaries barely shrink. In exchange, the ability to compute growth against last year disappears: the single most common request in reporting."
         },
         {
           "label": "Exactly 41%: however many rows you removed, that much space is freed",
-          "why": "There is no direct proportion between rows and size in a columnar store. The references into the dictionary do shrink proportionally, but the dictionaries themselves — the bulk of the weight of the expensive columns — stay nearly as they were."
+          "why": "There is no direct proportion between rows and size in a columnar store. The references into the dictionary do shrink proportionally, but the dictionaries themselves (the bulk of the weight of the expensive columns) stay nearly as they were."
         },
         {
           "label": "More than 41%: deleting rows also improves compression of the ones left",
-          "why": "Compression of the remaining data does not improve when neighbouring rows are removed — dictionaries are built from the values that remain. There is no gain to expect beyond the share of rows deleted."
+          "why": "Compression of the remaining data does not improve when neighbouring rows are removed; dictionaries are built from the values that remain. There is no gain to expect beyond the share of rows deleted."
         },
         {
           "label": "It will not shrink at all: a columnar store does not depend on row count",
@@ -1763,7 +1763,7 @@
         },
         {
           "label": "Delete the revenue column and compute revenue as units × price from the lookup table",
-          "why": "List price and actual sale price are different quantities (see mdl-009): sales happen at discounts and on promotion. Such a calculation would give revenue without discounts — replacing a correct number with a wrong one to save memory."
+          "why": "List price and actual sale price are different quantities (see mdl-009): sales happen at discounts and on promotion. Such a calculation would give revenue without discounts, replacing a correct number with a wrong one to save memory."
         },
         {
           "label": "Split revenue into two columns: roubles and kopecks separately, each with a smaller dictionary",

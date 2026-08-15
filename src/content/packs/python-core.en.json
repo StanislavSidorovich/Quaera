@@ -108,7 +108,7 @@
       "options": [
         {
           "label": "Returns products of the «Aqualis» brand priced above 100 ¥",
-          "why": "That's what would happen with & instead of and. and tries to reduce each condition to a single True/False before the comparison even happens — and that's exactly the step where everything fails."
+          "why": "That's what would happen with & instead of and. and tries to reduce each condition to a single True/False before the comparison even happens, and that's exactly the step where everything fails."
         },
         {
           "label": "Fails with an error: 'The truth value of a Series is ambiguous'",
@@ -120,7 +120,7 @@
         },
         {
           "label": "Returns every row of the original table, unfiltered",
-          "why": "If and were simply ignored, that would be plausible. But and is part of the Python language, not pandas, and it tries to evaluate both operands as bool at once — which is impossible for a Series."
+          "why": "If and were simply ignored, that would be plausible. But and is part of the Python language, not pandas, and it tries to evaluate both operands as bool at once, which is impossible for a Series."
         }
       ],
       "hints": [
@@ -171,11 +171,11 @@
       "options": [
         {
           "label": "a is a Series (a one-dimensional column), b is a DataFrame with one column, \"brand\"",
-          "why": "Single square brackets with a column name return a Series — the column itself. Double brackets are df[list], and even a list of one name gives a DataFrame, a two-dimensional table."
+          "why": "Single square brackets with a column name return a Series, the column itself. Double brackets are df[list], and even a list of one name gives a DataFrame, a two-dimensional table."
         },
         {
           "label": "The result is the same: these are two equivalent ways of writing the same thing",
-          "why": "The values match, but the types differ: a is a Series, b is a DataFrame. The difference surfaces on the very first call meant for a table: a Series has neither .columns nor .merge(), and while .rename(columns=...) does exist, it doesn't accept the columns parameter there and fails with a TypeError — there's nothing to rename in a Series, it has one name of its own instead of a list of columns."
+          "why": "The values match, but the types differ: a is a Series, b is a DataFrame. The difference surfaces on the very first call meant for a table: a Series has neither .columns nor .merge(), and while .rename(columns=...) does exist, it doesn't accept the columns parameter there and fails with a TypeError; there's nothing to rename in a Series, it has one name of its own instead of a list of columns."
         },
         {
           "label": "a will raise an error: that's not how columns are selected",
@@ -212,11 +212,11 @@
       "options": [
         {
           "label": "The column has gaps, and the plain integer type int64 can't hold NaN: pandas upgrades the whole column to float64",
-          "why": "NaN is a special floating-point value, and int64 physically cannot hold it. As soon as an integer column has even one gap, pandas converts the entire column to float64 — hence the decimal point on every value, even the ones that are present."
+          "why": "NaN is a special floating-point value, and int64 physically cannot hold it. As soon as an integer column has even one gap, pandas converts the entire column to float64, hence the decimal point on every value, even the ones that are present."
         },
         {
           "label": "It's a bug in the dataset: someone forgot to store manager_id as an integer",
-          "why": "The data are fine: pandas chooses the type itself when reading, and with gaps present int64 simply isn't physically available for that column — this is library behavior, not a flaw in the source."
+          "why": "The data are fine: pandas chooses the type itself when reading, and with gaps present int64 simply isn't physically available for that column; this is library behavior, not a flaw in the source."
         },
         {
           "label": "pandas always stores numeric ids as float64: that's a general rule for every column",
@@ -224,7 +224,7 @@
         },
         {
           "label": "This only happens in old pandas versions: in newer ones the ids will stay whole",
-          "why": "This is a fundamental limitation of the NumPy int64 type (it simply has no representation for \"no value\"), not a version bug. There's a separate nullable type, Int64 with a capital letter, that can hold both integers and gaps — but that isn't the default behavior."
+          "why": "This is a fundamental limitation of the NumPy int64 type (it simply has no representation for \"no value\"), not a version bug. There's a separate nullable type, Int64 with a capital letter, that can hold both integers and gaps, but that isn't the default behavior."
         }
       ],
       "hints": [
@@ -264,7 +264,7 @@
       "options": [
         {
           "label": "It became the index of the result: labeled to the left of the values, but it isn't counted as a separate column",
-          "why": "groupby makes the grouping column the index of the result by default. It's visible — just not in the position of an ordinary column, and code expecting product_id as df['product_id'] won't find it."
+          "why": "groupby makes the grouping column the index of the result by default. It's visible, just not in the position of an ordinary column, and code expecting product_id as df['product_id'] won't find it."
         },
         {
           "label": "It's gone for good: you'll have to group again while keeping product_id separately",
@@ -272,11 +272,11 @@
         },
         {
           "label": "It stayed an ordinary column, it's just not shown in this particular output",
-          "why": "It is shown — that thing that looks like a \"caption on top\" is exactly product_id: it's the index of the Series, not a missing column."
+          "why": "It is shown: that thing that looks like a \"caption on top\" is exactly product_id: it's the index of the Series, not a missing column."
         },
         {
           "label": "groupby deletes the grouping column from the result entirely by default",
-          "why": "It doesn't delete it, it moves it — into the index. That's an important difference: what's in the index isn't deleted, it just has to be accessed differently from an ordinary column."
+          "why": "It doesn't delete it, it moves it, into the index. That's an important difference: what's in the index isn't deleted, it just has to be accessed differently from an ordinary column."
         }
       ],
       "hints": [
@@ -327,15 +327,15 @@
       "options": [
         {
           "label": "Alphabetically: «Vitanor», «Gastrivo», «Aqualis», that is, in order of the key's values, not the order of rows in the source table",
-          "why": "groupby sorts groups by the key's value by default (sort=True) — this behavior is always on unless sort=False is passed explicitly. The row order in the source table has no effect on the result."
+          "why": "groupby sorts groups by the key's value by default (sort=True); this behavior is always on unless sort=False is passed explicitly. The row order in the source table has no effect on the result."
         },
         {
           "label": "In the order the brands first appeared in the file",
-          "why": "That would happen with sort=False — but that isn't the default. Without an explicit sort=False, groupby always sorts by key."
+          "why": "That would happen with sort=False, but that isn't the default. Without an explicit sort=False, groupby always sorts by key."
         },
         {
           "label": "In descending average price: from the most expensive brand to the cheapest",
-          "why": "groupby doesn't sort by the value of the measure (list_price) on its own — that would need a separate .sort_values() after the aggregation. By default it's the grouping key that gets sorted, not the result."
+          "why": "groupby doesn't sort by the value of the measure (list_price) on its own; that would need a separate .sort_values() after the aggregation. By default it's the grouping key that gets sorted, not the result."
         },
         {
           "label": "The order is unpredictable and can differ on every run",
@@ -387,7 +387,7 @@
         },
         {
           "label": "Both have 118,449 rows: since it's the same measure (units), the result's length shouldn't change",
-          "why": "sum() after groupby always collapses the group — that's its whole point as an aggregating function. The difference between sum() and transform('sum') is precisely whether the result collapses the group or not, not which function is computed inside."
+          "why": "sum() after groupby always collapses the group; that's its whole point as an aggregating function. The difference between sum() and transform('sum') is precisely whether the result collapses the group or not, not which function is computed inside."
         },
         {
           "label": "a has 118,449, b has 47: the options are swapped",
@@ -472,19 +472,19 @@
       "options": [
         {
           "label": "110,480: each of the 11,048 sales got glued to each of the brand's 10 promos",
-          "why": "merge doesn't check key uniqueness on either side by default: if there are 11,048 rows on the left with brand = 'Nettora' and 10 on the right, every pair with a matching brand produces a separate result row — 11,048 × 10."
+          "why": "merge doesn't check key uniqueness on either side by default: if there are 11,048 rows on the left with brand = 'Nettora' and 10 on the right, every pair with a matching brand produces a separate result row, 11,048 × 10."
         },
         {
           "label": "11,048: one per source sale, with the promo just noted alongside",
-          "why": "That would be the case if the join were on promo_id — dim_promo's unique key. Joining on brand doesn't distinguish the 10 promos from each other, so every sale shows up 10 times in the result, not once."
+          "why": "That would be the case if the join were on promo_id, dim_promo's unique key. Joining on brand doesn't distinguish the 10 promos from each other, so every sale shows up 10 times in the result, not once."
         },
         {
           "label": "10: merge will collapse all of the brand's sales down to one row per promo",
-          "why": "merge never collapses rows — that's what groupby does. merge only joins rows that match on the key, and if there are multiple matches on both sides, the row count goes up, not down."
+          "why": "merge never collapses rows; that's what groupby does. merge only joins rows that match on the key, and if there are multiple matches on both sides, the row count goes up, not down."
         },
         {
           "label": "The code will fail with an error: merge doesn't allow joining on a column with repeated values",
-          "why": "There's no error: merge, by default (without validate=), doesn't check key cardinality at all. It honestly performs the cross-match for every pair — silently, without a single warning."
+          "why": "There's no error: merge, by default (without validate=), doesn't check key cardinality at all. It honestly performs the cross-match for every pair, silently, without a single warning."
         }
       ],
       "hints": [
@@ -547,7 +547,7 @@
         },
         {
           "label": "describe()'s std would have flagged the problem right away, so if the colleague didn't look at it, that's on them",
-          "why": "std really would hint at a wide spread, but describe() doesn't force anyone to interpret it correctly — a large std can be written off as natural price variation rather than two groups being mixed together. The danger is precisely that one number (mean) looks sufficient on its own."
+          "why": "std really would hint at a wide spread, but describe() doesn't force anyone to interpret it correctly; a large std can be written off as natural price variation rather than two groups being mixed together. The danger is precisely that one number (mean) looks sufficient on its own."
         }
       ],
       "hints": [
@@ -595,7 +595,7 @@
         },
         {
           "label": "It returns a table, taking the last row in order for each cell and silently dropping the rest",
-          "why": "pivot doesn't silently drop data — wherever several rows are found for one cell, it stops with an error rather than arbitrarily picking one of them."
+          "why": "pivot doesn't silently drop data; wherever several rows are found for one cell, it stops with an error rather than arbitrarily picking one of them."
         },
         {
           "label": "It returns a table, summing the values in cells with matching brand and quarter: like pivot_table with aggfunc='sum'",
@@ -643,7 +643,7 @@
         },
         {
           "label": "45: casting to one form gives exactly the real number of outlets",
-          "why": "That would hold if every discrepancy came down to the form of the record. There's a third kind here — one name in two romanisations — and string normalization doesn't cure it."
+          "why": "That would hold if every discrepancy came down to the form of the record. There's a third kind here (one name in two romanisations), and string normalization doesn't cure it."
         },
         {
           "label": "104: .str.upper() changes nothing, because customer names are already in one case",
@@ -651,7 +651,7 @@
         },
         {
           "label": "The code fails: .str.strip() and .str.upper() can't be chained",
-          "why": "Both methods return a Series of strings, so the chain is valid — .str can be applied as many times in a row as you need."
+          "why": "Both methods return a Series of strings, so the chain is valid; .str can be applied as many times in a row as you need."
         }
       ],
       "hints": [
@@ -695,15 +695,15 @@
         },
         {
           "label": "0: pandas substitutes zero until the window fills up",
-          "why": "pandas never substitutes 0 for a missing value — that would distort the average. The correct signal for \"not enough data yet\" is NaN, not a number."
+          "why": "pandas never substitutes 0 for a missing value; that would distort the average. The correct signal for \"not enough data yet\" is NaN, not a number."
         },
         {
           "label": "The average of whatever weeks are already available: first over one, then two, then three",
-          "why": "That's how rolling(4, min_periods=1) would behave — but that isn't the default. Without an explicit min_periods, pandas waits for a full window of 4 values."
+          "why": "That's how rolling(4, min_periods=1) would behave, but that isn't the default. Without an explicit min_periods, pandas waits for a full window of 4 values."
         },
         {
           "label": "The series' first real value, repeated three times",
-          "why": "rolling() doesn't fill the start of the series by repeating the first value — with an incomplete window it returns NaN by default, rather than trying to guess an average from missing weeks."
+          "why": "rolling() doesn't fill the start of the series by repeating the first value; with an incomplete window it returns NaN by default, rather than trying to guess an average from missing weeks."
         }
       ],
       "hints": [
@@ -732,19 +732,19 @@
       "options": [
         {
           "label": "No, flag won't appear anywhere: the column is added to a temporary object that is discarded immediately, and the source table doesn't change at all",
-          "why": "fact_sellout[mask] creates a separate temporary object — a copy of the filtered rows with no connection to the original. ['flag'] = 1 modifies that copy specifically, and it ceases to exist the moment the line finishes executing."
+          "why": "fact_sellout[mask] creates a separate temporary object, a copy of the filtered rows with no connection to the original. ['flag'] = 1 modifies that copy specifically, and it ceases to exist the moment the line finishes executing."
         },
         {
           "label": "Yes: flag will appear in fact_sellout for every row with revenue > 3000, and the rest will have NaN",
-          "why": "That's what .loc[mask, 'flag'] = 1 would do — one lookup into the table instead of two. Here the second indexing, ['flag'], is applied not to fact_sellout but to a copy that has already separated from it."
+          "why": "That's what .loc[mask, 'flag'] = 1 would do, one lookup into the table instead of two. Here the second indexing, ['flag'], is applied not to fact_sellout but to a copy that has already separated from it."
         },
         {
           "label": "Yes: flag will appear on every row of fact_sellout with the value 1, regardless of revenue",
-          "why": "Even if the assignment did reach the original, the mask would confine it to rows with revenue > 3000. But it never reaches the original at all — the copy is discarded before anything can affect fact_sellout."
+          "why": "Even if the assignment did reach the original, the mask would confine it to rows with revenue > 3000. But it never reaches the original at all; the copy is discarded before anything can affect fact_sellout."
         },
         {
           "label": "The code will fail with an error: you can't assign a column through two consecutive index lookups",
-          "why": "There will be no error: pandas performs both operations and prints a warning (SettingWithCopyWarning), not an exception. That's exactly what makes the bug so treacherous — nothing signals explicitly that something went wrong."
+          "why": "There will be no error: pandas performs both operations and prints a warning (SettingWithCopyWarning), not an exception. That's exactly what makes the bug so treacherous; nothing signals explicitly that something went wrong."
         }
       ],
       "hints": [
@@ -803,11 +803,11 @@
         },
         {
           "label": "np.where doesn't work on tables with more than a few thousand rows: you'd have to go back to apply",
-          "why": "np.where has no size limit — NumPy's vectorized operations were built for large data arrays specifically; they don't degrade or give out as the number of rows grows."
+          "why": "np.where has no size limit: NumPy's vectorized operations were built for large data arrays specifically; they don't degrade or give out as the number of rows grows."
         },
         {
           "label": "There will be a speed difference, but a small one: within 10-20%, not critical for a task running in a browser",
-          "why": "The difference is usually orders of magnitude (severalfold to tens of times over), not within 10-20% — which is exactly why apply(..., axis=1) on genuinely large tables can noticeably freeze the interface, while a vectorized operation doesn't."
+          "why": "The difference is usually orders of magnitude (severalfold to tens of times over), not within 10-20%, which is exactly why apply(..., axis=1) on genuinely large tables can noticeably freeze the interface, while a vectorized operation doesn't."
         }
       ],
       "hints": [
