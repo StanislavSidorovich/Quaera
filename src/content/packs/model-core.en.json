@@ -179,7 +179,7 @@
       "scenario": "The dashboard reads the source\ndirectly.\n\nBefore:  orders.status\nAfter:   orders.order_status\n\nReports that reference it: 14\nThere was no warning.",
       "predictQuestion": "What actually needs fixing here?",
       "hints": [
-        "Don't ask \"whose fault\" — ask \"why did one change cost fourteen fixes.\"",
+        "Don't ask \"whose fault\"; ask \"why did one change cost fourteen fixes.\"",
         "Compare two options: agreeing the source won't change, versus arranging things so its changes only touch one place."
       ],
       "explain": "This shows the second argument for a separate model, besides load: decoupling in time and in ownership. The source belongs to the application team and changes on its schedule — that's correct and it won't change. As long as reports read it directly, each one is a hidden dependency the source's authors don't know about. A preparation layer makes that dependency explicit and singular: it breaks, not fourteen reports, and it gets fixed in one place by someone who understands why the column matters to reporting. Release sign-off doesn't solve the same problem, because it rests on people remembering, not on how the system is built.",
@@ -592,8 +592,8 @@
       "goal": "Work out the difference in when each variant computes.",
       "predictQuestion": "What's the main difference between variant A and variant B in how they compute?",
       "hints": [
-        "Ignore the difference in DIVIDE's syntax — focus on the difference in when the computation happens.",
-        "Ask: when does each of these formulas physically compute — once, or every time it's shown?"
+        "Ignore the difference in DIVIDE's syntax; focus on the difference in when the computation happens.",
+        "Ask: when does each of these formulas physically compute: once, or every time it's shown?"
       ],
       "explain": "Both formulas look syntactically similar and both use DIVIDE — that's exactly where the confusion comes from. But the context they live in differs: a column is tied to a table row and computes at the moment of data refresh, once and for all, until the next refresh. A measure isn't tied to any row — it exists as a formula and unfolds fresh every time the report asks for its value, taking as input whatever filter context is in effect right now. The number 126911191 hard-coded straight into formula A is an extra red flag: a column can't reach for \"the current filtered sum\", because at the moment it computes there's no current filter yet.",
       "options": [
@@ -646,7 +646,7 @@
       "scenario": "Matrix:\n  row = region («Tokyo»)\n  page slicer = brand «Nettora»\n\nMeasure: Revenue = SUM(revenue)\nRevenue in the cell: ¥819,771",
       "predictQuestion": "Which of the following is part of this cell's filter context?",
       "hints": [
-        "Mentally remove one of the two sources — the slicer or the row — and ask whether the number in the cell changes.",
+        "Mentally remove one of the two sources (the slicer or the row) and ask whether the number in the cell changes.",
         "A matrix row works the same way as a row in GROUP BY: it doesn't just label, it also restricts."
       ],
       "explain": "A report cell isn't one condition — it's the intersection of every condition currently acting on it. Here there are two: the row sets the region, the page slicer sets the brand, and the measure sees both at once, as if joined with AND. Remove either source and the number in the cell changes — that's the practical test: remove the slicer and keep the row, and you get all of Tokyo's revenue across every brand, ¥3,718,723 instead of ¥819,771. The habit of listing filter sources one at a time — row, column, slicers, filters baked into the measure itself — saves more time than any other report-reading skill.",
@@ -752,7 +752,7 @@
       "predictQuestion": "Which variant returns the first row's own price, 199.16, for that row?",
       "hints": [
         "Compare the two variants on one point: is there a SUM or a similar aggregating function inside either of them?",
-        "Row context works on its own for direct column references — an aggregating function overrides it."
+        "Row context works on its own for direct column references; an aggregating function overrides it."
       ],
       "explain": "The difference between the two variants isn't DIVIDE — it's identical in both formulas and just divides two numbers. The difference is what's inside DIVIDE. In variant A those are direct references to the current row's columns: revenue and units are pulled from that row specifically, and row context works with no extra effort. In variant B there's a SUM inside — and SUM, just as in the previous task, responds not to the row but to the filter context, which is absent here, and aggregates the entire table. The practical takeaway: if a column formula needs to answer \"for this row\", aggregating functions mostly have no place in it — only direct field references do.",
       "options": [
@@ -777,8 +777,8 @@
       "goal": "Work out why the same SUM inside an iterator no longer gives the table-wide total.",
       "predictQuestion": "Why does revenue inside SUMX here behave like the current row's value, rather than the table's total?",
       "hints": [
-        "SUMX isn't an ordinary aggregating function like SUM — it's an iterator: it walks rows one at a time.",
-        "Ask: who creates row context in this example — a calculated column (like mdl-022), or SUMX itself?"
+        "SUMX isn't an ordinary aggregating function like SUM; it's an iterator: it walks rows one at a time.",
+        "Ask: who creates row context in this example: a calculated column (like mdl-022), or SUMX itself?"
       ],
       "explain": "In the previous two tasks, row context already existed — a calculated column supplied it, and SUM inside it ignored that context, because SUM only responds to filter context. Here the source is different: SUMX itself creates row context by walking fact_sellout row by row, and for each row it evaluates the expression passed to it inside that exact context — only afterward summing the results across every row. That's why inside SUMX a direct column reference means the current iteration row's value, not the table's total. This is the key difference between iterator functions (SUMX, AVERAGEX, FILTER) and ordinary aggregating functions: they don't just aggregate — they iterate, and at every step of the iteration the formula inside has its own row context, one the function itself built.",
       "options": [
@@ -805,7 +805,7 @@
       "predictQuestion": "Which of the three measures can be summed across ANY breakdown, including time?",
       "hints": [
         "Ask of each measure: does it accumulate over a period (like money in a till), or exist at every moment (like stock on a shelf)?",
-        "An additive measure sums across time exactly as honestly as across any other breakdown — no exceptions."
+        "An additive measure sums across time exactly as honestly as across any other breakdown, no exceptions."
       ],
       "explain": "The three measures represent three classes of additivity, and the line between them isn't drawn by the unit of measurement but by what happens to the meaning when you sum. Revenue is additive: it belongs to a sale event, and events can be summed along any dimension, time included. Stock on hand is semi-additive: it belongs to a point in time, not a period, so it sums across everything that isn't time (product, region, distributor) but not across time itself. Average price isn't additive at all: it's already the result of a division, and summing several such results doesn't mean anything — it needs to be recomputed fresh at whatever level you need, not summed from ready-made averages.",
       "options": [
@@ -858,7 +858,7 @@
       "scenario": "Dashboard: SUM(units_on_hand)\nacross all 12 months of 2025\n= 370,142 units\n\nActual warehouse stock at\nend of December 2025: 52,350\n\nDiscrepancy — almost sevenfold.",
       "predictQuestion": "What's causing the discrepancy, and how do you fix it?",
       "hints": [
-        "Compare 370,142 to the sum of the distributor's twelve monthly stock figures — does it come close?",
+        "Compare 370,142 to the sum of the distributor's twelve monthly stock figures. Does it come close?",
         "Remember mdl-026: the same effect showed up across a quarter's three months, here it's across a year's twelve."
       ],
       "explain": "The mistake at annual scale is the same as the quarterly one in mdl-026, just more visible: summing twelve snapshots of growing stock gives a total several times larger than any of the values it's built from, because every snapshot partly re-counts the same physical goods that sat in the warehouse for more than one month. A measure meant to answer \"stock at year end\" has to take the value on the year's last date, not sum the intermediate snapshots. The practical lesson goes wider than this one case: any measure built over a semi-additive quantity needs a separate formula for every time breakdown — annual, quarterly and monthly versions of stock don't reduce to each other by simple summing, unlike revenue, where the annual measure is exactly the sum of the monthly ones.",
@@ -913,7 +913,7 @@
       "predictQuestion": "How does this one dim_date row connect both facts, if their date values differ?",
       "hints": [
         "Look at the dim_date row for March 3rd again: how many different dates does it hold, and which fact table needs which?",
-        "What's shared in this row isn't a specific date value — it's the year and quarter this row belongs to."
+        "What's shared in this row isn't a specific date value; it's the year and quarter this row belongs to."
       ],
       "explain": "The trick of a date table is that it's stored by day — the finest unit — but carries derived columns for every coarser grouping: week, month, quarter, year. The March 3rd row is simultaneously \"the start of its own week\" (for fact_sellout), \"belongs to March, which starts on the 1st\" (for fact_sellin), and \"Q1\" — all at once, in the same fields of the same row. Each fact table builds a relationship to the dim_date column it actually needs, not to the other fact's column: the weekly fact to week_start, the monthly fact to month_start. Both paths ultimately converge on the shared year and quarter, which is why a quarter slicer on dim_date filters both facts at once, even though their own native date values never coincide.",
       "options": [
@@ -939,7 +939,7 @@
       "scenario": "Slicer: year=2025, quarter=1\n\nSales (weekly,\nvia dim_date.week_start):\n  ¥13,512,252\n\nShipments (monthly,\nvia dim_date.month_start):\n  ¥9,186,879",
       "predictQuestion": "Different numbers — is this a broken relationship or an expected result?",
       "hints": [
-        "Ask yourself: what should a shared calendar actually guarantee — matching numbers, or a matching time window?",
+        "Ask yourself: what should a shared calendar actually guarantee: matching numbers, or a matching time window?",
         "Sell-in and sell-out are two different flows: from a distributor's warehouse, and off a retail shelf. Should they physically match?"
       ],
       "explain": "A shared date table solves one specific problem — it guarantees that a \"Q1, 2025\" slicer means the same window of time for every fact table connected to it, regardless of their native granularity. It doesn't solve, and doesn't promise to solve, a different problem — making different business measures equal to each other. Shelf sales and shipments to distributors are independent processes with their own dynamics: a warehouse stocks up ahead of time, retail sells gradually, and over any given quarter these two flows will almost never match in money. The value of a shared calendar is precisely that it makes a comparison like this possible and honest in the first place: both figures answer the question about the same period, and the gap between them can now be analyzed on its merits — instead of wondering whether the period boundaries themselves drifted apart.",
@@ -998,7 +998,7 @@
       "predictQuestion": "What does a plain Revenue measure compute with a \"March 2025\" slicer?",
       "hints": [
         "A dashed relationship exists in the model but doesn't carry the filter. How many paths does the filter from the calendar have left?",
-        "Compare with mdl-014: the dashed line showed up there for the same reason — to give the filter a single path."
+        "Compare with mdl-014: the dashed line showed up there for the same reason, to give the filter a single path."
       ],
       "explain": "An inactive relationship is a way to have a second path in the model without creating ambiguity. By default the filter travels only along the active one, and every measure computes the same way — by order date. A measure that needs the calendar's second role switches it on locally: CALCULATE(SUM(net_amount), USERELATIONSHIP(fact_sellin[ship_date], dim_date[date_id])). A measure like this gets its own name, something like \"Revenue by shipment\", and a person opening the field list sees two distinctly named measures instead of one with an unresolved meaning. It's the same principle as in mdl-015: the choice between interpretations is made explicit and local, not by flipping a switch on the whole model.",
       "options": [
@@ -1380,8 +1380,8 @@
       "scenario": "Calendar built from facts:\n  only dates that had sales\n\nCorrect dim_date:\n  912 consecutive days,\n  2024-01-01 to 2026-06-30,\n  all 365 days of 2025\n\nThe model has a product\nlaunched in September 2025.",
       "predictQuestion": "Why does a fact-derived calendar break time intelligence functions?",
       "hints": [
-        "A product launched in September 2025 — which days had no sales for it, and would those days even make it into a fact-derived calendar?",
-        "How does a function compute \"the same period a year ago\" — by looking up a neighbouring row, or by date arithmetic?"
+        "A product launched in September 2025. Which days had no sales for it, and would those days even make it into a fact-derived calendar?",
+        "How does a function compute \"the same period a year ago\": by looking up a neighbouring row, or by date arithmetic?"
       ],
       "explain": "A calendar for an analytical model isn't derived from facts — it's an independent lookup table that must be continuous and cover complete years. Time intelligence functions build a new set of dates by computation, not by navigating rows, so any gap shifts the interval's boundaries and silently understates the result. In our model, dim_date holds 912 consecutive days, including ones with no sales at all: for a product launched in September 2025, the January days of that same year are still in the calendar, and YTD computes correctly. The check takes a second: the calendar's row count should equal the difference between its earliest and latest dates, plus one. There's an extra condition too: the calendar has to be marked in the model as a date table, or some functions will refuse to work even on continuous data.",
       "options": [
@@ -1504,7 +1504,7 @@
       "scenario": "dim_customer — 144 outlets,\n16 regions; an outlet has one\nregion — the current one.\n\nWas:  outlet → «Tokyo»\nNow:  outlet → «Kanagawa»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
       "predictQuestion": "What does the 2024 report show after the lookup table is edited?",
       "hints": [
-        "Where is the region of a sale physically stored — in the fact row, or in the lookup table?",
+        "Where is the region of a sale physically stored: in the fact row, or in the lookup table?",
         "The report recomputes every time it is opened. Where does it get the region for a sale that happened a year ago?"
       ],
       "explain": "An ordinary lookup table answers the question \"which region is this outlet in now\" — and that is the only question it can answer. A report for last year asks a different one: \"which region was it in at the time of the sale.\" The difference between these questions is invisible while nothing changes, and it surfaces silently on the day the lookup gets edited: the regional total changes retroactively, nothing breaks, nobody gets a warning. This is the same class of error as the frozen column in mdl-016, only mirrored — there a value failed to recompute when it should have, here it recomputed when it should not have. The fix is versioning the lookup table, where each state has its own period of validity and the fact references the version that was current on the date of the event.",
@@ -1722,7 +1722,7 @@
       "predictQuestion": "How much smaller does the model get, and what is lost?",
       "hints": [
         "How many distinct products remain after dropping a year? And how many were there before?",
-        "Which matters more to the business — freeing memory, or keeping the ability to compute growth against last year?"
+        "Which matters more to the business: freeing memory, or keeping the ability to compute growth against last year?"
       ],
       "explain": "Trimming history is intuitively the most obvious way to shrink a model and almost always the least rewarding. A column's weight is made up of its dictionary of distinct values plus the references into it; deleting rows only reduces the second part, while the first — the bulk of the weight for expensive columns — stays nearly untouched, because values repeat across years. What gets given up in exchange is year-over-year comparison, which is exactly the capability history is kept for. The right order is the reverse: first remove columns that appear in no report (see mdl-055), then reduce precision where it is excessive — rounding amounts, for instance — and only then, if that was not enough, discuss the depth of history with the business as a deliberate trade-off.",
       "options": [

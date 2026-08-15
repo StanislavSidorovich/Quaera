@@ -144,8 +144,8 @@
         }
       ],
       "hints": [
-        "Don't compare the wording of the requests — compare what happens to the answer: is it looked at once, or returned to?",
-        "The sign of regular reporting isn't the query's complexity — it's its repetition with a changing period."
+        "Don't compare the wording of the requests; compare what happens to the answer: is it looked at once, or returned to?",
+        "The sign of regular reporting isn't the query's complexity; it's its repetition with a changing period."
       ],
       "explain": "The line between a one-off analysis and regular reporting isn't about complexity or topic — it's about repetition. A one-off analysis answers a question and closes; regular reporting is a product with an owner, a schedule, and a stability requirement. Practical rule: the third time is a signal. You do the first request, you notice the second, and on the third you say out loud: \"This looks like a recurring thing — let me build you a mart, and you can look yourself.\" The conversation takes a minute and saves a year of weekly exports. One caveat: turning an analysis into a dashboard also means taking on the obligation to maintain it — that's no longer one-off work, and it needs to be planned like a product."
     },
@@ -175,7 +175,7 @@
         }
       ],
       "hints": [
-        "The query runs against the mart, not against the accounting system directly — there's a step in between that could also have gone wrong.",
+        "The query runs against the mart, not against the accounting system directly; there's a step in between that could also have gone wrong.",
         "Compare row counts for March in the mart vs. the source, not the total sums."
       ],
       "explain": "A discrepancy against the primary source with correct logic almost always means incomplete data, not a calculation error — and that's someone else's territory: a data engineer fixes the pipeline. The analyst's role here isn't to fix it or work around it by hand, but to localize it: name the period, name the scale, show the query isn't at fault. A diagnosis like \"March 14th has zero rows in the mart, 3,812 in the source\" turns a vague complaint — \"the dashboard is lying\" — into a task with a specific owner. And until the cause is found, the number can't be sent upward with an \"approximately\" caveat — it's more honest to say the data is incomplete than to hand over an understated fact."
@@ -206,7 +206,7 @@
         }
       ],
       "hints": [
-        "The question isn't whether you can compute it — it's what happens to your number after you hand it over.",
+        "The question isn't whether you can compute it; it's what happens to your number after you hand it over.",
         "Compare two phrasings: \"we'll sell 18,500 units\" vs. \"assuming current promo levels hold, we expect 17–20 thousand units.\""
       ],
       "explain": "The boundary with data science isn't the word \"forecast\", it's whether a model is needed. Extending a seasonal profile and trend is analyst work, and refusing here just means the decision gets made with no numbers at all. What separates a professional answer from an unprofessional one is explicit assumptions: a forecast is always conditional, and the conditions need to be stated before reality states them for you. A formula that works: \"assuming current promo and pricing levels hold, we expect X; if there's no promo in July, subtract roughly Y.\" An answer like that is usable for planning and doesn't turn into a promise you'll be held to later."
@@ -237,7 +237,7 @@
         }
       ],
       "hints": [
-        "All four questions are reasonable — what differs is how much each answer narrows the space of possible things to build.",
+        "All four questions are reasonable; what differs is how much each answer narrows the space of possible things to build.",
         "Think about which answer lets you rule out the most options for what to actually build."
       ],
       "explain": "\"Need to see the picture\" describes a feeling, not a task, and you can't fill in the rest on the stakeholder's behalf — there are too many possibilities. The decision question works because it's the only one that ties the report to someone's subsequent action: a metric that doesn't influence anything has no correct shape. It's also protection against endless scope creep: once the decision is fixed, it's clear what belongs in the report and what's a separate task. If the stakeholder can't answer it, that's an answer too: there's no recurring decision behind the request, and what they may actually need is a one-off analysis, not a dashboard."
@@ -331,7 +331,7 @@
       ],
       "hints": [
         "Compute the gap between the two numbers and compare it against the makeup of the customer directory.",
-        "Ask yourself who each of the two departments considers \"their\" customer — the answers may differ, and both can be right."
+        "Ask yourself who each of the two departments considers \"their\" customer. The answers may differ, and both can be right."
       ],
       "explain": "This is the most common discrepancy scenario: not a bug, but two different definitions, neither of which was written down. Arguing over \"whose number is right\" is meaningless here — both are, and it's resolved not by recomputing but by definition: a customer for finance is a contracting party with an agreement, for sales it's an outlet where the product sits. Practical fix: keep a short metrics glossary recording each metric's source, filters, and exclusions, and state in the report itself which definition was used. The tell that lets you spot this instantly: the gap equals exactly the count of objects of one type — meaning the argument is really about whether that type belongs in the metric."
     },
@@ -361,7 +361,7 @@
         }
       ],
       "hints": [
-        "Both numbers are correct and the formula is the same — so the input differed, not the calculation.",
+        "Both numbers are correct and the formula is the same, so the input differed, not the calculation.",
         "Think about what happens to promo share computed over a year vs. over just a quarter with a major campaign."
       ],
       "explain": "Period is the piece of a definition most often left out, because it seems obvious from context. In metrics with seasonality and promo waves it affects the result as much as the formula does: an annual promo share, a quarterly one, and a \"last 12 weeks\" one are three different numbers, each honest. A rule that resolves most of these disputes: the period is part of the metric's name, not a footnote under the table. \"Promo share, 2025\" and \"promo share, Q4 2025\" are two metrics, not one with a clarification. This is also protection against unintentional cherry-picking: when the period isn't fixed, there's always a window where the number looks more favorable, and picking that window doesn't feel like manipulation even to the person doing it."
@@ -424,7 +424,7 @@
       ],
       "hints": [
         "Count the rows and compare against how many there should be.",
-        "Checking period completeness needs no recomputation — just knowing how many rows you expected to see."
+        "Checking period completeness needs no recomputation, just knowing how many rows you expected to see."
       ],
       "explain": "A missing period is the quietest of the common mistakes: it doesn't break the query, doesn't distort individual values, and doesn't look suspicious in the total. It's caught exactly one way — deliberately comparing the row count against what's expected: twelve months, fifty-two weeks, four quarters, sixteen regions. Hence the habit: before running a query, say out loud how many rows you expect to see; afterward, check. Any mismatch always means either a filter bug or a data gap, and it needs to be resolved before sending. Common causes: a BETWEEN with a boundary like '2025-12-01' instead of the end of the month, and an INNER JOIN where data doesn't exist for every period."
     },
@@ -517,7 +517,7 @@
       ],
       "hints": [
         "Walk the chain from factory to buyer and mark where each of the three tables originates.",
-        "Ask yourself at what moment the company actually receives money — it isn't the same moment the buyer takes the product off the shelf."
+        "Ask yourself at what moment the company actually receives money. It isn't the same moment the buyer takes the product off the shelf."
       ],
       "explain": "\"Sales\" without naming the link in the chain isn't a metric: behind it are three different events — a shipment into the channel, warehouse movement, and a purchase at an outlet. By sending one number to three people, the analyst answered one of them and misled the other two, silently: each will read it in their own frame of reference and never notice the substitution. The practical move isn't to guess but to ask back with one phrase: \"sales into the channel, or out of it?\" It sounds like a technical clarification, but it actually separates revenue from demand. And the consequence for reports: always name the link in the title — \"shipments\", \"outlet sales\" — never the generic \"sales.\""
     },
@@ -578,7 +578,7 @@
         }
       ],
       "hints": [
-        "Ask yourself what event actually gets recorded in fact_sellout — and whether anything gets recorded when the event never happened.",
+        "Ask yourself what event actually gets recorded in fact_sellout, and whether anything gets recorded when the event never happened.",
         "Check which links of the chain we can see in the data, and which end at the distributor's warehouse."
       ],
       "explain": "An out-of-stock shelf is FMCG analytics' main blind spot: in sales data it's indistinguishable from an absence of demand, because both simply mean an absence of rows. Hence a rule for wording: on seeing zeros, write \"no sales,\" not \"demand dropped\" — the latter is a conclusion you have no data to support. Only external sources can tell the causes apart: a shelf audit, delivery data to the outlet, panel data. And a technical consequence familiar from the SQL track: a zero-sales report can't be built from the fact table — the rows you need simply don't exist there — so it starts from the outlet and product directories and works outward via LEFT JOIN."
@@ -640,7 +640,7 @@
         }
       ],
       "hints": [
-        "The setup mentions title transfer — that's what matters here, not the dates by themselves.",
+        "The setup mentions title transfer; that's what matters here, not the dates by themselves.",
         "Think about how an operational shipment report differs from an accounting one, and exactly where they diverge."
       ],
       "explain": "Deals sitting on a period boundary are the classic place where operational and accounting reports diverge: the former is usually built on shipment date, the latter on transfer of control. Mid-month the difference is invisible; in the last three days it absorbs the entire dispute. What an analyst needs here is one thing: know which rule is baked into their mart, and be able to verify it — compare the last days of the period against accounting. And it's worth remembering separately that the rule is set by the contract, not by convenience: the same company can have different transfer terms with different chains, and then there's no single answer of \"shipment or receipt\" for the whole mart."
@@ -671,7 +671,7 @@
         }
       ],
       "hints": [
-        "The setup names a payment term — work out which month March's shipment turns into cash.",
+        "The setup names a payment term. Work out which month March's shipment turns into cash.",
         "Ask yourself whose revenue landed in the account in March, if every shipment has a month-and-a-half payment term."
       ],
       "explain": "Revenue and cash are two different coordinate systems, and confusing them is expensive. Accrual answers \"how much did we earn\"; cash flow answers \"how much do we have right now.\" A growing company with payment terms can be profitable and cash-strapped at the same time: the faster it grows, the more cash gets locked up in receivables. Hence the practice: a sales report and a cash report have different audiences and different conclusions, and folding them into one slide without explanation is a sure way to get the question \"so did we make money or not?\" An analyst should also keep a third number in mind — overdue receivables: it's what tells a normal offset apart from a real collections problem."
@@ -702,7 +702,7 @@
         }
       ],
       "hints": [
-        "Compare the ratio, not the absolute figures — it already accounts for the difference in distributor size.",
+        "Compare the ratio, not the absolute figures. It already accounts for the difference in distributor size.",
         "Look at «Setouchi Trading»'s outlet sales separately from its purchases: did they grow the same way shipments did?"
       ],
       "explain": "The sell-in to sell-out ratio is a basic distribution diagnostic precisely because it normalizes for size: it lets you compare anyone against anyone. A value near one means the channel's stock is stable; a noticeable excess means the channel is building up inventory. The causes can be legitimate (gearing up for a promo, entering a season), but each one has to be named in advance, or you're looking at a purchase made to hit an annual bonus — the distributor picks a volume to earn a retro discount, and the manufacturer is left to deal with the consequences. The key move here is comparison against the rest: eleven values in a tight 1.04–1.05 band turn one outlier from \"maybe that's just how it is\" into a fact demanding an explanation."
@@ -858,7 +858,7 @@
       ],
       "hints": [
         "Picture the argument at the alignment meeting: sales says \"the forecast is too low,\" supply chain says \"too high.\" What settles that argument?",
-        "Think about what separates a forecast from an opinion — and what's needed to make that difference visible."
+        "Think about what separates a forecast from an opinion, and what's needed to make that difference visible."
       ],
       "explain": "In the planning cycle, an analyst isn't responsible for how nice the materials look — they're responsible for whether the forecast can be trusted in any meaningful sense. The minimum kit for that: the size of past deviations, whether there's a systematic bias (consistently over or under), and the list of assumptions under which the forecast holds. With that history, the alignment argument turns from a contest of opinions into a conversation about numbers: \"last quarter we systematically overstated by 8%, the adjustment is already in.\" Without it, every participant silently applies their own correction, and the resulting plan is the outcome of invisible adjustments that nobody can reproduce a month later."
     },
@@ -1384,7 +1384,7 @@
         }
       ],
       "hints": [
-        "A change in a metric between two points can mean a change in what's measured — or a change in the measuring instrument.",
+        "A change in a metric between two points can mean a change in what's measured, or a change in the measuring instrument.",
         "Reread the second sentence of the methodology appendix: what specifically was not done to the history?"
       ],
       "explain": "Panel data is a market estimate from a sample, and the sample composition changes: the provider adds new pharmacy chains, loses old ones, refines extrapolation coefficients. Until the composition is restated backward, the series is a splice of two different measurements, and the jump at the splice point looks exactly like a market event.\n\nHere two effects coincided, both against you. The 9% market growth is partly mechanical — pharmacies were added to the denominator that weren't in last year's measurement. At the same time, your drug is underrepresented in those pharmacies because the contract was only signed in September: your numerator grew less than the denominator, and share dropped on paper even with completely unchanged sales.\n\nThe right steps, in order. First — bring both points to the same composition: either exclude chain N from the reporting year, or use only the months before it was added. Second — separately measure what's happening within chain N itself, because there's a real task there: the drug is underrepresented, and that's a distribution question, not a share question. Third — write the event into the report's footnote permanently: a year from now, nobody will remember why the series jumped in July.\n\nThe general rule extends beyond pharma: before explaining a change in a metric, check whether the definition, source, or coverage changed. A panel composition shift, a new source added to a data warehouse, a new way of defining an active user — all of them look like a business event, and they're the most expensive kind, because the explanation people invent for them is convincing and wrong."
@@ -1415,7 +1415,7 @@
         }
       ],
       "hints": [
-        "For each number, ask: whose decision does it measure — ours, the pharmacy's, or the doctor's?",
+        "For each number, ask: whose decision does it measure: ours, the pharmacy's, or the doctor's?",
         "Which of the three will move first if the drug starts losing the market?"
       ],
       "explain": "In pharma, the same movement of product gets measured at three points, and those points belong to three different decision-makers. Shipments are a decision by our own sales department and the distributor's buyer. Pharmacy sales are the patient's decision at the counter. Prescriptions are the doctor's decision, made before any of the rest.\n\nSo the series don't match, and shouldn't. Two warehouses sit between a shipment and a pharmacy sale, which can make our quarter look great purely off stock moved into the channel. A patient sits between a prescription and a purchase: some prescriptions never reach a pharmacy at all, some get filled later, some get swapped for a different drug at the counter. The gap between 29,400 prescriptions and 36,800 packs isn't a signal by itself — one course of treatment takes more than one pack.\n\nWhat to pick for \"is the drug growing\": watch pharmacy sales as the fact of demand and prescriptions as its leading indicator, and keep shipments alongside — they catch overstocking that's invisible anywhere else. The one-sentence answer for the board: demand is described by pharmacy sales, our shipments describe our own channel management, and the two shouldn't be confused.\n\nAnd a discipline that saves hours: any report with a number in it needs a source and an event stated right next to it. Not \"sales: 41,200\", but \"shipments to distributors, accounting system\". A meeting where three departments cite three unlabeled numbers always ends in an argument about who's wrong — even though nobody is."
@@ -1571,7 +1571,7 @@
       ],
       "hints": [
         "For each spike, ask: did you know about it in advance?",
-        "The coefficient of variation can't tell apart two series with the same spread — a regular one and a chaotic one."
+        "The coefficient of variation can't tell apart two series with the same spread, a regular one and a chaotic one."
       ],
       "explain": "XYZ analysis splits an assortment by demand stability, and the coefficient of variation — standard deviation divided by the mean — is almost always used to measure it. The trap is that CV measures spread around the mean, while a planner needs not the size of the spread but its predictability. Those are different things, and for seasonal or promoted products they diverge completely.\n\nThe 5-liter water shows a summer peak and a winter trough — a 2.3x swing, repeating every year. A series like that is as predictable as demand ever gets: July's plan is built from last July, not from the annual average. The snack hovers around a hundred thousand for eleven months and spikes to 230 in June — because we put a promo there ourselves. The date is known a quarter out, the discount depth is known, the mechanic is known.\n\nWhat to do instead. Before running XYZ, the series is cleaned: strip out the seasonal component, break out the promo as a separate effect, and compute variation on what's left. Then group Z catches the SKUs whose demand genuinely jumps around with no explanation — and those are the ones that actually need safety stock. In its raw form, the classification hands out stock to seasonal and promoted products, which need a calendar, not a buffer.\n\nA check that catches this mistake in a minute: look at the series with your own eyes before computing a coefficient on it. A regular wave and a one-off spike produce similar CVs and demand opposite responses — the first is fixed by planning around the season, the second by syncing purchasing with the promo calendar, and neither is fixed by safety stock.\n\nA practical note on the snack: a self-inflicted promo spike sitting in the sales history is dangerous beyond XYZ too. If it stays in the data as ordinary demand, any forecasting model will bake in its repeat next June — and the warehouse will end up bracing for a peak nobody actually planned."
     },
@@ -1632,7 +1632,7 @@
         }
       ],
       "hints": [
-        "Look at what April, June and July have in common — and what November and February lack.",
+        "Look at what April, June and July have in common, and what November and February lack.",
         "Compare the two calculations against each other: what exactly changed in the second one, and why did that kill the link?"
       ],
       "explain": "Correlation answers exactly one question: do two series move in step. It doesn't answer \"what is the cause,\" \"what is the effect,\" or \"is there any link between them at all\" — and that isn't nitpicking over wording, it's the difference between a sound decision and a harmful one.\n\nWhat's at work here is the most common of the three traps — a shared third factor. In summer, sales of both water and juice go up because it's hot; in winter both fall. Neither brand influences the other, but the series walk hand in hand, and the coefficient honestly reports 0.84. Shelving them as a pair would buy the company not a sales increase but a coincidence that would have happened anyway.\n\nThe check that exposes a link like this is simple: remove the common factor and see what's left. Comparing each month with the same month a year earlier subtracts the season from both series at once — and the correlation drops to 0.10, which is zero up to randomness. If the brands really were linked — if shoppers genuinely bought them together — the link would survive that procedure: a good month for one would still be a good month for the other after the season came out.\n\nThe other two traps are worth keeping in mind as the same short list. Reverse causation: \"outlets with larger stock have higher sales\" — more likely stock is held where sales are already high. And selection: comparing groups that objects didn't enter at random — that's the next task.\n\nWhat to do in practice. When you see a correlation, ask three questions in a row: what third factor could have lifted both series, could the arrow point the other way, and how did the objects end up in the groups being compared. If none of them has a clear answer, the correlation remains an observation, not grounds for a decision. Stating it honestly isn't hard either: \"sales move together\" is true, \"the juice pulls the water\" is already a claim about cause, and that has to be proven separately."
@@ -1695,7 +1695,7 @@
       ],
       "hints": [
         "Ask what should have gone up if the cause were the season or a general market lift rather than the promo.",
-        "The three lower rows share one property — which one?"
+        "The three lower rows share one property, which one?"
       ],
       "explain": "Proof of an effect rests not on what happened, but on a comparison with what would have happened without the intervention. That \"without\" can't be observed directly, so it's replaced with a control group — objects that lived through the same period but got no treatment.\n\nHere the control is double, and that's a strong construction. Along one axis the brand is fixed and the channel varies: «Krosti» in traditional retail and e-com, where there was no promo, stayed put. Along the other the channel is fixed and the brand varies: other FMCG in the same chains over the same weeks fell 17%. If the season or a general lift in chains were producing the growth, it would have shown up in at least one of those rows. It shows up in none — so the explanation is local: the promo.\n\nThis line of reasoning has a name — difference-in-differences: you take the change in the treated group and subtract the change in the control. Here the control group actually fell, so an honest estimate of the effect is slightly larger than the observed +221%, not smaller.\n\nWhere the construction can break. The control has to be comparable: if the promo ran in chains and traditional retail was taken as the control, the difference in the channels' own dynamics could manufacture an effect by itself. That's covered here by the second control — the same chains. Second: the control must not be affected by the treatment indirectly. If shoppers were shifting money from the snack to water, the control would be \"contaminated,\" and the effect would come out overstated.\n\nThe practical takeaway: for any \"we did X and the indicator went up,\" ask for an answer to \"and who didn't get X?\" With no answer, the conclusion stays a hypothesis — sometimes a plausible one, but never proven. The control group has to be planned before the promo launches, not after: holding a dozen comparable outlets back from the promo costs one week's revenue and buys you the ability to measure the return on every promo that follows."
     },
@@ -1725,7 +1725,7 @@
         }
       ],
       "hints": [
-        "Read only the first two lines of each version — that's exactly what the recipient will see. After which one can he decide anything?",
+        "Read only the first two lines of each version. That's exactly what the recipient will see. After which one can he decide anything?",
         "Check each version for three things: a conclusion, a number supporting it, and what's required from the reader."
       ],
       "explain": "There's one rule, and it's an uncomfortable one: the conclusion goes first, ahead of the explanation and ahead of the numbers. Uncomfortable because it runs against the order of the work — you went from data to conclusion and naturally want to lay it out in that order. The reader goes the other way: first \"what does this mean for me,\" and only if the answer matters, \"how do we know.\"\n\nA paragraph structure that works: conclusion, support, recommendation, request. The conclusion is one sentence someone can use to retell you to a third person. The support is the minimum set of numbers that prove that specific conclusion, not every number you have. The recommendation is what you advise doing. The request is what you need from the reader: a decision, a budget, a sign-off, nothing. Without the last item the email stays \"for information,\" and later you wonder why \"nothing happened.\"\n\nVersion B is the most widespread analyst's mistake, and it looks virtuous: \"I'm not imposing, I'm giving facts.\" In reality it's shifting the work back. You did the decomposition, you saw that price moved 3% and explains nothing — say so. Selecting numbers to fit the conclusion isn't distortion, it's the substance of the job: showing everything you computed means failing the main task, which is separating what matters from what doesn't.\n\nVersion D is the opposite mistake and a more dangerous one. There's a conclusion, it sounds confident, but it's connected to the data only by mood. The check is simple: every claim in the first paragraph must have a number or a fact behind it. \"We lost 46 outlets out of 79\" — it does. \"We need to change the packaging\" — follows from nothing you computed.\n\nAnd a last word on length. The first paragraph exists for the person who won't read further. Everything else — methodology, caveats, breakdowns — lives below and in the attachment, and there it can be as detailed as you like. That isn't cutting the content down, it's ordering it: first what you're being read for, then what you'll use to prove it if asked."
@@ -1819,7 +1819,7 @@
       ],
       "hints": [
         "For each question, name the type of comparison: over time, across categories, between two numbers, or contribution to a total.",
-        "Horizontal bars beat vertical ones when the category names are long — you don't have to tilt them."
+        "Horizontal bars beat vertical ones when the category names are long; you don't have to tilt them."
       ],
       "explain": "A chart isn't an illustration for the text, it's a way to answer a question faster than a table can. Hence the single rule for choosing one: state the question in a sentence first, then pick the form that encodes the answer.\n\nFour basic types of comparison cover nearly everything an analyst needs. Change over time — a line: the eye reads slope as speed and breaks as events. Comparison across categories — bars sorted by size, and horizontal ones if the names are long. The relationship between two numeric quantities — a scatter plot, the only form where you see the relationship, its absence, and the outliers alike. Contribution of parts to a change in a total — a waterfall, invented for decomposition specifically.\n\nThe pie chart deserves its own word, because it's the default in every editor. Its legitimate territory is narrow: shares of a single whole, when the parts are few, differ markedly, and genuinely sum to a hundred percent. Everything else it does badly — people compare angles worse than lengths, and negative values don't fit into it at all. For the fourth question that disqualifies it immediately: losing outlets pulls down, revenue growth per outlet pushes up.\n\nOn sorting and orientation: bars sorted by size answer \"who is biggest\" instantly, while the same bars in alphabetical order force the reader to sort by eye. That's the cheapest edit in any deck and one of the most noticeable.\n\nAnd on \"a consistent look.\" What should be consistent is the styling — palette, fonts, axis labels, legend order. The form of the chart obeys the question, not the layout; identical charts for different questions aren't style, they're a refusal to answer."
     },
@@ -1912,7 +1912,7 @@
       ],
       "hints": [
         "Check each number for an error: is even one of them wrong?",
-        "Ask who in the company has the right to say \"revenue is calculated like this\" — and where that's written down."
+        "Ask who in the company has the right to say \"revenue is calculated like this\", and where that's written down."
       ],
       "explain": "A discrepancy between numbers almost never means someone computed something incorrectly. Far more often everyone computed correctly — different things. Here three numbers answer three questions: how much the end shopper bought, how much we shipped, and how much of that we'll collect as cash. The gap between the first and second is the retail markup and stock sitting in the channel; between the second and third, distributor discounts, 8.4%.\n\nTrying to pick \"the right\" number by vote is a dead end, because each is needed for its own task. Data governance solves it differently: the metric gets a definition, and the definition gets an owner and a place where it's recorded. The minimum set for each metric: what it's called, what exactly it counts, which tables it comes from, who is responsible for its meaning, and when it was last reviewed. A metric dictionary like that isn't bureaucracy, it's a way to avoid spending an hour of committee time on an argument in which nobody is wrong.\n\nThe practical consequence for an analyst: a metric's name has to reflect its definition. \"Revenue\" is a bad name because it hides a choice; \"retail revenue (sell-out)\" and \"net shipments\" are good ones, because they make the choice visible right in the column header. Half the discrepancies between reports disappear at this step, before any governance at all.\n\nOn the role of the warehouse. A single source helps once the agreement exists: it turns the agreement into code that computes identically for everyone. Without the agreement it adds one more version of the number — its own.\n\nAnd on the signal that it's time to introduce definitions: if a meeting spends more than five minutes on whose number is right, the problem is no longer in the data, it's the absence of a rule. A good outcome for such a meeting isn't a chosen number, it's an assigned metric owner and a date by which the definition will be written down."
     },
@@ -1942,7 +1942,7 @@
         }
       ],
       "hints": [
-        "Sales didn't change — so what changed is the thing they're joined to. What exactly?",
+        "Sales didn't change, so what changed is the thing they're joined to. What exactly?",
         "Ask which question the report is asking: \"how much did this chain sell back then\" or \"how much do the outlets that are in this chain today sell.\""
       ],
       "explain": "This is the classic slowly-changing-dimension trap. The facts are immutable — last year's sales are what they always were. What changes is the reference table they're joined to, and with it all the history computed through that table.\n\nIt's important to see that both answers are legitimately needed. \"How much did the «Prima» chain sell last year\" is a question about history, and the outlet should count under «Prima», because that's where it was then. \"How much do the outlets that belong to «Ichiba» today sell\" is a question about today's portfolio, and here it's right to assign the whole history to the new chain: that's how you assess what was acquired. The defect isn't that the second option was chosen, it's that nobody made a choice — the report silently answered the second question when the first was asked.\n\nThe technical fix: the reference row gains validity dates and a current-version flag, and the old version isn't overwritten but closed off. The join between fact and dimension goes not by key alone but by date too: a March sale looks up the version of the outlet that was in force in March. That's what's called a historical dimension, and it costs more — more versions, a more complex join — so historization is switched on where an attribute really does change and does affect reports: chain, channel, region, assigned rep, product category.\n\nA separate takeaway for an analyst who isn't building the warehouse: if history has changed on its own, look first for an edit to a reference table, not for an error in the query. The signature is distinctive — the company total still reconciles while the breakdowns have drifted apart.\n\nAnd a practical habit, cheap and always useful: state in the report the date the reference data were taken as of. A line reading \"chain structure as of 01.07.2026\" removes half the questions and explains at once why the January version differs."
@@ -2005,7 +2005,7 @@
       ],
       "hints": [
         "For each option, picture the conversation at the committee: will it be about how the promo worked, or about who got it wrong?",
-        "One option protects the relationship at the cost of the conclusion — check what is left of the analysis once the comparison is gone."
+        "One option protects the relationship at the cost of the conclusion. Check what is left of the analysis once the comparison is gone."
       ],
       "explain": "The rule is called \"no surprises\": the person whose work the bad news is about hears it from you, and before the audience does. This is not about politeness. Someone caught out in public has no way to respond on the merits — he does not remember the details, has not seen the method, and is forced to defend himself; the subject quietly changes to his reputation, and the decision you did all the work for does not get made.\n\nWhat a heads-up is not: it is not approval of the conclusion, not a veto, and not a reason to soften the wording. The working formula is \"on Thursday I present the promo analysis, here are the numbers and the method, here is the conclusion; I want you to see it before the committee and tell me if I missed something.\" Give enough lead time to actually check it — a warning with no time to react is worse than none, because it reads as a formality.\n\nIn return you almost always get what the data does not hold: a competitor's promo in the same weeks, a supply gap, a change in shelf layout. Sometimes it changes the conclusion, and then you found your error before the committee rather than during it. A stakeholder with context is the cheapest reviewer you will ever get.\n\nOn wording: judge the work, not the person. \"The promo delivered +72% in money at a 30% price cut\" is a statement about mechanics, and one can agree with it. \"Trade marketing inflated the effect\" is a statement about people, and one can only argue with it. The difference in text is small; the difference in how the committee ends is enormous.\n\nAnd about the pressure that will likely follow. Separate the two: wording, order, emphasis are negotiable, and giving ground there is normal and useful. The conclusion, the numbers and the caveats are not. If you do end up defending the conclusion in public, the method will already have been through its most motivated reviewer, and the argument will be about the substance rather than about who failed to warn whom."
     },
@@ -2036,7 +2036,7 @@
       ],
       "hints": [
         "For each remark ask: is this a claim about a fact, about a definition, or about what to do?",
-        "One of the three positions cannot be checked against data at all — which does not make it wrong."
+        "One of the three positions cannot be checked against data at all, which does not make it wrong."
       ],
       "explain": "An argument around a table is almost never homogeneous, and the first move is to sort it by type of disagreement. There are three, and each is treated differently.\n\nDisagreement about a fact: \"the outlets are still there.\" It is closed by a source, and not by your authority but by a checkable statement: not \"my numbers are correct\" but \"here are 46 outlets with zero sales of the brand this quarter — name any one and we will look together.\" A checkable statement turns the argument into shared work; a claim about your own correctness turns it into a standoff. Often this same step teaches you something important — that three of those outlets changed owners rather than dropped the brand, for instance.\n\nDisagreement about a definition: BI shows 60 active outlets because activity there is counted over a rolling year, while yours is sales for the quarter. Nobody is wrong here: these are two correct metrics, and confusing them is not a person's mistake but the absence of a place where the definition is written down (see dom-058: that is fixed at the level of a metric owner, not at a meeting). The right line in the room sounds boring and works: \"these are different metrics; for a shelf question we need the quarterly one, and here is why.\"\n\nDisagreement about a decision: \"wind down support for the brand.\" Data does not close this at all — it is a choice of priorities, and it legitimately belongs to someone else. Your contribution is the price of the options: how much revenue sits behind the 46 outlets, what returning to the five largest gives, what another quarter of support costs. An analyst who brings a personal opinion about the priority instead of the price of the options loses both.\n\nThe interests around the table are worth remembering and not worth naming out loud. Sales has a target and a bonus on this brand, finance has a budget; that is normal, and it explains the heat. The line \"you are just defending your bonus\" instantly turns a working argument into a personal one and makes you a party to it. Work on the subject, not the motive.\n\nAnd here is how to notice you have drifted into being a party: you start caring which position \"wins\". Your job is to narrow the argument down to what is checkable and hand the decision to whoever owns it, together with the cost of being wrong in either direction."
     },
@@ -2159,7 +2159,7 @@
         }
       ],
       "hints": [
-        "Ask whose action tomorrow changes because of this correction — that is where the recipient list starts.",
+        "Ask whose action tomorrow changes because of this correction. That is where the recipient list starts.",
         "One option makes the correction invisible to exactly the people already acting on the old version."
       ],
       "explain": "Correcting an error that has already reached people has an order to it, and it does not start with apologies.\n\nFirst: who is acting on this figure. Not \"all forty recipients\" but those whose action tomorrow changes — the team that opened talks with the chains. They are written to first and immediately, because every hour of work on the wrong priority is paid for. Second: what exactly is wrong, in which direction and by how much — not \"there was an error in the table\" but \"e-commerce was missing from the breakdown; it accounts for 80% of the brand's revenue, the chains for 17%\". Third, and this is what gets skipped most often: what has not changed. The main finding about the 46 lost outlets stands. Without that line, a reader who does not know the boundaries of the error quite reasonably stops trusting the whole document, flawless parts included. A stated boundary works the same way as a stated weakness in the data in dom-054: it shows you know where your knowledge ends.\n\nEveryone else gets the short correction next, one paragraph. And only then, in a separate message and without rushing, the cause and what has changed in the process so it does not recur.\n\nThe silent fix looks like the cheapest way out and is the most expensive. People made a decision on the version they saw; two files with the same name will be left in the correspondence, and a month later nobody will be able to prove which table was on the table when the decision was made. The rule is simple: the corrected version carries a date and a \"what changed\" line, and the old one is not deleted but marked superseded (dom-059).\n\nOn apologies: one sentence is enough, then get to the substance. A long act of contrition moves attention from the reader's decision to your feelings and damages trust more than the error itself: the recipient starts to feel something extraordinary happened, when what happened was a lost filter.\n\nAnd the root cause, properly. It is not \"carelessness\" — nothing protects against carelessness. It is the absence of the check that catches this class of error: a breakdown must add up to the report's total. Chains plus traditional trade came to 210 thousand against brand revenue of 1 079 thousand — a discrepancy visible in a second, if anyone does that reconciliation at all. That is the pre-send check (dom-sanity-check): every breakdown of one quantity gives the same total, and when it does not, the thing to look at is not the breakdown but the filter."
