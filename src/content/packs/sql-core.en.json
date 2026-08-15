@@ -655,7 +655,7 @@
         "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product, the ones the report exists to show.",
         "You can look up the product's key by name with a scalar subquery right inside the join condition: (SELECT product_id FROM dim_product WHERE product_name = '...'). COALESCE turns an empty sum into zero."
       ],
-      "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\", both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN, the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0, in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent (zero sales, unvisited outlets, SKUs with no stock) are their own genre. They're almost always built outward from the dimension table, not from the fact."
+      "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\": both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN, the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0, in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent (zero sales, unvisited outlets, SKUs with no stock) are their own genre. They're almost always built outward from the dimension table, not from the fact."
     },
     {
       "id": "sql-039",
@@ -967,7 +967,7 @@
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep. Aggregate by rep_id first.",
         "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
       ],
-      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers, there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
+      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers; there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
     },
     {
       "id": "sql-053",
