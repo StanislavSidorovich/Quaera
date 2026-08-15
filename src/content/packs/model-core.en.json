@@ -203,7 +203,7 @@
       "title": "What one row means",
       "brief": "The first question for an unfamiliar fact table: what does one of its rows mean. The requester asks to \"count the number of purchases for the quarter.\"",
       "goal": "Work out what a fact_sellout row describes, and whether the question can be answered.",
-      "scenario": "fact_sellout — 118,449 rows\n\n  week_start   week\n  customer_id  outlet\n  product_id   SKU\n  units        units sold\n  revenue      revenue\n\nDistinct combinations of\n\"week × outlet × SKU\": 118,449",
+      "scenario": "fact_sellout: 118,449 rows\n\n  week_start   week\n  customer_id  outlet\n  product_id   SKU\n  units        units sold\n  revenue      revenue\n\nDistinct combinations of\n\"week × outlet × SKU\": 118,449",
       "predictQuestion": "What does one row of this table mean?",
       "hints": [
         "Compare two numbers: rows in the table, and distinct combinations of the key columns.",
@@ -234,7 +234,7 @@
       "title": "Plan and actuals in one report",
       "brief": "The requester wants to see plan attainment by SKU: sales and plan side by side. Both tables already exist in the model.",
       "goal": "Work out what such a report will show.",
-      "scenario": "fact_sellout — 118,449 rows\n  week × outlet × SKU\n\nfact_target — 750 rows\n  month × rep × division\n\nShared dimensions: date only\n(and at different granularity)",
+      "scenario": "fact_sellout: 118,449 rows\n  week × outlet × SKU\n\nfact_target: 750 rows\n  month × rep × division\n\nShared dimensions: date only\n(and at different granularity)",
       "predictQuestion": "What happens when you try to show plan next to sales, broken down by SKU?",
       "hints": [
         "Write out the grain of both tables and find the shared dimensions. There are fewer than you'd think.",
@@ -265,7 +265,7 @@
       "title": "Weeks versus months",
       "brief": "You need to compare shipments to distributors with retail sales: does what left the warehouse match what sold off the shelf.",
       "goal": "Work out at what level of detail this comparison is valid.",
-      "scenario": "fact_sellout — shelf sales\n  week × outlet × SKU\n\nfact_sellin — warehouse\n  shipments: month ×\n  distributor × SKU\n\nA week doesn't nest inside a\nmonth cleanly: it can split.",
+      "scenario": "fact_sellout: shelf sales\n  week × outlet × SKU\n\nfact_sellin: warehouse\n  shipments\n  month × distributor × SKU\n\nA week doesn't nest inside a\nmonth cleanly: it can split.",
       "predictQuestion": "At what level can the two measures sit side by side without caveats?",
       "hints": [
         "Write both tables' dimensions in two columns and circle the ones present in both.",
@@ -296,7 +296,7 @@
       "title": "One wide table",
       "brief": "The extract arrives as one table: brand, category, city and region are already sitting right next to sales. The temptation is to leave it as is and build the report straight on top.",
       "goal": "Work out what the biggest cost of that choice turns out to be.",
-      "scenario": "Flat table — 118,449 rows\n  week_start, revenue, units,\n  product_name, brand,\n  category, customer_name,\n  city, region_name\n\nDistinct products: 47\nOutlets: 144",
+      "scenario": "Flat table: 118,449 rows\n  week_start, revenue, units,\n  product_name, brand,\n  category, customer_name,\n  city, region_name\n\nDistinct products: 47\nOutlets: 144",
       "predictQuestion": "What turns out to be the most expensive cost?",
       "hints": [
         "Compare two numbers: how many times a product name is stored, and how many products exist.",
@@ -412,7 +412,7 @@
       "title": "A relationship on brand",
       "brief": "A colleague wants to link the promo lookup to the product lookup directly by brand: \"the field is in both, why not.\"",
       "goal": "Work out this relationship's cardinality.",
-      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nFor brand «Nettora»:\n  5 products, 10 promos",
+      "scenario": "dim_product: 47 rows\n  distinct brand: 9\n\ndim_promo: 89 rows\n  distinct brand: 9\n\nFor brand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What cardinality results from a relationship on the brand column?",
       "hints": [
         "Cardinality is about the key's uniqueness on each side, not about what the word \"brand\" means.",
@@ -501,7 +501,7 @@
       "title": "The model refused to choose",
       "brief": "You draw a second relationship between the same two tables. The modeling tool creates it, but marks it dashed and won't let you activate it.",
       "goal": "Work out why this is the response the tool gives.",
-      "scenario": "Between fact_sellout and\ndim_promo there are two paths:\n\n  direct — via promo_id\n  via dim_product — by brand\n\nThe second exists but is\ninactive (dashed on the\ndiagram).",
+      "scenario": "Between fact_sellout and\ndim_promo there are two paths:\n\n  direct: via promo_id\n  via dim_product: by brand\n\nThe second exists but is\ninactive (dashed on the\ndiagram).",
       "predictQuestion": "Why doesn't the tool activate the second relationship on its own?",
       "hints": [
         "Ask how the two paths differ in result. If they gave the same thing, there'd be nothing to choose.",
@@ -532,7 +532,7 @@
       "title": "How to keep the two paths apart",
       "brief": "The requester needs both pictures: revenue from the promo a sale actually took part in, and the total revenue of the brand that ran the promo.",
       "goal": "Work out how to satisfy both requests without ambiguity.",
-      "scenario": "Two measures are needed:\n\n  A — revenue via its own promo\n  B — revenue of the brand that\n      had a promo running\n\nThe direct promo_id relationship\nis active. The brand\nrelationship exists but is\ninactive.",
+      "scenario": "Two measures are needed:\n\n  A: revenue via its own promo\n  B: revenue of the brand that\n      had a promo running\n\nThe direct promo_id relationship\nis active. The brand\nrelationship exists but is\ninactive.",
       "predictQuestion": "How do you get both measures?",
       "hints": [
         "The measures are different, so there should be two of them. The question is what sets the default behaviour.",
@@ -563,7 +563,7 @@
       "title": "Brand share got hard-coded as a number",
       "brief": "Brand «Nettora»'s share of revenue is 12.7% across the whole database. A colleague set it up as a calculated column: computed once and put 12.7% into every fact row.",
       "goal": "Work out what the report shows after a region slicer is applied.",
-      "scenario": "dim_product → fact_sellout\nColumn: Nettora Share — 12.7%\n(written once, into every\nfact row)\n\nA slicer for region «Tokyo»\nwas added to the report.\nCorrect share for Tokyo: 19.1%",
+      "scenario": "dim_product → fact_sellout\nColumn Nettora Share: 12.7%\n(written once, into every\nfact row)\n\nA slicer for region «Tokyo»\nwas added to the report.\nCorrect share for Tokyo: 19.1%",
       "predictQuestion": "What will the column show after the Tokyo slicer?",
       "hints": [
         "Remember: a calculated column computes once at refresh, a measure recomputes every time it's displayed.",
@@ -801,7 +801,7 @@
       "title": "Three measures, three ways to sum",
       "brief": "The model has three measures: revenue, stock on hand, and average sale price. You need to decide which breakdowns each can be summed across without distorting its meaning.",
       "goal": "Work out each of the three measures' additivity.",
-      "scenario": "Three measures:\n\n  Revenue — ¥\n  StockOnHand — units\n  AvgPrice — average price, ¥\n\nStock is counted at the end\nof each month (a snapshot).",
+      "scenario": "Three measures:\n\n  Revenue: ¥\n  StockOnHand: units\n  AvgPrice: average price, ¥\n\nStock is counted at the end\nof each month (a snapshot).",
       "predictQuestion": "Which of the three measures can be summed across ANY breakdown, including time?",
       "hints": [
         "Ask of each measure: does it accumulate over a period (like money in a till), or exist at every moment (like stock on a shelf)?",
@@ -855,7 +855,7 @@
       "title": "Annual stock came out sevenfold off",
       "brief": "A dashboard showed stock on hand for 2025 as 370,142 units. The actual stock at the end of December, checked physically against the warehouse, is 52,350 units.",
       "goal": "Work out what's causing the discrepancy, and how to fix it.",
-      "scenario": "Dashboard: SUM(units_on_hand)\nacross all 12 months of 2025\n= 370,142 units\n\nActual warehouse stock at\nend of December 2025: 52,350\n\nDiscrepancy — almost sevenfold.",
+      "scenario": "Dashboard: SUM(units_on_hand)\nacross all 12 months of 2025\n= 370,142 units\n\nActual warehouse stock at\nend of December 2025: 52,350\n\nDiscrepancy: almost sevenfold.",
       "predictQuestion": "What's causing the discrepancy, and how do you fix it?",
       "hints": [
         "Compare 370,142 to the sum of the distributor's twelve monthly stock figures. Does it come close?",
@@ -882,7 +882,7 @@
       "title": "Without a shared calendar",
       "brief": "The model doesn't have a separate date table yet. A quarter slicer got built straight on the week_start column in fact_sellout; it only exists there.",
       "goal": "Work out what happens to fact_sellin with a slicer like this.",
-      "scenario": "The slicer is built on:\n  fact_sellout.week_start\n\nThere's no separate relationship\nwith fact_sellin — it has its\nown month_start column, and\nit isn't linked to the\nweek_start slicer.",
+      "scenario": "The slicer is built on:\n  fact_sellout.week_start\n\nThere's no separate relationship\nwith fact_sellin; it has its\nown month_start column, and\nit isn't linked to the\nweek_start slicer.",
       "predictQuestion": "What does the shipment measure (fact_sellin) show with this slicer?",
       "hints": [
         "Ask: are week_start in fact_sellout and month_start in fact_sellin related to each other directly?",
@@ -1056,7 +1056,7 @@
       "title": "The key isn't unique anywhere",
       "brief": "You need to link the product lookup to the promo lookup, to filter sales by a promo's brand. There's a shared column, brand.",
       "goal": "Work out the cardinality, and what to do about it.",
-      "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nBrand «Nettora»:\n  5 products, 10 promos",
+      "scenario": "dim_product: 47 rows\n  distinct brand: 9\n\ndim_promo: 89 rows\n  distinct brand: 9\n\nBrand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What does a direct relationship on brand give you, and what's the right way to link these?",
       "hints": [
         "Count rows and distinct key values in both tables. Do they match anywhere?",
@@ -1501,7 +1501,7 @@
       "title": "An outlet moved to another region",
       "brief": "A retail outlet changed regions: it used to be in «Tokyo», now it is listed in «Kanagawa». One field in the lookup table was updated.",
       "goal": "Work out what happens to last year's report.",
-      "scenario": "dim_customer — 144 outlets,\n16 regions; an outlet has one\nregion — the current one.\n\nWas:  outlet → «Tokyo»\nNow:  outlet → «Kanagawa»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
+      "scenario": "dim_customer: 144 outlets,\n16 regions; an outlet has one\nregion, the current one.\n\nWas:  outlet → «Tokyo»\nNow:  outlet → «Kanagawa»\n\nThe report \"sales by region\nfor 2024\" is rebuilt.",
       "predictQuestion": "What does the 2024 report show after the lookup table is edited?",
       "hints": [
         "Where is the region of a sale physically stored: in the fact row, or in the lookup table?",
@@ -1532,7 +1532,7 @@
       "title": "A \"previous region\" column",
       "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table; then the old value would be preserved.",
       "goal": "Work out whether this actually solves the problem.",
-      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Tokyo»\n  until 2025-03 — «Kanagawa»\n  now — «Osaka»",
+      "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06: «Tokyo»\n  until 2025-03: «Kanagawa»\n  now: «Osaka»",
       "predictQuestion": "What does this solution fail to solve?",
       "hints": [
         "The outlet moved twice. How many states fit into two columns?",
@@ -1594,7 +1594,7 @@
       "title": "The night no longer fits into the night",
       "brief": "The model does a full refresh every night and rereads the entire history. The refresh window has stopped fitting before morning.",
       "goal": "Work out what share of the work is done for nothing.",
-      "scenario": "fact_sellout — 118,449 rows:\n\n  2024   48,391\n  2025   47,122\n  2026   22,936\n\nThe last three months brought\n11,353 rows.\n\nHistory is not edited\nafter the fact.",
+      "scenario": "fact_sellout (118,449 rows):\n\n  2024   48,391\n  2025   47,122\n  2026   22,936\n\nThe last three months brought\n11,353 rows.\n\nHistory is not edited\nafter the fact.",
       "predictQuestion": "What share of the rows is worth rereading every night?",
       "hints": [
         "How many of the 118,449 rows could have changed since last night, if history is not edited?",
@@ -1625,7 +1625,7 @@
       "title": "The correction that never arrived",
       "brief": "Incremental refresh is configured for the last three months. An error in March 2025 sales was corrected in the source, nearly a year ago.",
       "goal": "Work out what the model shows after the next refresh.",
-      "scenario": "Partitions refreshed:\n  last 3 months — yes\n  anything earlier — no\n\nA sale from March 2025 was\ncorrected in the source.\n\nThe refresh completed fine,\nno errors in the log.",
+      "scenario": "Partitions refreshed:\n  last 3 months: yes\n  anything earlier: no\n\nA sale from March 2025 was\ncorrected in the source.\n\nThe refresh completed fine,\nno errors in the log.",
       "predictQuestion": "What does the model show for March 2025 after the refresh?",
       "hints": [
         "The model does not read the old partitions at all. How would it learn that something changed in the source?",
@@ -1687,7 +1687,7 @@
       "title": "The most expensive column",
       "brief": "The model takes up too much memory. You need to work out which column of the fact table costs the most.",
       "goal": "Identify the most expensive column and the reason.",
-      "scenario": "fact_sellout — 118,449 rows.\nDistinct values per column:\n\n  sellout_id   118,449\n  revenue       86,389\n  units            154\n  week_start       131\n  product_id        47",
+      "scenario": "fact_sellout: 118,449 rows.\nDistinct values per column:\n\n  sellout_id   118,449\n  revenue       86,389\n  units            154\n  week_start       131\n  product_id        47",
       "predictQuestion": "Which column takes up the most space, and why?",
       "hints": [
         "The engine compresses a column better the fewer distinct values it holds. Where are there most of them?",
@@ -1718,7 +1718,7 @@
       "title": "Trimming history for the sake of size",
       "brief": "The model needs to be smaller. The proposal is to drop 2024; that would cut the rows almost in half.",
       "goal": "Work out the real effect of such a decision.",
-      "scenario": "fact_sellout — 118,449 rows:\n  2024  48,391\n  2025  47,122\n  2026  22,936\n\nDrop 2024 and:\n  70,058 rows remain (−41%)\n\nPrices, amounts and products\nrepeat across years.",
+      "scenario": "fact_sellout (118,449 rows):\n  2024  48,391\n  2025  47,122\n  2026  22,936\n\nDrop 2024 and:\n  70,058 rows remain (−41%)\n\nPrices, amounts and products\nrepeat across years.",
       "predictQuestion": "How much smaller does the model get, and what is lost?",
       "hints": [
         "How many distinct products remain after dropping a year? And how many were there before?",
@@ -1749,7 +1749,7 @@
       "title": "Precision you pay for",
       "brief": "After removing the row identifier the model is still a bit large. Next up is the second most expensive column, revenue, with 86,389 distinct values.",
       "goal": "Work out how to reduce its weight without losing meaning.",
-      "scenario": "revenue — 86,389 distinct\nvalues across 118,449 rows.\n\nValues look like:\n  398.31   399.28   601.40\n\nReports show revenue in\nthousands and millions of ¥;\nkopecks appear nowhere.",
+      "scenario": "revenue: 86,389 distinct\nvalues across 118,449 rows.\n\nValues look like:\n  398.31   399.28   601.40\n\nReports show revenue in\nthousands and millions of ¥;\nkopecks appear nowhere.",
       "predictQuestion": "What reduces the column's weight without breaking the reports?",
       "hints": [
         "What is a column's dictionary made of, and what in the value 398.31 multiplies it hardest?",

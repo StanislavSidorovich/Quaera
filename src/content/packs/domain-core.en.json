@@ -340,7 +340,7 @@
       "title": "Promo share — 34% or 41%",
       "brief": "Trade marketing reports: promo share of the brand's sales is 34%. A week later, the same metric in a different deck is 41%. Both numbers are computed correctly, using the same formula.",
       "goal": "Determine which piece of the definition was missing.",
-      "scenario": "Metric: \"promo share of «Nettora»\nbrand sales\"\n\n  Report A   34%\n  Report B   41%\n\nKnown: both used the same\nformula —\npromo revenue ÷ total revenue",
+      "scenario": "Metric: \"promo share of «Nettora»\nbrand sales\"\n\n  Report A   34%\n  Report B   41%\n\nKnown: both used the same\nformula:\npromo revenue ÷ total revenue",
       "predictQuestion": "Which piece of the definition was missing for the numbers to match?",
       "options": [
         {
@@ -495,7 +495,7 @@
       "title": "How much did we sell in June",
       "brief": "\"June sales\" is requested by three people on the same day: the CFO, the head of distribution, and a brand manager. The analyst sends all three the same number from fact_sellout.",
       "goal": "Determine whose question this number actually answers.",
-      "scenario": "One request — \"June sales\" —\nfrom three people:\n\n  CFO\n    computing company revenue\n  Head of distribution\n    checking warehouse loading\n  Brand manager\n    gauging shelf demand\n\nSent to all three: one number\nfrom fact_sellout",
+      "scenario": "One request (\"June sales\")\nfrom three people:\n\n  CFO\n    computing company revenue\n  Head of distribution\n    checking warehouse loading\n  Brand manager\n    gauging shelf demand\n\nSent to all three: one number\nfrom fact_sellout",
       "predictQuestion": "Whose question does this number actually answer?",
       "options": [
         {
@@ -526,7 +526,7 @@
       "title": "Market share from our own data",
       "brief": "The marketing director asks for the market share of the «Nettora» brand in Saitama: \"we have all the sales data, don't we?\"",
       "goal": "Determine what this calculation actually measures.",
-      "scenario": "Request: «Nettora» market share\nin Saitama\n\nHave: fact_sellout — sales at\noutlets we have a data-sharing\nagreement with\n\nDon't have: competitor sales,\nsales at outlets without a\ndata-sharing agreement,\nmarketplaces, chains' own retail",
+      "scenario": "Request: «Nettora» market share\nin Saitama\n\nHave: fact_sellout (sales at\noutlets we have a data-sharing\nagreement with)\n\nDon't have: competitor sales,\nsales at outlets without a\ndata-sharing agreement,\nmarketplaces, chains' own retail",
       "predictQuestion": "What do you get by dividing «Nettora» sales by all sales in fact_sellout?",
       "options": [
         {
@@ -557,7 +557,7 @@
       "title": "Zero sales and an empty shelf",
       "brief": "One outlet has sold zero units of the \"«Nettora» Anti-Grease 500ml\" SKU for the third week running. The sales rep asks what happened to demand.",
       "goal": "Determine what can actually be learned from the sales data.",
-      "scenario": "Outlet \"Ichiba #204\"\nSKU \"«Nettora» Anti-Grease 500ml\"\nThird week in a row:\nsell-out = 0\n\nPossible causes:\n  A  product is on the shelf,\n     nobody buys it\n  B  product isn't there —\n     never delivered\n  C  product is in the outlet's\n     back room, not on the shelf",
+      "scenario": "Outlet \"Ichiba #204\"\nSKU \"«Nettora» Anti-Grease 500ml\"\nThird week in a row:\nsell-out = 0\n\nPossible causes:\n  A  product is on the shelf,\n     nobody buys it\n  B  product isn't there,\n     never delivered\n  C  product is in the outlet's\n     back room, not on the shelf",
       "predictQuestion": "Which of these can be told apart using fact_sellout data?",
       "options": [
         {
@@ -681,7 +681,7 @@
       "title": "One distributor out of twelve",
       "brief": "An analyst rolls up the ratio of shipments to outlet sales across all distributors for Q4. Eleven sit close to one; one stands out.",
       "goal": "Determine what the outlying value means.",
-      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  Setouchi Trading Co.\n    28,203 / 11,574 = 2.44\n  Hokuriku Supply K.K.\n    9,216 / 8,760 = 1.05\n  Hokusei Trading Co.\n    12,018 / 11,509 = 1.04\n  Tokai Group K.K.\n    10,038 / 9,640 = 1.04\n  ... the other eight —\n  1.04 to 1.05",
+      "scenario": "Sell-in to sell-out ratio,\nQ4 2025:\n\n  Setouchi Trading Co.\n    28,203 / 11,574 = 2.44\n  Hokuriku Supply K.K.\n    9,216 / 8,760 = 1.05\n  Hokusei Trading Co.\n    12,018 / 11,509 = 1.04\n  Tokai Group K.K.\n    10,038 / 9,640 = 1.04\n  ... the other eight\n    1.04 to 1.05",
       "predictQuestion": "What does «Setouchi Trading»'s 2.44 mean against the rest?",
       "options": [
         {
@@ -836,7 +836,7 @@
       "title": "The forecast slide",
       "brief": "An analyst prepares materials for the monthly planning cycle: a demand forecast chart and a neat breakdown by brand.",
       "goal": "Determine what this work is missing most.",
-      "scenario": "Planning cycle, monthly:\n\n  1. Demand forecast —\n     marketing + analytics\n  2. Alignment with\n     production — supply chain\n  3. Alignment with\n     sales — commercial\n  4. Plan approval —\n     leadership\n\nPrepared by the analyst:\na forecast chart and a\nbreakdown by brand.",
+      "scenario": "Planning cycle, monthly:\n\n  1. Demand forecast:\n     marketing + analytics\n  2. Alignment with\n     production: supply chain\n  3. Alignment with\n     sales: commercial\n  4. Plan approval:\n     leadership\n\nPrepared by the analyst:\na forecast chart and a\nbreakdown by brand.",
       "predictQuestion": "What's missing the most?",
       "options": [
         {
@@ -929,7 +929,7 @@
       "title": "Two brands in one window",
       "brief": "A presentation compares the trend of water and vitamins for August and draws a conclusion about where to shift marketing budget.",
       "goal": "Find the flaw in the conclusion.",
-      "scenario": "August 2025, change vs. July:\n\n  «Aqualis» water\n    15,792 → 11,711    −26%\n  «Vitanor» vitamins\n    260 → 282            +8%\n\nConclusion in the deck:\n\"Vitamins are growing, water\nis falling — shift budget\ninto vitamins\"",
+      "scenario": "August 2025, change vs. July:\n\n  «Aqualis» water\n    15,792 → 11,711    −26%\n  «Vitanor» vitamins\n    260 → 282            +8%\n\nConclusion in the deck:\n\"Vitamins are growing, water\nis falling. Shift budget\ninto vitamins\"",
       "predictQuestion": "What's wrong with this conclusion?",
       "options": [
         {
@@ -960,7 +960,7 @@
       "title": "One brand's two distributions",
       "brief": "«Nettora» brand manager brings a slide: numeric distribution fell from 82% to 33%. The commercial director looks at their own report and answers: \"Mine shows weighted at 47.5%, too early to panic.\" Both are right; they're measuring the same thing by different rules.",
       "goal": "Read what the gap between the two metrics meant in mid-2025.",
-      "scenario": "«Nettora» brand, household\nchemicals. Numeric distribution\n— share of outlets that sold\nthe brand at least once in\nthe month. Weighted — share\nof those outlets' turnover in\nthe channel's total turnover.\n\n  month    numeric    weighted\n  2024-01     81.9%      97.3%\n  2025-01     78.7%      97.2%\n  2025-06     68.1%      92.1%\n    ← −10.6 pp / −5.1 pp\n  2025-08     56.4%      78.8%\n  2025-12     42.6%      63.5%\n  2026-06     33.0%      47.5%",
+      "scenario": "«Nettora» brand, household\nchemicals. Numeric\ndistribution: share of outlets\nthat sold the brand at least\nonce in the month. Weighted:\nshare of those outlets'\nturnover in the channel's\ntotal turnover.\n\n  month    numeric    weighted\n  2024-01     81.9%      97.3%\n  2025-01     78.7%      97.2%\n  2025-06     68.1%      92.1%\n    ← −10.6 pp / −5.1 pp\n  2025-08     56.4%      78.8%\n  2025-12     42.6%      63.5%\n  2026-06     33.0%      47.5%",
       "predictQuestion": "By June 2025, numeric distribution lost 10.6 points, weighted only 5.1. What did that mean at the time?",
       "options": [
         {
@@ -991,7 +991,7 @@
       "title": "Distribution at 94%, but the shelf is empty",
       "brief": "A chain sent shelf audit data. Your sales report shows «Aqualis» present in 94% of the chain's stores. The auditor writes: in 12% of visits, the product wasn't on the shelf at the time of the check. The category manager asks how both numbers can be right.",
       "goal": "Explain why a distribution metric computed from sales data can't see an empty shelf.",
-      "scenario": "How our report computes\ndistribution:\n\n  an outlet counts toward\n  the month's distribution\n  if it sold at least one\n  unit of the brand during\n  that month\n\nWhat the audit found in\none of the stores:\n\n  week 1  product on the\n    shelf all week — 46 sold\n  week 2  product ran out\n    Thursday — 31 sold\n  week 3  no product at\n    all — 0 sold\n  week 4  delivery Wednesday —\n    22 sold\n\n  month total: sales\n  occurred → outlet \"in\n  distribution\"",
+      "scenario": "How our report computes\ndistribution:\n\n  an outlet counts toward\n  the month's distribution\n  if it sold at least one\n  unit of the brand during\n  that month\n\nWhat the audit found in\none of the stores:\n\n  week 1  product on the\n    shelf all week: 46 sold\n  week 2  product ran out\n    Thursday: 31 sold\n  week 3  no product at\n    all: 0 sold\n  week 4  delivery Wednesday:\n    22 sold\n\n  month total: sales\n  occurred → outlet \"in\n  distribution\"",
       "predictQuestion": "Which conclusion follows from this discrepancy?",
       "options": [
         {
@@ -1022,7 +1022,7 @@
       "title": "Which distribution to bring back",
       "brief": "It's been decided to bring «Nettora» back to the shelf. The sales director sets a target: get distribution back to 80%. You ask them to clarify which one, and it turns out the answer determines a year's worth of the department's workload.",
       "goal": "Compare the cost of two phrasings of the same goal.",
-      "scenario": "Now, Q2 2026:\nthe brand is in 33 outlets\nout of 94.\nNumeric distribution 35.1%,\nweighted 47.6%.\nVs. Q2 2024, 46 outlets\nwere lost.\n\nLost outlets, by turnover\n(share of channel turnover):\n\n  outlet 1     10.5%\n  outlet 2      7.8%\n  outlet 3      7.1%\n  outlet 4      5.6%\n    top 4 total — 31.0%\n  outlet 5      1.5%\n  outlets 6–30  1.4% to 0.34%\n  outlets 31–46 0.11% to 0.02%\n\nWinning back the first five:\nweighted 80.1%, numeric\n40.4%.\nFor numeric to reach 80%,\n43 of 46 outlets need to\ncome back.",
+      "scenario": "Now, Q2 2026:\nthe brand is in 33 outlets\nout of 94.\nNumeric distribution 35.1%,\nweighted 47.6%.\nVs. Q2 2024, 46 outlets\nwere lost.\n\nLost outlets, by turnover\n(share of channel turnover):\n\n  outlet 1     10.5%\n  outlet 2      7.8%\n  outlet 3      7.1%\n  outlet 4      5.6%\n    top 4 total: 31.0%\n  outlet 5      1.5%\n  outlets 6–30  1.4% to 0.34%\n  outlets 31–46 0.11% to 0.02%\n\nWinning back the first five:\nweighted 80.1%, numeric\n40.4%.\nFor numeric to reach 80%,\n43 of 46 outlets need to\ncome back.",
       "predictQuestion": "What should be said to the director?",
       "options": [
         {
@@ -1115,7 +1115,7 @@
       "title": "Speed off the shelf",
       "brief": "A chain's category manager is preparing an assortment review. The rule is simple: any SKU that takes up space and moves off the shelf slower than the rest loses that space. You look at the «Aqualis» portfolio and see who's about to get questioned.",
       "goal": "Find the SKU vulnerable in the assortment review, and name the reason.",
-      "scenario": "«Aqualis» portfolio, 12\nmonths. Rate of sale — units\nper outlet per week.\n\n  Aqualis still 0.5L\n    41 outlets, 13.16 units/wk\n    28,056 units total\n  Aqualis still 1.5L\n    52 outlets, 10.79 units/wk\n    29,163 units total\n  Aqualis still 5L\n    40 outlets, 8.80 units/wk\n    18,299 units total\n  Aqualis sparkling 0.5L\n    46 outlets, 8.73 units/wk\n    20,886 units total\n  Aqualis sparkling 1.5L\n    48 outlets, 6.97 units/wk\n    17,401 units total\n  Aqualis Sport 0.75L\n    46 outlets, 4.48 units/wk\n    10,720 units total",
+      "scenario": "«Aqualis» portfolio, 12\nmonths. Rate of sale: units\nper outlet per week.\n\n  Aqualis still 0.5L\n    41 outlets, 13.16 units/wk\n    28,056 units total\n  Aqualis still 1.5L\n    52 outlets, 10.79 units/wk\n    29,163 units total\n  Aqualis still 5L\n    40 outlets, 8.80 units/wk\n    18,299 units total\n  Aqualis sparkling 0.5L\n    46 outlets, 8.73 units/wk\n    20,886 units total\n  Aqualis sparkling 1.5L\n    48 outlets, 6.97 units/wk\n    17,401 units total\n  Aqualis Sport 0.75L\n    46 outlets, 4.48 units/wk\n    10,720 units total",
       "predictQuestion": "Which SKU will the chain question first, and why?",
       "options": [
         {
@@ -1208,7 +1208,7 @@
       "title": "Growth stolen from itself",
       "brief": "A promo on the flagship SKU delivered +2,400 units over two weeks. The category manager asks you to estimate how much of that gain the company actually earned, versus moved from one pocket to another.",
       "goal": "Compute the net category lift, adjusted for cannibalization and stock-up buying.",
-      "scenario": "Promoted SKU — \"Salt 150g\".\nSame category, same shelf —\n\"Salt 90g\" and \"Paprika 90g\",\nneither ran the promo.\n\nUnits over two weeks:\n\n  Salt 150g (promo)\n    before 1,600 → promo 4,000\n    → after 1,100\n  Salt 90g\n    before 1,500 → promo 1,050\n    → after 1,480\n  Paprika 90g\n    before 900 → promo 880\n    → after 910\n  category\n    before 4,000 → promo 5,930\n    → after 3,490\n\nBaseline for comparison — the\ntwo weeks before the promo.",
+      "scenario": "Promoted SKU: \"Salt 150g\".\nSame category, same shelf:\n\"Salt 90g\" and \"Paprika 90g\",\nneither ran the promo.\n\nUnits over two weeks:\n\n  Salt 150g (promo)\n    before 1,600 → promo 4,000\n    → after 1,100\n  Salt 90g\n    before 1,500 → promo 1,050\n    → after 1,480\n  Paprika 90g\n    before 900 → promo 880\n    → after 910\n  category\n    before 4,000 → promo 5,930\n    → after 3,490\n\nBaseline for comparison: the\ntwo weeks before the promo.",
       "predictQuestion": "What is the real lift from the promo?",
       "options": [
         {
@@ -1239,7 +1239,7 @@
       "title": "TRx grows, NRx falls",
       "brief": "A medical rep reports on a half-year for a drug: total prescriptions are steadily growing. The department head asks you to look at the data more closely, because next year's sales plan is being built on that growth.",
       "goal": "Read what the divergence between the two prescription metrics means.",
-      "scenario": "Drug X, prescriptions by\nmonth:\n\n  TRx — all prescriptions\n  (including refills)\n  NRx — new starts\n  (patient's first time)\n\n  Jan  TRx 4,100  NRx 910\n  Feb  TRx 4,240  NRx 840\n  Mar  TRx 4,380  NRx 770\n  Apr  TRx 4,460  NRx 690\n  May  TRx 4,520  NRx 610\n  Jun  TRx 4,550  NRx 540\n\nCourse of treatment: three\nto six months.",
+      "scenario": "Drug X, prescriptions by\nmonth:\n\n  TRx: all prescriptions\n  (including refills)\n  NRx: new starts\n  (patient's first time)\n\n  Jan  TRx 4,100  NRx 910\n  Feb  TRx 4,240  NRx 840\n  Mar  TRx 4,380  NRx 770\n  Apr  TRx 4,460  NRx 690\n  May  TRx 4,520  NRx 610\n  Jun  TRx 4,550  NRx 540\n\nCourse of treatment: three\nto six months.",
       "predictQuestion": "What's happening with the drug?",
       "options": [
         {
@@ -1332,7 +1332,7 @@
       "title": "Panel vs. shipments",
       "brief": "Marketing bought pharmacy sales panel data. Per the panel, your drug's quarterly market is 412 thousand packs, your share 24%. Logistics shipped 118 thousand packs that same quarter. 24% of 412 is 99 thousand. The 19-thousand-pack gap doesn't go away, and you're asked to explain the error.",
       "goal": "Determine whether there's actually an error, and how to relate panel data to your own shipments.",
-      "scenario": "What each source measures:\n\n  our shipments\n    packs from the\n    manufacturer's warehouse\n    to distributors — 118,000\n  panel\n    pharmacy sales to end\n    buyers, sampled from part\n    of the pharmacies and\n    extrapolated to the whole\n    market — 99,000 (24%)\n\nDistributor stock grew by\n14 thousand packs over\nthe quarter.",
+      "scenario": "What each source measures:\n\n  our shipments\n    packs from the\n    manufacturer's warehouse\n    to distributors: 118,000\n  panel\n    pharmacy sales to end\n    buyers, sampled from part\n    of the pharmacies and\n    extrapolated to the whole\n    market: 99,000 (24%)\n\nDistributor stock grew by\n14 thousand packs over\nthe quarter.",
       "predictQuestion": "How should the discrepancy be explained?",
       "options": [
         {
@@ -1363,7 +1363,7 @@
       "title": "The market grew, the buyers stayed the same",
       "brief": "Annual panel report: the category market grew 9%, your panel sales grew 2%. The deck concludes: \"we're losing share, the market is going to competitors.\" Before agreeing, you read the data provider's methodology appendix.",
       "goal": "Check the comparability of two points in a series before explaining the difference between them.",
-      "scenario": "From the panel provider's\nmethodology appendix:\n\n  \"Starting in July of the\n  reporting year, chain N's\n  pharmacies (about 1,400\n  outlets) were added to the\n  panel. Prior periods were\n  not restated.\"\n\nAdditionally known:\n\n  — chain N is strong in\n    major cities\n  — your drug is\n    represented weaker in\n    chain N than the market\n    average: the supply\n    contract was only\n    signed in September",
+      "scenario": "From the panel provider's\nmethodology appendix:\n\n  \"Starting in July of the\n  reporting year, chain N's\n  pharmacies (about 1,400\n  outlets) were added to the\n  panel. Prior periods were\n  not restated.\"\n\nAdditionally known:\n\n  - chain N is strong in\n    major cities\n  - your drug is\n    represented weaker in\n    chain N than the market\n    average: the supply\n    contract was only\n    signed in September",
       "predictQuestion": "What needs to be done before explaining the share loss?",
       "options": [
         {
@@ -1704,7 +1704,7 @@
       "title": "The first paragraph of the email",
       "brief": "The «Nettora» decline analysis is done: revenue fell 49% because the brand went off the shelf in 46 outlets out of 79, and where it stayed it sells 22% more than before. The email goes to the commercial director, who will read the first two lines on his phone between meetings.",
       "goal": "Choose the first paragraph that makes a decision possible.",
-      "scenario": "Four versions of the opening paragraph:\n\nA  Sending over the analysis of the\n   «Nettora» decline for Q2. Attached\n   is the extract by outlet, channel\n   and region, plus the calculation\n   methodology. Happy to discuss.\n\nB  «Nettora» revenue in Q2 2026 was\n   1 079 055 ¥ against 2 121 702 ¥\n   in Q2 2024. Outlets: 33 against 79.\n   Revenue per outlet: 32 699 ¥\n   against 26 857 ¥.\n\nC  «Nettora» lost half its revenue\n   purely by going off the shelf:\n   we are no longer stocked in 46 of\n   79 outlets, and where we remain we\n   sell 22% more. I suggest starting\n   with the five largest lost outlets —\n   they bring weighted distribution\n   back to 80%, whereas the other\n   forty-three together add as much.\n   I need your decision on the budget\n   for the negotiations.\n\nD  The «Nettora» situation is alarming.\n   I believe we urgently need to rethink\n   our approach to the brand as a whole —\n   from packaging to pricing — or we\n   risk losing the category.",
+      "scenario": "Four versions of the opening paragraph:\n\nA  Sending over the analysis of the\n   «Nettora» decline for Q2. Attached\n   is the extract by outlet, channel\n   and region, plus the calculation\n   methodology. Happy to discuss.\n\nB  «Nettora» revenue in Q2 2026 was\n   1 079 055 ¥ against 2 121 702 ¥\n   in Q2 2024. Outlets: 33 against 79.\n   Revenue per outlet: 32 699 ¥\n   against 26 857 ¥.\n\nC  «Nettora» lost half its revenue\n   purely by going off the shelf:\n   we are no longer stocked in 46 of\n   79 outlets, and where we remain we\n   sell 22% more. I suggest starting\n   with the five largest lost outlets;\n   they bring weighted distribution\n   back to 80%, whereas the other\n   forty-three together add as much.\n   I need your decision on the budget\n   for the negotiations.\n\nD  The «Nettora» situation is alarming.\n   I believe we urgently need to rethink\n   our approach to the brand as a whole,\n   from packaging to pricing, or we\n   risk losing the category.",
       "predictQuestion": "Which paragraph is written correctly?",
       "options": [
         {
@@ -1766,7 +1766,7 @@
       "title": "A conclusion you're not sure of",
       "brief": "The analysis is due today. The main conclusion is confirmed, but one part of it rests on data you doubt: some of the lost outlets may not have dropped the brand at all; they may have closed or changed owner, and the reference table doesn't distinguish the two. Checking will take a week.",
       "goal": "Choose the wording that neither lies nor blocks a decision.",
-      "scenario": "Four ways to report this:\n\nA  Say nothing. The conclusion about\n   lost distribution is right in the\n   main, and a caveat will only confuse\n   the reader and weaken the email.\n\nB  \"The brand may have lost distribution,\n   but the data require further checking,\n   so no final conclusions can be drawn\n   at this point.\"\n\nC  \"The brand went off the shelf in 46\n   outlets out of 79 — that's confirmed\n   by sales. Of those 46, some may have\n   closed or changed owner: the reference\n   table doesn't distinguish the two,\n   I'll check against the visit log by\n   the 12th. This doesn't affect the\n   conclusion — even in the worst case\n   losing the shelf remains the main\n   cause; it does affect the list of\n   priority outlets.\"\n\nD  Send the analysis in a week, once\n   everything is checked: a report with\n   caveats is worse than a report\n   delivered later.",
+      "scenario": "Four ways to report this:\n\nA  Say nothing. The conclusion about\n   lost distribution is right in the\n   main, and a caveat will only confuse\n   the reader and weaken the email.\n\nB  \"The brand may have lost distribution,\n   but the data require further checking,\n   so no final conclusions can be drawn\n   at this point.\"\n\nC  \"The brand went off the shelf in 46\n   outlets out of 79; that's confirmed\n   by sales. Of those 46, some may have\n   closed or changed owner: the reference\n   table doesn't distinguish the two,\n   I'll check against the visit log by\n   the 12th. This doesn't affect the\n   conclusion: even in the worst case\n   losing the shelf remains the main\n   cause; it does affect the list of\n   priority outlets.\"\n\nD  Send the analysis in a week, once\n   everything is checked: a report with\n   caveats is worse than a report\n   delivered later.",
       "predictQuestion": "Which version is right?",
       "options": [
         {
@@ -1828,7 +1828,7 @@
       "title": "The axis a conclusion starts from",
       "brief": "The «Vitanor» brand grew 3.2% over the rolling year. Marketing brings a slide where that growth is drawn as bars with the axis starting not at zero but at the series minimum: in the picture the last bar is three times the height of the first.",
       "goal": "Decide where a truncated axis is acceptable and where it turns a chart into a lie.",
-      "scenario": "The same series, two charts:\n\n  bars, axis from zero\n    the last bar is higher than\n    the first by an amount barely\n    visible to the eye (+3.2%)\n\n  bars, axis from the minimum\n    the last bar is three times the\n    first — it looks like a surge\n\nThe number under the chart is the\nsame in both cases: +3.2%.",
+      "scenario": "The same series, two charts:\n\n  bars, axis from zero\n    the last bar is higher than\n    the first by an amount barely\n    visible to the eye (+3.2%)\n\n  bars, axis from the minimum\n    the last bar is three times the\n    first; it looks like a surge\n\nThe number under the chart is the\nsame in both cases: +3.2%.",
       "predictQuestion": "What's the right answer?",
       "options": [
         {
@@ -1921,7 +1921,7 @@
       "title": "The reference table rewrote last year",
       "brief": "In June the outlet #1042 moved from the «Prima» chain to «Ichiba». The customer reference table was dutifully updated; the value in the chain-name column was replaced. In July a manager opens the annual report by chain for last year and can't understand why the numbers differ from the ones seen in January.",
       "goal": "Understand what happened to history, and how a reference table that doesn't do this is built.",
-      "scenario": "What changed in the report\nfor last year:\n\n  in January it was\n    «Prima»          8 400 000 ¥\n    «Ichiba»     12 100 000 ¥\n  in July it became\n    «Prima»          7 900 000 ¥\n    «Ichiba»     12 600 000 ¥\n\nLast year's sales did not change.\nOne attribute in the customer reference\ntable changed — and the outlet's sales\nfor the whole of last year moved to the\nnew chain retroactively.",
+      "scenario": "What changed in the report\nfor last year:\n\n  in January it was\n    «Prima»          8 400 000 ¥\n    «Ichiba»     12 100 000 ¥\n  in July it became\n    «Prima»          7 900 000 ¥\n    «Ichiba»     12 600 000 ¥\n\nLast year's sales did not change.\nOne attribute in the customer reference\ntable changed, and the outlet's sales\nfor the whole of last year moved to the\nnew chain retroactively.",
       "predictQuestion": "What's the defect here?",
       "options": [
         {
@@ -2014,7 +2014,7 @@
       "title": "Three positions and fifteen minutes",
       "brief": "The «Nettora» brand committee. Your analysis is on the screen: revenue −49%, the brand stopped selling in 46 outlets out of 79. The CFO proposes winding down support for the brand, the sales director says the numbers are wrong and the outlets are still there, the head of BI says his dashboard shows 60 active outlets. The budget decision is made today.",
       "goal": "Work out what the argument actually consists of, and what can be closed in fifteen minutes.",
-      "scenario": "Three positions at the table:\n\n  finance\n    the brand is a drag,\n    wind support down\n  sales\n    the numbers are wrong,\n    the outlets are there\n  BI\n    the dashboard shows 60\n    active outlets, not 33\n\nWhat you know:\n\n  46 outlets had not a single\n  sale of the brand all\n  quarter — that is a fact\n  in the BI dashboard an outlet\n  stays active for a year\n  after its last shipment",
+      "scenario": "Three positions at the table:\n\n  finance\n    the brand is a drag,\n    wind support down\n  sales\n    the numbers are wrong,\n    the outlets are there\n  BI\n    the dashboard shows 60\n    active outlets, not 33\n\nWhat you know:\n\n  46 outlets had not a single\n  sale of the brand all\n  quarter; that is a fact\n  in the BI dashboard an outlet\n  stays active for a year\n  after its last shipment",
       "predictQuestion": "Where do you start when you have fifteen minutes?",
       "options": [
         {
@@ -2045,7 +2045,7 @@
       "title": "A metric someone else's report rests on",
       "brief": "You have been with the company three months. The weekly commercial report carries a metric called \"average revenue per outlet\": the team reports growth on it, and part of the quarterly bonus is tied to it. For «Nettora» it shows +22%, while the brand's revenue halved: the outlets that dropped out were smaller than the ones that stayed, and their departure lifts the average by itself.",
       "goal": "Choose how to challenge a metric that is long established and not yours.",
-      "scenario": "Metric: average revenue per\noutlet. For «Nettora», +22%.\n\nWhat is behind it:\n\n  outlets that dropped out\n  averaged 24 738 ¥\n  those that stayed — 29 810 ¥\n  like-for-like outlets grew\n  by 9.7%\n  the rest is the mix effect\n\nThe setup:\n\n  the metric has been in the\n  report for three years\n  a bonus is tied to it\n  its owner heads commercial\n  analytics\n  you have been here three\n  months",
+      "scenario": "Metric: average revenue per\noutlet. For «Nettora», +22%.\n\nWhat is behind it:\n\n  outlets that dropped out\n  averaged 24 738 ¥\n  those that stayed, 29 810 ¥\n  like-for-like outlets grew\n  by 9.7%\n  the rest is the mix effect\n\nThe setup:\n\n  the metric has been in the\n  report for three years\n  a bonus is tied to it\n  its owner heads commercial\n  analytics\n  you have been here three\n  months",
       "predictQuestion": "How do you challenge this metric?",
       "options": [
         {
@@ -2076,7 +2076,7 @@
       "title": "A question the data cannot answer",
       "brief": "The sales director asks for one figure for the board: how much revenue «Nettora» lost because the brand is off the shelf in 46 outlets. Data about sales that never happened does not exist in any system.",
       "goal": "Answer without inventing a number and without leaving the requester with nothing.",
-      "scenario": "What is being asked:\n\n  revenue lost to being off\n  the shelf — one figure\n  for the board\n\nWhat you have:\n\n  46 outlets with no sales\n  their 2024 revenue\n  the trend of like-for-like\n  outlets that stayed (+9.7%)\n\nWhat exists nowhere:\n\n  what those outlets would\n  have bought had the product\n  been on the shelf",
+      "scenario": "What is being asked:\n\n  revenue lost to being off\n  the shelf, one figure\n  for the board\n\nWhat you have:\n\n  46 outlets with no sales\n  their 2024 revenue\n  the trend of like-for-like\n  outlets that stayed (+9.7%)\n\nWhat exists nowhere:\n\n  what those outlets would\n  have bought had the product\n  been on the shelf",
       "predictQuestion": "What do you tell the sales director?",
       "options": [
         {
@@ -2107,7 +2107,7 @@
       "title": "Asked to lead with a different number",
       "brief": "The board slide on «Nettora» is ready: revenue −49%, the cause being the brand going off the shelf in 46 outlets. Your manager asks you to lead with a different figure from the same analysis, revenue per outlet at +22%: \"it is true as well, and the conversation will go more calmly.\" Both numbers are computed correctly.",
       "goal": "Answer a request that is not a lie but changes the conclusion.",
-      "scenario": "Both figures, one analysis:\n\n  brand revenue     −49%\n  revenue per outlet +22%\n\nWhere the +22% comes from:\n\n  46 outlets left, and they\n  were smaller than the rest —\n  the average rose by itself\n  like-for-like outlets grew\n  by 9.7%\n\nThe request:\n\n  lead the slide with +22%,\n  mention the decline if\n  asked",
+      "scenario": "Both figures, one analysis:\n\n  brand revenue     −49%\n  revenue per outlet +22%\n\nWhere the +22% comes from:\n\n  46 outlets left, and they\n  were smaller than the rest;\n  the average rose by itself\n  like-for-like outlets grew\n  by 9.7%\n\nThe request:\n\n  lead the slide with +22%,\n  mention the decline if\n  asked",
       "predictQuestion": "What do you do with the slide?",
       "options": [
         {
