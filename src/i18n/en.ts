@@ -173,11 +173,24 @@ export const en = {
     howData:
       "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart. Every skill is trained on its own concrete situation, not an abstract example.",
     privacyTitle: 'Privacy',
+    /** См. довод в ru.ts: прежний текст обещал «никуда не отправляется», и это перестало быть правдой. */
     privacyBody:
-      "No account needed. All progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later, or reset your progress and start over.",
+      'The account is optional. Without one, all progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later. If you do sign in, the only thing sent to the server is the progress itself: skills, review intervals and which tasks you solved. Nothing you write in the sandbox ever goes there, and only you can see any of it.',
     backupTitle: 'Backup',
     backupBody:
-      "Progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a simple safeguard against that.",
+      'Without signing in, progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a safeguard that works without an account too.',
+    /** См. довод в ru.ts: заголовок называет пользу, а не механику. */
+    accountTitle: 'Your progress on every device',
+    accountBody:
+      'Signing in ties your progress to your Google account: sessions from your phone and your laptop merge into one, and clearing site data stops being the end of the story. You can keep practising without signing in, in which case everything stays on this device.',
+    accountSignInBtn: 'Sign in with Google',
+    accountSignOutBtn: 'Sign out',
+    accountSignedInAs: (email: string) => `Signed in as ${email}`,
+    accountSyncing: 'Merging progress…',
+    accountSynced: 'Progress merged and saved',
+    /** См. довод в ru.ts: отказ сети не потеря, и текст обязан это сказать. */
+    accountSyncError: 'Could not reach the server. Your progress is saved on this device, and we will try again later',
+    accountSignInError: 'Could not start sign-in. Check your connection and try again',
     exportBtn: 'Download progress file',
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
@@ -290,7 +303,7 @@ export const en = {
     ],
     /** См. довод в ru.ts: приватность и бэкап сказаны на «О тренажёре», здесь — что делать. */
     stepsNote:
-      'If you switch devices or clear site data, download the progress file from the About page: that is the only way to carry it over.',
+      'If you switch devices or clear site data, sign in with Google or download the progress file from the About page: without one of the two it will not survive the move.',
     /** См. комментарий в ru.ts: не пересказываем механику, только называем адрес действия. */
     installNote:
       'You can install the trainer as an app from the About page, in the Backup section, and download the Python runtime for offline pandas ahead of time, on the Python track itself, without waiting for the first task.',

@@ -26,7 +26,6 @@ import {
 import {
   applyAttempt,
   clearedProgress,
-  emptyProgress,
   exportProgress,
   loadProgress,
   parseImportedProgress,
@@ -36,6 +35,12 @@ import {
   today,
   type Progress,
 } from './srs/store';
+import type { Session } from '@supabase/supabase-js';
+import { signInWithGoogle, signOut, subscribeSession } from './sync/client';
+import { pushProgress, syncProgress } from './sync/progressSync';
+
+/** Состояние сведения прогресса с сервером — для подписи в карточке аккаунта. */
+type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 import {
   clearSession,
   fromStoredDraft,
@@ -413,6 +418,8 @@ export default function App() {
    * на каждую букву — ровно то, от чего taskDraftsRef и сделан ref'ом.
    */
   const [pendingSession, setPendingSession] = useState<StoredSession | null>(() => loadSession());
+  const [session, setSession] = useState<Session | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   /**
    * Слепок текущего занятия для записи в хранилище.
@@ -508,6 +515,53 @@ export default function App() {
   }, []);
 
   useEffect(() => saveProgress(progress), [progress]);
+
+  /*
+   * Синхронизация с сервером — три эффекта ниже.
+   *
+   * Порядок между ними важен и держится на `syncedForRef`: пока первое
+   * слияние для этого пользователя не прошло, отправлять нельзя. Иначе
+   * локальная копия свежеустановленного устройства (пустая) успела бы
+   * перезаписать серверную до того, как их свели, — то есть ровно та потеря
+   * данных, против которой писалась фаза 1.
+   */
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
+  const syncedForRef = useRef<string | null>(null);
+
+  useEffect(() => subscribeSession(setSession), []);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || syncedForRef.current === userId) return;
+    syncedForRef.current = userId;
+    setSyncStatus('syncing');
+    let cancelled = false;
+    void syncProgress(userId, progressRef.current).then(({ merged, ok }) => {
+      if (cancelled) return;
+      // Сравнение по значению, а не безусловный setProgress: слияние
+      // с пустым сервером возвращает ту же копию, и лишний setState
+      // перезапустил бы эффект отправки ниже без единого изменения.
+      if (JSON.stringify(merged) !== JSON.stringify(progressRef.current)) setProgress(merged);
+      setSyncStatus(ok ? 'synced' : 'error');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || syncedForRef.current !== userId) return;
+    /*
+     * Задержка, а не отправка на каждое изменение: `progress` меняется
+     * на каждой попытке, а занятие — это пять-десять попыток подряд.
+     * Две секунды сводят занятие к одной-двум записям и не заставляют
+     * ждать: уход со страницы прогресс не теряет, он уже в localStorage.
+     */
+    const timer = window.setTimeout(() => void pushProgress(userId, progress), 2000);
+    return () => window.clearTimeout(timer);
+  }, [progress, session]);
 
   /** Открытый раздел — на устройство, чтобы пережить перезагрузку (см. initialScreen). */
   useEffect(() => {
@@ -1217,6 +1271,14 @@ export default function App() {
               onExportProgress={downloadProgress}
               onImportProgress={importProgressFile}
               onResetProgress={resetProgress}
+              accountEmail={session?.user.email ?? null}
+              syncStatus={syncStatus}
+              onSignIn={signInWithGoogle}
+              onSignOut={async () => {
+                await signOut();
+                syncedForRef.current = null;
+                setSyncStatus('idle');
+              }}
             />
           )}
 
@@ -2299,6 +2361,10 @@ function About({
   onExportProgress,
   onImportProgress,
   onResetProgress,
+  accountEmail,
+  syncStatus,
+  onSignIn,
+  onSignOut,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
@@ -2306,6 +2372,11 @@ function About({
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
   onImportProgress: (file: File) => Promise<boolean>;
   onResetProgress: () => void;
+  /** null — не вошли; иначе почта аккаунта, которым вошли. */
+  accountEmail: string | null;
+  syncStatus: SyncStatus;
+  onSignIn: () => Promise<{ error: string | null }>;
+  onSignOut: () => Promise<void>;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
@@ -2326,6 +2397,13 @@ function About({
   // событие одноразовое, см. src/pwa/installPrompt.ts.
   const [installAvailable, setInstallAvailable] = useState(false);
   useEffect(() => subscribeInstallAvailable(setInstallAvailable), []);
+  /*
+   * Отдельно от syncStatus: та ошибка про сведение уже вошедшего, эта —
+   * про то, что вход не начался вовсе. Смешав их в одну подпись, человек
+   * с отвалившейся сетью прочитал бы «прогресс сохранён на устройстве»
+   * там, где ему не удалось даже нажать кнопку.
+   */
+  const [signInError, setSignInError] = useState(false);
 
   async function handleImportPick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -2520,6 +2598,66 @@ function About({
           <h2>{t.about.privacyTitle}</h2>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
         </div>
+
+      {/*
+       * Аккаунт — своя карточка перед «Резервной копией», а не раздел
+       * внутри неё. Обе про «что будет с накопленным», но отвечают
+       * по-разному: вход убирает проблему, файл её страхует. Слитые
+       * в одну карточку, они читались бы двумя равными кнопками
+       * с одинаковым весом — а веса у них разные, и порядок это говорит.
+       */}
+      <div className="card">
+        <h2>{t.about.accountTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.accountBody}</p>
+        {accountEmail ? (
+          <>
+            <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>
+              {t.about.accountSignedInAs(accountEmail)}
+            </p>
+            <button type="button" className="btn secondary" onClick={() => void onSignOut()}>
+              {t.about.accountSignOutBtn}
+            </button>
+          </>
+        ) : (
+          /*
+           * secondary, а не акцентная. Полноширинная синяя кнопка была
+           * единственной акцентной на всём экране и читалась главным
+           * действием «О тренажёре» — то есть настаивала ровно там, где
+           * текст двумя строками выше обещает, что вход добровольный.
+           * Заметности хватает собственного заголовка карточки.
+           */
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={async () => {
+              setSignInError(Boolean((await onSignIn()).error));
+            }}
+          >
+            {t.about.accountSignInBtn}
+          </button>
+        )}
+        {signInError && (
+          <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
+            {t.about.accountSignInError}
+          </p>
+        )}
+        {accountEmail && syncStatus !== 'idle' && (
+          <p
+            role="status"
+            style={{
+              margin: '10px 0 0',
+              fontSize: 13,
+              color: syncStatus === 'error' ? 'var(--err)' : syncStatus === 'synced' ? 'var(--ok)' : 'var(--text-dim)',
+            }}
+          >
+            {syncStatus === 'syncing'
+              ? t.about.accountSyncing
+              : syncStatus === 'synced'
+                ? t.about.accountSynced
+                : t.about.accountSyncError}
+          </p>
+        )}
+      </div>
 
       <div className="card">
         <h2>{t.about.backupTitle}</h2>
