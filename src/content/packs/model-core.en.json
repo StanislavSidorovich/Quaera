@@ -174,7 +174,7 @@
     {
       "id": "mdl-003",
       "title": "The column got renamed overnight",
-      "brief": "In the morning the dashboard greets you with an error. Overnight the app team shipped a release that renamed the status column to order_status — nobody thought about reporting.",
+      "brief": "In the morning the dashboard greets you with an error. Overnight the app team shipped a release that renamed the status column to order_status; nobody thought about reporting.",
       "goal": "Work out what actually needs to change here.",
       "scenario": "The dashboard reads the source\ndirectly.\n\nBefore:  orders.status\nAfter:   orders.order_status\n\nReports that reference it: 14\nThere was no warning.",
       "predictQuestion": "What actually needs fixing here?",
@@ -410,7 +410,7 @@
     {
       "id": "mdl-011",
       "title": "A relationship on brand",
-      "brief": "A colleague wants to link the promo lookup to the product lookup directly by brand — \"the field is in both, why not.\"",
+      "brief": "A colleague wants to link the promo lookup to the product lookup directly by brand: \"the field is in both, why not.\"",
       "goal": "Work out this relationship's cardinality.",
       "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nFor brand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What cardinality results from a relationship on the brand column?",
@@ -468,7 +468,7 @@
     {
       "id": "mdl-013",
       "title": "Revenue jumped tenfold",
-      "brief": "A second path to the promo lookup got added to the model — \"to filter sales by the promo's brand.\" After that, report revenue became ¥1,262,668,596.",
+      "brief": "A second path to the promo lookup got added to the model, \"to filter sales by the promo's brand.\" After that, report revenue became ¥1,262,668,596.",
       "goal": "Work out where that number came from.",
       "scenario": "Path 1 (existing):\n  fact_sellout.promo_id\n    → dim_promo.promo_id\n\nPath 2 (added):\n  fact_sellout.product_id\n    → dim_product.brand\n      → dim_promo.brand\n\nTotal revenue: ¥126,911,191\nNow shows: ¥1,262,668,596\nPromos per brand: 9-11",
       "predictQuestion": "Where does the tenfold number come from?",
@@ -614,7 +614,7 @@
     {
       "id": "mdl-018",
       "title": "A column for every slicer combination",
-      "brief": "A colleague proposes a compromise: since a measure recomputes slower than a column, set up a separate column for every slicer you need — by region, by brand, by region and brand together.",
+      "brief": "A colleague proposes a compromise: since a measure recomputes slower than a column, set up a separate column for every slicer you need: by region, by brand, by region and brand together.",
       "goal": "Work out what's wrong with this plan, beyond the growing number of columns.",
       "scenario": "Proposed:\n\n  ShareByRegion (column)\n  ShareByBrand (column)\n  ShareByRegionBrand (column)\n\nEach for every slicer\ncombination known so far.",
       "predictQuestion": "What happens to this plan at the first unplanned slicer?",
@@ -747,7 +747,7 @@
     {
       "id": "mdl-023",
       "title": "The fix without aggregation",
-      "brief": "You still need revenue per unit for each row — not the table's overall total, but exactly that row's own value. The first rows of fact_sellout are shown above the formulas.",
+      "brief": "You still need revenue per unit for each row, not the table's overall total, but exactly that row's own value. The first rows of fact_sellout are shown above the formulas.",
       "goal": "Work out which formula solves this correctly.",
       "predictQuestion": "Which variant returns the first row's own price, 199.16, for that row?",
       "hints": [
@@ -773,7 +773,7 @@
     {
       "id": "mdl-024",
       "title": "Row context inside an iterator",
-      "brief": "Unlike an ordinary column, a formula inside SUMX or a similar iterator function runs separately for each row — and there SUM behaves differently.",
+      "brief": "Unlike an ordinary column, a formula inside SUMX or a similar iterator function runs separately for each row, and there SUM behaves differently.",
       "goal": "Work out why the same SUM inside an iterator no longer gives the table-wide total.",
       "predictQuestion": "Why does revenue inside SUMX here behave like the current row's value, rather than the table's total?",
       "hints": [
@@ -826,7 +826,7 @@
     {
       "id": "mdl-026",
       "title": "Quarterly stock as one sum",
-      "brief": "The requester wants one number — \"the distributor's stock on hand for Q4.\" The model has stock computed at the end of every month.",
+      "brief": "The requester wants one number: \"the distributor's stock on hand for Q4.\" The model has stock computed at the end of every month.",
       "goal": "Work out what SUM across the quarter's three months shows.",
       "scenario": "Distributor stock, all\nproducts, month end:\n\n  October    10,325 units\n  November   15,108 units\n  December   20,846 units\n\nSUM for the quarter = 46,279",
       "predictQuestion": "What does 46,279 mean, and is it a valid answer for the requester?",
@@ -880,7 +880,7 @@
     {
       "id": "mdl-028",
       "title": "Without a shared calendar",
-      "brief": "The model doesn't have a separate date table yet. A quarter slicer got built straight on the week_start column in fact_sellout — it only exists there.",
+      "brief": "The model doesn't have a separate date table yet. A quarter slicer got built straight on the week_start column in fact_sellout; it only exists there.",
       "goal": "Work out what happens to fact_sellin with a slicer like this.",
       "scenario": "The slicer is built on:\n  fact_sellout.week_start\n\nThere's no separate relationship\nwith fact_sellin — it has its\nown month_start column, and\nit isn't linked to the\nweek_start slicer.",
       "predictQuestion": "What does the shipment measure (fact_sellin) show with this slicer?",
@@ -1023,7 +1023,7 @@
     {
       "id": "mdl-033",
       "title": "A second calendar instead of a second relationship",
-      "brief": "A colleague proposes doing without inactive relationships: add a second date table to the model — dim_ship_date — and connect it directly to ship_date.",
+      "brief": "A colleague proposes doing without inactive relationships: add a second date table to the model (dim_ship_date) and connect it directly to ship_date.",
       "goal": "Work out the main consequence of this choice for whoever opens the report.",
       "scenario": "Proposed:\n\n  dim_date      → order_date\n  dim_ship_date → ship_date\n\nBoth are full calendars with\nyear, quarter, month columns.",
       "predictQuestion": "What happens when someone puts a year slicer on the page?",
@@ -1054,7 +1054,7 @@
     {
       "id": "mdl-034",
       "title": "The key isn't unique anywhere",
-      "brief": "You need to link the product lookup to the promo lookup, to filter sales by a promo's brand. There's a shared column — brand.",
+      "brief": "You need to link the product lookup to the promo lookup, to filter sales by a promo's brand. There's a shared column, brand.",
       "goal": "Work out the cardinality, and what to do about it.",
       "scenario": "dim_product — 47 rows\n  distinct brand: 9\n\ndim_promo — 89 rows\n  distinct brand: 9\n\nBrand «Nettora»:\n  5 products, 10 promos",
       "predictQuestion": "What does a direct relationship on brand give you, and what's the right way to link these?",
@@ -1143,7 +1143,7 @@
     {
       "id": "mdl-037",
       "title": "CALCULATE isn't WHERE",
-      "brief": "A measure computes brand «Aqualis»'s revenue. Someone puts a slicer for brand «Nettora» on the page — two different brands at once.",
+      "brief": "A measure computes brand «Aqualis»'s revenue. Someone puts a slicer for brand «Nettora» on the page, two different brands at once.",
       "goal": "Work out what the measure returns.",
       "predictQuestion": "What does the measure return with a slicer on a different brand?",
       "hints": [
@@ -1530,7 +1530,7 @@
     {
       "id": "mdl-050",
       "title": "A \"previous region\" column",
-      "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table — then the old value would be preserved.",
+      "brief": "To avoid losing history, a colleague proposes adding a \"previous region\" column to the lookup table; then the old value would be preserved.",
       "goal": "Work out whether this actually solves the problem.",
       "scenario": "Proposed in dim_customer:\n\n  region_id       current\n  prev_region_id  previous\n\nThe outlet moved twice:\n  until 2024-06 — «Tokyo»\n  until 2025-03 — «Kanagawa»\n  now — «Osaka»",
       "predictQuestion": "What does this solution fail to solve?",
@@ -1561,7 +1561,7 @@
     {
       "id": "mdl-051",
       "title": "Not every attribute needs versioning",
-      "brief": "After working through the region problem, the team decides to version the entire customer lookup table — every attribute across the board.",
+      "brief": "After working through the region problem, the team decides to version the entire customer lookup table, every attribute across the board.",
       "goal": "Work out which attributes this is justified for.",
       "scenario": "dim_customer attributes:\n\n  region_id     region\n  channel       sales channel\n  chain_name    retail chain\n  customer_name name\n  opened_date   opening date\n\nBusiness questions differ:\nsome ask \"how it was then\",\nothers \"how it is now\".",
       "predictQuestion": "What tells you whether an attribute should be versioned?",
@@ -1623,7 +1623,7 @@
     {
       "id": "mdl-053",
       "title": "The correction that never arrived",
-      "brief": "Incremental refresh is configured for the last three months. An error in March 2025 sales was corrected in the source — nearly a year ago.",
+      "brief": "Incremental refresh is configured for the last three months. An error in March 2025 sales was corrected in the source, nearly a year ago.",
       "goal": "Work out what the model shows after the next refresh.",
       "scenario": "Partitions refreshed:\n  last 3 months — yes\n  anything earlier — no\n\nA sale from March 2025 was\ncorrected in the source.\n\nThe refresh completed fine,\nno errors in the log.",
       "predictQuestion": "What does the model show for March 2025 after the refresh?",
@@ -1654,7 +1654,7 @@
     {
       "id": "mdl-054",
       "title": "Where the partition boundary runs",
-      "brief": "Incremental refresh is being configured. You need to pick the column to slice the table into partitions by — and the shipments fact has two dates.",
+      "brief": "Incremental refresh is being configured. You need to pick the column to slice the table into partitions by, and the shipments fact has two dates.",
       "goal": "Work out which column is suitable for partitioning.",
       "scenario": "fact_sellin, two dates:\n\n  order_date  order date\n  ship_date   shipment date,\n              2-11 days later\n\n1,979 orders out of 15,362\nship in the following month.\n\nThe order creates the row,\nshipment is filled in later.",
       "predictQuestion": "Which date should partitions be sliced by, and why does it matter?",
@@ -1716,7 +1716,7 @@
     {
       "id": "mdl-056",
       "title": "Trimming history for the sake of size",
-      "brief": "The model needs to be smaller. The proposal is to drop 2024 — that would cut the rows almost in half.",
+      "brief": "The model needs to be smaller. The proposal is to drop 2024; that would cut the rows almost in half.",
       "goal": "Work out the real effect of such a decision.",
       "scenario": "fact_sellout — 118,449 rows:\n  2024  48,391\n  2025  47,122\n  2026  22,936\n\nDrop 2024 and:\n  70,058 rows remain (−41%)\n\nPrices, amounts and products\nrepeat across years.",
       "predictQuestion": "How much smaller does the model get, and what is lost?",
@@ -1747,7 +1747,7 @@
     {
       "id": "mdl-057",
       "title": "Precision you pay for",
-      "brief": "After removing the row identifier the model is still a bit large. Next up is the second most expensive column — revenue, with 86,389 distinct values.",
+      "brief": "After removing the row identifier the model is still a bit large. Next up is the second most expensive column, revenue, with 86,389 distinct values.",
       "goal": "Work out how to reduce its weight without losing meaning.",
       "scenario": "revenue — 86,389 distinct\nvalues across 118,449 rows.\n\nValues look like:\n  398.31   399.28   601.40\n\nReports show revenue in\nthousands and millions of ¥;\nkopecks appear nowhere.",
       "predictQuestion": "What reduces the column's weight without breaking the reports?",

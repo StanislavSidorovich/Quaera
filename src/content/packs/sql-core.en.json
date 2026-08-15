@@ -142,7 +142,7 @@
     {
       "id": "sql-003",
       "title": "Selection for the promo catalog",
-      "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ¥ — cheap ones don't work for promo.",
+      "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ¥; cheap ones don't work for promo.",
       "goal": "Return sku_code, product_name, brand, list_price for items of these two brands priced strictly above 100.",
       "hints": [
         "Listing several values of one column is shorter with IN than with OR.",
@@ -205,7 +205,7 @@
     {
       "id": "sql-026",
       "title": "All items in the «Forte» line",
-      "brief": "A brand manager is planning a separate «Forte» sub-line and wants every product across the company with that word in its name — regardless of which brand it belongs to.",
+      "brief": "A brand manager is planning a separate «Forte» sub-line and wants every product across the company with that word in its name, regardless of which brand it belongs to.",
       "goal": "Return product_name, brand, list_price for all products whose name contains «Forte».",
       "hints": [
         "An exact match (=) won't work here: the full names differ, the only thing in common is a word inside the string.",
@@ -216,7 +216,7 @@
     {
       "id": "sql-027",
       "title": "LIKE and case",
-      "brief": "A colleague is checking volumes for SKU code AQUA001 in the raw export. They know the source sends some rows in lowercase and want to catch both spellings at once — so they write the condition with LIKE rather than =.",
+      "brief": "A colleague is checking volumes for SKU code AQUA001 in the raw export. They know the source sends some rows in lowercase and want to catch both spellings at once, so they write the condition with LIKE rather than =.",
       "goal": "Determine how many rows the query returns.",
       "predictQuestion": "There are 163 rows for this SKU code in staging_raw_sellout: 107 written as AQUA001 and 56 as aqua001. What does the query return?",
       "options": [
@@ -246,7 +246,7 @@
     {
       "id": "sql-029",
       "title": "Second-priciest item of a brand",
-      "brief": "Ahead of a price revision, the CFO doesn't want the most expensive item of the «Vitanor» brand — that one's already clear — but the one right behind it.",
+      "brief": "Ahead of a price revision, the CFO doesn't want the most expensive item of the «Vitanor» brand (that one's already clear), but the one right behind it.",
       "goal": "Return product_name and list_price of the second most expensive product of the «Vitanor» brand.",
       "hints": [
         "Sort by price from high to low first, like in sql-004.",
@@ -317,7 +317,7 @@
     {
       "id": "sql-006",
       "title": "How many outlets are outside chains",
-      "brief": "The development department wants to gauge the size of independent retail: how many outlets don't belong to any chain. Distributors don't count here — they aren't points of sale.",
+      "brief": "The development department wants to gauge the size of independent retail: how many outlets don't belong to any chain. Distributors don't count here; they aren't points of sale.",
       "goal": "Return a single row with a single column, outlets (the count of customers without a chain, excluding distributors).",
       "hints": [
         "A null check is written only with IS NULL; the equals sign doesn't work here.",
@@ -451,7 +451,7 @@
     {
       "id": "sql-033",
       "title": "Aggregating an empty set",
-      "brief": "A category manager checks whether the \"NeonMax\" brand was ever in the portfolio — it was never launched, but the manager isn't sure and decides to double-check with a query.",
+      "brief": "A category manager checks whether the \"NeonMax\" brand was ever in the portfolio; it was never launched, but the manager isn't sure and decides to double-check with a query.",
       "goal": "Determine what COUNT(*) and AVG(list_price) will return.",
       "predictQuestion": "What will n and avg_price return, if there are no products of that brand in the database at all?",
       "options": [
@@ -585,7 +585,7 @@
     {
       "id": "sql-049",
       "title": "High-revenue brands with wide coverage",
-      "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets — either trait alone proves nothing.",
+      "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
       "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
         "Count distinct customers with the same function as in SELECT: DISTINCT customer_id.",
@@ -648,7 +648,7 @@
     {
       "id": "sql-014",
       "title": "Where did the new product reach",
-      "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report — it's built specifically for them, so they must not disappear.",
+      "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report; it's built specifically for them, so they must not disappear.",
       "goal": "Return for all 16 regions: region_name and units (total unit sales of «Vitanor Forte x30» across all time). Where there were no sales, show 0.",
       "hints": [
         "Start from the table whose rows all need to survive, the region directory.",
@@ -690,7 +690,7 @@
     {
       "id": "sql-040",
       "title": "Outlets that never bought «Nettora»",
-      "brief": "Trade marketing is preparing a win-back program for the «Nettora» brand and asks for a list of outlets that have never sold it at all — they need to be approached separately, ahead of the general visit plan.",
+      "brief": "Trade marketing is preparing a win-back program for the «Nettora» brand and asks for a list of outlets that have never sold it at all; they need to be approached separately, ahead of the general visit plan.",
       "goal": "Return customer_name and city for outlets (customer_type ≠ 'distributor') with zero sales rows for «Nettora» brand products in fact_sellout.",
       "hints": [
         "The brand condition must stay in ON; otherwise outlets without this product get filtered out before you even get a chance to find them.",
@@ -701,7 +701,7 @@
     {
       "id": "sql-013",
       "title": "Where did the extra revenue come from",
-      "brief": "An analyst added promo information to a revenue report by joining the fact table to dim_promo on brand — and total revenue nearly tripled, even though the underlying data hadn't changed.",
+      "brief": "An analyst added promo information to a revenue report by joining the fact table to dim_promo on brand, and total revenue nearly tripled, even though the underlying data hadn't changed.",
       "goal": "Determine the cause.",
       "predictQuestion": "Why is revenue higher in this query than in the same query without the join to dim_promo?",
       "options": [
@@ -794,7 +794,7 @@
     {
       "id": "sql-043",
       "title": "Price-list tiers",
-      "brief": "A category manager wants to see the portfolio not by brand but by price tier — this feeds a conversation with procurement about where the lineup is concentrated.",
+      "brief": "A category manager wants to see the portfolio not by brand but by price tier; this feeds a conversation with procurement about where the lineup is concentrated.",
       "goal": "Return tier ('Budget' for list_price < 100, 'Mid' for 100 ≤ list_price < 300, 'Premium' for list_price ≥ 300) and sku_count (the number of products in each tier).",
       "hints": [
         "You can group directly on the CASE expression's alias, shorter than repeating the whole construct in GROUP BY.",
@@ -846,7 +846,7 @@
     {
       "id": "sql-045",
       "title": "Revenue per active outlet by channel",
-      "brief": "The commercial director compares channels not by absolute revenue but by per-outlet efficiency — otherwise a channel with a hundred outlets always looks stronger than a niche one, even if it performs worse.",
+      "brief": "The commercial director compares channels not by absolute revenue but by per-outlet efficiency; otherwise a channel with a hundred outlets always looks stronger than a niche one, even if it performs worse.",
       "goal": "For 2025, return channel, revenue (sum of revenue, rounded to whole numbers), outlets (count of distinct outlets with at least one sale), and revenue_per_outlet (revenue divided by outlet count, rounded to whole numbers).",
       "hints": [
         "Both aggregates (SUM and COUNT(DISTINCT)) are computed in one CTE on the same key, channel.",
@@ -857,7 +857,7 @@
     {
       "id": "sql-021",
       "title": "Duplicates in a raw extract",
-      "brief": "A sales extract arrives from the accounting system, and it regularly contains fully duplicated rows — the export was run twice. Before loading it into the mart, you need to gauge the scale.",
+      "brief": "A sales extract arrives from the accounting system, and it regularly contains fully duplicated rows; the export was run twice. Before loading it into the mart, you need to gauge the scale.",
       "goal": "From the staging_raw_sellout table, return one row: total_rows (total rows), unique_rows (how many unique records remain if a row counts as a duplicate when date, customer, SKU, quantity, and revenue all match) and duplicate_rows (the difference between them). The technical row number raw_id is not part of the comparison.",
       "hints": [
         "COUNT(DISTINCT ...) takes only one expression. Concatenate the fields into a string with the || operator.",
@@ -879,7 +879,7 @@
     {
       "id": "sql-047",
       "title": "A date range on raw text",
-      "brief": "Before normalization, an analyst wants to estimate how many rows in staging_raw_sellout belong to June 2026, and compares sale_date against text boundaries of the month — the same way they normally would for well-formed ISO dates.",
+      "brief": "Before normalization, an analyst wants to estimate how many rows in staging_raw_sellout belong to June 2026, and compares sale_date against text boundaries of the month, the same way they normally would for well-formed ISO dates.",
       "goal": "Determine whether the condition will find all the needed rows.",
       "predictQuestion": "Will this condition find all the June 2026 rows, given sale_date mixes four formats: 'YYYY-MM-DD', 'DD.MM.YYYY', 'DD/MM/YYYY', and 'YYYY-M-D' without leading zeros?",
       "options": [
@@ -950,7 +950,7 @@
     {
       "id": "sql-051",
       "title": "Leading sales channel in each division",
-      "brief": "The commercial director is preparing a budget defense and wants not the full channel breakdown, but just the leading channel within each division — that's what everything else will be compared against.",
+      "brief": "The commercial director is preparing a budget defense and wants not the full channel breakdown, but just the leading channel within each division; that's what everything else will be compared against.",
       "goal": "For 2025, return per division: division, channel, and revenue (rounded to whole numbers) for the channel with the highest revenue within the division.",
       "hints": [
         "ROW_NUMBER here is partitioned by division. Insert PARTITION BY before division.",
@@ -961,7 +961,7 @@
     {
       "id": "sql-052",
       "title": "Rep ranking within a team",
-      "brief": "A sales manager is preparing 2025 year-end bonuses and wants to see each rep's rank within their team by the revenue of the outlets they cover — managers shouldn't be included in the ranking.",
+      "brief": "A sales manager is preparing 2025 year-end bonuses and wants to see each rep's rank within their team by the revenue of the outlets they cover; managers shouldn't be included in the ranking.",
       "goal": "For 2025, return team, rep_name, revenue (the sum of revenue from the rep's outlets, rounded to whole numbers) and rnk (the rep's rank within their team by descending revenue). Only role = 'rep'. Sort by team, then by rank.",
       "hints": [
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep. Aggregate by rep_id first.",
@@ -1013,7 +1013,7 @@
     {
       "id": "sql-020",
       "title": "Month-over-month change",
-      "brief": "The monthly report for management needs not just sales but change vs. the previous month — a number with no trend attached says nothing.",
+      "brief": "The monthly report for management needs not just sales but change vs. the previous month; a number with no trend attached says nothing.",
       "goal": "For 2025, return month (YYYY-MM format), units (sum of units), prev_units (units for the previous month), and mom_pct (the change vs. the previous month in percent, rounded to one decimal place). The first month is left with empty values. Ordered by month ascending.",
       "hints": [
         "LAG retrieves the previous row's value.",
@@ -1024,7 +1024,7 @@
     {
       "id": "sql-054",
       "title": "A distributor's quarterly running shipments",
-      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter — how much has been shipped to the «Setouchi Trading» distributor by the end of each month.",
+      "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter: how much has been shipped to the «Setouchi Trading» distributor by the end of each month.",
       "goal": "For October–December 2025, return month_start, units (shipped that month) and running_units (the running total since the start of the quarter). Ordered by month ascending.",
       "hints": [
         "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in sql-019.",
@@ -1035,7 +1035,7 @@
     {
       "id": "sql-055",
       "title": "Price growth since the start of the year",
-      "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year — and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
+      "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year, and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
       "goal": "For 2025, for the «Aqualis Still 1.5 L» product, return month_start, list_price, jan_price (the price in January of that year) and growth_pct (growth vs. January in percent, rounded to one decimal place). Ordered by month ascending.",
       "hints": [
         "FIRST_VALUE(list_price) OVER (ORDER BY month_start) returns the price of the window's very first row for every result row; that's the January price.",
@@ -1129,7 +1129,7 @@
     {
       "id": "sql-058",
       "title": "Who missed the plan in December",
-      "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division — only those under 100% attainment.",
+      "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division, only those under 100% attainment.",
       "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (revenue from the rep's division products at the rep's outlets, rounded to whole numbers) and attainment_pct (the plan attainment percentage, rounded to one decimal place). Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
       "hints": [
         "The plan is tied to a rep and a division at once. Join the fact to the plan on both keys, rep_id and division.",

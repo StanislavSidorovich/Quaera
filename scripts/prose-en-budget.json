@@ -2,13 +2,13 @@
   "_": "Потолок числа тире (—) в английском тексте по файлам. Только вниз: гейт test:prose-en падает при превышении и подсказывает новое число, когда файл стал чище. Почему это вообще меряется — в шапке scripts/test-prose-en.mjs.",
   "dashes": {
     "src/i18n/en.ts": 0,
-    "src/content/packs/domain-core.en.json": 73,
+    "src/content/packs/domain-core.en.json": 53,
     "src/content/packs/domain-lessons.en.json": 60,
-    "src/content/packs/model-core.en.json": 70,
+    "src/content/packs/model-core.en.json": 52,
     "src/content/packs/model-lessons.en.json": 55,
-    "src/content/packs/python-core.en.json": 63,
+    "src/content/packs/python-core.en.json": 30,
     "src/content/packs/python-lessons.en.json": 36,
-    "src/content/packs/sql-core.en.json": 33,
+    "src/content/packs/sql-core.en.json": 12,
     "src/content/packs/sql-lessons.en.json": 33,
     "src/content/sandbox.json": 8,
     "src/content/tools-compare.json": 1

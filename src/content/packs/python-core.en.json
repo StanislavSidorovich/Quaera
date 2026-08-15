@@ -91,7 +91,7 @@
     {
       "id": "py-001",
       "title": "Price list for a promo",
-      "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥ — cheap ones don't go into a promo.",
+      "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥; cheap ones don't go into a promo.",
       "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
       "hints": [
         "A list of values for one column is conveniently checked with .isin([...]), the pandas equivalent of SQL IN.",
@@ -102,7 +102,7 @@
     {
       "id": "py-002",
       "title": "and instead of &",
-      "brief": "A colleague wrote a filter out of an old Python habit — with and — and got not a result but an error, right in front of the client.",
+      "brief": "A colleague wrote a filter out of an old Python habit (with and) and got not a result but an error, right in front of the client.",
       "goal": "Determine what happens when the code runs.",
       "predictQuestion": "What happens when this code runs, if dim_product has more than one row?",
       "options": [
@@ -132,7 +132,7 @@
     {
       "id": "py-003",
       "title": "E-com customers for the logistics report",
-      "brief": "Logistics puts together a separate report for marketplace warehouses — they're serviced differently from retail — and needs a short list of these outlets.",
+      "brief": "Logistics puts together a separate report for marketplace warehouses (they're serviced differently from retail) and needs a short list of these outlets.",
       "goal": "Return customer_id, customer_name and city only for customers with channel = 'ecom'.",
       "hints": [
         "The channel value is a string, compared with ==, like an ordinary text value.",
@@ -143,7 +143,7 @@
     {
       "id": "py-004",
       "title": "The «Forte» line for the category report",
-      "brief": "The category manager is pulling the strengthened «Forte» line into a separate section of the quarterly report — there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
+      "brief": "The category manager is pulling the strengthened «Forte» line into a separate section of the quarterly report; there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
       "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Forte'.",
       "hints": [
         "Text methods on a string column are called through .str, the pandas equivalent of LIKE '%...%'.",
@@ -154,7 +154,7 @@
     {
       "id": "py-005",
       "title": "A view for the buyer",
-      "brief": "A buyer asks for a short view of products for price reconciliation: just the code, name and price — no service fields like launch_date.",
+      "brief": "A buyer asks for a short view of products for price reconciliation: just the code, name and price (no service fields like launch_date).",
       "goal": "Return sku_code, product_name, list_price for all products.",
       "hints": [
         "A list of columns is passed as a list inside square brackets: df[['a', 'b']].",
@@ -195,7 +195,7 @@
     {
       "id": "py-007",
       "title": "Regions for a demographic summary",
-      "brief": "A demographics report needs a short slice of regions — just the name and population, no macro-region or tier.",
+      "brief": "A demographics report needs a short slice of regions: just the name and population, no macro-region or tier.",
       "goal": "Return region_name and population for all regions.",
       "hints": [
         "Both blanks are column names, each in quotes, separated by a comma.",
@@ -236,7 +236,7 @@
     {
       "id": "py-009",
       "title": "Who in the company has no manager",
-      "brief": "The org chart needs a list of top-level employees — the ones who have no manager of their own.",
+      "brief": "The org chart needs a list of top-level employees, the ones who have no manager of their own.",
       "goal": "Return rep_id, rep_name, team for employees whose manager_id is empty.",
       "hints": [
         "\"Empty\" in pandas is NaN, and checking for it is a separate method: .isna(), not == None and not == NaN.",
@@ -247,7 +247,7 @@
     {
       "id": "py-010",
       "title": "Bringing the id back to whole numbers",
-      "brief": "A colleague asks for an extract for the HR system, where manager_id has to arrive without a decimal point — the import doesn't accept \"6.0\" as an employee code.",
+      "brief": "A colleague asks for an extract for the HR system, where manager_id has to arrive without a decimal point; the import doesn't accept \"6.0\" as an employee code.",
       "goal": "Return rep_id, rep_name, manager_id, casting manager_id to an integer type that still allows gaps.",
       "hints": [
         "Plain int64 won't work here; the column has gaps, and int64 can't hold them.",
@@ -258,7 +258,7 @@
     {
       "id": "py-011",
       "title": "Where did product_id go",
-      "brief": "An intern computed sales by product and sent a screenshot: columns units and product_id — but only units is there, and above it sits a strange caption product_id, as if it were a heading rather than a column.",
+      "brief": "An intern computed sales by product and sent a screenshot: columns units and product_id, but only units is there, and above it sits a strange caption product_id, as if it were a heading rather than a column.",
       "goal": "Understand where product_id went after the grouping.",
       "predictQuestion": "The result is a Series with one column of units values. Where did product_id end up?",
       "options": [
@@ -288,7 +288,7 @@
     {
       "id": "py-012",
       "title": "Brand by product code",
-      "brief": "A merchandiser is reconciling warehouse stock against the shelf and knows only the product_id from the delivery note — needs to quickly check which brand that is.",
+      "brief": "A merchandiser is reconciling warehouse stock against the shelf and knows only the product_id from the delivery note. They need to quickly check which brand that is.",
       "goal": "Return product_id and brand for the product with product_id = 5, setting product_id as the table's index and looking up the row with .loc.",
       "hints": [
         "set_index('product_id') makes product_id the index; after that, rows are looked up through it via .loc, not through a mask on a column.",
@@ -299,7 +299,7 @@
     {
       "id": "py-013",
       "title": "Bringing product_id back as a column",
-      "brief": "The result of the grouping needs to be merged with another table on product_id — and merge looks for it as an ordinary column, not as an index.",
+      "brief": "The result of the grouping needs to be merged with another table on product_id, and merge looks for it as an ordinary column, not as an index.",
       "goal": "After grouping by product_id, return product_id as an ordinary column again.",
       "hints": [
         "You need the method that reverses what groupby does with the grouping column by default.",
@@ -321,7 +321,7 @@
     {
       "id": "py-015",
       "title": "What order will the brands land in",
-      "brief": "An intern groups products by brand and expects to see them in the order the brands first appeared in the file — and gets something else.",
+      "brief": "An intern groups products by brand and expects to see them in the order the brands first appeared in the file, and gets something else.",
       "goal": "Understand the order groupby puts groups in by default.",
       "predictQuestion": "dim_product has 47 rows, brands appear in mixed order. In what order will the first three brands land in the result?",
       "options": [
@@ -351,7 +351,7 @@
     {
       "id": "py-016",
       "title": "Division × category matrix",
-      "brief": "Before assembling the assortment matrix, someone needs a quick view of how many SKUs fall into each \"division — category\" pair.",
+      "brief": "Before assembling the assortment matrix, someone needs a quick view of how many SKUs fall into each \"division / category\" pair.",
       "goal": "Group dim_product by two columns at once, division and category, and count sku_code in each pair.",
       "hints": [
         "Grouping by several columns at once is a list of names inside groupby([...]), not two separate calls.",
@@ -362,7 +362,7 @@
     {
       "id": "py-017",
       "title": "How concentrated a distributor's purchases are",
-      "brief": "The distributor KAM is preparing annual-terms negotiations and wants to understand concentration: whose purchases are spread across the whole assortment, and whose few positions make up the lion's share of volume — the discount conversation goes differently with the latter.",
+      "brief": "The distributor KAM is preparing annual-terms negotiations and wants to understand concentration: whose purchases are spread across the whole assortment, and whose few positions make up the lion's share of volume; the discount conversation goes differently with the latter.",
       "goal": "Add a line_share column to fact_sellin: this row's share of net_amount in the sum of net_amount for the same distributor_id over the whole period of the table.",
       "hints": [
         "transform, unlike agg, returns a result the same length as the source table, good for gluing a summary back onto every row.",
@@ -403,7 +403,7 @@
     {
       "id": "py-019",
       "title": "Each product's biggest sale",
-      "brief": "A logistics analyst is looking, for each product, for its single largest delivery — a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
+      "brief": "A logistics analyst is looking, for each product, for its single largest delivery: a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
       "goal": "Add a revenue_rank column with this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
       "hints": [
         ".rank() is the pandas equivalent of the RANK/DENSE_RANK/ROW_NUMBER window functions: it also needs a group and an order, just through the method's parameters instead of an OVER clause.",
@@ -414,7 +414,7 @@
     {
       "id": "py-020",
       "title": "132 customers instead of 144",
-      "brief": "A financial controller is reconciling the \"customers by rep\" report against the total customer count in the reference table — the sums don't match, and it's unclear where twelve went missing.",
+      "brief": "A financial controller is reconciling the \"customers by rep\" report against the total customer count in the reference table; the sums don't match, and it's unclear where twelve went missing.",
       "goal": "Understand where rows disappear when grouping by a column with gaps.",
       "predictQuestion": "dim_customer has 144 customers, and 12 of them (all with channel = 'distributor') have an empty rep_id. What will this sum equal?",
       "options": [
@@ -455,7 +455,7 @@
     {
       "id": "py-022",
       "title": "Labeling customers with no rep",
-      "brief": "The rep report goes into a BI system, where a NaN in the key looks like a load error — a readable label is needed instead of an empty value.",
+      "brief": "The rep report goes into a BI system, where a NaN in the key looks like a load error; a readable label is needed instead of an empty value.",
       "goal": "Before grouping, replace gaps in rep_id with a clear label, -1, so the group stays put without needing dropna=False on the receiving end.",
       "hints": [
         "fillna(-1) replaces NaN with a specific value before grouping; after that it isn't a gap anymore, it's an ordinary key, -1.",
@@ -466,7 +466,7 @@
     {
       "id": "py-023",
       "title": "110,480 sales instead of 11,048",
-      "brief": "An analyst joins fact_sellout to dim_promo by brand, to mark the promo period next to every sale — and afterward revenue is off by multiples from the report.",
+      "brief": "An analyst joins fact_sellout to dim_promo by brand, to mark the promo period next to every sale, and afterward revenue is off by multiples from the report.",
       "goal": "Understand what happens when you join on a key that's non-unique on both sides.",
       "predictQuestion": "The «Nettora» brand has 11,048 rows in fact_sellout and 10 different promos in dim_promo (all with brand = 'Nettora'). How many rows will merged give for this brand?",
       "options": [
@@ -518,7 +518,7 @@
     {
       "id": "py-026",
       "title": "How many items each brand has",
-      "brief": "Ahead of a conversation about assortment rotation, an analyst wants a quick look at how many SKUs fall under each brand in the catalogue — without grouping or counting by hand.",
+      "brief": "Ahead of a conversation about assortment rotation, an analyst wants a quick look at how many SKUs fall under each brand in the catalogue, without grouping or counting by hand.",
       "goal": "Count the number of items for each value of brand in dim_product, sorted in descending order of count.",
       "hints": [
         "value_counts() is a Series method, not a DataFrame one: first select one column with single brackets.",
@@ -570,7 +570,7 @@
     {
       "id": "py-029",
       "title": "Revenue by brand, by quarter",
-      "brief": "The commercial director wants to see 2025 revenue by brand, by quarter, in one table — brands as rows, quarters as columns, not a long list of thirty-six rows.",
+      "brief": "The commercial director wants to see 2025 revenue by brand, by quarter, in one table: brands as rows, quarters as columns, not a long list of thirty-six rows.",
       "goal": "Build a pivot table off the already-prepared merged/sub: brand in the rows, quarter in the columns, the sum of revenue in the values.",
       "hints": [
         "pivot_table can aggregate and reshape in one call; aggfunc decides what to do if several rows land on the same brand/quarter intersection (here: many sales of different products and customers).",
@@ -581,7 +581,7 @@
     {
       "id": "py-030",
       "title": "pivot() instead of pivot_table()",
-      "brief": "A colleague tries reshaping the same dataset with .pivot() — a shorter name, quicker to type — and gets an error instead of a table.",
+      "brief": "A colleague tries reshaping the same dataset with .pivot() (a shorter name, quicker to type) and gets an error instead of a table.",
       "goal": "Understand why pivot() doesn't work on raw, not-yet-aggregated data.",
       "predictQuestion": "sub is the raw fact_sellout rows (customer × product × week), joined with brand and quarter, with no aggregation done beforehand. What happens when .pivot() is called?",
       "options": [
@@ -611,7 +611,7 @@
     {
       "id": "py-031",
       "title": "Reshaping the report back to long format",
-      "brief": "The same quarterly-by-brand report needs to go to a BI system that only accepts long format — one brand and one quarter per row, not a wide table.",
+      "brief": "The same quarterly-by-brand report needs to go to a BI system that only accepts long format: one brand and one quarter per row, not a wide table.",
       "goal": "Reshape the wide table piv (brand, 2025Q1, 2025Q2) back to long format: columns brand, quarter, revenue.",
       "hints": [
         "id_vars is the column that stays as is and doesn't get reshaped; everything else turns into pairs of \"column name → value\".",
@@ -622,7 +622,7 @@
     {
       "id": "py-032",
       "title": "58 codes instead of 29 products",
-      "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs — some of the codes are duplicated in a different case: \"nett005\" and \"NETT005\" are the same product.",
+      "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs; some of the codes are duplicated in a different case: \"nett005\" and \"NETT005\" are the same product.",
       "goal": "Count how many unique product codes will remain in staging_raw_sellout if sku_code is cast to a single case.",
       "hints": [
         ".str.upper() upper-cases every string in the column in one call.",
@@ -663,7 +663,7 @@
     {
       "id": "py-034",
       "title": "One customer, two spellings",
-      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Minori #1013 \" and \"Minori #1013\" — these are two different values here, even though it's the same outlet.",
+      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Minori #1013 \" and \"Minori #1013\"; these are two different values here, even though it's the same outlet.",
       "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
       "hints": [
         ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",
@@ -674,7 +674,7 @@
     {
       "id": "py-035",
       "title": "Weekly sales into monthly",
-      "brief": "The «Aqualis» category manager wants monthly sales dynamics rather than weekly — weekly numbers swing too much to discuss in a meeting.",
+      "brief": "The «Aqualis» category manager wants monthly sales dynamics rather than weekly; weekly numbers swing too much to discuss in a meeting.",
       "goal": "From the weekly series weekly (already with a datetime index), return the monthly sum of units via resample('MS').",
       "hints": [
         "resample('MS') re-buckets a time series onto month-start boundaries (Month Start), similar to GROUP BY month in SQL, but it requires the index to already be datetime.",
@@ -756,7 +756,7 @@
     {
       "id": "py-039",
       "title": "Large sales as a separate table",
-      "brief": "A logistics analyst wants a separate table of sales above the average revenue across all of fact_sellout, marked with is_large — without touching the source table and without relying on pandas warnings to notice it.",
+      "brief": "A logistics analyst wants a separate table of sales above the average revenue across all of fact_sellout, marked with is_large, without touching the source table and without relying on pandas warnings to notice it.",
       "goal": "Return the rows of fact_sellout where revenue is above the average for the whole table, with an extra column is_large=True, as a chain through .copy() and .assign(), with no intermediate assignment into a filtered slice.",
       "hints": [
         ".copy() right after the filter says explicitly: from here on you're working with an independent table, not a view onto the source, and the warning stops appearing.",
@@ -767,7 +767,7 @@
     {
       "id": "py-040",
       "title": "The same flag, but done right",
-      "brief": "The same \"large sale\" flag — but done right, through .loc, with no intermediate object that can be lost by accident.",
+      "brief": "The same \"large sale\" flag, but done right, through .loc, with no intermediate object that can be lost by accident.",
       "goal": "Set flag=1 directly in fact_sellout for rows with revenue > 3000, modifying the table in a single lookup through .loc.",
       "hints": [
         ".loc[mask, 'column'] = value is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
@@ -778,7 +778,7 @@
     {
       "id": "py-041",
       "title": "A region's priority without apply",
-      "brief": "A colleague wrote the \"region priority\" column through apply(lambda row: ..., axis=1) — on 16 regions that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
+      "brief": "A colleague wrote the \"region priority\" column through apply(lambda row: ..., axis=1); on 16 regions that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
       "goal": "Build a priority column for dim_region: 'key' for tier == 1, otherwise 'rest', through vectorized np.where and without apply().",
       "hints": [
         "np.where(condition, if_true, if_false) is the vectorized replacement for apply(lambda row: ... if ... else ..., axis=1): the condition is checked for the whole column at once, not row after row.",
@@ -789,7 +789,7 @@
     {
       "id": "py-042",
       "title": "Same result, different price",
-      "brief": "A colleague insists: \"apply and a vectorized operation give the same result — so you can use either one, it's a matter of taste.\" On a small table the difference isn't visible; the question is what changes on a large one.",
+      "brief": "A colleague insists: \"apply and a vectorized operation give the same result, so you can use either one, it's a matter of taste.\" On a small table the difference isn't visible; the question is what changes on a large one.",
       "goal": "Understand what exactly the difference is between apply(..., axis=1) and a vectorized operation, given that the result is identical.",
       "predictQuestion": "On dim_product's 47 rows both variants produce the same segment column. What happens if the same technique is applied to fact_sellout (118,449 rows)?",
       "options": [
@@ -819,7 +819,7 @@
     {
       "id": "py-043",
       "title": "A product label without row-by-row formatting",
-      "brief": "The data schema builds a product label, \"brand / category\", through apply(lambda row: f'...', axis=1) — it works, but it's recomputed from scratch on every change of filter, and on a large table that's felt.",
+      "brief": "The data schema builds a product label, \"brand / category\", through apply(lambda row: f'...', axis=1); it works, but it's recomputed from scratch on every change of filter, and on a large table that's felt.",
       "goal": "Build a label column = brand + ' / ' + category for dim_product in a vectorized way, without apply and without row-by-row string formatting.",
       "hints": [
         "pandas string columns are added with the + operator just like ordinary Python strings, but element by element, for every row at once.",
