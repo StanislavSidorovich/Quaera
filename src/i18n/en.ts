@@ -176,9 +176,14 @@ export const en = {
     howData:
       "The dataset is 156,000 rows over two and a half years, with a few dozen storylines beyond the ones already named above: a new SKU's rollout, a promo that cannibalised its own category, sell-in and sell-out drifting apart. Every skill is trained on its own concrete situation, not an abstract example.",
     privacyTitle: 'Privacy',
-    /** См. довод в ru.ts: прежний текст обещал «никуда не отправляется», и это перестало быть правдой. */
+    /**
+     * См. довод в ru.ts: здесь краткий ответ, подробный — на «Аккаунте
+     * и данных» (account.dataTitle). Разделение вынужденное дважды:
+     * полный текст ломает балансир about-columns, и он же отвечает
+     * на вопросы, которые задают у кнопки входа, а она на том экране.
+     */
     privacyBody:
-      'The account is optional. Without one, all progress is stored on the device and never sent anywhere: close the tab and pick up where you left off a month later. If you do sign in, the only thing sent to the server is the progress itself: skills, review intervals and which tasks you solved. Nothing you write in the sandbox ever goes there, and only you can see any of it.',
+      'The account is optional: without one the trainer works in full and offline, and all your progress stays in this browser. There is no analytics here, no visit counters and no ads, and not one query you write ever leaves the device, with an account or without one. If you do sign in, what goes to the server is your progress and your Google account email; exactly what, where to, and how to remove it is spelled out under Account and data.',
     /** См. довод в ru.ts: ссылка стоит под «Приватностью» и называет действия, а не раздел. */
     accountLink: 'Sign-in, backup and reset →',
     /** См. комментарий в ru.ts: карточка видна только когда beforeinstallprompt пришёл. */
@@ -242,6 +247,26 @@ export const en = {
     resetConfirmBtn: 'Yes, reset',
     resetCancelBtn: 'Cancel',
     resetDone: 'Progress reset',
+    /**
+     * См. развёрнутый довод в ru.ts: четыре подраздела на четыре вопроса,
+     * каждый задаётся до нажатия кнопки входа. Правило письма оттуда же:
+     * гейта у этой прозы нет, поэтому каждое утверждение проверяемо
+     * по репозиторию. Тире не ставить вовсе — бюджет en.ts нулевой
+     * (test:prose-en).
+     */
+    dataTitle: 'What happens to your data',
+    dataDeviceTitle: 'What stays on the device',
+    dataDeviceBody:
+      'Progress, an unfinished session, saved sandbox scripts, settings and the Python runtime you downloaded are all kept by the browser itself. Answers are checked in the same place: both SQL and pandas run inside this tab, so not one query you write ever leaves the device, with an account or without one.',
+    dataServerTitle: 'What goes to the server if you sign in',
+    dataServerBody:
+      'One row: that same progress file, meaning skills, review intervals and marks for the tasks you solved. Next to it the sign-in machinery keeps your Google account email and its identifier, because without them there is no telling whose progress this is. The database is Supabase, on a server in Frankfurt. From Google the trainer asks for the email and nothing else: no contacts, no drive, no other access; your password is typed on a Google page and never reaches this one.',
+    dataNoneTitle: 'What is not here',
+    dataNoneBody:
+      'No analytics, no visit counters, no ads, no tracking pixels: not a single one, and the source code shows it. Three outside addresses appear in the code, and all three are the sign-in server, the GitHub repository and the author’s LinkedIn. The page pulls no fonts and no scripts from elsewhere, sets no cookies of its own, and the running app contains no language model at all: an answer is compared against the reference result, not against an AI.',
+    dataKeepTitle: 'How long it is kept, and how to remove it',
+    dataKeepBody:
+      'The row on the server lives until you delete it: the Delete account button removes the sign-in record, and the progress goes with it, at once and with no way back. The local copy goes with a reset or by clearing site data. And two honest boundaries: the access rules close your row to other learners but not to whoever owns the database, which is how any hosting works and cannot be undone from here; and the server takes no backups at all, so the safeguard against loss is the progress file, not the server copy.',
   },
   /**
    * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает
