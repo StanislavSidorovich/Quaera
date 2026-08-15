@@ -117,7 +117,7 @@
       "predictQuestion": "What does this query return, if the division column holds the values 'FMCG' and 'Pharma'?",
       "options": [
         {
-          "label": "0 — no rows at all",
+          "label": "0: no rows at all",
           "why": "The = operator compares text byte for byte, case included. 'pharma' and 'Pharma' are different values."
         },
         {
@@ -180,15 +180,15 @@
       "predictQuestion": "What will the second column in the result be called, if no alias is given?",
       "options": [
         {
-          "label": "The literal text of the expression — \"list_price * 0.9\", exactly as written in the query",
+          "label": "The literal text of the expression: \"list_price * 0.9\", exactly as written in the query",
           "why": "If a column isn't given a name via AS, the database uses the expression's own text as the header — exactly what you wrote in SELECT."
         },
         {
-          "label": "\"discount_price\" — the database will pick a sensible name based on what the calculation means",
+          "label": "\"discount_price\": the database will pick a sensible name based on what the calculation means",
           "why": "The database doesn't analyze what a formula means and can't invent business-friendly names — it takes exactly the text that's in the query."
         },
         {
-          "label": "\"list_price\" — the same name as the original column",
+          "label": "\"list_price\": the same name as the original column",
           "why": "That would be true if the column were left untouched. But here it's already a different value — multiplied by 0.9 — and the old name doesn't reflect that."
         },
         {
@@ -221,19 +221,19 @@
       "predictQuestion": "There are 163 rows for this SKU code in staging_raw_sellout: 107 written as AQUA001 and 56 as aqua001. What does the query return?",
       "options": [
         {
-          "label": "n = 163 — LIKE in SQLite does not distinguish case for Latin letters",
+          "label": "n = 163: LIKE in SQLite does not distinguish case for Latin letters",
           "why": "A pattern with no «%» requires the whole string to match, but it still compares characters by LIKE's rules, and those ignore case for Latin letters. Both spellings of the code land in the answer."
         },
         {
-          "label": "n = 107 — with no wildcards, LIKE behaves just like =",
+          "label": "n = 107: with no wildcards, LIKE behaves just like =",
           "why": "Dropping the «%» only removes matching against an arbitrary substring. The character comparison rule doesn't change with it: = compares byte for byte, LIKE is case-insensitive for ASCII."
         },
         {
-          "label": "n = 56 — an uppercase pattern only finds the opposite spelling",
+          "label": "n = 56: an uppercase pattern only finds the opposite spelling",
           "why": "The case of the pattern makes no difference: the comparison is symmetric, so both spellings match, not one of them."
         },
         {
-          "label": "n = 0 — without a % character, a LIKE pattern matches nothing",
+          "label": "n = 0: without a % character, a LIKE pattern matches nothing",
           "why": "LIKE with no wildcards is a perfectly valid pattern. It simply requires the whole string to match, like =, and differs from it only in the comparison rule."
         }
       ],
@@ -262,19 +262,19 @@
       "predictQuestion": "How many products priced 98 ¥ will be in the result, if there are three such products in the whole price list?",
       "options": [
         {
-          "label": "Two — the third one stayed on the previous page",
+          "label": "Two: the third one stayed on the previous page",
           "why": "OFFSET 33 counts from the start of the sorted list, and the rows priced 98 landed split across two neighboring groups of three: one went to the previous page, two landed on this one."
         },
         {
-          "label": "All three — a matching price guarantees they end up next to each other on one page",
+          "label": "All three: a matching price guarantees they end up next to each other on one page",
           "why": "Next to each other in the sorted list — yes, but \"next to each other\" doesn't mean \"inside the same group of three\" if there are more rows at that price than fit before the current LIMIT window ends."
         },
         {
-          "label": "None — OFFSET 33 has already skipped past all the 98 ¥ items",
+          "label": "None: OFFSET 33 has already skipped past all the 98 ¥ items",
           "why": "OFFSET 33 skips the first 33 rows after sorting, and the group of items priced 98 starts right at that boundary, not before it."
         },
         {
-          "label": "The query fails with an error — several rows with the same list_price can't be sorted",
+          "label": "The query fails with an error: several rows with the same list_price can't be sorted",
           "why": "Sorting a column with repeated values is an ordinary operation — there's no error here."
         }
       ],
@@ -292,7 +292,7 @@
       "predictQuestion": "Will outlets with chain_name = NULL end up in the result?",
       "options": [
         {
-          "label": "No — rows with NULL are filtered out",
+          "label": "No: rows with NULL are filtered out",
           "why": "NULL <> 'Magnit' evaluates to neither true nor false, but NULL. WHERE keeps only rows where the condition is true, so such rows silently drop out."
         },
         {
@@ -333,11 +333,11 @@
       "predictQuestion": "What will be among the first five rows?",
       "options": [
         {
-          "label": "Outlets without a chain — NULL sorts before any text here",
+          "label": "Outlets without a chain: NULL sorts before any text here",
           "why": "SQLite, like most DBMSes by default, treats NULL as the smallest possible value in ascending sort — such rows end up first."
         },
         {
-          "label": "The 'Marketo' chain — it's first alphabetically among the filled-in values",
+          "label": "The 'Marketo' chain: it's first alphabetically among the filled-in values",
           "why": "Among non-null values, 'Marketo' really would come first — Latin letters sort before Cyrillic. But it never gets to the filled-in values: NULL in sorting isn't \"an empty string\" or \"after everything\" — it's smaller than any text."
         },
         {
@@ -345,7 +345,7 @@
           "why": "NULL has a clear, documented place in sorting — it just doesn't match the intuition that \"unknown can't be compared\"."
         },
         {
-          "label": "The query will fail — you can't sort a column with nulls",
+          "label": "The query will fail: you can't sort a column with nulls",
           "why": "ORDER BY on a column with NULL is a perfectly ordinary operation — there's no error here."
         }
       ],
@@ -374,7 +374,7 @@
       "predictQuestion": "What will COUNT(*) return, given tens of thousands of rows in the database have sales without a promo (where promo_id is empty)?",
       "options": [
         {
-          "label": "0 — the comparison promo_id = NULL is never true",
+          "label": "0: the comparison promo_id = NULL is never true",
           "why": "The result of comparing against NULL is always NULL, never true or false. WHERE keeps only rows where the condition is true, so none pass."
         },
         {
@@ -382,7 +382,7 @@
           "why": "That would be the correct way to write the same condition. But = and IS NULL are different operators, and their results diverge on exactly the rows with an empty promo_id."
         },
         {
-          "label": "All rows in the table — NULL equals itself",
+          "label": "All rows in the table: NULL equals itself",
           "why": "In SQL's three-valued logic, NULL is never considered equal even to itself. A check for equality against NULL never yields true."
         },
         {
@@ -460,11 +460,11 @@
           "why": "COUNT(*) can honestly count \"zero rows\". But AVG has no value at all to average over an empty set, and the result is NULL, not 0."
         },
         {
-          "label": "Both return 0 — aggregates return zero over an empty set",
+          "label": "Both return 0: aggregates return zero over an empty set",
           "why": "Only COUNT(*) behaves that way, because it counts rows, not values. AVG, SUM, MIN, and MAX give NULL over an empty set."
         },
         {
-          "label": "Both return NULL — with no rows, there's nothing to count at all",
+          "label": "Both return NULL: with no rows, there's nothing to count at all",
           "why": "COUNT(*) was designed exactly to answer \"how many rows\", including the answer \"zero\" — it never turns into NULL."
         },
         {
@@ -519,7 +519,7 @@
       "predictQuestion": "What does this query return? SELECT includes list_price — a column that is neither in GROUP BY nor under an aggregate function.",
       "options": [
         {
-          "label": "It runs and returns one row per division, but list_price isn't an aggregate — it's the value from some single row in the group",
+          "label": "It runs and returns one row per division, but list_price isn't an aggregate: it's the value from some single row in the group",
           "why": "SQLite allows this liberty: it doesn't forbid a column outside GROUP BY and outside an aggregate — it substitutes the value from one arbitrary row of the group. The standard leaves this undefined, and you can't rely on the specific value."
         },
         {
@@ -527,7 +527,7 @@
           "why": "That's how PostgreSQL and most other DBMSes behave in strict mode. SQLite makes no such checks and allows this kind of query."
         },
         {
-          "label": "list_price comes back as NULL — since the column isn't aggregated, there's no value to show",
+          "label": "list_price comes back as NULL: since the column isn't aggregated, there's no value to show",
           "why": "SQLite doesn't replace a non-aggregated column with NULL — it takes an actual value from one of the group's rows."
         },
         {
@@ -560,11 +560,11 @@
       "predictQuestion": "Does the query run, given sku_count is an alias declared in this same SELECT line?",
       "options": [
         {
-          "label": "Yes — HAVING here refers to the same name as in SELECT, and that's allowed",
+          "label": "Yes: HAVING here refers to the same name as in SELECT, and that's allowed",
           "why": "SQLite lets HAVING reference a SELECT alias: since the name is already bound to the expression COUNT(*), by the time HAVING is checked it's substituted as that same expression."
         },
         {
-          "label": "No — at the point HAVING is checked, the alias sku_count hasn't been computed yet",
+          "label": "No: at the point HAVING is checked, the alias sku_count hasn't been computed yet",
           "why": "That would be the case under strict query execution order (SELECT runs after HAVING), but SQLite makes an exception here specifically for SELECT aliases."
         },
         {
@@ -572,7 +572,7 @@
           "why": "HAVING always runs after GROUP BY regardless — the only question is whether it can reference an alias, not at what stage the check happens."
         },
         {
-          "label": "No — HAVING, like WHERE, never sees SELECT aliases",
+          "label": "No: HAVING, like WHERE, never sees SELECT aliases",
           "why": "That's true for WHERE (it runs before aliases are even computed), but not for HAVING in SQLite and some other DBMSes."
         }
       ],
@@ -623,11 +623,11 @@
       "predictQuestion": "How many distinct customers does the query return, given dim_customer has 144 customers total, 12 of them distributors?",
       "options": [
         {
-          "label": "132 — distributors drop out: they don't sell to end buyers and never appear in fact_sellout",
+          "label": "132 (distributors drop out): they don't sell to end buyers and never appear in fact_sellout",
           "why": "fact_sellout records sales at points of sale. Distributors are not points of sale — they have zero rows in this table, and INNER JOIN discards customers with no match."
         },
         {
-          "label": "144 — INNER JOIN keeps all rows from the left table",
+          "label": "144: INNER JOIN keeps all rows from the left table",
           "why": "That's how LEFT JOIN behaves. INNER JOIN keeps only rows where a matching key was found in both tables."
         },
         {
@@ -635,7 +635,7 @@
           "why": "Distributor shipments live in a separate table, fact_sellin, not in fact_sellout — that table has nothing to do with this JOIN."
         },
         {
-          "label": "0 — customer_id has different data types in the two tables and never matches",
+          "label": "0: customer_id has different data types in the two tables and never matches",
           "why": "Both columns are numeric foreign keys into the same customer directory, and the comparison between them works normally."
         }
       ],
@@ -665,19 +665,19 @@
       "predictQuestion": "How many regions end up in the result, given there are 16 total and the new product isn't sold at all in five of them?",
       "options": [
         {
-          "label": "11 — regions with no sales of this product disappear, even though the JOIN in the text is still LEFT",
+          "label": "11: regions with no sales of this product disappear, even though the JOIN in the text is still LEFT",
           "why": "For regions without the target product, f.product_id is NULL after the join. The condition WHERE f.product_id = ... is never true for NULL, and such rows get filtered out — LEFT JOIN behaves like INNER here."
         },
         {
-          "label": "16 — LEFT JOIN keeps all regions regardless of where the filter sits",
+          "label": "16: LEFT JOIN keeps all regions regardless of where the filter sits",
           "why": "That would be true if the filter were in ON. In WHERE, it's checked after the join and cuts out exactly the NULL rows that LEFT JOIN generated."
         },
         {
-          "label": "5 — only the regions where the product truly has no sales come back",
+          "label": "5: only the regions where the product truly has no sales come back",
           "why": "It's the opposite: for those regions f.product_id is exactly NULL, and the condition WHERE f.product_id = ... filters them out rather than keeping them."
         },
         {
-          "label": "0 — a subquery in WHERE is incompatible with LEFT JOIN",
+          "label": "0: a subquery in WHERE is incompatible with LEFT JOIN",
           "why": "A subquery and LEFT JOIN have no technical conflict — the query runs and returns some of the regions."
         }
       ],
@@ -769,15 +769,15 @@
       "predictQuestion": "What ends up in channel_label for rows with channel = 'ecom' and channel = 'distributor'?",
       "options": [
         {
-          "label": "NULL — no WHEN branch matched, and there is no ELSE",
+          "label": "NULL: no WHEN branch matched, and there is no ELSE",
           "why": "A CASE WHEN ... END with no ELSE is an implicit ELSE NULL. If no condition is true, the whole expression becomes NULL."
         },
         {
-          "label": "An empty string '' — CASE substitutes a blank value for unhandled cases",
+          "label": "An empty string '': CASE substitutes a blank value for unhandled cases",
           "why": "An empty string is a specific value that would have to be written explicitly in ELSE. By default CASE returns NULL, not ''."
         },
         {
-          "label": "The original channel value — 'ecom' and 'distributor' as-is",
+          "label": "The original channel value: 'ecom' and 'distributor' as-is",
           "why": "CASE doesn't automatically fall back to the unhandled input value — only an explicit ELSE channel would behave that way."
         },
         {
@@ -821,19 +821,19 @@
       "predictQuestion": "How many rows does the query return, given brand_rev has 9 rows (one per brand) and div_rev has 2 (one per division)?",
       "options": [
         {
-          "label": "18 — a comma-separated list with no ON turns the join into a Cartesian product",
+          "label": "18: a comma-separated list with no ON turns the join into a Cartesian product",
           "why": "FROM a, b is a CROSS JOIN: every row of one table pairs with every row of the other. 9 brand_rev rows × 2 div_rev rows = 18."
         },
         {
-          "label": "9 — the second CTE just adds its columns onto the rows that already exist",
+          "label": "9: the second CTE just adds its columns onto the rows that already exist",
           "why": "That would be the case for a one-to-one join on a shared key. With no matching condition, every brand_rev row meets both div_rev rows, not just one."
         },
         {
-          "label": "11 — the rows of both CTEs line up one to one, and any extras get appended at the end",
+          "label": "11: the rows of both CTEs line up one to one, and any extras get appended at the end",
           "why": "That's how a vertical UNION ALL behaves. A comma-separated FROM is a horizontal join with no condition — it multiplies row counts rather than adding them."
         },
         {
-          "label": "The query fails with an error — CTEs can't be comma-separated in FROM",
+          "label": "The query fails with an error: CTEs can't be comma-separated in FROM",
           "why": "Syntactically this is perfectly legal — the same thing can be written for ordinary tables too. That's exactly why the mistake slips through unnoticed."
         }
       ],
@@ -884,11 +884,11 @@
       "predictQuestion": "Will this condition find all the June 2026 rows, given sale_date mixes four formats: 'YYYY-MM-DD', 'DD.MM.YYYY', 'DD/MM/YYYY', and 'YYYY-M-D' without leading zeros?",
       "options": [
         {
-          "label": "No — it only works for rows in YYYY-MM-DD format; the other formats compare as text and almost always give the wrong result",
+          "label": "No: it only works for rows in YYYY-MM-DD format; the other formats compare as text and almost always give the wrong result",
           "why": "A text comparison of '15.06.2026' against '2026-06-01' proceeds byte by byte through the string's leading characters, not by the meaning of the date — it has nothing to do with which month the date actually belongs to."
         },
         {
-          "label": "Yes — SQLite recognizes a date in any of these formats and compares by value",
+          "label": "Yes: SQLite recognizes a date in any of these formats and compares by value",
           "why": "SQLite has no separate \"date\" type: sale_date is plain TEXT, and >= / <= always compare character by character, regardless of what a human sees in the string."
         },
         {
@@ -914,7 +914,7 @@
       "predictQuestion": "What values do the two rows with revenue 800, and the following row with 700, get?",
       "options": [
         {
-          "label": "rn: 2 and 3, then 4 — rnk: 2 and 2, then 4 — dense: 2 and 2, then 3",
+          "label": "rn: 2 and 3, then 4; rnk: 2 and 2, then 4; dense: 2 and 2, then 3",
           "why": "ROW_NUMBER numbers rows consecutively and breaks ties arbitrarily; RANK gives ties the same rank and skips the next number; DENSE_RANK gives ties the same rank and leaves no gaps."
         },
         {
@@ -926,7 +926,7 @@
           "why": "Only ROW_NUMBER behaves that way. RANK and DENSE_RANK account for tied values."
         },
         {
-          "label": "rn: 2 and 2 — RANK and DENSE_RANK will match",
+          "label": "rn: 2 and 2; RANK and DENSE_RANK will match",
           "why": "ROW_NUMBER can never produce equal numbers, and RANK and DENSE_RANK diverge from each other exactly after a tie."
         }
       ],
@@ -977,19 +977,19 @@
       "predictQuestion": "What rn values do the two ecom rows get (revenue 500 and 300), given they come after three retail rows in the table itself?",
       "options": [
         {
-          "label": "1 and 2 — numbering restarts in each partition, regardless of where the rows sit in the table",
+          "label": "1 and 2: numbering restarts in each partition, regardless of where the rows sit in the table",
           "why": "PARTITION BY splits the row set into independent groups, and within each one ROW_NUMBER counts from one — the physical order of rows in the source table has no effect on this."
         },
         {
-          "label": "4 and 5 — the numbering continues across the whole table after retail",
+          "label": "4 and 5: the numbering continues across the whole table after retail",
           "why": "That's how ordinary numbering without PARTITION BY would behave. PARTITION BY's whole role is to split a single counter into several — one per channel."
         },
         {
-          "label": "Undefined — PARTITION BY requires the rows to already be sorted by channel",
+          "label": "Undefined: PARTITION BY requires the rows to already be sorted by channel",
           "why": "PARTITION BY groups the rows logically for the computation itself, regardless of their physical order in the source table."
         },
         {
-          "label": "1 and 1 — without sorting inside the partition, ROW_NUMBER can't tell the rows apart",
+          "label": "1 and 1: without sorting inside the partition, ROW_NUMBER can't tell the rows apart",
           "why": "There is an ORDER BY revenue DESC inside OVER here — it's exactly what determines which row is first and which is second within the ecom partition."
         }
       ],
@@ -1051,19 +1051,19 @@
       "predictQuestion": "What ends up in prev_revenue for the first row of the modern_trade channel (2025-01), given the row immediately before it in the ordered list is the ecom row for March (2382221)?",
       "options": [
         {
-          "label": "2382221 — March's ecom revenue, not NULL and not a modern_trade value",
+          "label": "2382221: March's ecom revenue, not NULL and not a modern_trade value",
           "why": "LAG without PARTITION BY looks at the previous row of the entire ordered result as a whole. Since rows run consecutively by channel, month, the row before modern_trade's first month is ecom's last month, not an empty value."
         },
         {
-          "label": "NULL, same as ecom's first row — both channels start with a clean slate",
+          "label": "NULL, same as ecom's first row: both channels start with a clean slate",
           "why": "That would be the case if the window were split with PARTITION BY channel. Without it, the boundary between channels means nothing special to LAG, same as the boundary between any two ordinary neighboring months."
         },
         {
-          "label": "751734 — modern_trade's January revenue gets duplicated as its own previous-row value",
+          "label": "751734: modern_trade's January revenue gets duplicated as its own previous-row value",
           "why": "LAG never looks at the current row against itself — only at the previous row in the given order, and here the previous one belongs to ecom."
         },
         {
-          "label": "0 — LAG substitutes zero when the previous row belongs to a different channel",
+          "label": "0: LAG substitutes zero when the previous row belongs to a different channel",
           "why": "LAG has no special logic for a category change. It honestly takes the previous row's value, whatever it is, and in this case that's ecom's real revenue, not zero."
         }
       ],
@@ -1145,7 +1145,7 @@
       "predictQuestion": "What happened to the «Aqualis» brand between Q1 2024 and Q1 2025?",
       "options": [
         {
-          "label": "Price was raised by almost 20%, which offset a nearly quarter-size drop in volume — revenue holds up on price, not demand",
+          "label": "Price was raised by almost 20%, which offset a nearly quarter-size drop in volume: revenue holds up on price, not demand",
           "why": "Units fell from 26,531 to 20,482 (−23%), while the average price rose from 53 to 63.4 (+20%) — as a result revenue dipped only 7.6%, even though the real physical sales volume shrank much more sharply."
         },
         {

@@ -127,7 +127,7 @@
       "predictQuestion": "By the third time, the task changed in substance. In what way, exactly?",
       "options": [
         {
-          "label": "A one-off analysis turned into regular reporting — that's a different kind of task now, not the same request",
+          "label": "A one-off analysis turned into regular reporting: that's a different kind of task now, not the same request",
           "why": "The same question, asked a third time with a new period, is a sign that what's needed isn't an answer but a tool: a mart the stakeholder opens themselves. Otherwise the request will repeat forever."
         },
         {
@@ -135,7 +135,7 @@
           "why": "Five minutes, multiplied by every week over a year, adds up to several working days dissolved into small tasks and invisible in any workload report. And the stakeholder waits on you the whole time instead of just looking themselves."
         },
         {
-          "label": "The stakeholder can't formulate the task — requirements need to be gathered again",
+          "label": "The stakeholder can't formulate the task: requirements need to be gathered again",
           "why": "The stakeholder actually formulated it with complete clarity, and repetition isn't a flaw in the brief. The problem isn't that the question is unclear — it's that the answer is delivered by hand."
         },
         {
@@ -162,15 +162,15 @@
           "why": "If the logic is right and the result is understated, there's one explanation left — it was computed over incomplete data. A partially-run pipeline produces exactly this picture: the query honestly sums whatever made it in before it."
         },
         {
-          "label": "Check the query one more time — there must be a bug in a filter somewhere",
+          "label": "Check the query one more time: there must be a bug in a filter somewhere",
           "why": "A fourth check of the same query rarely finds what the first three didn't. Once the logic is confirmed, it's cheaper to check the input than the calculation: compare the row count for March in the mart against the source."
         },
         {
-          "label": "Chalk it up to rounding and methodology differences — 4% is within normal range",
+          "label": "Chalk it up to rounding and methodology differences: 4% is within normal range",
           "why": "4% here is 191 thousand yen, not a rounding error. A gap of this size always has a specific cause, and \"within normal range\" just means nobody went looking for it."
         },
         {
-          "label": "Recompute it in the accounting system — the error is probably on their end",
+          "label": "Recompute it in the accounting system: the error is probably on their end",
           "why": "Possible, but you should start from the end where the odds are better and the check is cheaper. The accounting system here is the primary source, the mart is a copy, and copies are usually where things break, not originals."
         }
       ],
@@ -197,7 +197,7 @@
           "why": "The boundary isn't the word \"forecast\". Extending a trend with a seasonal adjustment is ordinary analyst work; you need a data scientist where a model with many factors, uncertainty estimation, and regular retraining is required."
         },
         {
-          "label": "Compute it and hand over one number — easier for the stakeholder to plan around",
+          "label": "Compute it and hand over one number: easier for the stakeholder to plan around",
           "why": "A single number with no interval or assumptions creates false precision: it gets remembered as a promise, and any deviation will look like the analyst's mistake, when the real cause was an unaccounted-for promo."
         },
         {
@@ -220,11 +220,11 @@
       "predictQuestion": "Which question gives you the most to work with for defining the task?",
       "options": [
         {
-          "label": "\"What will you decide after looking at it?\" — a question about the action that follows the number",
+          "label": "\"What will you decide after looking at it?\": a question about the action that follows the number",
           "why": "Its answer immediately sets the metric, the cut, and the frequency all at once. \"Where to send the field team\" is one thing; \"should we pull the brand off the shelf\" is entirely another, even though both get called a \"sales dashboard.\""
         },
         {
-          "label": "\"Which metrics should we show — revenue, units, average price?\"",
+          "label": "\"Which metrics should we show: revenue, units, average price?\"",
           "why": "A reasonable question asked too early: the set of metrics follows from the decision, not the other way around. Ask about metrics first and you'll get \"let's show all of them\" — right back where you started."
         },
         {
@@ -255,7 +255,7 @@
           "why": "The request and the goal have diverged: the person asked for a tool because they didn't expect to get an answer. The export isn't harmful, but they'll spend hours going through 19,000 rows by hand to reproduce what you can compute with a query in a minute."
         },
         {
-          "label": "Just hand over the export — the stakeholder is an adult and knows what they need",
+          "label": "Just hand over the export: the stakeholder is an adult and knows what they need",
           "why": "Formally flawless and professionally thin. The stakeholder named a method, not a task — and they picked that method not because it's the best one, but because it's the only one they expected from you."
         },
         {
@@ -290,7 +290,7 @@
           "why": "\"Done\" and \"accepted\" are different events. Without a shared criterion, the moment of closure is set by the stakeholder, whenever they open the report — and their idea of completeness can differ from yours by several days of work."
         },
         {
-          "label": "The report might turn out technically wrong — there's nobody to check the calculation",
+          "label": "The report might turn out technically wrong: there's nobody to check the calculation",
           "why": "Definition of done is about the task's boundaries, not the correctness of the calculation. The numbers need checking regardless, and that check doesn't depend on this agreement."
         },
         {
@@ -317,7 +317,7 @@
           "why": "The difference is exactly 12 — the number of distributors in the directory. Finance counts everyone they invoice; sales counts only outlets where an end consumer buys the product. Both numbers are correct, each for its own question."
         },
         {
-          "label": "A query bug on one side — only one of the two numbers is correct",
+          "label": "A query bug on one side: only one of the two numbers is correct",
           "why": "A gap that exactly matches the count of records of one type is a sign of different definitions, not a bug. A query bug would produce an arbitrary difference, not one this clean."
         },
         {
@@ -383,7 +383,7 @@
           "why": "Recomputing history is actually the right move — comparing periods under different rules would be worse. The problem isn't the recompute, it's that nobody was told about it."
         },
         {
-          "label": "The returns data is now lost — it can't be viewed anymore",
+          "label": "The returns data is now lost: it can't be viewed anymore",
           "why": "Per the setup, returns weren't lost — they were broken out into a separate line. The data got more detailed, not poorer."
         },
         {
@@ -406,7 +406,7 @@
       "predictQuestion": "What's wrong here?",
       "options": [
         {
-          "label": "One month is missing, and the annual total is understated by its amount — while the total itself still looks plausible",
+          "label": "One month is missing, and the annual total is understated by its amount: while the total itself still looks plausible",
           "why": "Twelve months give twelve rows. Eleven means a month dropped out — a filter boundary or a data gap — and the annual sum is understated by almost 4M, while still looking outwardly reasonable."
         },
         {
@@ -441,11 +441,11 @@
           "why": "The figure exceeds the whole company's annual revenue by more than seven hundred times — that's not an outlier, it's a sign of breakage: a join that duplicated rows, a lost filter, or mixed-up units. This can't be sent, not even with a caveat."
         },
         {
-          "label": "Send it with a note that the number needs checking — let the stakeholder decide",
+          "label": "Send it with a note that the number needs checking: let the stakeholder decide",
           "why": "That offloads the check onto the recipient. They don't know how the calculation works, and the only thing they'll take away from a report like this is that your numbers need separate verification."
         },
         {
-          "label": "Remove the anomalous row and send the rest — the other regions' data is correct",
+          "label": "Remove the anomalous row and send the rest: the other regions' data is correct",
           "why": "There's no certainty of that: whatever inflated one row could have touched the others too, just less visibly. And silently deleting a row from a report is the worst possible move."
         },
         {
@@ -468,15 +468,15 @@
       "predictQuestion": "How do you check the result when there's nothing to reconcile against?",
       "options": [
         {
-          "label": "Compute the same figure a second, independent way — from a different table or at a different granularity — and compare",
+          "label": "Compute the same figure a second, independent way (from a different table or at a different granularity) and compare",
           "why": "Two independent calculations landing on the same number is almost as strong a check as reconciling with a source. Total sales computed by outlet and, separately, by product matching means neither rows nor filters were lost."
         },
         {
-          "label": "There's nothing to check it against — send it with a note that the data is new and unreconciled",
+          "label": "There's nothing to check it against: send it with a note that the data is new and unreconciled",
           "why": "The note is honest, but it's a substitute for a check, not a check itself. An independent cross-check is possible almost always, even without an external source."
         },
         {
-          "label": "Show it to the stakeholder — they know the line better and will notice if something's off",
+          "label": "Show it to the stakeholder: they know the line better and will notice if something's off",
           "why": "Their perspective is genuinely useful, and they might catch something implausible. But that's a check after sending, and its cost is exactly what you're trying to avoid."
         },
         {
@@ -499,7 +499,7 @@
       "predictQuestion": "Whose question does this number actually answer?",
       "options": [
         {
-          "label": "Only the brand manager's: fact_sellout is sales at outlets — that is, shelf demand",
+          "label": "Only the brand manager's: fact_sellout is sales at outlets, that is, shelf demand",
           "why": "Sell-out captures the last link visible in our data: the product moved through a register. That's exactly what \"demand\" means, and that's what the brand manager is looking at."
         },
         {
@@ -534,7 +534,7 @@
           "why": "The denominator will only ever contain our own brands and our own outlets. The market also includes competitors and channels that never appear in our database at all, so their share can never emerge from any version of this calculation."
         },
         {
-          "label": "Market share with some error — with this much data, the estimate should be close",
+          "label": "Market share with some error: with this much data, the estimate should be close",
           "why": "The error here isn't a matter of quantity, it's a matter of category: an entire class of objects is missing from the denominator. No amount of accumulated data will make competitor sales appear."
         },
         {
@@ -542,7 +542,7 @@
           "why": "Closer, but still no: even at our own outlets, competitors' products sit on the shelf too, and we don't see their sales. What you get is our own assortment's share within our own outlets."
         },
         {
-          "label": "Nothing meaningful — a calculation like this makes no sense",
+          "label": "Nothing meaningful: a calculation like this makes no sense",
           "why": "The calculation is perfectly meaningful, it just answers a different question. Brand share within your own portfolio is a useful metric for assortment management — it just can't be called market share."
         }
       ],
@@ -561,7 +561,7 @@
       "predictQuestion": "Which of these can be told apart using fact_sellout data?",
       "options": [
         {
-          "label": "None of them: all three causes look identical in the sales data — an absence of sales",
+          "label": "None of them: all three causes look identical in the sales data, namely an absence of sales",
           "why": "A sales fact table records sales, not their absence: at zero demand, at zero delivery, and at product sitting unstocked in the back room, there will be no rows either way. Sales data fundamentally contains no information about whether the product was on the shelf."
         },
         {
@@ -592,15 +592,15 @@
       "predictQuestion": "Which number to use?",
       "options": [
         {
-          "label": "Shipped, 4,694K — revenue is recognized at the transfer of control over the goods",
+          "label": "Shipped, 4,694K: revenue is recognized at the transfer of control over the goods",
           "why": "Revenue arises neither when an order is placed nor when the money lands — it arises when control over the goods transfers to the buyer, usually at shipment or receipt, depending on the contract terms."
         },
         {
-          "label": "Orders placed, 4,910K — that is the month's sales",
+          "label": "Orders placed, 4,910K: that is the month's sales",
           "why": "An order is intent, not a sale: some get canceled, some ship in April, some get cut down by stock availability. This number belongs to the sales funnel, not a revenue report."
         },
         {
-          "label": "Landed in the account, 3,380K — the company's actual cash",
+          "label": "Landed in the account, 3,380K: the company's actual cash",
           "why": "That's cash movement, not revenue. With payment terms, March revenue arrives as cash in May, while March's incoming cash is January and February's revenue — a report by cash receipts measures the past."
         },
         {
@@ -623,11 +623,11 @@
       "predictQuestion": "Which month does this amount land in on the revenue report?",
       "options": [
         {
-          "label": "April — revenue is determined by the transfer of title, and that happened at receipt",
+          "label": "April: revenue is determined by the transfer of title, and that happened at receipt",
           "why": "The physical shipment date is irrelevant here: the contract explicitly ties transfer of control to receipt, and until April 2 the goods remain the supplier's property, even while in transit."
         },
         {
-          "label": "March — the goods left the warehouse in March, so they were sold in March",
+          "label": "March: the goods left the warehouse in March, so they were sold in March",
           "why": "The shipment date is convenient and often used in operational reports, but it only determines revenue when the contract ties control transfer to shipment. Here the contract says otherwise."
         },
         {
@@ -654,7 +654,7 @@
       "predictQuestion": "Where did the difference go?",
       "options": [
         {
-          "label": "Nowhere: it's accounts receivable — the goods shipped, the cash arrives once the payment term expires",
+          "label": "Nowhere: it's accounts receivable; the goods have shipped, but the cash arrives once the payment term expires",
           "why": "With 45-day terms, March revenue turns into cash in May, and the cash landing in March is January and February's revenue. The gap isn't a loss — it's the normal offset between two different accounting systems."
         },
         {
@@ -716,19 +716,19 @@
       "predictQuestion": "In which question is sell-in the correct source?",
       "options": [
         {
-          "label": "A — company revenue is created by the shipment into the channel, not by a purchase at an outlet",
+          "label": "A: company revenue is created by the shipment into the channel, not by a purchase at an outlet",
           "why": "The company's money comes from the distributor at the moment of shipment. How much of that product ended up sold to end buyers has no bearing on March revenue."
         },
         {
-          "label": "B — a promo decision is made based on shipment volume",
+          "label": "B: a promo decision is made based on shipment volume",
           "why": "A promo is launched to speed up the product leaving the shelf, so the decision is made on sell-out. Sell-in would only show how much the distributor managed to bring into their warehouse."
         },
         {
-          "label": "C — how much to ship is planned from past shipments",
+          "label": "C: how much to ship is planned from past shipments",
           "why": "Planning shipments off past shipments is a sure way to fuel overstocking: the channel will order the same amount as last time, regardless of whether it actually sold. It's planned from demand — that is, from sell-out and stock levels."
         },
         {
-          "label": "D — whether the new product arrived is visible from shipments",
+          "label": "D: whether the new product arrived is visible from shipments",
           "why": "\"Is it moving off the shelf\" is literally the definition of sell-out. Shipments answer a different question: did the new product reach the distributor's warehouse, which is only the first step."
         }
       ],
@@ -755,7 +755,7 @@
           "why": "The current flow is operating normally, but it isn't clearing out the past. Stock grew fivefold and hasn't come down since December — it keeps aging and taking up warehouse space regardless of what the ratio looks like."
         },
         {
-          "label": "Yes, the surplus has already been sold off — otherwise the ratio would be above one",
+          "label": "Yes, the surplus has already been sold off: otherwise the ratio would be above one",
           "why": "A ratio above one means stock is growing, not that it's being sold off. Selling down stock looks like a ratio below one, and there's no such quarter in the data."
         },
         {
@@ -782,7 +782,7 @@
           "why": "Six months of the same picture in a row is a property of the target, not a result produced by people. If it were the people, the distribution would be wider: part of the team would consistently overperform."
         },
         {
-          "label": "The team performs poorly — people need to be changed or reinforced",
+          "label": "The team performs poorly: people need to be changed or reinforced",
           "why": "Changing people changes the distribution of results, and here the distribution is precisely stable and shifted downward in the same way every time. Swap half the team and you'd get the same picture — because it's set by the bar, not by who's clearing it."
         },
         {
@@ -817,7 +817,7 @@
           "why": "They're not supposed to match. The demand forecast is an estimate of what will happen; the sales plan is a target the company sets for itself. Matching would mean the company sets no goals and only predicts."
         },
         {
-          "label": "That the forecast is understated — marketing is counting on promos to boost demand",
+          "label": "That the forecast is understated: marketing is counting on promos to boost demand",
           "why": "A plausible explanation, and if so it belongs among the plan's stated assumptions, alongside the planned promos. But the excess of plan over forecast, by itself, only ever means stock that has to land somewhere."
         },
         {
@@ -844,11 +844,11 @@
           "why": "At the alignment meeting, the argument isn't about the chart — it's about trust in the number. A track record of forecast error — how far off it's usually been, and whether it's biased high or low — is the only thing that turns an estimate from an opinion into a measurable claim."
         },
         {
-          "label": "A more detailed breakdown — by SKU instead of by brand",
+          "label": "A more detailed breakdown: by SKU instead of by brand",
           "why": "More detail without an accuracy track record just multiplies the number of figures nobody can trust. A per-SKU forecast usually isn't more accurate either — it just gets noisier than per-brand."
         },
         {
-          "label": "Better formatting — leadership responds to visuals",
+          "label": "Better formatting: leadership responds to visuals",
           "why": "Formatting helps deliver the content, it doesn't create it. A beautifully presented forecast with no accuracy history gets taken on faith just as readily as an ugly one."
         },
         {
@@ -871,15 +871,15 @@
       "predictQuestion": "Which of the three numbers answers \"how is the brand growing\"?",
       "options": [
         {
-          "label": "+3.2% — the annual comparison: only it is fully stripped of seasonality",
+          "label": "+3.2%, the annual comparison: only it is fully stripped of seasonality",
           "why": "A year contains every season on both sides of the comparison, so the calendar drops out entirely. What's left is what the question was actually about: whether the brand changed in substance."
         },
         {
-          "label": "+316% — the freshest trend, that's what shows current growth",
+          "label": "+316%: the freshest trend, that's what shows current growth",
           "why": "It's the move from a summer trough to an autumn peak, and it repeats every year: in 2024 the same August-September move gave +79%. Month-over-month on a seasonal product measures the calendar, not the company's performance."
         },
         {
-          "label": "+36% — comparing the same-named months, seasonality is accounted for",
+          "label": "+36%: comparing the same-named months, seasonality is accounted for",
           "why": "Seasonality really is removed, and it's an honest comparison. But one month is a small base: a promo or shipment shifting by a week moves this number more than the real trend does. Good as a reference point, not as an answer about brand growth."
         },
         {
@@ -902,19 +902,19 @@
       "predictQuestion": "Which method removes seasonality and still refreshes every month?",
       "options": [
         {
-          "label": "C — rolling year: the full season lands in both sides of the comparison, and the window shifts monthly",
+          "label": "C (rolling year): the full season lands in both sides of the comparison, and the window shifts monthly",
           "why": "Twelve months contain a full seasonal cycle on both sides, so the calendar effect cancels out. And the window moves every month, so you don't have to wait until year-end for the metric."
         },
         {
-          "label": "B — year over year by month",
+          "label": "B: year over year by month",
           "why": "Seasonality is removed, and it refreshes monthly too. But a single month is noisy: a promo or a large shipment shifting by a week moves this number more than the real trend does — which is why it's watched alongside the rolling year, not instead of it."
         },
         {
-          "label": "D — year-to-date",
+          "label": "D: year-to-date",
           "why": "An honest comparison, but with shifting reliability: in March it rests on three months, in December on twelve. The same metric behaves differently at the start and end of the year, and a January reading isn't comparable to a November one."
         },
         {
-          "label": "A — month over month",
+          "label": "A: month over month",
           "why": "The freshest and the least useful for a seasonal product: it measures the transition between seasons, not a change in the business."
         }
       ],
@@ -964,7 +964,7 @@
       "predictQuestion": "By June 2025, numeric distribution lost 10.6 points, weighted only 5.1. What did that mean at the time?",
       "options": [
         {
-          "label": "The brand was losing outlets below the average turnover: many addresses lost, little revenue — but those are exactly the outlets that go first, and the large ones follow later",
+          "label": "The brand was losing outlets below the average turnover: many addresses lost, little revenue, but those are exactly the outlets that go first, and the large ones follow later",
           "why": "Weighted distribution falls slower than numeric precisely when the departing outlets are smaller than average. That's not a reason to relax — it's an early signal: the shelf is crumbling from the edges. By December, weighted had already lost 34 points — the wave had reached the large outlets."
         },
         {
@@ -1119,11 +1119,11 @@
       "predictQuestion": "Which SKU will the chain question first, and why?",
       "options": [
         {
-          "label": "\"Sport 0.75L\": it occupies nearly as much shelf as the leaders, but moves off it two to three times slower — an assortment review compares return on space, not total volume",
+          "label": "\"Sport 0.75L\": it occupies nearly as much shelf as the leaders, but moves off it two to three times slower; an assortment review compares return on space, not total volume",
           "why": "The chain pays for shelf space, not for a brand. Sport is in 46 outlets — same as sparkling 0.5L — but delivers 4.48 units a week vs. 8.73. From the store's point of view, that's the worst return on space in the entire portfolio."
         },
         {
-          "label": "\"Still 5L\": it has the narrowest distribution in the portfolio — 40 outlets",
+          "label": "\"Still 5L\": it has the narrowest distribution in the portfolio, just 40 outlets",
           "why": "Narrow distribution is our problem, not the chain's: in the 40 outlets where it's stocked, it moves at 8.80, above the portfolio average. A category manager cares about their own shelf's return, not how many other stores stock the product."
         },
         {
@@ -1193,7 +1193,7 @@
           "why": "A +113% revenue lift against a 33% discount means volume grew faster than price fell — that's exactly a working promo. Failure would look like volume growth smaller than the price drop, i.e. falling revenue."
         },
         {
-          "label": "It can't be evaluated: online stores also grew 5%, so the promo touched them too — there's no clean control group left",
+          "label": "It can't be evaluated: online stores also grew 5%, so the promo touched them too, and there's no clean control group left",
           "why": "Five percent on an 850-unit channel is ordinary week-to-week noise, not a promo effect — chain growth against that backdrop is threefold. Demanding total stillness from a control group means never getting one at all."
         }
       ],
@@ -1212,7 +1212,7 @@
       "predictQuestion": "What is the real lift from the promo?",
       "options": [
         {
-          "label": "About 1,420 units: category-wide the promo gave +1,930 during its own weeks, but the next two weeks fell 510 below baseline — part of the promoted SKU's +2,400 was moved over from \"Salt 90g\", part pulled forward from the future",
+          "label": "About 1,420 units: category-wide the promo gave +1,930 during its own weeks, but the next two weeks fell 510 below baseline; part of the promoted SKU's +2,400 was moved over from \"Salt 90g\", part pulled forward from the future",
           "why": "The category, not the SKU, is what should be measured, over the full cycle, not just the promo weeks. Category-wide, the promo gave +1,930 over two weeks, but the following two weeks went 510 into the red — leaving about 1,420 in volume, and noticeably less in money once the discount is accounted for."
         },
         {
@@ -1313,7 +1313,7 @@
           "why": "Sales per pharmacy grew, but unevenly — bouncing between 3.6 and 9.0 with no direction since January. Building a plan on a lever that's oscillated around one level for half a year means mistaking noise for growth."
         },
         {
-          "label": "Growth slowed in February and stopped in June — the new product never caught on, and the launch should be called a failure",
+          "label": "Growth slowed in February and stopped in June: the new product never caught on, and the launch should be called a failure",
           "why": "Nineteen pharmacies in five months is a normal rollout pace, and the June dip falls in the vitamin off-season, visible across the rest of the brand's SKUs too. The problem isn't a failed launch, it's a rollout stalled halfway."
         },
         {
@@ -1336,7 +1336,7 @@
       "predictQuestion": "How should the discrepancy be explained?",
       "options": [
         {
-          "label": "There's no error: these are two different events in the chain — a warehouse shipment and a pharmacy purchase. The channel's warehouse sits between them, and the 14-thousand stock increase explains most of the gap, the rest is panel extrapolation error",
+          "label": "There's no error: these are two different events in the chain, a warehouse shipment and a pharmacy purchase. The channel's warehouse sits between them, and the 14-thousand stock increase explains most of the gap, the rest is panel extrapolation error",
           "why": "Shipments can't be compared directly to the panel: it's sell-in and sell-out at different links. Product that left for a distributor only enters the panel once a pharmacy sells it to a buyer — or never enters it at all if it sits on the shelf."
         },
         {
@@ -1460,7 +1460,7 @@
       "predictQuestion": "How much of this 22% is genuine growth from the outlets that remained?",
       "options": [
         {
-          "label": "Less than half: the like-for-like outlets grew 9.7%, the rest came from losing below-average outlets — they were dragging the average down, and stopped",
+          "label": "Less than half: the like-for-like outlets grew 9.7%, the rest came from losing below-average outlets; they were dragging the average down, and stopped",
           "why": "The departed outlets averaged 5 thousand less than the ones that stayed. Their departure lifts the average by itself, with not one extra sale: 1.097 × 1.110 = 1.22 — real growth and the composition effect together reproduce the observed 22%."
         },
         {
@@ -1491,7 +1491,7 @@
       "predictQuestion": "Which one to continue with?",
       "options": [
         {
-          "label": "Option A: until it's known exactly which outlets left, the task has no owner and no first step — a list of 46 addresses with chain names turns the analysis into a work plan",
+          "label": "Option A: until it's known exactly which outlets left, the task has no owner and no first step; a list of 46 addresses with chain names turns the analysis into a work plan",
           "why": "Decomposition is carried to the link that has someone able to act on it. \"There are fewer outlets\" is an observation; \"we left these specific chains\" is a task for a specific person, with an obvious first move."
         },
         {
@@ -1522,7 +1522,7 @@
       "predictQuestion": "What should you tell the director?",
       "options": [
         {
-          "label": "The rule doesn't hold here: the top 20% of SKUs deliver 36%, and reaching 80% of revenue needs twenty of the twenty-nine SKUs. There's almost no \"dead weight\" in this portfolio — cutting it means cutting things that genuinely sell",
+          "label": "The rule doesn't hold here: the top 20% of SKUs deliver 36%, and reaching 80% of revenue needs twenty of the twenty-nine SKUs. There's almost no \"dead weight\" in this portfolio: cutting it means cutting things that genuinely sell",
           "why": "20/80 is an empirical observation, not a law, and it doesn't hold on a flat assortment with no clear leaders. Here the gap between the top and bottom SKU is only eightfold, so the concentration the director expects simply isn't there."
         },
         {
@@ -1584,7 +1584,7 @@
       "predictQuestion": "What allocation of effort is correct?",
       "options": [
         {
-          "label": "AX — precise stock calculation and auto-ordering, since a mistake here is the costliest; AZ — the main target for manual attention and safety stock; CX — a simple replenishment rule with no human involved; CZ — a candidate for order-to-demand or delisting",
+          "label": "AX: precise stock calculation and auto-ordering, since a mistake here is the costliest; AZ: the main target for manual attention and safety stock; CX: a simple replenishment rule with no human involved; CZ: a candidate for order-to-demand or delisting",
           "why": "Attention is allocated by the product of a mistake's cost and its likelihood. AX is expensive but predictable, so it gets automated. AZ is expensive and unpredictable — it's the one cell where manual work actually pays off."
         },
         {
@@ -1615,7 +1615,7 @@
       "predictQuestion": "What does this pair of numbers say about the link between the two brands?",
       "options": [
         {
-          "label": "The joint movement is explained by a common cause — the season. As soon as each month is compared with the same month a year earlier, the link all but disappears",
+          "label": "The joint movement is explained by a common cause: the season. As soon as each month is compared with the same month a year earlier, the link all but disappears",
           "why": "The season lifts both drinks in summer and pushes both down in winter. The 0.84 correlation describes that shared wave, not a link between the brands: year over year the wave is subtracted from both series, and 0.10 is all that's left of the link."
         },
         {
@@ -1650,7 +1650,7 @@
           "why": "The reps didn't land in this ranking at random: one had a nationwide marketplace's warehouse in the portfolio, another had eight ordinary stores. The gap between channels is larger than any gap in quality of work, so the ranking ranks territories."
         },
         {
-          "label": "The work: this person hit record revenue off just two outlets — that's efficiency in its purest form",
+          "label": "The work: this person hit record revenue off just two outlets, which is efficiency in its purest form",
           "why": "Revenue per outlet here is set by the channel, not by anything the person did. The same warehouse in someone else's portfolio would produce roughly the same result — and that's a checkable claim, not a guess: the other seven e-com outlets average 3.2M ¥ each."
         },
         {
@@ -1677,15 +1677,15 @@
       "predictQuestion": "What in this table proves the promo produced the lift in chains?",
       "options": [
         {
-          "label": "The three lower rows: the same brand in channels with no promo, and other brands in the same channel. Not one of those series grew — so there was no general movement that could account for +221%",
+          "label": "The three lower rows: the same brand in channels with no promo, and other brands in the same channel. Not one of those series grew, so there was no general movement that could account for +221%",
           "why": "A control group is whatever lived through the same weeks but got no treatment. Here there are two of them: the brand without a promo in other channels, and the channel with the promo but other brands. Both held flat or fell, so tripling can't be pinned on the season, the weather or a general lift in chains."
         },
         {
-          "label": "The first row: a threefold rise in the channel where the promo ran — a before-and-after comparison is the proof",
+          "label": "The first row: a threefold rise in the channel where the promo ran; a before-and-after comparison is the proof",
           "why": "A before-and-after comparison doesn't separate the promo's effect from everything else that happened in those weeks: the end of summer, the back-to-school season, a competitor's moves. That's precisely why the first row needed three more."
         },
         {
-          "label": "The 17% drop in other brands is cannibalization, and it means there was no real growth — shoppers just moved their money around",
+          "label": "The 17% drop in other brands is cannibalization, and it means there was no real growth: shoppers just moved their money around",
           "why": "Cannibalization is the right next question, but it has to be checked separately and in units of comparable categories: a snack and water compete weakly. And crucially, it doesn't cancel the growth — «Krosti» gained 3 354 units, while other brands lost less than that within its category."
         },
         {
@@ -1708,19 +1708,19 @@
       "predictQuestion": "Which paragraph is written correctly?",
       "options": [
         {
-          "label": "C — the conclusion comes first, the numbers back up that specific conclusion, then a recommendation and an explicit request for a decision",
+          "label": "C: the conclusion comes first, the numbers back up that specific conclusion, then a recommendation and an explicit request for a decision",
           "why": "The reader gets an answer to his question in the first sentence and can decide without opening the attachment. The numbers are selected to support the conclusion rather than dumped wholesale, and the paragraph ends with what's needed from the reader."
         },
         {
-          "label": "B — facts only, no interpretation: let the manager draw his own conclusion, that's his responsibility",
+          "label": "B (facts only, no interpretation): let the manager draw his own conclusion, that's his responsibility",
           "why": "Drawing the conclusion from these numbers is your job, not his: that's what you did the decomposition for. Handing over four pairs of numbers without a conclusion returns the task to someone who has neither the time nor the context of the calculation. And you lose the chance to explain why price is irrelevant here."
         },
         {
-          "label": "A — a polite cover note, with the substance in the attachment, where it belongs",
+          "label": "A: a polite cover note, with the substance in the attachment, where it belongs",
           "why": "The only thing the reader learns from this paragraph is that the work is done. Attachments get opened only if the first lines force it; a paragraph that doesn't force it turns all the work into a file nobody opens."
         },
         {
-          "label": "D — the conclusion comes first, and it's decisive enough to get the manager moving",
+          "label": "D: the conclusion comes first, and it's decisive enough to get the manager moving",
           "why": "There is a conclusion, but it doesn't follow from the analysis: the data are about losing the shelf, while the recommendation is about packaging and price. A confident tone is no substitute for a link to the facts, and \"rethink the approach as a whole\" isn't a decision anyone can take."
         }
       ],
@@ -1739,7 +1739,7 @@
       "predictQuestion": "What should change from audience to audience?",
       "options": [
         {
-          "label": "Depth and emphasis — matched to the decision that person makes; the facts and numbers themselves never change",
+          "label": "Depth and emphasis: matched to the decision that person makes; the facts and numbers themselves never change",
           "why": "The CEO needs the scale of the problem and what it's worth; the field lead needs the list of outlets and the order to work them; the analyst needs methodology, filters and the limits of the data. It's one and the same conclusion, cut three ways for three different decisions, not three versions of the truth."
         },
         {
@@ -1747,7 +1747,7 @@
           "why": "Length is a consequence, not a decision. The short version for the CEO differs from the short version for the field team not in size but in which fact made it in: what the issue is worth versus which outlets to visit."
         },
         {
-          "label": "The field team needs it simpler and without numbers — people in the field don't work with analytics every day",
+          "label": "The field team needs it simpler and without numbers: people in the field don't work with analytics every day",
           "why": "That swaps \"for a different decision\" for \"for less clever people.\" The field lead needs the most concrete numbers of all — which outlets, in what order, whom to talk to; simplifying them makes the analysis useless exactly where someone will act on it."
         },
         {
@@ -1770,19 +1770,19 @@
       "predictQuestion": "Which version is right?",
       "options": [
         {
-          "label": "C — separate what's confirmed, what's in question and what exactly it affects, with a date for the check",
+          "label": "C: separate what's confirmed, what's in question and what exactly it affects, with a date for the check",
           "why": "Three levels of confidence are named explicitly, and crucially it says what the uncertainty affects and what it doesn't. The budget decision can be made today; the decision on the list of outlets after the 12th."
         },
         {
-          "label": "B — honestly admit the uncertainty and give no conclusion until it's checked",
+          "label": "B: honestly admit the uncertainty and give no conclusion until it's checked",
           "why": "Formally honest, practically useless: a \"may have\" with no indication of what specifically is in question and how much it changes the picture reads as \"the analyst isn't sure of anything.\" The reader will either decide blind or not decide at all."
         },
         {
-          "label": "A — say nothing: the conclusion is right in the main, and a caveat would only weaken the email",
+          "label": "A (say nothing): the conclusion is right in the main, and a caveat would only weaken the email",
           "why": "The caveat will surface — at a meeting, from a colleague, or a month later. What suffers then isn't that one number but trust in everything you bring, including the flawless parts. And staying quiet denies the reader the chance to factor the risk into their decision."
         },
         {
-          "label": "D — send it in a week, once the data are fully checked",
+          "label": "D: send it in a week, once the data are fully checked",
           "why": "Sometimes that's right, but not here: the confirmed part is enough for the main decision, and a week of standing still costs you negotiations that never started. Completeness bought at the price of being late is also a mistake, just a less visible one."
         }
       ],
@@ -1801,11 +1801,11 @@
       "predictQuestion": "Which set of forms is right?",
       "options": [
         {
-          "label": "1 — a line over time; 2 — horizontal bars sorted by size; 3 — a scatter plot; 4 — a waterfall",
+          "label": "1: a line over time; 2: horizontal bars sorted by size; 3: a scatter plot; 4: a waterfall",
           "why": "Each form encodes exactly what's being asked: a line for continuous change over time, bars for comparing magnitudes across categories, points for the relationship between two numeric quantities, a waterfall for how the parts contribute to a total change."
         },
         {
-          "label": "1 — bars by week; 2 — a pie by region; 3 — a line; 4 — a table",
+          "label": "1: bars by week; 2: a pie by region; 3: a line; 4: a table",
           "why": "Bars over a hundred weeks turn into a picket fence where the trend can't be read. A pie answers a question about shares of a whole, not \"who lost the most.\" A line connects points that have no order between them. A table doesn't show contribution — the reader has to work it out by eye."
         },
         {
@@ -1813,7 +1813,7 @@
           "why": "A form being understandable is no substitute for it fitting the question. Bars really are easy to read, but on a time series of a hundred weeks they hide the very thing the chart is built for — the shape of the change."
         },
         {
-          "label": "1 — a line; 2 — vertical bars; 3 — a scatter plot; 4 — a pie",
+          "label": "1: a line; 2: vertical bars; 3: a scatter plot; 4: a pie",
           "why": "Three of the four are right; the error is in the last one. A pie shows shares of a whole, while the question is about contribution to a change — there are positive and negative parts, and they can't fit into a circle in principle."
         }
       ],
@@ -1836,7 +1836,7 @@
           "why": "A bar is compared by length, so where it starts isn't a styling setting but part of the encoding: truncate the axis and you physically change the ratio the eye reads. A line encodes change through slope and needs no zero base — but a broken scale still gets labeled."
         },
         {
-          "label": "You must never truncate an axis on any chart — it's a recognized manipulation technique",
+          "label": "You must never truncate an axis on any chart: it's a recognized manipulation technique",
           "why": "The rule is correct for bars and harmful as a universal law: drawing temperature, an exchange rate or market share from zero is pointless — real fluctuations flatten into a straight line and the chart stops showing anything at all."
         },
         {
@@ -1863,11 +1863,11 @@
       "predictQuestion": "Which form answers this question?",
       "options": [
         {
-          "label": "A Pareto chart: bars in descending order of share plus a cumulative-percentage line — it reads off directly how many SKUs you need to reach any threshold",
+          "label": "A Pareto chart: bars in descending order of share plus a cumulative-percentage line, which reads off directly how many SKUs you need to reach any threshold",
           "why": "The slide's question is about accumulation, not about individual shares. The cumulative curve answers it geometrically: you can see both that the top is modest and that reaching 80% means going all the way to the twentieth product."
         },
         {
-          "label": "A pie chart with 29 sectors — the most direct way to show shares of a whole",
+          "label": "A pie chart with 29 sectors: the most direct way to show shares of a whole",
           "why": "Twenty-nine sectors means most of them are thinner than their label. People can't compare angles that size, and a circle doesn't answer a question about accumulation at all: summing sectors by eye is impossible."
         },
         {
@@ -1956,7 +1956,7 @@
       "predictQuestion": "What do you do?",
       "options": [
         {
-          "label": "Clarify which question they're solving, hand over the minimum that serves it — by territory without names, say — and send it not through the shared chat but after clearing it with the data owner",
+          "label": "Clarify which question they're solving, hand over the minimum that serves it (by territory without names, say), and send it not through the shared chat but after clearing it with the data owner",
           "why": "Three actions close three different risks: clarifying the purpose cuts out unnecessary fields, de-identifying removes personal data where the task doesn't need it, and the sign-off and the transfer channel record who authorized it and where it went."
         },
         {
@@ -1987,7 +1987,7 @@
       "predictQuestion": "What do you do with the analysis before Thursday?",
       "options": [
         {
-          "label": "Show him the numbers and the method before the committee — not to get the conclusion approved, but so he has time to check it and bring his own explanation; present the analysis unchanged",
+          "label": "Show him the numbers and the method before the committee: not to get the conclusion approved, but so he has time to check it and bring his own explanation; present the analysis unchanged",
           "why": "Bad news heard publicly and for the first time turns a conversation about promo mechanics into a defence of reputation, and the argument becomes about you rather than the number. A heads-up neither softens the conclusion nor grants a veto — it removes the surprise; and it often buys you what the data does not have, such as a competitor's promo running the same weeks."
         },
         {
@@ -1999,7 +1999,7 @@
           "why": "Remove the comparison and you remove the conclusion itself: the whole point is that the decision to repeat is being made on a figure twice the real effect. Gentleness that costs the reader the conclusion is not tact, it is distortion."
         },
         {
-          "label": "Hand the analysis to him and let him present it: it is his promo and his reporting — let him decide what goes to the committee",
+          "label": "Hand the analysis to him and let him present it: it is his promo and his reporting, so let him decide what goes to the committee",
           "why": "The committee asked the question, not him, and the answer goes back to whoever asked. Handing the material to an interested party and stepping aside makes him the editor of his own assessment."
         }
       ],
@@ -2049,7 +2049,7 @@
       "predictQuestion": "How do you challenge this metric?",
       "options": [
         {
-          "label": "Go to the metric's owner one to one with the specific case where it gives a false signal, and propose not removal but a second metric alongside it — like-for-like growth",
+          "label": "Go to the metric's owner one to one with the specific case where it gives a false signal, and propose not removal but a second metric alongside it: like-for-like growth",
           "why": "The argument is not with the metric in general but with the decision it steers wrong: +22% while revenue halves is a case the owner will see for himself. Adding rather than replacing keeps three years of history comparable and does not require him to admit that the report has been misleading all this time."
         },
         {
@@ -2080,7 +2080,7 @@
       "predictQuestion": "What do you tell the sales director?",
       "options": [
         {
-          "label": "Give an estimate with the assumption named: the past revenue of those outlets, adjusted for the trend of the ones that stayed — and say plainly that this is an upper bound, not a measured loss",
+          "label": "Give an estimate with the assumption named: the past revenue of those outlets, adjusted for the trend of the ones that stayed, and say plainly that this is an upper bound, not a measured loss",
           "why": "The board needs an order of magnitude for a decision about negotiation budget, not roubles. An estimate with its derivation written next to it delivers exactly that and stays honest: the reader can see the number came from those outlets' past rather than from measurement."
         },
         {
@@ -2111,7 +2111,7 @@
       "predictQuestion": "What do you do with the slide?",
       "options": [
         {
-          "label": "Keep the answer to the board's question in the headline — what is happening to the brand — and show +22% next to it as part of the explanation, with one line on where it comes from",
+          "label": "Keep the answer to the board's question in the headline (what is happening to the brand) and show +22% next to it as part of the explanation, with one line on where it comes from",
           "why": "The headline answers the question the board was convened for; +22% does not answer it but does explain the mechanics of the decline, so it belongs on the slide — just not first. The line about the mix effect also removes the temptation to read that growth as success."
         },
         {
@@ -2142,7 +2142,7 @@
       "predictQuestion": "How do you correct it?",
       "options": [
         {
-          "label": "Write immediately to the people whose decision rests on that table — with the corrected figures and an explicit line, \"the main conclusion is unchanged, the priority changes\"; a short correction follows to the other forty",
+          "label": "Write immediately to the people whose decision rests on that table: with the corrected figures and an explicit line, \"the main conclusion is unchanged, the priority changes\"; a short correction follows to the other forty",
           "why": "Negotiations are happening today, so speed matters more than completeness of explanation. Splitting it into \"what did not change / what did\" lets the reader work out in ten seconds whether the correction touches their actions, without rereading the whole report."
         },
         {
