@@ -8,7 +8,7 @@
       "example": "The requester's question: \"revenue by category for the quarter.\"\n\nIn a reporting model that's one fact table and one product lookup: sum revenue, break it down by category. Two objects, one relationship.",
       "reads": "The report reads exactly the data it needs, without getting in the way of checkout — the model refreshes at night and lives apart from the production database.",
       "wrong": "The same question, as a query straight against the production database: join orders, order_lines, products, product_categories, category_tree, and sum by the top level of the tree.",
-      "wrongWhy": "It will work — right up to the day fifty people open the report at once and a heavy query collides with the same database that's handling checkout. A second bill arrives later: the source's structure changes for the app's needs, not the report's, and one day a renamed column silently breaks the reporting.",
+      "wrongWhy": "It will work, right up to the day fifty people open the report at once and a heavy query collides with the same database that's handling checkout. A second bill arrives later: the source's structure changes for the app's needs, not the report's, and one day a renamed column silently breaks the reporting.",
       "selfCheck": "Ask yourself: does this query compete for resources with whatever is making money right now? If yes, there needs to be a layer between it and the source."
     },
     {
@@ -19,7 +19,7 @@
       "example": "fact_sellout: one row is the sales of one SKU at one outlet for one week. There are 118,449 rows, and exactly that many distinct \"week × outlet × SKU\" combinations.",
       "reads": "The match between row count and combination count is the proof: the key isn't duplicated, so the grain is described exactly, not approximately.",
       "wrong": "\"One row of fact_sellout is one purchase.\"",
-      "wrongWhy": "The phrasing sounds natural and is almost always wrong: a register rings up dozens of receipts a week, while the table has one row per SKU for that week. It's already an aggregate, not an event. The mistake surfaces on \"how many purchases were there\" — this table has no answer to that at all, and people usually bring the row count instead of an answer.",
+      "wrongWhy": "The phrasing sounds natural and is almost always wrong: a register rings up dozens of receipts a week, while the table has one row per SKU for that week. It's already an aggregate, not an event. The mistake surfaces on \"how many purchases were there\"; this table has no answer to that at all, and people usually bring the row count instead of an answer.",
       "selfCheck": "Check it by counting: the row count and the count of distinct combinations of the key dimensions should match. If they don't, the grain is actually finer than you thought."
     },
     {
@@ -30,7 +30,7 @@
       "example": "fact_sellout (118,449 rows) plus dim_product (47), dim_customer (144), dim_promo (89), dim_date. The \"category\" attribute sits as a column inside dim_product — five categories across forty-seven products.",
       "reads": "The product name is stored 47 times — once per product — not 118,449 times, once per sales row. Editing the name happens in one place and shows up in every report immediately.",
       "wrong": "Keep one flat table of 118,449 rows, where product_name, brand, category, city and region_name sit as columns next to revenue.",
-      "wrongWhy": "The most expensive thing here isn't disk space — it's consistency. Rename a product and the edit has to be carried into every row it appeared in, and any row you miss turns into a stray extra category in the filter. And the reverse case: a product that never sold this year simply doesn't exist in a table like this, so a \"sales by all SKUs\" report has no row for it with a zero.",
+      "wrongWhy": "The most expensive thing here isn't disk space; it's consistency. Rename a product and the edit has to be carried into every row it appeared in, and any row you miss turns into a stray extra category in the filter. And the reverse case: a product that never sold this year simply doesn't exist in a table like this, so a \"sales by all SKUs\" report has no row for it with a zero.",
       "selfCheck": "Ask of every column in the fact table: is it measured, or does it describe? If it describes, it belongs in a lookup table, where it's stored once."
     },
     {
@@ -41,7 +41,7 @@
       "example": "dim_product (47 rows, product_id unique) → fact_sellout (118,449 rows): one-to-many. Pick brand «Nettora» in a slicer — the filter travels from lookup to fact, and the revenue sum computes across that brand's five products.",
       "reads": "The \"one\" side filters the \"many\" side: the lookup sets which fact rows take part in the calculation.",
       "wrong": "Expecting a slicer on promo in dim_promo to filter dim_product the same way — \"show the products that took part in the promo.\"",
-      "wrongWhy": "The filter will reach from dim_promo into fact_sellout, and stop there: it doesn't flow back into dim_product by default — that's the \"many\"-to-\"one\" direction. The product list stays at its full 47, and that isn't a bug, it's the default behaviour — turning the reverse direction on takes a deliberate choice, and it has a cost.",
+      "wrongWhy": "The filter will reach from dim_promo into fact_sellout, and stop there: it doesn't flow back into dim_product by default; that's the \"many\"-to-\"one\" direction. The product list stays at its full 47, and that isn't a bug, it's the default behaviour; turning the reverse direction on takes a deliberate choice, and it has a cost.",
       "selfCheck": "Before you get surprised by a number, trace the filter's path with your finger from the slicer to the table where the measure computes. Did it get there, and did it change direction along the way?"
     },
     {
@@ -52,7 +52,7 @@
       "example": "fact_sellout links to dim_promo by promo_id — that's the correct path: a sales row either has a promo or it doesn't. The table's total revenue is ¥126,911,191, and along this path it stays that way.",
       "reads": "One path, one value. Every sales row corresponds to exactly one promo, or none.",
       "wrong": "Add a second path: fact_sellout → dim_product by product_id, then dim_product → dim_promo by brand, because \"a promo is set up per brand anyway.\"",
-      "wrongWhy": "Each of the nine brands has 9 to 11 entries in the promo lookup, so every sales row matches all of its brand's promos at once. Row count becomes 1,173,847 instead of 118,449, and revenue becomes ¥1,262,668,596 instead of ¥126,911,191 — exactly tenfold. No single row is \"wrong\" in this: the join did precisely what it was asked to do.",
+      "wrongWhy": "Each of the nine brands has 9 to 11 entries in the promo lookup, so every sales row matches all of its brand's promos at once. Row count becomes 1,173,847 instead of 118,449, and revenue becomes ¥1,262,668,596 instead of ¥126,911,191, exactly tenfold. No single row is \"wrong\" in this: the join did precisely what it was asked to do.",
       "selfCheck": "Count the paths from a fact table to a lookup. More than one — either delete the extra one, or leave it inactive and switch it on explicitly inside a measure."
     },
     {
@@ -63,7 +63,7 @@
       "example": "Brand «Nettora»'s share of revenue is 12.7% across the whole database. Set up as a measure, it's DIVIDE(Nettora revenue, total revenue). Add a region slicer for «Tokyo» to the report — the measure recomputes and shows 19.1%, because both parts of the formula recomputed along with the slicer.",
       "reads": "A measure doesn't store the number \"12.7%\" anywhere — it stores a formula and evaluates it under whatever filter is in effect right now.",
       "wrong": "Set up the same share as a calculated column: compute it once across the whole database and put 12.7% into every fact row.",
-      "wrongWhy": "After a Tokyo slicer, the column doesn't recompute — it holds the number that was written into it, not a formula, and it keeps showing 12.7% where the report expects 19.1%. Nothing about this looks wrong from the outside: there's a number, it looks plausible, and without checking against an independent calculation, a swap like this can go unnoticed for months.",
+      "wrongWhy": "After a Tokyo slicer, the column doesn't recompute; it holds the number that was written into it, not a formula, and it keeps showing 12.7% where the report expects 19.1%. Nothing about this looks wrong from the outside: there's a number, it looks plausible, and without checking against an independent calculation, a swap like this can go unnoticed for months.",
       "selfCheck": "Ask of every number in the model: does it have to change with a slicer, or not? Changes — a measure. Never changes (a product's category, say) — a column or a lookup attribute."
     },
     {
@@ -74,7 +74,7 @@
       "example": "A cell at the intersection of row «Tokyo» and a «Nettora» slicer: filter context is region = «Tokyo» AND brand = «Nettora». Revenue in that cell is ¥819,771. Remove the brand slicer — the context narrows to one condition, region = «Tokyo», and the same measure shows ¥3,718,723, the total across every brand.",
       "reads": "A cell doesn't \"hold\" a number — it sets the conditions a measure computes it under. Different cells in the same table almost always live in different filter contexts.",
       "wrong": "Assume that since it's the same measure (Revenue), the number must be the same in every cell of the report.",
-      "wrongWhy": "A measure is a formula, not a result. The same formula, evaluated in different filter contexts, legitimately and expectedly gives different numbers: that isn't a bug, it's the whole reason measures exist — they don't need a separate formula for every slicer.",
+      "wrongWhy": "A measure is a formula, not a result. The same formula, evaluated in different filter contexts, legitimately and expectedly gives different numbers: that isn't a bug, it's the whole reason measures exist; they don't need a separate formula for every slicer.",
       "selfCheck": "Before reading a number out of a cell, say out loud every condition acting on it: from the row, from the column, from the page's slicers. Miss one, and you won't understand where the number came from."
     },
     {
@@ -85,7 +85,7 @@
       "example": "fact_sellout's first row: revenue = ¥398.31. A column \"=SUM(fact_sellout[revenue])\" in that same row shows not 398.31, but 126,911,191 — the sum of revenue across the whole table, because SUM is bounded by nothing except a filter, and there is none.",
       "reads": "A plain reference to the current row's column, with no aggregating function, is what genuinely uses row context: \"=fact_sellout[revenue]\" returns exactly 398.31.",
       "wrong": "Write a column \"RowRevenue = SUM(fact_sellout[revenue])\", expecting to get that row's own value.",
-      "wrongWhy": "SUM is an aggregating function, built to add up a set of rows, not read one. Without an explicit transition from row context to filter context (that's what CALCULATE does), SUM sees an empty row context and aggregates whatever isn't filtered — meaning the entire table.",
+      "wrongWhy": "SUM is an aggregating function, built to add up a set of rows, not read one. Without an explicit transition from row context to filter context (that's what CALCULATE does), SUM sees an empty row context and aggregates whatever isn't filtered, meaning the entire table.",
       "selfCheck": "Does the calculated column's formula have an aggregating function (SUM, AVERAGE, COUNT)? If so, and you haven't wrapped it in CALCULATE — the result almost certainly isn't what you expected."
     },
     {
@@ -96,7 +96,7 @@
       "example": "One distributor's stock for one SKU: October 768, November 1,055, December 1,315 — climbing, a sign of stockpiling ahead of a bonus. Summing these three months into a \"quarterly stock total\" is meaningless: you get 3,138, a number that never once existed in the warehouse at any moment in time.",
       "reads": "Stock sums perfectly normally across products and distributors within the same month — that's a horizontal slice. Summing it across months, along time, doesn't work: months aren't independent portions, they're snapshots of the same inventory.",
       "wrong": "Show \"stock on hand for the year\" on a report as SUM(units_on_hand) across all twelve months of 2025.",
-      "wrongWhy": "The annual sum gives 370,142 — while actual stock at end of December was 52,350. A number sevenfold off the truth was arrived at with perfectly honest arithmetic — the question was simply put to the wrong function: annual stock is a value at a specific moment (usually period end), not a sum of monthly snapshots.",
+      "wrongWhy": "The annual sum gives 370,142, while actual stock at end of December was 52,350. A number sevenfold off the truth was arrived at with perfectly honest arithmetic; the question was simply put to the wrong function: annual stock is a value at a specific moment (usually period end), not a sum of monthly snapshots.",
       "selfCheck": "Before writing SUM, ask: does this quantity accumulate over a period (like revenue), or exist at every moment in time (like stock, price)? The second kind can't be summed across time."
     },
     {
@@ -107,7 +107,7 @@
       "example": "dim_date's row for March 3rd 2025: date_id = week_start = 2025-03-03, while its own month_start = 2025-03-01, quarter = 1. This one row connects fact_sellout (whose week starts March 3rd) and fact_sellin (whose month starts March 1st) — both see the same calendar, just through different columns of it.",
       "reads": "One \"quarter = 1\" slicer filters weekly sales and monthly shipments at the same time — because both fact tables ultimately connect to the same date table.",
       "wrong": "Skip dim_date: build a slicer straight on week_start in fact_sellout, and expect it to affect fact_sellin the same way.",
-      "wrongWhy": "fact_sellin has no row with date 2025-03-03 at all — the whole of March sits in one row dated 2025-03-01 there. A slicer built on one fact table's column finds no matches in the other: they literally hold different values in different columns, and no direct relationship between the two fact tables resolves that difference.",
+      "wrongWhy": "fact_sellin has no row with date 2025-03-03 at all; the whole of March sits in one row dated 2025-03-01 there. A slicer built on one fact table's column finds no matches in the other: they literally hold different values in different columns, and no direct relationship between the two fact tables resolves that difference.",
       "selfCheck": "How many fact tables does your model have, and how many different time granularities among them (week, month)? More than one, and you need a shared calendar — otherwise one slicer will never tie them all together."
     },
     {
@@ -118,7 +118,7 @@
       "example": "In fact_sellin, shipping lags ordering by 2 to 11 days, and 1,979 of 15,362 orders ship the following month. March 2025: by order date ¥3,303,414, by ship date ¥3,570,458. The active relationship is on order_date; a \"Revenue by shipment\" measure switches context to ship_date.",
       "reads": "A ¥267,000 gap for one month isn't a mistake in either number — it's two answers to two different questions: \"how much was ordered in March\" and \"how much shipped in March.\"",
       "wrong": "Add a second date table to the model — a separate calendar for the ship date — and connect each to its own column.",
-      "wrongWhy": "It formally works, but the field list ends up with two \"Year\" fields, two \"Quarter\" fields, and two slicers for people to guess between. Worse: one slicer stops filtering both measures at once — pick a year on the first calendar, and you won't narrow the measure computing off the second, leaving numbers for different periods sitting side by side on the report.",
+      "wrongWhy": "It formally works, but the field list ends up with two \"Year\" fields, two \"Quarter\" fields, and two slicers for people to guess between. Worse: one slicer stops filtering both measures at once. Pick a year on the first calendar, and you won't narrow the measure computing off the second, leaving numbers for different periods sitting side by side on the report.",
       "selfCheck": "How many dates does your fact table have, and how many calendars does your model have? If there's more than one calendar, ask yourself what slicer someone will put on the page — and what happens to the second measure."
     },
     {
@@ -129,7 +129,7 @@
       "example": "dim_product (47 rows, 9 brands) and dim_promo (89 promos, the same 9 brands). Brand repeats on both sides. The \"product × promo\" bridge holds 465 unique pairs: for brand «Nettora» that's 5 products × 10 promos = 50 bridge rows.",
       "reads": "Every bridge row is one specific \"this product took part in this promo\" pair. Both source tables connect to the bridge the way a lookup connects to a fact table, and the key no longer repeats on either relationship.",
       "wrong": "Link dim_product and dim_promo directly on the brand column, since it exists in both tables.",
-      "wrongWhy": "A relationship like that matches group to group, not row to row, and every pair inside a group becomes its own row in the calculation. That's exactly how revenue in mdl-013 grew from ¥126,911,191 to ¥1,262,668,596 — exactly tenfold, matching the number of promos per brand. A model usually won't even let you make a relationship like this active, but a join made in a query that bypasses the model is protected by nothing.",
+      "wrongWhy": "A relationship like that matches group to group, not row to row, and every pair inside a group becomes its own row in the calculation. That's exactly how revenue in mdl-013 grew from ¥126,911,191 to ¥1,262,668,596, exactly tenfold, matching the number of promos per brand. A model usually won't even let you make a relationship like this active, but a join made in a query that bypasses the model is protected by nothing.",
       "selfCheck": "Take the relationship's key and count row totals and distinct-value totals in both tables. Matches anywhere — an ordinary relationship. Matches nowhere — you need a bridge."
     },
     {
@@ -140,7 +140,7 @@
       "example": "Measure \"Aqualis Revenue\" = CALCULATE(SUM(revenue), brand = «Aqualis»). The page has a region slicer for «Tokyo». Result: ¥1,323,959 — the region filter survives, because region and brand are different columns; a brand slicer, if there were one, would get overwritten.",
       "reads": "The condition inside CALCULATE swapped out the brand filter and left the region filter untouched. Tokyo's full revenue, for comparison, is ¥8,876,489.",
       "wrong": "Assume CALCULATE(SUM(revenue), brand = «Aqualis»), with brand «Nettora» selected in a slicer, gives an intersection — meaning zero, since a product can't be two brands at once.",
-      "wrongWhy": "There's no intersection: the condition inside CALCULATE doesn't add to the slicer, it replaces it. The measure returns «Aqualis»'s full revenue, as if there were no brand slicer at all. This is the most common cause of \"why is my measure ignoring my filter\" — it isn't ignoring it, it's overwriting it.",
+      "wrongWhy": "There's no intersection: the condition inside CALCULATE doesn't add to the slicer, it replaces it. The measure returns «Aqualis»'s full revenue, as if there were no brand slicer at all. This is the most common cause of \"why is my measure ignoring my filter\"; it isn't ignoring it, it's overwriting it.",
       "selfCheck": "Before writing a condition inside CALCULATE, ask: could there already be a slicer on this column? If yes, you'll overwrite it. Need to preserve it and add your own on top — use KEEPFILTERS."
     },
     {
@@ -151,7 +151,7 @@
       "example": "dim_product has 9 brands and 47 products. The measure [Total Revenue] = SUM(revenue) gives ¥126,911,191 across the whole database. Invoked in the «Fruvia» brand row of a matrix, the same measure gives ¥25,465,980 — row context turned into a filter, \"brand = «Fruvia».\"",
       "reads": "A measure doesn't know about a \"current row\" — it only knows about filters. Context transition is the mechanism that turns one into the other.",
       "wrong": "Expect a calculated column \"=SUM(fact_sellout[revenue])\" in dim_product to show its own product's revenue — by analogy with how the same measure behaves in a matrix.",
-      "wrongWhy": "An ordinary calculated column has no context transition: SUM sees an empty filter context and aggregates the whole table, giving ¥126,911,191 in every row of the lookup. To get its own product's revenue, the formula needs wrapping in CALCULATE — that's exactly what translates row context into a filter.",
+      "wrongWhy": "An ordinary calculated column has no context transition: SUM sees an empty filter context and aggregates the whole table, giving ¥126,911,191 in every row of the lookup. To get its own product's revenue, the formula needs wrapping in CALCULATE; that's exactly what translates row context into a filter.",
       "selfCheck": "When you see a measure inside an iterator or a calculated column, ask: is there a CALCULATE here — explicit, or implicit via invoking a measure? If so, the current row has already become a filter, and the result needs reading with that in mind."
     },
     {
@@ -162,7 +162,7 @@
       "example": "March 2025 revenue is ¥4,694,330. SAMEPERIODLASTYEAR swaps the filter to March 2024 and returns ¥4,392,846; that gives 6.9% growth. TOTALYTD on the same cell swaps the filter to January-March 2025 and gives ¥12,566,159.",
       "reads": "None of these functions stores separate data — all three compute the same SUM(revenue), just under different sets of dates substituted in for the current one.",
       "wrong": "Apply these functions to a calendar that has gaps — a date table built from dates that actually occurred in the facts, say.",
-      "wrongWhy": "Time intelligence functions assume a continuous calendar: they compute \"the prior period\" by shifting dates, not by looking up a neighbouring row. A gap in the calendar silently breaks that shift. In our model, dim_date holds 912 consecutive days with not a single gap — 2025 is represented by all 365 of its days, including ones with no sales at all.",
+      "wrongWhy": "Time intelligence functions assume a continuous calendar: they compute \"the prior period\" by shifting dates, not by looking up a neighbouring row. A gap in the calendar silently breaks that shift. In our model, dim_date holds 912 consecutive days with not a single gap; 2025 is represented by all 365 of its days, including ones with no sales at all.",
       "selfCheck": "Check the calendar for continuity: its row count should equal the difference between its earliest and latest dates, plus one. If it doesn't match, complete the calendar first, then write YTD."
     },
     {
@@ -173,7 +173,7 @@
       "example": "In staging_raw_sellout one outlet, «Ichiba #1026», appears in four spellings: Ichiba and Itiba, with and without spaces at the edges. Plus 110 duplicates, 84 empty units and four different date formats across 3,110 rows. All of it is fixed in Power Query, once, at load time.",
       "reads": "After the preparation layer, one outlet enters the model instead of four, and no measure ever knows this problem existed.",
       "wrong": "Leave it as is and write TRIM with an Itiba-to-Ichiba replacement into every measure: CALCULATE(SUM(revenue), SUBSTITUTE(TRIM(customer_name), \"Itiba\", \"Ichiba\") = ...).",
-      "wrongWhy": "First, this repeats in every measure the outlet name appears in, and one day those copies will disagree. Second, the outlet slicer will still show four variants of one «Ichiba» — a measure cleans its own calculation, not what the person sees in the filter list. Third, a formula like that is evaluated on every query, whereas Power Query would have done the work once overnight.",
+      "wrongWhy": "First, this repeats in every measure the outlet name appears in, and one day those copies will disagree. Second, the outlet slicer will still show four variants of one «Ichiba»; a measure cleans its own calculation, not what the person sees in the filter list. Third, a formula like that is evaluated on every query, whereas Power Query would have done the work once overnight.",
       "selfCheck": "Ask of every cleanup: does its result depend on what is selected in the report? If not, it belongs in Power Query or at the source, not in a measure."
     },
     {
@@ -184,7 +184,7 @@
       "example": "dim_customer holds 144 retail outlets and 16 regions, and every outlet has one region — the current one. If an outlet moved from «Tokyo» to «Kanagawa», a \"sales by region for 2024\" report will show its entire history in the new region, as if it had always been there.",
       "reads": "There is no error in the data: the lookup table honestly answers \"where is this outlet now\". The report was simply asking a different question — \"where was it at the time of the sale\".",
       "wrong": "Solve the problem by adding a \"previous region\" column to the lookup table.",
-      "wrongWhy": "That covers exactly one move. The second move needs a \"region before last\", and so on — and more importantly, none of those columns answers which region was in effect on a specific sale date. SCD2 solves the problem generally: a customer gets as many rows as they have had states, and the fact references the right one by date.",
+      "wrongWhy": "That covers exactly one move. The second move needs a \"region before last\", and so on, and more importantly, none of those columns answers which region was in effect on a specific sale date. SCD2 solves the problem generally: a customer gets as many rows as they have had states, and the fact references the right one by date.",
       "selfCheck": "Ask of every lookup attribute: if it changes, should old reports change along with it, or stay as they were? The latter means you need SCD2."
     },
     {

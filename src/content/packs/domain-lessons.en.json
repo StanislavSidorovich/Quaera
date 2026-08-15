@@ -8,7 +8,7 @@
       "example": "\"The dashboard breaks every morning, the data is from yesterday\"\n  → DE territory: the nightly pipeline didn't land\n\n\"Why did sales drop in Kansai?\"\n  → DA territory: a one-off analysis with a conclusion\n\n\"I need this report every Monday at 9:00\"\n  → BI territory: regularity turns an analysis into a product",
       "reads": "The same question — \"what's going on with sales\" — can turn out to be any of the three tasks. What tells them apart isn't the topic or the difficulty, but what happens to the answer: is it looked at once, looked at every week, or does the source need fixing.",
       "wrong": "\"The dashboard breaks every morning\"\n  → the analyst manually re-runs the export every morning",
-      "wrongWhy": "The task gets solved and stays unsolved at the same time: the numbers are there, but the cause — a broken pipeline — is still there too. A month later this is a daily forty-minute ritual that nobody counts as work and that the person who could actually fix it never sees. Manually working around someone else's outage is the most expensive kind of help: it masks the problem just enough for people to stop noticing it.",
+      "wrongWhy": "The task gets solved and stays unsolved at the same time: the numbers are there, but the cause (a broken pipeline) is still there too. A month later this is a daily forty-minute ritual that nobody counts as work and that the person who could actually fix it never sees. Manually working around someone else's outage is the most expensive kind of help: it masks the problem just enough for people to stop noticing it.",
       "selfCheck": "Ask yourself: if I fix this right now, does the problem disappear — or come back tomorrow in the same shape? If it comes back, you're treating a symptom in someone else's territory, and that needs to be said out loud, not quietly patched over by re-running an export."
     },
     {
@@ -19,7 +19,7 @@
       "example": "Request:   \"Need a sales dashboard\"\nAsked:     \"What will you decide by looking at it?\"\nAnswer:    \"Where to send the field team next month\"\n\nBecame:    top 10 outlets with sales down more than 20%\n           vs. last month, with the sales rep's contact.\n           Viewed by the field team lead, once a month.",
       "reads": "One question about the decision compressed an endless \"sales dashboard\" into a ten-row table that takes an hour to build and will actually get used.",
       "wrong": "Request:  \"Need a sales dashboard\"\nBuilt:    20 charts — revenue, units, average price,\n          trend, shares, region map, top lists, funnel\nOutcome:  the stakeholder opened it once and asked:\n          \"Where do I see where to go?\"",
-      "wrongWhy": "A \"one for everything\" dashboard is an attempt to guess the question instead of asking it. It's more expensive to build, slower to run, needs upkeep, and still doesn't answer the stakeholder's actual question — it drowns among twenty charts, nineteen of which aren't about it. Completeness works against clarity here.",
+      "wrongWhy": "A \"one for everything\" dashboard is an attempt to guess the question instead of asking it. It's more expensive to build, slower to run, needs upkeep, and still doesn't answer the stakeholder's actual question; it drowns among twenty charts, nineteen of which aren't about it. Completeness works against clarity here.",
       "selfCheck": "Before opening the editor, finish this sentence: \"The stakeholder will look at this and decide ___.\" If you can't finish it, the task isn't defined yet, and it's too early to start."
     },
     {
@@ -30,7 +30,7 @@
       "example": "Monthly active outlet:\n  Source:       fact_sellout, month by week_start\n  Filters:      customer_type <> 'distributor'\n  Exclusions:   returns (units < 0) not counted\n  Granularity:  one row — one customer_id per month\n  Formula:      COUNT(DISTINCT customer_id) where SUM(units) > 0",
       "reads": "A definition two people can apply independently and get the same number from. Each item closes off a specific argument that would otherwise happen later, in front of an audience.",
       "wrong": "An active outlet is one that had sales.",
-      "wrongWhy": "Sounds complete and answers not a single practical question. Sales over what period — a month, a quarter, any period ever? Does a distributor count as an outlet? An outlet that sold one unit and took back a return of two — active or not? Everyone will compute it their own way and be sure they did the obvious thing.",
+      "wrongWhy": "Sounds complete and answers not a single practical question. Sales over what period: a month, a quarter, any period ever? Does a distributor count as an outlet? An outlet that sold one unit and took back a return of two: active or not? Everyone will compute it their own way and be sure they did the obvious thing.",
       "selfCheck": "Hand the definition to a colleague and ask them to compute it without asking you any questions. If they ask one, that's the item missing from the definition."
     },
     {
@@ -41,7 +41,7 @@
       "example": "Report: 2025 sales by month\n\n  Total        51,534K ¥ — reconciled against the annual P&L, matches\n  Order        ~4.3M per month — in line with last year\n  Completeness 12 rows, all months present\n  Extremes     max — December (peak), min — February (short month)",
       "reads": "None of the four checks requires recomputing anything. All of them are about looking at your own result through the eyes of someone who knows the business, not the query.",
       "wrong": "Report: 2025 sales by month\nRows in result: 11",
-      "wrongWhy": "Eleven months instead of twelve is the most common and least noticeable mistake: a month dropped out because of a filter boundary or a gap in the data, while the total still looks perfectly normal and gives no sign of anything wrong. There's exactly one way to catch it — deliberately counting the rows and comparing against how many there should be.",
+      "wrongWhy": "Eleven months instead of twelve is the most common and least noticeable mistake: a month dropped out because of a filter boundary or a gap in the data, while the total still looks perfectly normal and gives no sign of anything wrong. There's exactly one way to catch it: deliberately counting the rows and comparing against how many there should be.",
       "selfCheck": "Before sending, answer out loud: \"If this number is wrong, how exactly will I find out?\" No answer means there was no check — just a feeling that everything was fine."
     },
     {
@@ -52,7 +52,7 @@
       "example": "\"How much did we sell in June?\" — three different answers:\n\n  shipped to distributors    fact_sellin\n  sitting on their shelves   fact_stock\n  bought at outlets          fact_sellout\n\nThe numbers don't match, and shouldn't: they're three different events.",
       "reads": "\"Sold\" without naming the link isn't a metric — it's the start of a conversation.",
       "wrong": "\"How much of our product did consumers buy in Saitama?\"\n  → SUM(units) from fact_sellout for Saitama",
-      "wrongWhy": "The query answers a different question: how much moved through the registers of the outlets that made it into our records. A buyer could have bought from a competing distributor, at a chain that doesn't share data, or on a marketplace. Sell-out isn't \"the market\" — it's \"the part of the market visible to us\", and the gap grows the lower our coverage is.",
+      "wrongWhy": "The query answers a different question: how much moved through the registers of the outlets that made it into our records. A buyer could have bought from a competing distributor, at a chain that doesn't share data, or on a marketplace. Sell-out isn't \"the market\"; it's \"the part of the market visible to us\", and the gap grows the lower our coverage is.",
       "selfCheck": "Before answering a question about sales, name the link: shipment, warehouse, or register. Didn't name it — you're counting something unknown."
     },
     {
@@ -74,7 +74,7 @@
       "example": "Sell-in to sell-out ratio, Q4 2025:\n\n  Setouchi Trading Co.  28,203 / 11,574 = 2.44\n  Hokuriku Supply K.K.   9,216 /  8,760 = 1.05\n  Hokusei Trading Co.   12,018 / 11,509 = 1.04\n  Tokai Group K.K.      10,038 /  9,640 = 1.04\n  ... the other eight         1.04 to 1.05",
       "reads": "Eleven distributors out of twelve stay close to one — that's the channel working normally. One stands out at double: it took in 2.44 times more than the outlets it serves actually sold.",
       "wrong": "\"Sales grew 20%\" — computed from sell-in",
-      "wrongWhy": "Growing shipments can mean anything: real demand growth, a one-off purchase to hit an annual bonus, gearing up for a promo, or a distributor's planning mistake. The only way to tell them apart is sell-out — and if it didn't grow, \"sales growth\" means the product just moved from your warehouse to someone else's, and it'll come back as a drop next quarter.",
+      "wrongWhy": "Growing shipments can mean anything: real demand growth, a one-off purchase to hit an annual bonus, gearing up for a promo, or a distributor's planning mistake. The only way to tell them apart is sell-out, and if it didn't grow, \"sales growth\" means the product just moved from your warehouse to someone else's, and it'll come back as a drop next quarter.",
       "selfCheck": "Hearing \"sales grew\", ask: into the channel, or out of it? If only into it, check inventory levels before celebrating."
     },
     {
@@ -85,7 +85,7 @@
       "example": "April, «Fruvia» brand:\n\n  Demand forecast   18,200 units   estimated to sell\n  Sales plan        22,000 units   committed to ship\n  Gap                3,800 units   will sit in channel stock\n\nReason for the gap on record: entering a new chain on May 1.",
       "reads": "A forecast and a plan don't have to match — but the difference between them has to have a name. Here it does, so the April surplus sitting in warehouses won't be a surprise in June.",
       "wrong": "Demand forecast   18,200 units\nSales plan        22,000 units\nReason for the gap: not discussed",
-      "wrongWhy": "Without a named reason, the gap doesn't disappear — it just stops being visible: those 3,800 units still end up in the channel's warehouses. A quarter later they'll show up as a drop in orders, and it'll get pinned on sales, not planning — because by then nobody will remember there was nothing to overperform against.",
+      "wrongWhy": "Without a named reason, the gap doesn't disappear; it just stops being visible: those 3,800 units still end up in the channel's warehouses. A quarter later they'll show up as a drop in orders, and it'll get pinned on sales, not planning, because by then nobody will remember there was nothing to overperform against.",
       "selfCheck": "Find where the plan diverges from the forecast and ask what justifies the difference. An answer of \"that's just what was decided\" means the decision was made but never recorded — and there'll be nothing to deliberately repeat next cycle."
     },
     {
@@ -96,7 +96,7 @@
       "example": "«Vitanor» brand, the same growth, three answers:\n\n  August → September 2025      282 → 1,174    +316%\n  September 2024 → 2025        862 → 1,174     +36%\n  Year 2024 → 2025           9,126 → 9,419     +3.2%",
       "reads": "Three correct numbers about one brand, a hundredfold apart. +316% is the move from the summer trough to the autumn peak, and it repeats every year. Only the last line answers how the brand is actually growing.",
       "wrong": "\"Vitamins grew 316% — let's shift budget there\"",
-      "wrongWhy": "In 2024 the same August-to-September transition produced +79% (481 → 862) — that's seasonality, not an achievement. A decision made on MoM in a seasonal category buys the season at the price of \"growth\": the budget arrives at the peak and sits idle once the season turns.",
+      "wrongWhy": "In 2024 the same August-to-September transition produced +79% (481 → 862); that's seasonality, not an achievement. A decision made on MoM in a seasonal category buys the season at the price of \"growth\": the budget arrives at the peak and sits idle once the season turns.",
       "selfCheck": "Before comparing periods, ask: does this category have a season? If yes, compare against the same period last year or a rolling year, and never against the previous month."
     },
     {
@@ -107,7 +107,7 @@
       "example": "«Nettora» brand, household chemicals:\n\n  month      numeric      weighted\n  2024-01       81.9%        97.3%\n  2025-06       68.1%        92.1%\n  2025-08       56.4%        78.8%\n  2025-12       42.6%        63.5%\n  2026-06       33.0%        47.5%",
       "reads": "Through mid-2025, numeric distribution drops twice as fast as weighted — the brand is leaving small outlets, and the money is still mostly intact. From August, weighted collapses thirty points in five months: the wave has reached the large outlets, and that's a different stage of the problem.",
       "wrong": "\"Distribution is 94%\" — said without specifying which kind, or over what base",
-      "wrongWhy": "Numeric and weighted for the same brand diverge here by fourteen points, and on other portfolios the gap runs as high as forty. On top of that, weighted is sometimes computed over an outlet's total turnover and sometimes over just its category turnover — again two different numbers. A target of \"80% distribution\" with no clarification turns into two incomparable work plans: for «Nettora», 80% weighted is reached by winning back five outlets, while 80% numeric needs forty-five.",
+      "wrongWhy": "Numeric and weighted for the same brand diverge here by fourteen points, and on other portfolios the gap runs as high as forty. On top of that, weighted is sometimes computed over an outlet's total turnover and sometimes over just its category turnover, again two different numbers. A target of \"80% distribution\" with no clarification turns into two incomparable work plans: for «Nettora», 80% weighted is reached by winning back five outlets, while 80% numeric needs forty-five.",
       "selfCheck": "On hearing a distribution number, ask twice: which kind — numeric or weighted — and weighted over what base. No answer means the number means nothing."
     },
     {
@@ -140,7 +140,7 @@
       "example": "«Vitanor» share of packs among four OTC brands:\n\n  single month             rolling year\n  2024-03    11.0%         2025-03    29.4%\n  2025-02    49.5%         2025-09    29.5%\n  2025-08    13.5%         2025-12    27.1%\n  2026-06    24.4%         2026-06    26.1%\n\n  range 11.0 – 49.5        range 24.5 – 29.5",
       "reads": "The month-by-month share swings fourfold because the brands' seasons don't align: in the month of a competitor's peak, your share drops with not one lost pack. Over a rolling year, each brand's season enters the window exactly once, and what's left is the real movement — down three points over fifteen months.",
       "wrong": "\"Share fell from 49.5% to 24.4% in a year — we're losing the market\"",
-      "wrongWhy": "That's comparing February to June — vitamin season against off-season — and it'll repeat next year too. In a single month, a ratio metric's numerator and denominator both jump, and for different reasons. Before explaining a share drop by your own actions, compute it over a rolling year and separately check what happened to the denominator — maybe the market itself simply grew.",
+      "wrongWhy": "That's comparing February to June (vitamin season against off-season) and it'll repeat next year too. In a single month, a ratio metric's numerator and denominator both jump, and for different reasons. Before explaining a share drop by your own actions, compute it over a rolling year and separately check what happened to the denominator: maybe the market itself simply grew.",
       "selfCheck": "For any market-share series, ask: what window was it computed over. If it's monthly, don't draw conclusions about the brand's position until you've seen the same series over MAT."
     },
     {
@@ -162,7 +162,7 @@
       "example": "«Nettora» brand, Q2:\n\n                          2024-Q2      2026-Q2    change\n  revenue, ¥             2,121,702    1,079,055      −49%\n  outlets                       79           33      −58%\n  revenue per outlet, ¥     26,857       32,699      +22%\n\n  check: 33/79 × 32,699/26,857 = 0.51",
       "reads": "The factors moved in opposite directions, and the product reconciles with the actual figure — so the breakdown is complete. The brand didn't lose demand, it lost shelf space: where it stayed, sales even grew. The task belongs to sales, not marketing.",
       "wrong": "\"Revenue per outlet grew 22% — the remaining outlets are performing better\"",
-      "wrongWhy": "An average changes for two reasons: the members changed, or the composition of the group changed. The outlets that were lost averaged 24,738 ¥ against 29,810 ¥ for the ones that remained — their departure alone lifts the average by 11%. The 33 comparable outlets only grew 9.7%. A metric that improves from losing small outlets is doubly dangerous: put into a KPI, it turns shrinking distribution into apparent gains in efficiency.",
+      "wrongWhy": "An average changes for two reasons: the members changed, or the composition of the group changed. The outlets that were lost averaged 24,738 ¥ against 29,810 ¥ for the ones that remained; their departure alone lifts the average by 11%. The 33 comparable outlets only grew 9.7%. A metric that improves from losing small outlets is doubly dangerous: put into a KPI, it turns shrinking distribution into apparent gains in efficiency.",
       "selfCheck": "After decomposing, ask two questions: does the product of the factors reconcile with the fact, and who will you hand the result to. No owner means the analysis isn't finished; no reconciliation means the breakdown is wrong."
     },
     {
@@ -173,7 +173,7 @@
       "example": "29 SKUs in an FMCG division, 12 months:\n\n  rank    SKU share   cumulative revenue share\n     6       21%             36.3%\n    19       66%             79.5%\n    20       69%             82.2%\n\n  largest SKU — 8.5% of revenue, smallest — 1.0%",
       "reads": "The 20/80 rule doesn't hold here: the top fifth of the assortment delivers 36%, and reaching 80% takes all the way to SKU 20 out of 29. The assortment is even — there's no easy \"ballast\" to cut.",
       "wrong": "\"Demand for this SKU is unstable: CV 35%, raise the safety stock\"",
-      "wrongWhy": "The coefficient of variation measures spread, not unpredictability, and it can't tell a regular seasonal wave or the brand's own promo apart from real chaos. A seasonal water and a snack with a spike in its promo month both get a high CV, even though both events are known well in advance — one from nature's calendar, the other from trade marketing's. Before running XYZ, the series is cleaned: strip out the season, break out the promo as a separate effect, and compute variation on what's left.",
+      "wrongWhy": "The coefficient of variation measures spread, not unpredictability, and it can't tell a regular seasonal wave or the brand's own promo apart from real chaos. A seasonal water and a snack with a spike in its promo month both get a high CV, even though both events are known well in advance, one from nature's calendar, the other from trade marketing's. Before running XYZ, the series is cleaned: strip out the season, break out the promo as a separate effect, and compute variation on what's left.",
       "selfCheck": "Before computing CV, look at the series with your own eyes. If a spike is explained by the calendar — a season or your own promo — it isn't uncertainty, and a safety stock won't fix it."
     },
     {
@@ -184,7 +184,7 @@
       "example": "Water and juice sales, 2025:\n\n  correlation of monthly sales                   0.84\n  correlation of year-over-year changes           0.10\n\nRemoving the season kills the link — so there wasn't one:\na common factor was lifting both series at once.",
       "reads": "The first number describes a shared wave, not a link between the brands. The second is what's left of the link once the wave is taken out: essentially nothing. Shelving them together would produce a coincidence, not growth.",
       "wrong": "\"Correlation 0.84 — the juice pulls the water, let's shelve them as a pair\"",
-      "wrongWhy": "Correlation is symmetric: swap the series and you get the same number, so it contains no direction whatsoever. Nor does the size of the coefficient help: 0.84 is just as compatible with a shared season as with a real link. The only way to tell them apart is a test — remove the suspected common factor and see what's left.",
+      "wrongWhy": "Correlation is symmetric: swap the series and you get the same number, so it contains no direction whatsoever. Nor does the size of the coefficient help: 0.84 is just as compatible with a shared season as with a real link. The only way to tell them apart is a test: remove the suspected common factor and see what's left.",
       "selfCheck": "Before concluding \"A affects B,\" answer three questions: what third factor could have lifted both, could the arrow point the other way, how did the objects end up in the groups being compared. If even one has no answer, you have an observation, not a cause."
     },
     {
@@ -195,7 +195,7 @@
       "example": "Bad: \"Sending over the analysis of the brand's decline.\nAttached is the extract by outlet, channel and region.\"\n\nGood: \"The brand lost half its revenue purely by going off\nthe shelf: we are no longer stocked in 46 of 79 outlets, and\nwhere we remain we sell 22% more. I suggest starting with the\nfive largest outlets. I need a decision on the negotiation\nbudget.\"",
       "reads": "The second version can be read on a phone between meetings and decided on without opening the attachment. Its numbers are selected to fit the conclusion: of the analysis's four pairs of figures, two remain — the ones that prove the shelf was lost.",
       "wrong": "\"Revenue was 1 079 055 ¥ against 2 121 702 ¥. Outlets: 33\nagainst 79. Revenue per outlet: 32 699 ¥ against 26 857 ¥.\"",
-      "wrongWhy": "These are facts with no conclusion, and they look conscientious: \"I'm not imposing an interpretation.\" In practice you're handing the reader back work you've already done — running the decomposition and seeing which multiplier moved. They have neither the time nor the context of the calculation, so most often they'll do nothing.",
+      "wrongWhy": "These are facts with no conclusion, and they look conscientious: \"I'm not imposing an interpretation.\" In practice you're handing the reader back work you've already done: running the decomposition and seeing which multiplier moved. They have neither the time nor the context of the calculation, so most often they'll do nothing.",
       "selfCheck": "Cover everything but the first two lines and ask: what will a person do having read only this? If the answer is \"open the attachment,\" the paragraph isn't written yet."
     },
     {
@@ -206,7 +206,7 @@
       "example": "Question: how dependent is the company on a few products?\n\n  SKUs in FMCG in total                        29\n  the top 20% of SKUs give                  36.3% of revenue\n  reaching 80% of revenue takes         20 SKUs of 29\n\nForm: Pareto — descending bars plus a cumulative curve.",
       "reads": "The cumulative curve gives the answer at a glance: the top is modest, the tail is long, concentration is moderate. A pie with 29 sectors doesn't answer this question at all — summing angles by eye is impossible.",
       "wrong": "Growth of 3.2% over a year, drawn as bars with the axis\nstarting at the minimum: the last bar is three times the first.",
-      "wrongWhy": "A bar encodes magnitude with length, so a truncated axis changes not the styling but the message itself: the ratio of lengths stops matching the ratio of numbers. An honest \"+3.2%\" caption doesn't save it — a picture is read instantly and whole, the number only if you linger, and what stays in memory is the surge.",
+      "wrongWhy": "A bar encodes magnitude with length, so a truncated axis changes not the styling but the message itself: the ratio of lengths stops matching the ratio of numbers. An honest \"+3.2%\" caption doesn't save it; a picture is read instantly and whole, the number only if you linger, and what stays in memory is the surge.",
       "selfCheck": "Cover the labels and look at the geometry alone: what will a person conclude? If it diverges from the number, the form or the scale was chosen wrongly."
     },
     {
@@ -217,7 +217,7 @@
       "example": "Revenue for 2025 — three correct numbers:\n\n  sales        51 533 887 ¥   at retail (sell-out)\n  commercial   42 713 947 ¥   shipments before discounts\n  finance      39 104 808 ¥   shipments after discounts (−8.4%)",
       "reads": "None of the three is wrong: they answer different questions. The gap between the first and second is the retail markup and stock in the channel; between the second and third, distributor discounts. An argument over which is \"correct\" isn't settled by calculation.",
       "wrong": "\"Consolidate the three sources into one warehouse and there'll be a single number\"",
-      "wrongWhy": "A warehouse doesn't choose between definitions: it will keep all three and add a fourth of its own. A single data mart turns an agreement into code and is therefore useful — but only once the agreement exists. Without one, a technical project simply moves the argument up a level.",
+      "wrongWhy": "A warehouse doesn't choose between definitions: it will keep all three and add a fourth of its own. A single data mart turns an agreement into code and is therefore useful, but only once the agreement exists. Without one, a technical project simply moves the argument up a level.",
       "selfCheck": "If a meeting spends more than five minutes establishing whose number is right, the problem is no longer in the data. A good outcome for that meeting isn't \"we picked a number\" but \"we assigned a metric owner and a date by which the definition will be written down.\""
     }
   ]
