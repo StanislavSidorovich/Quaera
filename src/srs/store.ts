@@ -26,6 +26,18 @@ export interface Progress {
   /** Даты сессий в формате YYYY-MM-DD — для серии дней подряд. */
   activeDays: string[];
   totalSolved: number;
+  /**
+   * Когда прогресс сбрасывали вручную; `null` — не сбрасывали ни разу.
+   *
+   * Одному устройству эта метка не нужна вовсе: сброс там и так стирает
+   * всё. Она нужна слиянию копий (`sync/merge.ts`), у которого нет
+   * операции удаления: без метки очищенное устройство получило бы весь
+   * стёртый прогресс обратно с другого, и кнопка «Сбросить прогресс»
+   * оказалась бы ложью. Поле добавлено без смены `version`: в старых
+   * записях его просто нет, и `undefined` читается как «не сбрасывали»
+   * — ровно то, что верно для прогресса, созданного до появления поля.
+   */
+  resetAt?: string | null;
 }
 
 export const emptyProgress = (): Progress => ({
@@ -34,6 +46,17 @@ export const emptyProgress = (): Progress => ({
   taskRecords: {},
   activeDays: [],
   totalSolved: 0,
+  resetAt: null,
+});
+
+/**
+ * Прогресс после ручного сброса: тот же пустой, но с меткой времени.
+ * Отдельной функцией, а не параметром у `emptyProgress`, чтобы место
+ * вызова читалось: «здесь сброс», а не «здесь пустой прогресс, но с датой».
+ */
+export const clearedProgress = (now = new Date()): Progress => ({
+  ...emptyProgress(),
+  resetAt: now.toISOString(),
 });
 
 export function loadProgress(): Progress {

@@ -25,6 +25,7 @@ import {
 } from './srs/scheduler';
 import {
   applyAttempt,
+  clearedProgress,
   emptyProgress,
   exportProgress,
   loadProgress,
@@ -858,7 +859,10 @@ export default function App() {
     recordedTasksRef.current.clear();
     clearSession();
     setPendingSession(null);
-    setProgress(emptyProgress());
+    // clearedProgress, а не emptyProgress: метка сброса нужна будущему
+    // слиянию копий, чтобы стёртое не вернулось с другого устройства
+    // (см. resetAt в srs/store.ts и sync/merge.ts).
+    setProgress(clearedProgress());
   }
 
   /** true — файл распознан и прогресс заменён; false — не тот файл или битый JSON. */
