@@ -1062,10 +1062,10 @@ const raw = Buffer.from(db.export());
 // вешают перехватчик на известные архивные расширения и утаскивают файл к себе,
 // а странице достаётся пустой ответ. Клиент всё равно определяет сжатие
 // по сигнатуре первых байт, так что имя файла ни на что не влияет.
-const dbFile = path.join(root, '.cache', 'querium.sqlite');
+const dbFile = path.join(root, '.cache', 'quaera.sqlite');
 await writeFile(dbFile, raw);
 const gz = gzipSync(raw, { level: 9 });
-await writeFile(path.join(outDir, 'querium.dataset'), gz);
+await writeFile(path.join(outDir, 'quaera.dataset'), gz);
 
 /**
  * Тип колонки — не отдельно поддерживаемый список, а разбор той же DDL,
@@ -1106,7 +1106,7 @@ const sampleFor = (table, rowCount) => {
 };
 
 const schemaJson = {
-  dataset: 'querium',
+  dataset: 'quaera',
   // 2 — текст схемы стал парами { ru, en }. Клиент отличает старый документ
   // по форме, а не по числу (см. useSchema), но версия обязана не врать.
   version: 2,

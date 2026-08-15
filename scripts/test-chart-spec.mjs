@@ -32,7 +32,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = mkdtempSync(path.join(tmpdir(), 'querium-chart-'));
+const outDir = mkdtempSync(path.join(tmpdir(), 'quaera--'));
 
 let failed = 0;
 const fail = (name, msg) => {
@@ -312,7 +312,7 @@ try {
   const SQL = await initSqlJs({
     locateFile: (f) => path.join(path.dirname(require.resolve('sql.js')), f),
   });
-  const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'querium.sqlite'))));
+  const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'quaera.sqlite'))));
   const run = (sql) => {
     const stmt = db.prepare(sql);
     const rows = [];

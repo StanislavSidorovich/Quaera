@@ -5,7 +5,7 @@ import { en } from './en';
 export type Locale = 'ru' | 'en';
 type Strings = typeof ru;
 
-const STORAGE_KEY = 'querium-locale';
+const STORAGE_KEY = 'quaera-locale';
 const dict: Record<Locale, Strings> = { ru, en };
 
 /**

@@ -8,7 +8,7 @@
  * у него свой ключ и своя версия, которая может меняться независимо.
  */
 
-const KEY = 'querium.sandbox.v1';
+const KEY = 'quaera.sandbox.v1';
 
 export interface SavedScript {
   id: string;

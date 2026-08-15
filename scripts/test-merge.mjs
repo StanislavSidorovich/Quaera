@@ -22,7 +22,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = mkdtempSync(path.join(tmpdir(), 'querium-merge-'));
+const outDir = mkdtempSync(path.join(tmpdir(), 'quaera--'));
 
 try {
   /*

@@ -8,7 +8,7 @@ import { initialSkillState, type Grade, type SkillState } from './scheduler';
  * при изменении формата старый прогресс не должен молча ломать приложение.
  */
 
-const KEY = 'querium.progress.v1';
+const KEY = 'quaera.progress.v1';
 
 export interface TaskRecord {
   attempts: number;

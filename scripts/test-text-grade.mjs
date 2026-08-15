@@ -25,7 +25,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = mkdtempSync(path.join(tmpdir(), 'querium-text-grade-'));
+const outDir = mkdtempSync(path.join(tmpdir(), 'quaera--'));
 
 let failed = 0;
 const ok = (name) => console.log(` ok    ${name}`);

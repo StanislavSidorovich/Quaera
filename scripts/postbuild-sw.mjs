@@ -64,11 +64,13 @@ if (!sw.includes('__BUILD_ASSETS__') || !sw.includes('__BUILD_ID__') || !sw.incl
 sw = sw
   .replace('/* __BUILD_ASSETS__ */', assets.map((a) => JSON.stringify(a)).join(', '))
   .replace('__BUILD_ID__', buildId)
-  .replace('__VENDOR_ID__', vendorId);
+  // Глобально: плейсхолдер стоит дважды — у текущего имени кеша и у прежнего,
+  // из которого рантайм переносится после переименования (LEGACY_VENDOR в sw.js).
+  .replaceAll('__VENDOR_ID__', vendorId);
 
 await writeFile(swPath, sw, 'utf8');
 
-const { size } = await stat(path.join(dist, 'data', 'querium.dataset'));
+const { size } = await stat(path.join(dist, 'data', 'quaera.dataset'));
 console.log(`sw: сборка ${buildId}, в предзагрузке ${assets.length} файлов`);
-console.log(`sw: рантайм Python кешируется отдельно от сборки — querium-pyodide-${vendorId}`);
+console.log(`sw: рантайм Python кешируется отдельно от сборки — quaera-pyodide-${vendorId}`);
 console.log(`sw: датасет ${(size / 1024 / 1024).toFixed(2)} МБ кешируется при первом запросе`);

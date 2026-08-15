@@ -11,7 +11,7 @@ import type { DatasetInfo, Executor, ExecResult, GradeOptions, GradeResult, Load
  * менеджеры загрузок, и вместо данных страница получает пустой ответ.
  * Сжатие определяется по сигнатуре байт, а не по имени.
  */
-const DATASET_URL = '/data/querium.dataset';
+const DATASET_URL = '/data/quaera.dataset';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 

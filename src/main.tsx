@@ -1,3 +1,7 @@
+// Первой строкой и до всего остального: переносит ключи localStorage
+// с querium-* на quaera-* (см. migrateStorage.ts — там же почему порядок
+// импорта здесь важен, а не косметичен).
+import './migrateStorage';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';

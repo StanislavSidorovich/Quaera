@@ -1,4 +1,4 @@
-Learning content of Querium — task packs, lesson cards, and dataset story
+Learning content of Quaera — task packs, lesson cards, and dataset story
 design under `src/content/packs/` (files: `sql-core.json`, `sql-lessons.json`,
 `domain-core.json`, `domain-lessons.json`, `python-core.json`,
 `python-lessons.json`, `model-core.json`, and any future pack in this
@@ -38,12 +38,12 @@ HOW TO ATTRIBUTE
 so here is a form that satisfies it. Reproduce it wherever the reused
 material appears:
 
-  Learning content from Querium by Stanislav Sidorovich
-  (https://github.com/StanislavSidorovich/Querium), licensed under
+  Learning content from Quaera by Stanislav Sidorovich
+  (https://github.com/StanislavSidorovich/Quaera), licensed under
   CC BY-NC-SA 4.0. Changes were made. / No changes were made.
 
 Author: Stanislav Sidorovich — https://www.linkedin.com/in/stanislavsidorovich
-Project: https://querium.pages.dev
+Project: https://quaera.app
 
 ---
 

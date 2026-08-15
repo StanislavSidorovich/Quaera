@@ -24,7 +24,7 @@ import type { TaskDraft } from '../ui/TaskView';
  * и между сборками, а если id больше нет — занятие честно не восстановится.
  */
 
-const KEY = 'querium.session.v1';
+const KEY = 'quaera.session.v1';
 
 /** Шаг очереди в хранилище — тот же Step, но ссылкой, а не содержимым. */
 export type StoredStep = { kind: 'lesson'; skill: string } | { kind: 'task'; id: string };

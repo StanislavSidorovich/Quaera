@@ -12,8 +12,8 @@
 // сбрасывает старые кеши: иначе устройство, где приложение уже установлено,
 // продолжит открывать прошлую сборку.
 const VERSION = '__BUILD_ID__';
-const SHELL = `querium-shell-${VERSION}`;
-const ASSETS = `querium-assets-${VERSION}`;
+const SHELL = `quaera-shell-${VERSION}`;
+const ASSETS = `quaera-assets-${VERSION}`;
 
 /**
  * Рантайм Python — в кеше, не привязанном к версии сборки.
@@ -29,7 +29,25 @@ const ASSETS = `querium-assets-${VERSION}`;
  * при обновлении рантайма не меняются, поэтому только смена его версии
  * и должна сбрасывать этот кеш — деплой правки в CSS не должен.
  */
-const VENDOR = `querium-pyodide-__VENDOR_ID__`;
+const VENDOR = `quaera-pyodide-__VENDOR_ID__`;
+
+/**
+ * То же имя до переименования приложения (querium → quaera, домен quaera.app).
+ *
+ * Имена кешей переименованы вместе со всем остальным, но у этого кеша
+ * переименование не косметическое: `activate` удаляет всё, чего нет в списке
+ * текущих имён, — то есть простая смена строки заставила бы каждого, кто уже
+ * согласился на 51 МБ рантайма, скачать их заново, возможно по мобильному
+ * интернету. Ровно от этого кеш и отвязан от версии сборки (см. VENDOR выше),
+ * и терять это на переименовании было бы странно.
+ *
+ * Поэтому содержимое переносится копированием (adoptLegacyVendor), а не
+ * перекачивается: копия идёт по диску, без сети. Строка нужна до тех пор,
+ * пока в природе есть устройства, не открывавшие приложение с момента
+ * переименования; убирать вместе со следующей сменой версии Pyodide —
+ * тогда старый кеш становится негодным сам по себе.
+ */
+const LEGACY_VENDOR = `querium-pyodide-__VENDOR_ID__`;
 
 /** Что живёт в кеше без версии сборки: содержимое задано пином в scripts/sync-pyodide.mjs. */
 const isVendor = (url) => url.pathname.startsWith('/pyodide/');
@@ -95,12 +113,44 @@ async function ensurePrecache() {
   precacheChecked = results.every((r) => r.status === 'fulfilled');
 }
 
+/**
+ * Перенос кеша рантайма из-под старого имени (см. LEGACY_VENDOR).
+ *
+ * Возвращает `false`, если перенос нужен, но не удался целиком, — тогда старый
+ * кеш не удаляется и попытка повторится на следующей активации. Половина
+ * скопированного хуже, чем ничего: недостающие файлы уйдут в сеть по одному,
+ * то есть человек всё равно заплатит трафиком, только не заметит, за что.
+ */
+async function adoptLegacyVendor() {
+  const keys = await caches.keys();
+  if (!keys.includes(LEGACY_VENDOR)) return true;
+  try {
+    const [from, to] = await Promise.all([caches.open(LEGACY_VENDOR), caches.open(VENDOR)]);
+    for (const request of await from.keys()) {
+      if (await to.match(request)) continue;
+      const response = await from.match(request);
+      if (!response) continue;
+      await to.put(request, response);
+    }
+    return true;
+  } catch {
+    // Чаще всего это нехватка места: копия существует рядом с оригиналом,
+    // пока старый кеш не удалён, и на тесном устройстве 51 МБ может не влезть.
+    return false;
+  }
+}
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(keys.filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR).map((k) => caches.delete(k)))
+    adoptLegacyVendor()
+      .then((adopted) => caches.keys().then((keys) => ({ adopted, keys })))
+      .then(({ adopted, keys }) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR)
+            .filter((k) => adopted || k !== LEGACY_VENDOR)
+            .map((k) => caches.delete(k))
+        )
       )
       .then(() => ensurePrecache())
       .then(() => self.clients.claim())

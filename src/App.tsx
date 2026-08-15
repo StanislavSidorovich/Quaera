@@ -80,7 +80,7 @@ function requestPersistentStorage(): void {
 
 type FontSize = 'md' | 'lg' | 'xl';
 const FONT_SIZE_ORDER: FontSize[] = ['md', 'lg', 'xl'];
-const FONT_SIZE_STORAGE_KEY = 'querium-font-size';
+const FONT_SIZE_STORAGE_KEY = 'quaera-font-size';
 
 function initialFontSize(): FontSize {
   try {
@@ -100,7 +100,7 @@ function initialFontSize(): FontSize {
  */
 type Theme = 'system' | 'light' | 'dark';
 const THEME_ORDER: Theme[] = ['system', 'light', 'dark'];
-const THEME_STORAGE_KEY = 'querium-theme';
+const THEME_STORAGE_KEY = 'quaera-theme';
 
 function initialTheme(): Theme {
   try {
@@ -112,7 +112,7 @@ function initialTheme(): Theme {
   return 'system';
 }
 
-const ACTIVE_TRACK_STORAGE_KEY = 'querium-active-track';
+const ACTIVE_TRACK_STORAGE_KEY = 'quaera-active-track';
 const ALL_TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 
 /**
@@ -200,7 +200,7 @@ function backTarget(current: Screen): Screen {
   return { name: 'home' };
 }
 
-const SCREEN_STORAGE_KEY = 'querium-screen';
+const SCREEN_STORAGE_KEY = 'quaera-screen';
 
 /**
  * Открытый раздел переживает перезагрузку страницы.
@@ -883,7 +883,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `querium-progress-${today()}.json`;
+    a.download = `quaera-progress-${today()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

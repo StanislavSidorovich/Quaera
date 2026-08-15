@@ -46,8 +46,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
  * Возврат из OAuth — на тот же адрес, с которого ушли.
  *
  * `window.location.origin`, а не захардкоженный домен: приложение живёт
- * и на `querium.pages.dev`, и на `localhost:5173` при разработке, и под
- * будущим своим доменом. Захардкоженный адрес означал бы, что вход
+ * и на `quaera.app`, и на `localhost:5173` при разработке, и на прежнем
+ * `querium.pages.dev`. Захардкоженный адрес означал бы, что вход
  * работает ровно на одном из них.
  *
  * Тот же адрес обязан стоять в списке Redirect URLs в консоли Supabase

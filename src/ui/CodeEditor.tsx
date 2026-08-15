@@ -56,8 +56,8 @@ interface Props {
   placeholder?: string;
 }
 
-const KEYBOARD_STORAGE_KEY = 'querium-keyboard';
-const TOKENS_STORAGE_KEY = 'querium-tokens';
+const KEYBOARD_STORAGE_KEY = 'quaera-keyboard';
+const TOKENS_STORAGE_KEY = 'quaera-tokens';
 
 /**
  * Экранная клавиатура открывается по касанию в textarea всегда, даже когда

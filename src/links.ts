@@ -8,7 +8,7 @@
  * Referer с адресом приложения незачем.
  *
  * Зачем вообще в интерфейсе, а не только в LICENSE: приложение раздаётся
- * по HTTP отдельно от репозитория, и человек, открывший querium.pages.dev,
+ * по HTTP отдельно от репозитория, и человек, открывший quaera.app,
  * файлов лицензий не видит вовсе. Без этого у него нет ни способа узнать,
  * кто автор, ни способа связаться — при том что контент отдан под
  * CC BY-NC-SA, которая требует указания авторства при переиспользовании.
@@ -18,7 +18,7 @@
  * App сам импортирует Sidebar.
  */
 export const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/stanislavsidorovich';
-export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Querium';
+export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 
 /**
  * Имя правообладателя — латиницей на обеих локалях, ровно той строкой, что

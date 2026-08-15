@@ -13,7 +13,7 @@ import type { DatasetInfo, Executor, ExecResult, GradeOptions, GradeResult, Load
 /** Сумма проверенных по sha256 файлов в public/pyodide/ — ядро + pandas + sqlite3, версия зафиксирована в scripts/sync-pyodide.mjs. */
 export const DOWNLOAD_BYTES = 52_500_000;
 
-const CONSENT_KEY = 'querium.pyodide-consent.v1';
+const CONSENT_KEY = 'quaera.pyodide-consent.v1';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
@@ -111,7 +111,7 @@ export function initRuntime(): Promise<DatasetInfo> {
     }
     setState({ phase: 'loading' });
     try {
-      const info = await call<DatasetInfo>('init', { url: '/data/querium.dataset' });
+      const info = await call<DatasetInfo>('init', { url: '/data/quaera.dataset' });
       setState({ phase: 'ready', info });
       return info;
     } catch (err) {

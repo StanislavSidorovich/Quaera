@@ -16,9 +16,9 @@ const periodRange = (from: string, to: string) => `${from} – ${to}`;
 
 export const en = {
   app: {
-    name: 'Querium',
+    name: 'Quaera',
     /** См. комментарий в ru.ts: вкладка — последнее русское место в английском интерфейсе. */
-    documentTitle: 'Querium: a data analyst trainer',
+    documentTitle: 'Quaera: a data analyst trainer',
     back: 'Back',
     exitHint: 'Press back again to exit',
     streakSuffix: (days: number) => `${days}-day streak`,
@@ -193,7 +193,7 @@ export const en = {
     installBtn: 'Install',
     authorTitle: 'Author and licence',
     authorBody:
-      'Querium was built by Stanislav Sidorovich, an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
+      'Quaera was built by Stanislav Sidorovich, an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
     linkedinBtn: "Author's LinkedIn",
     repoBtn: 'Source code on GitHub',
     licenseBody:
@@ -237,7 +237,7 @@ export const en = {
     exportBtn: 'Download progress file',
     importBtn: 'Load progress from file',
     importSuccess: 'Progress loaded from file',
-    importError: "Doesn't look like a Querium progress file. Check you picked the right one",
+    importError: "Doesn't look like a Quaera progress file. Check you picked the right one",
     /** См. комментарий в ru.ts: текст называет обе границы, что исчезнет и что останется. */
     resetTitle: 'Reset progress',
     resetBody:

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Querium's own code is Apache-2.0 (see `LICENSE`) and its own learning
+Quaera's own code is Apache-2.0 (see `LICENSE`) and its own learning
 content is CC BY-NC-SA 4.0 (see `LICENSE-CONTENT`). This file lists the
 third-party software bundled into the app or shipped to the browser
 (`public/`), as required by their licenses.
@@ -22,7 +22,7 @@ third-party software bundled into the app or shipped to the browser
   Python in-browser (`public/pyodide/pyodide.js`, `pyodide.asm.*`).
   https://github.com/pyodide/pyodide/blob/main/LICENSE
   Per MPL-2.0, no modifications were made to the Pyodide distribution
-  files themselves; Querium only calls into them from
+  files themselves; Quaera only calls into them from
   `public/python-worker.js`.
 
   Packages loaded through Pyodide's package index at runtime
@@ -35,4 +35,4 @@ third-party software bundled into the app or shipped to the browser
   - **CPython standard library** (`python_stdlib.zip`, including the
     `sqlite3` module) — Python Software Foundation License.
 
-None of the above authors endorse or are affiliated with Querium.
+None of the above authors endorse or are affiliated with Quaera.

@@ -7,7 +7,7 @@
 // несёт только рантайм, пакеты грузятся отдельно с CDN Pyodide той же версии.
 // Поэтому они не «синкаются», а один раз докачиваются и проверяются по sha256
 // из pyodide-lock.json, после чего лежат в репозитории как обычный вендор-ассет
-// (как public/data/querium.dataset) — сборка их больше не трогает.
+// (как public/data/quaera.dataset) — сборка их больше не трогает.
 import { copyFile, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
@@ -39,7 +39,7 @@ const version = lock.info.version;
 const cdnBase = `https://cdn.jsdelivr.net/pyodide/v${version}/full/`;
 
 // pandas тянет numpy/python-dateutil/pytz/six транзитивно; sqlite3 нужен отдельно,
-// чтобы читать тот же querium.dataset, которым уже пользуется SQL-трек.
+// чтобы читать тот же quaera.dataset, которым уже пользуется SQL-трек.
 const PACKAGES = ['pandas', 'numpy', 'python-dateutil', 'pytz', 'six', 'sqlite3'];
 
 for (const name of PACKAGES) {

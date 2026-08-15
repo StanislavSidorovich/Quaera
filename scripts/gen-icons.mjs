@@ -190,10 +190,10 @@ function drawOg() {
   // на глаз: иначе строки съезжают при любой правке масштаба.
   const titleY = 250;
   const titleBottom = titleY + 7 * 14;
-  drawText(buf, W, H, 'QUERIUM', pad, titleY, 14, '#e2e8f0');
+  drawText(buf, W, H, 'QUAERA', pad, titleY, 14, '#e2e8f0');
   rect(buf, W, H, pad, titleBottom + 26, 128, 8, '#38bdf8', 4);
   drawText(buf, W, H, 'SQL · PANDAS · ANALYTICS', pad, titleBottom + 74, 6, '#94a3b8');
-  drawText(buf, W, H, 'QUERIUM.PAGES.DEV', pad, H - pad - 7 * 4, 4, '#475569');
+  drawText(buf, W, H, 'QUAERA.APP', pad, H - pad - 7 * 4, 4, '#475569');
   return { W, H, buf };
 }
 

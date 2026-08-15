@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.resolve('sql.js')), f) });
-const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'querium.sqlite'))));
+const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'quaera.sqlite'))));
 
 /**
  * Pyodide поднимается лениво и один раз: инициализация занимает секунды,
@@ -34,7 +34,7 @@ async function getPyodide() {
     pyodidePromise = (async () => {
       const pyodide = await loadPyodide({ indexURL: path.join(root, 'public', 'pyodide') });
       await pyodide.loadPackage(['pandas', 'sqlite3']);
-      let buf = readFileSync(path.join(root, 'public', 'data', 'querium.dataset'));
+      let buf = readFileSync(path.join(root, 'public', 'data', 'quaera.dataset'));
       if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
       pyodide.FS.writeFile('/data.sqlite', new Uint8Array(buf));
       await pyodide.runPythonAsync(`

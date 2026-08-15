@@ -21,7 +21,7 @@ create table if not exists public.progress (
   -- держалось бы на том, что кто-то не забудет удалить вторую половину.
   user_id uuid primary key references auth.users (id) on delete cascade,
 
-  -- Тот же объект, что лежит в localStorage под querium.progress.v1
+  -- Тот же объект, что лежит в localStorage под quaera.progress.v1
   -- и что отдаёт exportProgress. Совпадение намеренное: файл экспорта,
   -- строка в базе и локальное хранилище — один формат, и любой из трёх
   -- можно скормить mergeProgress без преобразования.

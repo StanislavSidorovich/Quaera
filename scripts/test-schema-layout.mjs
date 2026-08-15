@@ -24,7 +24,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = mkdtempSync(path.join(tmpdir(), 'querium-schema-layout-'));
+const outDir = mkdtempSync(path.join(tmpdir(), 'quaera--'));
 
 let failed = 0;
 const fail = (name, msg) => {

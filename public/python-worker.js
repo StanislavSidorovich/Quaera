@@ -6,7 +6,7 @@
  * тот же протокол {id, type, payload} и та же сверка с эталоном (grade-lib.js) —
  * задание одинаково устроено независимо от языка, меняется только исполнитель.
  *
- * Источник данных — тот же public/data/querium.dataset, что и у SQL-трека:
+ * Источник данных — тот же public/data/quaera.dataset, что и у SQL-трека:
  * Python открывает его через стандартный sqlite3 и грузит таблицы в pandas
  * через pd.read_sql. Два трека тренируются на одних и тех же данных,
  * и не нужно поддерживать вторую копию датасета в другом формате.
@@ -19,7 +19,7 @@
 
 importScripts('/grade-lib.js');
 
-const DATASET_URL = '/data/querium.dataset';
+const DATASET_URL = '/data/quaera.dataset';
 const PREVIEW_ROWS = 200;
 
 let pyodide = null;
