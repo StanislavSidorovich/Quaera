@@ -8,14 +8,14 @@
       "form": "SELECT column, other AS clear_name\nFROM table\n\nSELECT ROUND(list_price * 0.9, 2) AS discount_price  -- expression + alias",
       "reads": "All items of the «Gastrivo» brand with the shelf price. The column is named the way the requester expects it, not the way it sits in the database.",
       "wrongWhy": "The asterisk pulls in every column, including internal ones. Fields nobody asked for show up in the export, and when the table's structure changes, the report silently changes shape too, breaking whatever was built on top of it.",
-      "selfCheck": "Read the result's headers out loud. If even one can't be explained to the requester without caveats — rename it."
+      "selfCheck": "Read the result's headers out loud. If even one can't be explained to the requester without caveats, rename it."
     },
     {
       "skill": "sql-where",
       "title": "Filtering rows",
       "why": "A task statement almost always carries constraints: which period, which division, which channel. Turning those words into conditions is half the work, and it's also where most discrepancies between two reports on the same thing come from. Each phrasing has its own operator: \"for these three brands\" (IN with a list instead of a chain of ORs); \"for the first half-year\" (BETWEEN, whose both bounds are included, which people regularly forget); \"anything with 'Forte' in the name\" (LIKE, where % stands in for any stretch of text). The cheapest way to check that the filter caught anything at all is COUNT(*): zero rows here almost never means \"there are none in the database\"; it means the condition is written wrong.",
       "form": "SELECT ...\nFROM table\nWHERE condition\n  AND other_condition\n\ncolumn = 'value'                -- exact match\ncolumn > 100                    -- numeric comparison\ncolumn IN ('Aqualis','Fruvia')  -- any of a list\ncolumn BETWEEN '2025-01-01' AND '2025-12-31'  -- range, bounds included\ncolumn LIKE '%Forte%'           -- substring, % is any text\nSELECT COUNT(*) FROM ... WHERE ... -- how many rows passed the filter",
-      "reads": "Pharma-division items priced above 500 ¥. Both conditions must hold at once — that's what AND does.",
+      "reads": "Pharma-division items priced above 500 ¥. Both conditions must hold at once; that's what AND does.",
       "wrongWhy": "Zero rows come back: text comparison is case-sensitive, and the database holds «Pharma». The query doesn't fail; it runs cleanly and returns nothing. The most expensive mistakes in analytics are exactly this kind: not the ones that fail, but the ones that quietly understate the numbers.",
       "selfCheck": "Before filtering on a text column, look at what's actually in it: SELECT DISTINCT division FROM dim_product. Five seconds versus an hour of confusion. LIKE has a case trap of its own, in the opposite direction: in SQLite it ignores case for Latin letters, so «AQUA001» and «aqua001» are one and the same to it, while = keeps them apart. Convenient here, and a silent bug the moment the query moves to PostgreSQL."
     },
@@ -26,7 +26,7 @@
       "form": "SELECT ...\nFROM table\nORDER BY column DESC\nLIMIT 10\n\nLIMIT 1 OFFSET 1    -- skip the first row, take the next one\nLIMIT 20 OFFSET 40  -- third page at 20 rows each",
       "reads": "The five most expensive items in the price list. Rows are ordered by price from high to low first, and only then are the first five cut off.",
       "wrongWhy": "This isn't \"the first five\"; it's \"some five\". Without ORDER BY the database is free to return rows in any order, and on a different data volume or after reindexing the answer will change, while the report looks just as convincing.",
-      "selfCheck": "If the task statement has \"top\", \"best\", \"worst\" in it, find ORDER BY in your query. No ORDER BY, no real answer. With OFFSET the same check is stricter: skipping rows without a defined order is doubly meaningless — you're counting off a position in a list nobody put in order."
+      "selfCheck": "If the task statement has \"top\", \"best\", \"worst\" in it, find ORDER BY in your query. No ORDER BY, no real answer. With OFFSET the same check is stricter: skipping rows without a defined order is doubly meaningless; you're counting off a position in a list nobody put in order."
     },
     {
       "skill": "sql-null",
@@ -44,7 +44,7 @@
       "form": "COUNT(*)              -- rows\nCOUNT(column)          -- rows where the value is filled in\nCOUNT(DISTINCT col.)   -- distinct values\nSUM(column)            -- total\nAVG(column)            -- average\nMIN(column)            -- smallest value\nMAX(column)            -- largest value",
       "reads": "Forty-seven items, nine brands, average price list. A query without GROUP BY but with aggregates always returns exactly one row: the whole table counts as a single group.",
       "wrongWhy": "Returns 47, not 9. COUNT on a column counts rows where the value is filled in, not distinct values. The number looks plausible and quietly makes it into the presentation.",
-      "selfCheck": "When you hear \"count\", ask: count of what exactly — records or objects? Those are different queries with different answers."
+      "selfCheck": "When you hear \"count\", ask: count of what exactly (records or objects)? Those are different queries with different answers."
     },
     {
       "skill": "sql-group-by",
@@ -53,7 +53,7 @@
       "form": "SELECT dimension, SUM(measure) AS total\nFROM table\nGROUP BY dimension\n\nSELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\nFROM fact_sellout\nGROUP BY 1   -- 1 = the first SELECT column, to avoid repeating the expression",
       "reads": "One row per division. The list in GROUP BY sets the grain: as many columns there, as many cuts in the result.",
       "wrongWhy": "SQLite won't complain and will attach an arbitrary brand to each division. PostgreSQL would fail on this query, and that would be the better outcome: a silently wrong result is more dangerous than a failure. An unaggregated column in SELECT has to be in GROUP BY.",
-      "selfCheck": "Say it out loud: \"one row of the result is one …\". Can't finish the sentence — the task isn't understood yet."
+      "selfCheck": "Say it out loud: \"one row of the result is one …\". Can't finish the sentence: the task isn't understood yet."
     },
     {
       "skill": "sql-having",
@@ -78,9 +78,9 @@
       "title": "LEFT JOIN and missing data",
       "why": "Reports about what's absent are their own, most valuable genre: outlets with no sales, regions with no coverage, SKUs with no stock. An ordinary join simply won't show those rows, and the problem stays invisible.",
       "form": "FROM dimension d\nLEFT JOIN fact f ON f.key = d.key\n                AND extra_condition",
-      "reads": "All five sales channels, and next to each — in how many of its outlets pharma was sold at all. The answer: only in pharmacies (89,919 units); the other four channels are at zero. Build from the dimension table — the one whose rows all need to survive. The condition on the division sits in ON, so it filters sales rows without dropping channels. COALESCE isn't decoration here: a channel with no sales at all has nothing to sum, and SUM over an empty set returns NULL rather than 0 — four rows out of five would have come back empty.",
+      "reads": "All five sales channels, and next to each, in how many of its outlets pharma was sold at all. The answer: only in pharmacies (89,919 units); the other four channels are at zero. Build from the dimension table, the one whose rows all need to survive. The condition on the division sits in ON, so it filters sales rows without dropping channels. COALESCE isn't decoration here: a channel with no sales at all has nothing to sum, and SUM over an empty set returns NULL rather than 0; four rows out of five would have come back empty.",
       "wrongWhy": "One row comes back instead of five, pharmacies only. A condition on the right-hand table placed in WHERE turns LEFT JOIN into an ordinary INNER JOIN: unmatched rows carry NULL there, and a comparison against NULL is never true. Exactly the four channels the report was built to show disappear, and the conclusion comes out backwards: \"pharma sells everywhere\" instead of \"pharma sells only in pharmacies\".",
-      "selfCheck": "Compare the row count of the result with the row count of the dimension table. Doesn't match — the outer join degenerated into an inner one somewhere. And remember: SUM over an empty set gives NULL, not 0 — you need COALESCE."
+      "selfCheck": "Compare the row count of the result with the row count of the dimension table. Doesn't match: the outer join degenerated into an inner one somewhere. And remember: SUM over an empty set gives NULL, not 0; you need COALESCE."
     },
     {
       "skill": "sql-fanout",
@@ -89,7 +89,7 @@
       "form": "One row of the left table must match exactly one\nrow of the right table. Otherwise the measures duplicate.\n\nCounts before and after, as two subqueries in one row:\n\nSELECT (SELECT COUNT(*) FROM fact) AS rows_before,\n       (SELECT COUNT(*) FROM fact JOIN lookup ...)\n         AS rows_after",
       "reads": "The correct version: product_id is unique in the dimension table, every sales row finds exactly one match, the row count doesn't change.",
       "wrongWhy": "A brand can have up to eleven promotions, and every sales row matches every one of them. Revenue grows by exactly a factor of eleven. A suspiciously round integer multiplier is close to a sure sign that a join duplicated facts.",
-      "selfCheck": "Compare COUNT(*) before and after adding a JOIN. Changed, and you didn't plan for it — the measures can no longer be trusted as-is."
+      "selfCheck": "Compare COUNT(*) before and after adding a JOIN. Changed, and you didn't plan for it: the measures can no longer be trusted as-is."
     },
     {
       "skill": "sql-case",
@@ -98,14 +98,14 @@
       "form": "SUM(CASE WHEN condition THEN measure ELSE 0 END) AS column",
       "reads": "Promo and base revenue for each division, computed in a single pass over the data. The same trick gives a share: SUM(CASE ...) * 1.0 / SUM(measure).",
       "wrongWhy": "Counts absolutely every row. COUNT only skips NULL, and zero is a perfectly valid value. What's needed is either SUM instead of COUNT, or a CASE with no ELSE branch, so non-matching rows produce NULL.",
-      "selfCheck": "After conditional aggregation, add up the columns: the parts have to sum to the grand total. They don't — some rows fell into neither branch."
+      "selfCheck": "After conditional aggregation, add up the columns: the parts have to sum to the grand total. They don't: some rows fell into neither branch."
     },
     {
       "skill": "sql-cte",
       "title": "CTEs and decomposition",
       "why": "The value of WITH isn't brevity; it's often longer with it. The value is that every step can be run and checked on its own. A query written step by step gets debugged in minutes; a subquery nested four levels deep takes hours.",
       "form": "WITH step1 AS (\n  ...\n),\nstep2 AS (\n  SELECT ... FROM step1\n)\nSELECT ... FROM step2",
-      "reads": "A brand's revenue and its share of the total. The intermediate result is computed once and reused — both for the rows and for the denominator.",
+      "reads": "A brand's revenue and its share of the total. The intermediate result is computed once and reused, both for the rows and for the denominator.",
       "wrongWhy": "Every share comes out zero. Dividing two integers in SQL gives an integer; the fractional part is dropped. Fixed by multiplying the numerator by 100.0: a literal with a decimal point pushes the calculation into floating-point.",
       "selfCheck": "Run each CTE on its own, replacing the final SELECT with «SELECT * FROM step1». If the intermediate result is wrong, there's no point looking further."
     },
@@ -116,16 +116,16 @@
       "form": "ROW_NUMBER() OVER (PARTITION BY group ORDER BY measure DESC)\nRANK()       OVER (PARTITION BY group ORDER BY measure DESC)\nDENSE_RANK() OVER (PARTITION BY group ORDER BY measure DESC)\n\nROW_NUMBER() : sequential, breaks ties arbitrarily\nRANK()       : same rank for ties, next number is skipped\nDENSE_RANK() : same rank for ties, no gaps",
       "reads": "The three best-selling items within each brand. PARTITION BY sets the boundaries inside which numbering starts over.",
       "wrongWhy": "Error: the rnk column doesn't exist yet at this level. A window function is computed after WHERE, so filtering on its result is only possible one level up, in a CTE or subquery.",
-      "selfCheck": "Picking one row per group calls for ROW_NUMBER — it guarantees exactly one. And add a second key to ORDER BY: with ties, the result is otherwise non-deterministic."
+      "selfCheck": "Picking one row per group calls for ROW_NUMBER; it guarantees exactly one. And add a second key to ORDER BY: with ties, the result is otherwise non-deterministic."
     },
     {
       "skill": "sql-window-frame",
       "title": "Window functions: frames and shifts",
       "why": "A single number says nothing on its own: you need a trend, change versus the previous period, a running total. Window frames and shift functions cover almost all of that without self-joins, which also break on missing periods. On their own these functions only fetch the neighbouring value; the arithmetic is what turns it into a trend: the difference from the previous value, divided by that previous value, times 100. Write the multiplier as 100.0 rather than 100, or SQLite divides two integers and returns zero.",
       "form": "AVG(measure) OVER (ORDER BY period\n                ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)\n\nLAG(measure)  OVER (ORDER BY period)  -- previous value\nLEAD(measure) OVER (ORDER BY period)  -- next value\nFIRST_VALUE(measure) OVER (ORDER BY period)  -- first\n\n-- growth over the previous period, %\nROUND(100.0 * (measure - LAG(measure) OVER (ORDER BY period))\n             / LAG(measure) OVER (ORDER BY period), 1)",
-      "reads": "Monthly sales, last month's value, and a smoothed three-month series. The first row has no previous value — LAG honestly returns NULL.",
+      "reads": "Monthly sales, last month's value, and a smoothed three-month series. The first row has no previous value; LAG honestly returns NULL.",
       "wrongWhy": "Without specifying a frame, once ORDER BY is present the window defaults to everything from the start of the series to the current row. The result isn't a moving average, it's a running total; the numbers look plausible and mean something else entirely.",
-      "selfCheck": "Wrote ORDER BY inside OVER — deliberately decide whether you need a frame. And separately, on meaning: comparing month over month on a seasonal product is misleading; that calls for year over year."
+      "selfCheck": "Wrote ORDER BY inside OVER: deliberately decide whether you need a frame. And separately, on meaning: comparing month over month on a seasonal product is misleading; that calls for year over year."
     },
     {
       "skill": "sql-data-quality",
@@ -141,9 +141,9 @@
       "title": "Breaking down a business situation",
       "why": "\"Sales dropped 40%\" isn't an answer; it's the start of the work. The requester needs to know what to do, and for that you need to know which factor moved, and along with it, who owns the problem.",
       "form": "Break a metric into factors:\n  units  = number of outlets × units per outlet\n  revenue = units × price\n  units per outlet = number of purchases × average basket\nThen see which factor changed.",
-      "reads": "A brand's decline broken into factors. The outlet count halved while units per outlet held steady — so the problem isn't demand or price, it's lost shelf space. That's a question for the field team and retailer negotiations, not marketing.",
+      "reads": "A brand's decline broken into factors. The outlet count halved while units per outlet held steady, so the problem isn't demand or price, it's lost shelf space. That's a question for the field team and retailer negotiations, not marketing.",
       "wrongWhy": "Technically correct and completely useless. The number \"down 57%\" doesn't answer \"why\" and doesn't point to who should do something about it. A report that leads to no decision hasn't done its job.",
-      "selfCheck": "Compare like-for-like periods — a quarter against the same quarter last year. Comparing to the previous quarter mixes seasonality with trend and regularly leads to wrong conclusions."
+      "selfCheck": "Compare like-for-like periods, a quarter against the same quarter last year. Comparing to the previous quarter mixes seasonality with trend and regularly leads to wrong conclusions."
     }
   ]
 }
