@@ -258,6 +258,26 @@ export const en = {
     resetConfirmBtn: 'Yes, reset',
     resetCancelBtn: 'Cancel',
     resetDone: 'Progress reset',
+    /*
+     * См. развёрнутый довод в ru.ts: три вещи обязаны быть сказаны
+     * до нажатия, потому что разрешение необратимо из приложения.
+     * Тире не ставить — бюджет en.ts нулевой (test:prose-en).
+     */
+    pushTitle: 'Review reminders',
+    pushBody:
+      'The review schedule is built on coming back after days and weeks, and so far the only nudge was the number on the app icon, which you can see only while the app is open. A reminder arrives when topics come due and the app is closed. No account is needed: what goes to the server is the address your browser issued for this device plus a timestamp saying when to wake it, not your topics, answers or progress.',
+    pushExample: 'It looks like this: "Time to review. 3 topics are due. A session takes 7 to 10 minutes."',
+    pushEnableBtn: 'Turn on reminders',
+    pushDisableBtn: 'Turn off reminders',
+    pushOn: 'Reminders are on for this device',
+    pushOnNote:
+      'You will get at most one reminder at a time: the next one is scheduled only when you open the app again.',
+    pushDenied:
+      'Notifications are blocked for this site in your browser. The app cannot ask again; the permission comes back only through the site settings in your browser.',
+    pushUnsupported: 'This browser cannot deliver notifications to a closed app.',
+    pushIosNote:
+      'On iPhone and iPad notifications work only in an app added to the Home Screen: open Share, then Add to Home Screen, launch Quaera from there and come back to this page.',
+    pushFailed: 'Could not turn reminders on. Check your connection and try again',
     /**
      * См. развёрнутый довод в ru.ts: четыре подраздела на четыре вопроса,
      * каждый задаётся до нажатия кнопки входа. Правило письма оттуда же:

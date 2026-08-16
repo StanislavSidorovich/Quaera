@@ -8,6 +8,14 @@ import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
 import { AUTHOR_LINKEDIN, AUTHOR_REPO } from './links';
 import { promptInstall, subscribeInstallAvailable } from './pwa/installPrompt';
+import {
+  disablePush,
+  enablePush,
+  hasPushSubscription,
+  pushState,
+  syncWake,
+  type PushState,
+} from './push/client';
 import { DataScreen } from './ui/DataScreen';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
@@ -692,6 +700,24 @@ export default function App() {
   );
 
   /**
+   * Те же навыки, но списком id — для расписания push (src/push/schedule.ts).
+   *
+   * Отдельно от `dueTotal`, потому что вопросы разные: тот отвечает «сколько
+   * подошло сейчас», это — «за какими вообще следим». Но источник обязан быть
+   * один и тот же обход паков: возьми расписание ключи `progress.skills`,
+   * и человека будили бы ради тем, удалённых из паков месяц назад.
+   *
+   * Не зависит от локали по существу (id навыка один на оба языка), но
+   * `packForTrack` требует её аргументом, и подставлять сюда фиксированную
+   * значило бы завести второй способ добраться до паков.
+   */
+  const allSkillIds = useMemo(
+    () =>
+      ALL_TRACKS.flatMap((track) => packForTrack(track, locale)?.skills.map((s) => s.id) ?? []),
+    [locale]
+  );
+
+  /**
    * Бейдж на иконке установленного приложения.
    *
    * Зачем вообще: всё расписание тренажёра построено на возвратах через дни
@@ -703,10 +729,12 @@ export default function App() {
    * **Граница честности, которую важно знать до того, как на бейдж
    * положатся:** число обновляется только пока приложение открыто, и потом
    * остаётся на иконке до следующего запуска. То есть бейдж хорошо ловит
-   * «я ушёл, не доделав» и совсем не ловит «сегодня подошли три темы» —
-   * для второго нужен push с сервера (Web Push через Edge Function),
-   * это отдельная работа. Ставим сейчас потому, что первый случай тоже
-   * реальный, а цена — десять строк без сервера и без разрешений.
+   * «я ушёл, не доделав» и совсем не ловит «сегодня подошли три темы».
+   * Второе закрыто отдельным механизмом — Web Push (src/push/), — и они
+   * намеренно не пересекаются: бейдж показывает уже просроченное, push
+   * будит на переход «подошло, пока приложение было закрыто». Бейдж при
+   * этом остаётся нужен и сам по себе: он работает без разрешений,
+   * без сервера и у тех, кто напоминания не включал.
    *
    * Тихо ничего не делает там, где API нет (Firefox, обычная вкладка вместо
    * установленного приложения): это украшение, и ни одна ошибка отсюда
@@ -722,6 +750,48 @@ export default function App() {
     // Отказ штатен: в неустановленном приложении часть браузеров отклоняет вызов.
     done?.catch(() => {});
   }, [dueTotal]);
+
+  /**
+   * Взведение будильника push по текущему прогрессу.
+   *
+   * Два момента, и оба нужны по разным причинам.
+   *
+   * **При открытии приложения** — потому что это единственный момент, когда
+   * взведение точно случится: закрытие вкладки браузер волен не показать
+   * странице вовсе (телефон убил процесс, система выгрузила фон).
+   * Взводим по прогрессу, каким он поднялся из хранилища и слился
+   * с серверным, то есть по актуальному на этот запуск.
+   *
+   * **При уходе со страницы** — потому что за сессию прогресс меняется,
+   * и будильник, взведённый на входе, отстанет ровно на всё, что человек
+   * сегодня решил. `pagehide`, а не `beforeunload`: второй на мобильных
+   * не срабатывает при сворачивании, а именно так приложение и закрывают.
+   * Запрос уходит с `keepalive` (см. push/client.ts) — обычный браузер
+   * оборвал бы вместе со страницей.
+   *
+   * Не на каждый ответ: расписание меняется вместе с прогрессом, но сеть
+   * на каждое решённое задание — это батарея и трафик ради числа, которое
+   * всё равно уточнится при закрытии.
+   *
+   * Ошибки не обрабатываются здесь намеренно: `syncWake` не бросает вовсе,
+   * а нет подписки — тихо ничего не делает. Напоминания это удобство поверх
+   * работающего приложения, и ни одна их неудача не должна доходить
+   * до человека.
+   */
+  useEffect(() => {
+    void syncWake(progress, allSkillIds, locale);
+    const onHide = () => void syncWake(progressRef.current, allSkillIds, locale);
+    window.addEventListener('pagehide', onHide);
+    return () => window.removeEventListener('pagehide', onHide);
+    /*
+     * Намеренно НЕ зависит от progress: иначе обработчик переподписывался бы
+     * на каждый ответ, а первый вызов уходил бы в сеть столько же раз.
+     * Свежий прогресс обработчик берёт из ref — то же решение, что уже
+     * принято для `recordedTasksRef` и по той же причине: значение нужно
+     * на момент события, а не на момент подписки.
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSkillIds, locale]);
   // Показываем начатые темы, а не «открытые»: открытых на старте всего одна,
   // и цифра «1 из 16» читается как «почти всё закрыто», хотя первая же сессия
   // разворачивает границу графа на пять тем.
@@ -1413,6 +1483,8 @@ export default function App() {
                 setSyncStatus('idle');
                 return true;
               }}
+              onEnablePush={() => enablePush(progress, allSkillIds, locale)}
+              onDisablePush={disablePush}
             />
           )}
 
@@ -2908,6 +2980,121 @@ function About({
 }
 
 /**
+ * Карточка напоминаний.
+ *
+ * Состояние спрашивается у браузера при монтировании, а не хранится
+ * в приложении, и это не мелочь: разрешение живёт в настройках браузера,
+ * его можно отозвать снаружи в любой момент, и запомненное приложением
+ * «включено» пережило бы отзыв и врало бы человеку, который как раз пошёл
+ * проверять. Единственный источник правды здесь — `Notification.permission`
+ * плюс наличие подписки, и оба спрашиваются заново.
+ *
+ * Разрешение спрашивается только по нажатию. Спросить на загрузке нельзя
+ * ни при каких обстоятельствах: отказ необратим из приложения — вернуть
+ * его можно лишь в настройках сайта в браузере, — то есть преждевременный
+ * вопрос закрывает возможность навсегда. Цена ошибки несимметрична,
+ * поэтому и вопрос откладывается до явного намерения.
+ */
+function PushCard({
+  onEnable,
+  onDisable,
+}: {
+  onEnable: () => Promise<PushState>;
+  onDisable: () => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [state, setState] = useState<PushState>(() => pushState());
+  /*
+   * 'pending' отдельно от состояния разрешения по той же причине, по которой
+   * оно заведено у удаления аккаунта: между нажатием и ответом здесь стоит
+   * и системный диалог браузера, и запрос к push-сервису, и запрос к своей
+   * функции. Без явного «просим» человек секунду смотрит на неизменившуюся
+   * кнопку и жмёт второй раз.
+   */
+  const [pending, setPending] = useState(false);
+  /*
+   * Отдельно от `state`: подписка могла не создаться при выданном разрешении
+   * (сеть, отозванный push-сервис, iOS вне standalone). Смешав это с 'denied',
+   * человеку предложили бы идти в настройки браузера чинить то, что там
+   * не сломано.
+   */
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="card">
+      <h2>{t.account.pushTitle}</h2>
+      <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.account.pushBody}</p>
+      {/*
+       * Пример текста уведомления стоит ДО кнопки, а не после включения:
+       * человек вправе увидеть, на что соглашается, пока согласие ещё
+       * не дано. После нажатия показывать образец поздно — разрешение
+       * уже выдано, и образец превращается в отчёт.
+       */}
+      <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.55 }}>
+        {t.account.pushExample}
+      </p>
+
+      {state === 'granted' ? (
+        <>
+          <p style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>{t.account.pushOn}</p>
+          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.55 }}>
+            {t.account.pushOnNote}
+          </p>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={pending}
+            onClick={async () => {
+              setPending(true);
+              await onDisable();
+              setState(pushState());
+              setPending(false);
+            }}
+          >
+            {t.account.pushDisableBtn}
+          </button>
+        </>
+      ) : state === 'denied' ? (
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55 }}>
+          {t.account.pushDenied}
+        </p>
+      ) : state === 'unsupported-ios' ? (
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55 }}>
+          {t.account.pushIosNote}
+        </p>
+      ) : state === 'unsupported' ? (
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55 }}>
+          {t.account.pushUnsupported}
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={pending}
+          onClick={async () => {
+            setPending(true);
+            setFailed(false);
+            const next = await onEnable();
+            setState(next);
+            // Разрешение выдано, а подписки нет — единственный случай,
+            // который состоянием разрешения не описывается.
+            setFailed(next === 'granted' && !(await hasPushSubscription()));
+            setPending(false);
+          }}
+        >
+          {t.account.pushEnableBtn}
+        </button>
+      )}
+      {failed && (
+        <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
+          {t.account.pushFailed}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * «Аккаунт и данные» — экран, а не хвост «О тренажёре», где всё это жило
  * до 2026-08-15.
  *
@@ -2933,6 +3120,8 @@ function AccountScreen({
   onSignIn,
   onSignOut,
   onDeleteAccount,
+  onEnablePush,
+  onDisablePush,
 }: {
   onExportProgress: () => void;
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
@@ -2945,6 +3134,13 @@ function AccountScreen({
   onSignOut: () => Promise<void>;
   /** true — аккаунт удалён и сессия закрыта; false — сервер не ответил. */
   onDeleteAccount: () => Promise<boolean>;
+  /**
+   * Спросить разрешение и подписаться. Возвращает то, что реально видит
+   * браузер после попытки, а не «получилось / не получилось»: состояний
+   * у разрешения больше двух, и каждое требует своего объяснения.
+   */
+  onEnablePush: () => Promise<PushState>;
+  onDisablePush: () => Promise<void>;
 }) {
   const { t } = useI18n();
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -3202,6 +3398,22 @@ function AccountScreen({
           </p>
         )}
       </div>
+
+      {/*
+       * Напоминания — своя карточка, третьей, и порядок здесь не случайный.
+       *
+       * Первые две про одно и то же — «не потерять накопленное»: вход
+       * убирает проблему, файл её страхует, и читать их надо подряд.
+       * Напоминания отвечают на другой вопрос, «как не забыть вернуться»,
+       * и вклиниваться между входом и копией им незачем.
+       *
+       * После карточки со сбросом, а не до неё: сброс необратим и стоит
+       * под своей чертой в конце своей карточки, а начинать следующую
+       * карточку сразу за красной кнопкой безопаснее, чем ставить перед ней
+       * ещё один блок с кнопкой — тогда красная оказалась бы посреди экрана,
+       * между двумя безобидными.
+       */}
+      <PushCard onEnable={onEnablePush} onDisable={onDisablePush} />
 
       {/*
        * Полный текст про данные — закрывающая карточка экрана, и место
