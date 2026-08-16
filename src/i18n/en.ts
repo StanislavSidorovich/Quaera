@@ -114,6 +114,8 @@ export const en = {
     loading: 'Loading data…',
     loadingRuntime: 'Loading Python with pandas…',
     loadingRuntimeNote: 'Downloaded once, then served from device cache and works offline.',
+    loadingRuntimeCached: 'Starting Python from the device cache…',
+    loadingRuntimeCachedNote: 'The files are already on your device; no internet needed.',
     heroNote:
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your queries run against 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:

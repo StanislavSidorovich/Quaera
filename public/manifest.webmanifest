@@ -2,6 +2,7 @@
   "name": "Quaera — тренажёр аналитика",
   "short_name": "Quaera",
   "description": "SQL, модель данных и метрики FMCG/pharma. Практика с реальным исполнением запросов, офлайн.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

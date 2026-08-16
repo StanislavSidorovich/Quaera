@@ -1889,6 +1889,44 @@ function Home({
   onChooserScrolled: () => void;
 }) {
   const { t, locale } = useI18n();
+
+  /**
+   * Лежит ли рантайм Python в кеше устройства. От этого зависит только текст
+   * подписи под кнопкой — и это единственное место, где приложение может
+   * отличить первую закачку 52 МБ от подъёма из кеша. Флаг согласия для
+   * этого не годится: он хранится навсегда, а кеш браузер вправе вытеснить.
+   *
+   * `caches.match` без имени кеша ищет по всем кешам разом — и это здесь
+   * не лень, а необходимость: имя вендорного кеша содержит пин версии
+   * Pyodide, подставляемый в sw.js на сборке (см. scripts/postbuild-sw.mjs),
+   * и в коде приложения его нет.
+   *
+   * `null` — «не знаем» (Cache API недоступен или проба не успела): тогда
+   * показывается прежний текст про первую закачку. Ошибиться в эту сторону
+   * дешевле — обещание «качается один раз» при подъёме из кеша всего лишь
+   * избыточно, а обратная ошибка сказала бы «интернет не нужен» тому, кто
+   * как раз сейчас тратит трафик.
+   */
+  const [runtimeCached, setRuntimeCached] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!heavyRuntime || typeof caches === 'undefined') {
+      setRuntimeCached(null);
+      return;
+    }
+    let alive = true;
+    caches.match('/pyodide/pyodide.asm.wasm').then(
+      (hit) => {
+        if (alive) setRuntimeCached(Boolean(hit));
+      },
+      () => {
+        if (alive) setRuntimeCached(null);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [heavyRuntime]);
+
   const byTier = useMemo(() => {
     const groups = new Map<number, typeof activePack.skills>();
     for (const s of activePack.skills) {
@@ -2231,7 +2269,9 @@ function Home({
               >
                 {loading
                   ? heavyRuntime
-                    ? t.home.loadingRuntime
+                    ? runtimeCached
+                      ? t.home.loadingRuntimeCached
+                      : t.home.loadingRuntime
                     : t.home.loading
                   : dueCount > 0
                     ? t.home.startBtnResume
@@ -2260,7 +2300,7 @@ function Home({
                */}
               {loading && heavyRuntime && (
                 <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                  {t.home.loadingRuntimeNote}
+                  {runtimeCached ? t.home.loadingRuntimeCachedNote : t.home.loadingRuntimeNote}
                 </p>
               )}
               <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
