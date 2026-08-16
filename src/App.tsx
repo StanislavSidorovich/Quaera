@@ -145,6 +145,24 @@ const EXIT_HINT_MS = 2000;
 const TRACK_ORDER: Track[] = ['domain', 'sql', 'python', 'model'];
 
 /**
+ * Трек, с которого советуем начать тому, кто ещё ничего не решал.
+ *
+ * Отдельно от TRACK_ORDER намеренно: список выше — порядок работы аналитика
+ * (вопрос → данные → анализ → модель), и менять его ради совета значило бы
+ * сломать то, что этот порядок объясняет (about.chainBody, tracksWhyBody).
+ * Совет отвечает на другой вопрос — с чего начать учиться, — и ответ у него
+ * законно другой. Разница названа прямо в tracksWhyBody, чтобы список
+ * и метка не выглядели противоречием.
+ *
+ * Почему sql: его спрашивают почти в любой вакансии аналитика; это
+ * единственный готовый трек без докачки (3.5 МБ датасета против 52 МБ
+ * Pyodide у pandas, а у model движка нет вовсе и ответ сверяется текстом);
+ * и проверка там идёт по результату запроса — то есть первое же занятие
+ * показывает то, ради чего тренажёр существует. Совпадает с initialActiveTrack.
+ */
+const RECOMMENDED_TRACK: Track = 'sql';
+
+/**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
  * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
@@ -1541,7 +1559,22 @@ export default function App() {
  * Черновые треки видны и кликабельны (можно посмотреть граф навыков),
  * но помечены статусом и не дают начать занятие — контента там пока нет.
  */
-function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (track: Track) => void }) {
+function TrackSwitcher({
+  active,
+  onSelect,
+  recommend,
+}: {
+  active: Track;
+  onSelect: (track: Track) => void;
+  /*
+   * Показывать ли метку рекомендованного трека. Приходит извне, а не
+   * считается здесь: тот же признак нужен карточкам (TrackCards), и два
+   * независимых вычисления «человек ещё ничего не решал» разошлись бы
+   * ровно в тот момент, когда первое задание решено — метка исчезла бы
+   * на одной ширине экрана и осталась на другой.
+   */
+  recommend: boolean;
+}) {
   const { t } = useI18n();
   return (
     <div className="tabs tracks" role="tablist" aria-label={t.tracks.ariaLabel}>
@@ -1559,7 +1592,18 @@ function TrackSwitcher({ active, onSelect }: { active: Track; onSelect: (track: 
             onClick={() => onSelect(track)}
           >
             <span>{t.tracks.names[track]}</span>
-            <small>{ready ? t.tracks.readyBadge(p.tasks.length) : t.tracks.draftBadge}</small>
+            {/*
+             * Метка обязана быть и здесь, а не только на карточках: на
+             * телефоне .track-cards скрыты вовсе (см. styles.css), то есть
+             * без этой строки совет не доходил бы ровно до того экрана,
+             * ради которого затевался. Вместо счётчика заданий, а не рядом
+             * с ним — плитка узкая, две подписи в ней встают в три строки.
+             */}
+            {recommend && track === RECOMMENDED_TRACK ? (
+              <small className="track-tab-recommended">{t.tracks.recommendedBadge}</small>
+            ) : (
+              <small>{ready ? t.tracks.readyBadge(p.tasks.length) : t.tracks.draftBadge}</small>
+            )}
           </button>
         );
       })}
@@ -1586,13 +1630,17 @@ function TrackCards({
   active,
   progress,
   onSelect,
+  recommend,
 }: {
   active: Track;
   progress: Progress;
   onSelect: (track: Track) => void;
+  /** Показывать метку и довод рекомендованного трека — см. TrackSwitcher. */
+  recommend: boolean;
 }) {
   const { t, locale } = useI18n();
   return (
+    <>
     <div className="track-cards">
       {TRACK_ORDER.map((track) => {
         const pack = packForTrack(track, locale);
@@ -1612,6 +1660,9 @@ function TrackCards({
           >
             <div className="track-card-head">
               <span className="track-card-name">{t.tracks.names[track]}</span>
+              {recommend && track === RECOMMENDED_TRACK && (
+                <span className="track-card-recommended">{t.tracks.recommendedBadge}</span>
+              )}
               <span className="pill">{ready ? t.tracks.readyBadge(total) : t.tracks.draftBadge}</span>
             </div>
             <p className="muted track-card-chain">
@@ -1647,6 +1698,8 @@ function TrackCards({
         );
       })}
     </div>
+    {recommend && <p className="muted track-recommend-note">{t.tracks.recommendedNote}</p>}
+    </>
   );
 }
 
@@ -2053,6 +2106,15 @@ function Home({
   // Показываем ровно один раз, до первой же решённой задачи или начатого навыка —
   // дальше это уже не «что это такое», а лишняя строчка над картой навыков.
   const isNewUser = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
+  /*
+   * Совет «начните отсюда» живёт по тому же признаку, что и карточка-питч,
+   * и это не совпадение: оба отвечают человеку, который ещё ничего не решал.
+   * Как только он начал — неважно, с какого трека, — совет становится
+   * неверным (он уже начал) и превращается в шум на самом видном месте.
+   * Признак один на переключатель и на карточки, потому что это одна
+   * и та же развилка на двух ширинах экрана.
+   */
+  const showRecommendation = isNewUser;
 
   /**
    * Куда двигать экран после выбора трека. Два якоря, а не один, и второй
@@ -2202,10 +2264,11 @@ function Home({
         {t.about.entryLink}
       </button>
 
-      <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} />
+      <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} recommend={showRecommendation} />
       <TrackCards
         active={activeTrack}
         progress={progress}
+        recommend={showRecommendation}
         // Клик по карточке уже активного трека раньше не делал ничего —
         // switchTrack на тот же трек не меняет ни состояние, ни экран,
         // а подпись кнопки при этом обещает «Продолжить». Для активного

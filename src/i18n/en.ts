@@ -96,6 +96,9 @@ export const en = {
     openBtn: 'Open skill map →',
     /** См. комментарий в ru.ts: метка ставится по Executor.runsCode, не по режиму задания. */
     runsCodeBadge: 'the code runs',
+    recommendedBadge: 'start here',
+    recommendedNote:
+      'Not sure where to begin? Start with SQL: almost every analyst posting asks for it, it opens with no extra download, and the answer here is checked against the result of your query rather than its text. The other three tracks are open from the start, in any order.',
   },
   home: {
     dueLabel: 'due for review',
@@ -210,7 +213,7 @@ export const en = {
     chainBody:
       'Every working task travels the same path: business question → requirements → metric → data → analysis → model → insight → decision. The tools cover the middle; the path breaks at its ends, and the start is the more dangerous of the two: a misread question yields a flawlessly computed wrong answer, and no later step will catch it, because every one of them adds up perfectly. The middle has something to check it against: the query result is visible at once. The ends are checked only by the questions you ask the person who requested the work.',
     tracksWhyBody:
-      "The order of the tracks follows that path. Start with the profession itself: what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped. Modeling it before that exists would put the roof on before the walls.",
+      "The order of the tracks follows that path. Start with the profession itself: what an analyst is asked for and why, so the syntax that follows has a point. Then SQL, because that's where data is pulled from a source system. Then pandas, for the transforms and analysis that go beyond what a single query comfortably expresses. Power BI/DAX comes last, since a BI model is built on top of data that's already been extracted and shaped. Modeling it before that exists would put the roof on before the walls. That is the order of the work, not the order of learning: SQL is the easier place to begin, in the middle of the path but asked for most often, and it shows a result from the very first task. The profession track then runs alongside rather than before it, because it covers what people trip on once the syntax is already there.",
   },
   /** См. комментарий в ru.ts: свой экран, потому что здесь не читают, а делают. */
   account: {
