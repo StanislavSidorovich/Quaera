@@ -168,7 +168,7 @@ export const en = {
       "Anyone already working with data or heading that way: a product or commercial analyst, a reporting specialist, a finance person tired of waiting on someone else's export. There is no syntax-for-its-own-sake here: every task grew out of a question analysts get asked.",
     audienceStartLabel: 'Where it starts',
     audienceStartBody:
-      'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed.',
+      'From zero on every track: SQL opens with SELECT, pandas with what a DataFrame even is, the data model with why a star schema exists at all. No prior knowledge assumed, with one exception: parts of pandas are explained through their SQL counterpart further in.',
     audienceCeilingLabel: 'Where it gets you',
     audienceCeilingBody:
       'To a confident mid-level: window functions with frames, CTEs and query decomposition, filter context and time intelligence in DAX, reshaping data in pandas. That is the level at which an analyst closes most business requests without handing them onward.',
@@ -333,7 +333,7 @@ export const en = {
       {
         title: "Start with whatever is on fire",
         /* См. комментарий в ru.ts: шаг советует, а не пересказывает about.audienceStartBody и about.chainBody. */
-        body: 'The tracks are independent and none requires another: no prior knowledge is assumed anywhere, so any of them is a valid start. If nothing is on fire, take them in the order they are listed above: it follows the path from question to decision, and each one builds on the last.',
+        body: 'There are no formal prerequisites between tracks: nothing is locked, and any of them is a valid start. One caveat: pandas is written as a continuation of SQL, so you can work through it without SQL, but a good part of the explanations rest on the comparison and will pass you by. If nothing is on fire, take them in the order they are listed above: it follows the path from question to decision.',
       },
       {
         title: "Read the track's intro",
