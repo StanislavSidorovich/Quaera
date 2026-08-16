@@ -1218,8 +1218,8 @@ export default function App() {
              * не занимает: строка инструментов в шапке уже есть.
              */}
             <button
-              className="icon-btn topbar-account"
-              aria-label={t.nav.account}
+              className={`icon-btn topbar-account${session ? ' signed-in' : ''}`}
+              aria-label={session ? t.account.signedInAs(session.user.email ?? '') : t.nav.account}
               aria-current={screen.name === 'account' ? 'page' : undefined}
               onClick={() => setScreen({ name: 'account' })}
             >
@@ -1292,6 +1292,8 @@ export default function App() {
               onResume={resumeSession}
               scrollToChooser={pendingChooserScroll}
               onChooserScrolled={() => setPendingChooserScroll(false)}
+              accountEmail={session?.user.email ?? null}
+              onOpenAccount={() => setScreen({ name: 'account' })}
             />
           )}
 
@@ -1359,12 +1361,18 @@ export default function App() {
           )}
 
           {step?.kind === 'task' && executor && (() => {
-            // Пилюля навыка на карточке задания ведёт на карточку приёма
-            // этого же занятия — если её в очереди не было (навык уже
-            // введён раньше), пилюля остаётся текстом без клика: вести
-            // на карточку из справочника значило бы бросить занятие,
-            // а очередь занятия нигде не сохраняется.
+            /*
+             * Пилюля навыка на карточке задания ведёт на карточку приёма
+             * этого же занятия, если она в очереди была. Если нет (навык
+             * уже введён раньше, и сегодняшняя очередь его карточку
+             * не включила) — на карточку из справочника, тем же переходом,
+             * что и Reference.onOpen ниже. Занятие при этом не бросается:
+             * уход с экрана 'session' на любой другой сохраняет его
+             * снимок на устройстве (см. persistSession выше), тем же
+             * путём, каким уже работает «Вернуться к занятию» с главной.
+             */
             const lessonIndex = screen.name === 'session' ? lessonStepIndex(screen.queue, step.task.skill) : -1;
+            const skillId = step.task.skill;
             return (
               <TaskView
                 key={step.task.id}
@@ -1373,7 +1381,13 @@ export default function App() {
                 schema={schema}
                 drafts={taskDrafts}
                 skillTitle={activePack.skills.find((sk) => sk.id === step.task.skill)?.title ?? ''}
-                onOpenLesson={lessonIndex >= 0 ? () => goToStep(lessonIndex) : undefined}
+                onOpenLesson={
+                  lessonIndex >= 0
+                    ? () => goToStep(lessonIndex)
+                    : lessonBySkill.has(skillId)
+                      ? () => setScreen({ name: 'lesson', skill: skillId })
+                      : undefined
+                }
                 onOpenSchema={openSchema}
                 onDone={(o) => handleDone(step.task, o)}
               />
@@ -1851,6 +1865,8 @@ function Home({
   onResume,
   scrollToChooser,
   onChooserScrolled,
+  accountEmail,
+  onOpenAccount,
 }: {
   activeTrack: Track;
   activePack: Pack;
@@ -1887,8 +1903,18 @@ function Home({
   scrollToChooser: boolean;
   /** Сигнал получен и отработан — гасим его, чтобы он не сработал второй раз. */
   onChooserScrolled: () => void;
+  /** Почта вошедшего или null — для строки состояния входа (см. .home-account-line). */
+  accountEmail: string | null;
+  onOpenAccount: () => void;
 }) {
   const { t, locale } = useI18n();
+
+  /*
+   * Прежний адрес Cloudflare Pages продолжает работать и отдаёт то же
+   * приложение (см. [[querium-links]]) — отключить его, не сломав деплой,
+   * нельзя. Читается один раз при монтировании: домен не меняется на лету.
+   */
+  const isOldDomain = typeof location !== 'undefined' && location.hostname.endsWith('.pages.dev');
 
   /**
    * Лежит ли рантайм Python в кеше устройства. От этого зависит только текст
@@ -1987,6 +2013,15 @@ function Home({
    * оказывается на экране.
    */
   const chooserRef = useRef<HTMLButtonElement>(null);
+  /*
+   * Не только кнопка «Начать занятие» — три состояния карточки ниже
+   * (согласие на рантайм, отложенное согласие, готовый трек) взаимно
+   * исключают друг друга, и в каждом это ref висит на своей главной
+   * кнопке. Раньше он ставился только в третьем состоянии: на треке
+   * pandas без подтверждённого согласия startRef.current был пуст,
+   * прокрутка доводила лишь до ссылки-выбора, а «Скачать и продолжить»
+   * оставалось за сгибом — то самое действие, которого человек и искал.
+   */
   const startRef = useRef<HTMLButtonElement>(null);
   /*
    * Отмена анимации живёт в ref, а не в возврате эффекта, и это не стиль,
@@ -2034,6 +2069,23 @@ function Home({
 
   return (
     <>
+      {isOldDomain && (
+        <div className="domain-notice">
+          <span>{t.home.oldDomainNotice}</span>
+          <a href="https://quaera.app/">{t.home.oldDomainNoticeBtn}</a>
+        </div>
+      )}
+      {/*
+       * Признак входа, дублирующий подвал бокового меню, — на десктопе
+       * скрыт CSS-правилом, ниже никакого условия по ширине нет намеренно:
+       * та же логика, что у .topbar-account/.brand-word/.ctx-streak.
+       */}
+      <p className="muted home-account-line">
+        {accountEmail ? t.home.accountStatusSignedIn(accountEmail) : t.home.accountStatusSignedOut}
+        <button type="button" onClick={onOpenAccount}>
+          {accountEmail ? t.nav.account : t.home.accountStatusSignInBtn}
+        </button>
+      </p>
       {/*
        * Заголовок и абзац отдельной карточкой, а не всем WelcomeHero сразу —
        * решение (карточки треков) должно быть видно раньше обоснования.
@@ -2155,7 +2207,7 @@ function Home({
               <p className="brief">{t.consent.body(Math.round(consent / 1e6))}</p>
               <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
               <div className="row">
-                <button className="btn" onClick={onConfirmDownload}>
+                <button ref={startRef} className="btn" onClick={onConfirmDownload}>
                   {t.consent.confirmBtn}
                 </button>
                 <button className="btn secondary" onClick={onDeferConsent}>
@@ -2176,7 +2228,7 @@ function Home({
           {consent !== null && consentDeferred && (
             <div className="card">
               <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.deferredNote}</p>
-              <button className="btn secondary" onClick={onResumeConsent}>
+              <button ref={startRef} className="btn secondary" onClick={onResumeConsent}>
                 {t.consent.resumeBtn(Math.round(consent / 1e6))}
               </button>
             </div>

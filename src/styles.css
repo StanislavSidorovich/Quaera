@@ -512,6 +512,29 @@ textarea.sql {
   color: var(--text-dim);
 }
 
+/*
+ * Точка «вошли» на иконке аккаунта в шапке телефона. Сама иконка стоит
+ * четвёртой подряд среди тумблеров шрифта/темы/языка и без неё не отличима
+ * от них — точка хотя бы говорит «здесь есть состояние», подпись целиком
+ * даёт .home-account-line на главной. `position: relative` только здесь,
+ * не на всём .icon-btn — остальным иконкам ничего позиционировать не нужно.
+ */
+.icon-btn.topbar-account {
+  position: relative;
+}
+
+.icon-btn.topbar-account.signed-in::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--bg-raised);
+}
+
 /* Снэкбар «нажмите назад ещё раз, чтобы выйти» — на главном экране, ненавязчиво. */
 .exit-hint {
   position: fixed;
@@ -886,6 +909,51 @@ a.btn {
 }
 
 /* -------------------------------------------------------------- главная */
+
+/*
+ * Ссылка на quaera.app для тех, кто попал на прежний адрес Cloudflare
+ * Pages (querium.pages.dev — он продолжает работать, см. [[querium-links]]).
+ * Не .card: это единственная строка над постоянной раскладкой главной,
+ * и полноразмерная карточка с отступами обошлась бы в лишние ~60px высоты
+ * ради предупреждения, которое видит меньшинство. `--warn` тот же цвет,
+ * что у полосы загрузки согласия — «стоит прочитать», а не «сломалось».
+ */
+.domain-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.domain-notice a {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/*
+ * Признак входа на главной — на телефоне это единственное место, где он
+ * виден вообще: иконка в шапке (.topbar-account) там без подписи и ничем
+ * не отличается от соседних тумблеров шрифта/темы. На десктопе тот же
+ * признак уже в подвале бокового меню — скрыт правилом в @media (min-width:
+ * 1024px) ниже по файлу, чтобы не читаться вторым источником состояния.
+ */
+.home-account-line {
+  margin: 0 0 12px;
+}
+
+.home-account-line button {
+  margin-left: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
 
 /* Три доказательства в питче тренажёра (WelcomeHero) — тот же приём
    разделителя, что и skill-row, но без интерактивности: это не список
@@ -3437,6 +3505,12 @@ table.sample td.null {
    * договаривает то, что на десктопе уже сказано слева.
    */
   .topbar-account {
+    display: none;
+  }
+
+  /* Тот же признак («вошли» или «только на этом устройстве») уже стоит
+     в подвале бокового меню — на десктопе строка на главной его дублирует. */
+  .home-account-line {
     display: none;
   }
 

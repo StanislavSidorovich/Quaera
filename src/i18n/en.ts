@@ -134,6 +134,11 @@ export const en = {
     sandboxBtn: 'Sandbox',
     schemaBtn: 'Data schema',
     draftNote: 'The skill graph is already designed; tasks will land in one of the upcoming sprints.',
+    accountStatusSignedIn: (email: string) => `Progress is saved to ${email}`,
+    accountStatusSignedOut: 'Progress is only on this device',
+    accountStatusSignInBtn: 'Sign in',
+    oldDomainNotice: 'The trainer moved to quaera.app. This link still works, but the new address is easier to remember.',
+    oldDomainNoticeBtn: 'Go to quaera.app',
   },
   consent: {
     title: 'Python engine download needed',
