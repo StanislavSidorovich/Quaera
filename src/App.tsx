@@ -1640,7 +1640,6 @@ function TrackCards({
 }) {
   const { t, locale } = useI18n();
   return (
-    <>
     <div className="track-cards">
       {TRACK_ORDER.map((track) => {
         const pack = packForTrack(track, locale);
@@ -1651,18 +1650,17 @@ function TrackCards({
           ? pack.tasks.filter((task) => progress.taskRecords[task.id]?.solved).length
           : 0;
         const started = solved > 0;
+        const highlighted = recommend && track === RECOMMENDED_TRACK;
         return (
           <button
             key={track}
             type="button"
-            className={`track-card track-${track}${active === track ? ' active' : ''}${ready ? '' : ' draft'}`}
+            className={`track-card track-${track}${active === track ? ' active' : ''}${ready ? '' : ' draft'}${highlighted ? ' track-card-highlight' : ''}`}
             onClick={() => onSelect(track)}
           >
             <div className="track-card-head">
               <span className="track-card-name">{t.tracks.names[track]}</span>
-              {recommend && track === RECOMMENDED_TRACK && (
-                <span className="track-card-recommended">{t.tracks.recommendedBadge}</span>
-              )}
+              {highlighted && <span className="track-card-recommended">{t.tracks.recommendedBadge}</span>}
               <span className="pill">{ready ? t.tracks.readyBadge(total) : t.tracks.draftBadge}</span>
             </div>
             <p className="muted track-card-chain">
@@ -1698,8 +1696,6 @@ function TrackCards({
         );
       })}
     </div>
-    {recommend && <p className="muted track-recommend-note">{t.tracks.recommendedNote}</p>}
-    </>
   );
 }
 
@@ -2198,17 +2194,6 @@ function Home({
         </div>
       )}
       {/*
-       * Признак входа, дублирующий подвал бокового меню, — на десктопе
-       * скрыт CSS-правилом, ниже никакого условия по ширине нет намеренно:
-       * та же логика, что у .topbar-account/.brand-word/.ctx-streak.
-       */}
-      <p className="muted home-account-line">
-        {accountEmail ? t.home.accountStatusSignedIn(accountEmail) : t.home.accountStatusSignedOut}
-        <button type="button" onClick={onOpenAccount}>
-          {accountEmail ? t.nav.account : t.home.accountStatusSignInBtn}
-        </button>
-      </p>
-      {/*
        * Заголовок и абзац отдельной карточкой, а не всем WelcomeHero сразу —
        * решение (карточки треков) должно быть видно раньше обоснования.
        * До этой правки WelcomeHero целиком (питч + три довода + цепочка,
@@ -2264,6 +2249,18 @@ function Home({
         {t.about.entryLink}
       </button>
 
+      {/*
+       * Довод «почему SQL» — над выбором, а не под карточками (было заведено
+       * в ROADMAP отдельным пунктом 2026-08-16: замер на чистом хранилище
+       * показал y=975 из 800px на десктопе и y=905 из 812 на телефоне, то есть
+       * ниже сгиба на обоих размерах, при том что сам бейдж виден. Причина —
+       * страница читает сверху вниз, а довод стоял ПОСЛЕ решения, которое
+       * объясняет; поднят до чтения самого решения, отступ снизу маленький —
+       * он держится вплотную к переключателю/карточкам, которые объясняет,
+       * а не к абзацу выше.
+       */}
+      {showRecommendation && <p className="muted track-recommend-note">{t.tracks.recommendedNote}</p>}
+
       <TrackSwitcher active={activeTrack} onSelect={onSwitchTrack} recommend={showRecommendation} />
       <TrackCards
         active={activeTrack}
@@ -2278,6 +2275,21 @@ function Home({
       />
 
       {/*
+       * Признак входа, дублирующий подвал бокового меню, — на десктопе
+       * скрыт CSS-правилом, ниже никакого условия по ширине нет намеренно:
+       * та же логика, что у .topbar-account/.brand-word/.ctx-streak. Стоит
+       * здесь, а не первой строкой экрана (было так раньше): на первом
+       * визите это не то, ради чего человек открыл главную, а 300px высоты
+       * до выбора трека дороже, чем более раннее знакомство с состоянием входа.
+       */}
+      <p className="muted home-account-line">
+        {accountEmail ? t.home.accountStatusSignedIn(accountEmail) : t.home.accountStatusSignedOut}
+        <button type="button" onClick={onOpenAccount}>
+          {accountEmail ? t.nav.account : t.home.accountStatusSignInBtn}
+        </button>
+      </p>
+
+      {/*
        * Показываем только на английском и только на треке, контент которого
        * действительно не переведён. Раньше условие было одно — locale === 'en', —
        * и после того как sql, domain и python были переведены целиком, надпись
@@ -2286,23 +2298,6 @@ function Home({
        */}
       {locale === 'en' && !isTrackTranslated(activeTrack) && (
         <p className="muted" style={{ margin: '-6px 0 12px', fontSize: 12 }}>{t.locale.partialNote}</p>
-      )}
-
-      {/*
-       * Вводная карточка конкретного трека — не то же самое, что About:
-       * там сводка по всем четырём сразу, здесь — что за инструмент, где
-       * он встречается в работе и чего не даёт. Кнопка остаётся и после
-       * первого показа: вопрос «что это вообще такое» может всплыть позже.
-       */}
-      {onOpenTrackIntro && (
-        <button
-          type="button"
-          className="link-row"
-          onClick={onOpenTrackIntro}
-          style={{ margin: '-2px 0 12px' }}
-        >
-          {t.trackIntro.entryLink}
-        </button>
       )}
 
       {/*
@@ -2374,44 +2369,6 @@ function Home({
                 </div>
               </div>
               {/*
-               * Объяснение полосы стоит видимой строкой, а не в `title`.
-               * Раньше оно было только там — и на телефоне не показывалось
-               * никак: `title` не открывается ни по тапу, ни по долгому
-               * нажатию. Получалось, что текст, написанный ровно против
-               * прочтения «приложение оценивает меня на 3%», не доходил
-               * до тех, у кого это прочтение и возникает. Одна тусклая
-               * строка на 12px — не баннер, прятать её под раскрытие
-               * незачем: она объясняет числа, стоящие тут же под ней.
-               */}
-              <div className="overall-progress">
-                {/*
-                 * Подпись не `.muted`, в отличие от прежней версии: рядом
-                 * с ней теперь стоит серое объяснение в две строки, и двумя
-                 * одинаково тусклыми абзацами подряд заголовок блока
-                 * переставал быть заголовком — читалось как один сплошной
-                 * комментарий неизвестно к чему. Порядок должен читаться
-                 * сразу: что это → почему так → сами числа.
-                 */}
-                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600 }}>{t.home.overallProgressLabel}</p>
-                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12, lineHeight: 1.5 }}>
-                  {t.home.overallProgressHint}
-                </p>
-                {masteryByTier.map(({ tier, avg }) => (
-                  <div className="overall-progress-row" key={tier}>
-                    <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
-                    <div
-                      className="bar-lg"
-                      role="img"
-                      aria-label={t.home.masteryAria(Math.round(avg * 100))}
-                      title={t.home.masteryAria(Math.round(avg * 100))}
-                    >
-                      <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
-                    </div>
-                    <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
-                  </div>
-                ))}
-              </div>
-              {/*
                * Незаконченное занятие идёт первым и основной кнопкой: если оно
                * есть, вернуться к нему — намерение более частое, чем набрать
                * новое, и та же расстановка уже стоит на «Занятие закончено».
@@ -2481,6 +2438,49 @@ function Home({
               <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
                 {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
               </p>
+              {/*
+               * Перенесена сюда, под кнопку и её подпись (была сразу под
+               * счётчиками) — замер 2026-08-16 показал, что она отодвигала
+               * кнопку «Начать» на 204px ниже без пользы для решения «нажимать
+               * ли сейчас»: это ретроспектива («как у меня дела вообще»),
+               * а не то, что нужно перед действием («что меня ждёт сейчас»).
+               * Объяснение полосы стоит видимой строкой, а не в `title`.
+               * Раньше оно было только там — и на телефоне не показывалось
+               * никак: `title` не открывается ни по тапу, ни по долгому
+               * нажатию. Получалось, что текст, написанный ровно против
+               * прочтения «приложение оценивает меня на 3%», не доходил
+               * до тех, у кого это прочтение и возникает. Одна тусклая
+               * строка на 12px — не баннер, прятать её под раскрытие
+               * незачем: она объясняет числа, стоящие тут же под ней.
+               */}
+              <div className="overall-progress" style={{ marginTop: 16 }}>
+                {/*
+                 * Подпись не `.muted`, в отличие от прежней версии: рядом
+                 * с ней теперь стоит серое объяснение в две строки, и двумя
+                 * одинаково тусклыми абзацами подряд заголовок блока
+                 * переставал быть заголовком — читалось как один сплошной
+                 * комментарий неизвестно к чему. Порядок должен читаться
+                 * сразу: что это → почему так → сами числа.
+                 */}
+                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600 }}>{t.home.overallProgressLabel}</p>
+                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12, lineHeight: 1.5 }}>
+                  {t.home.overallProgressHint}
+                </p>
+                {masteryByTier.map(({ tier, avg }) => (
+                  <div className="overall-progress-row" key={tier}>
+                    <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
+                    <div
+                      className="bar-lg"
+                      role="img"
+                      aria-label={t.home.masteryAria(Math.round(avg * 100))}
+                      title={t.home.masteryAria(Math.round(avg * 100))}
+                    >
+                      <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
+                    </div>
+                    <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -2489,6 +2489,29 @@ function Home({
               <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
               <p className="muted" style={{ margin: 0, fontSize: 13 }}>{t.home.draftNote}</p>
             </div>
+          )}
+
+          {/*
+           * Вводная карточка конкретного трека — не то же самое, что About:
+           * там сводка по всем четырём сразу, здесь — что за инструмент, где
+           * он встречается в работе и чего не даёт. Кнопка остаётся и после
+           * первого показа: вопрос «что это вообще такое» может всплыть позже.
+           *
+           * Перенесена сюда, в dash-main после карточки, — раньше стояла
+           * между карточками треков и всей приборной панелью, отдельной
+           * строкой, отодвигая решение «начать занятие» ещё на 40px без
+           * необходимости: вопрос «что это за инструмент» уместен рядом
+           * с самим треком, а не между его выбором и панелью.
+           */}
+          {onOpenTrackIntro && (
+            <button
+              type="button"
+              className="link-row"
+              onClick={onOpenTrackIntro}
+              style={{ margin: '10px 0 0' }}
+            >
+              {t.trackIntro.entryLink}
+            </button>
           )}
         </div>
 
