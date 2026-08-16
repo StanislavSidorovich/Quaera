@@ -1,13 +1,13 @@
 {
   "id": "python-core",
   "title": "pandas for an analyst",
-  "description": "Not \"Python in general,\" but the slice of it used to work with data. Every technique is placed next to its SQL equivalent — and what SQL doesn't have at all — the index, copies, column types — is worked through separately.",
+  "description": "Not \"Python in general,\" but the slice of it used to work with data. Every technique is placed next to its SQL equivalent, and what SQL doesn't have at all (the index, copies, column types) is worked through separately.",
   "intro": {
-    "what": "pandas is a library for Python, not a separate language: what would have been a query's output in SQL becomes an object in memory here (a DataFrame) — you can filter it further, join it to another object, compute anything on it, without going back to the database.\n\nThe main technical difference from SQL is who picks the order of computation. In SQL you describe the result you want, and the engine decides how to get it. In pandas the order is yours: steps run exactly in the order you wrote them, and after every line you need to know what's now in the variable. That shapes the kind of mistakes you make — fewer silent ones than in SQL, but more of them overall, because almost any step can hand back the wrong type, the wrong shape, or a copy instead of the original data.\n\nThis track isn't \"Python from scratch\": it assumes you've already been through SQL, and it's built entirely around comparing the two. Wherever a technique matches its SQL counterpart, that's said outright; wherever pandas has something SQL doesn't have at all — the index, the difference between a copy and a view, column types — it gets its own separate, detailed treatment, because that's exactly where the time goes.",
-    "where": "Computing something a single query handles awkwardly: a rolling average with a window that changes by condition, or a chain of ten transformations that isn't worth cramming into one SELECT. Bringing together data from two sources that don't live in the same database — a file from an ERP and an export from an ad platform. Quickly checking a hypothesis in a notebook before turning it into a standing query or a dashboard.\n\nAnalyst job postings ask for Python constantly — and what they almost always mean is pandas specifically, not the language at large: nobody asks an analyst to write classes and services, but everybody asks them to take an export apart.",
-    "idea": "An operation applies to the whole column at once, not row by row — that's vectorisation, and pandas's entire performance story is built around it. A loop over rows works, but on even medium-sized data it's slower by orders of magnitude, and that's not a style preference — it's the difference between a second and several minutes.\n\nThe second thing worth accepting right away: a DataFrame has an index — a structure separate from the data itself that decides which rows get matched to which when two objects are combined. After a groupby, the column you grouped by doesn't disappear — it moves into the index, and that's the first thing that trips up anyone arriving from SQL, where no such concept exists at all.",
-    "limits": "pandas keeps the entire dataset in the process's memory — on an export of hundreds of millions of rows that hits the machine's limits far sooner than a real database would. It's a tool for exploration and one-off calculation, not for a standing report people check every day: a calculation that has to recompute itself under any slice gets written as a measure in a data model — there's a separate track for that.\n\nAnd it doesn't replace SQL, it complements it: if the data already lives in a database and the aggregation fits in one query, pulling it into pandas for the same result is an extra step with an extra point of failure.",
-    "bridge": "The same working question as in SQL: brand «Nettora»'s revenue falling by almost half. Here you'll assemble it through groupby and merge — with the same meaning as INNER JOIN and GROUP BY — but the result doesn't vanish after one query; it stays an object you can keep turning: build a chart from it, run it through another filter, save it as an intermediate step.\n\nIn the data model, that same number becomes a measure that isn't computed once but recalculates itself under any slice — and that's the next step once the pandas version already makes sense to you step by step."
+    "what": "pandas is a library for Python, not a separate language: what would have been a query's output in SQL becomes an object in memory here (a DataFrame); you can filter it further, join it to another object, compute anything on it, without going back to the database.\n\nThe main technical difference from SQL is who picks the order of computation. In SQL you describe the result you want, and the engine decides how to get it. In pandas the order is yours: steps run exactly in the order you wrote them, and after every line you need to know what's now in the variable. That shapes the kind of mistakes you make, fewer silent ones than in SQL, but more of them overall, because almost any step can hand back the wrong type, the wrong shape, or a copy instead of the original data.\n\nThis track isn't \"Python from scratch\": it assumes you've already been through SQL, and it's built entirely around comparing the two. Wherever a technique matches its SQL counterpart, that's said outright; wherever pandas has something SQL doesn't have at all (the index, the difference between a copy and a view, column types), it gets its own separate, detailed treatment, because that's exactly where the time goes.",
+    "where": "Computing something a single query handles awkwardly: a rolling average with a window that changes by condition, or a chain of ten transformations that isn't worth cramming into one SELECT. Bringing together data from two sources that don't live in the same database, a file from an ERP and an export from an ad platform. Quickly checking a hypothesis in a notebook before turning it into a standing query or a dashboard.\n\nAnalyst job postings ask for Python constantly, and what they almost always mean is pandas specifically, not the language at large: nobody asks an analyst to write classes and services, but everybody asks them to take an export apart.",
+    "idea": "An operation applies to the whole column at once, not row by row; that's vectorisation, and pandas's entire performance story is built around it. A loop over rows works, but on even medium-sized data it's slower by orders of magnitude, and that's not a style preference; it's the difference between a second and several minutes.\n\nThe second thing worth accepting right away: a DataFrame has an index, a structure separate from the data itself that decides which rows get matched to which when two objects are combined. After a groupby, the column you grouped by doesn't disappear; it moves into the index, and that's the first thing that trips up anyone arriving from SQL, where no such concept exists at all.",
+    "limits": "pandas keeps the entire dataset in the process's memory, on an export of hundreds of millions of rows that hits the machine's limits far sooner than a real database would. It's a tool for exploration and one-off calculation, not for a standing report people check every day: a calculation that has to recompute itself under any slice gets written as a measure in a data model; there's a separate track for that.\n\nAnd it doesn't replace SQL, it complements it: if the data already lives in a database and the aggregation fits in one query, pulling it into pandas for the same result is an extra step with an extra point of failure.",
+    "bridge": "The same working question as in SQL: brand «Nettora»'s revenue falling by almost half. Here you'll assemble it through groupby and merge (with the same meaning as INNER JOIN and GROUP BY), but the result doesn't vanish after one query; it stays an object you can keep turning: build a chart from it, run it through another filter, save it as an intermediate step.\n\nIn the data model, that same number becomes a measure that isn't computed once but recalculates itself under any slice, and that's the next step once the pandas version already makes sense to you step by step."
   },
   "tierNames": {
     "1": "DataFrame and data",
@@ -19,12 +19,12 @@
     {
       "id": "py-dataframe",
       "title": "DataFrame and Series",
-      "summary": "I read data into a DataFrame and distinguish a table from a single column — a Series, which has its own set of methods."
+      "summary": "I read data into a DataFrame and distinguish a table from a single column, a Series, which has its own set of methods."
     },
     {
       "id": "py-index",
-      "title": "The index — SQL has no equivalent",
-      "summary": "I remember that a DataFrame has an index, and I'm not surprised when a column \"disappears\" after groupby — it moved into the index."
+      "title": "The index: SQL has no equivalent",
+      "summary": "I remember that a DataFrame has an index, and I'm not surprised when a column \"disappears\" after groupby; it moved into the index."
     },
     {
       "id": "py-select-filter",
@@ -39,12 +39,12 @@
     {
       "id": "py-groupby",
       "title": "groupby and agg",
-      "summary": "I build a summary with groupby, and I know ahead of time what comes back — a Series or a DataFrame — and what ends up in the index."
+      "summary": "I build a summary with groupby, and I know ahead of time what comes back (a Series or a DataFrame) and what ends up in the index."
     },
     {
       "id": "py-transform",
       "title": "transform vs. agg and apply",
-      "summary": "I return a value at the source granularity through transform instead of computing a summary and gluing it back on — the pandas version of a window function."
+      "summary": "I return a value at the source granularity through transform instead of computing a summary and gluing it back on, the pandas version of a window function."
     },
     {
       "id": "py-nan",
@@ -54,12 +54,12 @@
     {
       "id": "py-merge",
       "title": "merge and row multiplication",
-      "summary": "I join tables knowing the key's cardinality, and I check it with validate — not after the total has doubled."
+      "summary": "I join tables knowing the key's cardinality, and I check it with validate, not after the total has doubled."
     },
     {
       "id": "py-explore",
       "title": "Exploring the data",
-      "summary": "I look at the data before computing anything: value_counts by slice, describe by measure — and I catch an outlier or a stray category before it reaches a report."
+      "summary": "I look at the data before computing anything: value_counts by slice, describe by measure, and I catch an outlier or a stray category before it reaches a report."
     },
     {
       "id": "py-reshape",
@@ -372,7 +372,7 @@
     },
     {
       "id": "py-018",
-      "title": "sum() and transform('sum') — different length",
+      "title": "sum() and transform('sum'): different length",
       "brief": "A colleague plugged in sum() where a transform was needed, and got a column that's almost all NaN instead of each sale's share.",
       "goal": "Understand how the results of sum() and transform('sum') differ after the same grouping.",
       "predictQuestion": "fact_sellout has 118,449 rows and 47 unique product_id values. How many rows will a and b have?",
@@ -443,7 +443,7 @@
     },
     {
       "id": "py-021",
-      "title": "Customers by rep — with nothing lost",
+      "title": "Customers by rep: with nothing lost",
       "brief": "The same report, but done right: the sum has to match the reference table's total customer count, including the 12 who have no rep at all.",
       "goal": "Count the number of customers per rep_id, including a separate group for customers with no rep, and return columns rep_id, n_customers.",
       "hints": [
@@ -531,7 +531,7 @@
       "title": "An average price of 230 ¥ that doesn't exist",
       "brief": "A category manager looks at .describe() over list_price for the whole product reference table and reports upstairs: \"the average SKU price is 230 ¥.\" A colleague from pharma is surprised: isn't our average around 400?",
       "goal": "Understand what's behind the discrepancy, given that describe()'s own number isn't wrong.",
-      "predictQuestion": "The mean in the output really is 230.3 ¥ — describe() didn't lie. What's behind the mismatch the colleague noticed?",
+      "predictQuestion": "The mean in the output really is 230.3 ¥; describe() didn't lie. What's behind the mismatch the colleague noticed?",
       "options": [
         {
           "label": "The column actually mixes two different divisions (FMCG with an average of 110.7 ¥ and Pharma with an average of 423.2 ¥); the overall average describes neither",

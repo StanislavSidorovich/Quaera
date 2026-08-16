@@ -9,11 +9,11 @@
     "4": "Production model"
   },
   "intro": {
-    "what": "A data model isn't a report file — it's a layer between raw tables and what a person sees on a dashboard: facts and dimensions laid out so the same measure computes correctly under any slice someone asks for. DAX is the language that measure is written in; it exists only inside a model and means nothing outside one, unlike SQL or Python code, which work on their own.\n\nThe main difference from SQL and pandas: there, you write a new query for every new question. Here, you build the model and its measures once, and after that any slice — by region, by month, by brand — the report computes on its own, with no new query.",
-    "where": "A dashboard that different people open every day and slice differently — today by region, tomorrow by product group — and the number has to agree both times without hand-editing the query for each slice. A report built on a single flat extract, where joining the fact to a lookup table multiplied rows and quietly doubled revenue: a model with correctly set relationships and cardinality keeps that from happening structurally, not because whoever built the extract was careful enough.\n\nAt a BI-analyst interview this doesn't come up as DAX syntax trivia — it comes up as walking through an actual model: why did this double, why does a measure give the wrong thing under a slice, where should this column have lived. The same style of reasoning underlies the PL-300 exam, which this track uses as its anchor for topic coverage.",
-    "idea": "A measure doesn't store a number — it gets computed at the moment the report already knows which slice is asking for it: that's the filter context. The same formula written as a calculated column computes once, at data refresh, and freezes — a measure recomputes for every cell of a pivot table, with its own set of filters from rows, columns and slicers.\n\nThat's where CALCULATE comes from — not an analogue of WHERE, but a tool that changes the filter context already in place, before the formula ever sees it. Until that difference settles, time intelligence (YTD, comparison to the prior period) looks like a set of spells to memorise; after it, the same one action applied to different date filters.",
-    "limits": "DAX means nothing without a model around it: a formula relies on relationships between tables, and cut off from them it's just text. The model itself, though, travels — the same language and the same mechanics work in Power BI, in Power Pivot inside Excel, and in Analysis Services, so the skill is learned once, not relearned per tool.\n\nA model doesn't replace SQL and pandas: it takes facts and dimensions that are already prepared, not raw data — if the source is dirty, that gets cleaned earlier, before the model.\n\nAnd it isn't free: every extra relationship, every extra high-cardinality column, every extra calculated column grows the model and slows the report down. Later in the track we work through what's worth its cost and what didn't need to go into the model at all.",
-    "bridge": "The same working question as in SQL, domain and pandas: the «Nettora» brand's revenue falling by nearly half. Here the same number is packaged as a measure that recomputes on its own under any slice — by region, by month, by channel — with no new query and no dataframe rebuilt for every new question.\n\nIf a measure, a query and a dataframe on the same data suddenly disagree, that's — as everywhere in this trainer — not a difference between tools, but a mistake in one of the three."
+    "what": "A data model isn't a report file; it's a layer between raw tables and what a person sees on a dashboard: facts and dimensions laid out so the same measure computes correctly under any slice someone asks for. DAX is the language that measure is written in; it exists only inside a model and means nothing outside one, unlike SQL or Python code, which work on their own.\n\nThe main difference from SQL and pandas: there, you write a new query for every new question. Here, you build the model and its measures once, and after that any slice (by region, by month, by brand), the report computes on its own, with no new query.",
+    "where": "A dashboard that different people open every day and slice differently (today by region, tomorrow by product group), and the number has to agree both times without hand-editing the query for each slice. A report built on a single flat extract, where joining the fact to a lookup table multiplied rows and quietly doubled revenue: a model with correctly set relationships and cardinality keeps that from happening structurally, not because whoever built the extract was careful enough.\n\nAt a BI-analyst interview this doesn't come up as DAX syntax trivia; it comes up as walking through an actual model: why did this double, why does a measure give the wrong thing under a slice, where should this column have lived. The same style of reasoning underlies the PL-300 exam, which this track uses as its anchor for topic coverage.",
+    "idea": "A measure doesn't store a number; it gets computed at the moment the report already knows which slice is asking for it: that's the filter context. The same formula written as a calculated column computes once, at data refresh, and freezes; a measure recomputes for every cell of a pivot table, with its own set of filters from rows, columns and slicers.\n\nThat's where CALCULATE comes from, not an analogue of WHERE, but a tool that changes the filter context already in place, before the formula ever sees it. Until that difference settles, time intelligence (YTD, comparison to the prior period) looks like a set of spells to memorise; after it, the same one action applied to different date filters.",
+    "limits": "DAX means nothing without a model around it: a formula relies on relationships between tables, and cut off from them it's just text. The model itself, though, travels; the same language and the same mechanics work in Power BI, in Power Pivot inside Excel, and in Analysis Services, so the skill is learned once, not relearned per tool.\n\nA model doesn't replace SQL and pandas: it takes facts and dimensions that are already prepared, not raw data; if the source is dirty, that gets cleaned earlier, before the model.\n\nAnd it isn't free: every extra relationship, every extra high-cardinality column, every extra calculated column grows the model and slows the report down. Later in the track we work through what's worth its cost and what didn't need to go into the model at all.",
+    "bridge": "The same working question as in SQL, domain and pandas: the «Nettora» brand's revenue falling by nearly half. Here the same number is packaged as a measure that recomputes on its own under any slice (by region, by month, by channel), with no new query and no dataframe rebuilt for every new question.\n\nIf a measure, a query and a dataframe on the same data suddenly disagree, that's (as everywhere in this trainer) not a difference between tools, but a mistake in one of the three."
   },
   "skills": [
     {
@@ -39,7 +39,7 @@
     {
       "id": "model-ambiguity",
       "title": "Two paths to the same table",
-      "summary": "I notice when there's more than one path from a fact to a dimension, and I know the model doesn't pick the best one for me in that case — it refuses to decide."
+      "summary": "I notice when there's more than one path from a fact to a dimension, and I know the model doesn't pick the best one for me in that case; it refuses to decide."
     },
     {
       "id": "model-measure-vs-column",
@@ -89,12 +89,12 @@
     {
       "id": "model-time-intelligence",
       "title": "Time intelligence",
-      "summary": "I compute YTD, a rolling year, the prior period and its growth — and understand what each of these functions does to the date filter."
+      "summary": "I compute YTD, a rolling year, the prior period and its growth, and understand what each of these functions does to the date filter."
     },
     {
       "id": "model-power-query",
       "title": "Power Query and the preparation layer",
-      "summary": "I decide where to clean data — at the source, in Power Query, or in a measure — and I do not push cleaning into DAX out of habit."
+      "summary": "I decide where to clean data (at the source, in Power Query, or in a measure), and I do not push cleaning into DAX out of habit."
     },
     {
       "id": "model-scd2",
@@ -937,7 +937,7 @@
       "brief": "The dashboard has weekly sales and monthly shipments side by side, both connected to dim_date. The requester sets a slicer \"quarter = 1, year = 2025.\"",
       "goal": "Work out whether the two reports show consistent numbers, and why.",
       "scenario": "Slicer: year=2025, quarter=1\n\nSales (weekly,\nvia dim_date.week_start):\n  ¥13,512,252\n\nShipments (monthly,\nvia dim_date.month_start):\n  ¥9,186,879",
-      "predictQuestion": "Different numbers — is this a broken relationship or an expected result?",
+      "predictQuestion": "Different numbers: is this a broken relationship or an expected result?",
       "hints": [
         "Ask yourself: what should a shared calendar actually guarantee: matching numbers, or a matching time window?",
         "Sell-in and sell-out are two different flows: from a distributor's warehouse, and off a retail shelf. Should they physically match?"
@@ -960,7 +960,7 @@
     },
     {
       "id": "mdl-031",
-      "title": "March revenue — by which date",
+      "title": "March revenue: by which date",
       "brief": "The requester asks for March 2025 shipment revenue. The table has two dates: when it was ordered and when it shipped. They didn't specify which, and you didn't ask.",
       "goal": "Work out why two calculations give different numbers, and both are correct.",
       "scenario": "fact_sellin, March 2025:\n\n  by order date    ¥3,303,414\n  by ship date     ¥3,570,458\n\nShipping lags ordering by\n2-11 days. Of 15,362 orders,\n1,979 ship the following month.",

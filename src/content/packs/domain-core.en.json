@@ -9,11 +9,11 @@
     "4": "Judgment and influence"
   },
   "intro": {
-    "what": "This track is about what's left once the tools are stripped away: whose question you're answering, what a computed number actually means, and why the business works the way it does rather than some other way. This isn't \"soft skills\" — there's no less specificity here than in SQL, it's just that the checker isn't an engine, it's the consequences.\n\nThe domain is FMCG and OTC-pharma distribution: how a product travels from factory to shelf, and what metrics measure that journey. The way of reasoning carries over to any industry; the specific set of metrics doesn't, and wherever that boundary falls, the tasks call it out directly.",
-    "where": "A request comes in: \"work out sales for the quarter\" — and before opening the editor, you need to know whose sales: shipments to distributors, or retail sales, before discounts or after. You bring back the correct number and it's rejected, because a neighboring department computes it differently. A report shows growth, and in the meeting it turns out that's a low-base effect.\n\nAnd the most common case of all: the question sounds like \"give me an export\", but what's needed is an answer to a question nobody asked out loud.",
-    "idea": "A number by itself asserts nothing — the assertion only appears together with a definition. \"2025 revenue\" in our dataset has at least three equally correct values: 51.5M ¥ in retail, 42.7M in shipments before discounts, and 39.1M after. None of them is wrong — it's the questions that diverge, not the arithmetic.\n\nThat's where the habit that holds the whole track together comes from: before computing, agree on exactly what's being computed; before comparing, make sure the comparison bases match. A good share of the \"data errors\" people argue about in meetings turn out to be a mismatch of definitions, not of arithmetic.",
-    "limits": "There are no ready-made answers here that apply without looking. Distribution metrics live in FMCG and pharma; in banking, on a marketplace, or in industrial construction the set would be different — what carries over is the way of working it out, not a table of formulas.\n\nThis track doesn't teach tools either: you won't write a single line of code here — tasks are built as picking a decision and seeing why the other options fall short.\n\nAnd the main limitation, worth stating honestly: correctness of a business judgment is never checked automatically by anything. Whatever can be expressed as a number, we lock down against the dataset — but a conclusion stays a conclusion, and it's worth checking against real colleagues, not just the trainer.",
-    "bridge": "This track comes first not out of politeness: it sets up the questions the other three answer. Until it's clear how sell-in differs from sell-out, SUM(units) in a query is arithmetic, not an answer.\n\nThe reverse also holds: half the tasks here are built on the same numbers you'll pull with a query in SQL and with a dataframe in pandas. The «Setouchi Trading» warehouse overstock is worked out here as a distinction between flow and stock — the flow returned to normal, but the level stayed — and the same thing takes a few lines in SQL.\n\nThe trainer gives you meaning and tool separately, so you connect them yourself."
+    "what": "This track is about what's left once the tools are stripped away: whose question you're answering, what a computed number actually means, and why the business works the way it does rather than some other way. This isn't \"soft skills\"; there's no less specificity here than in SQL, it's just that the checker isn't an engine, it's the consequences.\n\nThe domain is FMCG and OTC-pharma distribution: how a product travels from factory to shelf, and what metrics measure that journey. The way of reasoning carries over to any industry; the specific set of metrics doesn't, and wherever that boundary falls, the tasks call it out directly.",
+    "where": "A request comes in: \"work out sales for the quarter\", and before opening the editor, you need to know whose sales: shipments to distributors, or retail sales, before discounts or after. You bring back the correct number and it's rejected, because a neighboring department computes it differently. A report shows growth, and in the meeting it turns out that's a low-base effect.\n\nAnd the most common case of all: the question sounds like \"give me an export\", but what's needed is an answer to a question nobody asked out loud.",
+    "idea": "A number by itself asserts nothing; the assertion only appears together with a definition. \"2025 revenue\" in our dataset has at least three equally correct values: 51.5M ¥ in retail, 42.7M in shipments before discounts, and 39.1M after. None of them is wrong; it's the questions that diverge, not the arithmetic.\n\nThat's where the habit that holds the whole track together comes from: before computing, agree on exactly what's being computed; before comparing, make sure the comparison bases match. A good share of the \"data errors\" people argue about in meetings turn out to be a mismatch of definitions, not of arithmetic.",
+    "limits": "There are no ready-made answers here that apply without looking. Distribution metrics live in FMCG and pharma; in banking, on a marketplace, or in industrial construction the set would be different; what carries over is the way of working it out, not a table of formulas.\n\nThis track doesn't teach tools either: you won't write a single line of code here; tasks are built as picking a decision and seeing why the other options fall short.\n\nAnd the main limitation, worth stating honestly: correctness of a business judgment is never checked automatically by anything. Whatever can be expressed as a number, we lock down against the dataset, but a conclusion stays a conclusion, and it's worth checking against real colleagues, not just the trainer.",
+    "bridge": "This track comes first not out of politeness: it sets up the questions the other three answer. Until it's clear how sell-in differs from sell-out, SUM(units) in a query is arithmetic, not an answer.\n\nThe reverse also holds: half the tasks here are built on the same numbers you'll pull with a query in SQL and with a dataframe in pandas. The «Setouchi Trading» warehouse overstock is worked out here as a distinction between flow and stock (the flow returned to normal, but the level stayed), and the same thing takes a few lines in SQL.\n\nThe trainer gives you meaning and tool separately, so you connect them yourself."
   },
   "skills": [
     {
@@ -34,7 +34,7 @@
     {
       "id": "dom-sanity-check",
       "title": "Checks before you send it",
-      "summary": "Before sending, I reconcile the total against the source, sanity-check the order of magnitude, and check period completeness — catching the mistake before the recipient does."
+      "summary": "Before sending, I reconcile the total against the source, sanity-check the order of magnitude, and check period completeness, catching the mistake before the recipient does."
     },
     {
       "id": "dom-value-chain",
@@ -104,12 +104,12 @@
     {
       "id": "dom-storytelling",
       "title": "Conclusion first",
-      "summary": "I start with the answer and with \"so what,\" and keep the working below — Minto pyramid order, not the chronology of my own work; and I defend that conclusion in front of people with different stakes in it."
+      "summary": "I start with the answer and with \"so what,\" and keep the working below, Minto pyramid order, not the chronology of my own work; and I defend that conclusion in front of people with different stakes in it."
     },
     {
       "id": "dom-chart-choice",
       "title": "Choosing a chart",
-      "summary": "I pick the chart type to fit the question — comparison, composition, change over time or relationship — and strip out everything that doesn't answer it."
+      "summary": "I pick the chart type to fit the question (comparison, composition, change over time or relationship) and strip out everything that doesn't answer it."
     },
     {
       "id": "dom-governance",
@@ -337,7 +337,7 @@
     },
     {
       "id": "dom-008",
-      "title": "Promo share — 34% or 41%",
+      "title": "Promo share: 34% or 41%",
       "brief": "Trade marketing reports: promo share of the brand's sales is 34%. A week later, the same metric in a different deck is 41%. Both numbers are computed correctly, using the same formula.",
       "goal": "Determine which piece of the definition was missing.",
       "scenario": "Metric: \"promo share of «Nettora»\nbrand sales\"\n\n  Report A   34%\n  Report B   41%\n\nKnown: both used the same\nformula:\npromo revenue ÷ total revenue",
