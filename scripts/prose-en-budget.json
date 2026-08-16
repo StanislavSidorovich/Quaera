@@ -3,13 +3,13 @@
   "dashes": {
     "src/i18n/en.ts": 0,
     "src/content/packs/domain-core.en.json": 14,
-    "src/content/packs/domain-lessons.en.json": 60,
+    "src/content/packs/domain-lessons.en.json": 47,
     "src/content/packs/model-core.en.json": 21,
-    "src/content/packs/model-lessons.en.json": 55,
+    "src/content/packs/model-lessons.en.json": 41,
     "src/content/packs/python-core.en.json": 30,
-    "src/content/packs/python-lessons.en.json": 36,
+    "src/content/packs/python-lessons.en.json": 18,
     "src/content/packs/sql-core.en.json": 12,
-    "src/content/packs/sql-lessons.en.json": 33,
+    "src/content/packs/sql-lessons.en.json": 18,
     "src/content/sandbox.json": 8,
     "src/content/tools-compare.json": 1
   }

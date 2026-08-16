@@ -3,7 +3,7 @@
     {
       "skill": "model-oltp-olap",
       "title": "Why analytics needs its own model",
-      "why": "\"Let's have the report just read the same database as the app\" — a proposal that comes up on every other project. It saves a day at the start and costs months later. Being able to explain why this isn't done comes up before you even start building the model itself.",
+      "why": "\"Let's have the report just read the same database as the app\", a proposal that comes up on every other project. It saves a day at the start and costs months later. Being able to explain why this isn't done comes up before you even start building the model itself.",
       "form": "A source (OLTP) answers \"what's happening with this order right now\" and is optimized for writes: data is spread across dozens of narrow tables, so one change touches one row.\n\nA reporting model (OLAP) answers \"what happened across all orders over two years\" and is optimized for reads: wide fact tables with small lookup tables next to them.",
       "example": "The requester's question: \"revenue by category for the quarter.\"\n\nIn a reporting model that's one fact table and one product lookup: sum revenue, break it down by category. Two objects, one relationship.",
       "reads": "The report reads exactly the data it needs, without getting in the way of checkout — the model refreshes at night and lives apart from the production database.",
@@ -25,7 +25,7 @@
     {
       "skill": "model-star",
       "title": "Star and snowflake",
-      "why": "An extract arrives as one wide table, with product name, brand, category, city and region sitting right next to sales. The temptation to leave it as is is real — it works, doesn't it. The star schema is why it gets split into a fact table and lookups anyway.",
+      "why": "An extract arrives as one wide table, with product name, brand, category, city and region sitting right next to sales. The temptation to leave it as is is real; it works, doesn't it. The star schema is why it gets split into a fact table and lookups anyway.",
       "form": "A fact is what gets measured and accumulated: units, revenue. A dimension is what you slice it by: product, outlet, date, promo.\n\n  fact in the center, dimensions around it: a star\n  a dimension split further: a snowflake",
       "example": "fact_sellout (118,449 rows) plus dim_product (47), dim_customer (144), dim_promo (89), dim_date. The \"category\" attribute sits as a column inside dim_product — five categories across forty-seven products.",
       "reads": "The product name is stored 47 times — once per product — not 118,449 times, once per sales row. Editing the name happens in one place and shows up in every report immediately.",
@@ -47,7 +47,7 @@
     {
       "skill": "model-ambiguity",
       "title": "Two paths to the same table",
-      "why": "The most expensive modeling mistake looks harmless: another relationship got added because \"it's more convenient to filter this way.\" After that, the report either refuses to compute, or — worse — computes and returns a number several times bigger than the real one.",
+      "why": "The most expensive modeling mistake looks harmless: another relationship got added because \"it's more convenient to filter this way.\" After that, the report either refuses to compute, or, worse, computes and returns a number several times bigger than the real one.",
       "form": "There should be exactly one path from a fact table to a lookup. If there are two, the model doesn't pick the better one; it either bans the second relationship (leaves it inactive), or, if the join is made directly in a query, multiplies rows across every match.",
       "example": "fact_sellout links to dim_promo by promo_id — that's the correct path: a sales row either has a promo or it doesn't. The table's total revenue is ¥126,911,191, and along this path it stays that way.",
       "reads": "One path, one value. Every sales row corresponds to exactly one promo, or none.",
@@ -58,7 +58,7 @@
     {
       "skill": "model-measure-vs-column",
       "title": "Measure or calculated column",
-      "why": "Both approaches produce what looks like the same number in the field list, and confusing the two is the source of the single most common complaint: \"the report shows the wrong thing once I add a slicer.\" It isn't a calculation mistake — a column and a measure answer different questions.",
+      "why": "Both approaches produce what looks like the same number in the field list, and confusing the two is the source of the single most common complaint: \"the report shows the wrong thing once I add a slicer.\" It isn't a calculation mistake; a column and a measure answer different questions.",
       "form": "A calculated column computes once at data refresh, is stored physically per row, and afterward behaves like ordinary data; a filter doesn't recompute it.\n\nA measure doesn't store a value at all: it recomputes every time it's displayed, accounting for whatever filters are in effect at that moment.\n\nThe simplest measure is an aggregate over a fact column:\n[Total Revenue] := SUM(fact_sellout[revenue])",
       "example": "Brand «Nettora»'s share of revenue is 12.7% across the whole database. Set up as a measure, it's DIVIDE(Nettora revenue, total revenue). Add a region slicer for «Tokyo» to the report — the measure recomputes and shows 19.1%, because both parts of the formula recomputed along with the slicer.",
       "reads": "A measure doesn't store the number \"12.7%\" anywhere — it stores a formula and evaluates it under whatever filter is in effect right now.",
@@ -69,7 +69,7 @@
     {
       "skill": "model-filter-context",
       "title": "Filter context",
-      "why": "The same measure shows different numbers in different cells of a report, and it isn't different formulas — it's different conditions the formula computes under. Being able to list those conditions for a specific cell is a basic skill for reading any report, not just your own. One of those sources is set by whoever wrote the measure, using CALCULATE. How it combines with the page's filters is a topic of its own; here it is enough to know that such a source exists.",
+      "why": "The same measure shows different numbers in different cells of a report, and it isn't different formulas; it's different conditions the formula computes under. Being able to list those conditions for a specific cell is a basic skill for reading any report, not just your own. One of those sources is set by whoever wrote the measure, using CALCULATE. How it combines with the page's filters is a topic of its own; here it is enough to know that such a source exists.",
       "form": "A cell's filter context is made up of everything acting on it at once:\n\n  the matrix row, the matrix column,\n  slicers on the page,\n  filters built into the measure itself\n\nThat last item is CALCULATE(expression, condition):\nthe function that puts a filter inside the measure.",
       "example": "A cell at the intersection of row «Tokyo» and a «Nettora» slicer: filter context is region = «Tokyo» AND brand = «Nettora». Revenue in that cell is ¥819,771. Remove the brand slicer — the context narrows to one condition, region = «Tokyo», and the same measure shows ¥3,718,723, the total across every brand.",
       "reads": "A cell doesn't \"hold\" a number — it sets the conditions a measure computes it under. Different cells in the same table almost always live in different filter contexts.",
@@ -91,7 +91,7 @@
     {
       "skill": "model-additivity",
       "title": "Measure additivity",
-      "why": "Not every measure can be summed across every breakdown and give a meaningful number. The confusion here isn't about DAX syntax — it's about arithmetic: summing stock on hand the same way as revenue gives you a number that describes nothing.",
+      "why": "Not every measure can be summed across every breakdown and give a meaningful number. The confusion here isn't about DAX syntax; it's about arithmetic: summing stock on hand the same way as revenue gives you a number that describes nothing.",
       "form": "An additive measure sums across any dimension without losing meaning: revenue, units.\n\nA semi-additive one sums across some dimensions and not across time: stock on hand.\n\nA non-additive one doesn't sum at all: price, share, an average.",
       "example": "One distributor's stock for one SKU: October 768, November 1,055, December 1,315 — climbing, a sign of stockpiling ahead of a bonus. Summing these three months into a \"quarterly stock total\" is meaningless: you get 3,138, a number that never once existed in the warehouse at any moment in time.",
       "reads": "Stock sums perfectly normally across products and distributors within the same month — that's a horizontal slice. Summing it across months, along time, doesn't work: months aren't independent portions, they're snapshots of the same inventory.",
@@ -102,7 +102,7 @@
     {
       "skill": "model-date-table",
       "title": "The date table",
-      "why": "The model already has dates — right there in the fact tables. It seems like a separate calendar shouldn't be needed: filter on those columns and you're done. The trap is that the date in one fact table and the date in another aren't the same column, and without a shared calendar there's no way to bring them under one slicer.",
+      "why": "The model already has dates, right there in the fact tables. It seems like a separate calendar shouldn't be needed: filter on those columns and you're done. The trap is that the date in one fact table and the date in another aren't the same column, and without a shared calendar there's no way to bring them under one slicer.",
       "form": "A date table is a by-day lookup, with derived columns (week, month, quarter, year), connected to every fact table at once.\n\nOne slicer on this table filters every fact table simultaneously, even when they have different native time granularity.",
       "example": "dim_date's row for March 3rd 2025: date_id = week_start = 2025-03-03, while its own month_start = 2025-03-01, quarter = 1. This one row connects fact_sellout (whose week starts March 3rd) and fact_sellin (whose month starts March 1st) — both see the same calendar, just through different columns of it.",
       "reads": "One \"quarter = 1\" slicer filters weekly sales and monthly shipments at the same time — because both fact tables ultimately connect to the same date table.",
@@ -113,7 +113,7 @@
     {
       "skill": "model-role-playing",
       "title": "One date, two roles",
-      "why": "A fact table has two dates: ordered and shipped. The requester asks for \"revenue for March\" — without saying which one. The answers differ, both are correct, and the choice between them falls to you — and then you need to be able to explain it.",
+      "why": "A fact table has two dates: ordered and shipped. The requester asks for \"revenue for March\", without saying which one. The answers differ, both are correct, and the choice between them falls to you, and then you need to be able to explain it.",
       "form": "Both dates connect to the same calendar, not to two copies of it. One relationship stays active: the one most measures compute by.\n\nThe second relationship exists but is marked inactive. Whichever measure needs it specifically switches it on explicitly, via USERELATIONSHIP inside CALCULATE.",
       "example": "In fact_sellin, shipping lags ordering by 2 to 11 days, and 1,979 of 15,362 orders ship the following month. March 2025: by order date ¥3,303,414, by ship date ¥3,570,458. The active relationship is on order_date; a \"Revenue by shipment\" measure switches context to ship_date.",
       "reads": "A ¥267,000 gap for one month isn't a mistake in either number — it's two answers to two different questions: \"how much was ordered in March\" and \"how much shipped in March.\"",
@@ -146,7 +146,7 @@
     {
       "skill": "model-context-transition",
       "title": "Context transition",
-      "why": "The same formula, written as a column and invoked as a measure, gives different numbers. This isn't a bug or a syntax quirk — it's the one place in DAX where one kind of context silently turns into another, and without understanding it, reading someone else's measures is impossible.",
+      "why": "The same formula, written as a column and invoked as a measure, gives different numbers. This isn't a bug or a syntax quirk; it's the one place in DAX where one kind of context silently turns into another, and without understanding it, reading someone else's measures is impossible.",
       "form": "Context transition happens inside CALCULATE (and inside any measure, because invoking a measure is implicitly wrapped in CALCULATE).\n\nThe current row stops being just a row and turns into a filter: \"every row where the key columns' values match this one's.\"\n\nThis is what makes the functions that need a current row\nwork: RELATED(column) pulls a value from a related lookup\ntable, VALUES(column) returns the distinct values visible\nin the current context, COUNTROWS(table) counts its rows,\nand FILTER(table, condition) picks out a subset before an\niterator walks it.",
       "example": "dim_product has 9 brands and 47 products. The measure [Total Revenue] = SUM(revenue) gives ¥126,911,191 across the whole database. Invoked in the «Fruvia» brand row of a matrix, the same measure gives ¥25,465,980 — row context turned into a filter, \"brand = «Fruvia».\"",
       "reads": "A measure doesn't know about a \"current row\" — it only knows about filters. Context transition is the mechanism that turns one into the other.",
@@ -157,7 +157,7 @@
     {
       "skill": "model-time-intelligence",
       "title": "Time intelligence",
-      "why": "YTD, last year, a rolling average — half of what anyone ever asks a BI analyst for. The functions for this look like ready-made buttons, but every one of them does the same thing to the date filter: replaces it with a different set of dates.",
+      "why": "YTD, last year, a rolling average, half of what anyone ever asks a BI analyst for. The functions for this look like ready-made buttons, but every one of them does the same thing to the date filter: replaces it with a different set of dates.",
       "form": "Every time intelligence function is a wrapper around CALCULATE with a swapped-out calendar filter.\n\nTOTALYTD replaces the current period with \"from the start of the year through the current date.\" SAMEPERIODLASTYEAR replaces it with the same period a year earlier. DATESINPERIOD replaces it with an arbitrary interval. DATESYTD returns the set of dates since the start of the year: what TOTALYTD does internally, but as a separate function you can hand to CALCULATE.",
       "example": "March 2025 revenue is ¥4,694,330. SAMEPERIODLASTYEAR swaps the filter to March 2024 and returns ¥4,392,846; that gives 6.9% growth. TOTALYTD on the same cell swaps the filter to January-March 2025 and gives ¥12,566,159.",
       "reads": "None of these functions stores separate data — all three compute the same SUM(revenue), just under different sets of dates substituted in for the current one.",
@@ -179,7 +179,7 @@
     {
       "skill": "model-scd2",
       "title": "Slowly changing dimensions",
-      "why": "A customer moved to another region, a product was reassigned to another category, a rep was moved to another team. An ordinary lookup table holds only the current value — and the entire sales history is instantly rewritten retroactively, without a trace in the report.",
+      "why": "A customer moved to another region, a product was reassigned to another category, a rep was moved to another team. An ordinary lookup table holds only the current value, and the entire sales history is instantly rewritten retroactively, without a trace in the report.",
       "form": "SCD type 1 (overwrite): only the current value is kept, history is lost.\n\nSCD type 2 (versioning): every change adds a new row with its own validity range (valid from / valid to), and the fact references the version that was current at the time of the event.",
       "example": "dim_customer holds 144 retail outlets and 16 regions, and every outlet has one region — the current one. If an outlet moved from «Tokyo» to «Kanagawa», a \"sales by region for 2024\" report will show its entire history in the new region, as if it had always been there.",
       "reads": "There is no error in the data: the lookup table honestly answers \"where is this outlet now\". The report was simply asking a different question — \"where was it at the time of the sale\".",
@@ -201,7 +201,7 @@
     {
       "skill": "model-performance",
       "title": "Model size and speed",
-      "why": "The model has bloated, the report takes half a minute to open — and the first instinct is usually to start deleting rows. That is almost always beside the point: the engine stores data by column and compresses it by the number of distinct values, not by the number of rows.",
+      "why": "The model has bloated, the report takes half a minute to open, and the first instinct is usually to start deleting rows. That is almost always beside the point: the engine stores data by column and compresses it by the number of distinct values, not by the number of rows.",
       "form": "A column's cost is determined by its cardinality: the number of distinct values.\n\nA column with 47 values across 118,449 rows compresses to almost nothing. A column with 118,449 distinct values does not compress at all and becomes the most expensive one in the model.",
       "example": "fact_sellout has 118,449 rows. product_id has 47 distinct values, week_start 131, units 154, revenue 86,389. And sellout_id, the row surrogate key, is distinct across all 118,449 — the most expensive column in the table, and one nobody will ever ask for in a report.",
       "reads": "Removing sellout_id alone from the model strips more weight than deleting half the rows — and costs you not a single reporting capability.",

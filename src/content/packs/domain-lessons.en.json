@@ -3,7 +3,7 @@
     {
       "skill": "dom-roles",
       "title": "Roles and boundaries",
-      "why": "A request lands on you not because it's yours, but because you're the closest person to the data. Half of an analyst's \"urgent\" tasks belong to someone else: a broken pipeline, a process that needs rebuilding, a forecast that needs an uncertainty estimate. Being able to name the task's actual owner isn't a way to dodge it — it's a way to make sure it actually gets solved.",
+      "why": "A request lands on you not because it's yours, but because you're the closest person to the data. Half of an analyst's \"urgent\" tasks belong to someone else: a broken pipeline, a process that needs rebuilding, a forecast that needs an uncertainty estimate. Being able to name the task's actual owner isn't a way to dodge it; it's a way to make sure it actually gets solved.",
       "form": "DE (getting the data there): pipelines, storage, input quality\nDA (what happened and why): a one-off analysis, an answer to a question\nBI (regular reporting): marts, dashboards, metrics\nBA (processes and requirements): how the work is structured and what to change\nDS (forecasting and probability): models, experiments",
       "example": "\"The dashboard breaks every morning, the data is from yesterday\"\n  → DE territory: the nightly pipeline didn't land\n\n\"Why did sales drop in Kansai?\"\n  → DA territory: a one-off analysis with a conclusion\n\n\"I need this report every Monday at 9:00\"\n  → BI territory: regularity turns an analysis into a product",
       "reads": "The same question — \"what's going on with sales\" — can turn out to be any of the three tasks. What tells them apart isn't the topic or the difficulty, but what happens to the answer: is it looked at once, looked at every week, or does the source need fixing.",
@@ -14,7 +14,7 @@
     {
       "skill": "dom-requirements",
       "title": "From \"build me a dashboard\" to a brief",
-      "why": "\"Build me a sales dashboard\" isn't a task, it's a direction. It's missing the one thing that matters: what decision will this person make after looking at the result? Without that you'll build something technically flawless that nobody needs — and find out a month later, when nobody opens the dashboard.",
+      "why": "\"Build me a sales dashboard\" isn't a task, it's a direction. It's missing the one thing that matters: what decision will this person make after looking at the result? Without that you'll build something technically flawless that nobody needs, and find out a month later, when nobody opens the dashboard.",
       "form": "What to find out before starting work:\n  Decision   : what will you do once you see the answer?\n  Recipient  : who else looks at this, and why?\n  Cut        : what are we comparing by: period, brand, region?\n  Deadline   : when is it needed, and what happens if it's late?\n  Done       : what signal tells us the task is closed?",
       "example": "Request:   \"Need a sales dashboard\"\nAsked:     \"What will you decide by looking at it?\"\nAnswer:    \"Where to send the field team next month\"\n\nBecame:    top 10 outlets with sales down more than 20%\n           vs. last month, with the sales rep's contact.\n           Viewed by the field team lead, once a month.",
       "reads": "One question about the decision compressed an endless \"sales dashboard\" into a ten-row table that takes an hour to build and will actually get used.",
@@ -25,7 +25,7 @@
     {
       "skill": "dom-metric-definition",
       "title": "Defining a metric",
-      "why": "Two reports about the same thing almost never diverge because of a query bug — they diverge because \"active outlet\" or \"revenue\" meant something different to each author. An argument over whose numbers are right eats up the whole meeting and goes nowhere: both sides computed correctly, just different things.",
+      "why": "Two reports about the same thing almost never diverge because of a query bug; they diverge because \"active outlet\" or \"revenue\" meant something different to each author. An argument over whose numbers are right eats up the whole meeting and goes nowhere: both sides computed correctly, just different things.",
       "form": "A metric definition has five parts:\n  Source        : which table, over what period\n  Filters       : what's included\n  Exclusions    : what's deliberately dropped, and why\n  Granularity   : what does one result row represent\n  Formula       : exactly how it's computed",
       "example": "Monthly active outlet:\n  Source:       fact_sellout, month by week_start\n  Filters:      customer_type <> 'distributor'\n  Exclusions:   returns (units < 0) not counted\n  Granularity:  one row — one customer_id per month\n  Formula:      COUNT(DISTINCT customer_id) where SUM(units) > 0",
       "reads": "A definition two people can apply independently and get the same number from. Each item closes off a specific argument that would otherwise happen later, in front of an audience.",
@@ -47,7 +47,7 @@
     {
       "skill": "dom-value-chain",
       "title": "The value chain",
-      "why": "Data doesn't fall from the sky: every row is born at a specific link in the chain — someone shipped it, someone received it, someone rang it up. Without understanding exactly where a row originated, you can't answer the main question about any data: what it doesn't and can't contain.",
+      "why": "Data doesn't fall from the sky: every row is born at a specific link in the chain: someone shipped it, someone received it, someone rang it up. Without understanding exactly where a row originated, you can't answer the main question about any data: what it doesn't and can't contain.",
       "form": "Manufacturer → Distributor → Point of sale → Buyer\n      │              │               │             │\n   sell-in       stock on hand    sell-out     invisible\n fact_sellin    fact_stock     fact_sellout       —",
       "example": "\"How much did we sell in June?\" — three different answers:\n\n  shipped to distributors    fact_sellin\n  sitting on their shelves   fact_stock\n  bought at outlets          fact_sellout\n\nThe numbers don't match, and shouldn't: they're three different events.",
       "reads": "\"Sold\" without naming the link isn't a metric — it's the start of a conversation.",
@@ -58,7 +58,7 @@
     {
       "skill": "dom-order-to-cash",
       "title": "Order-to-cash",
-      "why": "\"Sold\" isn't one event — it's a chain of statuses: order placed, reserved, shipped, delivered, received, invoiced, paid. Two sales reports built on different statuses will produce different numbers — and both authors will be sure they computed the same thing.",
+      "why": "\"Sold\" isn't one event; it's a chain of statuses: order placed, reserved, shipped, delivered, received, invoiced, paid. Two sales reports built on different statuses will produce different numbers, and both authors will be sure they computed the same thing.",
       "form": "Order → Reserve → Shipment → Delivery → Receipt → Invoice → Payment\n\n  Revenue      : at transfer of control over the goods: shipment\n                 or receipt, depending on what the contract says\n  Receivables  : invoiced, money not in yet\n  Cash         : money landed in the account",
       "example": "\"How much did we sell in March?\" — three honest numbers:\n\n  Orders placed        4,910K ¥   sales funnel\n  Shipped               4,694K ¥   revenue\n  Landed in the account 3,380K ¥   cash, some on payment terms",
       "reads": "Three numbers for the same month diverge by a quarter, and all three are correct. Which one is \"sales\" isn't up to the analyst — it's up to the stakeholder's question.",
@@ -80,7 +80,7 @@
     {
       "skill": "dom-planning",
       "title": "S&OP and demand forecasting",
-      "why": "Planning is the one process where analytics moves money directly: a demand forecast grows into a production, purchasing, and shipment plan, and a mistake turns into either a shortage or stock that later gets written off. The analyst here isn't decorating someone else's numbers with a chart — they're on the hook for whether the number can be trusted.",
+      "why": "Planning is the one process where analytics moves money directly: a demand forecast grows into a production, purchasing, and shipment plan, and a mistake turns into either a shortage or stock that later gets written off. The analyst here isn't decorating someone else's numbers with a chart; they're on the hook for whether the number can be trusted.",
       "form": "Demand forecast   how much will sell: an estimate, built bottom-up\n      ↓\nSales plan        how much we'll ship: a target, set top-down\n      ↓\nProduction and purchasing plan\n\nGap \"plan − forecast\" = a decision to load the channel.\nIt has to be named out loud, not appear on its own.",
       "example": "April, «Fruvia» brand:\n\n  Demand forecast   18,200 units   estimated to sell\n  Sales plan        22,000 units   committed to ship\n  Gap                3,800 units   will sit in channel stock\n\nReason for the gap on record: entering a new chain on May 1.",
       "reads": "A forecast and a plan don't have to match — but the difference between them has to have a name. Here it does, so the April surplus sitting in warehouses won't be a surprise in June.",
@@ -102,7 +102,7 @@
     {
       "skill": "dom-fmcg-distribution",
       "title": "Distribution and shelf presence",
-      "why": "A brand's sales are the product of two things: how many outlets carry it, and how fast it moves off the shelf there. Distribution accounts for the first half, and it's the only part the company controls directly with its own hands. A brand with no distribution doesn't lose to the buyer — it simply never meets them, and no amount of advertising fixes that.",
+      "why": "A brand's sales are the product of two things: how many outlets carry it, and how fast it moves off the shelf there. Distribution accounts for the first half, and it's the only part the company controls directly with its own hands. A brand with no distribution doesn't lose to the buyer; it simply never meets them, and no amount of advertising fixes that.",
       "form": "numeric (ND)    share of outlets that carry the brand\n                counts addresses\n\nweighted (WD)   share of those outlets' turnover in channel\n                turnover: counts money behind the addresses\n\nWD > ND whenever the brand sits in larger-than-average outlets\n\n  ND drops faster than WD  →  small outlets are dropping it\n  WD drops faster than ND  →  large ones are, and that's a fire",
       "example": "«Nettora» brand, household chemicals:\n\n  month      numeric      weighted\n  2024-01       81.9%        97.3%\n  2025-06       68.1%        92.1%\n  2025-08       56.4%        78.8%\n  2025-12       42.6%        63.5%\n  2026-06       33.0%        47.5%",
       "reads": "Through mid-2025, numeric distribution drops twice as fast as weighted — the brand is leaving small outlets, and the money is still mostly intact. From August, weighted collapses thirty points in five months: the wave has reached the large outlets, and that's a different stage of the problem.",
@@ -113,7 +113,7 @@
     {
       "skill": "dom-fmcg-consumer",
       "title": "Penetration, repeat purchase, and rate of sale",
-      "why": "Market share is convenient to compute as one number, but it can't be managed as one number: it's made of three independent things — how many people bought it, how many times they came back, and how much they took each time. Each is fixed by different actions, and growth in one is easily eaten by a drop in another. A report saying \"share is unchanged\" says nothing at all about what's actually happening to the brand without breaking it down.",
+      "why": "Market share is convenient to compute as one number, but it can't be managed as one number: it's made of three independent things (how many people bought it, how many times they came back, and how much they took each time). Each is fixed by different actions, and growth in one is easily eaten by a drop in another. A report saying \"share is unchanged\" says nothing at all about what's actually happening to the brand without breaking it down.",
       "form": "market share = penetration × frequency × purchase volume\n\n  penetration     share of buyers who bought the brand at least once\n  frequency       how many times those buyers repurchased\n  purchase volume how much they take per purchase\n\nThe same arithmetic from outlet data:\n\n  units = outlets × weeks with a sale × units in such a week\n\nrate of sale = units per outlet per week",
       "example": "Household panel, a new flavor launch:\n\n                          before    after\n  penetration               4%       11%\n  purchases per buyer       3.4       1.3\n  purchase size, ¥          180       185\n  ───────────────────────────────────────\n  market share              2.1%      2.1%",
       "reads": "Penetration grew 2.75x, frequency dropped 2.6x — the product stayed exactly in place. Lots of people tried it and almost nobody came back: the ad campaign worked, the product didn't.",
@@ -124,7 +124,7 @@
     {
       "skill": "dom-fmcg-promo",
       "title": "Promo: real lift and cannibalization",
-      "why": "A promo almost always produces a good-looking first number: volume during the promo week is two to three times the baseline. The problem is that number is inflated three ways at once — the discount also applied to volume that would have sold anyway, part of the growth flowed in from neighboring SKUs, and part of it was simply pulled forward from future weeks. A repeat decision made on that first number repeats the loss too.",
+      "why": "A promo almost always produces a good-looking first number: volume during the promo week is two to three times the baseline. The problem is that number is inflated three ways at once: the discount also applied to volume that would have sold anyway, part of the growth flowed in from neighboring SKUs, and part of it was simply pulled forward from future weeks. A repeat decision made on that first number repeats the loss too.",
       "form": "three corrections, each reducing the result:\n\n  1  scope       measure where the promo ran, not the whole brand\n  2  level       measure at the category level, not just the promo'd\n                 SKU (otherwise cannibalization is invisible)\n  3  horizon     before / during / after\n                 (otherwise stock-up buying is invisible)\n\n  and finally — money, not units:\n  margin lift = extra volume × promo margin\n              − lost margin on the baseline volume\n              − promo costs",
       "example": "«Milvara», 30% discount, weekly averages:\n\n                    units      revenue ¥    price ¥\n  4 weeks before    1,353.3     104,645      77.33\n  3 weeks of promo  3,327.0     180,157      54.15\n  4 weeks after     1,376.0     106,344      77.28\n\n  units +146%, revenue +72%, price −30%",
       "reads": "Units grow twice as fast as revenue: the discount also applied to the 1,353 units a week that would have sold with no promo at all — about 94 thousand yen over three weeks. There's no post-promo dip, but that's a property of the product: nobody stocks up on yogurt.",
@@ -179,7 +179,7 @@
     {
       "skill": "dom-causality",
       "title": "Correlation and causation",
-      "why": "Decisions are made on the basis of causes: if A causes B, you can influence B through A. Correlation says only that the series move together, and it's routinely mistaken for a cause — after which the company spends budget on a link that doesn't exist.",
+      "why": "Decisions are made on the basis of causes: if A causes B, you can influence B through A. Correlation says only that the series move together, and it's routinely mistaken for a cause, after which the company spends budget on a link that doesn't exist.",
       "form": "Three explanations for any correlation besides \"A causes B\":\n\n  common factor  one cause lifts both A and B\n                 (season, inflation, market growth)\n  reverse        B actually causes A\n  selection      the objects didn't enter the groups\n                 at random, and differed before\n                 the measurement\n\nWhat raises confidence in a causal link:\n  a control group: same period, no treatment\n  a mechanism: an account of how A affects B\n  the link survives removal of the common factor",
       "example": "Water and juice sales, 2025:\n\n  correlation of monthly sales                   0.84\n  correlation of year-over-year changes           0.10\n\nRemoving the season kills the link — so there wasn't one:\na common factor was lifting both series at once.",
       "reads": "The first number describes a shared wave, not a link between the brands. The second is what's left of the link once the wave is taken out: essentially nothing. Shelving them together would produce a coincidence, not growth.",
@@ -190,7 +190,7 @@
     {
       "skill": "dom-storytelling",
       "title": "Conclusion first",
-      "why": "A report exists so that someone can make a decision. The reader goes from \"what does this mean for me\" to \"how do we know,\" not the other way around — and if there's no conclusion in the first two lines, they read no further, and the work turns into a file in an attachment.",
+      "why": "A report exists so that someone can make a decision. The reader goes from \"what does this mean for me\" to \"how do we know,\" not the other way around, and if there's no conclusion in the first two lines, they read no further, and the work turns into a file in an attachment.",
       "form": "Four parts of the opening paragraph:\n\n  conclusion     one sentence the reader can\n                 retell to a third person\n  support        the minimum numbers that prove it\n  recommendation what you advise doing\n  request        what you need from the reader: a decision,\n                 budget, sign-off, or an explicit \"nothing\"\n\nUncertainty is split into three levels:\n  what's confirmed · what's in question · what I'll check and when",
       "example": "Bad: \"Sending over the analysis of the brand's decline.\nAttached is the extract by outlet, channel and region.\"\n\nGood: \"The brand lost half its revenue purely by going off\nthe shelf: we are no longer stocked in 46 of 79 outlets, and\nwhere we remain we sell 22% more. I suggest starting with the\nfive largest outlets. I need a decision on the negotiation\nbudget.\"",
       "reads": "The second version can be read on a phone between meetings and decided on without opening the attachment. Its numbers are selected to fit the conclusion: of the analysis's four pairs of figures, two remain — the ones that prove the shelf was lost.",
@@ -201,7 +201,7 @@
     {
       "skill": "dom-chart-choice",
       "title": "Choosing a chart",
-      "why": "A chart doesn't illustrate the text, it answers a question faster than a table can. A form that doesn't match the question isn't merely awkward — it hands the reader a different conclusion, and that's what they'll carry away, not the caption underneath.",
+      "why": "A chart doesn't illustrate the text, it answers a question faster than a table can. A form that doesn't match the question isn't merely awkward; it hands the reader a different conclusion, and that's what they'll carry away, not the caption underneath.",
       "form": "The question determines the form:\n\n  change over time            a line\n  comparison across           bars, sorted\n  categories                  by size\n  relationship between two    a scatter plot\n  quantities\n  contribution to a change    a waterfall\n  accumulation to a threshold Pareto: bars + a curve\n  shares of one whole (3–5)   a stacked bar, not a pie\n\nAxis: bars start at zero, always; length encodes magnitude.\nOn a line truncation is allowed, but a scale break gets labeled.",
       "example": "Question: how dependent is the company on a few products?\n\n  SKUs in FMCG in total                        29\n  the top 20% of SKUs give                  36.3% of revenue\n  reaching 80% of revenue takes         20 SKUs of 29\n\nForm: Pareto — descending bars plus a cumulative curve.",
       "reads": "The cumulative curve gives the answer at a glance: the top is modest, the tail is long, concentration is moderate. A pie with 29 sectors doesn't answer this question at all — summing angles by eye is impossible.",
