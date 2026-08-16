@@ -34,13 +34,26 @@
       Одна карточка на всех — ограничение статики: og-теги отдаются
       до всякого JavaScript, и подстроиться под Accept-Language без
       серверной функции нельзя. og:locale:alternate это и говорит.
+
+      У адреса картинки стоит версия, и это не украшение. Соцсети и
+      мессенджеры запоминают превью по URL, и Cloudflare держал по этому же
+      адресу копию на грани: после переименования Querium → Quaera ссылка
+      сутки показывала карточку со старым именем и доменом querium.pages.dev,
+      хотя развёрнут был правильный файл (замер 2026-08-16: тот же адрес —
+      cf-cache-status HIT, age 80509, 7656 байт; он же со строкой запроса —
+      MISS, 7252 байта, ровно как в репозитории). Правило кеширования
+      исправлено в public/_headers, но уже сохранённую запись это не выселяет:
+      её обходит только новый ключ, то есть новый адрес.
+
+      Менять версию при каждой правке самой картинки — иначе прежняя
+      застрянет у тех, кто уже показывал ссылку.
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Quaera" />
     <meta property="og:url" content="https://quaera.app/" />
     <meta property="og:title" content="Quaera — an analytics trainer where the query actually runs" />
     <meta property="og:description" content="SQL, pandas and FMCG/pharma metrics on one continuous distributor dataset. Queries execute in the browser, offline, with no sign-up." />
-    <meta property="og:image" content="https://quaera.app/icons/og.png" />
+    <meta property="og:image" content="https://quaera.app/icons/og.png?v=quaera" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_US" />
