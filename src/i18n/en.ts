@@ -97,8 +97,9 @@ export const en = {
     /** См. комментарий в ru.ts: метка ставится по Executor.runsCode, не по режиму задания. */
     runsCodeBadge: 'the code runs',
     recommendedBadge: 'start here',
+    /** См. комментарий в ru.ts: укорочено, чтобы уместиться в 4 строки на 375px. */
     recommendedNote:
-      'Not sure where to begin? Start with SQL: almost every analyst posting asks for it, it opens with no extra download, and the answer here is checked against the result of your query rather than its text. The other three tracks are open from the start, in any order.',
+      'Not sure where to begin? Start with SQL: almost every analyst posting asks for it, it opens with no extra download, and the answer is checked against the result of your query. The other three tracks are open from the start, in any order.',
   },
   home: {
     dueLabel: 'due for review',
