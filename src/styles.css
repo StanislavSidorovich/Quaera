@@ -1945,6 +1945,18 @@ textarea.sql:focus {
   color: var(--text-dim);
 }
 
+/*
+ * Стирающая кнопка — действие, не токен вставки, и не должна читаться
+ * как ещё один символ в том же ряду. Рецепт контраста тот же, что
+ * у .pill.warn: чистый --warn на этом фоне даёт тот же провал контраста,
+ * подмешанный --text вытягивает обе темы.
+ */
+.accessory button.erase {
+  color: color-mix(in srgb, var(--warn) 70%, var(--text));
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, var(--bg-sunken));
+}
+
 .tabs {
   display: flex;
   gap: 6px;

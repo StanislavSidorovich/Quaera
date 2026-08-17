@@ -653,6 +653,7 @@ export const en = {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} symbols`,
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} keywords`,
     chipsAria: 'Tables and columns',
+    backspaceAria: 'Erase character',
     keyboardShow: 'Show keyboard',
     keyboardHide: 'Hide keyboard',
     /** См. комментарий в ru.ts: видны только на десктопе. */

@@ -1260,6 +1260,7 @@ export const ru = {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Символы ${langGenitive(track)}`,
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Ключевые слова ${langGenitive(track)}`,
     chipsAria: 'Таблицы и колонки',
+    backspaceAria: 'Стереть символ',
     keyboardShow: 'Показать клавиатуру',
     keyboardHide: 'Скрыть клавиатуру',
     /**

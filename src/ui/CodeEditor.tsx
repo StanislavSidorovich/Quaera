@@ -129,6 +129,27 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
     return [...columns, ...rest];
   }, [schema, value]);
 
+  /**
+   * Стирает выделение, если оно есть, иначе один символ перед курсором —
+   * единственный способ отменить промах панели без вызова системной
+   * клавиатуры (та по умолчанию выключена, см. initialKeyboardOn).
+   * Гранулярность символьная, а не токенная: курсор часто стоит внутри
+   * вставленного слова, и удаление по токену там непредсказуемо.
+   */
+  const backspace = () => {
+    const el = ref.current;
+    if (!el) return;
+    const start = el.selectionStart ?? value.length;
+    const end = el.selectionEnd ?? value.length;
+    const from = start === end ? Math.max(0, start - 1) : start;
+    const next = value.slice(0, from) + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(from, from);
+    });
+  };
+
   /** Вставка в позицию курсора без потери фокуса — иначе клавиатура схлопывается. */
   const insert = (text: string) => {
     const el = ref.current;
@@ -233,6 +254,16 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
               {s}
             </button>
           ))}
+          {/* Действие, не токен вставки — отдельный вид (.erase), чтобы не читаться как ещё один символ. */}
+          <button
+            type="button"
+            className="erase"
+            aria-label={t.editor.backspaceAria}
+            onClick={backspace}
+            disabled={disabled}
+          >
+            ⌫
+          </button>
         </div>
         <div className="accessory" role="toolbar" aria-label={t.editor.keywordsAria(track)}>
           {keywords.map((k) => (
