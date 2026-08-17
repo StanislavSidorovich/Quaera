@@ -3026,6 +3026,23 @@ function About({
  * вопрос закрывает возможность навсегда. Цена ошибки несимметрична,
  * поэтому и вопрос откладывается до явного намерения.
  */
+/**
+ * Состояние с учётом подписки, а не одного разрешения.
+ *
+ * `pushState()` синхронна и потому знает только `Notification.permission` —
+ * подписку у браузера надо спрашивать асинхронно. Разница видна ровно там,
+ * где эти две вещи расходятся, а расходятся они постоянно: разрешение живёт
+ * в настройках браузера навсегда после первого согласия, подписка же
+ * снимается `unsubscribe()`, теряется при отзыве push-сервисом и не
+ * переживает смены ключа VAPID. Карточка, судящая по разрешению, в этом
+ * состоянии показывает «включено» там, где не придёт ничего.
+ */
+async function resolvePushState(): Promise<PushState> {
+  const base = pushState();
+  if (base !== 'granted') return base;
+  return (await hasPushSubscription()) ? 'granted' : 'default';
+}
+
 function PushCard({
   onEnable,
   onDisable,
@@ -3062,15 +3079,13 @@ function PushCard({
    * после нажатия, а переживший перезагрузку страницы.
    */
   useEffect(() => {
-    if (state !== 'granted') return;
     let alive = true;
-    hasPushSubscription().then((has) => {
-      if (alive && !has) setState('default');
+    resolvePushState().then((next) => {
+      if (alive) setState(next);
     });
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -3100,7 +3115,16 @@ function PushCard({
             onClick={async () => {
               setPending(true);
               await onDisable();
-              setState(pushState());
+              /*
+               * `pushState()` здесь врал: он смотрит только на разрешение,
+               * а `disablePush()` снимает подписку, разрешение не трогая, —
+               * оно из приложения и не снимается. Карточка после успешного
+               * выключения оставалась в 'granted', то есть показывала
+               * «Напоминания включены» и ту же кнопку «Выключить». Со стороны
+               * это выглядело как мёртвая кнопка: она отрабатывала полностью
+               * и молча, а на экране не менялось ничего.
+               */
+              setState(await resolvePushState());
               setPending(false);
             }}
           >
@@ -3127,11 +3151,21 @@ function PushCard({
           onClick={async () => {
             setPending(true);
             setFailed(false);
-            const next = await onEnable();
+            const granted = await onEnable();
+            /*
+             * Разрешение выдано, а подписки нет — единственный случай,
+             * который состоянием разрешения не описывается. Раньше он
+             * ставил состояние в 'granted' (его и возвращает `enablePush`
+             * из своего catch — разрешение ведь на месте) и карточка
+             * противоречила сама себе: «Напоминания включены», кнопка
+             * «Выключить» и красная строка «не удалось включить» разом.
+             * Теперь состояние берётся с учётом подписки: кнопка остаётся
+             * «Включить», а красная строка объясняет, почему нажать
+             * придётся ещё раз.
+             */
+            const next = await resolvePushState();
             setState(next);
-            // Разрешение выдано, а подписки нет — единственный случай,
-            // который состоянием разрешения не описывается.
-            setFailed(next === 'granted' && !(await hasPushSubscription()));
+            setFailed(granted === 'granted' && next !== 'granted');
             setPending(false);
           }}
         >
