@@ -21,7 +21,7 @@ import type { Progress } from '../srs/store';
  * а `service_role` не лежит нигде. **Форк обязан заменить эту константу
  * своей** вместе с адресом Supabase, иначе его подписки уедут к автору.
  */
-const VAPID_PUBLIC_KEY = 'BGvqQRrlY7qHo1y4nGWgGxE0o-RWzHuH3NxnGFL-uaB6wIxCjCC2Y9XgO99aF2Zx9cV6_ulNUQihCAcwecDX3sM';
+const VAPID_PUBLIC_KEY = 'BAvAdO8rBiMrnueA1g72ejNMqc2TR6rfYiZl0KLhLrLWpAn65sXx6tqOiuJJMc7hzIkbH_f9M1GeUuD7m3QiI3E';
 
 const SUPABASE_URL = 'https://lueignziprnjnjiixdsh.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Bjyj9gNlpgFJXhbWb7vhIg_DlpXtQpx';
