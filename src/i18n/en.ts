@@ -124,6 +124,8 @@ export const en = {
       'Up to 5 tasks, 7–10 minutes. New techniques are introduced with a card before the first task. Your queries run against 2.5 years of FMCG and OTC-pharma distributor data.',
     heroNoteNoCode:
       "Up to 5 tasks, 7–10 minutes. New topics are introduced with a card before the first task. No code to write here: each task is a real situation where you pick a decision and see why the others don't hold up.",
+    /** См. комментарий в ru.ts: видна только pandas без единого повторения в SQL. */
+    pandasSqlNote: "This track is written as a continuation of SQL, and you haven't started that track yet: some explanations lean on things you haven't seen.",
     /** См. комментарий в ru.ts: подпись называет то, что меряется, а не долю сделанного. */
     overallProgressLabel: 'Memory strength in this track',
     /** См. комментарий в ru.ts: объяснение жило в `title=`, то есть на телефоне не жило вовсе. */

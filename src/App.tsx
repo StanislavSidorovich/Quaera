@@ -2145,6 +2145,20 @@ function Home({
   }, [activePack]);
 
   /**
+   * Видна только тому, кто выбрал pandas и ни разу не прикасался к SQL —
+   * `reps` растёт после первой же оценки SRS, поэтому «0 у каждого навыка
+   * трека» и значит «трек не открывали». Считаем не по activePack (это
+   * всегда python здесь), а по sql-паку конкретно: сравнение с чужим
+   * треком, который скрыт под текущим выбором.
+   */
+  const showPandasSqlHint = useMemo(() => {
+    if (activeTrack !== 'python') return false;
+    const sqlPack = packForTrack('sql', locale);
+    if (!sqlPack) return false;
+    return sqlPack.skills.every((s) => (progress.skills[s.id]?.reps ?? 0) === 0);
+  }, [activeTrack, progress, locale]);
+
+  /**
    * Мастерство по уровням графа — отдельная метрика от solvedCount
    * и startedCount, а не их пересказ другими словами. Те считают решённые
    * задания и начатые темы; здесь — глубина освоения (интервал и качество
@@ -2510,6 +2524,23 @@ function Home({
               <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
                 {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
               </p>
+              {/*
+               * Узко и намеренно: видна только тому, кто выбрал pandas
+               * и ещё не тронул SQL (см. showPandasSqlHint выше) — тем,
+               * кому первое же занятие подсунет навык, объясняемый
+               * сопоставлением с треком, которого он не видел. У остальных
+               * довод неверен или не нужен, поэтому шумом для них не станет.
+               * Ссылается на уже написанную вводную трека, а не пересказывает
+               * её — та же вводная, что открывается ссылкой «О треке →» ниже.
+               */}
+              {showPandasSqlHint && onOpenTrackIntro && (
+                <p className="muted track-prereq-hint" style={{ margin: '6px 0 0', fontSize: 13 }}>
+                  {t.home.pandasSqlNote}{' '}
+                  <button type="button" onClick={onOpenTrackIntro}>
+                    {t.trackIntro.entryLink}
+                  </button>
+                </p>
+              )}
               {/*
                * Перенесена сюда, под кнопку и её подпись (была сразу под
                * счётчиками) — замер 2026-08-16 показал, что она отодвигала
