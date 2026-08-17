@@ -23,7 +23,7 @@
     },
     {
       "id": "py-index",
-      "title": "The index: SQL has no equivalent",
+      "title": "The index: a DataFrame's third dimension",
       "summary": "I remember that a DataFrame has an index, and I'm not surprised when a column \"disappears\" after groupby; it moved into the index."
     },
     {

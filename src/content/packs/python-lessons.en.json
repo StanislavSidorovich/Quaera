@@ -29,7 +29,7 @@
     },
     {
       "skill": "py-index",
-      "title": "The index — SQL has no equivalent",
+      "title": "The index: a DataFrame's third dimension",
       "why": "A DataFrame has a third dimension a SQL table doesn't, the index, a row label to the left of the values. .loc works through it, the key ends up there after groupby, and pandas aligns tables by it when combining them. Without knowing about the index, there's no way to understand where a column \"went\" after a grouping. The index can also be assigned directly: df.set_index('column') makes the chosen column the row label; from there .loc looks it up by that label instead of a mask on a column, the same spirit as a primary key in SQL, only assigned explicitly instead of implied.",
       "form": "df.groupby('key')['measure'].sum().reset_index()\ndf.set_index('column').loc[[value]]   # index assigned by hand, lookup by label",
       "reads": "Sales in units for every product, with the brand glued on from the reference table. reset_index() is mandatory here: it returns product_id from the index back into the columns, which is where merge looks for it.",
