@@ -3051,6 +3051,28 @@ function PushCard({
    */
   const [failed, setFailed] = useState(false);
 
+  /*
+   * Разрешение и подписка расходятся на практике, а не только в теории:
+   * `pushState()` в исходном состоянии выше знает только про разрешение,
+   * подписку он не спрашивает (это асинхронно, а инициализатор `useState`
+   * должен быть синхронным). Без этой проверки экран показывал бы «включено»
+   * бесконечно после любого сбоя между разрешением и подпиской (сеть,
+   * отозванный push-сервис, смена VAPID-ключа при живой старой подписке) —
+   * ровно тот сценарий, что и у `failed` ниже, только не пойманный сразу
+   * после нажатия, а переживший перезагрузку страницы.
+   */
+  useEffect(() => {
+    if (state !== 'granted') return;
+    let alive = true;
+    hasPushSubscription().then((has) => {
+      if (alive && !has) setState('default');
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="card">
       <h2>{t.account.pushTitle}</h2>
