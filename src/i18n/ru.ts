@@ -1261,6 +1261,7 @@ export const ru = {
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Ключевые слова ${langGenitive(track)}`,
     chipsAria: 'Таблицы и колонки',
     backspaceAria: 'Стереть символ',
+    digitsAria: 'Цифры',
     keyboardShow: 'Показать клавиатуру',
     keyboardHide: 'Скрыть клавиатуру',
     /**

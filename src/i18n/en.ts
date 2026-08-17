@@ -654,6 +654,7 @@ export const en = {
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} keywords`,
     chipsAria: 'Tables and columns',
     backspaceAria: 'Erase character',
+    digitsAria: 'Digits',
     keyboardShow: 'Show keyboard',
     keyboardHide: 'Hide keyboard',
     /** См. комментарий в ru.ts: видны только на десктопе. */
