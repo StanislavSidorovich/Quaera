@@ -552,6 +552,8 @@ export const en = {
     checkBtn: 'Check',
     runBtn: 'Run',
     runNote: '"Run" just shows the result. Try things: mistakes cost nothing here.',
+    /** См. комментарий в ru.ts: показывается на зачтённом задании. */
+    solvedRunNote: 'Task passed. You can still change the query and run it: neither the verdict nor the review schedule changes.',
     /** См. комментарий в ru.ts: граница проверки там, где движка нет. */
     checkTextNote:
       'Nothing runs here: your answer is compared with the reference formula as text. Case and extra spaces do not matter.',

@@ -117,6 +117,12 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
   const [expected, setExpected] = useState<Preview | null>(initial.expected);
   const [feedback, setFeedback] = useState<Feedback | null>(initial.feedback);
   const [solved, setSolved] = useState(initial.solved);
+  /**
+   * Зачтённое задание запускали заново. Не сохраняется и не восстанавливается
+   * намеренно: это состояние одного взгляда на свой запрос, а не результат,
+   * от которого что-то зависит дальше.
+   */
+  const [explored, setExplored] = useState(false);
   /** Решено верно или разобрано после сдачи — от этого зависит интервал повторения. */
   const [wasCorrect, setWasCorrect] = useState(initial.wasCorrect);
   const [wrongAttempts, setWrongAttempts] = useState(initial.wrongAttempts);
@@ -245,7 +251,11 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
 
   async function handleRun() {
     setRunning(true);
-    setFeedback(null);
+    // После зачёта «Верно» не стираем: оно относится к проверенному ответу,
+    // а не к текущему прогону, и человек не должен решить, что потерял зачёт.
+    // Ошибку исполнения ниже это не глушит — она перезапишет обратную связь.
+    if (!solved) setFeedback(null);
+    if (solved) setExplored(true);
     try {
       const r = await executor.exec(composedCode);
       setPreview(r);
@@ -363,7 +373,10 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
     </div>
   );
 
-  const previewBlock = preview && !solved && (
+  // После зачёта своя таблица прячется: она совпала с эталоном, и две
+  // одинаковые рядом только мешают. Но если зачтённое задание запустили
+  // заново (explored), результат снова единственное, ради чего запускали.
+  const previewBlock = preview && (!solved || explored) && (
     <div className="card">
       <ResultTable data={preview} caption={t.task.yourResult} />
     </div>
@@ -535,23 +548,31 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
                   schema={schema}
                   level={task.level}
                   track={task.track}
-                  disabled={solved}
                   placeholder={t.task.placeholder(task.track)}
                 />
               )}
               <div className="row" style={{ marginTop: 12 }}>
                 {/* Без исполнителя запускать нечего — кнопки нет, а не «есть и падает». */}
+                {/*
+                  * После зачёта «Выполнить» остаётся, «Проверить» — нет.
+                  * Запуск ничего не записывает (см. handleRun), а проверка
+                  * выставляет вердикт и двигает интервал повторения; второй
+                  * раз за один ответ его двигать нельзя — этот дефект уже
+                  * чинили через recordedTasksRef.
+                  */}
                 {runsCode && (
-                  <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || solved}>
+                  <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit}>
                     {t.task.runBtn}
                   </button>
                 )}
-                <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || solved}>
-                  {running ? '…' : t.task.checkBtn}
-                </button>
+                {!solved && (
+                  <button className="btn" onClick={handleCheck} disabled={running || !canSubmit}>
+                    {running ? '…' : t.task.checkBtn}
+                  </button>
+                )}
               </div>
               <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                {runsCode ? t.task.runNote : t.task.checkTextNote}
+                {solved && runsCode ? t.task.solvedRunNote : runsCode ? t.task.runNote : t.task.checkTextNote}
               </p>
             </div>
           </div>
