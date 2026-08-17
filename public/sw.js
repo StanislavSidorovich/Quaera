@@ -140,20 +140,47 @@ async function adoptLegacyVendor() {
   }
 }
 
+/**
+ * Удаление кешей прошлых версий — только после того, как новый собран целиком.
+ *
+ * Порядок здесь не косметика, а защита от белого экрана. `install` собирает
+ * PRECACHE через `allSettled`: одна сетевая заминка оставляет новый SHELL
+ * неполным, установку при этом не роняет, и `skipWaiting` всё равно
+ * активирует воркер. Удали в этот момент прежние кеши — и до следующего
+ * удачного захода в сеть приложение не откроется вовсе: навигация уйдёт
+ * в `fromCache('/index.html')`, не найдёт там ничего и вернёт
+ * `Response.error()`. Ровно то же и с бандлом: промах кеша у пути с хешем
+ * в имени идёт в сеть, а сети нет — и запасного варианта уже не осталось,
+ * потому что старый удалили.
+ *
+ * Довод тот же, что у adoptLegacyVendor: половина нового хуже целого старого.
+ * Пока `precacheChecked` не поднят, прежние кеши — единственное, чем
+ * приложение открывается без сети, и они остаются. Повтор бесплатен:
+ * `ensurePrecache` зовётся из fetch при каждом запуске воркера, а `activate`
+ * происходит один раз на версию и второго шанса бы не дал.
+ */
+let supersededCleared = false;
+async function cleanupSupersededCaches() {
+  if (supersededCleared || !precacheChecked) return;
+  const adopted = await adoptLegacyVendor();
+  const keys = await caches.keys();
+  await Promise.all(
+    keys
+      .filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR)
+      .filter((k) => adopted || k !== LEGACY_VENDOR)
+      .map((k) => caches.delete(k))
+  );
+  // Неусвоенный legacy-кеш значит «повторить позже», а не «готово».
+  supersededCleared = adopted;
+}
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    adoptLegacyVendor()
-      .then((adopted) => caches.keys().then((keys) => ({ adopted, keys })))
-      .then(({ adopted, keys }) =>
-        Promise.all(
-          keys
-            .filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR)
-            .filter((k) => adopted || k !== LEGACY_VENDOR)
-            .map((k) => caches.delete(k))
-        )
-      )
-      .then(() => ensurePrecache())
-      .then(() => self.clients.claim())
+    (async () => {
+      await ensurePrecache();
+      await cleanupSupersededCaches();
+      await self.clients.claim();
+    })()
   );
 });
 
@@ -256,8 +283,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Проверка целостности кеша при первом запросе после запуска воркера.
-  // Не блокирует ответ: восстановление идёт фоном.
-  event.waitUntil(ensurePrecache());
+  // Не блокирует ответ: восстановление идёт фоном. Уборка прежних версий
+  // прицеплена сюда же — она отложена, если кеш собрался не с первого раза
+  // (см. cleanupSupersededCaches), и это её единственный шанс догнать.
+  event.waitUntil(ensurePrecache().then(cleanupSupersededCaches));
 
   event.respondWith(
     (async () => {

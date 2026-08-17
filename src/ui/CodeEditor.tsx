@@ -278,7 +278,7 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
        * где правило не действует, дерево вообще то же самое, что было.
        */}
       <div className="accessory-stack" data-open={tokensOn}>
-        <div className="accessory" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
+        <div className="accessory symbols" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
           {symbols.map((s) => (
             <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
               {s}
