@@ -1138,6 +1138,8 @@ export const ru = {
       track === 'python' ? 'Напишите код…' : 'Напишите запрос…',
     hintWait: (s: number) => `Подсказка откроется через ${s} с — попробуйте сами`,
     hintShow: (shown: number, total: number) => `Показать подсказку (${shown} из ${total})`,
+    /** Подпись над рефлексивным вопросом — между диагнозом и кнопкой подсказки. */
+    reflexiveLabel: 'Прежде чем смотреть подсказку',
     correctTitle: 'Верно',
     wrongOptionTitle: 'Не тот вариант',
     wrongOptionBody: 'Разбор всех вариантов — ниже.',

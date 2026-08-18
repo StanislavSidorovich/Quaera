@@ -564,6 +564,8 @@ export const en = {
       track === 'python' ? 'Write your code…' : 'Write your query…',
     hintWait: (s: number) => `Hint unlocks in ${s}s (try it yourself first)`,
     hintShow: (shown: number, total: number) => `Show hint (${shown} of ${total})`,
+    /** Label above the reflexive question, between the diagnosis and the hint button. */
+    reflexiveLabel: 'Before you look at the hint',
     correctTitle: 'Correct',
     wrongOptionTitle: 'Not quite',
     wrongOptionBody: 'The breakdown of every option is below.',

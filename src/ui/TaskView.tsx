@@ -827,6 +827,20 @@ function StepView({
         </div>
       )}
 
+      {/*
+       * Между диагнозом и подсказкой: диагноз (feedbackBlock выше) уже назвал
+       * причину расхождения, подсказка ниже уже даёт готовую мысль — здесь
+       * стоит вопрос, после которого думает человек, а не мы. Только у
+       * write/fill: у interpret расхождение с эталоном не считается,
+       * там неверный ответ разбирается вариантами, а не diagnoseComparison.
+       */}
+      {!draft.solved && draft.feedback?.reflexive && (
+        <div className="reflexive">
+          <span className="reflexive-label">{t.task.reflexiveLabel}</span>
+          {draft.feedback.reflexive}
+        </div>
+      )}
+
       {!draft.solved && step.hints.length > 0 && (
         <div>
           {step.hints.slice(0, draft.hintsShown).map((h, i) => (

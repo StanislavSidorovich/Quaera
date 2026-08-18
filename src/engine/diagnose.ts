@@ -169,29 +169,33 @@ export function diagnoseComparison(cmp: Comparison, locale: Locale): Feedback {
   const T = diagnoseText[locale];
   const style = cmp.columnNamesDiffer ? T.columnNamesStyle(cmp.expectedCols) : undefined;
   const withStyle = (f: Feedback): Feedback => ({ ...f, style: f.style ?? style });
+  // Вопрос между диагнозом и подсказкой — по причине расхождения (см. reflexive
+  // у DiagnoseText), одинаковый для любого её случая и на каждом из путей ниже.
+  const withReflexive = (f: Feedback): Feedback => ({ ...f, reflexive: cmp.reason ? T.reflexive[cmp.reason] : undefined });
 
-  if (cmp.reason === 'columns_count') return withStyle(T.columnsCount(cmp.expectedCols, cmp.userCols.length));
+  if (cmp.reason === 'columns_count')
+    return withReflexive(withStyle(T.columnsCount(cmp.expectedCols, cmp.userCols.length)));
 
   // Единственный диагноз без стилевой приписки: она сообщает, что имена колонок
   // на правильность не влияют, а здесь на неё повлияла именно их расстановка —
   // рядом с основным текстом приписка читалась бы прямым враньём.
-  if (cmp.reason === 'columns_order') return T.columnsOrder(cmp.expectedCols);
+  if (cmp.reason === 'columns_order') return withReflexive(T.columnsOrder(cmp.expectedCols));
 
-  if (cmp.reason === 'order') return withStyle(T.wrongOrder());
+  if (cmp.reason === 'order') return withReflexive(withStyle(T.wrongOrder()));
 
   if (cmp.reason === 'values' && cmp.sampleMismatch.length) {
     const f = analyseRatios(cmp.sampleMismatch, locale);
-    if (f) return withStyle(f);
+    if (f) return withReflexive(withStyle(f));
   }
 
-  if (cmp.reason === 'missing') return withStyle(T.missingRows(cmp.missingRows));
+  if (cmp.reason === 'missing') return withReflexive(withStyle(T.missingRows(cmp.missingRows)));
 
   if (cmp.reason === 'extra') {
     const ratio = cmp.expectedRows ? cmp.userRows / cmp.expectedRows : 0;
-    return withStyle(T.extraRows(cmp.extraRows, nearInteger(ratio)));
+    return withReflexive(withStyle(T.extraRows(cmp.extraRows, nearInteger(ratio))));
   }
 
-  if (cmp.reason === 'both') return withStyle(T.bothWays(cmp.userRows, cmp.expectedRows));
+  if (cmp.reason === 'both') return withReflexive(withStyle(T.bothWays(cmp.userRows, cmp.expectedRows)));
 
-  return withStyle(T.mismatchFallback(cmp.userRows, cmp.expectedRows));
+  return withReflexive(withStyle(T.mismatchFallback(cmp.userRows, cmp.expectedRows)));
 }

@@ -1,4 +1,4 @@
-import type { Feedback } from './types';
+import type { CompareReason, Feedback } from './types';
 import type { Locale } from '../i18n/context';
 
 /**
@@ -69,6 +69,13 @@ export interface DiagnoseText {
   mismatchFallback: (userRows: number, expectedRows: number) => Feedback;
   /** Замечание по оформлению — на правильность не влияет, живёт отдельным полем Feedback. */
   columnNamesStyle: (expectedCols: string[]) => string;
+  /**
+   * Рефлексивный вопрос между диагнозом и подсказкой — по одному на каждую
+   * из семи причин расхождения (CompareReason без null). Привязан к причине,
+   * а не к заданию: 232 задания в двух локалях переиспользуют эти семь строк
+   * как есть, не заводя своих.
+   */
+  reflexive: Record<Exclude<CompareReason, null>, string>;
 }
 
 /** Русское склонение числительных — форма зависит от последних одной-двух цифр. */
@@ -309,6 +316,16 @@ const ru: DiagnoseText = {
 
   columnNamesStyle: (expectedCols) =>
     `Имена колонок отличаются от ожидаемых (${expectedCols.join(', ')}). На правильность это не влияет, но отчёт с колонкой вида SUM(units) в работу не отдают — давайте колонкам осмысленные алиасы.`,
+
+  reflexive: {
+    columns_count: 'Пересчитайте список колонок в постановке: все ли они есть в SELECT и нет ли лишней?',
+    columns_order: 'В каком порядке колонки перечислены в самой постановке задания?',
+    order: 'По какому столбцу и в какую сторону задание просит отсортировать результат?',
+    values: 'Какая таблица в этом запросе может содержать несколько записей на один и тот же ключ?',
+    missing: 'Какое соединение или условие могло отсеять группы, для которых по этому условию не нашлось пары?',
+    extra: 'Какое условие из постановки — период, сегмент, канал — могло не попасть в запрос?',
+    both: 'Те ли колонки стоят в GROUP BY, что и в SELECT без агрегатных функций?',
+  },
 };
 
 const en: DiagnoseText = {
@@ -540,6 +557,16 @@ const en: DiagnoseText = {
 
   columnNamesStyle: (expectedCols) =>
     `The column names differ from the expected ones (${expectedCols.join(', ')}). It does not affect correctness, but nobody hands over a report with a column called SUM(units) — give your columns meaningful aliases.`,
+
+  reflexive: {
+    columns_count: 'Recount the column list in the brief: are they all in your SELECT, with nothing extra?',
+    columns_order: 'In what order does the brief itself list the columns?',
+    order: 'Which column, and which direction, does the brief ask you to sort by?',
+    values: 'Which table in this query could hold more than one row for the same key?',
+    missing: 'Which join or condition could have dropped groups that had no match under it?',
+    extra: 'Which condition from the brief — period, segment, channel — might be missing from the query?',
+    both: 'Are the columns in GROUP BY exactly the ones in SELECT that are not wrapped in an aggregate?',
+  },
 };
 
 export const diagnoseText: Record<Locale, DiagnoseText> = { ru, en };
