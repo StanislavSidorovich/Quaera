@@ -1,0 +1,784 @@
+<title>Kaiyo Trading Findings</title>
+<style>
+  :root {
+    --ground: #FCFCFB;
+    --surface: #F2F2EE;
+    --surface-2: #E9E9E4;
+    --ink: #16181A;
+    --ink-2: #474C52;
+    --muted: #767C84;
+    --rule: #DBDBD4;
+    --rule-strong: #C3C3BA;
+    --accent: #0072B2;
+    --s1: #0072B2;
+    --s2: #D55E00;
+    --s3: #009E73;
+    --serif: Charter, "Bitstream Charter", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181A;
+      --surface: #1E2023;
+      --surface-2: #26282C;
+      --ink: #E9EAE7;
+      --ink-2: #B6BABE;
+      --muted: #878D94;
+      --rule: #2D3034;
+      --rule-strong: #3C4046;
+      --accent: #56A8DE;
+      --s1: #3E90CE;
+      --s2: #CE6C2A;
+      --s3: #159274;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181A;
+    --surface: #1E2023;
+    --surface-2: #26282C;
+    --ink: #E9EAE7;
+    --ink-2: #B6BABE;
+    --muted: #878D94;
+    --rule: #2D3034;
+    --rule-strong: #3C4046;
+    --accent: #56A8DE;
+    --s1: #3E90CE;
+    --s2: #CE6C2A;
+    --s3: #159274;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 1.25rem 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap { max-width: 62rem; margin: 0 auto; }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 0.15em; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding: 4rem 0 2rem;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  h1 {
+    font-size: clamp(2rem, 5.2vw, 3.1rem);
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+    max-width: 20ch;
+  }
+  .standfirst { font-size: 1.15rem; color: var(--ink-2); margin: 0; max-width: 60ch; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem;
+    font-family: var(--mono); font-size: 0.74rem; color: var(--muted);
+    padding-top: 0.4rem;
+  }
+  .meta span { white-space: nowrap; }
+
+  /* ---------- finding ---------- */
+  .finding {
+    display: grid;
+    /* minmax(0, 1fr), not 1fr: a bare 1fr is minmax(auto, 1fr) and the widest
+       table inside would push the whole page sideways on a phone. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    padding: 3.25rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 62rem) {
+    .finding { grid-template-columns: 13rem minmax(0, 1fr); gap: 3rem; }
+    .rail { position: sticky; top: 2rem; align-self: start; }
+  }
+  .rail { display: flex; flex-direction: column; gap: 1.4rem; min-width: 0; }
+  .body { min-width: 0; }
+  .rail-cost { border-top: 2px solid var(--ink); padding-top: 0.6rem; }
+  .rail-cost .figure {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.55rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .rail-cost .caption { font-size: 0.9rem; color: var(--muted); margin-top: 0.35rem; }
+
+  .finding h2 {
+    font-size: clamp(1.4rem, 3vw, 1.85rem);
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 1.25rem;
+    max-width: 26ch;
+  }
+  .body { max-width: 42rem; }
+  .body p { margin: 0 0 1.1rem; }
+  .block { margin-bottom: 1.9rem; }
+  .block > .eyebrow { margin-bottom: 0.55rem; }
+  .block > p:last-child { margin-bottom: 0; }
+
+  /* ---------- tables ---------- */
+  .table-scroll { overflow-x: auto; margin: 0 0 1.9rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  caption {
+    text-align: left; font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    padding-bottom: 0.6rem;
+  }
+  th, td { padding: 0.55rem 0.9rem 0.55rem 0; text-align: left; vertical-align: baseline; }
+  thead th {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 400; color: var(--muted);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  tbody tr + tr td { border-top: 1px solid var(--rule); }
+  td.num, th.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.subject { color: var(--ink-2); }
+
+  /* ---------- figures ---------- */
+  figure { margin: 0 0 1.9rem; }
+  figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.7rem; max-width: 46rem; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 0.35rem 1.2rem;
+    font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2);
+    margin-bottom: 0.8rem;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 0.85rem; height: 0.2rem; border-radius: 0.1rem; display: inline-block; }
+  .chart-shell { position: relative; }
+  /* Chart colours live in CSS, not in the SVG attributes, so a theme switch
+     repaints them without redrawing the charts. */
+  .s1 { fill: var(--s1); stroke: var(--s1); }
+  .s2 { fill: var(--s2); stroke: var(--s2); }
+  .s3 { fill: var(--s3); stroke: var(--s3); }
+  .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .endpoint { stroke: var(--ground); stroke-width: 2; }
+  .grid { stroke: var(--rule); fill: none; }
+  .grid-strong { stroke: var(--rule-strong); fill: none; }
+  .band { fill: var(--surface-2); }
+  .tick { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+  .value-label { fill: var(--ink-2); font-family: var(--mono); font-size: 11px; }
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0;
+    transition: opacity 0.1s linear;
+    background: var(--ground); border: 1px solid var(--rule-strong);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    font-family: var(--mono); font-size: 0.72rem; line-height: 1.5;
+    padding: 0.5rem 0.6rem; white-space: nowrap; color: var(--ink);
+    font-variant-numeric: tabular-nums; z-index: 5;
+  }
+  .tip b { font-weight: 600; }
+  .tip .dim { color: var(--muted); }
+  .tip .k { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.35rem; vertical-align: -1px; }
+  @media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+
+  /* ---------- method ---------- */
+  .method { padding: 3.25rem 0 0; }
+  .method h2 { font-size: 1.35rem; font-weight: 600; margin: 0 0 1.1rem; }
+  pre {
+    background: var(--surface); border: 1px solid var(--rule);
+    padding: 1rem 1.1rem; overflow-x: auto; border-radius: 2px;
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.55; color: var(--ink-2);
+    margin: 0 0 1.5rem;
+  }
+  code { font-family: var(--mono); font-size: 0.88em; }
+  .footer-note { font-size: 0.9rem; color: var(--muted); max-width: 46rem; }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Analysis · Kaiyo Trading · FMCG and OTC pharma distribution</p>
+    <h1>Three findings and what they cost</h1>
+    <p class="standfirst">
+      A brand that lost half its shelf without losing any demand, a distributor
+      holding five months of stock nobody ordered, and a sales target that turns
+      out to measure a coin flip. Each finding is one query away, and each one
+      went unnoticed because the number that moved was not the number on the report.
+    </p>
+    <div class="meta">
+      <span>12 tables · ~156,000 rows</span>
+      <span>Jan 2024 – Jun 2026</span>
+      <span>Fictional company, reproducible data</span>
+      <span><a href="https://quaera.app">quaera.app</a></span>
+    </div>
+  </header>
+
+  <p class="footer-note" style="padding-top:1.6rem">
+    Kaiyo Trading is invented. Its data is built by a deterministic generator with a
+    fixed seed and ships inside Quaera, a trainer where these same tables are used as
+    exercises. The company is fiction; the reasoning is not, and neither are the
+    numbers: every figure below comes from a query anyone can rerun.
+  </p>
+
+  <!-- ================= FINDING 1 ================= -->
+  <article class="finding">
+    <div class="rail">
+      <p class="eyebrow">Distribution</p>
+      <div class="rail-cost">
+        <div class="figure">¥4.02M</div>
+        <p class="caption">a year, walked out of 42 outlets while the reports showed a soft market</p>
+      </div>
+    </div>
+
+    <div class="body">
+      <h2>Nettora lost 57% of its volume and none of its demand</h2>
+
+      <div class="block">
+        <p class="eyebrow">The question</p>
+        <p>
+          Home care brand Nettora sold 10,101 units in Q1 2024 and 4,308 in Q1 2026.
+          Two explanations were on the table, weak demand and the price. The average
+          selling price had indeed risen 10% over the same two years, which made the
+          second one sound settled.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What the data shows</p>
+        <p>The brand did not lose sales per outlet. It lost outlets.</p>
+      </div>
+
+      <figure>
+        <div class="legend" id="lg1"></div>
+        <div class="chart-shell" id="c1"></div>
+        <figcaption>
+          Each measure indexed to Q1 2024 = 100. Volume tracks the outlet count almost
+          exactly; sales per outlet stay level throughout, seasonal spring peaks and all.
+          Wherever the brand is still stocked, it sells as it always did.
+        </figcaption>
+      </figure>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Q1 2024 → Q1 2026</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="num">Nettora</th><th scope="col" class="num">Other four FMCG brands</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="subject">Units</td><td class="num">10,101 → 4,308 (−57%)</td><td class="num">+14%</td></tr>
+            <tr><td class="subject">Outlets buying the brand</td><td class="num">79 → 37 (−53%)</td><td class="num">94 → 94</td></tr>
+            <tr><td class="subject">Units per outlet</td><td class="num">127.9 → 116.4 (−9%)</td><td class="num">+14%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="block">
+        <p>
+          Restricting the comparison to the 33 outlets that never dropped the brand
+          removes the ambiguity. In those outlets, first-half volume went from 282.9
+          units per outlet in 2024 to 285.0 in 2026, and the realised price went from
+          ¥195.9 to ¥198.5. Demand and price are flat wherever the brand is still on
+          the shelf.
+        </p>
+        <p>
+          The 10% price rise is an artefact of the mix. List price moved 1.9% in two
+          years (¥202.6 to ¥206.5) and the promo price moved 0.8%. What changed is who
+          was left buying: the outlets that dropped the brand were the discount-heavy
+          ecommerce accounts, so the average price of what remained went up while no
+          price went up.
+        </p>
+        <p>
+          Two more checks close the obvious alternatives. All 42 outlets that stopped
+          buying Nettora are still trading and still buying other FMCG from the same
+          company, 76,571 units of it in the first half of 2026, so this is not store
+          closures. And they left in a steady trickle, 8 outlets in Q1 2025, then 11,
+          10, 13 and 4, spread across five retail chains, three ecommerce accounts and
+          independent trade, so this is not one account's decision either.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it means</p>
+        <p>
+          This is a distribution problem wearing the costume of a demand problem. It
+          ran for five quarters without triggering anything, because the reported
+          metric was volume, and volume falls slowly and plausibly when outlets leave
+          one at a time. Nobody was watching the number that was actually moving.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What to do</p>
+        <p>
+          Recovering the brand is a shelf conversation with 42 named accounts, not a
+          campaign. The list is one query away. The metric that would have caught it in
+          the first quarter is outlets billed per brand per month, and it belongs in
+          the weekly reporting next to volume, with an alert on the rate of decline
+          rather than on the level.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it costs</p>
+        <p>
+          Those 42 outlets bought 21,015 units for ¥4.02M in 2024, 54% of the brand's
+          revenue. In the first half of 2026 they bought 454 units. At their own 2024
+          rate, each recovered outlet is worth about ¥96,000 a year.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ================= FINDING 2 ================= -->
+  <article class="finding">
+    <div class="rail">
+      <p class="eyebrow">Inventory</p>
+      <div class="rail-cost">
+        <div class="figure">¥2.05M</div>
+        <p class="caption">frozen for six months in one distributor's warehouse, and still there</p>
+      </div>
+    </div>
+
+    <div class="body">
+      <h2>One distributor's stock quadrupled while nothing extra was sold</h2>
+
+      <div class="block">
+        <p class="eyebrow">The question</p>
+        <p>
+          Setouchi Trading, one of twelve distributors, held 4,217 units at the end of
+          September 2025 and 20,846 at the end of December. Was this a sales collapse
+          or a shipping decision?
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What the data shows</p>
+        <p>Neither the demand nor the discount changed. The shipments did.</p>
+      </div>
+
+      <figure>
+        <div class="chart-shell" id="c2"></div>
+        <figcaption>
+          Month-end stock at Setouchi Trading. Three months of loading took cover from
+          under one month to five and a half; the eighteen months around it are flat.
+          Stock is a level, not a flow, which is why it never came back on its own.
+        </figcaption>
+      </figure>
+
+      <div class="table-scroll">
+        <table>
+          <caption>Q4 2025</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="num">Setouchi</th><th scope="col" class="num">Other 11 distributors</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="subject">Sell-in to sell-out ratio</td><td class="num">2.44</td><td class="num">1.04 – 1.05</td></tr>
+            <tr><td class="subject">Stock cover at 31 December</td><td class="num">5.4 months</td><td class="num">1.05 – 1.4 months</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="block">
+        <p>
+          Monthly, the ratio sat between 1.01 and 1.05 through September, jumped to 2.5
+          in October, and returned to 1.05 in January. Nothing on the demand side asked
+          for it: sell-out through Setouchi's nine outlets was 11,574 units in Q4 2025
+          against 12,673 a year earlier, a 9% dip in a year that was up 6% overall. The
+          purchase discount was unchanged at 8.0 to 8.9%, so the volume was not bought
+          with a promotion, and it was not one brand's launch push either: Aqualis went
+          from 3,041 to 7,311 units year on year, Milvara from 3,082 to 5,923, Fruvia
+          from 1,996 to 5,669. Everything moved at once.
+        </p>
+        <p>
+          The stock never came back down. In June 2026, six months later, Setouchi
+          still held 22,176 units, because shipments went straight back to tracking
+          off-take instead of being cut below it.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it means</p>
+        <p>
+          For one quarter, sell-in stopped being a measure of demand for this account
+          and became a measure of how much inventory was moved across the company's own
+          boundary. Any revenue reading that used sell-in for Q4 2025 overstated the
+          quarter, and because the stock is still sitting there, it borrowed that
+          overstatement from every quarter since.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What to do</p>
+        <p>
+          Two changes, both cheap. Net the next orders for this account against its
+          stock cover rather than against its order history, which at 5.4 months means
+          near-zero shipments for a quarter. And put the cover-months alarm at
+          distributor level: the company-wide average stayed inside its normal band
+          through the entire episode, so no aggregate would ever have shown it.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it costs</p>
+        <p>
+          22,176 units at list price is ¥2.68M of working capital sitting in someone
+          else's warehouse. About 17,000 of those units are above the 1.2 months of
+          cover its peers carry, which is ¥2.05M frozen for six months and counting.
+          Some of it is dairy: 1,488 units of Milvara Strawberry, on a shelf life that
+          will decide this question if nobody else does.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ================= FINDING 3 ================= -->
+  <article class="finding">
+    <div class="rail">
+      <p class="eyebrow">Incentives</p>
+      <div class="rail-cost">
+        <div class="figure">80%</div>
+        <p class="caption">of the team misses target every month for a reason that is not theirs</p>
+      </div>
+    </div>
+
+    <div class="body">
+      <h2>Only 5 of 25 reps hit target, and it says nothing about the reps</h2>
+
+      <div class="block">
+        <p class="eyebrow">The question</p>
+        <p>
+          In a typical month 3 to 7 of the 25 sales reps hit their monthly target:
+          median 5, and 24 of the 30 months fall in that range. Company attainment over
+          the same 30 months never left the 92.8 to 97.9% band. Is this a weak team, or
+          a weak target?
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What the data shows</p>
+        <p>
+          Targets are set as the same rep's own prior fact plus about 5%: the mean
+          target-to-actual ratio across 750 rep-months is 1.051, with a spread from
+          0.92 to 1.18. The hit rate that follows is 19.5%.
+        </p>
+      </div>
+
+      <figure>
+        <div class="chart-shell" id="c3"></div>
+        <figcaption>
+          One column per month, one dot per rep who hit target. Thirty months of it and
+          no trend, no seasonality, no recovery after a bad month: the scatter around
+          the median of five is what twenty-five biased coins look like.
+        </figcaption>
+      </figure>
+
+      <div class="table-scroll">
+        <table>
+          <caption>750 rep-months, split by person instead of by month</caption>
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col" class="num">Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="subject">Spread of attainment between reps (SD of rep means)</td><td class="num">0.88 pp</td></tr>
+            <tr><td class="subject">Spread of attainment within one rep, month to month</td><td class="num">4.96 pp</td></tr>
+            <tr><td class="subject">Share of variance explained by which rep it is (ICC)</td><td class="num">about 0</td></tr>
+            <tr><td class="subject">Months hit out of 30, best to worst rep</td><td class="num">9 to 3</td></tr>
+            <tr><td class="subject">SD of those hit counts</td><td class="num">1.93 vs 2.17 from coin flips</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="block">
+        <p>
+          Over two and a half years, the best and the worst rep in the company are 3.0
+          percentage points apart on attainment, and the month-to-month swing inside a
+          single rep is more than five times what separates one rep from another. The
+          count of months each rep hit target is distributed the way 25 people flipping
+          a biased coin thirty times would be distributed.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it means</p>
+        <p>
+          The target does not measure the rep. It measures the gap between last
+          period's fact and a 5% uplift applied on top of it, and that gap is noise.
+          Ranking people on it, paying on it, or discussing it in a monthly review is
+          ranking, paying and discussing luck. It also explains why the two facts that
+          look contradictory are not: the company hits 95% every month precisely
+          because the target is derived from what the company already did.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What to do</p>
+        <p>
+          Separate the two jobs this number is currently doing. If the target is a
+          forecast, state the growth assumption in advance instead of smuggling it in
+          as a 5% multiplier on each rep's own history. If it is a performance measure,
+          measure something the rep controls: outlets billed, assortment width per
+          outlet, order regularity, all of which are already in these tables. Whichever
+          is chosen, publish the expected hit rate with it: at ×1.05 it is about 20%,
+          at ×1.00 it is 49%.
+        </p>
+      </div>
+
+      <div class="block">
+        <p class="eyebrow">What it costs</p>
+        <p>
+          If any part of the bonus depends on hitting target, 80% of the team misses it
+          every month for a reason that has nothing to do with them, and the 20% who
+          make it were not the better performers. That is the cost of the current
+          design, and it is paid monthly.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ================= METHOD ================= -->
+  <section class="method">
+    <h2>Method</h2>
+    <div class="body">
+      <p>
+        The dataset is a star schema of 12 tables and about 156,000 rows covering
+        January 2024 to June 2026: sell-out weekly by outlet and SKU, sell-in monthly
+        by distributor, month-end stock, targets by rep and division, prices, promos, a
+        date dimension and a deliberately dirty staging table. Sell-out aggregates into
+        sell-in, sell-in minus sell-out gives stock, and targets are derived from fact,
+        which is what makes the third finding visible at all.
+      </p>
+      <p>
+        Every figure above is a query against that database. The one that decides the
+        first finding fits in twelve lines: it puts volume, outlet count, volume per
+        outlet and realised price side by side, so that a fall in the first with the
+        third holding steady can only be the second.
+      </p>
+    </div>
+<pre><code>SELECT d.year || '-Q' || d.quarter                          AS period,
+       SUM(f.units)                                         AS units,
+       COUNT(DISTINCT f.customer_id)                        AS outlets,
+       ROUND(1.0 * SUM(f.units) / COUNT(DISTINCT f.customer_id), 1)
+                                                            AS per_outlet,
+       ROUND(SUM(f.revenue) / SUM(f.units), 1)              AS avg_price
+FROM fact_sellout f
+JOIN dim_product p ON p.product_id = f.product_id
+JOIN dim_date    d ON d.date_id    = f.week_start
+WHERE p.brand = 'Nettora'
+GROUP BY 1
+ORDER BY 1;</code></pre>
+    <p class="footer-note">
+      Rebuilding the database from the generator with the same seed reproduces the same
+      rows byte for byte, and the three storylines are held in place by regression
+      tests, so a change that quietly drops one of them fails the build instead of
+      silently invalidating this page. Source and dataset:
+      <a href="https://github.com/StanislavSidorovich/Quaera">github.com/StanislavSidorovich/Quaera</a>.
+      Written by Stanislav Sidorovich.
+    </p>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (n, a = {}) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const fmt = (n) => n.toLocaleString('en-US');
+  const text = (s, x, y, anchor, cls) => {
+    const t = el('text', { x, y, 'text-anchor': anchor, class: cls || 'tick' });
+    t.textContent = s;
+    return t;
+  };
+
+  function shell(host, w, h) {
+    const svg = el('svg', { viewBox: `0 0 ${w} ${h}`, role: 'img' });
+    host.appendChild(svg);
+    let tip = host.querySelector('.tip');
+    if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip); }
+    return { svg, tip };
+  }
+  function showTip(host, tip, x, y, html) {
+    tip.innerHTML = html;
+    tip.style.opacity = '1';
+    const r = host.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.max(0, Math.min(r.width - tw, x - tw / 2)) + 'px';
+    tip.style.top = Math.max(0, y - th - 10) + 'px';
+  }
+  const hideTip = (tip) => { tip.style.opacity = '0'; };
+
+  /* ---------- 1. indexed lines ---------- */
+  const q = ['2024-Q1','2024-Q2','2024-Q3','2024-Q4','2025-Q1','2025-Q2','2025-Q3','2025-Q4','2026-Q1','2026-Q2'];
+  const raw = {
+    units:   [10101, 10639, 8755, 8918, 8158, 12092, 8415, 6182, 4308, 5550],
+    outlets: [79, 79, 79, 79, 79, 71, 60, 50, 37, 33],
+    per:     [127.9, 134.7, 110.8, 112.9, 103.3, 170.3, 140.3, 123.6, 116.4, 168.2],
+  };
+  const series = [
+    { key: 'units',   label: 'Units sold',          cls: 's2' },
+    { key: 'outlets', label: 'Outlets stocking it', cls: 's1' },
+    { key: 'per',     label: 'Units per outlet',    cls: 's3' },
+  ];
+  const idx = (a) => a.map((v) => (v / a[0]) * 100);
+
+  function chart1() {
+    const host = document.getElementById('c1');
+    host.innerHTML = '';
+    const W = 720, H = 300, m = { t: 14, r: 54, b: 30, l: 34 };
+    const { svg, tip } = shell(host, W, H);
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const data = series.map((s) => ({ ...s, v: idx(raw[s.key]) }));
+    const lo = 20, hi = 140;
+    const X = (i) => m.l + (i / (q.length - 1)) * iw;
+    const Y = (v) => m.t + ih - ((v - lo) / (hi - lo)) * ih;
+
+    for (const gv of [40, 60, 80, 100, 120, 140]) {
+      svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: Y(gv), y2: Y(gv),
+        class: gv === 100 ? 'grid-strong' : 'grid', 'stroke-width': gv === 100 ? 1.5 : 1,
+        'stroke-dasharray': gv === 100 ? '' : '2 4' }));
+      svg.appendChild(text(gv, m.l - 8, Y(gv) + 4, 'end'));
+    }
+    q.forEach((label, i) => {
+      if (i % 2) return;
+      svg.appendChild(text(label, X(i), H - 8, 'middle'));
+    });
+
+    for (const s of data) {
+      const d = s.v.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+      svg.appendChild(el('path', { d, class: `line ${s.cls}` }));
+      const last = s.v[s.v.length - 1];
+      svg.appendChild(el('circle', { cx: X(q.length - 1), cy: Y(last), r: 4,
+        class: `endpoint ${s.cls}` }));
+      svg.appendChild(text(Math.round(last), X(q.length - 1) + 9, Y(last) + 3.5, 'start', 'value-label'));
+    }
+
+    const cross = el('line', { y1: m.t, y2: m.t + ih, class: 'grid-strong',
+      'stroke-width': 1, opacity: 0 });
+    svg.appendChild(cross);
+    const hit = el('rect', { x: m.l, y: m.t, width: iw, height: ih, fill: 'transparent' });
+    svg.appendChild(hit);
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * W;
+      let i = Math.round(((px - m.l) / iw) * (q.length - 1));
+      i = Math.max(0, Math.min(q.length - 1, i));
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('opacity', 1);
+      const rows = data.map((s) => `<span class="k" style="background:var(--${s.cls})"></span>${s.label} <b>${Math.round(s.v[i])}</b> <span class="dim">(${fmt(raw[s.key][i])})</span>`).join('<br>');
+      showTip(host, tip, (X(i) / W) * r.width, (Y(120) / H) * r.height, `<b>${q[i]}</b><br>${rows}`);
+    };
+    hit.addEventListener('mousemove', move);
+    hit.addEventListener('mouseleave', () => { hideTip(tip); cross.setAttribute('opacity', 0); });
+
+    const lg = document.getElementById('lg1');
+    lg.innerHTML = data.map((s) => `<span><i class="swatch" style="background:var(--${s.cls})"></i>${s.label}</span>`).join('');
+  }
+
+  /* ---------- 2. stock level ---------- */
+  const months = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09',
+                  '2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+  const stock = [2693, 2872, 3025, 3310, 3486, 3679, 3752, 3949, 4217, 10325, 15108, 20846,
+                 21120, 21250, 21561, 21757, 21877, 22176];
+
+  function chart2() {
+    const host = document.getElementById('c2');
+    host.innerHTML = '';
+    const W = 720, H = 280, m = { t: 30, r: 12, b: 34, l: 46 };
+    const { svg, tip } = shell(host, W, H);
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const max = 24000;
+    const bw = iw / months.length;
+    const Y = (v) => m.t + ih - (v / max) * ih;
+
+    const bandX = m.l + 9 * bw, bandW = 3 * bw;
+    svg.appendChild(el('rect', { x: bandX, y: m.t - 18, width: bandW, height: ih + 18,
+      class: 'band' }));
+    svg.appendChild(text('Q4 2025 load-in', bandX + bandW / 2, m.t - 22, 'middle'));
+
+    for (const gv of [0, 6000, 12000, 18000, 24000]) {
+      svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: Y(gv), y2: Y(gv),
+        class: 'grid', 'stroke-width': 1 }));
+      svg.appendChild(text(gv ? gv / 1000 + 'k' : '0', m.l - 8, Y(gv) + 4, 'end'));
+    }
+
+    months.forEach((mo, i) => {
+      const h = Math.max(1, m.t + ih - Y(stock[i]));
+      const r = el('rect', { x: m.l + i * bw + 2, y: Y(stock[i]), width: bw - 4, height: h,
+        class: 's1', rx: 2 });
+      svg.appendChild(r);
+      const hitr = el('rect', { x: m.l + i * bw, y: m.t, width: bw, height: ih, fill: 'transparent' });
+      hitr.addEventListener('mouseenter', () => {
+        const rect = svg.getBoundingClientRect();
+        const cover = (stock[i] / 4335).toFixed(1);
+        showTip(host, tip, ((m.l + i * bw + bw / 2) / W) * rect.width, (Y(stock[i]) / H) * rect.height,
+          `<b>${mo}</b><br>${fmt(stock[i])} units on hand<br><span class="dim">≈ ${cover} months of cover</span>`);
+      });
+      hitr.addEventListener('mouseleave', () => hideTip(tip));
+      svg.appendChild(hitr);
+      if (i % 3 === 0) svg.appendChild(text(mo, m.l + i * bw + bw / 2, H - 10, 'middle'));
+    });
+  }
+
+  /* ---------- 3. hits per month ---------- */
+  const hits = [6,1,4,5,0,3,5,5,4,4,4,7, 7,4,6,2,7,3,7,4,6,4,7,7, 10,2,5,5,8,4];
+  const hitMonths = [];
+  for (const y of [2024, 2025, 2026]) {
+    for (let mo = 1; mo <= 12; mo++) {
+      if (y === 2026 && mo > 6) break;
+      hitMonths.push(`${y}-${String(mo).padStart(2, '0')}`);
+    }
+  }
+
+  function chart3() {
+    const host = document.getElementById('c3');
+    host.innerHTML = '';
+    const W = 720, H = 250, m = { t: 20, r: 12, b: 34, l: 46 };
+    const { svg, tip } = shell(host, W, H);
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const colW = iw / hits.length, max = 10;
+    const Y = (v) => m.t + ih - (v / max) * ih;
+
+    svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: Y(5), y2: Y(5),
+      class: 'grid-strong', 'stroke-width': 1, 'stroke-dasharray': '4 4' }));
+    svg.appendChild(text('median 5', m.l - 8, Y(5) + 4, 'end'));
+    for (const gv of [0, 10]) svg.appendChild(text(gv, m.l - 8, Y(gv) + 4, 'end'));
+    svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: Y(0), y2: Y(0),
+      class: 'grid', 'stroke-width': 1 }));
+
+    hits.forEach((n, i) => {
+      const cx = m.l + i * colW + colW / 2;
+      for (let k = 1; k <= n; k++) {
+        svg.appendChild(el('circle', { cx, cy: Y(k) + (Y(0) - Y(1)) / 2, r: 3.2, class: 's1' }));
+      }
+      const hitr = el('rect', { x: m.l + i * colW, y: m.t, width: colW, height: ih, fill: 'transparent' });
+      hitr.addEventListener('mouseenter', () => {
+        const rect = svg.getBoundingClientRect();
+        showTip(host, tip, (cx / W) * rect.width, (Y(Math.max(n, 3)) / H) * rect.height,
+          `<b>${hitMonths[i]}</b><br>${n} of 25 reps hit target`);
+      });
+      hitr.addEventListener('mouseleave', () => hideTip(tip));
+      svg.appendChild(hitr);
+      if (i % 6 === 0) svg.appendChild(text(hitMonths[i], cx, H - 10, 'middle'));
+    });
+  }
+
+  const draw = () => { chart1(); chart2(); chart3(); };
+  draw();
+  let t;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 150); });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+})();
+</script>
