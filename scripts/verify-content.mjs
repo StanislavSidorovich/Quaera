@@ -120,7 +120,7 @@ const schemaTableNames = new Set(schemaDoc.tables.map((t) => t.table));
  */
 function checkTaskTableNames(pack) {
   for (const t of pack.tasks) {
-    const code = [t.starter, t.template, t.solution, t.predictSql].filter(Boolean).join('\n');
+    const code = [...codeFieldsOf(t)].map(([, value]) => value).join('\n');
     if (!code) continue;
     const found = new Set(code.match(/\b(?:dim|fact|staging)_[a-z_]+\b/g) ?? []);
     for (const name of found) {
@@ -155,6 +155,34 @@ function checkTaskTableNames(pack) {
 const CODE_FIELDS = ['starter', 'template', 'solution', 'predictSql'];
 
 /**
+ * Все кодовые поля задания — вместе с полями его шагов.
+ *
+ * Перебор через одно место, а не тремя копиями списка: у многошагового
+ * задания код лежит в шагах, и проверка, знающая только про поля верхнего
+ * уровня, не упала бы, а просто перестала бы его видеть. Этот класс пропуска
+ * в проекте уже случался (захардкоженный список файлов перевода), и вид
+ * у него всегда один: гейт рапортует «в порядке», не посмотрев.
+ */
+function* codeFieldsOf(t) {
+  for (const field of CODE_FIELDS) {
+    if (typeof t[field] === 'string') yield [field, t[field]];
+  }
+  for (const [i, step] of (t.steps ?? []).entries()) {
+    for (const field of CODE_FIELDS) {
+      if (typeof step[field] === 'string') yield [`${field} шага ${i + 1}`, step[field]];
+    }
+  }
+}
+
+/** Значения пропусков задания и его шагов — тем же перебором и по той же причине. */
+function* blanksOf(t) {
+  for (const [i, blank] of (t.blanks ?? []).entries()) yield [`№${i + 1}`, blank];
+  for (const [k, step] of (t.steps ?? []).entries()) {
+    for (const [i, blank] of (step.blanks ?? []).entries()) yield [`№${i + 1} шага ${k + 1}`, blank];
+  }
+}
+
+/**
  * Ширина строки-комментария в блоке кода.
  *
  * `pre.sql-block` — это `white-space: pre-wrap`, и на 375 px в него влезает
@@ -174,9 +202,8 @@ const COMMENT_WIDTH = 39;
 const isComment = (line) => /^\s*(--|\/\/|#)/.test(line);
 
 function checkCommentWidth(t) {
-  for (const field of CODE_FIELDS) {
-    if (typeof t[field] !== 'string') continue;
-    for (const line of t[field].split('\n')) {
+  for (const [field, value] of codeFieldsOf(t)) {
+    for (const line of value.split('\n')) {
       if (isComment(line) && line.length > COMMENT_WIDTH) {
         fail(t.id, `строка-комментарий в ${field} длиннее ${COMMENT_WIDTH} знаков (${line.length}) — на 375 px она переносится: «${line.trim()}»`);
       }
@@ -188,17 +215,16 @@ function checkCodeLocaleNeutral(pack) {
   const before = failed;
   let checked = 0;
   for (const t of pack.tasks) {
-    for (const field of CODE_FIELDS) {
-      if (typeof t[field] !== 'string') continue;
+    for (const [field, value] of codeFieldsOf(t)) {
       checked++;
-      if (/[А-Яа-яЁё]/.test(t[field])) {
+      if (/[А-Яа-яЁё]/.test(value)) {
         fail(t.id, `в поле ${field} есть кириллица — оно не переводится вовсе, прозе место в brief`);
       }
     }
-    for (const [i, blank] of (t.blanks ?? []).entries()) {
+    for (const [where, blank] of blanksOf(t)) {
       checked++;
       if (/[А-Яа-яЁё]/.test(blank)) {
-        fail(t.id, `в пропуске №${i + 1} есть кириллица — blanks не переводятся, значение пропуска обязано быть кодом`);
+        fail(t.id, `в пропуске ${where} есть кириллица — blanks не переводятся, значение пропуска обязано быть кодом`);
       }
     }
     checkCommentWidth(t);
@@ -364,17 +390,27 @@ function checkOptionPositions(pack) {
 
   const positions = new Map();
   let total = 0;
-  for (const t of pack.tasks) {
-    if (!t.options || t.options.length < 2) continue;
-    const rnd = rngFrom(seedFrom(t.id));
-    const options = [...t.options];
-    for (let i = options.length - 1; i > 0; i--) {
+  /** Зерно то же, что у плеера (shuffleOptions в content/index.ts): иначе считалась бы чужая раскладка. */
+  const count = (options, seed) => {
+    if (!options || options.length < 2) return;
+    const rnd = rngFrom(seedFrom(seed));
+    const shuffled = [...options];
+    for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
-      [options[i], options[j]] = [options[j], options[i]];
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    const at = options.findIndex((o) => o.correct);
+    const at = shuffled.findIndex((o) => o.correct);
     positions.set(at, (positions.get(at) ?? 0) + 1);
     total++;
+  };
+  for (const t of pack.tasks) {
+    count(t.options, t.id);
+    // Варианты внутри шагов считаются наравне: иначе проверка на «решается
+    // по положению ответа» просто перестала бы видеть новый тип заданий —
+    // не упав, а исчезнув.
+    (t.steps ?? []).forEach((step, i) => {
+      if (step.kind === 'interpret') count(step.options, `${t.id}:${i}`);
+    });
   }
   if (total < 10) return; // на горстке заданий разброс ничего не значит
 
@@ -386,6 +422,158 @@ function checkOptionPositions(pack) {
   } else {
     console.log(`  ok   позиция верного варианта после перемешивания — ${layout} из ${total}`);
   }
+}
+
+/**
+ * Многошаговое задание: «посчитай → интерпретируй».
+ *
+ * Проверяется то же, что у одношагового, плюс единственное, что у этого типа
+ * есть своего, — связь между шагами. Правило типа (см. TaskStep в
+ * content/types.ts): шаг интерпретации говорит о результате предыдущего
+ * расчётного шага и ни о чём другом. Отсюда проверка чисел ниже: она и есть
+ * причина, по которой двухэтапное задание вообще проверяемо гейтом, а не
+ * становится первым контентом, правильность которого не проверяет ничто.
+ */
+async function checkSteps(pack, t) {
+  if (!runsCodeTrack(pack.track)) {
+    fail(t.id, `шаги есть, а исполнителя кода у трека «${pack.track}» нет — расчётный шаг некому выполнить`);
+    return;
+  }
+  const steps = t.steps;
+  if (steps.length < 2) {
+    fail(t.id, 'шагов меньше двух — одношаговое задание пишется без steps, иначе одно и то же записывается двумя способами');
+    return;
+  }
+  if (steps[0].kind !== 'compute') fail(t.id, 'первый шаг не расчётный — интерпретировать нечего');
+  if (steps[steps.length - 1].kind !== 'interpret') {
+    fail(t.id, 'последний шаг не интерпретация — задание заканчивается на числах, а не на их смысле');
+  }
+
+  /*
+   * Одношаговые поля на многошаговом задании — второй источник правды:
+   * плеер их не смотрит (см. resolveSteps), а человек, который будет править
+   * задание, увидит два эталона и не узнает, какой из них работает.
+   */
+  for (const field of ['solution', 'template', 'blanks', 'starter', 'options', 'predictSql', 'predictQuestion', 'scenario']) {
+    if (t[field] !== undefined) fail(t.id, `у задания с шагами заполнено одношаговое поле ${field} — плеер его не покажет`);
+  }
+  if (t.hints?.length) fail(t.id, 'подсказки на уровне задания: у задания с шагами они принадлежат шагу');
+  const firstCompute = steps.find((s) => s.kind === 'compute');
+  if (firstCompute && t.mode !== firstCompute.mode) {
+    fail(t.id, `mode задания «${t.mode}» не совпадает с режимом расчётного шага «${firstCompute.mode}»`);
+  }
+
+  /** Результат последнего выполненного расчётного шага — то, о чём спрашивает интерпретация. */
+  let lastResult = null;
+
+  for (const [i, step] of steps.entries()) {
+    const at = `${t.id} шаг ${i + 1}`;
+    if (!step.hints?.length) fail(at, 'нет подсказок');
+
+    if (step.kind === 'compute') {
+      if (!step.goal) fail(at, 'нет формулировки результата (goal)');
+      if (!step.solution) {
+        fail(at, 'нет эталонного решения');
+        lastResult = null;
+        continue;
+      }
+      if (step.mode === 'fill') {
+        if (!step.template || !step.blanks) {
+          fail(at, 'режим fill без шаблона или значений пропусков');
+        } else {
+          const parts = step.template.split('___');
+          if (parts.length - 1 !== step.blanks.length) {
+            fail(at, `пропусков в шаблоне ${parts.length - 1}, значений ${step.blanks.length}`);
+          } else if (parts.reduce((acc, part, k) => acc + part + (step.blanks[k] ?? ''), '') !== step.solution) {
+            fail(at, 'шаблон с подставленными значениями не совпадает с эталоном');
+          }
+        }
+      }
+      let res;
+      try {
+        res = pack.track === 'sql' ? runSql(step.solution) : await runPython(step.solution);
+      } catch (e) {
+        fail(at, `эталон не выполняется — ${e.message}`);
+        lastResult = null;
+        continue;
+      }
+      if (!res.rows.length) fail(at, 'эталон возвращает пустой результат');
+      if (pack.track === 'sql') {
+        if (res.columns.some((c) => /^(sum|count|avg|round|min|max)\(/i.test(c))) {
+          fail(at, `в эталоне колонка без алиаса: ${res.columns.find((c) => /^\w+\(/.test(c))}`);
+        }
+        if (step.orderMatters && !/order\s+by/i.test(step.solution)) fail(at, 'orderMatters, но в эталоне нет ORDER BY');
+        if (!step.orderMatters && /order\s+by/i.test(step.solution) && !/over\s*\(/i.test(step.solution)) {
+          fail(at, 'в эталоне есть ORDER BY, но orderMatters не выставлен — порядок не будет проверяться');
+        }
+      } else if (!/(^|\n)\s*result\s*=/.test(step.solution)) {
+        fail(at, 'эталон не присваивает переменную result — см. контракт в ROADMAP.md §6');
+      }
+      lastResult = res;
+      console.log(`  ok   ${at} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length}`);
+      continue;
+    }
+
+    // --- шаг интерпретации
+    if (!step.question) fail(at, 'нет вопроса');
+    const correct = (step.options ?? []).filter((o) => o.correct);
+    if (correct.length !== 1) fail(at, `должен быть ровно один верный вариант, найдено ${correct.length}`);
+    if ((step.options ?? []).length < 3) fail(at, 'меньше трёх вариантов ответа');
+    for (const o of step.options ?? []) {
+      if (!o.why || o.why.length < 40) fail(at, `у варианта «${o.label}» нет содержательного разбора`);
+    }
+    if (!lastResult) {
+      fail(at, 'нет результата предыдущего расчётного шага — интерпретировать нечего');
+      continue;
+    }
+    const strays = strayNumbers(step.question, lastResult);
+    if (strays.length) {
+      fail(
+        at,
+        `в вопросе числа, которых нет в результате расчёта: ${strays.join(', ')} — вопрос обязан говорить о том, что человек только что посчитал, а пороги и сравнения живут в вариантах ответа`
+      );
+    }
+  }
+}
+
+/**
+ * Числа вопроса, которых нет в результате расчёта.
+ *
+ * Проверяется только вопрос, и это не половинчатость, а единственное место,
+ * где такая проверка вообще осмысленна: варианты-ловушки обязаны содержать
+ * неверные числа по своему устройству, а верный вариант нередко называет
+ * производное (разницу, разрыв в пунктах), которого в таблице нет ни в каком
+ * виде. Граница гарантии отсюда: гейт ручается за числа в вопросе, за числа
+ * в разборе вариантов — по-прежнему только пересчёт поштучно (ROADMAP §1,
+ * урок аналитического разбора датасета).
+ *
+ * Допустимым считается любое округление до той точности, с какой число
+ * написано, а также доля, записанная процентами, и величина, записанная
+ * тысячами: 0.4123 в таблице оправдывает и «41%», и «41.2%».
+ */
+function strayNumbers(text, res) {
+  const values = [];
+  for (const row of res.rows) {
+    for (const v of row) {
+      if (typeof v === 'number') values.push(v, v * 100, v / 1000);
+      else if (typeof v === 'string') {
+        for (const m of v.match(/\d+(?:[.,]\d+)?/g) ?? []) values.push(Number(m.replace(',', '.')));
+      }
+    }
+  }
+  const asText = res.rows.map((row) => row.map((v) => String(v ?? '')).join(' ')).join(' ');
+  const literals = String(text).match(/\d+(?:[.,]\d+)?/g) ?? [];
+  return [
+    ...new Set(
+      literals.filter((lit) => {
+        if (asText.includes(lit)) return false;
+        const digits = (lit.split(/[.,]/)[1] ?? '').length;
+        const scale = 10 ** digits;
+        const target = Number(lit.replace(',', '.'));
+        return !values.some((v) => Number.isFinite(v) && Math.abs(Math.round(v * scale) / scale - target) < 1e-9);
+      })
+    ),
+  ];
 }
 
 for (const packId of packs) {
@@ -407,9 +595,14 @@ for (const packId of packs) {
     taskIds.add(t.id);
     if (!skillIds.has(t.skill)) fail(t.id, `неизвестный скилл «${t.skill}»`);
     for (const s of t.alsoTrains ?? []) if (!skillIds.has(s)) fail(t.id, `неизвестный скилл в alsoTrains: «${s}»`);
-    if (!t.hints?.length) fail(t.id, 'нет подсказок');
+    if (!t.hints?.length && !t.steps) fail(t.id, 'нет подсказок');
     if (!t.explain || t.explain.length < 80) fail(t.id, 'разбор слишком короткий или отсутствует');
     if (!t.brief || !t.goal) fail(t.id, 'нет бизнес-постановки или формулировки результата');
+
+    if (t.steps) {
+      await checkSteps(pack, t);
+      continue;
+    }
 
     if (t.mode === 'predict') {
       // Предсказывать можно результат кода (predictSql) или последствие
@@ -2831,6 +3024,16 @@ function translationPairs(orig, tr) {
     pairs.push([`разборе варианта ${i + 1}`, orig.options?.[i]?.why, o.why]);
   });
   (tr.hints ?? []).forEach((h, i) => pairs.push([`подсказке ${i + 1}`, orig.hints?.[i], h]));
+  (tr.steps ?? []).forEach((st, i) => {
+    const os = orig.steps?.[i];
+    if (st.question) pairs.push([`вопросе шага ${i + 1}`, os?.question, st.question]);
+    if (st.goal) pairs.push([`постановке шага ${i + 1}`, os?.goal, st.goal]);
+    (st.hints ?? []).forEach((h, k) => pairs.push([`подсказке ${k + 1} шага ${i + 1}`, os?.hints?.[k], h]));
+    (st.options ?? []).forEach((o, k) => {
+      pairs.push([`варианте ${k + 1} шага ${i + 1}`, os?.options?.[k]?.label, o.label]);
+      pairs.push([`разборе варианта ${k + 1} шага ${i + 1}`, os?.options?.[k]?.why, o.why]);
+    });
+  });
   if (tr.predictQuestion) pairs.push(['вопросе', orig.predictQuestion, tr.predictQuestion]);
   if (tr.explain) pairs.push(['разборе', orig.explain, tr.explain]);
   return pairs;
@@ -2860,6 +3063,10 @@ function translationPairs(orig, tr) {
       }
       if (t.options && (orig.options ?? []).length !== t.options.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`);
+        ok = false;
+      }
+      if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
+        fail(`${packId}.en`, `у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`);
         ok = false;
       }
       for (const [where, ru, en] of translationPairs(orig, t)) {
