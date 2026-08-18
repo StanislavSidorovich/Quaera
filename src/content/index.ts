@@ -37,7 +37,22 @@ function validate(pack: Pack): Pack {
   }
   for (const t of pack.tasks) {
     if (!skillIds.has(t.skill)) throw new Error(`Пак ${pack.id}: задание ${t.id} ссылается на несуществующий скилл ${t.skill}`);
-    if (t.mode === 'predict') {
+    /*
+     * У многошагового задания и эталон, и варианты ответа принадлежат шагам,
+     * поэтому проверяются по шагам. Проверка «одно из двух на верхнем уровне»
+     * без этой ветки читает пустое место и падает на исправном задании —
+     * что и случилось при первом же запуске.
+     */
+    if (t.steps?.length) {
+      for (const [i, step] of t.steps.entries()) {
+        const at = `${t.id} шаг ${i + 1}`;
+        if (step.kind === 'compute') {
+          if (!step.solution) throw new Error(`Пак ${pack.id}: у задания ${at} нет эталонного решения`);
+        } else if (step.options.filter((o) => o.correct).length !== 1) {
+          throw new Error(`Пак ${pack.id}: у задания ${at} должен быть ровно один верный вариант`);
+        }
+      }
+    } else if (t.mode === 'predict') {
       if ((t.options ?? []).filter((o) => o.correct).length !== 1) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} должен быть ровно один верный вариант`);
       }
@@ -72,6 +87,20 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
         `Перевод ${tr.id}: у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`
       );
     }
+    if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`
+      );
+    }
+    (t.steps ?? []).forEach((st, i) => {
+      const os = orig.steps?.[i];
+      const origOptions = os && os.kind === 'interpret' ? os.options : [];
+      if (st.options && origOptions.length !== st.options.length) {
+        throw new Error(
+          `Перевод ${tr.id}: у задания ${t.id} на шаге ${i + 1} ${st.options.length} переведённых вариантов вместо ${origOptions.length}`
+        );
+      }
+    });
   }
   return tr;
 }
@@ -103,6 +132,21 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         hints: tt.hints ?? t.hints,
         explain: tt.explain ?? t.explain,
         options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
+        steps:
+          tt.steps && t.steps
+            ? t.steps.map((s, i) => {
+                const st = tt.steps![i];
+                if (!st) return s;
+                return s.kind === 'compute'
+                  ? { ...s, goal: st.goal ?? s.goal, hints: st.hints ?? s.hints }
+                  : {
+                      ...s,
+                      question: st.question ?? s.question,
+                      hints: st.hints ?? s.hints,
+                      options: st.options ? s.options.map((o, j) => ({ ...o, ...st.options![j] })) : s.options,
+                    };
+              })
+            : t.steps,
       };
     }),
   };
@@ -151,18 +195,33 @@ function rngFrom(seed: number): () => number {
   };
 }
 
+/** Перестановка на месте по зерну — общая для вариантов задания и вариантов шага. */
+function shuffled<T>(options: T[], seed: string): T[] {
+  const rnd = rngFrom(seedFrom(seed));
+  const next = [...options];
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
 function shuffleOptions(pack: Pack): Pack {
   return {
     ...pack,
     tasks: pack.tasks.map((task) => {
-      if (!task.options || task.options.length < 2) return task;
-      const rnd = rngFrom(seedFrom(task.id));
-      const options = [...task.options];
-      for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(rnd() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-      }
-      return { ...task, options };
+      const options = task.options && task.options.length >= 2 ? shuffled(task.options, task.id) : task.options;
+      /*
+       * Варианты шага перемешиваются тем же способом и по тому же доводу,
+       * но со своим зерном: с общим зерном все шаги задания получили бы
+       * одинаковую перестановку, и верный вариант стоял бы на одном месте
+       * во всём задании — ровно тот признак, ради снятия которого
+       * перемешивание и заведено.
+       */
+      const steps = task.steps?.map((s, i) =>
+        s.kind === 'interpret' && s.options.length >= 2 ? { ...s, options: shuffled(s.options, `${task.id}:${i}`) } : s
+      );
+      return { ...task, options, steps: steps ?? task.steps };
     }),
   };
 }
@@ -352,7 +411,12 @@ export const trainedSkills = (t: Task): string[] => [t.skill, ...(t.alsoTrains ?
  */
 export function taskTables(task: Task, schema: SchemaDoc | null): string[] {
   if (!schema) return [];
-  const code = [task.starter, task.template, task.solution, task.predictSql].filter(Boolean).join('\n');
+  const stepCode = (task.steps ?? []).flatMap((s) =>
+    s.kind === 'compute' ? [s.starter, s.template, s.solution] : [s.predictSql]
+  );
+  const code = [task.starter, task.template, task.solution, task.predictSql, ...stepCode]
+    .filter(Boolean)
+    .join('\n');
   if (!code) return [];
   return schema.tables.map((t) => t.table).filter((name) => new RegExp(`\\b${name}\\b`).test(code));
 }

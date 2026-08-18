@@ -1,5 +1,5 @@
 import type { Track } from '../content/types';
-import type { TaskDraft } from '../ui/TaskView';
+import type { StepDraft, TaskDraft } from '../ui/TaskView';
 
 /**
  * Незаконченное занятие на устройстве.
@@ -30,7 +30,7 @@ const KEY = 'quaera.session.v1';
 export type StoredStep = { kind: 'lesson'; skill: string } | { kind: 'task'; id: string };
 
 /**
- * Черновик задания без `preview`/`expected`.
+ * Черновик шага задания без `preview`/`expected`.
  *
  * Обе таблицы — производные: их возвращает исполнитель, и один клик
  * «Выполнить» получает их заново. Платить за них местом в localStorage
@@ -40,11 +40,32 @@ export type StoredStep = { kind: 'lesson'; skill: string } | { kind: 'task'; id:
  * занятие. `feedback`/`solved`/`wasCorrect` при этом остаются: решённый
  * шаг обязан вернуться решённым, а вот таблица под ним честно пуста,
  * пока её не выполнили заново (оба блока в TaskView под `preview &&`).
+ *
+ * У шага интерпретации из-за этого есть своя работа при восстановлении:
+ * интерпретировать нечего, пока таблицы нет, и экран выполняет эталон
+ * предыдущего шага сам (см. TaskView).
  */
-export type StoredDraft = Omit<TaskDraft, 'preview' | 'expected'>;
+export type StoredStepDraft = Omit<StepDraft, 'preview' | 'expected'>;
+
+/** Черновик задания целиком: где человек внутри задания и что сделано на каждом шаге. */
+export interface StoredDraft {
+  stepIndex: number;
+  steps: StoredStepDraft[];
+}
+
+/**
+ * Черновик формата первой версии — плоский, без шагов.
+ *
+ * Нужен ровно для одного: поднять незаконченное занятие, сохранённое до
+ * появления многошаговых заданий. Выбрасывать его было бы легко (`version`
+ * не совпал — занятия нет), но это ровно та потеря работы человека, ради
+ * которой хранилище и заводилось.
+ */
+type LegacyDraft = StoredStepDraft & { stepIndex?: undefined; steps?: undefined };
 
 export interface StoredSession {
-  version: 1;
+  /** 2 — черновики по шагам; 1 — плоские, поднимаются при чтении (см. upgradeDraft). */
+  version: 2;
   track: Track;
   steps: StoredStep[];
   index: number;
@@ -60,9 +81,22 @@ export function loadSession(): StoredSession | null {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as StoredSession;
-    if (parsed.version !== 1 || !Array.isArray(parsed.steps) || !parsed.steps.length) return null;
-    return parsed;
+    /*
+     * Разбирается как «любая версия», а не как StoredSession: записи первой
+     * версии по типу от нынешних отличаются, и приводить их к нынешнему типу
+     * до проверки самой версии значило бы поверить хранилищу на слово.
+     */
+    const parsed = JSON.parse(raw) as Omit<StoredSession, 'version' | 'drafts'> & {
+      version: number;
+      drafts?: Record<string, StoredDraft | LegacyDraft>;
+    };
+    if (parsed.version !== 1 && parsed.version !== 2) return null;
+    if (!Array.isArray(parsed.steps) || !parsed.steps.length) return null;
+    return {
+      ...parsed,
+      version: 2,
+      drafts: Object.fromEntries(Object.entries(parsed.drafts ?? {}).map(([id, d]) => [id, upgradeDraft(d)])),
+    };
   } catch {
     return null;
   }
@@ -84,13 +118,22 @@ export function clearSession(): void {
   }
 }
 
+/** Плоский черновик первой версии — в шаг единственного расчёта или выбора. */
+function upgradeDraft(d: StoredDraft | LegacyDraft): StoredDraft {
+  if (Array.isArray(d.steps)) return d as StoredDraft;
+  const { stepIndex: _i, steps: _s, ...flat } = d as LegacyDraft;
+  return { stepIndex: 0, steps: [flat] };
+}
+
 /** Черновик без производных таблиц — то, что уходит в хранилище. */
 export function toStoredDraft(d: TaskDraft): StoredDraft {
-  const { preview: _preview, expected: _expected, ...rest } = d;
-  return rest;
+  return {
+    stepIndex: d.stepIndex,
+    steps: d.steps.map(({ preview: _preview, expected: _expected, ...rest }) => rest),
+  };
 }
 
 /** Обратно в черновик: таблицы восстанавливаются пустыми, их вернёт «Выполнить». */
 export function fromStoredDraft(d: StoredDraft): TaskDraft {
-  return { ...d, preview: null, expected: null };
+  return { stepIndex: d.stepIndex, steps: d.steps.map((s) => ({ ...s, preview: null, expected: null })) };
 }

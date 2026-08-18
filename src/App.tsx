@@ -854,7 +854,7 @@ export default function App() {
     const snapshot = sessionSnapshotRef.current;
     if (!snapshot) return;
     saveSession({
-      version: 1,
+      version: 2,
       track: snapshot.track,
       steps: snapshot.queue.map((s) =>
         s.kind === 'lesson' ? { kind: 'lesson', skill: s.lesson.skill } : { kind: 'task', id: s.task.id }

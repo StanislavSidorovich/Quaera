@@ -573,6 +573,12 @@ export const en = {
     explainTitle: 'Breakdown',
     solutionSummary: 'Show reference solution',
     nextBtn: 'Next',
+    /** См. комментарии в ru.ts. */
+    stepLabel: (n: number, total: number) => `Step ${n} of ${total}`,
+    nextStepBtn: 'Next step',
+    prevStepBtn: 'Back to the previous step',
+    interpretOnReference: 'The calculation did not match, so the interpretation below is about the reference result.',
+    interpretLoading: 'Computing the result of the previous step…',
     columnNameNote: (cols: string) =>
       `The result matches, but the column names differ from what's expected (${cols}). In a real report this matters: a column should be named the way the requester would name it.`,
     yourResult: 'Your result',
