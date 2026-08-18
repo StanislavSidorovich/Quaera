@@ -156,7 +156,11 @@
   }
   tbody tr + tr td { border-top: 1px solid var(--rule); }
   td.num, th.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  td.subject { color: var(--ink-2); }
+  /* The number cells never wrap, so on a narrow screen the browser pays for
+     them out of the label column: without a floor, "Outlets buying the brand"
+     collapsed to four lines beside a one-line number. The table scrolls
+     sideways inside its own box, so buying the floor costs nothing else. */
+  td.subject { color: var(--ink-2); min-width: 11ch; }
 
   /* ---------- figures ---------- */
   figure { margin: 0 0 1.9rem; }
@@ -212,7 +216,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Analysis · Kaiyo Trading · FMCG and OTC pharma distribution</p>
+    <p class="eyebrow">Analysis &middot; Kaiyo Trading &middot; FMCG and OTC pharma distribution</p>
     <h1>Three findings and what they cost</h1>
     <p class="standfirst">
       A brand that lost half its shelf without losing any demand, a distributor
@@ -221,8 +225,8 @@
       went unnoticed because the number that moved was not the number on the report.
     </p>
     <div class="meta">
-      <span>12 tables · ~156,000 rows</span>
-      <span>Jan 2024 – Jun 2026</span>
+      <span>12 tables &middot; ~156,000 rows</span>
+      <span>Jan 2024 &ndash; Jun 2026</span>
       <span>Fictional company, reproducible data</span>
       <span><a href="https://quaera.app">quaera.app</a></span>
     </div>
@@ -240,7 +244,7 @@
     <div class="rail">
       <p class="eyebrow">Distribution</p>
       <div class="rail-cost">
-        <div class="figure">¥4.02M</div>
+        <div class="figure">&yen;4.02M</div>
         <p class="caption">a year, walked out of 42 outlets while the reports showed a soft market</p>
       </div>
     </div>
@@ -268,21 +272,22 @@
         <div class="chart-shell" id="c1"></div>
         <figcaption>
           Each measure indexed to Q1 2024 = 100. Volume tracks the outlet count almost
-          exactly; sales per outlet stay level throughout, seasonal spring peaks and all.
-          Wherever the brand is still stocked, it sells as it always did.
+          exactly. Sales per outlet swing with the season, spring high and autumn low,
+          and end the period above where they started: the brand sells as it always did
+          wherever it is still stocked.
         </figcaption>
       </figure>
 
       <div class="table-scroll">
         <table>
-          <caption>Q1 2024 → Q1 2026</caption>
+          <caption>Q1 2024 &rarr; Q1 2026</caption>
           <thead>
             <tr><th scope="col">Measure</th><th scope="col" class="num">Nettora</th><th scope="col" class="num">Other four FMCG brands</th></tr>
           </thead>
           <tbody>
-            <tr><td class="subject">Units</td><td class="num">10,101 → 4,308 (−57%)</td><td class="num">+14%</td></tr>
-            <tr><td class="subject">Outlets buying the brand</td><td class="num">79 → 37 (−53%)</td><td class="num">94 → 94</td></tr>
-            <tr><td class="subject">Units per outlet</td><td class="num">127.9 → 116.4 (−9%)</td><td class="num">+14%</td></tr>
+            <tr><td class="subject">Units</td><td class="num">10,101 &rarr; 4,308 (&minus;57%)</td><td class="num">+14%</td></tr>
+            <tr><td class="subject">Outlets buying the brand</td><td class="num">79 &rarr; 37 (&minus;53%)</td><td class="num">94 &rarr; 94</td></tr>
+            <tr><td class="subject">Units per outlet</td><td class="num">127.9 &rarr; 116.4 (&minus;9%)</td><td class="num">+14%</td></tr>
           </tbody>
         </table>
       </div>
@@ -292,12 +297,12 @@
           Restricting the comparison to the 33 outlets that never dropped the brand
           removes the ambiguity. In those outlets, first-half volume went from 282.9
           units per outlet in 2024 to 285.0 in 2026, and the realised price went from
-          ¥195.9 to ¥198.5. Demand and price are flat wherever the brand is still on
+          &yen;195.9 to &yen;198.5. Demand and price are flat wherever the brand is still on
           the shelf.
         </p>
         <p>
           The 10% price rise is an artefact of the mix. List price moved 1.9% in two
-          years (¥202.6 to ¥206.5) and the promo price moved 0.8%. What changed is who
+          years (&yen;202.6 to &yen;206.5) and the promo price moved 0.8%. What changed is who
           was left buying: the outlets that dropped the brand were the discount-heavy
           ecommerce accounts, so the average price of what remained went up while no
           price went up.
@@ -336,9 +341,9 @@
       <div class="block">
         <p class="eyebrow">What it costs</p>
         <p>
-          Those 42 outlets bought 21,015 units for ¥4.02M in 2024, 54% of the brand's
+          Those 42 outlets bought 21,015 units for &yen;4.02M in 2024, 54% of the brand's
           revenue. In the first half of 2026 they bought 454 units. At their own 2024
-          rate, each recovered outlet is worth about ¥96,000 a year.
+          rate, each recovered outlet is worth about &yen;96,000 a year.
         </p>
       </div>
     </div>
@@ -349,7 +354,7 @@
     <div class="rail">
       <p class="eyebrow">Inventory</p>
       <div class="rail-cost">
-        <div class="figure">¥2.05M</div>
+        <div class="figure">&yen;2.05M</div>
         <p class="caption">frozen for six months in one distributor's warehouse, and still there</p>
       </div>
     </div>
@@ -375,8 +380,9 @@
         <div class="chart-shell" id="c2"></div>
         <figcaption>
           Month-end stock at Setouchi Trading. Three months of loading took cover from
-          under one month to five and a half; the eighteen months around it are flat.
-          Stock is a level, not a flow, which is why it never came back on its own.
+          under one month to five and a half. The nine months before it and the six
+          after are equally flat, just at different levels: stock is a level, not a
+          flow, which is why it never came back on its own.
         </figcaption>
       </figure>
 
@@ -387,8 +393,8 @@
             <tr><th scope="col">Measure</th><th scope="col" class="num">Setouchi</th><th scope="col" class="num">Other 11 distributors</th></tr>
           </thead>
           <tbody>
-            <tr><td class="subject">Sell-in to sell-out ratio</td><td class="num">2.44</td><td class="num">1.04 – 1.05</td></tr>
-            <tr><td class="subject">Stock cover at 31 December</td><td class="num">5.4 months</td><td class="num">1.05 – 1.4 months</td></tr>
+            <tr><td class="subject">Sell-in to sell-out ratio</td><td class="num">2.44</td><td class="num">1.04 &ndash; 1.05</td></tr>
+            <tr><td class="subject">Stock cover at 31 December</td><td class="num">5.4 months</td><td class="num">1.05 &ndash; 1.4 months</td></tr>
           </tbody>
         </table>
       </div>
@@ -436,9 +442,9 @@
       <div class="block">
         <p class="eyebrow">What it costs</p>
         <p>
-          22,176 units at list price is ¥2.68M of working capital sitting in someone
+          22,176 units at list price is &yen;2.68M of working capital sitting in someone
           else's warehouse. About 17,000 of those units are above the 1.2 months of
-          cover its peers carry, which is ¥2.05M frozen for six months and counting.
+          cover its peers carry, which is &yen;2.05M frozen for six months and counting.
           Some of it is dairy: 1,488 units of Milvara Strawberry, on a shelf life that
           will decide this question if nobody else does.
         </p>
@@ -533,8 +539,8 @@
           as a 5% multiplier on each rep's own history. If it is a performance measure,
           measure something the rep controls: outlets billed, assortment width per
           outlet, order regularity, all of which are already in these tables. Whichever
-          is chosen, publish the expected hit rate with it: at ×1.05 it is about 20%,
-          at ×1.00 it is 49%.
+          is chosen, publish the expected hit rate with it: at &times;1.05 it is about 20%,
+          at &times;1.00 it is 49%.
         </p>
       </div>
 
@@ -638,7 +644,11 @@ ORDER BY 1;</code></pre>
   function chart1() {
     const host = document.getElementById('c1');
     host.innerHTML = '';
-    const W = 720, H = 300, m = { t: 14, r: 54, b: 30, l: 34 };
+    // Ширина берётся у контейнера, а не задаётся числом: viewBox с чужой
+    // шириной масштабирует и текст, и на телефоне подписи осей выходили
+    // вдвое мельче, чем задано. Одна единица viewBox = один CSS-пиксель.
+    const W = Math.max(240, Math.round(host.clientWidth)), H = 300;
+    const m = { t: 14, r: W < 460 ? 42 : 54, b: 30, l: 34 };
     const { svg, tip } = shell(host, W, H);
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const data = series.map((s) => ({ ...s, v: idx(raw[s.key]) }));
@@ -652,8 +662,9 @@ ORDER BY 1;</code></pre>
         'stroke-dasharray': gv === 100 ? '' : '2 4' }));
       svg.appendChild(text(gv, m.l - 8, Y(gv) + 4, 'end'));
     }
+    const everyX = W < 460 ? 3 : 2;
     q.forEach((label, i) => {
-      if (i % 2) return;
+      if (i % everyX) return;
       svg.appendChild(text(label, X(i), H - 8, 'middle'));
     });
 
@@ -696,7 +707,8 @@ ORDER BY 1;</code></pre>
   function chart2() {
     const host = document.getElementById('c2');
     host.innerHTML = '';
-    const W = 720, H = 280, m = { t: 30, r: 12, b: 34, l: 46 };
+    const W = Math.max(240, Math.round(host.clientWidth)), H = 280;
+    const m = { t: 30, r: 12, b: 34, l: 46 };
     const { svg, tip } = shell(host, W, H);
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const max = 24000;
@@ -724,11 +736,11 @@ ORDER BY 1;</code></pre>
         const rect = svg.getBoundingClientRect();
         const cover = (stock[i] / 4335).toFixed(1);
         showTip(host, tip, ((m.l + i * bw + bw / 2) / W) * rect.width, (Y(stock[i]) / H) * rect.height,
-          `<b>${mo}</b><br>${fmt(stock[i])} units on hand<br><span class="dim">≈ ${cover} months of cover</span>`);
+          `<b>${mo}</b><br>${fmt(stock[i])} units on hand<br><span class="dim">about ${cover} months of cover</span>`);
       });
       hitr.addEventListener('mouseleave', () => hideTip(tip));
       svg.appendChild(hitr);
-      if (i % 3 === 0) svg.appendChild(text(mo, m.l + i * bw + bw / 2, H - 10, 'middle'));
+      if (i % (W < 460 ? 6 : 3) === 0) svg.appendChild(text(mo, m.l + i * bw + bw / 2, H - 10, 'middle'));
     });
   }
 
@@ -745,7 +757,10 @@ ORDER BY 1;</code></pre>
   function chart3() {
     const host = document.getElementById('c3');
     host.innerHTML = '';
-    const W = 720, H = 250, m = { t: 20, r: 12, b: 34, l: 46 };
+    const W = Math.max(240, Math.round(host.clientWidth)), H = 250;
+    // Левое поле шире, чем у соседних графиков: подпись «median 5» длиннее
+    // числа, и на узком экране она вылезала бы за левый край рисунка.
+    const m = { t: 20, r: 12, b: 34, l: 64 };
     const { svg, tip } = shell(host, W, H);
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const colW = iw / hits.length, max = 10;
@@ -771,7 +786,7 @@ ORDER BY 1;</code></pre>
       });
       hitr.addEventListener('mouseleave', () => hideTip(tip));
       svg.appendChild(hitr);
-      if (i % 6 === 0) svg.appendChild(text(hitMonths[i], cx, H - 10, 'middle'));
+      if (i % (W < 460 ? 12 : 6) === 0) svg.appendChild(text(hitMonths[i], cx, H - 10, 'middle'));
     });
   }
 
