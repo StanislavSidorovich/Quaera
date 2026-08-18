@@ -1217,6 +1217,86 @@
         }
       ],
       "explain": "This task is about the gap between the grain of the data and the grain of the decision. In fact_sellout a customer is a delivery point, and row by row the concentration looks moderate: 8.9% at most. But negotiations happen with a chain, not with a warehouse, and three rows in the same table belong to Bazario, 18.6% together, twice the largest single customer. The move carries over almost word for word: SKU versus brand, sales rep versus team, distributor warehouse versus the distributor itself. Before naming a concentration figure, ask at what level the decision in question is made, then aggregate up to it."
+    },
+    {
+      "id": "sql-062",
+      "title": "Which region is really stronger",
+      "brief": "The head of regional development is planning next year's budget and asks which regions actually sell better, not in absolute totals but adjusted for the size of the region itself.",
+      "goal": "Work out revenue and revenue per capita for every region in 2025, then answer which region is really stronger: the one that leads by absolute revenue, or the one that leads by revenue per capita.",
+      "steps": [
+        {
+          "goal": "For 2025, return for every region: region_name, population (the region's population), revenue (total revenue, rounded to whole numbers), and revenue_per_capita (revenue divided by population, rounded to two decimals). Sorted by revenue descending.",
+          "hints": [
+            "revenue is already in the starter query. revenue_per_capita is that same revenue from the same row, divided by r.population, not by the sum across all regions.",
+            "No extra JOIN is needed: r.population already comes from dim_region, which the query already joins."
+          ]
+        },
+        {
+          "question": "By revenue the top row is Saitama, with revenue_per_capita of 0.92. Miyagi, only third in the overall ranking, has revenue_per_capita of 2.46. Does Saitama's higher total revenue mean it is the stronger market by penetration?",
+          "hints": [
+            "Schema: every region has its own population (dim_region.population), and it varies a lot in size. What does that mean for comparing raw revenue?"
+          ],
+          "options": [
+            {
+              "label": "No: Saitama has the highest total revenue, but its revenue_per_capita is only 0.92, against 2.46 for Miyagi. Miyagi sells markedly more intensely per resident, even though it is only third by total revenue.",
+              "why": "Total revenue grows with market size on its own: Saitama's population is 7,340,000, Miyagi's is 2,260,000, more than three times smaller. Dividing revenue by population shows Saitama beats Miyagi in total mainly because its market is bigger, not because brands sell more intensely there per resident."
+            },
+            {
+              "label": "Yes: the highest total revenue is direct proof that Saitama is the strongest market by penetration.",
+              "why": "The number is right, the conclusion is not: the total grows with market size on its own. Saitama's population is nearly three times Miyagi's (7,340,000 versus 2,260,000), so a higher total revenue is expected regardless of how intensely each resident buys."
+            },
+            {
+              "label": "No, but revenue_per_capita is beside the point: it is the region's share of total revenue across all regions, not a division by its population, so it cannot be used to compare regions.",
+              "why": "That is not so: revenue_per_capita here is this region's revenue divided by this region's population, the same row. It exists precisely to compare regions of different sizes, not to show a share of total revenue."
+            },
+            {
+              "label": "The question does not make sense: distribution decisions are made at the level of individual outlets, not whole regions, so comparing regions is pointless.",
+              "why": "Decisions about specific outlets are indeed made further down, but before deciding where to focus effort you need to know which regions are underusing their potential in the first place, and that is a regional-level question, not one that reduces to a single outlet."
+            }
+          ]
+        }
+      ],
+      "explain": "This task is about totals not measuring intensity when the groups being compared are different sizes. Saitama leads in revenue simply because its market is bigger: population 7,340,000 against 2,260,000 for Miyagi. Once revenue is divided by the size of the base (revenue_per_capita), the picture changes: Miyagi sells almost three times more intensely per resident, even though it trails Saitama and Aichi in absolute terms. The move carries over to any pair of \"total plus group size\": revenue per outlet instead of total chain revenue, average receipt per customer instead of total sales, conversion instead of visit count. Before comparing totals across groups of different sizes, ask how big those groups actually are."
+    },
+    {
+      "id": "sql-063",
+      "title": "Simple average price versus weighted",
+      "brief": "A category manager got Aqualis's average price from the BI system and again from an analyst; the numbers differ by almost eight percent, and it is unclear which one belongs in the pricing report.",
+      "goal": "Work out the simple and the volume-weighted average price for every brand in 2025, then answer which of the two numbers shows the price a customer actually pays per unit on average.",
+      "steps": [
+        {
+          "goal": "For 2025, return for every brand: brand, naive_avg_price (the simple average of avg_price values across all sales rows, rounded to two decimals), and weighted_avg_price (total revenue divided by total units, rounded to two decimals).",
+          "hints": [
+            "naive_avg_price is already in the starter query, it is AVG(f.avg_price) across all rows. weighted_avg_price is not the average of another column; it is SUM(f.revenue) divided by SUM(f.units).",
+            "Round the same way as naive_avg_price: to two decimals."
+          ]
+        },
+        {
+          "question": "For Aqualis, naive_avg_price is 64.08, weighted_avg_price is 59.58: two numbers with the same name, \"average price\", that differ by almost eight percent. Can either one be used in the pricing report?",
+          "hints": [
+            "Schema: the Aqualis brand has several SKUs (dim_product) at different prices and different sales volumes. How does that affect each of the two ways of averaging?"
+          ],
+          "options": [
+            {
+              "label": "No: naive_avg_price averages price across sales rows, not across units sold, giving every SKU the same weight regardless of volume. The price a customer actually pays on average is weighted_avg_price, it is weighted by actual sales.",
+              "why": "Aqualis has several SKUs at different prices and different sales volumes. naive_avg_price averages their prices equally, as if every SKU sold just as often. weighted_avg_price divides revenue by units and so accounts for each SKU's real weight in actual sales."
+            },
+            {
+              "label": "Yes: since both numbers are called \"average price\", either works for the report. The gap is under ten percent and will not change the overall conclusion.",
+              "why": "Eight percent on price in a pricing report is a real difference, not noise. For some brands the weighted average even comes out higher than the simple one, not lower, so the direction of the gap is not consistent and cannot be written off as rounding."
+            },
+            {
+              "label": "No, but it is not about weighting: naive_avg_price is wrong because it only averages one randomly chosen week, not the whole of 2025.",
+              "why": "That is not the case: AVG(f.avg_price) in this query runs over every week of 2025 with no exceptions, the same rows as SUM(f.revenue) and SUM(f.units). The gap is not about the period; it is about what gets averaged, prices row by row, or money and units summed first."
+            },
+            {
+              "label": "The question does not make sense: a brand with several SKUs at different prices has no single \"true\" average price at all, so there is nothing to compare.",
+              "why": "A brand with several SKUs indeed has no single \"correct\" price on its own, but the question was not about that; it was about which of the two already-computed numbers is a usable estimate of it. weighted_avg_price qualifies, naive_avg_price does not: it is distorted by ignoring volume."
+            }
+          ]
+        }
+      ],
+      "explain": "This task is about \"average\" not being one number when the units being averaged are of different sizes. naive_avg_price is the arithmetic mean across sales rows: every week of every SKU weighs the same, no matter how many units it represents. weighted_avg_price is revenue divided by units: it weighs each row by how much was actually bought. Aqualis has several SKUs priced from 38 to 128 per unit with different sales volumes, so the simple average and the true average purchase price diverge by almost eight percent. The move carries over to any pair of \"simple average of a metric\" and \"sum of the numerator divided by sum of the denominator\": average receipt, average margin, average rating. If the weights differ, the two numbers are bound to diverge, and the question is always the same: what is weighted, and what is not."
     }
   ]
 }
