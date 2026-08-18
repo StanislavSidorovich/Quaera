@@ -1177,6 +1177,46 @@
         "To include exactly the rows needed to reach 50%, compare the share accumulated BEFORE the current row (without it) against the threshold. If it was already under 50%, this row is needed."
       ],
       "explain": "The idea is to include the minimal set of leaders in the report, not an arbitrary top N: what's compared isn't the current row's own cumulative share, but the share accumulated BEFORE it (prev_share_pct); that's what decides whether this row was necessary to cross 50%. The result: 15 out of 47 products, roughly a third of the lineup, together account for just over half of revenue, moderate, not extreme concentration; not the case of five hits carrying the whole company, but not a perfectly even spread either. It's easy to go wrong here by expecting the classic \"20% of products drive 80% of revenue\" rule: this portfolio doesn't bear it out, and forcing a conclusion to match someone else's heuristic instead of reading your own numbers is a typical interpretation mistake."
+    },
+    {
+      "id": "sql-061",
+      "title": "Eight customers, half the revenue",
+      "brief": "The CFO is preparing for annual terms negotiations and asks how dependent the company is on individual customers: whose departure would really show up in the report, and whose would pass unnoticed.",
+      "goal": "Measure revenue concentration by customer for 2025, then answer what those shares say about the company dependence.",
+      "steps": [
+        {
+          "goal": "For 2025, return the eight customers with the highest revenue: customer_name, chain_name, revenue (rounded to whole numbers) and share_pct, the customer share of 2025 revenue in percent, rounded to one decimal. Sorted by revenue descending.",
+          "hints": [
+            "The denominator of the share is revenue from all customers over the same period, not the revenue of these eight: take it from a separate subquery on fact_sellout with the same date condition.",
+            "LIMIT is applied after sorting and after the share is computed, so trimming the output can be the last thing you do: it does not affect the denominator."
+          ]
+        },
+        {
+          "question": "The top row is 8.9% of annual revenue, the lowest of the eight is 4.3%. No single customer accounts for even a tenth. Does that mean the company has no dependence on any individual customer?",
+          "hints": [
+            "Look at the chain_name column: how many distinct values are there, and how many rows fall on the most frequent one?"
+          ],
+          "options": [
+            {
+              "label": "No: the eight rows are outlets of four chains, and the contract is signed with the chain. Three Bazario warehouses together account for almost a fifth of revenue.",
+              "why": "The grain of a row here is a warehouse, the grain of the decision is a contract with a chain. Until the two are reconciled, the largest counterparty looks half its real size."
+            },
+            {
+              "label": "Yes: the maximum is 8.9%, that is low concentration, and the risk of a single customer can be treated as immaterial.",
+              "why": "The number is right, the conclusion is not: the rows are independent only on paper. Three of the eight warehouses belong to one chain and leave with its contract, not one by one."
+            },
+            {
+              "label": "No: the shares are computed against the revenue of these eight, so they say nothing about the dependence of the company.",
+              "why": "The denominator here is all 2025 revenue, not the revenue of the eight. The numbers themselves show it: the shares add up to half, not to a hundred percent."
+            },
+            {
+              "label": "Yes: all eight are warehouses of online platforms, and a warehouse is not a customer, so concentration should be measured by channel and the question about customers is meaningless.",
+              "why": "Channel is a useful cut, but it answers a different question. Dependence is measured by whoever signed the contract, and such a counterparty does exist here: the chain."
+            }
+          ]
+        }
+      ],
+      "explain": "This task is about the gap between the grain of the data and the grain of the decision. In fact_sellout a customer is a delivery point, and row by row the concentration looks moderate: 8.9% at most. But negotiations happen with a chain, not with a warehouse, and three rows in the same table belong to Bazario, 18.6% together, twice the largest single customer. The move carries over almost word for word: SKU versus brand, sales rep versus team, distributor warehouse versus the distributor itself. Before naming a concentration figure, ask at what level the decision in question is made, then aggregate up to it."
     }
   ]
 }
