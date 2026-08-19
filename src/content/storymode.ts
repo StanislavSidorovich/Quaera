@@ -77,9 +77,9 @@ const ru: StoryCampaign = {
         },
       ],
       theory: [
-        '«Помесячно» значит свести тысячи недельных строк в двенадцать. Это делает GROUP BY: он собирает строки в группы, а SUM складывает штуки внутри каждой.',
-        'Дата хранится текстом в формате ГГГГ-ММ-ДД, поэтому первые 7 символов — это уже месяц.',
-        'Дальше — сам. В запросе оставлены два пустых места.',
+        '«Помесячно» значит свести тысячи недельных строк в двенадцать. Это делает GROUP BY: он собирает строки в группы, а агрегат — SUM, COUNT, AVG — считает значение внутри каждой группы.',
+        'Как это выглядит на другом вопросе — «сколько товаров и какая средняя цена в каждом дивизионе»:\n\nSELECT division,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY division\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). Группируют по разрезу — здесь division.',
+        'В твоём задании разрез — месяц (substr(week_start, 1, 7)), а сложить нужно штуки (units). Два места оставлены пустыми: чем считаем и по чему группируем. GROUP BY 1 — это «по первой колонке», чтобы не повторять выражение.',
       ],
       reflection: [
         'Ты видишь форму: продажи держатся весь год и проваливаются в первом квартале — и это по всем брендам сразу.',
@@ -111,9 +111,9 @@ const en: StoryCampaign = {
         },
       ],
       theory: [
-        '"By month" means folding thousands of weekly rows into twelve. GROUP BY does that: it collects rows into groups, and SUM adds up the units within each one.',
-        'Dates are stored as text in YYYY-MM-DD format, so the first 7 characters are already the month.',
-        'Now it is your turn. Two spots in the query are left blank.',
+        '"By month" means folding thousands of weekly rows into twelve. GROUP BY does that: it collects rows into groups, and an aggregate (SUM, COUNT, AVG) computes a value within each group.',
+        'Here is the shape on a different question, "how many products and what average price in each division":\n\nSELECT division,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY division\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). You group by the dimension, here division.',
+        'In your task the dimension is the month (substr(week_start, 1, 7)) and the thing to add up is units. Two spots are left blank: what to compute with, and what to group by. GROUP BY 1 means "by the first column", so you do not repeat the expression.',
       ],
       reflection: [
         'You can see the shape: sales hold all year and dip in the first quarter, and that dip is there across every brand at once.',

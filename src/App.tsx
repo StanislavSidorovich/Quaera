@@ -199,6 +199,15 @@ function readStoryEnabled(): boolean {
 const STORY_ENABLED = readStoryEnabled();
 
 /**
+ * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
+ * валидации режима истории: два «сюжетных» входа рядом путали пользователя.
+ * Это флаг видимости, а не удаление — код и экран линии живы; когда решится
+ * её судьба, флаг либо вернётся, либо линия уедет целиком. Режим истории
+ * при этом остаётся за `?story` (STORY_ENABLED), он линию и замещает.
+ */
+const SHOW_STORY_LINE = false;
+
+/**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
  * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
@@ -1347,7 +1356,7 @@ export default function App() {
         streakDays={streak(progress.activeDays)}
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
-        storyEnabled={STORY_ENABLED}
+        storyEnabled={SHOW_STORY_LINE}
         onStory={() => setScreen({ name: 'story' })}
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
@@ -2796,7 +2805,7 @@ function Home({
               {t.storyMode.entryLink}
             </button>
           )}
-          {STORY_ENABLED && storyAt && (
+          {SHOW_STORY_LINE && storyAt && (
             <button
               type="button"
               className="link-row"
