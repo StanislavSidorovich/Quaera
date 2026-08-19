@@ -25,7 +25,7 @@ import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
-import { StoryMode, storyPhaseBefore, type StoryPhase } from './ui/StoryMode';
+import { StoryMode, storyPhaseBefore, type StoryPhase, type StoryStepView } from './ui/StoryMode';
 import { storyCampaign, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
@@ -305,10 +305,12 @@ type Screen =
   | { name: 'done'; solved: number; fromStory?: boolean }
   | { name: 'story' }
   /**
-   * `phase` — где человек внутри миссии (бриф → теория → задание → суждение
-   * → крючок). Живёт в экране, а не внутри StoryMode, ровно по той же причине,
-   * по которой `index` занятия живёт здесь: шапке нужен шаг назад, а стрелка
-   * в шапке умеет только менять экран.
+   * `phase` — где человек внутри дня (бриф → подводки и задания → суждение
+   * → крючок; см. storyPhases в StoryMode). Живёт в экране, а не внутри
+   * StoryMode, ровно по той же причине, по которой `index` занятия живёт
+   * здесь: шапке нужен шаг назад, а стрелка в шапке умеет только менять
+   * экран. `missionId` рядом потому, что в кампании дней несколько и «назад»
+   * обязано попадать в свой день, а не в первый.
    */
   | { name: 'storymode'; missionId: string; phase: StoryPhase }
   | { name: 'reference' }
@@ -335,7 +337,7 @@ function lessonStepIndex(queue: Step[], skillId: string): number {
  * стоил бы всего занятия целиком (очередь нигде не сохраняется), и человек
  * переставал за теорией ходить вовсе.
  */
-function backTarget(current: Screen): Screen {
+function backTarget(current: Screen, locale: Locale): Screen {
   // Из карточки возвращаемся в список приёмов, а не на главную:
   // в справочнике их обычно листают подряд.
   if (current.name === 'lesson') return { name: 'reference' };
@@ -346,7 +348,13 @@ function backTarget(current: Screen): Screen {
    * всей миссии целиком (её ход нигде не сохраняется).
    */
   if (current.name === 'storymode') {
-    const before = storyPhaseBefore(current.phase);
+    /*
+     * Порядок экранов дня считается по самой миссии: в дне может быть одно
+     * задание, а может три, и подводка есть не у каждого. Поэтому миссию
+     * приходится поднять из кампании — по её id и текущей локали.
+     */
+    const mission = storyCampaign(locale).missions.find((m) => m.id === current.missionId);
+    const before = mission ? storyPhaseBefore(mission, current.phase) : null;
     if (before) return { ...current, phase: before };
   }
   if (current.name === 'session') {
@@ -470,7 +478,7 @@ function initialBoot(locale: Locale): Boot {
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);
     if (mission) {
-      return { screen: { name: 'storymode', missionId: mission.id, phase: 'brief' }, ...empty, track: mission.track };
+      return { screen: { name: 'storymode', missionId: mission.id, phase: { kind: 'brief' } }, ...empty, track: mission.track };
     }
   }
   if (!stored) return { screen: { name: 'home' }, ...empty };
@@ -702,22 +710,27 @@ export default function App() {
   const storyMissionTrack = useMemo(() => storyEntryMission(locale)?.track ?? null, [locale]);
 
   /**
-   * Миссии кампании, у которых на активном треке нашлось их задание, — по id.
+   * Дни кампании, у которых на активном треке нашлись все их задания, — по id.
    *
-   * Картой, а не одной миссией: экран называет свою по id, и разрешать её
-   * нужно в момент отрисовки. Миссия без задания в паке сюда не попадает
-   * вовсе — это тот же приём, что у восстановления занятия: лучше не открыть
-   * раздел, чем открыть его с дырой посреди сюжета.
+   * Картой, а не одним днём: экран называет свой по id, и разрешать его нужно
+   * в момент отрисовки. День, которому не хватило хотя бы одного задания,
+   * сюда не попадает целиком — это тот же приём, что у восстановления
+   * занятия: лучше не открыть раздел, чем открыть его с дырой посреди дня,
+   * где кнопка «дальше» упирается в пустоту.
    */
   const storyMissions = useMemo(() => {
-    const byId = new Map<string, { mission: StoryMission; task: Task; skillTitle: string }>();
+    const byId = new Map<string, { mission: StoryMission; steps: StoryStepView[] }>();
     if (!STORY_ENABLED) return byId;
     for (const mission of storyCampaign(locale).missions) {
       if (mission.track !== activeTrack) continue;
-      const task = activePack.tasks.find((tk) => tk.id === mission.taskId);
-      if (!task) continue;
-      const skillTitle = activePack.skills.find((s) => s.id === task.skill)?.title ?? '';
-      byId.set(mission.id, { mission, task, skillTitle });
+      const steps: StoryStepView[] = [];
+      for (const step of mission.steps) {
+        const task = activePack.tasks.find((tk) => tk.id === step.taskId);
+        if (!task) break;
+        steps.push({ task, skillTitle: activePack.skills.find((sk) => sk.id === task.skill)?.title ?? '' });
+      }
+      if (steps.length !== mission.steps.length) continue;
+      byId.set(mission.id, { mission, steps });
     }
     return byId;
   }, [locale, activePack, activeTrack]);
@@ -836,6 +849,13 @@ export default function App() {
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+  // Локаль — тем же приёмом и по той же причине: backTarget поднимает по ней
+  // миссию, чтобы посчитать порядок экранов дня, а обработчик popstate висит
+  // с пустыми зависимостями и из замыкания видел бы локаль первого рендера.
+  const localeRef = useRef(locale);
+  useEffect(() => {
+    localeRef.current = locale;
+  }, [locale]);
 
   useEffect(() => {
     history.replaceState(null, '');
@@ -863,7 +883,7 @@ export default function App() {
         return;
       }
       history.pushState(null, '');
-      setScreen(backTarget(current));
+      setScreen(backTarget(current, localeRef.current));
     }
 
     window.addEventListener('popstate', onPopState);
@@ -1397,7 +1417,7 @@ export default function App() {
     }
     const mission = storyEntryMission(locale);
     if (!mission) return;
-    setScreen({ name: 'storymode', missionId: mission.id, phase: 'brief' });
+    setScreen({ name: 'storymode', missionId: mission.id, phase: { kind: 'brief' } });
   }
 
   /**
@@ -1414,7 +1434,7 @@ export default function App() {
     if (!next || !storyMissions.has(next.id)) return null;
     return () => {
       saveStoryMissionId(next.id);
-      setScreen({ name: 'storymode', missionId: next.id, phase: 'brief' });
+      setScreen({ name: 'storymode', missionId: next.id, phase: { kind: 'brief' } });
       window.scrollTo({ top: 0 });
     };
   }
@@ -1541,7 +1561,7 @@ export default function App() {
             <button
               className="icon-btn"
               onClick={() => {
-                setScreen(backTarget(screen));
+                setScreen(backTarget(screen, locale));
                 window.scrollTo({ top: 0 });
               }}
               aria-label={t.app.back}
@@ -1926,11 +1946,10 @@ export default function App() {
                */
               key={storyMission.mission.id}
               mission={storyMission.mission}
-              task={storyMission.task}
+              steps={storyMission.steps}
               executor={executor}
               schema={schema}
               drafts={taskDrafts}
-              skillTitle={storyMission.skillTitle}
               phase={screen.phase}
               onPhase={(phase) => {
                 setScreen({ name: 'storymode', missionId: storyMission.mission.id, phase });

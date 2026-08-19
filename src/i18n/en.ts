@@ -560,11 +560,10 @@ export const en = {
   storyMode: {
     headerTitle: 'Story mode',
     badge: 'Early prototype',
-    theoryTitle: 'One idea before you write',
-    toTheory: 'Next',
+    /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
+    next: 'Next',
     toTask: 'Take on the task',
     reflectionTitle: 'Before you move on',
-    reflectionNext: 'Next',
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',
     toBeContinued: 'To be continued',

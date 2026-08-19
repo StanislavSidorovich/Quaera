@@ -7,56 +7,103 @@ import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import type { StoryMission } from '../content/storymode';
 
 /**
- * Экран режима истории — нарративная оболочка вокруг одного существующего
- * задания. В отличие от StoryLine (карта выведенных из графа миссий), здесь
- * миссия одна и рукописная, а её ход — маленькая машина фаз, которую крутит
- * этот экран. Задание на фазе `task` крутит тот же TaskView, что и обычное
- * занятие: движок, проверка эталоном, подсказки — всё настоящее.
+ * Экран режима истории — нарративная оболочка вокруг нескольких существующих
+ * заданий. В отличие от StoryLine (карта выведенных из графа миссий), здесь
+ * миссия рукописная, а её ход — маленькая машина фаз, которую крутит этот
+ * экран. Задания крутит тот же TaskView, что и обычное занятие: движок,
+ * проверка эталоном, подсказки — всё настоящее.
  *
- * Порядок фаз и есть весь сюжет миссии:
+ * Один день миссии выглядит так:
  *   бриф (кто и зачем спрашивает)
- *   → теория (ровно перед нуждой)
- *   → задание (настоящее, с проверкой)
+ *   → [подводка → задание] столько раз, сколько заданий в дне
  *   → суждение (это уже ответ заказчику? ещё нет)
- *   → переход (что осталось и куда ведёт сюжет).
+ *   → крючок (что осталось и куда ведёт сюжет).
  *
- * Своего хранилища нет: решение задания уходит в прогресс через onTaskDone
- * (тот же путь, что handleDone у занятия), а фаза живёт в `screen` приложения.
+ * **Почему фаза — объект, а не строка.** Раньше день держал ровно одно
+ * задание, и пяти имён хватало. Как только в дне их стало три, фаза обязана
+ * называть ещё и номер шага: «задание» без номера не отличает первое задание
+ * понедельника от третьего, а стрелке «назад» надо попадать ровно на тот
+ * экран, откуда пришли. Порядок фаз при этом по-прежнему существует в одном
+ * месте — storyPhases(), — и оба движения выводятся из него.
+ *
+ * Своего хранилища нет: решения уходят в прогресс через onTaskDone (тот же
+ * путь, что handleDone у занятия), а фаза живёт в `screen` приложения.
  */
-export type StoryPhase = 'brief' | 'theory' | 'task' | 'reflection' | 'hook';
+export type StoryPhase =
+  | { kind: 'brief' }
+  | { kind: 'intro'; step: number }
+  | { kind: 'task'; step: number }
+  | { kind: 'reflection' }
+  | { kind: 'hook' };
 
 /**
- * Порядок фаз в одном месте — он же порядок сюжета, и разъезжаться этим
- * двум спискам нельзя. Из него выводятся оба движения: «дальше» рисуют
- * кнопки внизу фазы, «назад» — стрелка в шапке (см. backTarget в App.tsx).
+ * Порядок экранов дня — единственный источник правды о ходе миссии.
+ * Из него растут и «дальше», и «назад»; разъехаться им негде, потому что
+ * оба считают индекс в этом же списке.
+ *
+ * Подводка появляется только у тех шагов, где она написана: задание, которому
+ * нечего предпослать, идёт сразу за предыдущим. Пустой экран ради симметрии
+ * читался бы как заминка.
  */
-const PHASE_ORDER: StoryPhase[] = ['brief', 'theory', 'task', 'reflection', 'hook'];
+export function storyPhases(mission: StoryMission): StoryPhase[] {
+  const phases: StoryPhase[] = [{ kind: 'brief' }];
+  mission.steps.forEach((step, i) => {
+    if (step.intro) phases.push({ kind: 'intro', step: i });
+    phases.push({ kind: 'task', step: i });
+  });
+  phases.push({ kind: 'reflection' }, { kind: 'hook' });
+  return phases;
+}
+
+function samePhase(a: StoryPhase, b: StoryPhase): boolean {
+  if (a.kind !== b.kind) return false;
+  if (a.kind === 'intro' || a.kind === 'task') {
+    return a.step === (b as { step: number }).step;
+  }
+  return true;
+}
+
+function phaseAt(mission: StoryMission, phase: StoryPhase, delta: number): StoryPhase | null {
+  const phases = storyPhases(mission);
+  const i = phases.findIndex((p) => samePhase(p, phase));
+  if (i < 0) return null;
+  return phases[i + delta] ?? null;
+}
 
 /**
- * Предыдущая фаза миссии, либо null на первой.
+ * Предыдущий экран дня, либо null на первом.
  *
  * Нужна шапке: до этой правки стрелка «назад» из любой точки миссии
- * выбрасывала на главную, то есть теряла всю миссию ради того, чтобы
+ * выбрасывала на главную, то есть теряла весь день ради того, чтобы
  * перечитать предыдущий экран. Вопрос «а что там было в брифе?» возникает
  * ровно посреди задания — та же причина, по которой с задачи занятия
  * «назад» ведёт на карточку приёма, а не наружу.
  *
- * Возврат с суждения на задание намеренно разрешён: попытка уже записана
+ * Возврат на решённое задание намеренно разрешён: попытка уже записана
  * (см. `recorded` ниже), решение лежит в черновиках, и перечитать свой
  * запрос — законное желание. Второй записи это не заводит.
  */
-export function storyPhaseBefore(phase: StoryPhase): StoryPhase | null {
-  const i = PHASE_ORDER.indexOf(phase);
-  return i > 0 ? PHASE_ORDER[i - 1] : null;
+export function storyPhaseBefore(mission: StoryMission, phase: StoryPhase): StoryPhase | null {
+  return phaseAt(mission, phase, -1);
+}
+
+/** Следующий экран дня, либо null на крючке (дальше уже переход между днями). */
+export function storyPhaseAfter(mission: StoryMission, phase: StoryPhase): StoryPhase | null {
+  return phaseAt(mission, phase, 1);
+}
+
+/** Задание дня вместе с названием приёма — разрешается в App по паку активного трека. */
+export interface StoryStepView {
+  task: Task;
+  skillTitle: string;
 }
 
 export function StoryMode({
   mission,
-  task,
+  steps,
   executor,
   schema,
   drafts,
-  skillTitle,
   phase,
   onPhase,
   onTaskDone,
@@ -65,13 +112,12 @@ export function StoryMode({
   onExit,
 }: {
   mission: StoryMission;
-  /** Задание миссии, уже найденное в паке по mission.taskId. */
-  task: Task;
+  /** Задания дня по порядку mission.steps — уже найденные в паке. */
+  steps: StoryStepView[];
   executor: Executor;
   schema: SchemaDoc | null;
   drafts: TaskDraftStore;
-  skillTitle: string;
-  /** Текущая фаза — живёт в `screen` приложения, чтобы шапка умела шаг назад. */
+  /** Текущий экран — живёт в `screen` приложения, чтобы шапка умела шаг назад. */
   phase: StoryPhase;
   onPhase: (next: StoryPhase) => void;
   /** Записывает попытку в прогресс — та же запись, что у обычного занятия. */
@@ -79,8 +125,8 @@ export function StoryMode({
   onOpenSchema: (table?: string) => void;
   /**
    * Перейти к следующей миссии кампании, либо null — если эта последняя.
-   * Признак приходит снаружи, а не считается здесь: порядок миссий знает
-   * кампания, а экран знает только свою.
+   * Признак приходит снаружи, а не считается здесь: порядок дней знает
+   * кампания, а экран знает только свой.
    */
   onNext: (() => void) | null;
   /** Выйти из миссии (на главную). */
@@ -89,39 +135,67 @@ export function StoryMode({
   const { t } = useI18n();
 
   /*
-   * Запись попытки — один раз за проход миссии. TaskView зовёт onDone на «Дальше»
-   * после решения; ref защищает от второй записи, если человек вернулся стрелкой
-   * на задание и прошёл его снова.
+   * Записанные попытки — множеством, а не флагом: в дне несколько заданий,
+   * и «уже зачёл» относится к конкретному, а не ко дню целиком. Ref защищает
+   * от второй записи, если человек вернулся стрелкой на решённое задание
+   * и прошёл его снова.
    */
-  const recorded = useRef(false);
-  function handleTaskDone(outcome: TaskOutcome) {
-    if (!recorded.current) {
-      recorded.current = true;
-      onTaskDone(task, outcome);
-    }
-    onPhase('reflection');
+  const recorded = useRef(new Set<string>());
+
+  const after = storyPhaseAfter(mission, phase);
+
+  function goNext() {
+    if (after) onPhase(after);
   }
 
-  if (phase === 'task') {
+  function handleTaskDone(task: Task, outcome: TaskOutcome) {
+    if (!recorded.current.has(task.id)) {
+      recorded.current.add(task.id);
+      onTaskDone(task, outcome);
+    }
+    goNext();
+  }
+
+  if (phase.kind === 'task') {
+    const step = steps[phase.step];
+    if (!step) return null;
     return (
       <TaskView
-        key={task.id}
-        task={task}
+        key={step.task.id}
+        task={step.task}
         executor={executor}
         schema={schema}
         drafts={drafts}
-        skillTitle={skillTitle}
+        skillTitle={step.skillTitle}
         onOpenSchema={onOpenSchema}
-        onDone={handleTaskDone}
+        onDone={(outcome) => handleTaskDone(step.task, outcome)}
       />
     );
   }
 
+  /*
+   * Подпись кнопки выводится из того, что будет дальше, а не из того, где мы
+   * сейчас: «Взяться за задачу» перед заданием и «Дальше» перед разговором.
+   * Иначе подпись пришлось бы держать в каждой ветке отдельно и следить,
+   * чтобы она не разъехалась с порядком фаз.
+   */
+  const nextLabel = after?.kind === 'task' ? t.storyMode.toTask : t.storyMode.next;
+
+  const intro = phase.kind === 'intro' ? mission.steps[phase.step]?.intro : null;
+  const scene =
+    phase.kind === 'brief'
+      ? mission.scenes.brief
+      : phase.kind === 'reflection'
+        ? mission.scenes.reflection
+        : phase.kind === 'hook'
+          ? mission.scenes.hook
+          : intro?.scene;
+
   return (
     <div className="card story-mode">
-      <StoryArt scene={mission.scenes[phase]} />
+      {scene && <StoryArt scene={scene} />}
 
-      {phase === 'brief' && (
+      {phase.kind === 'brief' && (
         <>
           <p className="story-mode-badge">{t.storyMode.badge}</p>
           <p className="story-mode-place">{mission.place}</p>
@@ -133,27 +207,27 @@ export function StoryMode({
               </div>
             ))}
           </div>
-          <button type="button" className="btn" onClick={() => onPhase('theory')}>
-            {t.storyMode.toTheory}
+          <button type="button" className="btn" onClick={goNext}>
+            {nextLabel}
           </button>
         </>
       )}
 
-      {phase === 'theory' && (
+      {phase.kind === 'intro' && intro && (
         <>
-          <h2>{mission.theoryTitle ?? t.storyMode.theoryTitle}</h2>
-          {mission.theory.map((p, i) => (
+          {intro.title && <h2>{intro.title}</h2>}
+          {intro.paras.map((p, i) => (
             <p className="story-mode-para" key={i}>
               {p}
             </p>
           ))}
-          <button type="button" className="btn" onClick={() => onPhase('task')}>
-            {t.storyMode.toTask}
+          <button type="button" className="btn" onClick={goNext}>
+            {nextLabel}
           </button>
         </>
       )}
 
-      {phase === 'reflection' && (
+      {phase.kind === 'reflection' && (
         <>
           <h2>{t.storyMode.reflectionTitle}</h2>
           {mission.reflection.map((p, i) => (
@@ -161,13 +235,13 @@ export function StoryMode({
               {p}
             </p>
           ))}
-          <button type="button" className="btn" onClick={() => onPhase('hook')}>
-            {t.storyMode.reflectionNext}
+          <button type="button" className="btn" onClick={goNext}>
+            {nextLabel}
           </button>
         </>
       )}
 
-      {phase === 'hook' && (
+      {phase.kind === 'hook' && (
         <>
           {mission.hook.map((p, i) => (
             <p className="story-mode-para" key={i}>

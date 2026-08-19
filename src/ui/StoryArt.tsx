@@ -42,6 +42,9 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
     <div className="story-art" aria-hidden>
       <svg viewBox={VIEW_BOX} role="presentation" preserveAspectRatio="xMidYMid meet">
         {scene === 'office' && <Office />}
+        {scene === 'catalog' && <Catalog />}
+        {scene === 'tables' && <Tables />}
+        {scene === 'join' && <Join />}
         {scene === 'groups' && <Groups />}
         {scene === 'trend' && <Trend />}
         {scene === 'split' && <Split />}
@@ -302,6 +305,96 @@ function Rival() {
           ))}
         </g>
       ))}
+    </g>
+  );
+}
+
+/*
+ * Прайс-лист: ряды позиций, у каждой длинное имя и короткое число справа.
+ * Акцент отдан колонке цен — единственному, что в первый день будет
+ * фильтроваться и сортироваться, и единственному, о чём говорит текст.
+ */
+function Catalog() {
+  const rows = [30, 46, 62, 78, 94];
+  /** Разная длина имён — чтобы ряды читались как названия, а не как полосы. */
+  const names = [148, 176, 132, 190, 160];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* шапка таблицы */}
+      <g className="art-far">
+        <path d="M24 18h124M188 18h44M252 18h44" strokeWidth="2.5" strokeLinecap="butt" />
+        <path d="M24 24h272" strokeWidth="1" />
+      </g>
+
+      <g className="art-mid">
+        {rows.map((y, i) => (
+          <path key={y} d={`M24 ${y}h${names[i]}`} strokeWidth="2.5" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      {/* колонка цен */}
+      {rows.map((y) => (
+        <path key={y} className="art-line" d={`M252 ${y}h44`} strokeWidth="2.5" strokeLinecap="butt" />
+      ))}
+    </g>
+  );
+}
+
+/*
+ * Две таблицы, между которыми связи ещё нет: понедельник кончается на том,
+ * что прайс человек читать умеет, а продажи лежат отдельно. Акцентом названа
+ * не таблица, а разрыв — две встречные стрелки, которые не сходятся.
+ * В четверг тот же кадр закрывается сценой `join`, и это единственная пара
+ * сцен в кампании, которая работает именно как пара.
+ */
+function Tables() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="20" y="24" width="104" height="68" rx="4" strokeWidth="1.6" />
+        <path d="M20 40h104" strokeWidth="1.2" />
+        <path d="M32 54h64M32 66h72M32 78h56" strokeWidth="2" strokeLinecap="butt" />
+
+        <rect x="196" y="24" width="104" height="68" rx="4" strokeWidth="1.6" />
+        <path d="M196 40h104" strokeWidth="1.2" />
+        <path d="M208 54h72M208 66h58M208 78h68" strokeWidth="2" strokeLinecap="butt" />
+      </g>
+
+      {/* разрыв между ними: стрелки идут навстречу и не встречаются */}
+      <path className="art-line" d="M134 58h20" strokeWidth="2.2" />
+      <path className="art-line" d="m148 52 6 6-6 6" strokeWidth="2.2" />
+      <path className="art-line" d="M186 58h-20" strokeWidth="2.2" />
+      <path className="art-line" d="m172 52-6 6 6 6" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Тот же кадр, что в `tables`, но ключ найден: в каждой таблице подсвечена
+ * одна строка-колонка, и между ними сплошная линия. Разрыв из понедельника
+ * закрыт — это и есть весь смысл четверга.
+ */
+function Join() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="20" y="24" width="104" height="68" rx="4" strokeWidth="1.6" />
+        <path d="M20 40h104" strokeWidth="1.2" />
+        <path d="M32 66h72M32 78h56" strokeWidth="2" strokeLinecap="butt" />
+
+        <rect x="196" y="24" width="104" height="68" rx="4" strokeWidth="1.6" />
+        <path d="M196 40h104" strokeWidth="1.2" />
+        <path d="M208 66h58M208 78h68" strokeWidth="2" strokeLinecap="butt" />
+      </g>
+
+      {/* общий ключ: одинаковая колонка в обеих таблицах и линия между ними */}
+      <path className="art-line" d="M32 54h64" strokeWidth="2.6" strokeLinecap="butt" />
+      <path className="art-line" d="M208 54h64" strokeWidth="2.6" strokeLinecap="butt" />
+      <path className="art-line" d="M124 54h72" strokeWidth="2.2" />
+      <g className="art-near">
+        <circle cx="124" cy="54" r="3" strokeWidth="2" />
+        <circle cx="196" cy="54" r="3" strokeWidth="2" />
+      </g>
     </g>
   );
 }
