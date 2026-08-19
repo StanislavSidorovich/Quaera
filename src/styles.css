@@ -3750,6 +3750,258 @@ table.sample td.null {
   background: var(--accent);
 }
 
+/* --------------------------------------------------- сюжетная линия */
+
+/*
+ * Линия — список миссий сверху вниз, а не сетка.
+ *
+ * Соблазн разложить восемь карточек в две колонки на десктопе есть (так
+ * сделана вводная трека), и он здесь неверен: у вводной пять независимых
+ * ответов на пять вопросов, их читают в любом порядке, а у линии порядок
+ * и есть содержание. Двумя колонками путь читается зигзагом.
+ *
+ * Ширину вместо этого забирает сама карточка: текст слева, время и кнопка
+ * справа. На узком экране правая часть переносится под левую и кнопка
+ * растягивается на всю ширину — без второго набора правил.
+ */
+.story-missions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.story-mission {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.story-mission-main {
+  /* min-width: 0 обязателен: без него длинное слово в связке распирает
+     колонку и вытесняет правую часть за край карточки. */
+  flex: 3 1 min(320px, 100%);
+  min-width: 0;
+}
+
+.story-mission-side {
+  flex: 1 1 min(190px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.story-mission-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/*
+ * Номер миссии кружком — единственное место, где положение на линии видно
+ * без чтения. Пройденные и текущая различаются им же: цвет + толщина рамки,
+ * без второго акцентного тона (тот же довод, что у рекомендованной карточки
+ * трека — третий сигнал спорил бы с первыми двумя).
+ */
+.story-mission-num {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.story-mission h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* Подпись «Миссия N» над названием, а не вместо него: номер нужен для счёта,
+   название — для узнавания, и в одну строку они не помещаются на телефоне. */
+.story-mission-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.story-mission-hook,
+.story-mission-outcome {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.story-mission-outcome b {
+  display: block;
+  color: var(--text-dim);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.story-mission-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.story-mission-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Текущая миссия — элевацией, как рекомендованная карточка трека на главной:
+ * тень плюс рамка в акцент. Заливкой нельзя, на ней стоит различие
+ * пройденного и непройденного.
+ */
+.story-mission.current {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: 0 2px 14px rgb(0 0 0 / 0.22);
+}
+
+.story-mission.current .story-mission-num {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  /*
+   * Чистый --accent на утопленной заливке даёт 4.49:1 в светлой теме при
+   * кегле 13px — то есть промах мимо 4.5 на сотую. Примесь --text вытягивает
+   * обе темы, не теряя синий; тот же рецепт, что у .pill.warn и у зелёного
+   * номера пройденной миссии ниже.
+   */
+  color: color-mix(in srgb, var(--accent) 80%, var(--text));
+}
+
+/*
+ * Пройденная миссия приглушена целиком, а не только галочкой: на линии
+ * из восьми карточек глаз ищет, где остановиться, и одинаково набранные
+ * соседи этому мешают (то же правило, что на «Данных»). Приглушение —
+ * фоном карточки, не прозрачностью: opacity потащила бы за собой и текст
+ * итога, который человек как раз перечитывает.
+ */
+.story-mission.done {
+  background: var(--bg-sunken);
+}
+
+.story-mission.done .story-mission-num {
+  /* Чистый --ok на этой заливке даёт меньше 4.5:1 в светлой теме; примесь
+     --text вытягивает контраст в обеих, не теряя зелёный. Тот же рецепт,
+     что у .pill.warn. */
+  color: color-mix(in srgb, var(--ok) 70%, var(--text));
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+}
+
+.story-line-heading {
+  font-variant-numeric: tabular-nums;
+}
+
+.story-bar {
+  /*
+   * По ширине текста, а не карточки. На десктопе карточка 950px, а проза
+   * под ней ограничена 68ch (см. `.card p` в десктопном блоке): полоса
+   * во всю ширину переставала читаться показанием и начинала читаться
+   * разделительной чертой под заголовком. Одна мера у шкалы и у текста,
+   * к которому она относится.
+   */
+  max-width: 68ch;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+.story-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  border-radius: 3px;
+}
+
+/*
+ * Свёрнутая вводная. Стрелка своя, как у .welcome-proof: системный
+ * треугольник везде разной формы и в Safari не поддаётся ни цвету,
+ * ни размеру.
+ */
+.story-opening-wrap {
+  margin-top: 12px;
+}
+
+.story-opening-wrap > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-dim);
+  list-style: none;
+  min-height: 24px;
+}
+
+.story-opening-wrap > summary::-webkit-details-marker {
+  display: none;
+}
+
+.story-opening-wrap > summary::after {
+  content: '⌄';
+  padding-left: 6px;
+  transform: translateY(-2px);
+}
+
+.story-opening-wrap[open] > summary::after {
+  content: '⌃';
+  transform: translateY(2px);
+}
+
+/* Повтор пройденной миссии — текстом, а не блоком: действие есть,
+   веса кнопки у него быть не должно. */
+.story-replay {
+  align-self: start;
+  padding: 6px 0;
+  min-height: var(--tap);
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Абзац «кто вы и где вы» — пустая строка в тексте становится границей
+   абзаца, как во вводной трека (см. TrackIntroScreen). */
+.story-opening,
+.story-ending p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.story-ending p {
+  margin-top: 0;
+}
+
 /* ------------------------------------------------------------- десктоп */
 
 /*

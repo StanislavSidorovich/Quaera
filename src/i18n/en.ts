@@ -63,6 +63,8 @@ export const en = {
     sectionsLabel: 'Learning',
     tracksLabel: 'Tracks',
     home: 'Home',
+    /** См. комментарий в ru.ts: порядок пунктов повторяет порядок намерений. */
+    story: 'Story line',
     reference: 'Reference',
     sandbox: 'Sandbox',
     data: 'Data',
@@ -525,6 +527,34 @@ export const en = {
     homeBtn: 'Home',
     prevAria: 'Previous step',
     stepAria: (i: number) => `Step ${i}`,
+    /** См. комментарий в ru.ts: возврат на линию вместо главной, когда занятие было миссией. */
+    lineBtn: 'Back to the line',
+  },
+  story: {
+    title: 'Story line',
+    /** См. комментарий в ru.ts: число стоит в самой ссылке, чтобы «где я» читалось до перехода. */
+    entryLink: (current: number, total: number) => `Story line: mission ${current} of ${total} →`,
+    entryLinkDone: 'Story line: complete →',
+    entryLinkStart: (total: number) => `Story line: ${total} missions to the base →`,
+    progressLabel: (current: number, total: number) => `Mission ${current} of ${total}`,
+    progressDone: (total: number) => `Line complete: ${total} missions`,
+    /** См. комментарий в ru.ts: подпись называет статус, номер уже стоит кружком слева. */
+    statusDone: 'Done',
+    statusCurrent: 'You are here',
+    statusAhead: 'Ahead',
+    meta: (tasks: number, minutes: number) => `Tasks: ${tasks} · ~${minutes} min`,
+    solvedOf: (solved: number, total: number) => `Solved ${solved} of ${total}`,
+    /** См. комментарий в ru.ts: подпись отдельной строкой, чтобы сам итог остался предложением. */
+    outcomeLabel: 'What you can do now',
+    startBtn: 'Start the mission',
+    continueBtn: 'Continue the mission',
+    againBtn: 'Run it again',
+    /** См. комментарий в ru.ts: порядок здесь рекомендация, а не замок. */
+    openBtn: 'Open',
+    /** См. комментарий в ru.ts: заголовок называет вопрос, а не действие. */
+    openingSummary: 'Where you are and what the company is',
+    endingTitle: 'Line complete',
+    emptyTrack: 'This track has no tasks yet, so it has no line either. The skill map is worth a look: the graph is already designed.',
   },
   lesson: {
     pill: 'Technique',

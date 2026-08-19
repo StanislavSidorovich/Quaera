@@ -18,6 +18,7 @@ import type { Progress } from '../srs/store';
  */
 export type SidebarSection =
   | 'home'
+  | 'story'
   | 'reference'
   | 'sandbox'
   | 'data'
@@ -34,6 +35,7 @@ export function Sidebar({
   streakDays,
   accountEmail,
   onHome,
+  onStory,
   onReference,
   onSandbox,
   onData,
@@ -51,6 +53,7 @@ export function Sidebar({
   /** Почта вошедшего или null. Печатается подписью под пунктом «Аккаунт и данные». */
   accountEmail: string | null;
   onHome: () => void;
+  onStory: () => void;
   onReference: () => void;
   onSandbox: () => void;
   onData: () => void;
@@ -113,6 +116,15 @@ export function Sidebar({
           >
             <IconHome />
             {t.nav.home}
+          </button>
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'story' ? 'page' : undefined}
+            onClick={onStory}
+          >
+            <IconRoute />
+            {t.nav.story}
           </button>
           <button
             type="button"
@@ -286,6 +298,21 @@ const iconProps = {
 const IconHome = () => (
   <svg {...iconProps}>
     <path d="M2.6 7.1 8 2.9l5.4 4.2V13a.6.6 0 0 1-.6.6H3.2a.6.6 0 0 1-.6-.6z" />
+  </svg>
+);
+
+/*
+ * Дорога с двумя точками: линия — это путь, а не список. Отличается
+ * от IconCompass («с чего начать») тем, что у компаса нет направления
+ * движения, а здесь оно и есть содержание раздела.
+ */
+const IconRoute = () => (
+  <svg {...iconProps}>
+    <circle cx="4.4" cy="3.6" r="1.5" />
+    <circle cx="4.4" cy="12.4" r="1.5" />
+    <path d="M4.4 5.1v5.8" />
+    <path d="M8.4 3.6h5.2" />
+    <path d="M8.4 12.4h3.4" />
   </svg>
 );
 

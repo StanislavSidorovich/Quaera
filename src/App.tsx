@@ -22,6 +22,8 @@ import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
+import { StoryLine } from './ui/StoryLine';
+import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -187,7 +189,14 @@ type Screen =
    * обратно туда, где остановился, не проходя середину заново.
    */
   | { name: 'session'; queue: Step[]; index: number; maxIndex: number }
-  | { name: 'done'; solved: number }
+  /**
+   * `fromStory` — занятие было миссией линии, и «Занятие закончено» обязано
+   * вернуть на линию, а не на главную. Флаг, а не id миссии: экран линии
+   * сам вычислит, где человек теперь, из решённых заданий, — а хранить
+   * здесь номер значило бы завести вторую правду о прогрессе.
+   */
+  | { name: 'done'; solved: number; fromStory?: boolean }
+  | { name: 'story' }
   | { name: 'reference' }
   | { name: 'sandbox' }
   | { name: 'data' }
@@ -331,6 +340,9 @@ function initialBoot(locale: Locale): Boot {
   }
   if (!stored) return { screen: { name: 'home' }, ...empty };
   switch (stored.name) {
+    // Линия выводится из пака и существует у любого готового трека, так что
+    // проверять здесь нечего: пустой трек экран объявляет сам, текстом.
+    case 'story':
     case 'reference':
     case 'sandbox':
     case 'data':
@@ -519,6 +531,26 @@ export default function App() {
   // меняется только проза внутри карточки (см. lessonBySkillFor в content/index.ts).
   const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
   const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
+  /**
+   * Сюжетная линия трека — чистая функция от пака (см. story/line.ts), поэтому
+   * зависит только от него: прогресс сюда не входит намеренно. Линия — это
+   * дорога, а не положение на ней; положение считает уже сам экран, из решённых
+   * заданий. Пересобирать её на каждую решённую задачу было бы и лишней работой,
+   * и приглашением однажды сделать состав миссий зависящим от успехов.
+   */
+  const line = useMemo(() => buildLine(activePack), [activePack]);
+  /**
+   * Положение на линии — только ради подписи ссылки на главной.
+   *
+   * Число стоит в самой ссылке, а не за ней: «где я» — это и есть вопрос,
+   * ради которого линия сделана, и заставлять человека переходить, чтобы
+   * его задать, значит отвечать на него дороже, чем он стоит.
+   */
+  const storyAt = useMemo(() => {
+    if (!line.length) return null;
+    const at = currentMissionIndex(line, (id) => progress.taskRecords[id]?.solved === true);
+    return { at, total: line.length };
+  }, [line, progress]);
 
   useEffect(() => {
     if (!executor) {
@@ -826,12 +858,24 @@ export default function App() {
     });
     if (!picked.length) return;
 
-    // Перед первой задачей на навык вставляем карточку приёма. Признак «первой» —
-    // отсутствие повторений: как только задача решена, счётчик растёт и теория
-    // больше не всплывает.
+    startQueue(withLessons(picked));
+  }
+
+  /**
+   * Задания плюс карточки приёма перед первой задачей на незнакомый навык.
+   *
+   * Признак «первой» — отсутствие повторений: как только задача решена,
+   * счётчик растёт и теория больше не всплывает сама, оставаясь в справочнике.
+   *
+   * Общая для занятия и для миссии линии намеренно. Правило показа теории —
+   * то самое, из-за которого новичок не утыкается в задачу, не зная приёма;
+   * разъедься эти два входа, и линия начала бы вести себя не как занятие
+   * ровно там, где человек впервые видит тему.
+   */
+  function withLessons(tasks: Task[]): Step[] {
     const introduced = new Set<string>();
     const queue: Step[] = [];
-    for (const task of picked) {
+    for (const task of tasks) {
       const lesson = lessonBySkill.get(task.skill);
       const isNew = (progress.skills[task.skill]?.reps ?? 0) === 0;
       if (lesson && isNew && !introduced.has(task.skill)) {
@@ -840,7 +884,7 @@ export default function App() {
       }
       queue.push({ kind: 'task', task });
     }
-    startQueue(queue);
+    return queue;
   }
 
   /**
@@ -976,12 +1020,47 @@ export default function App() {
     startQueue(queue);
   }
 
+  /**
+   * Миссия сюжетной линии — третий вход в занятие, и самый простой из трёх:
+   * состав уже определён линией (см. story/line.ts), подбирать нечего.
+   * Задания идут в том же порядке, в каком их выстроила линия: сначала
+   * разобранный образец, потом достраивание, потом с нуля.
+   *
+   * Пройденную миссию можно начать заново, и она соберётся из тех же заданий.
+   * Это не ошибка учёта: повторное решение уходит в SRS как обычная попытка,
+   * а «пройдено» у миссии от него не меняется — оно и так уже верно.
+   */
+  function startMission(mission: Mission) {
+    const queue = withLessons(mission.tasks);
+    if (!queue.length) return;
+    startQueue(queue);
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
+   * Была ли очередь занятия миссией линии — по составу, а не по флагу.
+   *
+   * Флаг в памяти вкладки соврал бы после перезагрузки: занятие поднимается
+   * из хранилища целиком (см. initialBoot), а флаг к тому моменту потерян,
+   * и «Занятие закончено» увело бы с линии на главную только потому, что
+   * посреди миссии нажали F5. Состав же в хранилище есть — по нему и считаем.
+   */
+  function queueMission(queue: Step[]): Mission | null {
+    const ids = queue.flatMap((step) => (step.kind === 'task' ? [step.task.id] : []));
+    if (!ids.length) return null;
+    return line.find((m) => ids.every((id) => m.tasks.some((t) => t.id === id))) ?? null;
+  }
+
   function advance() {
     setScreen((s) => {
       if (s.name !== 'session') return s;
       const next = s.index + 1;
       if (next >= s.queue.length) {
-        return { name: 'done', solved: s.queue.filter((q) => q.kind === 'task').length };
+        return {
+          name: 'done',
+          solved: s.queue.filter((q) => q.kind === 'task').length,
+          fromStory: queueMission(s.queue) !== null,
+        };
       }
       return { ...s, index: next, maxIndex: Math.max(s.maxIndex, next) };
     });
@@ -1183,22 +1262,20 @@ export default function App() {
 
   // Занятие, карточка приёма и вводная трека своего пункта в меню не имеют:
   // подсвечивать там «Главную» значило бы врать о том, где человек находится.
-  const sidebarSection: SidebarSection =
-    screen.name === 'home' || screen.name === 'done'
-      ? 'home'
-      : screen.name === 'reference'
-        ? 'reference'
-        : screen.name === 'sandbox'
-          ? 'sandbox'
-          : screen.name === 'data'
-            ? 'data'
-            : screen.name === 'about'
-              ? 'about'
-              : screen.name === 'account'
-                ? 'account'
-                : screen.name === 'onboarding'
-                  ? 'onboarding'
-                  : null;
+  const SIDEBAR_SECTIONS: Partial<Record<Screen['name'], SidebarSection>> = {
+    home: 'home',
+    // Конец занятия принадлежит главной: своего пункта у него нет, а подсветить
+    // нечего — раздел, из которого занятие начали, уже не восстановить.
+    done: 'home',
+    story: 'story',
+    reference: 'reference',
+    sandbox: 'sandbox',
+    data: 'data',
+    about: 'about',
+    account: 'account',
+    onboarding: 'onboarding',
+  };
+  const sidebarSection: SidebarSection = SIDEBAR_SECTIONS[screen.name] ?? null;
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -1217,6 +1294,7 @@ export default function App() {
         streakDays={streak(progress.activeDays)}
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
+        onStory={() => setScreen({ name: 'story' })}
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
@@ -1243,6 +1321,8 @@ export default function App() {
           <h1 className={screen.name === 'home' ? 'brand' : undefined}>
             {screen.name === 'session'
               ? (currentSkillTitle ?? t.session.title)
+              : screen.name === 'story'
+                ? t.story.title
               : screen.name === 'reference'
                 ? t.reference.title
                 : screen.name === 'sandbox'
@@ -1429,6 +1509,8 @@ export default function App() {
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
+              onOpenStory={() => setScreen({ name: 'story' })}
+              storyAt={storyAt}
               /*
                * Незаконченное занятие показываем только на главной его же
                * трека: главная — экран одного трека (его карта, его прогресс,
@@ -1544,6 +1626,15 @@ export default function App() {
             );
           })()}
 
+          {screen.name === 'story' && (
+            <StoryLine
+              track={activeTrack}
+              line={line}
+              isSolved={(id) => progress.taskRecords[id]?.solved === true}
+              onStartMission={startMission}
+            />
+          )}
+
           {screen.name === 'reference' && (
             <Reference activeTrack={activeTrack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
           )}
@@ -1602,8 +1693,22 @@ export default function App() {
               <button className="btn" style={{ marginTop: 12 }} onClick={startSession}>
                 {t.session.moreBtn}
               </button>
-              <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setScreen({ name: 'home' })}>
-                {t.session.homeBtn}
+              {/*
+               * Миссия возвращает на линию, а не на главную: следующий шаг
+               * пути стоит именно там, и уводить оттуда на главную значило бы
+               * рвать линию ровно в точке, ради которой она и заводилась.
+               * Занятие, собранное планировщиком, по-прежнему ведёт на главную —
+               * его следующий шаг там.
+               */}
+              <button
+                className="btn secondary"
+                style={{ marginTop: 8 }}
+                onClick={() => {
+                  setScreen(screen.fromStory ? { name: 'story' } : { name: 'home' });
+                  window.scrollTo({ top: 0 });
+                }}
+              >
+                {screen.fromStory ? t.session.lineBtn : t.session.homeBtn}
               </button>
             </div>
           )}
@@ -2046,6 +2151,8 @@ function Home({
   onSwitchTrack,
   onStartSkill,
   onOpenTrackIntro,
+  onOpenStory,
+  storyAt,
   resume,
   onResume,
   scrollToChooser,
@@ -2081,6 +2188,9 @@ function Home({
   onStartSkill: (skillId: string) => void;
   /** Вводная карточка трека. undefined — у трека intro ещё не написан, кнопку не показываем. */
   onOpenTrackIntro?: () => void;
+  onOpenStory: () => void;
+  /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
+  storyAt: { at: number; total: number } | null;
   /** Подпись шага незаконченного занятия этого трека («Задача 2 из 5»), null — продолжать нечего. */
   resume: string | null;
   onResume: () => void;
@@ -2592,6 +2702,28 @@ function Home({
            * необходимости: вопрос «что это за инструмент» уместен рядом
            * с самим треком, а не между его выбором и панелью.
            */}
+          {/*
+           * Вход на линию стоит выше вводной трека: вводная отвечает на «что
+           * это за инструмент» — вопрос разовый, а линия на «где я и сколько
+           * осталось» — вопрос каждого захода. Обе ссылкой, а не кнопкой:
+           * основное действие на этом экране одно, и второй крупной кнопкой
+           * рядом оно перестало бы быть основным.
+           */}
+          {storyAt && (
+            <button
+              type="button"
+              className="link-row"
+              onClick={onOpenStory}
+              style={{ margin: '10px 0 0' }}
+            >
+              {storyAt.at >= storyAt.total
+                ? t.story.entryLinkDone
+                : storyAt.at === 0
+                  ? t.story.entryLinkStart(storyAt.total)
+                  : t.story.entryLink(storyAt.at + 1, storyAt.total)}
+            </button>
+          )}
+
           {onOpenTrackIntro && (
             <button
               type="button"
