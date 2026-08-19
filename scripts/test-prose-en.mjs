@@ -87,7 +87,13 @@ const targets = () => {
   const packs = readdirSync(path.join(root, 'src/content/packs'))
     .filter((f) => f.endsWith('.en.json'))
     .map((f) => `src/content/packs/${f}`);
-  return ['src/i18n/en.ts', ...packs.sort(), 'src/content/sandbox.json', 'src/content/tools-compare.json'];
+  return [
+    'src/i18n/en.ts',
+    ...packs.sort(),
+    'src/content/sandbox.json',
+    'src/content/story.en.json',
+    'src/content/tools-compare.json',
+  ];
 };
 
 let failed = 0;

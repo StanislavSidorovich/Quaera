@@ -1,0 +1,52 @@
+{
+  "_": "English prose for the story line. Same shape as story.json minus the `skills` fingerprint: the translation covers prose only and maps to missions by position, exactly like pack translations. Em dashes are counted by test:prose-en; the budget for this file is 0.",
+  "version": 1,
+  "tracks": {
+    "sql": {
+      "opening": "You have started as an analyst at a distributor of FMCG and over-the-counter pharma. The company moves goods from manufacturers into chains, pharmacies, traditional retail and online; two and a half years of data sit in the database you have just been given access to.\n\nEight missions cover your first weeks: from \"pull me the price list\" to \"work out why the brand collapsed\". The people asking are the same ones you meet outside the line: the brand manager, finance, the commercial director.",
+      "ending": "The base is covered. You have gone from a plain selection to a full business case, and you know where SQL stays silent: a join that multiplies rows, a NULL that eats your filter, a grain nobody mentioned.\n\nThe other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
+      "missions": [
+        {
+          "title": "First day",
+          "hook": "The first thing you are asked for is not a report but an extract: the brand manager needs the price list, finance needs part of it. Every piece of work against a database starts with the same two questions: which columns, and which rows.",
+          "outcome": "You pull the columns you need out of a table and cut the rows you do not. Every later query in the track starts here."
+        },
+        {
+          "title": "Top of the list, empty cells",
+          "hook": "People rarely want the whole list. They want the top: the ten most expensive items, the worst outlets of the month. Along the way you discover a third state besides yes and no, and that an ordinary filter says nothing about it.",
+          "outcome": "You take a top-N by any measure and stop losing rows to empty values. That loss is the most common silent one in reporting."
+        },
+        {
+          "title": "From rows to numbers",
+          "hook": "The first question an extract cannot answer: how much did we sell in March. An extract returns forty thousand rows; the answer is one number. And the raw layer turns out to lie: duplicates, dates in four formats, one chain spelled two ways.",
+          "outcome": "You collapse rows into numbers at the grain you were asked for, and you check raw data before a report is built on it."
+        },
+        {
+          "title": "Lookups",
+          "hook": "The sales table holds identifiers, while your manager asks about brands, cities and channels. The names live elsewhere and have to be attached. You also find out that filtering before the count and filtering after it are two different answers.",
+          "outcome": "You join facts to lookup tables, and you tell a filter on rows apart from a filter on groups that are already counted."
+        },
+        {
+          "title": "Zero and absence",
+          "hook": "You are asked for a report across all outlets, including the ones that bought nothing this month. A plain join drops them without a word, and the report looks better than reality. The same request needs slices: promo and non-promo side by side, not one total.",
+          "outcome": "You show absence as absence rather than as a vanished row, and you count several slices in a single pass."
+        },
+        {
+          "title": "When the number doubles",
+          "hook": "You add one more table to the query and revenue doubles. No error, no warning: the join multiplied the rows. This is exactly the class of mistake the track introduction was written for. The query ran; the answer is wrong.",
+          "outcome": "You catch row multiplication before the number reaches the person who asked, and you break a heavy query into steps that read on their own."
+        },
+        {
+          "title": "The neighbouring row",
+          "hook": "Sales for the month are not enough; your manager wants the change against the previous one. A top-3 of products is not enough; the top-3 has to be inside each category. Both questions are about something the row itself does not hold: its neighbours.",
+          "outcome": "You compute rankings inside groups and comparisons with the previous period in one query, without a second pass over the same data."
+        },
+        {
+          "title": "Why it dropped",
+          "hook": "A few weeks in, the question arrives as alarm rather than as an assignment: a brand is down by half and nobody knows why. Here the work is not writing a query but deciding which query to write, and then saying what the result means.",
+          "outcome": "You take a situation apart down to its cause: first you compute it yourself, then you answer what the number means for the business."
+        }
+      ]
+    }
+  }
+}
