@@ -118,6 +118,8 @@ export function StoryMode({
   onTaskDone,
   onOpenSchema,
   onNext,
+  openDayIds,
+  onOpenDay,
   onExit,
 }: {
   /** Вся кампания — полосе дела нужны вопрос расследования и все дни разом. */
@@ -140,6 +142,10 @@ export function StoryMode({
    * кампания, а экран знает только свой.
    */
   onNext: (() => void) | null;
+  /** id дней, куда разрешён возврат, — см. storyOpenDayIds в App. */
+  openDayIds: Set<string>;
+  /** Открыть день кампании с его брифа. */
+  onOpenDay: (missionId: string) => void;
   /** Выйти из миссии (на главную). */
   onExit: () => void;
 }) {
@@ -172,7 +178,13 @@ export function StoryMode({
     if (!step) return null;
     return (
       <>
-        <StoryProgress campaign={campaign} mission={mission} phase={phase} />
+        <StoryProgress
+          campaign={campaign}
+          mission={mission}
+          phase={phase}
+          openDayIds={openDayIds}
+          onOpenDay={onOpenDay}
+        />
         <TaskView
           key={step.task.id}
           task={step.task}
@@ -218,7 +230,13 @@ export function StoryMode({
 
   return (
     <>
-      <StoryProgress campaign={campaign} mission={mission} phase={phase} />
+      <StoryProgress
+          campaign={campaign}
+          mission={mission}
+          phase={phase}
+          openDayIds={openDayIds}
+          onOpenDay={onOpenDay}
+        />
 
       <div className="card story-mode">
         {scene && <StoryArt scene={scene} />}

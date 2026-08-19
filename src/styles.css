@@ -4244,6 +4244,50 @@ table.sample td.null {
   color: var(--accent-ink);
 }
 
+/*
+ * Пройденный день — кнопка возврата. Деление уже занимает всю свою ячейку,
+ * поэтому кнопка растягивается на него целиком: иначе попадать пришлось бы
+ * в текст из четырёх букв, а на телефоне это ниже порога в 44px по высоте
+ * строки деления. Ни своего фона, ни своей рамки у неё нет — вид деления
+ * задаёт li, и кнопка обязана быть с ним неразличима, пока на неё не навели.
+ */
+.story-progress-days li:has(> button) {
+  padding: 0;
+}
+
+.story-progress-days li > button {
+  display: block;
+  width: 100%;
+  padding: 4px 0 5px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/*
+ * День впереди текущего, но уже посещённый (человек вернулся в понедельник
+ * из четверга), красится как пройденный. Классы `is-done`/`is-ahead` говорят
+ * «раньше или позже того, что на экране», а заливка обязана говорить другое —
+ * «здесь ты был». Иначе возврат в начало недели гасит всю полосу в серый,
+ * и пройденные дни выглядят непройденными.
+ */
+.story-progress-days li.is-ahead:has(> button) {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-sunken));
+  color: var(--text);
+}
+
+.story-progress-days li > button:hover {
+  background: color-mix(in srgb, var(--accent) 34%, var(--bg-sunken));
+}
+
+.story-progress-days li > button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .story-progress-step {
   flex: none;
   margin: 0;

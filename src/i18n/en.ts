@@ -570,6 +570,8 @@ export const en = {
     stepOf: (n: number, total: number) => `Task ${n} of ${total}`,
     dayDone: 'Day closed',
     dayAria: (n: number, total: number) => `Day ${n} of ${total}`,
+    /** См. довод в ru.ts. */
+    dayBack: (short: string) => `Back to ${short}`,
     known: 'What we know so far',
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */

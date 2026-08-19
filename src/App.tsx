@@ -262,6 +262,23 @@ function saveStoryMissionId(id: string) {
 }
 
 /**
+ * Забыть, докуда дошла кампания. Вызывается сбросом прогресса.
+ *
+ * Позиция в кампании — это прогресс, а не настройка: сброс, оставляющий
+ * её на месте, отправляет человека с чистой главной сразу в четверг,
+ * где бриф ссылается на находки трёх дней, которых больше нет. Ключ живёт
+ * отдельно от `quaera.progress.v1` (см. довод у STORY_MISSION_STORAGE_KEY),
+ * и ровно поэтому его надо гасить руками — общая чистка его не заденет.
+ */
+function clearStoryMissionId() {
+  try {
+    localStorage.removeItem(STORY_MISSION_STORAGE_KEY);
+  } catch {
+    // нечего чистить — значит и не сохранялось
+  }
+}
+
+/**
  * Миссия, с которой открывается режим: запомненная, а если её больше нет
  * в кампании (переписали контент) — первая. Возврат к началу здесь честнее
  * пустого экрана: сюжет читается подряд, и первая миссия ничего не ломает.
@@ -736,6 +753,34 @@ export default function App() {
   }, [locale, activePack, activeTrack]);
 
   const storyMission = screen.name === 'storymode' ? storyMissions.get(screen.missionId) ?? null : null;
+
+  /**
+   * Докуда дошла кампания — то же, что лежит в хранилище, но в состоянии:
+   * от него зависит, какие дни в полосе кликабельны, и после сброса оно
+   * обязано обновиться без перезагрузки.
+   *
+   * **Двигается только вперёд.** Возврат в понедельник из четверга —
+   * перечитать, а не откатить неделю: если бы отметка ехала за экраном,
+   * человек, заглянувший назад, терял бы вход в четверг и шёл бы вперёд
+   * заново. Поэтому клик по дню меняет экран и не трогает отметку.
+   */
+  const [storyReachedId, setStoryReachedId] = useState<string | null>(readStoryMissionId);
+
+  /**
+   * Дни кампании, открытые для возврата: всё до достигнутого включительно.
+   *
+   * Считается по кампании, а не по прогрессу заданий: день считается
+   * пройденным, если человек до него дошёл сюжетом. Задания дня можно
+   * решить и в обычном занятии, ни разу не открыв историю, и брать их
+   * за признак значило бы открывать четверг тому, кто не читал ни одного
+   * брифа.
+   */
+  const storyOpenDayIds = useMemo(() => {
+    const missions = storyCampaign(locale).missions;
+    const reached = missions.findIndex((m) => m.id === storyReachedId);
+    const upTo = reached < 0 ? 0 : reached;
+    return new Set(missions.slice(0, upTo + 1).map((m) => m.id));
+  }, [locale, storyReachedId]);
 
   useEffect(() => {
     if (!executor) {
@@ -1344,6 +1389,11 @@ export default function App() {
     recordedTasksRef.current.clear();
     clearSession();
     setPendingSession(null);
+    // Позиция кампании режима истории живёт своим ключом и общей чисткой
+    // не задевается — гасим отдельно, иначе чистая главная открывала бы
+    // историю с середины недели.
+    clearStoryMissionId();
+    setStoryReachedId(null);
     // clearedProgress, а не emptyProgress: метка сброса нужна будущему
     // слиянию копий, чтобы стёртое не вернулось с другого устройства
     // (см. resetAt в srs/store.ts и sync/merge.ts).
@@ -1450,7 +1500,18 @@ export default function App() {
     const next = storyMissionAfter(locale, currentId);
     if (!next || !storyMissions.has(next.id)) return null;
     return () => {
-      saveStoryMissionId(next.id);
+      /*
+       * Отметка «докуда дошли» двигается только вперёд. Человек, вернувшийся
+       * в понедельник и дочитавший его до крючка, нажмёт «следующий день» —
+       * и без этой проверки отметка съехала бы с четверга на вторник, то есть
+       * возврат назад отбирал бы два дня пути.
+       */
+      const missions = storyCampaign(locale).missions;
+      const at = (id: string | null) => missions.findIndex((m) => m.id === id);
+      if (at(next.id) > at(storyReachedId)) {
+        saveStoryMissionId(next.id);
+        setStoryReachedId(next.id);
+      }
       setScreen({ name: 'storymode', missionId: next.id, phase: { kind: 'brief' } });
       window.scrollTo({ top: 0 });
     };
@@ -1977,6 +2038,12 @@ export default function App() {
               onTaskDone={recordAttempt}
               onOpenSchema={openSchema}
               onNext={nextStoryMission(storyMission.mission.id)}
+              openDayIds={storyOpenDayIds}
+              onOpenDay={(id) => {
+                if (!storyMissions.has(id)) return;
+                setScreen({ name: 'storymode', missionId: id, phase: { kind: 'brief' } });
+                window.scrollTo({ top: 0 });
+              }}
               onExit={() => setScreen({ name: 'home' })}
             />
           )}
