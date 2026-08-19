@@ -34,6 +34,18 @@ import type { Track } from './types';
  * следующий поимённо («завтра откроем fact_sellout»), поэтому переставить
  * дни нельзя, не переписав прозу.
  *
+ * **Новая конструкция появляется дважды.** Сначала в готовом виде — в подводке,
+ * в шаблоне с пропусками или в запросе predict-задания, — и только потом
+ * человек печатает её рукой. Это и есть та лестница, ради которой неделю
+ * разложили на пять дней, и держать её на глаз не выходит: первый прогон
+ * недели нашёл десять мест, где подводка говорила про идею, а эталон требовал
+ * напечатать слово, которого человек нигде не видел (IN и AND в понедельник,
+ * DESC там же, COUNT(DISTINCT) — за экран до того, как ему учат). Теперь
+ * правило проверяется гейтом test:story-ladder, и у него есть следствие
+ * для прозы: функцию мало назвать, её надо показать вызовом. «AVG усредняет»
+ * ступенью не считается, AVG(list_price) — считается, потому что по первому
+ * напечатать нельзя, а по второму можно.
+ *
  * **Пока это вертикальный срез: одна неделя, только SQL, без ветвления.**
  * Вход спрятан за `?story` (см. STORY_ENABLED в App.tsx): код в проде, но
  * показывать всем рано.
@@ -62,6 +74,8 @@ export type StoryScene =
   | 'dropped'
   | 'threshold'
   | 'factors'
+  // разговоры между делом
+  | 'corridor'
   // находки и повороты сюжета
   | 'toolkit'
   | 'foundation'
@@ -104,6 +118,40 @@ export interface StoryStep {
   /** id существующего задания, которое крутится на этом шаге. */
   taskId: string;
   intro?: StoryIntro;
+  /**
+   * Реакция на сданное: одна реплика персонажа про то, что человек только что
+   * получил. Появляется рядом с разбором решённого задания, своего экрана
+   * не заводит.
+   *
+   * **Зачем.** Весь живой голос дня сидел на его концах — бриф утром, суждение
+   * вечером, — а середина шла обучающей прозой, и три задания подряд
+   * ощущались упражнениями, а не работой. Реплика возвращает середине пульс
+   * дешевле любого экрана: мир заметил, что вы сдали.
+   *
+   * **Правило письма: реплика говорит о числе, а не о навыке.** «37 точек?
+   * У нас их было под восемьдесят» — реакция; «отлично, вы освоили JOIN» —
+   * похвала тренажёра, от которой история и отличается. Отсюда же
+   * необязательность: заданию, чей результат никого в кампании не удивляет,
+   * реплику придумывать не надо.
+   */
+  after?: StoryMessage;
+  /**
+   * Разговор между делом — экран перед подводкой этого шага, то есть между
+   * двумя заданиями дня.
+   *
+   * **Зачем отдельная сущность, а не ещё один абзац подводки.** Подводка учит
+   * и говорит голосом наставника; здесь никто не учит. Смысл беседы в том,
+   * что человек получает факт из чужих рук — так, как факты и приходят
+   * в работе: не из таблицы, а от того, кто был в поле. Дальше этот факт
+   * либо подтвердится числами, либо нет, и в этом вся разница между
+   * расследованием и упражнением.
+   *
+   * **Одна беседа на неделю.** Дважды — и это уже рубрика, а не случайность
+   * коридора. Место выбирается по сюжету: в первой неделе разговор стоит
+   * в среде, ровно там, где числа впервые упираются в потолок и подсказать
+   * может только человек.
+   */
+  interlude?: { scene?: StoryScene; messages: StoryMessage[] };
 }
 
 export interface StoryMission {
@@ -194,14 +242,25 @@ const ru: StoryCampaign = {
               'Колонку можно переименовать на выходе: list_price AS price вернёт те же числа, но в отчёте они пойдут под коротким именем. Это не косметика — заголовки колонок читают люди, а не только движок.',
             ],
           },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Сорок семь позиций — весь наш ассортимент помещается на один экран. Запомни это число: если в отчёте когда-нибудь окажется больше, значит, ты размножил строки соединением, а не нашёл новые товары.»',
+          },
         },
         {
           taskId: 'sql-003',
           intro: {
             scene: 'filter',
+            title: 'Отбор строк',
             paras: [
               'Теперь то же самое, но не всё подряд: в каталог берут не весь ассортимент, а два бренда и только позиции дороже сотни. Строки отбирает WHERE, и стоит он после FROM.',
+              'Одно условие устроено просто — колонка, знак, значение: WHERE division = \'FMCG\'. Текст обязательно в одинарных кавычках, число — без них: WHERE list_price > 100. «Строго больше» — это >, «не меньше» — >=.',
+              'Условий может быть несколько: AND требует, чтобы выполнились оба сразу. А когда одна колонка может принимать несколько значений, вместо цепочки OR пишут IN со списком: WHERE brand IN (\'Aqualis\', \'Fruvia\'). Короче — и безопаснее: у AND и OR разный приоритет, и на этом ошибаются чаще, чем на чём-либо ещё.',
             ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Шесть строк из сорока семи. Заметь: ты не перебирал прайс глазами — условие сделало это за тебя. На таблице в сотни тысяч строк оно отработает ровно так же, и вот там разница станет видна.»',
           },
         },
         {
@@ -209,8 +268,12 @@ const ru: StoryCampaign = {
           intro: {
             scene: 'sort',
             paras: [
-              'И последнее на сегодня — порядок. ORDER BY сортирует, LIMIT обрезает; вдвоём они отвечают на любой вопрос вида «покажи верхние десять».',
+              'И последнее на сегодня — порядок. ORDER BY list_price сортирует по возрастанию, ORDER BY list_price DESC — от большего к меньшему; LIMIT 10 обрезает результат до десяти строк. Вдвоём они отвечают на любой вопрос вида «покажи верхние десять».',
             ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Вся верхушка прайса аптечная — Vitanor, Gastrivo, Pyrexan. Ни одного напитка в первой десятке. Это не перекос выборки, это наша структура цен, и Nettora живёт в совсем другой её части.»',
           },
         },
       ],
@@ -229,6 +292,11 @@ const ru: StoryCampaign = {
      * версии кампании появлялась в пятничном запросе из ниоткуда. Подводка
      * к ней намеренно ссылается вперёд, на пятницу: неделя должна читаться
      * как одно движение, а не как пять несвязанных дней.
+     *
+     * Предсказание идёт первым, и это не про сюжет, а про ступень: sql-007
+     * разбирает три формы COUNT чтением, sql-008 требует две из них рукой.
+     * В обратном порядке (как было сначала) день просил напечатать
+     * COUNT(DISTINCT) за экран до того, как о нём заходила речь.
      */
     {
       id: 'day-2-counting',
@@ -249,23 +317,34 @@ const ru: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-008',
+          taskId: 'sql-007',
           intro: {
             scene: 'fold',
+            title: 'Три вопроса, которые выглядят одинаково',
             paras: [
-              'Агрегат — функция, которая из многих строк делает одно число: COUNT считает строки, AVG усредняет, MIN и MAX берут края. Без GROUP BY агрегат сворачивает всю таблицу в одну-единственную строку — ровно то, что просит Аоки-сан.',
+              'Агрегат — функция, которая из многих строк делает одно число: COUNT(*) считает строки, SUM(units) складывает, AVG(list_price) усредняет, MIN и MAX берут края. Вчера ты перечислял строки, сегодня будешь получать из них числа — это и есть второй язык запросов.',
+              'И сразу осторожность с самым простым из них. COUNT(*) считает строки. COUNT(chain_name) считает строки, где в этой колонке что-то есть. COUNT(DISTINCT chain_name) считает разные значения. Три разных вопроса, три разных числа, и перепутать их легче, чем кажется.',
+              'Смотреть будем не по прайсу, а по справочнику точек dim_customer: одна строка — один магазин, у сетевых заполнено название сети, у остальных там пусто. Это не отвлечение: «в скольких точках продавали бренд» — это в точности COUNT(DISTINCT customer_id), и к пятнице оно нам понадобится.',
             ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Сто сорок четыре точки, у половины за спиной сеть, а самих сетей двенадцать. Двенадцать переговоров — вот из чего на самом деле сделана наша полка.»',
           },
         },
         {
-          taskId: 'sql-007',
+          taskId: 'sql-008',
           intro: {
             scene: 'counts',
-            title: 'Три вопроса, которые выглядят одинаково',
+            title: 'Одна строка вместо всей таблицы',
             paras: [
-              'Осторожно с самым простым. COUNT(*) считает строки. COUNT(колонка) считает строки, где в этой колонке что-то есть. COUNT(DISTINCT колонка) считает разные значения. Три разных вопроса, три разных числа, и перепутать их легче, чем кажется.',
-              'Это не мелочь на потом: «в скольких точках продавали бренд» — это в точности COUNT(DISTINCT customer_id), и к пятнице оно нам понадобится.',
+              'Без GROUP BY агрегат сворачивает всю таблицу в одну-единственную строку — ровно то, что просит Аоки-сан: не список товаров, а его размер.',
+              'Дробное округляют: ROUND(AVG(list_price), 2) — среднее до двух знаков. И имя колонке в такой сводке обязательно, тем же AS, что вчера: COUNT(*) AS products читается, голый COUNT(*) в заголовке отчёта — нет.',
             ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Сорок семь позиций, девять брендов. Спасибо — теперь я хотя бы знаю масштаб разговора: мы спорим об одном бренде из девяти, и он не самый крупный.»',
           },
         },
         {
@@ -277,6 +356,10 @@ const ru: StoryCampaign = {
               'Агрегат считает по всей таблице сразу. GROUP BY разрезает её на группы и заставляет агрегат посчитать внутри каждой отдельно: одна строка результата на одну группу.',
               'Разрез стоит в GROUP BY, а в SELECT рядом с ним — только он сам и агрегаты. Колонка мимо этого правила ошибка, и завтра ты своими глазами увидишь, что с ней делает движок.',
             ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Посмотри на Nettora: пять позиций против шести у соседей и самая высокая средняя цена в FMCG — двести один против шестидесяти восьми у Aqualis. Пока это просто строка в таблице. В пятницу вспомнишь.»',
           },
         },
       ],
@@ -302,7 +385,7 @@ const ru: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
       short: 'Ср',
-      found: 'Форма года найдена: провал в первом квартале. Но он у всей категории, а не у одной Nettora.',
+      found: 'Форма года найдена: зимний спад и летний пик. Но эта волна у всей категории, а не у одной Nettora.',
       scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -323,26 +406,56 @@ const ru: StoryCampaign = {
             paras: [
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7) даёт 2025-03.',
               'Группировать можно не только по колонке, но и по выражению. Чтобы не повторять его дважды, пишут GROUP BY 1 — «по первой колонке в SELECT».',
+              'Год в шаблоне уже отобран: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
               'Как это выглядело вчера, на ассортименте по брендам:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании два места оставлены пустыми — чем считаем штуки и по чему группируем.',
             ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Июнь против ноября — почти вдвое. Эта волна мне знакома двадцать лет, и на встрече её слушать никто не станет: она одинаковая у всех, включая тех, у кого продажи растут.»',
           },
         },
         {
           taskId: 'sql-035',
+          /*
+           * Единственный разговор недели. Стоит здесь, потому что среда —
+           * первый день, когда числа упираются в потолок: форма года найдена,
+           * а причины в ней нет. Ито-сан приносит не ответ, а две версии
+           * сразу, и они намеренно противоположные — та самая развилка,
+           * которую в пятницу разрешает разложение на множители. Дай он одну,
+           * пятница превратилась бы в пересказ услышанного в коридоре.
+           */
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ито-сан, руководитель полевой команды',
+                text: '«Ты новенький? Слушай, раз ты в цифрах — глянь заодно, что у нас творится с зимы. У меня двое торговых уволились в январе, точки месяц стояли без визитов. А ещё в феврале подняли цены — может, покупатель просто ушёл к соседям. Я в таблицы не лезу, но в поле стало тяжелее.»',
+              },
+              {
+                from: 'Ваш руководитель',
+                text: '«Ито-сан говорит по памяти, и это не доказательство. Это две версии сразу, и они противоположные: либо у бренда пропала полка, либо с полки перестали брать. Звучат одинаково убедительно, а различить их можно только числами. Запомни обе — в пятницу будешь выбирать.»',
+              },
+            ],
+          },
           intro: {
             scene: 'stray',
             paras: [
               'И сразу та ловушка, о которой вчера предупреждали: что будет, если рядом с агрегатом поставить колонку, которой нет в GROUP BY. Ответ зависит от движка, и это само по себе стоит знать.',
             ],
           },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Вот за это отчёты и переделывают: запрос не упал, число выглядит настоящим, а взято из случайной строки группы. Движок промолчал — значит, смотреть придётся тебе.»',
+          },
         },
       ],
       reflection: [
-        'Ты видишь форму: продажи держатся весь год и проваливаются в первом квартале — и это по всем брендам сразу.',
+        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И волна одна на все бренды сразу.',
         'Обрати внимание на то, что легко проскочить: ты нашёл где просело, а не почему. И нашёл по всей рознице разом, а Аоки-сан спрашивает про один бренд.',
       ],
       hook: [
-        'Провал в Q1 есть у всей категории — это сезон, и нести его на встречу бессмысленно: сезон одинаков для всех, включая конкурентов.',
+        'Зимний спад есть у всей категории — это сезон, и нести его на встречу бессмысленно: сезон одинаков для всех, включая конкурентов.',
         'А у Nettora продажи упали вдвое, и вдвое — это уже не сезон. Завтра надо будет отделить один бренд от остальных. Загвоздка в том, что бренда в таблице продаж нет.',
       ],
     },
@@ -380,6 +493,10 @@ const ru: StoryCampaign = {
               'Пишется это так:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nУсловие после ON и есть «по какому ключу совпадать». Короткие имена f и p — псевдонимы таблиц: без них пришлось бы писать полное имя перед каждой колонкой.',
             ],
           },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Nettora седьмая из девяти. Два года назад она была второй — сразу за Fruvia. Вот теперь я вижу, о чём мы вообще говорим.»',
+          },
         },
         {
           taskId: 'sql-037',
@@ -388,6 +505,10 @@ const ru: StoryCampaign = {
             paras: [
               'У соединения есть цена, и узнать её лучше сразу, на маленьком примере: строки, которым не нашлось пары, исчезают из результата молча — без ошибки и без предупреждения.',
             ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Двенадцать клиентов пропали из отчёта, и ни строчки об этом. Если в пятницу число точек не сойдётся с тем, что ты ожидал, — начинай искать отсюда.»',
           },
         },
         {
@@ -399,6 +520,10 @@ const ru: StoryCampaign = {
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — это число разных точек, COUNT(DISTINCT customer_id): вторничная функция на новой таблице.',
               'Фильтровать по агрегату WHERE не умеет — он отбирает строки до группировки, а выручка бренда появляется только после неё. Для этого есть HAVING: тот же фильтр, но после GROUP BY.',
             ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Nettora в этом списке нет, и до порога ей не хватило одной точки: нужно восемьдесят, у неё семьдесят девять. А в этом году их тридцать семь.»',
           },
         },
       ],
@@ -494,14 +619,25 @@ const en: StoryCampaign = {
               'A column can be renamed on the way out: list_price AS price returns the same numbers under a shorter heading. That is not decoration. Column headings are read by people, not only by the engine.',
             ],
           },
+          after: {
+            from: 'Your manager',
+            text: '"Forty-seven items, and our whole assortment fits on one screen. Remember that number: if a report ever shows more, you multiplied rows with a join, you did not find new products."',
+          },
         },
         {
           taskId: 'sql-003',
           intro: {
             scene: 'filter',
+            title: 'Picking rows',
             paras: [
               'Now the same thing, but not everything at once: the catalog takes two brands only, and only items above a hundred. Rows are picked by WHERE, which comes after FROM.',
+              'A single condition is column, sign, value: WHERE division = \'FMCG\'. Text always goes in single quotes, numbers go bare: WHERE list_price > 100. "Strictly above" is >, "no less than" is >=.',
+              'Conditions can be combined: AND demands that both hold at once. And when one column may take several values, a chain of OR gives way to IN with a list: WHERE brand IN (\'Aqualis\', \'Fruvia\'). Shorter, and safer: AND and OR bind with different precedence, and that trips people up more often than anything else.',
             ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Six rows out of forty-seven. Notice that you did not comb the price list by eye. The condition did it for you. On a table of hundreds of thousands of rows it works exactly the same, and that is where the difference shows."',
           },
         },
         {
@@ -509,8 +645,12 @@ const en: StoryCampaign = {
           intro: {
             scene: 'sort',
             paras: [
-              'One more thing today: order. ORDER BY sorts, LIMIT cuts, and together they answer any question shaped like "show me the top ten".',
+              'One more thing today: order. ORDER BY list_price sorts upward, ORDER BY list_price DESC runs from larger to smaller, and LIMIT 10 cuts the result to ten rows. Together they answer any question shaped like "show me the top ten".',
             ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"The whole top of the price list is pharma: Vitanor, Gastrivo, Pyrexan. Not one drink in the top ten. That is not a quirk of the sample, that is our price structure, and Nettora lives in a very different part of it."',
           },
         },
       ],
@@ -543,23 +683,34 @@ const en: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-008',
+          taskId: 'sql-007',
           intro: {
             scene: 'fold',
+            title: 'Three questions that look identical',
             paras: [
-              'An aggregate is a function that turns many rows into one number: COUNT counts rows, AVG averages, MIN and MAX take the edges. Without GROUP BY an aggregate folds the whole table into a single row, which is exactly what Aoki asked for.',
+              'An aggregate is a function that turns many rows into one number: COUNT(*) counts rows, SUM(units) adds them up, AVG(list_price) averages, MIN and MAX take the edges. Yesterday you listed rows; today you get numbers out of them, and that is the second language of queries.',
+              'And straight away, care with the simplest of them. COUNT(*) counts rows. COUNT(chain_name) counts rows where that column holds something. COUNT(DISTINCT chain_name) counts different values. Three different questions, three different numbers, and they are easier to mix up than they look.',
+              'We will look at this on the outlet directory rather than the price list: in dim_customer one row is one store, chain members carry a chain name and the rest hold nothing there. This is not a detour: "in how many outlets did the brand sell" is exactly COUNT(DISTINCT customer_id), and by Friday we will need it.',
             ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"A hundred and forty-four outlets, half of them behind a chain, and only twelve chains in total. Twelve negotiations are what our shelf is actually made of."',
           },
         },
         {
-          taskId: 'sql-007',
+          taskId: 'sql-008',
           intro: {
             scene: 'counts',
-            title: 'Three questions that look identical',
+            title: 'One row instead of the whole table',
             paras: [
-              'Be careful with the simplest one. COUNT(*) counts rows. COUNT(column) counts rows where that column holds something. COUNT(DISTINCT column) counts different values. Three different questions, three different numbers, and they are easier to mix up than they look.',
-              'This is not a detail for later: "in how many outlets did the brand sell" is exactly COUNT(DISTINCT customer_id), and by Friday we will need it.',
+              'Without GROUP BY an aggregate folds the whole table into a single row, which is exactly what Aoki asked for: not the list of items but its size.',
+              'Fractions get rounded: ROUND(AVG(list_price), 2) is an average to two decimal places. And a column in a summary like this needs a name, by the same AS as yesterday: COUNT(*) AS products reads, a bare COUNT(*) in a report heading does not.',
             ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Forty-seven items, nine brands. Thank you. At least now I know the scale of the argument: we are debating one brand out of nine, and not the largest one."',
           },
         },
         {
@@ -571,6 +722,10 @@ const en: StoryCampaign = {
               'An aggregate counts across the whole table at once. GROUP BY cuts the table into groups and makes the aggregate count inside each one separately: one result row per group.',
               'The dimension sits in GROUP BY, and next to it in SELECT there are only the dimension itself and aggregates. A column outside that rule is an error, and tomorrow you will see for yourself what the engine does with it.',
             ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Look at Nettora: five items against six for its neighbours, and the highest average price in FMCG: two hundred and one against sixty-eight for Aqualis. For now it is just a row in a table. On Friday you will remember it."',
           },
         },
       ],
@@ -589,7 +744,7 @@ const en: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
       short: 'Wed',
-      found: 'The shape of the year is found: a first quarter dip. But it belongs to the whole category, not to Nettora.',
+      found: 'The shape of the year is found: a winter trough and a summer peak. But that wave belongs to the whole category, not to Nettora.',
       scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -610,26 +765,49 @@ const en: StoryCampaign = {
             paras: [
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7) gives 2025-03.',
               'You can group not only by a column but by an expression. To avoid writing it twice, people write GROUP BY 1, meaning "by the first column in SELECT".',
+              'The year is already picked in the template: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
               'Here is how it looked yesterday, on the assortment by brand:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves two spots blank: what to compute the units with, and what to group by.',
             ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"June against November, nearly double. I have known that wave for twenty years, and nobody in the meeting will sit through it: it is the same for everyone, including the brands that are growing."',
           },
         },
         {
           taskId: 'sql-035',
+          /* Тот же единственный разговор недели, см. русскую версию выше. */
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ito-san, field team lead',
+                text: '"You are the new one? Listen, since you are in the numbers, take a look at what has been going on with us since winter. Two of my reps quit in January and their outlets went a month without a visit. And prices went up in February, so maybe the shopper simply walked next door. I do not go into tables, but out in the field it got harder."',
+              },
+              {
+                from: 'Your manager',
+                text: '"Ito-san is speaking from memory, and that is not evidence. It is two versions at once, and they are opposites: either the brand lost its shelf, or people stopped taking it off the shelf. They sound equally convincing, and only numbers tell them apart. Hold on to both, because on Friday you will be choosing."',
+              },
+            ],
+          },
           intro: {
             scene: 'stray',
             paras: [
               'And straight into the trap we warned you about yesterday: what happens when a column that is not in GROUP BY sits next to an aggregate. The answer depends on the engine, and that alone is worth knowing.',
             ],
           },
+          after: {
+            from: 'Your manager',
+            text: '"This is what reports get rebuilt over: the query did not fail, the number looks real, and it was taken from an arbitrary row of the group. The engine kept quiet, so the looking is on you."',
+          },
         },
       ],
       reflection: [
-        'You can see the shape: sales hold all year and dip in the first quarter, and that dip is there across every brand at once.',
+        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And the wave is one and the same across every brand.',
         'Notice what is easy to skip: you found where it dropped, not why. And you found it across all of retail at once, while Aoki is asking about one brand.',
       ],
       hook: [
-        'The Q1 dip belongs to the whole category, which makes it seasonality, and carrying seasonality into the meeting is pointless: the season is the same for everyone, competitors included.',
+        'The winter trough belongs to the whole category, which makes it seasonality, and carrying seasonality into the meeting is pointless: the season is the same for everyone, competitors included.',
         'Nettora, though, fell by half, and by half is not a season. Tomorrow you will have to separate one brand from the rest. The catch is that the sales table holds no brand at all.',
       ],
     },
@@ -662,6 +840,10 @@ const en: StoryCampaign = {
               'It is written like this:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nThe condition after ON is the "match on which key" part. The short names f and p are table aliases: without them you would spell the full table name in front of every column.',
             ],
           },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Nettora is seventh out of nine. Two years ago it was second, right behind Fruvia. Now I see what we are actually talking about."',
+          },
         },
         {
           taskId: 'sql-037',
@@ -670,6 +852,10 @@ const en: StoryCampaign = {
             paras: [
               'A join has a price, and it is better learned right away on a small example: rows that found no match disappear from the result silently, with no error and no warning.',
             ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Twelve clients vanished from the report and not a word about it. If the outlet count on Friday does not match what you expected, start looking here."',
           },
         },
         {
@@ -681,6 +867,10 @@ const en: StoryCampaign = {
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id), Tuesday function on a new table.',
               'WHERE cannot filter by an aggregate. It picks rows before grouping, and a brand revenue only exists after it. That is what HAVING is for: the same filter, but after GROUP BY.',
             ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Nettora is not on that list, and it missed the threshold by a single outlet: eighty required, seventy-nine held. This year it holds thirty-seven."',
           },
         },
       ],

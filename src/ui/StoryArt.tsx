@@ -56,6 +56,7 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'foundation' && <Foundation />}
         {scene === 'coverage' && <Coverage />}
         {scene === 'meeting' && <Meeting />}
+        {scene === 'corridor' && <Corridor />}
         {scene === 'catalog' && <Catalog />}
         {scene === 'tables' && <Tables />}
         {scene === 'join' && <Join />}
@@ -756,6 +757,36 @@ function Meeting() {
         <circle cx="264" cy="34" r="18" strokeWidth="1.8" />
       </g>
       <path className="art-line" d="M264 34V22M264 34l9 6" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Разговор между делом: две чашки на узком столике у автомата, пар над ними
+ * и дверной проём в стороне. Акцент на пар — единственное движение в кадре,
+ * и оно же единственное, что отличает эту сцену от рабочего места: здесь
+ * никто не работает, здесь разговаривают.
+ */
+function Corridor() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M24 22v78M24 22h56v78" strokeWidth="1.6" />
+        <path d="M232 20h64v54h-64z" strokeWidth="1.6" />
+        <path d="M244 36h40M244 48h28" strokeWidth="1.6" strokeLinecap="butt" />
+      </g>
+
+      <g className="art-mid">
+        <path d="M96 100h136" strokeWidth="2" />
+        <path d="M118 100V84h92v16" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-near">
+        <path d="M132 84V68h20v16zM176 84V68h20v16z" strokeWidth="1.8" />
+        <path d="M152 72h6a4 4 0 0 1 0 8h-6M196 72h6a4 4 0 0 1 0 8h-6" strokeWidth="1.4" />
+      </g>
+
+      <path className="art-line" d="M142 60c-6-6 6-10 0-16M186 60c-6-6 6-10 0-16" strokeWidth="2.2" />
     </g>
   );
 }

@@ -165,9 +165,27 @@ interface Props {
    * остаётся текстом без клика, а не ведёт наружу из занятия.
    */
   onOpenLesson?: () => void;
+  /**
+   * Реплика персонажа про сданный результат — только у заданий режима
+   * истории (см. StoryStep.after). Стоит рядом с разбором, потому что это
+   * то же место разговора: разбор объясняет решение, реплика показывает,
+   * что с ним стало дальше. Своего экрана ей не дают намеренно — в дне
+   * из семи экранов восьмой ради одной фразы читался бы как заминка.
+   */
+  afterNote?: { from: string; text: string };
 }
 
-export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, onOpenSchema, onOpenLesson }: Props) {
+export function TaskView({
+  task,
+  executor,
+  schema,
+  drafts,
+  skillTitle,
+  onDone,
+  onOpenSchema,
+  onOpenLesson,
+  afterNote,
+}: Props) {
   const { t } = useI18n();
   const steps = useMemo(() => resolveSteps(task), [task]);
   /**
@@ -398,6 +416,12 @@ export function TaskView({ task, executor, schema, drafts, skillTitle, onDone, o
             <div className="card">
               <h2>{t.task.explainTitle}</h2>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{task.explain}</p>
+            </div>
+          )}
+          {last && afterNote && (
+            <div className="card story-after">
+              <p className="story-mode-from">{afterNote.from}</p>
+              <p className="story-mode-text">{afterNote.text}</p>
             </div>
           )}
           {step.kind === 'compute' && (

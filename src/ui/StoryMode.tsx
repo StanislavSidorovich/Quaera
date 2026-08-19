@@ -16,9 +16,14 @@ import { StoryProgress } from './StoryProgress';
  *
  * Один день миссии выглядит так:
  *   бриф (кто и зачем спрашивает)
- *   → [подводка → задание] столько раз, сколько заданий в дне
+ *   → [разговор между делом → подводка → задание] столько раз, сколько
+ *     заданий в дне
  *   → суждение (это уже ответ заказчику? ещё нет)
  *   → крючок (что осталось и куда ведёт сюжет).
+ *
+ * Разговор между делом есть у одного шага на неделю (см. StoryStep.interlude),
+ * подводка — у большинства; экран, которому нечего показать, просто не
+ * появляется.
  *
  * **Почему фаза — объект, а не строка.** Раньше день держал ровно одно
  * задание, и пяти имён хватало. Как только в дне их стало три, фаза обязана
@@ -32,6 +37,7 @@ import { StoryProgress } from './StoryProgress';
  */
 export type StoryPhase =
   | { kind: 'brief' }
+  | { kind: 'interlude'; step: number }
   | { kind: 'intro'; step: number }
   | { kind: 'task'; step: number }
   | { kind: 'reflection' }
@@ -49,6 +55,7 @@ export type StoryPhase =
 export function storyPhases(mission: StoryMission): StoryPhase[] {
   const phases: StoryPhase[] = [{ kind: 'brief' }];
   mission.steps.forEach((step, i) => {
+    if (step.interlude) phases.push({ kind: 'interlude', step: i });
     if (step.intro) phases.push({ kind: 'intro', step: i });
     phases.push({ kind: 'task', step: i });
   });
@@ -58,7 +65,7 @@ export function storyPhases(mission: StoryMission): StoryPhase[] {
 
 function samePhase(a: StoryPhase, b: StoryPhase): boolean {
   if (a.kind !== b.kind) return false;
-  if (a.kind === 'intro' || a.kind === 'task') {
+  if (a.kind === 'intro' || a.kind === 'task' || a.kind === 'interlude') {
     return a.step === (b as { step: number }).step;
   }
   return true;
@@ -174,6 +181,7 @@ export function StoryMode({
           drafts={drafts}
           skillTitle={step.skillTitle}
           onOpenSchema={onOpenSchema}
+          afterNote={mission.steps[phase.step]?.after}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
         />
       </>
@@ -189,6 +197,7 @@ export function StoryMode({
   const nextLabel = after?.kind === 'task' ? t.storyMode.toTask : t.storyMode.next;
 
   const intro = phase.kind === 'intro' ? mission.steps[phase.step]?.intro : null;
+  const interlude = phase.kind === 'interlude' ? mission.steps[phase.step]?.interlude : null;
   const scene =
     phase.kind === 'brief'
       ? mission.scenes.brief
@@ -196,7 +205,9 @@ export function StoryMode({
         ? mission.scenes.reflection
         : phase.kind === 'hook'
           ? mission.scenes.hook
-          : intro?.scene;
+          : phase.kind === 'interlude'
+            ? interlude?.scene
+            : intro?.scene;
 
   /*
    * Находки прошлых дней — папка дела, которая растёт. Показывается только
@@ -228,6 +239,27 @@ export function StoryMode({
             )}
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
+                <div className="story-mode-msg" key={i}>
+                  <p className="story-mode-from">{m.from}</p>
+                  <p className="story-mode-text">{m.text}</p>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
+            </button>
+          </>
+        )}
+
+        {/*
+          * Разговор между делом рисуется той же перепиской, что и бриф:
+          * это один и тот же жанр — люди говорят, — и различать их вёрсткой
+          * значило бы намекать на разницу, которой нет.
+          */}
+        {phase.kind === 'interlude' && interlude && (
+          <>
+            <div className="story-mode-thread">
+              {interlude.messages.map((m, i) => (
                 <div className="story-mode-msg" key={i}>
                   <p className="story-mode-from">{m.from}</p>
                   <p className="story-mode-text">{m.text}</p>

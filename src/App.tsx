@@ -1421,6 +1421,23 @@ export default function App() {
   }
 
   /**
+   * Вход в режим истории из «О тренажёре».
+   *
+   * Отличается от openStoryMode одним: запоминает флаг. Адрес `?story`
+   * делает это сам (readStoryEnabled), и без этого человек, вошедший
+   * из приложения, терял бы раздел из бокового меню при каждом
+   * возвращении — то есть каждый раз искал бы вход заново.
+   */
+  function openStoryModeFromApp() {
+    try {
+      localStorage.setItem('quaera.story', '1');
+    } catch {
+      // приватный режим — вход сработает, просто не запомнится
+    }
+    openStoryMode();
+  }
+
+  /**
    * Что делает кнопка в конце миссии, если кампания на ней не кончается.
    *
    * null означает «эта миссия последняя» — тогда крючок прощается словами
@@ -1833,6 +1850,7 @@ export default function App() {
               onSelectTrack={(track) => { switchTrack(track); }}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onOpenAccount={() => setScreen({ name: 'account' })}
+              onOpenStoryMode={storyMissionTrack ? openStoryModeFromApp : null}
             />
           )}
 
@@ -3244,10 +3262,25 @@ function About({
   onSelectTrack,
   onOpenOnboarding,
   onOpenAccount,
+  onOpenStoryMode,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
   onOpenAccount: () => void;
+  /**
+   * Вход в режим истории — единственный внутри приложения, и стоит он
+   * здесь, а не на главной. Довод тот же, по которому раздел спрятан
+   * за `?story` (см. STORY_OPEN_ON_BOOT): незаконченный прототип не занимает
+   * первый экран. Но `?story` — адрес, а установленное приложение
+   * открывается с иконки, без адресной строки, и другого способа туда
+   * попасть у него нет. «О тренажёре» — компромисс: свежий пользователь
+   * сюда не приходит, а тот, кто дочитал до «как это устроено», уже
+   * достаточно любопытен, чтобы прототип его не отпугнул.
+   *
+   * null — если кампания не разрешается в задания (см. storyMissionTrack):
+   * ссылка, ведущая на пустой экран, хуже отсутствия ссылки.
+   */
+  onOpenStoryMode: (() => void) | null;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
@@ -3455,7 +3488,12 @@ function About({
           <h2>{t.about.howTitle}</h2>
           <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
           <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
+          {onOpenStoryMode && (
+            <button type="button" className="link-row" onClick={onOpenStoryMode}>
+              {t.about.storyModeLink}
+            </button>
+          )}
         </div>
 
         <div className="card">

@@ -164,6 +164,8 @@ export const en = {
   about: {
     title: 'About the trainer',
     entryLink: "What's in the trainer and how it works →",
+    /** См. довод в ru.ts. */
+    storyModeLink: 'Trying it out: an analyst work week as one story →',
     tracksStatLabel: 'tracks',
     skillsStatLabel: 'skills',
     tasksStatLabel: 'tasks',
