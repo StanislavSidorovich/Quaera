@@ -19,12 +19,26 @@ import type { Track } from './types';
  * источник правды рядом с проверяемым. Миссия берёт задание из пака как есть
  * и лишь оборачивает его в сюжет.
  *
- * **Пока это вертикальный срез: одна миссия, только SQL, без ветвления.**
+ * **Пока это вертикальный срез: две миссии подряд, только SQL, без ветвления.**
  * Цель среза — проверить, заходит ли сама рамка «первый день на работе», прежде
  * чем строить движок состояний (последствия, ветки) и остальную кампанию.
  * Вход спрятан за `?story` (см. STORY_ENABLED в App.tsx): код в проде, но
  * показывать всем рано.
+ *
+ * Миссии идут по порядку массива, и порядок этот — сюжетный, а не по сложности:
+ * крючок каждой миссии обещает следующую поимённо («завтра ты разложишь падение
+ * на части»), поэтому переставить их местами нельзя, не переписав прозу.
+ * Вторая миссия сознательно меняет род работы: первая просит написать запрос,
+ * вторая — прочитать готовый разрез и назвать причину. Кампания растёт не
+ * длиной запроса, а весом суждения.
  */
+
+/**
+ * Сцены заставок, которые умеет рисовать StoryArt.tsx. Список живёт здесь,
+ * а не в ui: какие сцены бывают — вопрос кампании, а не рисовалки. Новый бит,
+ * которому не хватает сцены, добавляет имя сюда и функцию туда.
+ */
+export type StoryScene = 'office' | 'groups' | 'trend' | 'split' | 'factors' | 'outlets' | 'rival';
 
 export interface StoryMessage {
   /** Кто пишет: имя и роль. Живой заказчик — дешёвый и уместный источник эмоции. */
@@ -43,6 +57,18 @@ export interface StoryMission {
   place: string;
   /** Бриф как переписка: заказчик и руководитель. Ставит задачу и даёт человеческую фактуру. */
   messages: StoryMessage[];
+  /**
+   * Заставка каждой фазы, кроме задания (там всё внимание редактору).
+   * Сцена принадлежит биту, а не фазе: «суждение» первой миссии — это форма
+   * продаж, второй — полки, с которых бренд исчез, и общей картинки у них нет.
+   */
+  scenes: { brief: StoryScene; theory: StoryScene; reflection: StoryScene; hook: StoryScene };
+  /**
+   * Заголовок фазы теории, если общий не подходит. Общий говорит «прежде чем
+   * писать», и это правда для миссии с заданием на запрос; миссия, где надо
+   * не написать, а прочитать и назвать, просит своих слов.
+   */
+  theoryTitle?: string;
   /** Теория ровно перед нуждой: несколько коротких абзацев прямо перед заданием. */
   theory: string[];
   /**
@@ -66,6 +92,7 @@ const ru: StoryCampaign = {
       taskId: 'sql-010',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:14',
+      scenes: { brief: 'office', theory: 'groups', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -90,6 +117,46 @@ const ru: StoryCampaign = {
         'Провал в Q1 есть у всей категории. Но у Nettora продажи упали вдвое — это не сезон. Завтра ты разложишь падение на части и узнаешь, спрос это или полка.',
       ],
     },
+    /*
+     * Вторая миссия — те же сутки плюс одни, и сознательно другой род работы.
+     * В первой человек писал запрос (fill), здесь запрос уже написан, а от него
+     * требуется суждение по готовому разрезу (predict, sql-023). Это не шаг
+     * вниз по сложности: назвать виновника и удержать имя под вопросами —
+     * ровно то, чем работа аналитика отличается от работы с синтаксисом,
+     * и ровно то, чего не хватило в конце первой миссии («ты нашёл где, а не
+     * почему»). Бит выбран первым, задание подтянуто под него.
+     */
+    {
+      id: 'shelf-or-demand',
+      taskId: 'sql-023',
+      track: 'sql',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:40',
+      scenes: { brief: 'office', theory: 'factors', reflection: 'outlets', hook: 'rival' },
+      messages: [
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Встреча через час двадцать. Твою помесячную динамику я посмотрела — форма понятна, спасибо. Но бренд придёт спрашивать не про форму. Мне нужно одно предложение: почему Nettora упала вдвое. И мне нужно знать, к кому с этим идти — к маркетингу, к ценообразованию или к своим полевым. Прийти на встречу с четырьмя версиями хуже, чем не прийти вовсе.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Не ищи причину внутри одного числа — разложи его. Штуки — это число точек, где бренд стоит, умноженное на продажи в одной точке. Разрез по первым кварталам трёх лет я уже собрал, он в задании над запросом. Сегодня от тебя нужен не запрос, а суждение: назвать виновника и удержать это имя под вопросами. Ошибёшься — Аоки-сан в 11:00 постучит не в ту дверь.»',
+        },
+      ],
+      theoryTitle: 'Прежде чем судить — одна идея',
+      theory: [
+        'Любое падение раскладывается на множители, и это единственный способ спорить о причинах не наугад. Штуки = число точек × продажи на точку. Выручка = штуки × цена. Пока число целое, версий у него столько же, сколько людей в переговорной; как только оно разложено, вопрос сводится к одному: какой множитель поехал.',
+        'Как это читается — на другом случае. Бренд продавал 1000 штук в месяц, стало 500. Раскладываем: точек было 50, стало 48 — почти не изменилось; продаж на точку было 20, стало 10.4 — ровно вдвое. Полка на месте, а берут с неё вдвое меньше: это спрос, и разговор пойдёт с маркетингом. Была бы обратная картина — точек 50 против 24 при тех же 20 на точку — виноват доступ, и разговор пойдёт с полевой командой.',
+        'В задании разрез уже посчитан и стоит над запросом: по первым кварталам 2024, 2025 и 2026 — штуки, число точек, продажи на точку и средняя цена. Сравнивай 2024 с 2026 и ищи множитель, который изменился сильнее остальных.',
+      ],
+      reflection: [
+        'Точек было 79, стало 37 — больше половины полок бренд потерял. Продажи в одной точке при этом почти не двинулись: 127.9 против 116.4, обычные колебания. Там, где Nettora ещё стоит, её берут как брали.',
+        'Вот теперь это ответ, а не уточнённый вопрос. У него есть не только виновник, но и владелец: не маркетинг и не цена, а переговоры с сетями и работа полевой команды. Заметь, что изменилось за сутки — вчера ты назвал где просело, сегодня почему и к кому с этим идти.',
+      ],
+      hook: [
+        'Аоки-сан уходит на встречу в 11:00 с одним предложением и четырьмя числами за ним. Это и есть работа аналитика: не отчёт, а решение, которое кто-то может принять.',
+        'Остался вопрос, которого в этих числах нет: почему сорок две точки перестали брать Nettora. Полка не пустует — если бренд с неё ушёл, значит место занял кто-то другой. Кто именно, ты пока не знаешь.',
+      ],
+    },
   ],
 };
 
@@ -100,6 +167,7 @@ const en: StoryCampaign = {
       taskId: 'sql-010',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:14',
+      scenes: { brief: 'office', theory: 'groups', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -122,6 +190,38 @@ const en: StoryCampaign = {
       hook: [
         'Day one is done. Aoki expects you tomorrow at 11:00, and her question has not gone anywhere: why Nettora specifically?',
         'The Q1 dip belongs to the whole category. But Nettora’s sales fell by half, and that is not seasonality. Tomorrow you break the decline into parts and find out whether it is demand or shelf.',
+      ],
+    },
+    /* Про выбор задания и род работы см. комментарий к этой миссии в русской кампании выше. */
+    {
+      id: 'shelf-or-demand',
+      taskId: 'sql-023',
+      track: 'sql',
+      place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:40',
+      scenes: { brief: 'office', theory: 'factors', reflection: 'outlets', hook: 'rival' },
+      messages: [
+        {
+          from: 'Aoki, Sales Director',
+          text: '"The meeting is in an hour and twenty minutes. I looked at your monthly trend and the shape is clear, thank you. But the brand is not coming to ask about shapes. I need one sentence: why Nettora fell by half. And I need to know whose door to knock on, marketing, pricing, or my own field team. Walking in with four theories is worse than not walking in at all."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Do not look for the cause inside a single number, break it apart. Units are the number of outlets carrying the brand multiplied by sales in one outlet. I already pulled the split across the first quarters of three years, and it sits above the query in your task. Today I need a judgment from you rather than a query: name the culprit and hold that name under questioning. Get it wrong and Aoki knocks on the wrong door at 11:00."',
+        },
+      ],
+      theoryTitle: 'One idea before you judge',
+      theory: [
+        'Any decline breaks into factors, and that is the only way to argue about causes without guessing. Units = outlets × sales per outlet. Revenue = units × price. While the number stays whole it carries as many theories as there are people in the room; once it is broken apart the question narrows to one: which factor moved.',
+        'Here is how that reads on a different case. A brand sold 1000 units a month and now sells 500. Break it apart: outlets went from 50 to 48, barely a change; sales per outlet went from 20 to 10.4, exactly half. The shelf is intact and people take half as much from it, so that is demand and the conversation goes to marketing. Flip the picture, outlets 50 against 24 with the same 20 per outlet, and the culprit is access, so the conversation goes to the field team.',
+        'In your task the split is already computed and sits above the query: first quarters of 2024, 2025 and 2026, with units, outlets, sales per outlet and average price. Compare 2024 with 2026 and find the factor that moved more than the rest.',
+      ],
+      reflection: [
+        'Outlets went from 79 to 37, so the brand lost more than half of its shelves. Sales in a single outlet barely moved, 127.9 against 116.4, ordinary fluctuation. Where Nettora is still on the shelf, people buy it the way they always did.',
+        'Now this is an answer rather than a sharper question. It has a culprit and it has an owner: not marketing and not price, but negotiations with the chains and the work of the field team. Notice what changed in a day. Yesterday you named where sales dropped; today you named why, and whose problem it is.',
+      ],
+      hook: [
+        'Aoki walks into her 11:00 with one sentence and four numbers behind it. That is the job: not a report, but a decision somebody can act on.',
+        'One question is not in those numbers: why forty two outlets stopped carrying Nettora. A shelf does not stay empty, so if the brand left it, somebody else took the space. Who exactly, you do not know yet.',
       ],
     },
   ],

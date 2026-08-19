@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
-import { StoryArt, type StoryScene } from './StoryArt';
+import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import type { StoryMission } from '../content/storymode';
 
@@ -50,18 +50,6 @@ export function storyPhaseBefore(phase: StoryPhase): StoryPhase | null {
   return i > 0 ? PHASE_ORDER[i - 1] : null;
 }
 
-/**
- * Сцена-заставка каждой фазы. Ровно одна на фазу и ни одной на задание:
- * на экране задания всё внимание принадлежит редактору, и картинка сверху
- * отодвигала бы его вниз без всякой пользы.
- */
-const PHASE_SCENE: Record<Exclude<StoryPhase, 'task'>, StoryScene> = {
-  brief: 'office',
-  theory: 'groups',
-  reflection: 'trend',
-  hook: 'split',
-};
-
 export function StoryMode({
   mission,
   task,
@@ -73,6 +61,7 @@ export function StoryMode({
   onPhase,
   onTaskDone,
   onOpenSchema,
+  onNext,
   onExit,
 }: {
   mission: StoryMission;
@@ -88,6 +77,12 @@ export function StoryMode({
   /** Записывает попытку в прогресс — та же запись, что у обычного занятия. */
   onTaskDone: (task: Task, outcome: TaskOutcome) => void;
   onOpenSchema: (table?: string) => void;
+  /**
+   * Перейти к следующей миссии кампании, либо null — если эта последняя.
+   * Признак приходит снаружи, а не считается здесь: порядок миссий знает
+   * кампания, а экран знает только свою.
+   */
+  onNext: (() => void) | null;
   /** Выйти из миссии (на главную). */
   onExit: () => void;
 }) {
@@ -124,7 +119,7 @@ export function StoryMode({
 
   return (
     <div className="card story-mode">
-      <StoryArt scene={PHASE_SCENE[phase]} />
+      <StoryArt scene={mission.scenes[phase]} />
 
       {phase === 'brief' && (
         <>
@@ -146,7 +141,7 @@ export function StoryMode({
 
       {phase === 'theory' && (
         <>
-          <h2>{t.storyMode.theoryTitle}</h2>
+          <h2>{mission.theoryTitle ?? t.storyMode.theoryTitle}</h2>
           {mission.theory.map((p, i) => (
             <p className="story-mode-para" key={i}>
               {p}
@@ -179,10 +174,18 @@ export function StoryMode({
               {p}
             </p>
           ))}
-          <p className="story-mode-tbc">{t.storyMode.toBeContinued}</p>
-          <button type="button" className="btn secondary" onClick={onExit}>
-            {t.storyMode.finish}
-          </button>
+          {onNext ? (
+            <button type="button" className="btn" onClick={onNext}>
+              {t.storyMode.nextMission}
+            </button>
+          ) : (
+            <>
+              <p className="story-mode-tbc">{t.storyMode.toBeContinued}</p>
+              <button type="button" className="btn secondary" onClick={onExit}>
+                {t.storyMode.finish}
+              </button>
+            </>
+          )}
         </>
       )}
     </div>

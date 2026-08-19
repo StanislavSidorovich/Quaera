@@ -565,6 +565,8 @@ export const en = {
     toTask: 'Take on the task',
     reflectionTitle: 'Before you move on',
     reflectionNext: 'Next',
+    /** См. комментарий в ru.ts: единица кампании — день. */
+    nextMission: 'Next day',
     toBeContinued: 'To be continued',
     finish: 'Home',
   },

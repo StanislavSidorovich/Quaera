@@ -92,6 +92,9 @@ const targets = () => {
     ...packs.sort(),
     'src/content/sandbox.json',
     'src/content/story.en.json',
+    // Проза миссий режима истории лежит в .ts рядом с русской; englishOnly
+    // отбрасывает строки с кириллицей, поэтому в замер идёт только английская.
+    'src/content/storymode.ts',
     'src/content/tools-compare.json',
   ];
 };

@@ -1290,7 +1290,7 @@
       "level": 5,
       "mode": "predict",
       "title": "Почему упал бренд",
-      "brief": "Продажи бренда «Nettora» в первом квартале 2026 года вдвое ниже, чем в первом квартале 2024. Руководитель требует объяснения. Аналитик разложил падение на составляющие и получил такую картину по первым кварталам — она показана над запросом, сокращённо.",
+      "brief": "Продажи бренда «Nettora» в первом квартале 2026 года вдвое ниже, чем в первом квартале 2024. Руководитель требует объяснения. Падение уже разложено на составляющие: картина по первым кварталам показана над запросом, сокращённо.",
       "goal": "Определить причину падения по результатам декомпозиции.",
       "predictSql": "-- year units outlets per_outlet price\n-- 2024 10101      79      127.9 184.7\n-- 2025  8158      79      103.3 200.9\n-- 2026  4308      37      116.4 203.8\n\nSELECT d.year, SUM(f.units) AS units,\n       COUNT(DISTINCT f.customer_id) AS outlets,\n       ROUND(1.0 * SUM(f.units) / COUNT(DISTINCT f.customer_id), 1) AS per_outlet,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Nettora' AND d.quarter = 1\nGROUP BY d.year",
       "predictQuestion": "Что стало основной причиной падения продаж бренда?",

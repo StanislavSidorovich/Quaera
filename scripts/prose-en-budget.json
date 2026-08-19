@@ -12,6 +12,7 @@
     "src/content/packs/sql-lessons.en.json": 0,
     "src/content/sandbox.json": 8,
     "src/content/tools-compare.json": 1,
-    "src/content/story.en.json": 0
+    "src/content/story.en.json": 0,
+    "src/content/storymode.ts": 0
   }
 }

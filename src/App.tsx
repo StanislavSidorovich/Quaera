@@ -26,7 +26,7 @@ import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, type StoryPhase } from './ui/StoryMode';
-import { storyCampaign } from './content/storymode';
+import { storyCampaign, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -233,6 +233,53 @@ const STORY_OPEN_ON_BOOT = STORY_FLAG.fromUrl;
 const SHOW_STORY_LINE = false;
 
 /**
+ * Докуда дошла кампания режима истории — id миссии, которую откроет вход.
+ *
+ * Единственное, что режим истории хранит про себя. Ход внутри миссии
+ * (фаза, ответы) не переживает перезагрузку намеренно — миссия рассчитана
+ * на один присест, — но кампания из нескольких миссий обязана: заставлять
+ * человека проходить первый день заново ради второго значит наказывать
+ * за возвращение. Прогрессом заданий это не подменить: `sql-010` можно
+ * решить в обычном занятии, ни разу не открыв историю, и тогда вход
+ * выбросил бы в середину сюжета без брифа.
+ */
+const STORY_MISSION_STORAGE_KEY = 'quaera.story.mission';
+
+function readStoryMissionId(): string | null {
+  try {
+    return localStorage.getItem(STORY_MISSION_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveStoryMissionId(id: string) {
+  try {
+    localStorage.setItem(STORY_MISSION_STORAGE_KEY, id);
+  } catch {
+    // приватный режим или переполнение — кампания просто начнётся сначала
+  }
+}
+
+/**
+ * Миссия, с которой открывается режим: запомненная, а если её больше нет
+ * в кампании (переписали контент) — первая. Возврат к началу здесь честнее
+ * пустого экрана: сюжет читается подряд, и первая миссия ничего не ломает.
+ */
+function storyEntryMission(locale: Locale): StoryMission | null {
+  const missions = storyCampaign(locale).missions;
+  const saved = readStoryMissionId();
+  return missions.find((m) => m.id === saved) ?? missions[0] ?? null;
+}
+
+/** Следующая миссия кампании, либо null — если эта последняя. */
+function storyMissionAfter(locale: Locale, id: string): StoryMission | null {
+  const missions = storyCampaign(locale).missions;
+  const i = missions.findIndex((m) => m.id === id);
+  return i >= 0 ? missions[i + 1] ?? null : null;
+}
+
+/**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
  * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
@@ -263,7 +310,7 @@ type Screen =
    * по которой `index` занятия живёт здесь: шапке нужен шаг назад, а стрелка
    * в шапке умеет только менять экран.
    */
-  | { name: 'storymode'; phase: StoryPhase }
+  | { name: 'storymode'; missionId: string; phase: StoryPhase }
   | { name: 'reference' }
   | { name: 'sandbox' }
   | { name: 'data' }
@@ -300,7 +347,7 @@ function backTarget(current: Screen): Screen {
    */
   if (current.name === 'storymode') {
     const before = storyPhaseBefore(current.phase);
-    if (before) return { name: 'storymode', phase: before };
+    if (before) return { ...current, phase: before };
   }
   if (current.name === 'session') {
     const step = current.queue[current.index];
@@ -421,8 +468,10 @@ function initialBoot(locale: Locale): Boot {
    * войти в неё с чужим значило бы дать SQL-заданию питоновский движок.
    */
   if (STORY_OPEN_ON_BOOT) {
-    const mission = storyCampaign(locale).missions[0];
-    if (mission) return { screen: { name: 'storymode', phase: 'brief' }, ...empty, track: mission.track };
+    const mission = storyEntryMission(locale);
+    if (mission) {
+      return { screen: { name: 'storymode', missionId: mission.id, phase: 'brief' }, ...empty, track: mission.track };
+    }
   }
   if (!stored) return { screen: { name: 'home' }, ...empty };
   switch (stored.name) {
@@ -650,17 +699,30 @@ export default function App() {
    * как миссия станет доступной (а доступной она становится только на своём
    * треке — иначе исполнитель и схема будут чужие).
    */
-  const storyMissionTrack = useMemo(() => storyCampaign(locale).missions[0]?.track ?? null, [locale]);
+  const storyMissionTrack = useMemo(() => storyEntryMission(locale)?.track ?? null, [locale]);
 
-  const storyMission = useMemo(() => {
-    if (!STORY_ENABLED) return null;
-    const mission = storyCampaign(locale).missions[0];
-    if (!mission || mission.track !== activeTrack) return null;
-    const task = activePack.tasks.find((tk) => tk.id === mission.taskId);
-    if (!task) return null;
-    const skillTitle = activePack.skills.find((s) => s.id === task.skill)?.title ?? '';
-    return { mission, task, skillTitle };
+  /**
+   * Миссии кампании, у которых на активном треке нашлось их задание, — по id.
+   *
+   * Картой, а не одной миссией: экран называет свою по id, и разрешать её
+   * нужно в момент отрисовки. Миссия без задания в паке сюда не попадает
+   * вовсе — это тот же приём, что у восстановления занятия: лучше не открыть
+   * раздел, чем открыть его с дырой посреди сюжета.
+   */
+  const storyMissions = useMemo(() => {
+    const byId = new Map<string, { mission: StoryMission; task: Task; skillTitle: string }>();
+    if (!STORY_ENABLED) return byId;
+    for (const mission of storyCampaign(locale).missions) {
+      if (mission.track !== activeTrack) continue;
+      const task = activePack.tasks.find((tk) => tk.id === mission.taskId);
+      if (!task) continue;
+      const skillTitle = activePack.skills.find((s) => s.id === task.skill)?.title ?? '';
+      byId.set(mission.id, { mission, task, skillTitle });
+    }
+    return byId;
   }, [locale, activePack, activeTrack]);
+
+  const storyMission = screen.name === 'storymode' ? storyMissions.get(screen.missionId) ?? null : null;
 
   useEffect(() => {
     if (!executor) {
@@ -1333,7 +1395,28 @@ export default function App() {
         // см. initialActiveTrack
       }
     }
-    setScreen({ name: 'storymode', phase: 'brief' });
+    const mission = storyEntryMission(locale);
+    if (!mission) return;
+    setScreen({ name: 'storymode', missionId: mission.id, phase: 'brief' });
+  }
+
+  /**
+   * Что делает кнопка в конце миссии, если кампания на ней не кончается.
+   *
+   * null означает «эта миссия последняя» — тогда крючок прощается словами
+   * «продолжение следует» и уводит на главную. Проверяется не только наличие
+   * следующей в кампании, но и то, что она разрешилась в задание на активном
+   * треке: обещать переход, который упрётся в пустой экран, хуже, чем честно
+   * закончить кампанию на миссию раньше.
+   */
+  function nextStoryMission(currentId: string): (() => void) | null {
+    const next = storyMissionAfter(locale, currentId);
+    if (!next || !storyMissions.has(next.id)) return null;
+    return () => {
+      saveStoryMissionId(next.id);
+      setScreen({ name: 'storymode', missionId: next.id, phase: 'brief' });
+      window.scrollTo({ top: 0 });
+    };
   }
 
   function openTrackIntro(track: Track) {
@@ -1835,6 +1918,13 @@ export default function App() {
 
           {screen.name === 'storymode' && storyMission && executor && (
             <StoryMode
+              /*
+               * Смена миссии — это новый экран, а не новые пропсы того же.
+               * Внутри StoryMode живёт ref «попытку уже зачёл», и без
+               * перемонтирования он приехал бы во вторую миссию взведённым:
+               * её задание молча не попало бы в прогресс.
+               */
+              key={storyMission.mission.id}
               mission={storyMission.mission}
               task={storyMission.task}
               executor={executor}
@@ -1843,11 +1933,12 @@ export default function App() {
               skillTitle={storyMission.skillTitle}
               phase={screen.phase}
               onPhase={(phase) => {
-                setScreen({ name: 'storymode', phase });
+                setScreen({ name: 'storymode', missionId: storyMission.mission.id, phase });
                 window.scrollTo({ top: 0 });
               }}
               onTaskDone={recordAttempt}
               onOpenSchema={openSchema}
+              onNext={nextStoryMission(storyMission.mission.id)}
               onExit={() => setScreen({ name: 'home' })}
             />
           )}

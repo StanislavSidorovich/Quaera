@@ -1088,7 +1088,7 @@
     {
       "id": "sql-023",
       "title": "Why the brand fell",
-      "brief": "«Nettora» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. An analyst decomposed the decline into components and got this picture across the first quarters, shown above the query in abridged form.",
+      "brief": "«Nettora» brand sales in Q1 2026 are half what they were in Q1 2024. Management wants an explanation. The decline has already been decomposed into components, and the picture across the first quarters is shown above the query in abridged form.",
       "goal": "Determine the cause of the decline from the decomposition results.",
       "predictQuestion": "What was the main cause of the drop in brand sales?",
       "options": [

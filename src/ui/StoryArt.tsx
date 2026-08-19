@@ -26,7 +26,13 @@
  * был бы недоступен через экранный диктор — а разбор миссии обязан
  * читаться целиком голосом.
  */
-export type StoryScene = 'office' | 'groups' | 'trend' | 'split';
+import type { StoryScene } from '../content/storymode';
+
+/*
+ * Список сцен объявлен в контенте (content/storymode.ts), а не здесь: какие
+ * сцены вообще бывают — вопрос кампании, а этот файл только рисует названное.
+ * Так добавление сцены начинается там же, где пишется бит, который её просит.
+ */
 
 /** Общая рамка сцен: одна ширина и одна высота на все фазы. */
 const VIEW_BOX = '0 0 320 116';
@@ -39,6 +45,9 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'groups' && <Groups />}
         {scene === 'trend' && <Trend />}
         {scene === 'split' && <Split />}
+        {scene === 'factors' && <Factors />}
+        {scene === 'outlets' && <Outlets />}
+        {scene === 'rival' && <Rival />}
       </svg>
     </div>
   );
@@ -170,6 +179,129 @@ function Split() {
         <path d="M292 40v46" strokeWidth="1.2" strokeDasharray="3 4" />
         <path d="M288 40h8M288 86h8" strokeWidth="1.2" />
       </g>
+    </g>
+  );
+}
+
+/*
+ * Одно число раскладывается на два множителя: слева целое, справа те же
+ * данные как произведение. Акцентом назван не множитель, а сама стрелка —
+ * то есть действие разложения. Выделить один из множителей значило бы
+ * заранее показать пальцем на виновника, которого человек как раз и должен
+ * найти сам по числам в задании.
+ */
+function Factors() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* целое: одно число, о котором спорить бесполезно */}
+      <g className="art-near">
+        <rect x="24" y="30" width="46" height="56" rx="3" strokeWidth="1.8" />
+      </g>
+
+      {/* разложение */}
+      <path className="art-line" d="M84 58h30" strokeWidth="2.4" />
+      <path className="art-line" d="m108 52 7 6-7 6" strokeWidth="2.4" />
+
+      {/* множители и знак умножения между ними */}
+      <g className="art-mid">
+        <rect x="130" y="30" width="46" height="56" rx="3" strokeWidth="1.8" />
+        <rect x="228" y="30" width="46" height="56" rx="3" strokeWidth="1.8" />
+      </g>
+      <g className="art-far">
+        <path d="m194 52 16 12M210 52l-16 12" strokeWidth="1.8" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Полки с товаром: три ряда точек на трёх полках, и меньше половины из них
+ * ещё заняты. Ровно та форма, которую называет проза фазы, — не «продажи
+ * упали», а «бренд перестали брать больше половины точек».
+ *
+ * Оставшиеся точки идут подряд, а не вразброс: вразброс честнее по жизни,
+ * но на 116 пикселях высоты читается как шум, а сцена обязана сообщать одно
+ * — «занято меньше половины» — и сообщать это до чтения текста.
+ *
+ * Акцент достаётся оставшимся, а не потерянным, хотя история про потерю:
+ * отсутствие нечем выделить. Это совпадает с мыслью фазы — там, где бренд
+ * ещё стоит, продажи живые, и упал не спрос, а доступ к полке.
+ */
+function Outlets() {
+  const rows = [22, 54, 86];
+  /** Точек в ряду и сколько из них ещё заняты — 17 из 36, та же доля, что 37 из 79. */
+  const perRow = 12;
+  const kept = [6, 6, 5];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {rows.map((y, r) => (
+        <g key={y}>
+          {/* сама полка */}
+          <g className="art-far">
+            <path d={`M22 ${y + 11}h276`} strokeWidth="1.5" />
+          </g>
+
+          {/* занятые места */}
+          <g className="art-near">
+            {Array.from({ length: kept[r] }, (_, i) => (
+              <circle key={i} cx={34 + i * 24} cy={y} r="5" strokeWidth="2" />
+            ))}
+          </g>
+
+          {/* освободившиеся: контур пунктиром — место есть, товара нет */}
+          <g className="art-far">
+            {Array.from({ length: perRow - kept[r] }, (_, i) => (
+              <circle key={i} cx={34 + (kept[r] + i) * 24} cy={y} r="5" strokeWidth="1.4" strokeDasharray="2 3" />
+            ))}
+          </g>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/*
+ * Те же полки, что в `outlets`, но освободившиеся места уже заняты — другим
+ * знаком. Единственный акцент сцены отдан не нашему бренду, а чужому: текст
+ * рядом говорит ровно об этом, полка не пустует, её кто-то забрал.
+ *
+ * Форма важнее цвета: кружок и квадрат различаются и в монохроме, и на
+ * телефоне в 320 пикселей, а два цвета на одной полке пришлось бы объяснять.
+ */
+function Rival() {
+  const rows = [22, 54, 86];
+  const perRow = 12;
+  const kept = [6, 6, 5];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {rows.map((y, r) => (
+        <g key={y}>
+          <g className="art-far">
+            <path d={`M22 ${y + 11}h276`} strokeWidth="1.5" />
+          </g>
+
+          {/* наш бренд: то, что осталось, и уже без акцента */}
+          <g className="art-mid">
+            {Array.from({ length: kept[r] }, (_, i) => (
+              <circle key={i} cx={34 + i * 24} cy={y} r="5" strokeWidth="1.8" />
+            ))}
+          </g>
+
+          {/* чужой знак на освободившихся местах */}
+          {Array.from({ length: perRow - kept[r] }, (_, i) => (
+            <rect
+              key={i}
+              className="art-line"
+              x={34 + (kept[r] + i) * 24 - 4.5}
+              y={y - 4.5}
+              width="9"
+              height="9"
+              rx="1.5"
+              strokeWidth="2"
+            />
+          ))}
+        </g>
+      ))}
     </g>
   );
 }
