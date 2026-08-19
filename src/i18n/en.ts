@@ -556,6 +556,18 @@ export const en = {
     endingTitle: 'Line complete',
     emptyTrack: 'This track has no tasks yet, so it has no line either. The skill map is worth a look: the graph is already designed.',
   },
+  storyMode: {
+    headerTitle: 'Story mode',
+    entryLink: 'Story mode · experiment →',
+    badge: 'Early prototype',
+    theoryTitle: 'One idea before you write',
+    toTheory: 'Next',
+    toTask: 'Take on the task',
+    reflectionTitle: 'Before you move on',
+    reflectionNext: 'Next',
+    toBeContinued: 'To be continued',
+    finish: 'Home',
+  },
   lesson: {
     pill: 'Technique',
     formTitle: 'How it is written',

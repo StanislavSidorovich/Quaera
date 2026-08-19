@@ -4002,6 +4002,74 @@ table.sample td.null {
   margin-top: 0;
 }
 
+/* --------------------------------------------------------- режим истории */
+
+/*
+ * Режим истории — нарративная оболочка вокруг одного задания (StoryMode.tsx).
+ * Экспериментальный срез за `?story`, поэтому стилей минимум: карточка, нить
+ * сообщений заказчиков и абзацы прозы. Никаких очков и наград — мотивация
+ * из сюжета и роли, а не из украшений.
+ */
+.story-mode-badge {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.story-mode-place {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* Бриф как переписка: реплики заказчика и руководителя друг под другом. */
+.story-mode-thread {
+  margin: 14px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Акцентная полоса слева — реплика, а не абзац теории. */
+.story-mode-msg {
+  padding-left: 12px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, var(--text));
+}
+
+.story-mode-from {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.story-mode-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.story-mode-para {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* «Продолжение следует» — тихая метка перед выходом, не действие. */
+.story-mode-tbc {
+  margin: 18px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.story-mode .btn {
+  margin-top: 18px;
+}
+
 /* ------------------------------------------------------------- десктоп */
 
 /*

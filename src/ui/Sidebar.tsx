@@ -35,6 +35,7 @@ export function Sidebar({
   streakDays,
   accountEmail,
   onHome,
+  storyEnabled,
   onStory,
   onReference,
   onSandbox,
@@ -53,6 +54,8 @@ export function Sidebar({
   /** Почта вошедшего или null. Печатается подписью под пунктом «Аккаунт и данные». */
   accountEmail: string | null;
   onHome: () => void;
+  /** Экспериментальный раздел «Сюжет» спрятан за `?story` (см. App.tsx). */
+  storyEnabled: boolean;
   onStory: () => void;
   onReference: () => void;
   onSandbox: () => void;
@@ -117,15 +120,17 @@ export function Sidebar({
             <IconHome />
             {t.nav.home}
           </button>
-          <button
-            type="button"
-            className="side-item"
-            aria-current={section === 'story' ? 'page' : undefined}
-            onClick={onStory}
-          >
-            <IconRoute />
-            {t.nav.story}
-          </button>
+          {storyEnabled && (
+            <button
+              type="button"
+              className="side-item"
+              aria-current={section === 'story' ? 'page' : undefined}
+              onClick={onStory}
+            >
+              <IconRoute />
+              {t.nav.story}
+            </button>
+          )}
           <button
             type="button"
             className="side-item"

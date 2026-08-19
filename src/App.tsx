@@ -24,6 +24,8 @@ import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
+import { StoryMode } from './ui/StoryMode';
+import { storyCampaign } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -173,6 +175,30 @@ const TRACK_ORDER: Track[] = ['domain', 'sql', 'python', 'model'];
 const RECOMMENDED_TRACK: Track = 'sql';
 
 /**
+ * Экспериментальные разделы (сейчас — сюжетная линия) спрятаны за параметром
+ * адреса `?story`, а не убраны из сборки: код уже в проде, но показывать его
+ * всем рано — сначала проверяем саму идею на скрытом входе. Открывший `?story`
+ * включает вход для себя, и флаг запоминается, чтобы не набирать параметр
+ * на каждой навигации; `?story=0` выключает обратно. Экран линии по-прежнему
+ * рендерится штатно — прячутся только два видимых входа в него (пункт меню
+ * и ссылка на главной), поэтому без флага раздел просто недостижим.
+ */
+function readStoryEnabled(): boolean {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('story')) {
+      const on = params.get('story') !== '0';
+      localStorage.setItem('quaera.story', on ? '1' : '0');
+      return on;
+    }
+    return localStorage.getItem('quaera.story') === '1';
+  } catch {
+    return false;
+  }
+}
+const STORY_ENABLED = readStoryEnabled();
+
+/**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
  * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
@@ -197,6 +223,7 @@ type Screen =
    */
   | { name: 'done'; solved: number; fromStory?: boolean }
   | { name: 'story' }
+  | { name: 'storymode' }
   | { name: 'reference' }
   | { name: 'sandbox' }
   | { name: 'data' }
@@ -551,6 +578,22 @@ export default function App() {
     const at = currentMissionIndex(line, (id) => progress.taskRecords[id]?.solved === true);
     return { at, total: line.length };
   }, [line, progress]);
+
+  /**
+   * Миссия режима истории и её задание, найденное в паке. Срез — одна миссия,
+   * привязанная к sql (см. content/storymode.ts). Показываем только когда
+   * активен тот же трек: тогда executor и schema соответствуют заданию.
+   * Спрятано за STORY_ENABLED, как и оба входа в старую линию.
+   */
+  const storyMission = useMemo(() => {
+    if (!STORY_ENABLED) return null;
+    const mission = storyCampaign(locale).missions[0];
+    if (!mission || mission.track !== activeTrack) return null;
+    const task = activePack.tasks.find((tk) => tk.id === mission.taskId);
+    if (!task) return null;
+    const skillTitle = activePack.skills.find((s) => s.id === task.skill)?.title ?? '';
+    return { mission, task, skillTitle };
+  }, [locale, activePack, activeTrack]);
 
   useEffect(() => {
     if (!executor) {
@@ -1079,27 +1122,37 @@ export default function App() {
     window.scrollTo({ top: 0 });
   }
 
+  /**
+   * Записывает попытку в прогресс и SRS. Вынесено из handleDone, чтобы тем же
+   * путём писал режим истории (см. StoryMode): у него нет сессии и своего
+   * счётчика recordedTasksRef, поэтому «один раз» он стережёт сам, а сюда
+   * приходит уже с решением, которое надо зачесть.
+   */
+  function recordAttempt(task: Task, outcome: TaskOutcome) {
+    const grade = gradeFromAttempt(outcome);
+    setProgress((p) =>
+      applyAttempt(
+        p,
+        {
+          taskId: task.id,
+          skills: [task.skill, ...(task.alsoTrains ?? [])],
+          correct: outcome.correct,
+          wrongAttempts: outcome.wrongAttempts,
+          hintsUsed: outcome.hintsUsed,
+          grade,
+        },
+        review
+      )
+    );
+  }
+
   function handleDone(task: Task, outcome: TaskOutcome) {
     // Попытка засчитывается один раз за занятие — см. recordedTasksRef.
     // Шаг при этом двигается всегда: кнопка «Дальше» обязана вести дальше
     // и на решённом задании, куда человек просто вернулся посмотреть разбор.
     if (!recordedTasksRef.current.has(task.id)) {
       recordedTasksRef.current.add(task.id);
-      const grade = gradeFromAttempt(outcome);
-      setProgress((p) =>
-        applyAttempt(
-          p,
-          {
-            taskId: task.id,
-            skills: [task.skill, ...(task.alsoTrains ?? [])],
-            correct: outcome.correct,
-            wrongAttempts: outcome.wrongAttempts,
-            hintsUsed: outcome.hintsUsed,
-            grade,
-          },
-          review
-        )
-      );
+      recordAttempt(task, outcome);
     }
     advance();
   }
@@ -1294,6 +1347,7 @@ export default function App() {
         streakDays={streak(progress.activeDays)}
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
+        storyEnabled={STORY_ENABLED}
         onStory={() => setScreen({ name: 'story' })}
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
@@ -1321,6 +1375,8 @@ export default function App() {
           <h1 className={screen.name === 'home' ? 'brand' : undefined}>
             {screen.name === 'session'
               ? (currentSkillTitle ?? t.session.title)
+              : screen.name === 'storymode'
+                ? t.storyMode.headerTitle
               : screen.name === 'story'
                 ? t.story.title
               : screen.name === 'reference'
@@ -1356,6 +1412,8 @@ export default function App() {
                       {t.tracks.names[activeTrack]} · {stepLabel}
                     </>
                   )
+                : screen.name === 'storymode'
+                  ? null
                 : screen.name === 'reference'
                   ? t.tracks.names[activeTrack]
                   : screen.name === 'sandbox'
@@ -1511,6 +1569,8 @@ export default function App() {
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
               onOpenStory={() => setScreen({ name: 'story' })}
               storyAt={storyAt}
+              /* Вход в режим истории — только когда миссия разрешена (флаг + её трек). */
+              onOpenStoryMode={storyMission ? () => setScreen({ name: 'storymode' }) : undefined}
               /*
                * Незаконченное занятие показываем только на главной его же
                * трека: главная — экран одного трека (его карта, его прогресс,
@@ -1632,6 +1692,20 @@ export default function App() {
               line={line}
               isSolved={(id) => progress.taskRecords[id]?.solved === true}
               onStartMission={startMission}
+            />
+          )}
+
+          {screen.name === 'storymode' && storyMission && executor && (
+            <StoryMode
+              mission={storyMission.mission}
+              task={storyMission.task}
+              executor={executor}
+              schema={schema}
+              drafts={taskDrafts}
+              skillTitle={storyMission.skillTitle}
+              onTaskDone={recordAttempt}
+              onOpenSchema={openSchema}
+              onExit={() => setScreen({ name: 'home' })}
             />
           )}
 
@@ -2153,6 +2227,7 @@ function Home({
   onOpenTrackIntro,
   onOpenStory,
   storyAt,
+  onOpenStoryMode,
   resume,
   onResume,
   scrollToChooser,
@@ -2191,6 +2266,8 @@ function Home({
   onOpenStory: () => void;
   /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
   storyAt: { at: number; total: number } | null;
+  /** Вход в режим истории (эксперимент за `?story`). undefined — миссия не разрешена, ссылку не показываем. */
+  onOpenStoryMode?: () => void;
   /** Подпись шага незаконченного занятия этого трека («Задача 2 из 5»), null — продолжать нечего. */
   resume: string | null;
   onResume: () => void;
@@ -2709,7 +2786,17 @@ function Home({
            * основное действие на этом экране одно, и второй крупной кнопкой
            * рядом оно перестало бы быть основным.
            */}
-          {storyAt && (
+          {onOpenStoryMode && (
+            <button
+              type="button"
+              className="link-row"
+              onClick={onOpenStoryMode}
+              style={{ margin: '10px 0 0' }}
+            >
+              {t.storyMode.entryLink}
+            </button>
+          )}
+          {STORY_ENABLED && storyAt && (
             <button
               type="button"
               className="link-row"
