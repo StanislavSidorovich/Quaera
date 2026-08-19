@@ -563,6 +563,12 @@ export const en = {
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
     toTask: 'Take on the task',
+    /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */
+    caseLabel: 'Case',
+    stepOf: (n: number, total: number) => `Task ${n} of ${total}`,
+    dayDone: 'Day closed',
+    dayAria: (n: number, total: number) => `Day ${n} of ${total}`,
+    known: 'What we know so far',
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',

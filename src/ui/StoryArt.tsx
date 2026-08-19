@@ -42,6 +42,20 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
     <div className="story-art" aria-hidden>
       <svg viewBox={VIEW_BOX} role="presentation" preserveAspectRatio="xMidYMid meet">
         {scene === 'office' && <Office />}
+        {scene === 'desk' && <Desk />}
+        {scene === 'filter' && <Filter />}
+        {scene === 'sort' && <Sort />}
+        {scene === 'fold' && <Fold />}
+        {scene === 'counts' && <Counts />}
+        {scene === 'calendar' && <Calendar />}
+        {scene === 'stray' && <Stray />}
+        {scene === 'sellout' && <Sellout />}
+        {scene === 'dropped' && <Dropped />}
+        {scene === 'threshold' && <Threshold />}
+        {scene === 'toolkit' && <Toolkit />}
+        {scene === 'foundation' && <Foundation />}
+        {scene === 'coverage' && <Coverage />}
+        {scene === 'meeting' && <Meeting />}
         {scene === 'catalog' && <Catalog />}
         {scene === 'tables' && <Tables />}
         {scene === 'join' && <Join />}
@@ -395,6 +409,405 @@ function Join() {
         <circle cx="124" cy="54" r="3" strokeWidth="2" />
         <circle cx="196" cy="54" r="3" strokeWidth="2" />
       </g>
+    </g>
+  );
+}
+
+/*
+ * Рабочее место: монитор с таблицей на экране, клавиатура, остывающий кофе.
+ * Общий кадр начала дня — брифы вторника, среды и четверга открываются им
+ * одинаково, и это намеренно: одно и то же утро, одно и то же место,
+ * меняется только вопрос. Понедельник и пятница получают `office`, потому
+ * что первый день и день встречи — не рядовое утро.
+ */
+function Desk() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="86" y="10" width="148" height="72" rx="4" strokeWidth="1.8" />
+        <path d="M160 82v10M136 96h48" strokeWidth="1.8" />
+        <rect x="96" y="100" width="128" height="9" rx="2" strokeWidth="1.5" />
+      </g>
+
+      <g className="art-far">
+        <path d="M100 28h60M100 40h84M100 52h72" strokeWidth="2.2" strokeLinecap="butt" />
+      </g>
+
+      {/* строка, ради которой человек и сел за стол */}
+      <path className="art-line" d="M100 64h48" strokeWidth="2.8" strokeLinecap="butt" />
+
+      <g className="art-far">
+        <path d="M256 62h30v26h-30z" strokeWidth="1.6" />
+        <path d="M286 68h5a5 5 0 0 1 0 12h-5" strokeWidth="1.4" />
+        <path d="M264 54v-8M272 54v-11M280 54v-8" strokeWidth="1.2" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Отбор строк: слева пришло много, справа осталось меньше, между ними
+ * воронка. Акцент на самой воронке — она и есть WHERE, о котором говорит
+ * подводка; строки по обе стороны одинаково второстепенны.
+ */
+function Filter() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <path d="M20 26h84M20 42h84M20 58h84M20 74h84M20 90h84" strokeWidth="2.6" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M122 22h72l-25 30v34l-22 9V52z" strokeWidth="2.2" />
+
+      <g className="art-near">
+        <path d="M216 42h80M216 58h80M216 74h80" strokeWidth="2.6" strokeLinecap="butt" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Сортировка и обрезка: столбики выстроены по убыванию, и рамкой назван
+ * не самый высокий столбик, а верхняя часть списка целиком — LIMIT берёт
+ * сколько сказано, а не одного победителя.
+ */
+function Sort() {
+  const bars = [
+    { x: 26, h: 74 },
+    { x: 60, h: 64 },
+    { x: 94, h: 56 },
+    { x: 128, h: 46 },
+    { x: 162, h: 38 },
+    { x: 196, h: 30 },
+    { x: 230, h: 24 },
+    { x: 264, h: 18 },
+  ];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M18 102h284" strokeWidth="1.5" />
+      </g>
+
+      <g className="art-mid">
+        {bars.map((b) => (
+          <rect key={b.x} x={b.x} y={102 - b.h} width="22" height={b.h} rx="2" strokeWidth="1.6" />
+        ))}
+      </g>
+
+      <rect className="art-line" x="18" y="16" width="112" height="94" rx="4" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Свёртка: много строк слева превращаются в одно число справа. Акцент отдан
+ * стрелке, то есть самому действию, — ровно как в сцене `factors`, где
+ * акцентировано разложение, а не множители.
+ */
+function Fold() {
+  const rows = [22, 34, 46, 58, 70, 82];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        {rows.map((y) => (
+          <path key={y} d={`M24 ${y}h92`} strokeWidth="2.4" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <path className="art-line" d="M136 52h32" strokeWidth="2.4" />
+      <path className="art-line" d="m162 46 7 6-7 6" strokeWidth="2.4" />
+
+      <g className="art-near">
+        <rect x="196" y="36" width="100" height="34" rx="3" strokeWidth="1.8" />
+        <path d="M218 53h56" strokeWidth="3.2" strokeLinecap="butt" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Три способа посчитать одно и то же множество: все ячейки, только
+ * заполненные, только разные. Слева направо число убывает — это и есть
+ * весь смысл сцены. Акцент на третьей колонке: COUNT(DISTINCT) — та,
+ * ради которой подводка написана и которая понадобится в пятницу.
+ */
+function Counts() {
+  const ys = [18, 34, 50, 66, 82, 98];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* всё подряд */}
+      <g className="art-mid">
+        {ys.map((y) => (
+          <circle key={y} cx="60" cy={y} r="6" strokeWidth="1.8" />
+        ))}
+      </g>
+
+      {/* только заполненные */}
+      <g className="art-mid">
+        {ys.slice(0, 4).map((y) => (
+          <circle key={y} cx="160" cy={y} r="6" strokeWidth="1.8" />
+        ))}
+      </g>
+      <g className="art-far">
+        {ys.slice(4).map((y) => (
+          <circle key={y} cx="160" cy={y} r="6" strokeWidth="1.4" strokeDasharray="2 3" />
+        ))}
+      </g>
+
+      {/* только разные */}
+      {ys.slice(0, 3).map((y) => (
+        <circle key={y} className="art-line" cx="260" cy={y} r="6" strokeWidth="2.2" />
+      ))}
+    </g>
+  );
+}
+
+/*
+ * Недели сворачиваются в месяцы: сверху частая гребёнка недель, снизу
+ * дюжина широких блоков. Числа не подписаны намеренно — сцена говорит
+ * «много мелкого стало немногим крупным», а не «пятьдесят два и двенадцать».
+ */
+function Calendar() {
+  const ticks = Array.from({ length: 27 }, (_, i) => 24 + i * 10);
+  const months = Array.from({ length: 12 }, (_, i) => 26 + i * 22);
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        {ticks.map((x) => (
+          <path key={x} d={`M${x} 16v14`} strokeWidth="1.6" />
+        ))}
+      </g>
+
+      <path className="art-line" d="M160 40v14" strokeWidth="2.4" />
+      <path className="art-line" d="m154 48 6 7 6-7" strokeWidth="2.4" />
+
+      <g className="art-mid">
+        {months.map((x) => (
+          <rect key={x} x={x} y="68" width="18" height="30" rx="2" strokeWidth="1.6" />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Колонка мимо группировки: три строки честно собраны в группу, а четвёртая
+ * стоит снаружи рамки и держится на пунктире — движок её откуда-то взял,
+ * но откуда именно, не обещал. Акцент на ней: вопрос подводки — про неё.
+ */
+function Stray() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="26" y="14" width="176" height="66" rx="4" strokeWidth="1.8" />
+        <path d="M42 32h140M42 48h116M42 64h132" strokeWidth="2.4" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M226 47h56" strokeWidth="2.8" strokeLinecap="butt" />
+      <path className="art-line" d="M206 47h14" strokeWidth="1.6" strokeDasharray="3 4" />
+      <g className="art-near">
+        <circle cx="254" cy="76" r="3" strokeWidth="2" />
+      </g>
+      <path className="art-line" d="M254 55v14" strokeWidth="1.6" strokeDasharray="3 4" />
+    </g>
+  );
+}
+
+/*
+ * Таблица розничных продаж: сетка, у которой много строк и несколько
+ * колонок. Акцентом названа колонка штук — та мера, которую всю неделю
+ * и будут складывать.
+ */
+function Sellout() {
+  const rows = [44, 58, 72, 86];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="20" y="14" width="280" height="88" rx="4" strokeWidth="1.8" />
+        <path d="M20 32h280" strokeWidth="1.5" />
+        <path d="M104 14v88M188 14v88M244 14v88" strokeWidth="1.2" />
+      </g>
+
+      <g className="art-far">
+        <path d="M32 24h56M116 24h56M200 24h32" strokeWidth="2.2" strokeLinecap="butt" />
+        {rows.map((y) => (
+          <g key={y}>
+            <path d={`M32 ${y}h58M116 ${y}h48M200 ${y}h28`} strokeWidth="2.2" strokeLinecap="butt" />
+          </g>
+        ))}
+      </g>
+
+      <path className="art-line" d="M256 24h30" strokeWidth="2.4" strokeLinecap="butt" />
+      {rows.map((y) => (
+        <path key={y} className="art-line" d={`M256 ${y}h30`} strokeWidth="2.4" strokeLinecap="butt" />
+      ))}
+    </g>
+  );
+}
+
+/*
+ * Цена соединения: часть строк ушла в результат, а часть провалилась мимо
+ * него — молча, пунктиром, вниз за кадр. Акцент на этом падении, потому что
+ * подводка ровно о нём: ошибки не будет, строк просто не станет.
+ */
+function Dropped() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="20" y="12" width="146" height="58" rx="4" strokeWidth="1.7" />
+        <path d="M34 28h104M34 42h86M34 56h112" strokeWidth="2.2" strokeLinecap="butt" />
+
+        <rect x="222" y="12" width="78" height="58" rx="4" strokeWidth="1.7" />
+        <path d="M236 28h50M236 42h42" strokeWidth="2.2" strokeLinecap="butt" />
+      </g>
+
+      <g className="art-far">
+        <path d="M178 41h32" strokeWidth="1.8" />
+        <path d="m204 35 6 6-6 6" strokeWidth="1.8" />
+      </g>
+
+      {/* то, чему не нашлось пары */}
+      <path className="art-line" d="M118 78v18" strokeWidth="2" strokeDasharray="4 4" />
+      <path className="art-line" d="m111 89 7 9 7-9" strokeWidth="2" />
+    </g>
+  );
+}
+
+/*
+ * Порог после группировки: столбики уже посчитаны по группам, и линия
+ * отсекает те, что не дотянули. Акцент — сама линия: HAVING это она,
+ * а не столбики.
+ */
+function Threshold() {
+  const bars = [
+    { x: 26, h: 72 },
+    { x: 62, h: 40 },
+    { x: 98, h: 86 },
+    { x: 134, h: 28 },
+    { x: 170, h: 64 },
+    { x: 206, h: 22 },
+    { x: 242, h: 54 },
+    { x: 278, h: 34 },
+  ];
+  const cut = 50;
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M18 102h288" strokeWidth="1.5" />
+      </g>
+
+      {bars.map((b) => (
+        <g key={b.x} className={b.h >= cut ? 'art-near' : 'art-far'}>
+          <rect x={b.x} y={102 - b.h} width="20" height={b.h} rx="2" strokeWidth="1.7" />
+        </g>
+      ))}
+
+      <path className="art-line" d="M14 52h292" strokeWidth="2.4" strokeDasharray="7 5" />
+    </g>
+  );
+}
+
+/*
+ * Собранный инструмент: три блока понедельника стоят в ряд и сцеплены.
+ * Акцент на сцепках, а не на блоках: находка дня в том, что три приёма
+ * работают вместе, а не в том, что их три.
+ */
+function Toolkit() {
+  const boxes = [26, 124, 222];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        {boxes.map((x) => (
+          <rect key={x} x={x} y="30" width="72" height="52" rx="4" strokeWidth="1.8" />
+        ))}
+        <path d="M42 48h40M42 62h28" strokeWidth="2.2" strokeLinecap="butt" />
+        <path d="M140 48h40M140 62h24" strokeWidth="2.2" strokeLinecap="butt" />
+        <path d="M238 48h40M238 62h32" strokeWidth="2.2" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M98 56h26M196 56h26" strokeWidth="2.6" />
+      <g className="art-near">
+        <circle cx="111" cy="56" r="3" strokeWidth="2" />
+        <circle cx="209" cy="56" r="3" strokeWidth="2" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Переговорная перед встречей: экран на стене, стол, часы. Акцент отдан
+ * часам — крючок четверга держится не на комнате, а на «завтра в 11:00».
+ */
+function Meeting() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <rect x="70" y="12" width="130" height="50" rx="3" strokeWidth="1.6" />
+        <path d="M84 30h94M84 42h64" strokeWidth="2" strokeLinecap="butt" />
+      </g>
+
+      <g className="art-mid">
+        <path d="M52 100h216" strokeWidth="2" />
+        <path d="M78 100 96 76h128l18 24" strokeWidth="1.8" />
+        <path d="M96 88h128" strokeWidth="1.2" />
+      </g>
+
+      <g className="art-near">
+        <circle cx="264" cy="34" r="18" strokeWidth="1.8" />
+      </g>
+      <path className="art-line" d="M264 34V22M264 34l9 6" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Фундамент: широкое основание из двух блоков — агрегат и группировка, —
+ * а на нём приглушённо стоит то, что будет строиться дальше. Акцент внизу,
+ * потому что находка вторника не в трёх решённых заданиях, а в том, что без
+ * этих двух приёмов на неделе не будет ни одного запроса.
+ */
+function Foundation() {
+  const upper = [40, 108, 176, 244];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        {upper.map((x) => (
+          <rect key={x} x={x} y="18" width="48" height="34" rx="3" strokeWidth="1.5" strokeDasharray="4 4" />
+        ))}
+      </g>
+
+      <rect className="art-line" x="30" y="64" width="120" height="34" rx="3" strokeWidth="2.2" />
+      <rect className="art-line" x="164" y="64" width="126" height="34" rx="3" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Два языка одного бренда: слева столбик выручки, справа ряд точек, в которых
+ * он стоит. Акцент отдан точкам — суждение четверга ровно про то, что охват
+ * выглядит служебной подробностью, а на деле это отдельная метрика.
+ */
+function Coverage() {
+  const dots = Array.from({ length: 9 }, (_, i) => 150 + i * 19);
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M20 100h280" strokeWidth="1.5" />
+      </g>
+
+      {/* выручка */}
+      <g className="art-mid">
+        <rect x="34" y="24" width="34" height="76" rx="2" strokeWidth="1.8" />
+        <rect x="80" y="46" width="34" height="54" rx="2" strokeWidth="1.8" />
+      </g>
+
+      {/* охват */}
+      <g className="art-far">
+        <path d="M150 72h162" strokeWidth="1.4" strokeDasharray="3 4" />
+      </g>
+      {dots.map((x) => (
+        <circle key={x} className="art-line" cx={x} cy="56" r="6" strokeWidth="2.2" />
+      ))}
     </g>
   );
 }

@@ -45,14 +45,31 @@ import type { Track } from './types';
  * которому не хватает сцены, добавляет имя сюда и функцию туда.
  */
 export type StoryScene =
+  // рабочее место: общий кадр начала дня
   | 'office'
+  | 'desk'
+  // приёмы, которые вводит подводка
   | 'catalog'
+  | 'filter'
+  | 'sort'
+  | 'fold'
+  | 'counts'
   | 'groups'
+  | 'calendar'
+  | 'stray'
   | 'tables'
   | 'join'
+  | 'dropped'
+  | 'threshold'
+  | 'factors'
+  // находки и повороты сюжета
+  | 'toolkit'
+  | 'foundation'
+  | 'coverage'
+  | 'sellout'
   | 'trend'
   | 'split'
-  | 'factors'
+  | 'meeting'
   | 'outlets'
   | 'rival';
 
@@ -91,6 +108,21 @@ export interface StoryStep {
 
 export interface StoryMission {
   id: string;
+  /**
+   * Короткая метка дня для полосы дела («Пн»). Полоса должна помещаться
+   * на 320 пикселях в пять делений, поэтому метка именно короткая, а не
+   * название дня целиком.
+   */
+  short: string;
+  /**
+   * Что этот день установил — одна строка в папку дела.
+   *
+   * Показывается не в своём дне, а в брифах следующих: смысл в том, чтобы
+   * каждое утро начиналось с растущего списка уже известного. Пишется
+   * как факт расследования, а не как перечень выученных приёмов: «продаж
+   * в прайсе нет», а не «изучили SELECT».
+   */
+  found: string;
   /** Трек заданий — нужен, чтобы миссия шла в контексте его исполнителя и схемы. */
   track: Track;
   /** Контекстная строка брифа: место и время. Задаёт сцену одной строкой. */
@@ -115,10 +147,19 @@ export interface StoryMission {
 }
 
 export interface StoryCampaign {
+  /**
+   * Вопрос расследования — стоит над каждым экраном кампании.
+   *
+   * Он существует ровно затем, чтобы на третьем задании вторника человек
+   * помнил, зачем считает средние цены по брендам. Задание видно, а цель —
+   * нет, и без напоминания неделя рассыпается на дюжину упражнений.
+   */
+  question: string;
   missions: StoryMission[];
 }
 
 const ru: StoryCampaign = {
+  question: 'Почему продажи Nettora упали вдвое — и к кому с этим идти?',
   missions: [
     /*
      * Понедельник. Ни одного вопроса про Nettora по существу — день целиком
@@ -129,7 +170,9 @@ const ru: StoryCampaign = {
       id: 'day-1-first-day',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:14',
-      scenes: { brief: 'office', hook: 'tables' },
+      short: 'Пн',
+      found: 'Прайс читается насквозь: колонки, отбор, сортировка. Продаж в нём нет ни одной.',
+      scenes: { brief: 'office', reflection: 'toolkit', hook: 'tables' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -155,6 +198,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-003',
           intro: {
+            scene: 'filter',
             paras: [
               'Теперь то же самое, но не всё подряд: в каталог берут не весь ассортимент, а два бренда и только позиции дороже сотни. Строки отбирает WHERE, и стоит он после FROM.',
             ],
@@ -163,6 +207,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-004',
           intro: {
+            scene: 'sort',
             paras: [
               'И последнее на сегодня — порядок. ORDER BY сортирует, LIMIT обрезает; вдвоём они отвечают на любой вопрос вида «покажи верхние десять».',
             ],
@@ -189,7 +234,9 @@ const ru: StoryCampaign = {
       id: 'day-2-counting',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
-      scenes: {},
+      short: 'Вт',
+      found: 'Считать по разрезам умеем. «Сколько продали» и «в скольких точках продавали» — разные числа.',
+      scenes: { brief: 'desk', reflection: 'foundation', hook: 'sellout' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -204,6 +251,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-008',
           intro: {
+            scene: 'fold',
             paras: [
               'Агрегат — функция, которая из многих строк делает одно число: COUNT считает строки, AVG усредняет, MIN и MAX берут края. Без GROUP BY агрегат сворачивает всю таблицу в одну-единственную строку — ровно то, что просит Аоки-сан.',
             ],
@@ -212,6 +260,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-007',
           intro: {
+            scene: 'counts',
             title: 'Три вопроса, которые выглядят одинаково',
             paras: [
               'Осторожно с самым простым. COUNT(*) считает строки. COUNT(колонка) считает строки, где в этой колонке что-то есть. COUNT(DISTINCT колонка) считает разные значения. Три разных вопроса, три разных числа, и перепутать их легче, чем кажется.',
@@ -252,7 +301,9 @@ const ru: StoryCampaign = {
       id: 'day-3-shape-of-the-year',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
-      scenes: { reflection: 'trend', hook: 'split' },
+      short: 'Ср',
+      found: 'Форма года найдена: провал в первом квартале. Но он у всей категории, а не у одной Nettora.',
+      scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -267,6 +318,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-010',
           intro: {
+            scene: 'calendar',
             title: 'Группировать по тому, чего в таблице нет',
             paras: [
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7) даёт 2025-03.',
@@ -278,6 +330,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-035',
           intro: {
+            scene: 'stray',
             paras: [
               'И сразу та ловушка, о которой вчера предупреждали: что будет, если рядом с агрегатом поставить колонку, которой нет в GROUP BY. Ответ зависит от движка, и это само по себе стоит знать.',
             ],
@@ -303,7 +356,9 @@ const ru: StoryCampaign = {
       id: 'day-4-join',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:30',
-      scenes: { hook: 'split' },
+      short: 'Чт',
+      found: 'Бренд соединяется с продажами. На руках выручка бренда и число точек, где он стоит.',
+      scenes: { brief: 'desk', reflection: 'coverage', hook: 'meeting' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -329,6 +384,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-037',
           intro: {
+            scene: 'dropped',
             paras: [
               'У соединения есть цена, и узнать её лучше сразу, на маленьком примере: строки, которым не нашлось пары, исчезают из результата молча — без ошибки и без предупреждения.',
             ],
@@ -337,6 +393,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-049',
           intro: {
+            scene: 'threshold',
             title: 'Фильтр, который считает после группировки',
             paras: [
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — это число разных точек, COUNT(DISTINCT customer_id): вторничная функция на новой таблице.',
@@ -366,6 +423,8 @@ const ru: StoryCampaign = {
       id: 'day-5-shelf-or-demand',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:40',
+      short: 'Пт',
+      found: 'Причина названа: бренд потерял полку, а не спрос. Владелец проблемы — полевая команда.',
       scenes: { brief: 'office', reflection: 'outlets', hook: 'rival' },
       messages: [
         {
@@ -404,13 +463,16 @@ const ru: StoryCampaign = {
 };
 
 const en: StoryCampaign = {
+  question: 'Why did Nettora sales fall by half, and whose door do we knock on?',
   missions: [
     /* Про устройство недели и выбор заданий см. комментарии в русской кампании выше. */
     {
       id: 'day-1-first-day',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:14',
-      scenes: { brief: 'office', hook: 'tables' },
+      short: 'Mon',
+      found: 'The price list reads end to end: columns, filter, order. It holds no sales at all.',
+      scenes: { brief: 'office', reflection: 'toolkit', hook: 'tables' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -436,6 +498,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-003',
           intro: {
+            scene: 'filter',
             paras: [
               'Now the same thing, but not everything at once: the catalog takes two brands only, and only items above a hundred. Rows are picked by WHERE, which comes after FROM.',
             ],
@@ -444,6 +507,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-004',
           intro: {
+            scene: 'sort',
             paras: [
               'One more thing today: order. ORDER BY sorts, LIMIT cuts, and together they answer any question shaped like "show me the top ten".',
             ],
@@ -464,7 +528,9 @@ const en: StoryCampaign = {
       id: 'day-2-counting',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
-      scenes: {},
+      short: 'Tue',
+      found: 'We can count by dimension. "How many sales" and "in how many outlets" are different numbers.',
+      scenes: { brief: 'desk', reflection: 'foundation', hook: 'sellout' },
       messages: [
         {
           from: 'Your manager',
@@ -479,6 +545,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-008',
           intro: {
+            scene: 'fold',
             paras: [
               'An aggregate is a function that turns many rows into one number: COUNT counts rows, AVG averages, MIN and MAX take the edges. Without GROUP BY an aggregate folds the whole table into a single row, which is exactly what Aoki asked for.',
             ],
@@ -487,6 +554,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-007',
           intro: {
+            scene: 'counts',
             title: 'Three questions that look identical',
             paras: [
               'Be careful with the simplest one. COUNT(*) counts rows. COUNT(column) counts rows where that column holds something. COUNT(DISTINCT column) counts different values. Three different questions, three different numbers, and they are easier to mix up than they look.',
@@ -520,7 +588,9 @@ const en: StoryCampaign = {
       id: 'day-3-shape-of-the-year',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
-      scenes: { reflection: 'trend', hook: 'split' },
+      short: 'Wed',
+      found: 'The shape of the year is found: a first quarter dip. But it belongs to the whole category, not to Nettora.',
+      scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -535,6 +605,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-010',
           intro: {
+            scene: 'calendar',
             title: 'Grouping by something the table does not hold',
             paras: [
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7) gives 2025-03.',
@@ -546,6 +617,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-035',
           intro: {
+            scene: 'stray',
             paras: [
               'And straight into the trap we warned you about yesterday: what happens when a column that is not in GROUP BY sits next to an aggregate. The answer depends on the engine, and that alone is worth knowing.',
             ],
@@ -566,7 +638,9 @@ const en: StoryCampaign = {
       id: 'day-4-join',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:30',
-      scenes: { hook: 'split' },
+      short: 'Thu',
+      found: 'The brand joins to sales. We hold brand revenue and the number of outlets it sits in.',
+      scenes: { brief: 'desk', reflection: 'coverage', hook: 'meeting' },
       messages: [
         {
           from: 'Your manager',
@@ -592,6 +666,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-037',
           intro: {
+            scene: 'dropped',
             paras: [
               'A join has a price, and it is better learned right away on a small example: rows that found no match disappear from the result silently, with no error and no warning.',
             ],
@@ -600,6 +675,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-049',
           intro: {
+            scene: 'threshold',
             title: 'A filter that runs after grouping',
             paras: [
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id), Tuesday function on a new table.',
@@ -622,6 +698,8 @@ const en: StoryCampaign = {
       id: 'day-5-shelf-or-demand',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:40',
+      short: 'Fri',
+      found: 'The cause is named: the brand lost shelf, not demand. The problem belongs to the field team.',
       scenes: { brief: 'office', reflection: 'outlets', hook: 'rival' },
       messages: [
         {

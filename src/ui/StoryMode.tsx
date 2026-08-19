@@ -4,7 +4,8 @@ import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
-import type { StoryMission } from '../content/storymode';
+import type { StoryCampaign, StoryMission } from '../content/storymode';
+import { StoryProgress } from './StoryProgress';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -99,6 +100,7 @@ export interface StoryStepView {
 }
 
 export function StoryMode({
+  campaign,
   mission,
   steps,
   executor,
@@ -111,6 +113,8 @@ export function StoryMode({
   onNext,
   onExit,
 }: {
+  /** Вся кампания — полосе дела нужны вопрос расследования и все дни разом. */
+  campaign: StoryCampaign;
   mission: StoryMission;
   /** Задания дня по порядку mission.steps — уже найденные в паке. */
   steps: StoryStepView[];
@@ -160,16 +164,19 @@ export function StoryMode({
     const step = steps[phase.step];
     if (!step) return null;
     return (
-      <TaskView
-        key={step.task.id}
-        task={step.task}
-        executor={executor}
-        schema={schema}
-        drafts={drafts}
-        skillTitle={step.skillTitle}
-        onOpenSchema={onOpenSchema}
-        onDone={(outcome) => handleTaskDone(step.task, outcome)}
-      />
+      <>
+        <StoryProgress campaign={campaign} mission={mission} phase={phase} />
+        <TaskView
+          key={step.task.id}
+          task={step.task}
+          executor={executor}
+          schema={schema}
+          drafts={drafts}
+          skillTitle={step.skillTitle}
+          onOpenSchema={onOpenSchema}
+          onDone={(outcome) => handleTaskDone(step.task, outcome)}
+        />
+      </>
     );
   }
 
@@ -191,77 +198,98 @@ export function StoryMode({
           ? mission.scenes.hook
           : intro?.scene;
 
+  /*
+   * Находки прошлых дней — папка дела, которая растёт. Показывается только
+   * на брифе: утро начинается с того, что уже известно, а дальше по дню
+   * это был бы шум над каждым экраном.
+   */
+  const found = campaign.missions.slice(0, campaign.missions.findIndex((m) => m.id === mission.id)).map((m) => m.found);
+
   return (
-    <div className="card story-mode">
-      {scene && <StoryArt scene={scene} />}
+    <>
+      <StoryProgress campaign={campaign} mission={mission} phase={phase} />
 
-      {phase.kind === 'brief' && (
-        <>
-          <p className="story-mode-badge">{t.storyMode.badge}</p>
-          <p className="story-mode-place">{mission.place}</p>
-          <div className="story-mode-thread">
-            {mission.messages.map((m, i) => (
-              <div className="story-mode-msg" key={i}>
-                <p className="story-mode-from">{m.from}</p>
-                <p className="story-mode-text">{m.text}</p>
+      <div className="card story-mode">
+        {scene && <StoryArt scene={scene} />}
+
+        {phase.kind === 'brief' && (
+          <>
+            <p className="story-mode-badge">{t.storyMode.badge}</p>
+            <p className="story-mode-place">{mission.place}</p>
+            {found.length > 0 && (
+              <div className="story-known">
+                <p className="story-known-title">{t.storyMode.known}</p>
+                <ul>
+                  {found.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-          <button type="button" className="btn" onClick={goNext}>
-            {nextLabel}
-          </button>
-        </>
-      )}
-
-      {phase.kind === 'intro' && intro && (
-        <>
-          {intro.title && <h2>{intro.title}</h2>}
-          {intro.paras.map((p, i) => (
-            <p className="story-mode-para" key={i}>
-              {p}
-            </p>
-          ))}
-          <button type="button" className="btn" onClick={goNext}>
-            {nextLabel}
-          </button>
-        </>
-      )}
-
-      {phase.kind === 'reflection' && (
-        <>
-          <h2>{t.storyMode.reflectionTitle}</h2>
-          {mission.reflection.map((p, i) => (
-            <p className="story-mode-para" key={i}>
-              {p}
-            </p>
-          ))}
-          <button type="button" className="btn" onClick={goNext}>
-            {nextLabel}
-          </button>
-        </>
-      )}
-
-      {phase.kind === 'hook' && (
-        <>
-          {mission.hook.map((p, i) => (
-            <p className="story-mode-para" key={i}>
-              {p}
-            </p>
-          ))}
-          {onNext ? (
-            <button type="button" className="btn" onClick={onNext}>
-              {t.storyMode.nextMission}
+            )}
+            <div className="story-mode-thread">
+              {mission.messages.map((m, i) => (
+                <div className="story-mode-msg" key={i}>
+                  <p className="story-mode-from">{m.from}</p>
+                  <p className="story-mode-text">{m.text}</p>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
             </button>
-          ) : (
-            <>
-              <p className="story-mode-tbc">{t.storyMode.toBeContinued}</p>
-              <button type="button" className="btn secondary" onClick={onExit}>
-                {t.storyMode.finish}
+          </>
+        )}
+
+        {phase.kind === 'intro' && intro && (
+          <>
+            {intro.title && <h2>{intro.title}</h2>}
+            {intro.paras.map((p, i) => (
+              <p className="story-mode-para" key={i}>
+                {p}
+              </p>
+            ))}
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
+            </button>
+          </>
+        )}
+
+        {phase.kind === 'reflection' && (
+          <>
+            <h2>{t.storyMode.reflectionTitle}</h2>
+            {mission.reflection.map((p, i) => (
+              <p className="story-mode-para" key={i}>
+                {p}
+              </p>
+            ))}
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
+            </button>
+          </>
+        )}
+
+        {phase.kind === 'hook' && (
+          <>
+            {mission.hook.map((p, i) => (
+              <p className="story-mode-para" key={i}>
+                {p}
+              </p>
+            ))}
+            {onNext ? (
+              <button type="button" className="btn" onClick={onNext}>
+                {t.storyMode.nextMission}
               </button>
-            </>
-          )}
-        </>
-      )}
-    </div>
+            ) : (
+              <>
+                <p className="story-mode-tbc">{t.storyMode.toBeContinued}</p>
+                <button type="button" className="btn secondary" onClick={onExit}>
+                  {t.storyMode.finish}
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 }

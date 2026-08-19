@@ -1945,6 +1945,7 @@ export default function App() {
                * её задание молча не попало бы в прогресс.
                */
               key={storyMission.mission.id}
+              campaign={storyCampaign(locale)}
               mission={storyMission.mission}
               steps={storyMission.steps}
               executor={executor}

@@ -4154,6 +4154,145 @@ table.sample td.null {
 }
 
 /*
+ * Полоса дела (StoryProgress.tsx) — стоит над карточкой дня и над заданием.
+ *
+ * Не карточка: своей заливки и рамки у неё нет, потому что она не содержимое,
+ * а подпись к нему. Карточка рядом с карточкой на телефоне читается как два
+ * равных блока, и вопрос расследования начинал бы спорить с самим заданием
+ * за внимание — ровно наоборот тому, зачем он здесь.
+ */
+.story-progress {
+  padding: 0 2px;
+}
+
+.story-progress-case {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.story-progress-label {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Сам вопрос — обычным текстом, а метка приглушена: иначе оба серых
+   и метка перетягивает на себя внимание размером букв. */
+.story-progress-question {
+  color: var(--text);
+}
+
+.story-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.story-progress-days {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Пять делений на 320px: минимальная ширина не задаётся, деления делят
+     остаток поровну и на узком экране просто становятся уже. */
+  min-width: 0;
+}
+
+.story-progress-days li {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0 5px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-sunken);
+  color: var(--text-dim);
+}
+
+/*
+ * Пройденные дни названы заливкой, а не цветом текста: цветом текста уже
+ * назван текущий, и два признака одного цвета сливались бы в один.
+ */
+.story-progress-days li.is-done {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-sunken));
+  color: var(--text);
+}
+
+.story-progress-days li.is-current {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.story-progress-step {
+  flex: none;
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Папка дела на брифе: что установили прошлые дни. Каждая находка —
+ * с акцентной точкой, а не с маркером списка: список фактов расследования,
+ * а не перечисление в тексте.
+ */
+.story-known {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+}
+
+.story-known-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.story-known ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.story-known li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.story-known li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/*
  * Заставки фаз (StoryArt.tsx).
  *
  * Полоса во всю ширину карточки и с фиксированным отношением сторон: высота
