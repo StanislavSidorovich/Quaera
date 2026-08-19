@@ -22,9 +22,10 @@ import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
+import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
-import { StoryMode } from './ui/StoryMode';
+import { StoryMode, storyPhaseBefore, type StoryPhase } from './ui/StoryMode';
 import { storyCampaign } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
@@ -183,20 +184,44 @@ const RECOMMENDED_TRACK: Track = 'sql';
  * рендерится штатно — прячутся только два видимых входа в него (пункт меню
  * и ссылка на главной), поэтому без флага раздел просто недостижим.
  */
-function readStoryEnabled(): boolean {
+function readStoryEnabled(): { enabled: boolean; fromUrl: boolean } {
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.has('story')) {
       const on = params.get('story') !== '0';
       localStorage.setItem('quaera.story', on ? '1' : '0');
-      return on;
+      /*
+       * Параметр стирается из адреса сразу, как прочитан. Иначе он остаётся
+       * в строке навсегда, и каждое обновление страницы снова выбрасывало бы
+       * в миссию — из главной было бы не выйти, не почистив адрес руками.
+       * Своё дело он к этому моменту сделал: флаг записан в localStorage,
+       * а открыть раздел просят один раз, не при каждом F5.
+       */
+      params.delete('story');
+      const rest = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+      return { enabled: on, fromUrl: on };
     }
-    return localStorage.getItem('quaera.story') === '1';
+    return { enabled: localStorage.getItem('quaera.story') === '1', fromUrl: false };
   } catch {
-    return false;
+    return { enabled: false, fromUrl: false };
   }
 }
-const STORY_ENABLED = readStoryEnabled();
+const STORY_FLAG = readStoryEnabled();
+const STORY_ENABLED = STORY_FLAG.enabled;
+
+/**
+ * Адрес `?story` не просто включает раздел, а сразу его и открывает.
+ *
+ * До этого вход в режим истории стоял ссылкой на главной — то есть
+ * незаконченный прототип занимал место на первом экране, который человек
+ * видит каждый заход. Экспериментальному разделу там не место, а другого
+ * входа на телефоне не бывает: бокового меню там нет вовсе. Ответ — сам
+ * адрес: `quaera.app/?story` открывает миссию с первой фазы, а запомненный
+ * флаг после этого держит пункт в боковом меню на десктопе. Свежий
+ * пользователь по-прежнему не видит ни входа, ни следа раздела.
+ */
+const STORY_OPEN_ON_BOOT = STORY_FLAG.fromUrl;
 
 /**
  * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
@@ -232,7 +257,13 @@ type Screen =
    */
   | { name: 'done'; solved: number; fromStory?: boolean }
   | { name: 'story' }
-  | { name: 'storymode' }
+  /**
+   * `phase` — где человек внутри миссии (бриф → теория → задание → суждение
+   * → крючок). Живёт в экране, а не внутри StoryMode, ровно по той же причине,
+   * по которой `index` занятия живёт здесь: шапке нужен шаг назад, а стрелка
+   * в шапке умеет только менять экран.
+   */
+  | { name: 'storymode'; phase: StoryPhase }
   | { name: 'reference' }
   | { name: 'sandbox' }
   | { name: 'data' }
@@ -261,6 +292,16 @@ function backTarget(current: Screen): Screen {
   // Из карточки возвращаемся в список приёмов, а не на главную:
   // в справочнике их обычно листают подряд.
   if (current.name === 'lesson') return { name: 'reference' };
+  /*
+   * Из миссии «назад» ведёт на предыдущую фазу той же миссии, а наружу —
+   * только с первой. Причина та же, что у занятия ниже: перечитать бриф
+   * посреди задания — вопрос по ходу дела, а выход на главную стоил бы
+   * всей миссии целиком (её ход нигде не сохраняется).
+   */
+  if (current.name === 'storymode') {
+    const before = storyPhaseBefore(current.phase);
+    if (before) return { name: 'storymode', phase: before };
+  }
   if (current.name === 'session') {
     const step = current.queue[current.index];
     if (step?.kind === 'task') {
@@ -373,6 +414,15 @@ function initialBoot(locale: Locale): Boot {
     stored = raw ? (JSON.parse(raw) as StoredScreen) : null;
   } catch {
     // localStorage недоступен или запись битая — открываем главную
+  }
+  /*
+   * Трек берётся у самой миссии, а не из своего ключа: миссия крутит внутри
+   * настоящее задание, а исполнитель и схема приходят из активного трека —
+   * войти в неё с чужим значило бы дать SQL-заданию питоновский движок.
+   */
+  if (STORY_OPEN_ON_BOOT) {
+    const mission = storyCampaign(locale).missions[0];
+    if (mission) return { screen: { name: 'storymode', phase: 'brief' }, ...empty, track: mission.track };
   }
   if (!stored) return { screen: { name: 'home' }, ...empty };
   switch (stored.name) {
@@ -594,6 +644,14 @@ export default function App() {
    * активен тот же трек: тогда executor и schema соответствуют заданию.
    * Спрятано за STORY_ENABLED, как и оба входа в старую линию.
    */
+  /**
+   * Трек миссии режима истории. Отдельно от storyMission ниже потому, что
+   * нужен раньше него: вход обязан знать, куда переключаться, ещё до того,
+   * как миссия станет доступной (а доступной она становится только на своём
+   * треке — иначе исполнитель и схема будут чужие).
+   */
+  const storyMissionTrack = useMemo(() => storyCampaign(locale).missions[0]?.track ?? null, [locale]);
+
   const storyMission = useMemo(() => {
     if (!STORY_ENABLED) return null;
     const mission = storyCampaign(locale).missions[0];
@@ -1254,6 +1312,30 @@ export default function App() {
     setScreen({ name: 'home' });
   }
 
+  /**
+   * Вход в режим истории — переключает трек на тот, которому принадлежит
+   * задание миссии, и только потом открывает экран.
+   *
+   * Без переключения вход был обусловлен: раздел показывался, только пока
+   * активен sql, — то есть человек с открытым pandas просто не видел, что
+   * режим существует, а адрес `?story` привёл бы его на пустой экран.
+   * Прокрутки к выбору трека здесь нет, в отличие от switchTrack: она
+   * нужна главной, а мы с главной уходим.
+   */
+  function openStoryMode() {
+    if (!storyMissionTrack) return;
+    if (storyMissionTrack !== activeTrack) {
+      setActiveTrack(storyMissionTrack);
+      setConsentDeferred(false);
+      try {
+        localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, storyMissionTrack);
+      } catch {
+        // см. initialActiveTrack
+      }
+    }
+    setScreen({ name: 'storymode', phase: 'brief' });
+  }
+
   function openTrackIntro(track: Track) {
     setScreen({ name: 'trackIntro', track });
   }
@@ -1330,6 +1412,7 @@ export default function App() {
     // нечего — раздел, из которого занятие начали, уже не восстановить.
     done: 'home',
     story: 'story',
+    storymode: 'storymode',
     reference: 'reference',
     sandbox: 'sandbox',
     data: 'data',
@@ -1358,6 +1441,8 @@ export default function App() {
         onReference={() => setScreen({ name: 'reference' })}
         storyEnabled={SHOW_STORY_LINE}
         onStory={() => setScreen({ name: 'story' })}
+        storyModeEnabled={STORY_ENABLED && storyMissionTrack !== null}
+        onStoryMode={openStoryMode}
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
@@ -1380,6 +1465,18 @@ export default function App() {
             >
               ←
             </button>
+          )}
+          {/*
+           * Знак приложения — только на главной и только там, где нет
+           * бокового меню (см. .topbar-mark в styles.css). Слово «Quaera»
+           * при этом остаётся на месте, справа от знака: знак опознаётся
+           * быстрее, а имя всё равно нужно — приложение называет себя
+           * на телефоне ровно один раз, и это единственное такое место.
+           */}
+          {screen.name === 'home' && (
+            <span className="topbar-mark">
+              <QuaeraMark />
+            </span>
           )}
           <h1 className={screen.name === 'home' ? 'brand' : undefined}>
             {screen.name === 'session'
@@ -1466,6 +1563,39 @@ export default function App() {
                           )}
             </span>
           </h1>
+          {/*
+           * Полоска треков в шапке главной — постоянная дорога к треку там,
+           * где бокового меню нет вовсе.
+           *
+           * До этого перейти к треку на телефоне можно было только через
+           * карточки в теле главной, то есть через конкретную вёрстку одного
+           * экрана: любая её перестановка рвала единственный путь. Здесь путь
+           * привязан к шапке — к тому, что на экране не двигается.
+           *
+           * Знаком, а не буквой (A/S/p/D): буквы без подписи не опознаются,
+           * см. TrackGlyph. Активный трек назван не цветом текста, а заливкой
+           * и полосой под знаком — цвета треков задуманы заливкой и текстом
+           * дают меньше 4.5:1 (замер у --track-* в styles.css).
+           */}
+          {screen.name === 'home' && (
+            <nav className="track-strip" aria-label={t.nav.tracksLabel}>
+              {TRACK_ORDER.map((track) => (
+                <button
+                  key={track}
+                  type="button"
+                  className={`track-chip track-${track}${track === activeTrack ? ' is-active' : ''}`}
+                  // aria-pressed, а не aria-current, — по той же причине, что
+                  // и у треков в боковом меню: активный трек это состояние
+                  // приложения, а не открытая страница.
+                  aria-pressed={track === activeTrack}
+                  aria-label={t.tracks.names[track]}
+                  onClick={() => switchTrack(track)}
+                >
+                  <TrackGlyph track={track} />
+                </button>
+              ))}
+            </nav>
+          )}
           {screen.name === 'session' && screen.index > 0 && (
             <button className="icon-btn" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
               ‹
@@ -1579,7 +1709,6 @@ export default function App() {
               onOpenStory={() => setScreen({ name: 'story' })}
               storyAt={storyAt}
               /* Вход в режим истории — только когда миссия разрешена (флаг + её трек). */
-              onOpenStoryMode={storyMission ? () => setScreen({ name: 'storymode' }) : undefined}
               /*
                * Незаконченное занятие показываем только на главной его же
                * трека: главная — экран одного трека (его карта, его прогресс,
@@ -1712,6 +1841,11 @@ export default function App() {
               schema={schema}
               drafts={taskDrafts}
               skillTitle={storyMission.skillTitle}
+              phase={screen.phase}
+              onPhase={(phase) => {
+                setScreen({ name: 'storymode', phase });
+                window.scrollTo({ top: 0 });
+              }}
               onTaskDone={recordAttempt}
               onOpenSchema={openSchema}
               onExit={() => setScreen({ name: 'home' })}
@@ -2236,7 +2370,6 @@ function Home({
   onOpenTrackIntro,
   onOpenStory,
   storyAt,
-  onOpenStoryMode,
   resume,
   onResume,
   scrollToChooser,
@@ -2276,7 +2409,6 @@ function Home({
   /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
   storyAt: { at: number; total: number } | null;
   /** Вход в режим истории (эксперимент за `?story`). undefined — миссия не разрешена, ссылку не показываем. */
-  onOpenStoryMode?: () => void;
   /** Подпись шага незаконченного занятия этого трека («Задача 2 из 5»), null — продолжать нечего. */
   resume: string | null;
   onResume: () => void;
@@ -2795,16 +2927,6 @@ function Home({
            * основное действие на этом экране одно, и второй крупной кнопкой
            * рядом оно перестало бы быть основным.
            */}
-          {onOpenStoryMode && (
-            <button
-              type="button"
-              className="link-row"
-              onClick={onOpenStoryMode}
-              style={{ margin: '10px 0 0' }}
-            >
-              {t.storyMode.entryLink}
-            </button>
-          )}
           {SHOW_STORY_LINE && storyAt && (
             <button
               type="button"

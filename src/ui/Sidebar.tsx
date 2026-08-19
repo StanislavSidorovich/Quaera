@@ -19,6 +19,7 @@ import type { Progress } from '../srs/store';
 export type SidebarSection =
   | 'home'
   | 'story'
+  | 'storymode'
   | 'reference'
   | 'sandbox'
   | 'data'
@@ -37,6 +38,8 @@ export function Sidebar({
   onHome,
   storyEnabled,
   onStory,
+  storyModeEnabled,
+  onStoryMode,
   onReference,
   onSandbox,
   onData,
@@ -57,6 +60,14 @@ export function Sidebar({
   /** Экспериментальный раздел «Сюжет» спрятан за `?story` (см. App.tsx). */
   storyEnabled: boolean;
   onStory: () => void;
+  /**
+   * Режим истории — тоже за `?story`, но это другой раздел и другой флаг:
+   * линия сейчас скрыта целиком (SHOW_STORY_LINE), а режим истории виден
+   * тому, кто флаг включил. Единственный видимый вход в него на десктопе;
+   * на телефоне меню нет, и туда заходят прямо по адресу `?story`.
+   */
+  storyModeEnabled: boolean;
+  onStoryMode: () => void;
   onReference: () => void;
   onSandbox: () => void;
   onData: () => void;
@@ -129,6 +140,17 @@ export function Sidebar({
             >
               <IconRoute />
               {t.nav.story}
+            </button>
+          )}
+          {storyModeEnabled && (
+            <button
+              type="button"
+              className="side-item"
+              aria-current={section === 'storymode' ? 'page' : undefined}
+              onClick={onStoryMode}
+            >
+              <IconStory />
+              {t.nav.storyMode}
             </button>
           )}
           <button
@@ -318,6 +340,19 @@ const IconRoute = () => (
     <path d="M4.4 5.1v5.8" />
     <path d="M8.4 3.6h5.2" />
     <path d="M8.4 12.4h3.4" />
+  </svg>
+);
+
+/*
+ * Реплика в рамке: миссия начинается с того, что заказчик пишет тебе,
+ * и это единственный раздел, где вопрос приходит голосом человека,
+ * а не списком тем. Отличается от IconRoute (линия) тем, что здесь
+ * содержание — разговор, а не путь.
+ */
+const IconStory = () => (
+  <svg {...iconProps}>
+    <path d="M13.4 3H2.6v7.4h2.2v2.8l3-2.8h5.6z" />
+    <path d="M5.2 6h5.6M5.2 8.1h3.4" strokeWidth="1.2" />
   </svg>
 );
 

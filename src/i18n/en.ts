@@ -65,6 +65,7 @@ export const en = {
     home: 'Home',
     /** См. комментарий в ru.ts: порядок пунктов повторяет порядок намерений. */
     story: 'Story line',
+    storyMode: 'Story mode',
     reference: 'Reference',
     sandbox: 'Sandbox',
     data: 'Data',
@@ -558,7 +559,6 @@ export const en = {
   },
   storyMode: {
     headerTitle: 'Story mode',
-    entryLink: 'Story mode · experiment →',
     badge: 'Early prototype',
     theoryTitle: 'One idea before you write',
     toTheory: 'Next',

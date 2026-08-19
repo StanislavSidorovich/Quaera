@@ -464,6 +464,13 @@ textarea.sql {
   z-index: 20;
   display: flex;
   align-items: center;
+  /*
+   * Перенос разрешён всегда, а не только на телефоне: полоске треков
+   * (.track-strip) нужна своя строка уже с 600px, а без flex-wrap её
+   * flex-basis: 100% сплющил бы заголовок в колонку вместо переноса.
+   * На десктопе переносить нечего — и знак, и полоска там скрыты.
+   */
+  flex-wrap: wrap;
   gap: 12px;
   padding: max(env(safe-area-inset-top), 10px) 16px 10px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
@@ -482,6 +489,78 @@ textarea.sql {
 /* Название «Quaera» на главном экране — крупнее прочих заголовков шапки (+~25%). */
 .topbar h1.brand {
   font-size: 21px;
+}
+
+/*
+ * Знак приложения слева от названия — только на главной.
+ *
+ * На десктопе он скрыт: тот же знак уже стоит в шапке бокового меню
+ * в трёхстах пикселях левее (.sidebar-brand), и второй был бы задвоенным
+ * логотипом — тем же дефектом, из-за которого оттуда убрано слово «Quaera».
+ */
+.topbar-mark {
+  display: flex;
+  align-items: center;
+  flex: none;
+  color: var(--text-dim);
+}
+
+/*
+ * Полоска треков в шапке главной — постоянная дорога к треку на телефоне.
+ *
+ * Своей строкой, а не в одном ряду с тумблерами шрифта/темы/языка: замер
+ * на 360px даёт тумблерам около 212px из 328 доступных, и четыре знака
+ * рядом влезали бы впритык при кегле по умолчанию и переполняли строку
+ * при A+ — ровно тот дефект, что уже ловили на панели ввода. Строка
+ * встаёт над тумблерами (order 10 против 11), сразу под названием:
+ * ближе к тому, чем она управляет.
+ */
+.track-strip {
+  order: 10;
+  flex-basis: 100%;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+
+.track-chip {
+  flex: 1 1 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  color: var(--text-dim);
+}
+
+/*
+ * Активный трек назван заливкой и рамкой, а знак внутри — обычным цветом
+ * текста. Цветом самого знака его назвать нельзя: цвета треков задуманы
+ * заливкой и текстом дают ниже 4.5:1 (замер у --track-* в начале файла),
+ * а линия знака в 1.5px читается не легче текста.
+ */
+.track-chip.is-active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--track, var(--accent)) 50%, var(--line));
+  background: color-mix(in srgb, var(--track, var(--accent)) 15%, var(--bg-raised));
+}
+
+.track-chip.track-domain {
+  --track: var(--track-domain);
+}
+
+.track-chip.track-sql {
+  --track: var(--track-sql);
+}
+
+.track-chip.track-python {
+  --track: var(--track-python);
+}
+
+.track-chip.track-model {
+  --track: var(--track-model);
 }
 
 .topbar .sub {
@@ -4074,6 +4153,71 @@ table.sample td.null {
   margin-top: 18px;
 }
 
+/*
+ * Заставки фаз (StoryArt.tsx).
+ *
+ * Полоса во всю ширину карточки и с фиксированным отношением сторон: высота
+ * не должна зависеть от того, сколько линий в конкретной сцене, иначе переход
+ * между фазами читался бы как прыжок вёрстки, а не как смена момента.
+ * Фон — --bg-sunken: картинка обязана быть тише прозы под ней, она вводит
+ * сцену, а не спорит с ней за внимание.
+ */
+.story-art {
+  margin: -2px 0 16px;
+  border-radius: 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.story-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /*
+   * Потолок высоты нужен десктопу: карточка там доходит до 1240px, и полоса
+   * в пропорции 2.76:1 выросла бы до 450px — половина окна под заставку.
+   * `meet` в preserveAspectRatio при этом оставляет рисунок по центру,
+   * а лишняя ширина уходит в поля, а не в растяжение.
+   */
+  max-height: 170px;
+  /*
+   * Общий цвет всех линий — приглушённый текст. Три класса ниже разводят
+   * планы яркостью одного и того же цвета, а не тремя разными цветами:
+   * так схема остаётся одноцветной (её задача — сцена, а не данные)
+   * и не начинает обещать, что цвет что-то значит.
+   */
+  color: var(--text-dim);
+}
+
+.story-art .art-far {
+  opacity: 0.4;
+}
+
+.story-art .art-mid {
+  opacity: 0.7;
+}
+
+.story-art .art-near {
+  opacity: 1;
+}
+
+/* Единственная акцентная линия сцены — та, о которой говорит текст рядом. */
+.story-art .art-line {
+  stroke: var(--accent);
+  fill: none;
+}
+
+.story-art .art-near circle {
+  stroke: var(--accent);
+}
+
+/* Подсветка участка — заливкой, а не цветом линий: акцент в сцене один. */
+.story-art .art-band {
+  fill: var(--accent);
+  opacity: 0.09;
+}
+
 /* ------------------------------------------------------------- десктоп */
 
 /*
@@ -4114,6 +4258,13 @@ table.sample td.null {
    * договаривает то, что на десктопе уже сказано слева.
    */
   .topbar-account {
+    display: none;
+  }
+
+  /* Знак и полоска треков — там же и по той же причине: и то и другое
+     уже стоит в боковом меню (.sidebar-brand и список треков под ним). */
+  .topbar-mark,
+  .track-strip {
     display: none;
   }
 
