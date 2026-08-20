@@ -92,11 +92,50 @@ const VOCAB = [
   ['псевдоним таблицы', /\b[a-z]\.[a-z_]{2,}/],
 ];
 
+/**
+ * Рабочая форма конструкции — то, по чему её можно напечатать.
+ *
+ * Правка по живому проходу четверга: подводка честно писала «для этого есть
+ * HAVING: тот же фильтр, но после GROUP BY», и словарь выше засчитывал показ
+ * по одному имени. Человек читал про идею, а через экран встречал в шаблоне
+ * HAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT ...) >= 80 и говорил,
+ * что конструкцию «как будто не проходили». Это то же самое, обо что гейт уже
+ * спотыкался на AVG: **функцию мало назвать, её надо показать вызовом**, —
+ * только теперь про клаузы, у которых форма не в скобках, а в операнде.
+ *
+ * Здесь у конструкции нет записи — годится образец из VOCAB: у строкового
+ * литерала или у сравнения имя и форма совпадают.
+ *
+ * Латиница в образцах не случайна: \w в JS не включает кириллицу, поэтому
+ * русская проза, называющая клаузу по имени, в рабочую форму не проходит
+ * сама собой. Английская проза отсекается требованием операнда.
+ */
+const FORMS = new Map([
+  ['WHERE', /\bWHERE\s+[\w.]+\s*(?:[=<>]|\b(?:BETWEEN|IN|IS|LIKE|NOT)\b)/],
+  ['GROUP BY', /\bGROUP\s+BY\s+[\w.]+/],
+  ['ORDER BY', /\bORDER\s+BY\s+[\w.]+/],
+  ['HAVING', /\bHAVING\s+[\w.]+\s*(?:\(|[<>=])/],
+  ['JOIN', /\bJOIN\b[^\n]*\bON\b/],
+  ['ON', /\bON\s+[\w.]+\s*=/],
+  ['LIMIT', /\bLIMIT\s+\d/],
+  ['IN', /\bIN\s*\(/],
+  ['BETWEEN', /\bBETWEEN\s+\S+\s+AND\b/],
+  ['DESC', /[\w.]+\s+DESC\b/],
+]);
+
 /** Какие конструкции есть в куске текста. */
 function constructs(text) {
   if (!text) return new Set();
   const found = new Set();
   for (const [name, re] of VOCAB) if (re.test(text)) found.add(name);
+  return found;
+}
+
+/** Какие конструкции показаны в рабочей форме — то есть так, что по ним можно напечатать. */
+function inWorkingForm(text) {
+  if (!text) return new Set();
+  const found = new Set();
+  for (const [name, re] of VOCAB) if ((FORMS.get(name) ?? re).test(text)) found.add(name);
   return found;
 }
 
@@ -119,6 +158,14 @@ function typedByHand(task) {
 /** Что задание показывает после того, как пройдено: шаблон, запрос, эталон, заготовка. */
 const shownByTask = (task) =>
   constructs(join([task.starter, task.template, task.predictSql, task.solution]));
+
+/**
+ * Что задание кладёт человеку перед глазами, пока он его решает: шаблон
+ * с пропусками, заготовка, запрос predict. Эталон сюда не входит намеренно —
+ * его видят после решения или по кнопке «показать разбор», а ступень обязана
+ * держаться без них (тот же довод, по которому исключены hints и explain).
+ */
+const givenByTask = (task) => constructs(join([task.starter, task.template, task.predictSql]));
 
 try {
   execSync(
@@ -163,8 +210,10 @@ try {
      */
     const seen = new Set();
     const namedInProse = new Set();
+    const formShown = new Set();
     const gaps = [];
     const weak = [];
+    const unformed = [];
     let missing = 0;
 
     campaign.missions.forEach((mission, day) => {
@@ -176,6 +225,7 @@ try {
         }
 
         const intro = constructs(introText(step));
+        const introForms = inWorkingForm(introText(step));
         const available = new Set([...seen, ...intro]);
         const required = typedByHand(task);
 
@@ -187,11 +237,32 @@ try {
           if (!intro.has(c) && !namedInProse.has(c)) weak.push(`${mission.short} · ${task.id} — ${c}`);
         }
 
+        /*
+         * Вторая половина лестницы: конструкция, которую человек не печатает,
+         * а получает готовой в шаблоне или в запросе predict, обязана быть
+         * показана в рабочей форме прежде, чем он на неё наткнётся. Подводка
+         * того же шага годится — она стоит экраном раньше.
+         *
+         * Без этого правила ступень засчитывалась по одному имени: подводка
+         * писала «для этого есть HAVING», а через экран человек встречал
+         * HAVING SUM(f.revenue) > 5000000 и говорил, что конструкцию
+         * не проходили. Имя не форма.
+         */
+        for (const c of minus(givenByTask(task), formShown)) {
+          if (!introForms.has(c)) {
+            unformed.push(`${mission.short} · ${task.id} (${task.mode}) — ${c}`);
+          }
+        }
+
         for (const c of intro) {
           seen.add(c);
           namedInProse.add(c);
         }
-        for (const c of shownByTask(task)) seen.add(c);
+        for (const c of introForms) formShown.add(c);
+        for (const c of shownByTask(task)) {
+          seen.add(c);
+          formShown.add(c);
+        }
       });
     });
 
@@ -199,6 +270,12 @@ try {
       `${label}конструкция показана прежде, чем её печатают рукой`,
       missing === 0,
       `${missing} шт. впервые под рукой:\n        ${gaps.join('\n        ')}`
+    );
+
+    check(
+      `${label}конструкция показана в рабочей форме прежде, чем встретится в задании`,
+      unformed.length === 0,
+      `${unformed.length} шт. названы именем без формы:\n        ${unformed.join('\n        ')}`
     );
 
     if (weak.length) {

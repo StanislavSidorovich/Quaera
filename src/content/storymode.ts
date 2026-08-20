@@ -385,7 +385,7 @@ const ru: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
       short: 'Ср',
-      found: 'Форма года найдена: зимний спад и летний пик. Но эта волна у всей категории, а не у одной Nettora.',
+      found: 'Форма года найдена: зимний спад и летний пик. Но волна посчитана по всей рознице разом, а не по одной Nettora.',
       scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -412,7 +412,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Аоки-сан, директор по продажам',
-            text: '«Июнь против ноября — почти вдвое. Эта волна мне знакома двадцать лет, и на встрече её слушать никто не станет: она одинаковая у всех, включая тех, у кого продажи растут.»',
+            text: '«Июнь против ноября — почти вдвое. Эта волна мне знакома двадцать лет, и на встрече её слушать никто не станет: она про розницу вообще, а не про один бренд.»',
           },
         },
         {
@@ -451,11 +451,11 @@ const ru: StoryCampaign = {
         },
       ],
       reflection: [
-        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И волна одна на все бренды сразу.',
+        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И это одна кривая на все бренды разом: внутри неё ни один бренд не различить.',
         'Обрати внимание на то, что легко проскочить: ты нашёл где просело, а не почему. И нашёл по всей рознице разом, а Аоки-сан спрашивает про один бренд.',
       ],
       hook: [
-        'Зимний спад есть у всей категории — это сезон, и нести его на встречу бессмысленно: сезон одинаков для всех, включая конкурентов.',
+        'Зимний спад виден по всей рознице — это сезон, и нести его на встречу бессмысленно: он объясняет форму года у всех сразу и ни одного бренда в отдельности.',
         'А у Nettora продажи упали вдвое, и вдвое — это уже не сезон. Завтра надо будет отделить один бренд от остальных. Загвоздка в том, что бренда в таблице продаж нет.',
       ],
     },
@@ -519,6 +519,7 @@ const ru: StoryCampaign = {
             paras: [
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — это число разных точек, COUNT(DISTINCT customer_id): вторничная функция на новой таблице.',
               'Фильтровать по агрегату WHERE не умеет — он отбирает строки до группировки, а выручка бренда появляется только после неё. Для этого есть HAVING: тот же фильтр, но после GROUP BY.',
+              'Пишется это так:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через AND, — ровно как в WHERE.',
             ],
           },
           after: {
@@ -744,7 +745,7 @@ const en: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
       short: 'Wed',
-      found: 'The shape of the year is found: a winter trough and a summer peak. But that wave belongs to the whole category, not to Nettora.',
+      found: 'The shape of the year is found: a winter trough and a summer peak. But the wave was counted across all retail at once, not for Nettora alone.',
       scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -771,7 +772,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
-            text: '"June against November, nearly double. I have known that wave for twenty years, and nobody in the meeting will sit through it: it is the same for everyone, including the brands that are growing."',
+            text: '"June against November, nearly double. I have known that wave for twenty years, and nobody in the meeting will sit through it: it is about retail in general, not about one brand."',
           },
         },
         {
@@ -803,11 +804,11 @@ const en: StoryCampaign = {
         },
       ],
       reflection: [
-        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And the wave is one and the same across every brand.',
+        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And it is one curve for every brand at once: no single brand can be told apart inside it.',
         'Notice what is easy to skip: you found where it dropped, not why. And you found it across all of retail at once, while Aoki is asking about one brand.',
       ],
       hook: [
-        'The winter trough belongs to the whole category, which makes it seasonality, and carrying seasonality into the meeting is pointless: the season is the same for everyone, competitors included.',
+        'The winter trough shows across all retail, which makes it seasonality, and carrying seasonality into the meeting is pointless: it explains the shape of the year for everyone at once and no single brand in particular.',
         'Nettora, though, fell by half, and by half is not a season. Tomorrow you will have to separate one brand from the rest. The catch is that the sales table holds no brand at all.',
       ],
     },
@@ -866,6 +867,7 @@ const en: StoryCampaign = {
             paras: [
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id), Tuesday function on a new table.',
               'WHERE cannot filter by an aggregate. It picks rows before grouping, and a brand revenue only exists after it. That is what HAVING is for: the same filter, but after GROUP BY.',
+              'It is written like this:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by AND, exactly as in WHERE.',
             ],
           },
           after: {
