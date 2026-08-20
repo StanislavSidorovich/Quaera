@@ -76,7 +76,7 @@
 | Репозиторий | **https://github.com/StanislavSidorovich/Quaera**, ветка `main`, публичный |
 | Деплой | Cloudflare Pages, проект в панели по-прежнему зовётся `querium`, автоматически на каждый push в `main`, ~3–4 минуты |
 | Каталог на диске | `D:\docs\2. study\Claude\0. Claude code\2. analytics\querium` — **на диске есть второй, устаревший клон** в `D:\docs\2. study\7. gpt\querium`; правки вести только в первом |
-| Последний тег | `v0.22-promo-lift` — первый расчётный навык роли commercial analytics: промо-лифт и база сравнения, семь заданий. До него `v0.21-story-week-2` (вторая неделя режима истории) |
+| Последний тег | `v0.22-promo-lift` (`ba327d5`) — первый расчётный навык роли commercial analytics: промо-лифт и база сравнения, семь заданий. До него `v0.21-story-week-2` (вторая неделя режима истории) |
 | Supabase | проект `lueignziprnjnjiixdsh`, Франкфурт; см. §3.4 и ниже |
 
 **Имя.** Проект называется **Quaera** с 2026-08-15 (до этого — Querium).
