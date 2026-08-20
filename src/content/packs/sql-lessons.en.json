@@ -153,6 +153,15 @@
       "reads": "A week with a promotion for «Krosti» is 2141 units, a week without one is 1184, a lift of +80.8%. The base is named right in the query: weeks of 2025 in which the brand had no promo rows at all.",
       "wrongWhy": "The base is worked out across every week in a row, promo weeks included. They pull it upwards (1423 instead of 1184), and the lift drops from 80.8% to 50.4%, the more so the more weeks the promotions took. The rule: the promo period and the base never share a single week.",
       "selfCheck": "Say it out loud: «lift against what?» If the answer holds no period and no rule for picking base weeks, there is no number yet. Check as well that no week is lost or double counted: promo weeks plus base weeks must add up to exactly the number of weeks in the period."
+    },
+    {
+      "skill": "sql-price-realization",
+      "title": "Price: realization, discount, mix",
+      "why": "The price list is what the company intends, the till is what happened, and promotions, retailer discounts and the mix of what sold all stand in between. Price realization answers how much of the list price turned into money, and it is only ever measured weighted: a sum divided by a sum. A plain average across fact rows gives a different number, because those rows come in different sizes and weigh the same in it.",
+      "form": "SELECT SUM(revenue) / SUM(units)                  AS actual,\n       SUM(units * list_price) / SUM(units)       AS list,\n       100.0 * SUM(revenue) / SUM(units * list_price) AS realization\nFROM fact\nJOIN prices ON same product\n           AND same month",
+      "reads": "For «Krosti» in 2025, 95.5% of the list price reached the till: 100.7 yen instead of 105.4. The 4.5 yen gap per unit is promotions and discounts, and it only shows up next to the list price of the same month.",
+      "wrongWhy": "The list price is taken as a plain average over the six SKUs in the reference table, with no weighting by sales, and realization comes out at 100.2%: «we sell exactly at list», when 4.5% is in fact given away. The error is not in the discount but in the mix: cheap fast-moving items sell more often than expensive ones, so the average list price in the catalogue sits below the one that actually stood on the units sold.",
+      "selfCheck": "Take a month in which the brand ran no promotion at all. Realization in it has to land near 100%: list and till agree. If there is a gap even there, what is broken is not the business but the join, most likely the price pulled in for the wrong month."
     }
   ]
 }

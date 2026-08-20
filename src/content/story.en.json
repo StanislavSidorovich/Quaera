@@ -42,9 +42,9 @@
           "outcome": "You measure uplift against a base you name out loud, rankings inside groups, and comparisons with the previous period."
         },
         {
-          "title": "Why it dropped",
-          "hook": "A few weeks in, the question arrives as alarm rather than as an assignment: a brand is down by half and nobody knows why. Here the work is not writing a query but deciding which query to write, and then saying what the result means.",
-          "outcome": "You take a situation apart down to its cause: first you compute it yourself, then you answer what the number means for the business."
+          "title": "Price and cause",
+          "hook": "The last weeks bring the two questions asked most often. First: the price list went up and the money did not, so where did the difference go. The second arrives as worry rather than a task: a brand has halved and nobody knows why. Neither is answered by a query, but by deciding which query to write.",
+          "outcome": "You work out how much of the list price reached the till and what ate the rest, and you take a situation apart down to its cause: the numbers first, then what they mean for the business."
         }
       ]
     }

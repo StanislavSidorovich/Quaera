@@ -189,6 +189,17 @@
       "wrong": "WITH weekly AS (\n  SELECT f.week_start,\n         SUM(f.units) AS units,\n         MAX(CASE WHEN f.promo_id IS NOT NULL THEN 1 ELSE 0 END) AS on_promo\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Krosti'\n    AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY f.week_start\n)\nSELECT ROUND(AVG(CASE WHEN on_promo = 1 THEN units END)) AS promo_week,\n       ROUND(AVG(units)) AS base_week\nFROM weekly",
       "wrongWhy": "База посчитана по всем неделям подряд, вместе с промо-неделями. Они тянут её вверх — 1423 вместо 1184, — и лифт занижается с 80.8% до 50.4%, тем сильнее, чем больше недель заняли акции. Правило: период акции и база не пересекаются ни одной неделей.",
       "selfCheck": "Спросите вслух: «лифт к чему?» Если в ответе нет периода и правила отбора базовых недель, числа ещё нет. Заодно проверьте, что недели не потерялись и не задвоились: промо-недели плюс базовые должны дать ровно столько недель, сколько в периоде."
+    },
+    {
+      "skill": "sql-price-realization",
+      "title": "Цена: реализация, скидка, микс",
+      "why": "Прайс — намерение компании, касса — факт, и между ними стоят промо, скидки сетям и микс проданного. Реализация цены отвечает, какая часть прайса дошла до денег, и считается только взвешенно: сумма делится на сумму. Простое среднее по строкам факта даёт другое число, потому что строки разного размера, а весят в нём одинаково.",
+      "form": "SELECT SUM(выручка) / SUM(штуки)                   AS факт,\n       SUM(штуки * прайс) / SUM(штуки)             AS прайс,\n       100.0 * SUM(выручка) / SUM(штуки * прайс)   AS реализация\nFROM факт\nJOIN прайс ON тот же товар\n          AND тот же месяц",
+      "example": "SELECT ROUND(SUM(f.revenue) / SUM(f.units), 1) AS realized_price,\n       ROUND(SUM(f.units * pr.list_price) / SUM(f.units), 1) AS list_price,\n       ROUND(100.0 * SUM(f.revenue) / SUM(f.units * pr.list_price), 1) AS realization_pct\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND substr(pr.month_start, 1, 7) = substr(f.week_start, 1, 7)\nWHERE p.brand = 'Krosti'\n  AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'",
+      "reads": "У «Krosti» за 2025 год до кассы дошло 95.5% прайса: 100.7 ¥ вместо 105.4. Разрыв в 4.5 ¥ на штуку — это промо и скидки, и он виден только рядом с прайсом того же месяца.",
+      "wrong": "SELECT ROUND(SUM(f.revenue) / SUM(f.units), 1) AS realized_price,\n       ROUND((SELECT AVG(list_price) FROM dim_product WHERE brand = 'Krosti'), 1) AS list_price,\n       ROUND(100.0 * SUM(f.revenue) / SUM(f.units)\n             / (SELECT AVG(list_price) FROM dim_product WHERE brand = 'Krosti'), 1) AS realization_pct\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Krosti'\n  AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'",
+      "wrongWhy": "Прайс взят простым средним по шести SKU справочника, без веса продаж, и реализация выходит 100.2% — «продаём ровно по прайсу», хотя на деле отдаём 4.5%. Ошибка не в скидке, а в миксе: дешёвые ходовые позиции продаются чаще дорогих, поэтому средний прайс по справочнику ниже того, который реально стоял на проданных штуках.",
+      "selfCheck": "Возьмите месяц, в котором у бренда не было ни одной акции. Реализация в нём обязана быть около 100%: прайс и касса сходятся. Если и там разрыв — сломан не бизнес, а join: скорее всего, прайс подтянулся не за тот месяц."
     }
   ]
 }

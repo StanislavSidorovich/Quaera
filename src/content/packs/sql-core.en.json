@@ -100,6 +100,11 @@
       "id": "sql-promo-lift",
       "title": "Promo: lift and the comparison base",
       "summary": "I measure promo uplift against a base I choose deliberately, and I name that base next to the number, because it can flip the sign of the answer."
+    },
+    {
+      "id": "sql-price-realization",
+      "title": "Price: realization, discount, mix",
+      "summary": "I work out how much of the list price reaches the till, and I tell apart the three causes of the gap: discount depth, promo share, and the mix of what sold."
     }
   ],
   "tasks": [
@@ -1448,6 +1453,122 @@
         }
       ],
       "explain": "This is the whole review in one task: a promotion with an obvious success in units turned out to be a loss in money, and the entire difference lies in what it is compared against. A revenue uplift of 226,538 yen against 231,546 yen of discount given means every yen of discount came back as a yen of revenue and not one yen more, and revenue is not profit. Three things are worth taking away. First: payback is measured by uplift over a base, never by promo revenue, otherwise every promotion pays for itself, since the brand would have sold anyway. Second: growth in units and growth in money diverge the deeper the discount goes, and the first without the second is not an argument. Third: even a return of about one in revenue is a loss in profit rather than a break-even. What this review cannot work out is the true cost of the promotion: neither cost of goods nor display and print costs are in the data, so the answer here is an upper bound on payback, and it should be spoken as exactly that."
+    },
+    {
+      "id": "sql-071",
+      "title": "What reached the till",
+      "brief": "The «Aqualis» brand manager is preparing a price list revision and asks how much the company actually receives per unit. The price list says one thing, the till says another: promotions and retailer discounts sit in between. The price list is stored by month in fact_price.",
+      "goal": "For 2025 and the brand «Aqualis», return realized_price (actual revenue per unit sold), list_price (the same unit at list) and realization_pct (what percentage of the list price reached the till). Round all three to one decimal.",
+      "hints": [
+        "The actual price per unit is all revenue divided by all units, not the average of the avg_price column: rows carry different volumes and cannot weigh the same.",
+        "Realization is the ratio of two sums you already have: actual revenue over that same revenue at list price."
+      ],
+      "explain": "The price list is what the company intends, the till is what happened, and the gap between them has a price of its own: for «Aqualis» 91.7% of the list price reached the till, that is 59.6 yen out of 65.0. It can only be measured weighted: revenue divided by units, never averaged across rows. The reason is that fact rows come in different sizes, and a hundred units in a hypermarket and three units in a kiosk weigh the same in a plain average and nothing alike in money. The same rule holds wherever the word «average» appears: average price, average discount and average basket are all sums divided by sums, while AVG across rows answers a question nobody asked."
+    },
+    {
+      "id": "sql-072",
+      "title": "Who gives away the most",
+      "brief": "The commercial director wants one page before the budget committee: for every brand, how much of the list price reaches the till and how many units sell on promotion. He wants to see whether the two columns are related.",
+      "goal": "For 2025 and every brand, return brand, realization_pct (the percentage of the list price that reached the till) and promo_share_units (the share of promotion in units sold). Round both to one decimal. Sorted by realization_pct ascending.",
+      "hints": [
+        "Promo share in units is a conditional sum over the full one: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) over SUM(units).",
+        "Both shares are worked out in a single pass over the same rows; no second query is needed."
+      ],
+      "explain": "The two columns run almost as mirror images: «Rhinolar» sells 55.1% of its units on promotion and brings 86.7% of the list price to the till, while «Nettora» sells 23.4% and brings 96.1%. That is the main lever of price realization: the more volume goes through promotions, the lower the average price received, even if the list price never moved. But the mirror is imperfect, and that is the other half of the answer: «Aqualis» with a 35.5% promo share gives away more than «Vitanor» at 46.4%, because the «Aqualis» promotions are deeper. There are two levers, share of volume on promotion and depth of discount, and a conversation about price without both turns into an argument about who is to blame. The third lever, the mix of SKUs sold, waits in sql-074."
+    },
+    {
+      "id": "sql-073",
+      "title": "Two shares of one promotion",
+      "brief": "In the meeting someone says «our promo share is 55%», the finance deck says 48%, and both numbers describe the same brand in the same year. Nobody is wrong: one was measured in units, the other in money. The director asks to see both side by side for every brand.",
+      "goal": "For 2025 and every brand, return brand, promo_share_units (the share of promotion in units sold) and promo_share_revenue (the share of promotion in revenue). Round both to one decimal. Sorted by promo_share_units descending.",
+      "hints": [
+        "Both shares are built the same way: a conditional sum divided by the full one. Only the measure changes, units in the first and revenue in the second.",
+        "Each share keeps its own denominator: units over units, money over money."
+      ],
+      "explain": "The promo share in units is always higher than the share in money, and that is arithmetic rather than a data mismatch: a promo unit sold cheaper, so it weighs less in a money denominator. «Rhinolar» shows 55.1% against 48.3%, «Milvara» 17.7% against 13.0%, and the gap widens the deeper the discount. The practical conclusion is not about SQL: the question «what is our promo share» has no single answer, and the first move is to pin down the unit of measure. Units answer «how much product leaves on promotion», which is a conversation about shelf and production; money answers «how much revenue comes from promotion», which is a conversation about the P&L. Quoted without a unit, 55% and 48% look like somebody made a mistake, and the meeting goes on hunting for the culprit instead of deciding anything."
+    },
+    {
+      "id": "sql-074",
+      "title": "A discount nobody promised",
+      "brief": "The «Aqualis» brand ran four promotions in 2025: one yellow tag at 12% and three at 30% off. An analyst worked out the actual discount across all promo sales of the brand for the year and got 23.4%, a number that appears nowhere in the promo calendar. Finance wants to know where it came from.",
+      "goal": "Work out where an average discount that matches none of the promised ones comes from.",
+      "scenario": "Promotion          Discount   Units\nDiscount 30% (x3)        30   30325\nYellow tag               12   17482\n\nActual, total          23.4   47807",
+      "predictQuestion": "Why is the actual discount for the brand over the year 23.4%, when the promises were 12% and 30%?",
+      "options": [
+        {
+          "label": "It is a volume-weighted average: 30% applied to 30,325 units and 12% to 17,482, and the weight of each depth sets the result.",
+          "why": "It checks out on paper: (30 x 30325 + 12 x 17482) / 47807 = 23.4. The number has to land between 12 and 30, and closer to 30, because nearly two thirds of the volume went through the deep promotions. It cannot appear anywhere in the calendar: the calendar states mechanics, while the fact is made of how much sold under each of them."
+        },
+        {
+          "label": "The shelf discounts did not match what was promised: the retailers gave a different depth than agreed.",
+          "why": "That is always worth checking, but not the case here: taken promotion by promotion, the actual discount matches the promised one to within a tenth (30.0, 12.0, 30.0, 30.1). Only the yearly total diverges, and it diverges by composition rather than by execution."
+        },
+        {
+          "label": "It is the plain average of the promised depths: (12 + 30) / 2 = 21, adjusted for sales outside promotions.",
+          "why": "A plain average of two depths gives 21, not 23.4, and it means nothing anyway: averaging percentages without weighting by volume is the same mistake as averaging prices without weighting by units. Sales outside promotions do not enter this calculation at all; it covers promo sales only."
+        },
+        {
+          "label": "Distributor discounts from fact_sellin leaked into the figure, which is why it does not match the promo calendar.",
+          "why": "The calculation runs on fact_sellout, that is sales in outlets, and distributor discounts are not part of it. Mixing sell-in and sell-out is a real mistake, but it cannot explain this particular number."
+        }
+      ],
+      "hints": [
+        "Try to produce 23.4 from the four numbers in the table: two depths and two volumes.",
+        "Ask yourself where the result lands if the deep promotion sold twice as much as the shallow one."
+      ],
+      "explain": "This is the third lever of price after depth and promo share: the mix, not «what discount» but «how much sold under each». A weighted average discount is under no obligation to match any promised one, and demanding that match is a classic checking mistake. Two practical consequences follow. First: plan and actual can only be compared at one level, promotion against promotion, never a yearly total against a calendar. Second: the yearly total moves even when every promotion ran exactly as promised, since it is enough for volume to shift from a shallow mechanic to a deep one. Which is why «the actual discount went from 20% to 23%» accuses nobody by itself: the first thing to look at is whether the mix changed."
+    },
+    {
+      "id": "sql-075",
+      "title": "The month the price sank furthest",
+      "brief": "Finance sees a flat list price for «Aqualis» all year and revenue per unit jumping about. They want the monthly picture: where exactly the price sank, and whether that matches the promotions.",
+      "goal": "For 2025 and the brand «Aqualis», return month in YYYY-MM format, realized_price (revenue per unit that month) and promo_share_units (the share of promotion in that month's units). Round both numbers to one decimal. Sorted by month ascending.",
+      "hints": [
+        "The month comes out of the week date with the same five characters as in sql-010: substr(week_start, 1, 7).",
+        "Group by the same expression as the first column; you need not repeat it, the column number is enough."
+      ],
+      "explain": "The monthly picture answers a question the yearly total hides. The lowest price for «Aqualis» is not in April, when all 100% of units went on promotion at 57.2 yen, but in June: 53.2 yen at a promo share of 60.8%. The explanation is not in the share but in the depth: the April yellow tag gave 12%, the June promotion 30%. The two levers work independently, and neither one is visible in a single column. Hence a working habit: monthly price realization with promo share beside it is the cheapest chart there is in a pricing negotiation, because it answers «we raised the price, why did the money not follow» on sight. And the third month worth noting is February, with no promotion at all and a price matching the list: that is the check that the calculation itself is sound."
+    },
+    {
+      "id": "sql-076",
+      "title": "The price list went up and the money went down",
+      "brief": "The «Milvara» list price was raised in early 2026, and the commercial director expects revenue per unit to grow. Finance says they are receiving less than a year ago. We compare the first half of 2026 with the first half of 2025 and find out who is right.",
+      "goal": "Work out the list price, the actual price per unit and the promo share for the first halves of 2025 and 2026, then explain why the price increase never reached the till.",
+      "steps": [
+        {
+          "goal": "For the brand «Milvara» across the first half of 2025 and the first half of 2026, return year, list_price (list price per unit sold), realized_price (actual revenue per unit) and promo_share_units (the share of promotion in units). Round all three to one decimal. Sorted by year ascending.",
+          "hints": [
+            "The year comes out of the week date as its first four characters: substr(week_start, 1, 4).",
+            "The list price per unit sold is weighted by volume: SUM(units * list_price) / SUM(units), otherwise expensive SKUs weigh as much as the fast-moving ones."
+          ]
+        },
+        {
+          "question": "The list price per unit sold rose from 76.8 to 77.7 yen, while the price actually received fell from 74.3 to 70.4 yen. The promo share in units moved from 9.9% to 31.7% over the same period. What do you tell the commercial director?",
+          "hints": [
+            "Look at the percentage change in each of the three figures.",
+            "Ask which of them is a decision the company made and which is a consequence of how it sold."
+          ],
+          "options": [
+            {
+              "label": "The list price did go up, but the share of volume sold on promotion tripled and took the increase away with room to spare: 90.6% of the list price reaches the till against 96.7% a year earlier.",
+              "why": "The list price rose 1.2% while the price received fell 5.2%, and the gap is explained entirely by the third column: promo volume went from 9.9% to 31.7%. The pricing decision was carried out; the promo plan overrode it. Those are different decisions made by different people, and a conversation about price without the second column always ends in an argument about whose data is right."
+            },
+            {
+              "label": "The data contradicts itself: if the list price went up, the price received cannot fall, so the calculation is wrong somewhere.",
+              "why": "There is no contradiction. The list price is the price before discounts, the received price is after them, and the promo share stands in between. It tripled, which is more than enough to swallow the increase and pull the price down."
+            },
+            {
+              "label": "The brand moved into cheaper outlets, so the average price fell.",
+              "why": "A plausible and checkable theory, but not needed here: the gap is already explained by the promo share, which tripled. A channel shift would explain a fall without any promotion, and here there is a direct cause in the same data."
+            },
+            {
+              "label": "The increase came too late: it simply had no time to show up in first-half revenue.",
+              "why": "The list price per unit sold is already worked out from the actual sales of both halves, so the increase is in the figure: 77.7 against 76.8. There is no lag here, there is a discount on top of the new list price."
+            }
+          ]
+        }
+      ],
+      "explain": "The review the whole skill exists for: «we raised the price» and «we receive less» are both true at once, and there is nothing to argue about once three numbers sit side by side. The list price rose 1.2%, the received price fell 5.2%, the promo share went from 9.9% to 31.7%, and price realization sank from 96.7% to 90.6%. Pricing is owned by the commercial function, the promo plan by trade marketing, and without a shared table each of them is sure they did their job. Hence a reporting rule: price is never shown as a single line. Three at a minimum, list, actual and promo share; four is better, with discount depth added. What this data will not show is how much the company earned on any of it. There is no cost of goods in it, so the conversation stays about revenue per unit rather than margin, and it should be spoken that way."
     }
   ]
 }
