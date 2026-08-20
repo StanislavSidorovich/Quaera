@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n/context';
-import type { StoryCampaign, StoryMission } from '../content/storymode';
+import { storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
 import type { StoryPhase } from './StoryMode';
 
 /**
@@ -45,7 +45,16 @@ export function StoryProgress({
 }) {
   const { t } = useI18n();
 
-  const dayIndex = campaign.missions.findIndex((m) => m.id === mission.id);
+  /*
+   * Полоса показывает свою неделю, а не всю кампанию: пять делений и один
+   * вопрос расследования. Со второй недели список дней стал сквозным
+   * (пятница первой ведёт в понедельник второй), и без этого среза полоса
+   * выросла бы до десяти делений на 320 пикселях, а вопрос над ней остался
+   * бы один на две разные истории.
+   */
+  const week = storyWeekOf(campaign, mission.id);
+  const days = week?.missions ?? campaign.missions;
+  const dayIndex = days.findIndex((m) => m.id === mission.id);
   /*
    * Номер задания берётся у шага, а не у экрана: подводка и задание одного
    * шага — это один и тот же пункт дня, и счётчик между ними меняться
@@ -60,12 +69,12 @@ export function StoryProgress({
     <div className="story-progress">
       <p className="story-progress-case">
         <span className="story-progress-label">{t.storyMode.caseLabel}</span>
-        <span className="story-progress-question">{campaign.question}</span>
+        <span className="story-progress-question">{week?.week.question ?? ''}</span>
       </p>
 
       <div className="story-progress-track">
-        <ol className="story-progress-days" aria-label={t.storyMode.dayAria(dayIndex + 1, campaign.missions.length)}>
-          {campaign.missions.map((m, i) => {
+        <ol className="story-progress-days" aria-label={t.storyMode.dayAria(dayIndex + 1, days.length)}>
+          {days.map((m, i) => {
             /*
              * Текущий день кнопкой не делается: она вела бы на бриф того же
              * дня, то есть выглядела бы как «начать заново» — а с середины

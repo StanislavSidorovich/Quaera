@@ -4,7 +4,7 @@ import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
-import type { StoryCampaign, StoryMission } from '../content/storymode';
+import { storyPreviousCase, storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
 import { StoryProgress } from './StoryProgress';
 
 /**
@@ -226,7 +226,17 @@ export function StoryMode({
    * на брифе: утро начинается с того, что уже известно, а дальше по дню
    * это был бы шум над каждым экраном.
    */
-  const found = campaign.missions.slice(0, campaign.missions.findIndex((m) => m.id === mission.id)).map((m) => m.found);
+  const weekDays = storyWeekOf(campaign, mission.id)?.missions ?? campaign.missions;
+  /** Следующий день кампании принадлежит другой неделе — значит, крючок ведёт в новое дело. */
+  const nextMission = campaign.missions[campaign.missions.findIndex((m) => m.id === mission.id) + 1] ?? null;
+  const nextStartsWeek = !!nextMission && nextMission.week !== mission.week;
+  const found = weekDays.slice(0, weekDays.findIndex((m) => m.id === mission.id)).map((m) => m.found);
+  /**
+   * Дверь в прошлое дело — только на первом дне недели, где её и ищут.
+   * На остальных днях та же ссылка была бы шумом: назад по своей неделе
+   * ведёт полоса.
+   */
+  const previousCase = weekDays[0]?.id === mission.id ? storyPreviousCase(campaign, mission.id) : null;
 
   return (
     <>
@@ -266,6 +276,15 @@ export function StoryMode({
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}
             </button>
+            {previousCase && (
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => onOpenDay(previousCase.id)}
+              >
+                {t.storyMode.previousCase}
+              </button>
+            )}
           </>
         )}
 
@@ -327,7 +346,14 @@ export function StoryMode({
             ))}
             {onNext ? (
               <button type="button" className="btn" onClick={onNext}>
-                {t.storyMode.nextMission}
+                {/*
+                 * Подпись выводится из того, куда ведёт кнопка: внутри недели
+                 * это следующий день, на границе недель — следующая неделя.
+                 * Назвать переход между неделями «следующим днём» значит
+                 * соврать в единственном месте, где кампания меняет дело
+                 * и вопрос над полосой.
+                 */}
+                {nextStartsWeek ? t.storyMode.nextWeek : t.storyMode.nextMission}
               </button>
             ) : (
               <>

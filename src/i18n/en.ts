@@ -576,6 +576,8 @@ export const en = {
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',
+    nextWeek: 'Next week',
+    previousCase: 'Back to the previous case',
     toBeContinued: 'To be continued',
     finish: 'Home',
   },

@@ -157,6 +157,17 @@ export interface StoryStep {
 export interface StoryMission {
   id: string;
   /**
+   * Неделя кампании, которой принадлежит день.
+   *
+   * Полоса дела показывает пять делений и вопрос расследования — то есть
+   * ровно одну неделю. Сложить все дни в один список значило бы получить
+   * десять делений на 320 пикселях и один вопрос на две разные истории.
+   * Сквозным при этом остаётся порядок: пятница первой недели ведёт
+   * в понедельник второй тем же «следующим днём», и лестница конструкций
+   * копится через границу недель, а не начинается заново.
+   */
+  week: string;
+  /**
    * Короткая метка дня для полосы дела («Пн»). Полоса должна помещаться
    * на 320 пикселях в пять делений, поэтому метка именно короткая, а не
    * название дня целиком.
@@ -194,20 +205,28 @@ export interface StoryMission {
   hook: string[];
 }
 
-export interface StoryCampaign {
+export interface StoryWeek {
+  id: string;
   /**
-   * Вопрос расследования — стоит над каждым экраном кампании.
+   * Вопрос расследования — стоит над каждым экраном своей недели.
    *
    * Он существует ровно затем, чтобы на третьем задании вторника человек
    * помнил, зачем считает средние цены по брендам. Задание видно, а цель —
    * нет, и без напоминания неделя рассыпается на дюжину упражнений.
    */
   question: string;
+}
+
+export interface StoryCampaign {
+  weeks: StoryWeek[];
   missions: StoryMission[];
 }
 
 const ru: StoryCampaign = {
-  question: 'Почему продажи Nettora упали вдвое — и к кому с этим идти?',
+  weeks: [
+    { id: 'w1', question: 'Почему продажи Nettora упали вдвое — и к кому с этим идти?' },
+    { id: 'w2', question: 'Кто занял 42 точки Nettora — и можем ли мы это увидеть?' },
+  ],
   missions: [
     /*
      * Понедельник. Ни одного вопроса про Nettora по существу — день целиком
@@ -216,6 +235,7 @@ const ru: StoryCampaign = {
      */
     {
       id: 'day-1-first-day',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:14',
       short: 'Пн',
@@ -300,6 +320,7 @@ const ru: StoryCampaign = {
      */
     {
       id: 'day-2-counting',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
       short: 'Вт',
@@ -382,6 +403,7 @@ const ru: StoryCampaign = {
      */
     {
       id: 'day-3-shape-of-the-year',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
       short: 'Ср',
@@ -467,6 +489,7 @@ const ru: StoryCampaign = {
      */
     {
       id: 'day-4-join',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:30',
       short: 'Чт',
@@ -547,6 +570,7 @@ const ru: StoryCampaign = {
      */
     {
       id: 'day-5-shelf-or-demand',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:40',
       short: 'Пт',
@@ -585,15 +609,378 @@ const ru: StoryCampaign = {
         'Остался вопрос, которого в этих числах нет: почему сорок две точки перестали брать Nettora. Полка не пустует — если бренд с неё ушёл, значит место занял кто-то другой. Кто именно, ты пока не знаешь.',
       ],
     },
+    /*
+     * ВТОРАЯ НЕДЕЛЯ. Вопрос принесён из крючка пятницы: кто занял 42 точки.
+     * Ответ на него в наших данных не лежит — чужих продаж у дистрибьютора
+     * нет ни строки, — и это не дефект сюжета, а его содержание: неделя
+     * учит отличать вопрос, на который данные отвечают, от вопроса,
+     * на который они молчат. Разворот к вопросу «а мы-то что сделали»
+     * происходит не в брифе, а к пятнице, числами.
+     *
+     * Понедельник. Левое соединение: единственный способ увидеть тех,
+     * кого в факте нет вовсе. Обычный JOIN показывает только тех, у кого
+     * продажи были, — то есть ровно не тех, кого мы ищем.
+     */
+    {
+      id: 'day-6-who-is-missing',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Понедельник, 9:05',
+      short: 'Пн',
+      found: 'Точки без Nettora называются поимённо. Обычное соединение их не показывает: в продажах их нет.',
+      scenes: { brief: 'office', reflection: 'coverage', hook: 'split' },
+      messages: [
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Встреча прошла лучше, чем я ждала. Твоё объяснение бренд принял, но задал вопрос, на который у меня ответа не было: если полки освободились, кто их занял? Мне нужно имя. Или хотя бы понимание, чем эти сорок две точки отличаются от тех, где мы остались.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Сразу договоримся про границу, иначе неделя уйдёт впустую. Чужих продаж у нас нет ни одной строки: в базе только то, что купили у нас и что продали наши точки. Имя конкурента оттуда не достать никакими запросами. Достать можно другое — где нас нет. И это отдельный приём: обычное соединение показывает тех, у кого продажи были, а нам нужны те, у кого их нет.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-014',
+          intro: {
+            scene: 'join',
+            title: 'Соединение, которое никого не теряет',
+            paras: [
+              'Четверговый JOIN оставляет только совпавшие пары. Если по региону не продали ни штуки, региона в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
+              'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Считается он так:\n\nSELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\n\nCOALESCE(SUM(f.units), 0) подменяет пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
+              'Второе, что понадобится: условие отбора товара можно спрятать в запрос внутри запроса.\n\nAND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\')\n\nВнутренний SELECT возвращает одно значение, и с ним сравнивают как с числом. Важно, что стоит он в ON, а не в WHERE, — почему, увидишь на следующем шаге.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Пять регионов из шестнадцати — нули. Vitanor Forte вышел в сентябре, и в эти пять он за всё время не доехал. Это и есть та дыра, которую обычное соединение просто не показало бы.»',
+          },
+        },
+        {
+          taskId: 'sql-039',
+          intro: {
+            paras: [
+              'И сразу цена ошибки, которая стоит целых отчётов: то же условие, но перенесённое из ON в WHERE.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Одиннадцать вместо шестнадцати. Слово LEFT в запросе осталось, а работать он стал как обычный JOIN: WHERE отбрасывает строки уже после соединения, а у пустых пар сравнивать нечего.»',
+          },
+        },
+        {
+          taskId: 'sql-040',
+          intro: {
+            scene: 'dropped',
+            title: 'Признак того, что пары не нашлось',
+            paras: [
+              'Теперь по делу: точки, где Nettora не продавалась ни разу. Приём тот же, но нам нужны именно несовпавшие строки — а у них колонки правой таблицы пусты.',
+              'Проверяется это не равенством, а отдельным словом:\n\nWHERE f.sellout_id IS NULL\n\nС NULL нельзя сравниться через =: пустота не равна ничему, включая саму себя. IS NULL — единственный способ спросить «здесь пусто?».',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Вот это уже список, с которым можно работать в поле. Половина имён мне знакома — мы с ними работаем по другим брендам.»',
+          },
+        },
+      ],
+      reflection: [
+        'Список точек без Nettora получен, и получен единственным способом, каким такие вопросы вообще решаются: через таблицу, где эти точки есть, — справочник, а не продажи.',
+        'Но заметь, чего в нём нет. Там нет ни одной строки про то, что стоит на этой полке вместо нас. Вопрос Аоки-сан «кто занял» остался ровно там, где был.',
+      ],
+      hook: [
+        'Прежде чем искать виноватого снаружи, стоит закрыть версии внутри. Ито-сан в среду называла две: ушли торговые и подняли цены. Про цены мы ещё не смотрели вовсе.',
+        'Завтра — цена и скидка. Если бренд держался на промо, а промо кончилось, никакой конкурент не нужен, чтобы объяснить падение.',
+      ],
+    },
+
+    /*
+     * Вторник. CASE: две ветки внутри одного агрегата. Сюжетно день закрывает
+     * версию «дело в цене» — и закрывает её отрицательным результатом, который
+     * в работе бывает чаще положительного.
+     */
+    {
+      id: 'day-7-promo-or-price',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Вторник, 9:20',
+      short: 'Вт',
+      found: 'Бренд жил не на скидке: за 2025 год 5.4 млн базовых продаж против 1.4 млн в акциях.',
+      scenes: { brief: 'desk', reflection: 'factors', hook: 'trend' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Версия про цену проверяется быстрее всех, поэтому с неё и начнём. Прайс мы уже видели: за год Nettora подорожала с 204.7 до 207 иен, это чуть больше процента. Так что вопрос не в прайсе, а в скидке: если бренд последние два года стоял в промо и на нём держался, отмена акции объясняет падение без всяких конкурентов.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Проверь, только считай честно. У меня в голове цифра „почти всё по акции", но я её ниоткуда не брала.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-042',
+          intro: {
+            scene: 'split',
+            title: 'Условие внутри строки результата',
+            paras: [
+              'До сих пор условие отбирало строки: WHERE решал, попадёт строка в ответ или нет. CASE решает другое — что подставить в колонку для этой строки.',
+              'Пишется так:\n\nCASE WHEN channel = \'ecom\' THEN \'Онлайн\'\n     WHEN channel = \'pharmacy\' THEN \'Аптеки\'\n     ELSE \'Розница\'\nEND AS channel_label\n\nВетки проверяются сверху вниз, срабатывает первая подошедшая. ELSE — то, что подставится, если не подошла ни одна.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Забытый ELSE — это не ошибка, на которую ругается движок. Это NULL в отчёте, который потом кто-то посчитает нулём.»',
+          },
+        },
+        {
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ито-сан, руководитель полевой команды',
+                text: '«Слышал, ты копаешь дальше. Скажу, что знаю: в двух сетях с зимы стоит их собственная марка бытовой химии — тот же объём, дешевле нашего. Полку под неё расширяли, и кого-то из нас должны были подвинуть. Это разговоры в поле, не документ.»',
+              },
+              {
+                from: 'Ваш руководитель',
+                text: '«Правдоподобно и на встречу не годится. У нас нет ни одной строки о чужих продажах — ни подтвердить, ни опровергнуть мы это не можем. Держи версию в голове, но в отчёт идёт только то, что считается. Разница между аналитиком и коридором ровно здесь.»',
+              },
+            ],
+          },
+          taskId: 'sql-015',
+          intro: {
+            paras: [
+              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«1.4 миллиона в акциях против 5.4 базовых. Значит, моя цифра из головы была неверна: бренд стоял на полке за свои деньги, а не за скидку.»',
+          },
+        },
+      ],
+      reflection: [
+        'Версия про цену закрыта, и закрыта отрицательным результатом: прайс почти не двигался, а на промо у бренда приходится каждая пятая иена — меньше, чем у Vitanor или Rhinolar.',
+        'Отрицательный результат не пустая работа. Из четырёх версий, которые Аоки-сан понесёт бренду, две теперь вычеркнуты числами, а не мнением.',
+      ],
+      hook: [
+        'Остаётся то, что мы до сих пор считали одним числом на всех: продажи. Но точки не одинаковы — их 132, и в них разное всё, от канала до размера.',
+        'Завтра научишься считать в два шага: сначала свернуть, потом сравнить свёрнутое. Без этого «выручка на точку» не считается вовсе.',
+      ],
+    },
+
+    /*
+     * Среда. CTE: промежуточный результат с именем. Технически это ступень
+     * к пятничному запросу, где два свёрнутых факта соединяются между собой;
+     * сюжетно — первый раз, когда человек считает нормированную метрику,
+     * а не сумму.
+     */
+    {
+      id: 'day-8-two-steps',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Среда, 9:10',
+      short: 'Ср',
+      found: 'Выручка на точку не зависит от их числа: в e-com 3.2 млн на точку, в традиционной рознице 21.7 тыс.',
+      scenes: { brief: 'desk', reflection: 'outlets', hook: 'tables' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Сегодня приём, без которого дальше не пройти. Любой сложный вопрос считается в два шага: сначала свернуть строки в промежуточную таблицу, потом работать с ней как с обычной. В SQL это называется CTE — общее табличное выражение, и пишется словом WITH.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«И раз уж будешь считать по каналам — посмотри заодно, сколько выручки даёт одна точка в каждом. Я подозреваю, что e-com и ларёк у станции сравнивать по общей сумме бессмысленно, но доказательства у меня нет.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-045',
+          intro: {
+            scene: 'fold',
+            title: 'Промежуточный результат, у которого есть имя',
+            paras: [
+              'WITH заводит временную таблицу на время одного запроса. Она считается один раз, у неё есть имя и колонки, и дальше с ней работают как с настоящей:\n\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats',
+              'Зачем это нужно ровно сегодня: агрегат нельзя поделить на другой агрегат в том же SELECT так, чтобы это осталось читаемым. Свернули один раз — дальше делите обычные колонки. Умножение на 1.0 в делении обязательно: два целых числа SQLite поделит нацело и отбросит остаток.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Три миллиона на точку в e-com против двадцати одной тысячи в традиционной рознице. Восемь складов против сорока четырёх ларьков — это разные бизнесы, и сравнивать их общей суммой я больше не буду.»',
+          },
+        },
+        {
+          taskId: 'sql-044',
+          intro: {
+            paras: [
+              'Два выражения WITH пишутся через запятую и живут в одном запросе. И тут же ловушка: если перечислить их в FROM через запятую и забыть условие соединения, ошибки не будет — будет каждая строка с каждой.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Ни ошибки, ни предупреждения — просто число строк, которого не бывает. Запомни эту форму: неправдоподобно большой результат почти всегда означает потерянное условие соединения.»',
+          },
+        },
+        {
+          taskId: 'sql-016',
+          intro: {
+            paras: [
+              'И то же самое как надо: два WITH подряд, второй считает итог по дивизиону из первого, а финальный SELECT соединяет их обычным JOIN по division. Это ровно та конструкция, которая понадобится в пятницу.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«17.6 процента дивизиона FMCG, четвёртое место из пяти. Год назад бренд был вторым — доля тает не потому, что рынок вырос, а потому, что мы уходим с полок.»',
+          },
+        },
+      ],
+      reflection: [
+        'Появилась метрика, которая не растёт от числа точек и не падает от их потери: выручка на одну точку. Дальше в неделе она главная — именно ею отличают «нас стало меньше» от «нас стали хуже брать».',
+        'И ещё одно, что стоит заметить: доля бренда в дивизионе — это сравнение с самими собой. Данных, чтобы сравнить себя с чужим брендом, у нас по-прежнему нет.',
+      ],
+      hook: [
+        'Остался последний инструмент. Чтобы понять, дошёл ли товар до полки, придётся поставить рядом два факта: сколько отгрузили дистрибьюторам и сколько те продали в точках.',
+        'Завтра ты увидишь, чем это опасно. Два факта соединяются не по любому общему слову, и цена ошибки здесь — выручка, выросшая в десять раз из ничего.',
+      ],
+    },
+
+    /*
+     * Четверг. Гранулярность и размножение строк — последняя ступень перед
+     * пятницей, где два факта встают рядом по-настоящему. Порядок внутри дня
+     * строгий: увидеть раздутое число, доказать его счётом строк, сделать
+     * правильно.
+     */
+    {
+      id: 'day-9-two-facts',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Четверг, 9:30',
+      short: 'Чт',
+      found: 'Соединение не по ключу размножает строки: 4 370 строк продаж Nettora превращаются в 43 700.',
+      scenes: { brief: 'desk', reflection: 'counts', hook: 'meeting' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Вчера ты соединял справочник с фактом — там на каждую строку продаж приходится ровно один товар, и ничего не ломается. Сегодня будет соединение, где на одну строку приходится много пар, и результат вырастет на ровном месте. Это самая дорогая ошибка в отчётности: запрос не падает, число выглядит настоящим, и подписывают его уже потом.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Мне такое приносили дважды за год. Оба раза выручка в презентации была выше настоящей, и оба раза это находил не автор.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-013',
+          intro: {
+            scene: 'stray',
+            title: 'Соединение по неуникальному полю',
+            paras: [
+              'Соединять таблицы можно по любому общему полю, но осмысленно — только по такому, где значение в правой таблице встречается один раз. Бренд в справочнике акций так не устроен: у одного бренда акций много, и каждая строка продаж совпадёт с каждой из них.',
+              'Признак беды в тексте запроса виден заранее: JOIN dim_promo m ON m.brand = p.brand соединяет по названию, а не по ключу акции.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-041',
+          intro: {
+            paras: [
+              'Догадку про размножение доказывают счётом строк до и после. Оба счёта можно получить одним запросом: подзапрос в SELECT, как в понедельнике, только считает он не product_id, а COUNT(*).',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«4 370 строк против 43 700 — ровно в десять раз, потому что у Nettora десять акций. Любое SUM поверх такого соединения будет завышено на тот же множитель.»',
+          },
+        },
+        {
+          taskId: 'sql-050',
+          intro: {
+            paras: [
+              'И как надо: акция привязывается к продаже своим ключом — promo_id, который лежит в самой строке продаж. Тогда каждой строке соответствует ровно одна акция или ни одной.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Yellow tag 823 тысячи, кросс-категорийные 443, механика 2+1 — 106. Сумма сходится с вчерашним промо-числом, значит, на этот раз не задвоили.»',
+          },
+        },
+      ],
+      reflection: [
+        'Ты научился не доверять соединению по названию и проверять его счётом строк. Это скучный навык, который отличает отчёт, который можно подписать, от отчёта, который выглядит правдоподобно.',
+        'Завтра инструменты кончатся. Останется поставить рядом отгрузки и продажи и сказать Аоки-сан то единственное, что мы про эти сорок две точки действительно знаем.',
+      ],
+      hook: [
+        'Пятница, и вопрос ровно тот же, с которого началась неделя: кто занял сорок две точки.',
+        'Ответить на него мы не сможем — и это тоже будет ответ. Но прежде надо закрыть последнюю версию, в которой виноваты не они, а мы: могло ли быть так, что товар просто не доехал.',
+      ],
+    },
+
+    /*
+     * Пятница. Ни одной новой конструкции: WITH и соединение двух свёрнутых
+     * фактов из среды, ROUND и деление оттуда же, JOIN и BETWEEN из первой
+     * недели. Ровно поэтому от человека здесь просят не приём, а вывод —
+     * и вывод отрицательный, что для расследования нормальный исход.
+     */
+    {
+      id: 'day-10-supply-chain',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Пятница, 9:00',
+      short: 'Пт',
+      found: 'Цепочка сбалансирована: отгрузили примерно столько же, сколько продали. Дефицита не было.',
+      scenes: { brief: 'office', reflection: 'rival', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Последняя версия перед выводом — наша собственная. Если бы товар не доезжал до дистрибьюторов, полка опустела бы сама, без всякого конкурента. Проверяется это отношением: отгрузили штук за квартал против того, сколько продали в точках за тот же квартал. Единица означает, что что отгрузили, то и продали; двойка — что половина осталась на складе.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«И заодно скажи мне прямо: смогу я назвать бренду имя того, кто нас подвинул, или нет? Мне важнее знать границу, чем услышать красивую догадку.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-022',
+          intro: {
+            scene: 'sellout',
+            title: 'Два факта, наконец, рядом',
+            paras: [
+              'Отгрузки лежат в fact_sellin помесячно и по дистрибьюторам, продажи — в fact_sellout понедельно и по точкам. Сложить их напрямую нельзя: разная гранулярность, и вчерашний урок про размножение строк ровно об этом.',
+              'Способ единственный и уже знакомый: свернуть каждый факт своим WITH до одной строки на дистрибьютора, а потом соединить два свёрнутых результата. Точка знает своего дистрибьютора — c.served_by_distributor_id, по нему продажи и собираются.',
+              'Нового в этом запросе нет ничего: WITH и соединение двух выражений из среды, деление через 1.0 оттуда же, JOIN, BETWEEN и ORDER BY DESC — с прошлой недели. Собери и посмотри на числа: тебе нужен не первый в списке, а форма всего списка.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Одиннадцать дистрибьюторов из двенадцати между 0.97 и 1.04. Двенадцатый — Setouchi Trading, 2.32. Запомни это число, но к Nettora оно отношения не имеет: там всего пять её точек.»',
+          },
+        },
+      ],
+      reflection: [
+        'Дефицита не было. Цепочка сбалансирована почти у всех, а по самой Nettora остатки у дистрибьюторов за год выросли с 2 363 до 4 224 штук при падающих продажах: товар есть, он лежит, и на полку его не берут. Версия «не доехало» закрыта.',
+        'Значит, ответ Аоки-сан состоит из двух частей, и первая ей не понравится. Кто занял полку — на наших данных не устанавливается: чужих продаж у нас нет, и любое имя было бы догадкой в костюме отчёта. Вторая часть важнее: все сорок две точки живы и за полугодие купили у нас 76 571 штуку других брендов. Они не закрылись и не перестали покупать — они перестали покупать Nettora.',
+        'И последнее число, ради которого стоило считать на точку: там, где бренд остался, за то же полугодие продают даже чуть больше прежнего — 52.9 тысячи иен на точку против 48.3 год назад. Спрос никуда не делся. Мы ушли с полки, а не нас с неё вытеснили спросом.',
+      ],
+      hook: [
+        'Две недели назад ты не мог достать список товаров. Сегодня ты закрыл четыре версии числами, назвал границу того, что данные знают, и не выдал догадку за вывод — это и есть работа, за которую платят.',
+        'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело.',
+        'Разбирать его в SQL неудобно: там нужны ряды по неделям и товарам, скользящие средние и сравнение с прошлым месяцем — запросами это пишется долго и читается плохо. В понедельник возьмёшь другой инструмент.',
+      ],
+    },
   ],
 };
 
 const en: StoryCampaign = {
-  question: 'Why did Nettora sales fall by half, and whose door do we knock on?',
+  weeks: [
+    { id: 'w1', question: 'Why did Nettora sales fall by half, and whose door do we knock on?' },
+    { id: 'w2', question: 'Who took the 42 Nettora outlets, and can we even see it?' },
+  ],
   missions: [
     /* Про устройство недели и выбор заданий см. комментарии в русской кампании выше. */
     {
       id: 'day-1-first-day',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:14',
       short: 'Mon',
@@ -667,6 +1054,7 @@ const en: StoryCampaign = {
 
     {
       id: 'day-2-counting',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
       short: 'Tue',
@@ -742,6 +1130,7 @@ const en: StoryCampaign = {
 
     {
       id: 'day-3-shape-of-the-year',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
       short: 'Wed',
@@ -815,6 +1204,7 @@ const en: StoryCampaign = {
 
     {
       id: 'day-4-join',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:30',
       short: 'Thu',
@@ -888,6 +1278,7 @@ const en: StoryCampaign = {
 
     {
       id: 'day-5-shelf-or-demand',
+      week: 'w1',
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:40',
       short: 'Fri',
@@ -926,8 +1317,362 @@ const en: StoryCampaign = {
         'One question is not in those numbers: why forty two outlets stopped carrying Nettora. A shelf does not stay empty, so if the brand left it, somebody else took the space. Who exactly, you do not know yet.',
       ],
     },
+    {
+      id: 'day-6-who-is-missing',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Monday, 9:05',
+      short: 'Mon',
+      found: 'Outlets without Nettora can be named one by one. An ordinary join never shows them: they are absent from sales.',
+      scenes: { brief: 'office', reflection: 'coverage', hook: 'split' },
+      messages: [
+        {
+          from: 'Aoki-san, sales director',
+          text: '"The meeting went better than I expected. The brand accepted your explanation, then asked something I could not answer: if the shelves came free, who took them? I need a name. Or at least an understanding of how those forty two outlets differ from the ones we kept."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Let us agree on a boundary first, or the week is wasted. We hold no row of anyone else\'s sales: the database has what was bought from us and what our outlets sold. No query will produce a competitor name. Something else can be produced: where we are absent. That takes its own technique, because an ordinary join shows the ones who had sales, and we want the ones who had none."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-014',
+          intro: {
+            scene: 'join',
+            title: 'A join that loses nobody',
+            paras: [
+              'Thursday JOIN keeps matched pairs only. If a region sold not a single unit, that region is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
+              'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\nSELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\n\nCOALESCE(SUM(f.units), 0) turns emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
+              'The second thing you will need: a filter value can come from a query inside the query.\n\nAND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\')\n\nThe inner SELECT returns one value and is compared like a number. What matters is that it sits in ON and not in WHERE. The next step shows why.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Five regions out of sixteen come back as zero. Vitanor Forte launched in September and never reached those five. That is the hole an ordinary join would simply not have shown."',
+          },
+        },
+        {
+          taskId: 'sql-039',
+          intro: {
+            paras: [
+              'And straight away the price of one mistake that ruins whole reports: the same condition, moved from ON into WHERE.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Eleven instead of sixteen. The word LEFT is still in the query, yet it now behaves like a plain join: WHERE drops rows after the join, and empty pairs have nothing to compare."',
+          },
+        },
+        {
+          taskId: 'sql-040',
+          intro: {
+            scene: 'dropped',
+            title: 'The mark of a pair that was never found',
+            paras: [
+              'Now to the case: outlets where Nettora never sold at all. Same technique, but this time we want the unmatched rows, and their right hand columns are empty.',
+              'That is asked with a word of its own, not with equality:\n\nWHERE f.sellout_id IS NULL\n\nNULL cannot be compared with =, because emptiness equals nothing, itself included. IS NULL is the only way to ask "is this empty?".',
+            ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Now that is a list the field team can work with. Half of those names I know: we sell them other brands."',
+          },
+        },
+      ],
+      reflection: [
+        'The list of outlets without Nettora is in hand, and it came the only way such questions ever resolve: through a table where those outlets exist, which is the directory, not the sales.',
+        'Notice what is missing from it. Not one row about what stands on that shelf instead of us. The question Aoki asked, who took the space, is exactly where it was.',
+      ],
+      hook: [
+        'Before hunting for a culprit outside, the versions inside deserve closing. Ito named two on Wednesday: the reps who left and the price that went up. Price we have not looked at at all.',
+        'Tomorrow: price and discount. If the brand was living on promotions and the promotions ended, no competitor is needed to explain the fall.',
+      ],
+    },
+
+    {
+      id: 'day-7-promo-or-price',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Tuesday, 9:20',
+      short: 'Tue',
+      found: 'The brand was not living on discounts: 5.4 million of base sales in 2025 against 1.4 million on promotion.',
+      scenes: { brief: 'desk', reflection: 'factors', hook: 'trend' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"The price version checks out faster than any other, so we start there. We have seen the price list already: over the year Nettora went from 204.7 to 207 yen, a little over one percent. So the question is not the list price but the discount. If the brand spent two years on promotion and stood on it, the end of a promotion explains the fall with no competitor at all."',
+        },
+        {
+          from: 'Aoki-san, sales director',
+          text: '"Check it, but count it honestly. I carry a number in my head that says almost everything went on promotion, and I never took it from anywhere."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-042',
+          intro: {
+            scene: 'split',
+            title: 'A condition inside the row',
+            paras: [
+              'So far a condition picked rows: WHERE decided whether a row reached the answer. CASE decides something else, namely what goes into a column for this row.',
+              'It is written like this:\n\nCASE WHEN channel = \'ecom\' THEN \'Online\'\n     WHEN channel = \'pharmacy\' THEN \'Pharmacy\'\n     ELSE \'Retail\'\nEND AS channel_label\n\nBranches are tried top to bottom and the first match wins. ELSE is what lands there when nothing matched.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"A forgotten ELSE is not an error the engine complains about. It is a NULL in the report that somebody later reads as a zero."',
+          },
+        },
+        {
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ito-san, field team lead',
+                text: '"Heard you are digging further. Here is what I know: since winter two chains have carried their own home care label, same volume, cheaper than ours. They widened the shelf for it, and somebody had to be pushed off. That is field talk, not a document."',
+              },
+              {
+                from: 'Your manager',
+                text: '"Plausible, and useless in a meeting. We hold no row of anyone else\'s sales, so we can neither confirm it nor refute it. Keep the version in your head, but only what can be counted goes into the report. The difference between an analyst and a corridor sits exactly here."',
+              },
+            ],
+          },
+          taskId: 'sql-015',
+          intro: {
+            paras: [
+              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
+            ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"1.4 million on promotion against 5.4 outside it. So the number in my head was wrong: the brand held its shelf on its own money, not on a discount."',
+          },
+        },
+      ],
+      reflection: [
+        'The price version is closed, and closed by a negative result: the list price barely moved, and one yen in five came from promotion, less than for Vitanor or Rhinolar.',
+        'A negative result is not wasted work. Of the four versions Aoki can carry to the brand, two are now crossed out by numbers rather than by opinion.',
+      ],
+      hook: [
+        'What remains is the thing we kept treating as one number for everyone: sales. Yet outlets are not alike. There are 132 of them, and everything differs, from channel to size.',
+        'Tomorrow you learn to count in two steps: fold first, compare the folded result second. Without that, revenue per outlet cannot be computed at all.',
+      ],
+    },
+
+    {
+      id: 'day-8-two-steps',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Wednesday, 9:10',
+      short: 'Wed',
+      found: 'Revenue per outlet does not depend on their count: 3.2 million per outlet in ecom, 21.7 thousand in traditional retail.',
+      scenes: { brief: 'desk', reflection: 'outlets', hook: 'tables' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Today comes a technique you cannot go on without. Any hard question is counted in two steps: fold rows into an intermediate table first, then work with it like an ordinary one. In SQL that is a CTE, a common table expression, and it is spelled WITH."',
+        },
+        {
+          from: 'Aoki-san, sales director',
+          text: '"And while you are counting by channel, look at how much revenue one outlet gives in each. I suspect that comparing ecom with a kiosk by total revenue is meaningless, but I have no proof of it."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-045',
+          intro: {
+            scene: 'fold',
+            title: 'An intermediate result with a name',
+            paras: [
+              'WITH creates a temporary table for the duration of one query. It is computed once, it has a name and columns, and from there it is used like a real one:\n\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats',
+              'Why it is needed today: one aggregate cannot be divided by another inside the same SELECT and stay readable. Fold once, then divide plain columns. Multiplying by 1.0 in the division is mandatory, because SQLite divides two integers as integers and throws the remainder away.',
+            ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Three million per outlet in ecom against twenty one thousand in traditional retail. Eight warehouses against forty four kiosks are different businesses, and I will stop comparing them by a total."',
+          },
+        },
+        {
+          taskId: 'sql-044',
+          intro: {
+            paras: [
+              'Two WITH expressions are written through a comma and live in one query. And here is the trap: list them in FROM through a comma, forget the join condition, and there will be no error, only every row against every row.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"No error, no warning, just a row count that does not happen in nature. Remember that shape: an implausibly large result almost always means a lost join condition."',
+          },
+        },
+        {
+          taskId: 'sql-016',
+          intro: {
+            paras: [
+              'And the same thing done right: two WITH expressions in a row, the second one totalling the first by division, and the final SELECT joining them with an ordinary JOIN on division. This is exactly the construction Friday will need.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"17.6 percent of the FMCG division, fourth place out of five. A year ago the brand was second. The share is melting not because the market grew, but because we are leaving shelves."',
+          },
+        },
+      ],
+      reflection: [
+        'A metric appeared that neither grows with the number of outlets nor falls when they are lost: revenue per outlet. From here on it is the main one, because it is what separates "there are fewer of us" from "we are bought less".',
+        'One more thing worth noticing: a brand share inside a division is a comparison with ourselves. Data to compare ourselves with somebody else\'s brand is still not there.',
+      ],
+      hook: [
+        'One tool is left. To learn whether the goods reached the shelf, two facts have to stand side by side: how much was shipped to distributors and how much they sold through outlets.',
+        'Tomorrow you will see why that is dangerous. Two facts do not join on any word they happen to share, and the price of the mistake here is revenue grown tenfold out of nothing.',
+      ],
+    },
+
+    {
+      id: 'day-9-two-facts',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Thursday, 9:30',
+      short: 'Thu',
+      found: 'A join on a non key field multiplies rows: 4 370 rows of Nettora sales become 43 700.',
+      scenes: { brief: 'desk', reflection: 'counts', hook: 'meeting' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Yesterday you joined a directory to a fact, where every sales row has exactly one product and nothing breaks. Today comes a join where one row meets many pairs and the result grows out of thin air. It is the most expensive mistake in reporting: the query does not fail, the number looks real, and the signature comes later."',
+        },
+        {
+          from: 'Aoki-san, sales director',
+          text: '"I have been handed one twice this year. Both times the revenue on the slide was higher than the real one, and both times it was not the author who caught it."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-013',
+          intro: {
+            scene: 'stray',
+            title: 'A join on a field that is not unique',
+            paras: [
+              'Tables can be joined on any shared field, but it only makes sense on one where the value occurs once on the right hand side. A brand in the promotions directory is not like that: one brand has many promotions, and every sales row will match every one of them.',
+              'The warning sign is visible in the query text in advance: JOIN dim_promo m ON m.brand = p.brand joins on a name rather than on a promotion key.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-041',
+          intro: {
+            paras: [
+              'A guess about multiplication is proved by counting rows before and after. Both counts fit in one query: a subquery inside SELECT, as on Monday, except that it counts COUNT(*) rather than a product_id.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"4 370 rows against 43 700, exactly tenfold, because Nettora has ten promotions. Any SUM on top of such a join is overstated by the same factor."',
+          },
+        },
+        {
+          taskId: 'sql-050',
+          intro: {
+            paras: [
+              'And how it should be done: a promotion is tied to a sale by its own key, promo_id, which sits in the sales row itself. Then each row matches exactly one promotion or none.',
+            ],
+          },
+          after: {
+            from: 'Aoki-san, sales director',
+            text: '"Yellow tag 823 thousand, cross category 443, the 2+1 mechanic 106. The total agrees with yesterday\'s promotion number, so nothing was double counted this time."',
+          },
+        },
+      ],
+      reflection: [
+        'You have learned to distrust a join on a name and to check it by counting rows. It is a dull skill, and it separates a report that can be signed from a report that merely looks plausible.',
+        'Tomorrow the tools run out. What is left is to put shipments and sales side by side and tell Aoki the one thing we actually know about those forty two outlets.',
+      ],
+      hook: [
+        'Friday, and the question is the one the week started with: who took the forty two outlets.',
+        'We will not be able to answer it, and that will be an answer too. First, though, the last version has to be closed, the one where the fault is ours rather than theirs: could it be that the goods simply never arrived.',
+      ],
+    },
+
+    {
+      id: 'day-10-supply-chain',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Friday, 9:00',
+      short: 'Fri',
+      found: 'The chain is balanced: roughly as much was shipped as was sold. There was no shortage.',
+      scenes: { brief: 'office', reflection: 'rival', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"The last version before the conclusion is our own. If goods stopped reaching distributors, the shelf would empty by itself with no competitor involved. That is checked by a ratio: units shipped over a quarter against units sold through outlets over the same quarter. One means that what was shipped was sold. Two means half of it stayed in the warehouse."',
+        },
+        {
+          from: 'Aoki-san, sales director',
+          text: '"And tell me plainly: will I be able to give the brand the name of whoever pushed us out, or not? Knowing the boundary matters more to me than hearing a pretty guess."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-022',
+          intro: {
+            scene: 'sellout',
+            title: 'Two facts, at last, side by side',
+            paras: [
+              'Shipments sit in fact_sellin by month and by distributor, sales sit in fact_sellout by week and by outlet. They cannot be added directly: the grain differs, and yesterday\'s lesson about multiplied rows is about exactly that.',
+              'The way through is the only one, and it is familiar: fold each fact with its own WITH down to one row per distributor, then join the two folded results. An outlet knows its distributor through c.served_by_distributor_id, and sales are collected by it.',
+              'Nothing in this query is new: WITH and the join of two expressions come from Wednesday, division through 1.0 from there as well, JOIN, BETWEEN and ORDER BY DESC from last week. Assemble it and look at the numbers. What you need is not the first line but the shape of the whole list.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Eleven distributors out of twelve sit between 0.97 and 1.04. The twelfth is Setouchi Trading at 2.32. Remember that number, but it has nothing to do with Nettora: only five of its outlets are there."',
+          },
+        },
+      ],
+      reflection: [
+        'There was no shortage. The chain is balanced for almost everyone, and for Nettora itself the stock held at distributors grew over the year from 2 363 to 4 224 units while sales fell: the goods exist, they sit still, and the shelf does not take them. The "never arrived" version is closed.',
+        'So the answer for Aoki has two parts, and she will dislike the first. Who took the shelf cannot be established from our data: we hold no competitor sales, and any name would be a guess in the costume of a report. The second part matters more: all forty two outlets are alive and bought 76 571 units of our other brands over the half year. They did not close and did not stop buying. They stopped buying Nettora.',
+        'And the last number, the one that made counting per outlet worth it: where the brand stayed, the same half year sells slightly more than before, 52.9 thousand yen per outlet against 48.3 a year earlier. Demand did not go anywhere. We left the shelf, and demand did not push us off it.',
+      ],
+      hook: [
+        'Two weeks ago you could not pull a list of products. Today you closed four versions with numbers, named the boundary of what the data knows, and did not pass a guess off as a conclusion. That is the work people are paid for.',
+        'One number stays written down and set aside: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and that is a case of its own.',
+        'Taking it apart in SQL is awkward: it needs series by week and by product, rolling averages and a comparison with the previous month, which queries write slowly and read badly. On Monday you pick up a different tool.',
+      ],
+    },
   ],
 };
+
+/**
+ * Последний день прошлой недели, если эта неделя не первая.
+ *
+ * Полоса дела показывает только свою неделю, и без этой ссылки закрытое дело
+ * становится недостижимым: пять дней прозы, к которым нет ни одной двери.
+ * Ведёт именно в последний день, а не в первый: оттуда полоса той недели
+ * снова навигация, и любой её день в одном клике.
+ */
+export function storyPreviousCase(campaign: StoryCampaign, missionId: string): StoryMission | null {
+  const mission = campaign.missions.find((m) => m.id === missionId);
+  if (!mission) return null;
+  const wi = campaign.weeks.findIndex((w) => w.id === mission.week);
+  const prev = wi > 0 ? campaign.weeks[wi - 1] : null;
+  if (!prev) return null;
+  const days = campaign.missions.filter((m) => m.week === prev.id);
+  return days[days.length - 1] ?? null;
+}
+
+/** Неделя, которой принадлежит день, вместе со своими днями и вопросом. */
+export function storyWeekOf(
+  campaign: StoryCampaign,
+  missionId: string
+): { week: StoryWeek; missions: StoryMission[] } | null {
+  const mission = campaign.missions.find((m) => m.id === missionId);
+  if (!mission) return null;
+  const week = campaign.weeks.find((w) => w.id === mission.week);
+  if (!week) return null;
+  return { week, missions: campaign.missions.filter((m) => m.week === week.id) };
+}
 
 /** Кампания режима истории для локали. */
 export function storyCampaign(locale: Locale = 'ru'): StoryCampaign {

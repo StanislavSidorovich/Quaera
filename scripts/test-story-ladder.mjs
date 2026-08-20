@@ -90,6 +90,14 @@ const VOCAB = [
   ['JOIN', /\bJOIN\b/],
   ['ON', /\bON\b/],
   ['псевдоним таблицы', /\b[a-z]\.[a-z_]{2,}/],
+  ['LEFT JOIN', /\bLEFT\s+JOIN\b/],
+  ['IS NULL', /\bIS\s+NULL\b/],
+  ['IS NOT NULL', /\bIS\s+NOT\s+NULL\b/],
+  ['COALESCE', /\bCOALESCE\s*\(/],
+  ['подзапрос', /\(\s*SELECT\b/],
+  ['CASE', /\bCASE\s+WHEN\b/],
+  ['ELSE', /\bELSE\b/],
+  ['WITH', /\bWITH\b/],
 ];
 
 /**
@@ -121,6 +129,11 @@ const FORMS = new Map([
   ['IN', /\bIN\s*\(/],
   ['BETWEEN', /\bBETWEEN\s+\S+\s+AND\b/],
   ['DESC', /[\w.]+\s+DESC\b/],
+  ['LEFT JOIN', /\bLEFT\s+JOIN\b[^\n]*\bON\b/],
+  ['WITH', /\bWITH\s+\w+\s+AS\s*\(/],
+  ['IS NULL', /[\w.]+\s+IS\s+NULL\b/],
+  ['IS NOT NULL', /[\w.]+\s+IS\s+NOT\s+NULL\b/],
+  ['ELSE', /\bELSE\s+\S/],
 ]);
 
 /** Какие конструкции есть в куске текста. */
@@ -284,31 +297,39 @@ try {
     }
 
     /*
-     * Обещание финала: в последнем дне не вводится ни одной новой
-     * конструкции — он собран из недели целиком. Это то свойство, ради
-     * которого неделю вообще разложили на пять дней, и стоит оно ровно
-     * до первой правки контента, которая тихо добавит в пятницу оконную
-     * функцию.
+     * Обещание финала: в последнем дне недели не вводится ни одной новой
+     * конструкции — он собран из неё целиком. Это то свойство, ради которого
+     * неделю вообще разложили на пять дней, и стоит оно ровно до первой
+     * правки контента, которая тихо добавит в пятницу оконную функцию.
+     *
+     * Считается по каждой неделе отдельно, а показанное копится сквозь всю
+     * кампанию: вторая неделя строится на первой и обязана этим пользоваться,
+     * иначе понедельник второй недели пришлось бы начинать с SELECT.
      */
-    const last = campaign.missions[campaign.missions.length - 1];
-    const before = new Set();
-    campaign.missions.slice(0, -1).forEach((m) =>
-      m.steps.forEach((s) => {
-        for (const c of constructs(introText(s))) before.add(c);
-        const task = taskOf(s.taskId, m.track);
-        if (task) for (const c of shownByTask(task)) before.add(c);
-      })
-    );
-    const fresh = new Set();
-    last.steps.forEach((s) => {
-      const task = taskOf(s.taskId, last.track);
-      if (task) for (const c of minus(shownByTask(task), before)) fresh.add(c);
-    });
-    check(
-      `${label}в финале нет ни одной новой конструкции`,
-      fresh.size === 0,
-      `в последнем дне впервые: ${[...fresh].join(', ')}`
-    );
+    for (const week of campaign.weeks) {
+      const days = campaign.missions.filter((m) => m.week === week.id);
+      const last = days[days.length - 1];
+      if (!last) continue;
+      const lastAt = campaign.missions.findIndex((m) => m.id === last.id);
+      const before = new Set();
+      campaign.missions.slice(0, lastAt).forEach((m) =>
+        m.steps.forEach((s) => {
+          for (const c of constructs(introText(s))) before.add(c);
+          const task = taskOf(s.taskId, m.track);
+          if (task) for (const c of shownByTask(task)) before.add(c);
+        })
+      );
+      const fresh = new Set();
+      last.steps.forEach((s) => {
+        const task = taskOf(s.taskId, last.track);
+        if (task) for (const c of minus(shownByTask(task), before)) fresh.add(c);
+      });
+      check(
+        `${label}${week.id}: в финале нет ни одной новой конструкции`,
+        fresh.size === 0,
+        `в последнем дне впервые: ${[...fresh].join(', ')}`
+      );
+    }
 
     /*
      * Один день — несколько заданий, и это тоже договор: день из одного
@@ -331,7 +352,7 @@ try {
   const shape = (locale) =>
     storyCampaign(locale).missions.map(
       (m) =>
-        `${m.id}:${m.steps
+        `${m.week}/${m.id}:${m.steps
           .map((s) => `${s.taskId}${s.after ? '+реплика' : ''}${s.interlude ? '+разговор' : ''}`)
           .join(',')}`
     );
