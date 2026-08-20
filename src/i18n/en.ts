@@ -164,8 +164,6 @@ export const en = {
   about: {
     title: 'About the trainer',
     entryLink: "What's in the trainer and how it works →",
-    /** См. довод в ru.ts. */
-    storyModeLink: 'Trying it out: an analyst work week as one story →',
     tracksStatLabel: 'tracks',
     skillsStatLabel: 'skills',
     tasksStatLabel: 'tasks',
@@ -562,6 +560,12 @@ export const en = {
   storyMode: {
     headerTitle: 'Story mode',
     badge: 'Early prototype',
+    /** См. довод в ru.ts: на главной обещают неделю работы, а не «режим». */
+    homeTitle: 'An analyst work week',
+    homeBody:
+      'Five working days on one case: the client comes in with a question, you answer it with queries. SQL techniques arrive exactly where the case runs into them, with a brief in the morning and a look at the finding in the evening.',
+    homeStartBtn: 'Start day one',
+    homeResumeBtn: 'Resume the case',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
     toTask: 'Take on the task',

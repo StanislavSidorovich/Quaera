@@ -176,59 +176,42 @@ const TRACK_ORDER: Track[] = ['domain', 'sql', 'python', 'model'];
 const RECOMMENDED_TRACK: Track = 'sql';
 
 /**
- * Экспериментальные разделы (сейчас — сюжетная линия) спрятаны за параметром
- * адреса `?story`, а не убраны из сборки: код уже в проде, но показывать его
- * всем рано — сначала проверяем саму идею на скрытом входе. Открывший `?story`
- * включает вход для себя, и флаг запоминается, чтобы не набирать параметр
- * на каждой навигации; `?story=0` выключает обратно. Экран линии по-прежнему
- * рендерится штатно — прячутся только два видимых входа в него (пункт меню
- * и ссылка на главной), поэтому без флага раздел просто недостижим.
+ * `?story` — прямая ссылка в кампанию: открывает миссию с первой фазы.
+ *
+ * Раньше этот параметр делал две вещи разом: открывал раздел и **включал**
+ * его видимость (флаг в localStorage), потому что режим истории был скрытым
+ * прототипом без единого входа в интерфейсе. С выходом кампании на главную
+ * скрывать нечего — остался только прямой адрес, и нужен он ровно затем,
+ * чтобы дать кампанию ссылкой тому, кого зовут её проверить.
+ *
+ * Параметр стирается из адреса сразу, как прочитан: иначе он остаётся
+ * в строке навсегда, и каждое обновление страницы снова выбрасывало бы
+ * в миссию — из главной было бы не выйти, не почистив адрес руками.
+ *
+ * `?story=0` больше ничего не выключает, но и в кампанию не уводит: старая
+ * ссылка не должна делать противоположное тому, что обещала.
  */
-function readStoryEnabled(): { enabled: boolean; fromUrl: boolean } {
+function readStoryOpenOnBoot(): boolean {
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.has('story')) {
-      const on = params.get('story') !== '0';
-      localStorage.setItem('quaera.story', on ? '1' : '0');
-      /*
-       * Параметр стирается из адреса сразу, как прочитан. Иначе он остаётся
-       * в строке навсегда, и каждое обновление страницы снова выбрасывало бы
-       * в миссию — из главной было бы не выйти, не почистив адрес руками.
-       * Своё дело он к этому моменту сделал: флаг записан в localStorage,
-       * а открыть раздел просят один раз, не при каждом F5.
-       */
-      params.delete('story');
-      const rest = params.toString();
-      window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
-      return { enabled: on, fromUrl: on };
-    }
-    return { enabled: localStorage.getItem('quaera.story') === '1', fromUrl: false };
+    if (!params.has('story')) return false;
+    const on = params.get('story') !== '0';
+    params.delete('story');
+    const rest = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    return on;
   } catch {
-    return { enabled: false, fromUrl: false };
+    return false;
   }
 }
-const STORY_FLAG = readStoryEnabled();
-const STORY_ENABLED = STORY_FLAG.enabled;
-
-/**
- * Адрес `?story` не просто включает раздел, а сразу его и открывает.
- *
- * До этого вход в режим истории стоял ссылкой на главной — то есть
- * незаконченный прототип занимал место на первом экране, который человек
- * видит каждый заход. Экспериментальному разделу там не место, а другого
- * входа на телефоне не бывает: бокового меню там нет вовсе. Ответ — сам
- * адрес: `quaera.app/?story` открывает миссию с первой фазы, а запомненный
- * флаг после этого держит пункт в боковом меню на десктопе. Свежий
- * пользователь по-прежнему не видит ни входа, ни следа раздела.
- */
-const STORY_OPEN_ON_BOOT = STORY_FLAG.fromUrl;
+const STORY_OPEN_ON_BOOT = readStoryOpenOnBoot();
 
 /**
  * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
  * валидации режима истории: два «сюжетных» входа рядом путали пользователя.
  * Это флаг видимости, а не удаление — код и экран линии живы; когда решится
  * её судьба, флаг либо вернётся, либо линия уедет целиком. Режим истории
- * при этом остаётся за `?story` (STORY_ENABLED), он линию и замещает.
+ * вышел на главную и линию замещает — тем более незачем показывать оба.
  */
 const SHOW_STORY_LINE = false;
 
@@ -713,16 +696,13 @@ export default function App() {
   }, [line, progress]);
 
   /**
-   * Миссия режима истории и её задание, найденное в паке. Срез — одна миссия,
-   * привязанная к sql (см. content/storymode.ts). Показываем только когда
-   * активен тот же трек: тогда executor и schema соответствуют заданию.
-   * Спрятано за STORY_ENABLED, как и оба входа в старую линию.
-   */
-  /**
-   * Трек миссии режима истории. Отдельно от storyMission ниже потому, что
-   * нужен раньше него: вход обязан знать, куда переключаться, ещё до того,
-   * как миссия станет доступной (а доступной она становится только на своём
-   * треке — иначе исполнитель и схема будут чужие).
+   * Трек миссии режима истории. Кампания привязана к sql
+   * (см. content/storymode.ts), и её задания разрешаются только на своём
+   * треке: тогда исполнитель и схема соответствуют заданию.
+   *
+   * Отдельно от storyMissions ниже потому, что нужен раньше него: вход
+   * обязан знать, куда переключаться, ещё до того, как миссия станет
+   * доступной.
    */
   const storyMissionTrack = useMemo(() => storyEntryMission(locale)?.track ?? null, [locale]);
 
@@ -737,7 +717,6 @@ export default function App() {
    */
   const storyMissions = useMemo(() => {
     const byId = new Map<string, { mission: StoryMission; steps: StoryStepView[] }>();
-    if (!STORY_ENABLED) return byId;
     for (const mission of storyCampaign(locale).missions) {
       if (mission.track !== activeTrack) continue;
       const steps: StoryStepView[] = [];
@@ -1467,24 +1446,19 @@ export default function App() {
     }
     const mission = storyEntryMission(locale);
     if (!mission) return;
-    setScreen({ name: 'storymode', missionId: mission.id, phase: { kind: 'brief' } });
-  }
-
-  /**
-   * Вход в режим истории из «О тренажёре».
-   *
-   * Отличается от openStoryMode одним: запоминает флаг. Адрес `?story`
-   * делает это сам (readStoryEnabled), и без этого человек, вошедший
-   * из приложения, терял бы раздел из бокового меню при каждом
-   * возвращении — то есть каждый раз искал бы вход заново.
-   */
-  function openStoryModeFromApp() {
-    try {
-      localStorage.setItem('quaera.story', '1');
-    } catch {
-      // приватный режим — вход сработает, просто не запомнится
+    /*
+     * Первый вход отмечает кампанию начатой. Без этого отметка появлялась
+     * только при переходе на следующий день (см. nextStoryMission), и человек,
+     * бросивший неделю посреди понедельника, возвращался на главную, которая
+     * предлагала ему «начать первый день» заново — то есть теряла его место
+     * ровно там, где кампания и обещала его помнить. Дальше первого дня
+     * отметка отсюда не двигается: её двигает только переход вперёд.
+     */
+    if (storyReachedId === null) {
+      saveStoryMissionId(mission.id);
+      setStoryReachedId(mission.id);
     }
-    openStoryMode();
+    setScreen({ name: 'storymode', missionId: mission.id, phase: { kind: 'brief' } });
   }
 
   /**
@@ -1602,6 +1576,15 @@ export default function App() {
     onboarding: 'onboarding',
   };
   const sidebarSection: SidebarSection = SIDEBAR_SECTIONS[screen.name] ?? null;
+  /**
+   * Серия дней — одно число на два места: подвал бокового меню и строка
+   * под шапкой главной. Ноль в шапке не показываем вовсе: на первом визите
+   * «серия 0 дн.» — не состояние, а отчёт о его отсутствии, и приветствовать
+   * им нового человека незачем. Строка появляется ровно тогда, когда ей
+   * есть что сказать (см. .topbar-home-streak в styles.css: без неё шапке
+   * возвращается обычная нижняя граница).
+   */
+  const streakDays = streak(progress.activeDays);
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
@@ -1617,12 +1600,12 @@ export default function App() {
         tracks={TRACK_ORDER}
         activeTrack={activeTrack}
         progress={progress}
-        streakDays={streak(progress.activeDays)}
+        streakDays={streakDays}
         onHome={() => setScreen({ name: 'home' })}
         onReference={() => setScreen({ name: 'reference' })}
         storyEnabled={SHOW_STORY_LINE}
         onStory={() => setScreen({ name: 'story' })}
-        storyModeEnabled={STORY_ENABLED && storyMissionTrack !== null}
+        storyModeEnabled={storyMissionTrack !== null}
         onStoryMode={openStoryMode}
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
@@ -1639,7 +1622,13 @@ export default function App() {
          * шапка держит полоску треков и строку серии, и только там нижняя
          * граница отдана этой строке (см. .topbar-home в styles.css).
          */}
-        <header className={screen.name === 'home' ? 'topbar topbar-home' : 'topbar'}>
+        <header
+          className={
+            screen.name === 'home'
+              ? `topbar topbar-home${streakDays > 0 ? ' topbar-home-streak' : ''}`
+              : 'topbar'
+          }
+        >
           {screen.name !== 'home' && (
             <button
               className="icon-btn"
@@ -1801,9 +1790,9 @@ export default function App() {
            * из переменной пришлось бы кормить через CSS-переменную —
            * текст в разметке честнее и доступен экранному диктору.
            */}
-          {screen.name === 'home' && (
+          {screen.name === 'home' && streakDays > 0 && (
             <p className="topbar-streak">
-              <span>{t.app.streakSuffix(streak(progress.activeDays))}</span>
+              <span>{t.app.streakSuffix(streakDays)}</span>
             </p>
           )}
           {screen.name === 'session' && screen.index > 0 && (
@@ -1918,7 +1907,9 @@ export default function App() {
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
               onOpenStory={() => setScreen({ name: 'story' })}
               storyAt={storyAt}
-              /* Вход в режим истории — только когда миссия разрешена (флаг + её трек). */
+              /* Вход в кампанию — только когда её миссия разрешается в задания. */
+              onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
+              storyStarted={storyReachedId !== null}
               /*
                * Незаконченное занятие показываем только на главной его же
                * трека: главная — экран одного трека (его карта, его прогресс,
@@ -1940,7 +1931,6 @@ export default function App() {
               onSelectTrack={(track) => { switchTrack(track); }}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onOpenAccount={() => setScreen({ name: 'account' })}
-              onOpenStoryMode={storyMissionTrack ? openStoryModeFromApp : null}
             />
           )}
 
@@ -2595,6 +2585,8 @@ function Home({
   onOpenTrackIntro,
   onOpenStory,
   storyAt,
+  onOpenStoryMode,
+  storyStarted,
   resume,
   onResume,
   scrollToChooser,
@@ -2631,6 +2623,21 @@ function Home({
   /** Вводная карточка трека. undefined — у трека intro ещё не написан, кнопку не показываем. */
   onOpenTrackIntro?: () => void;
   onOpenStory: () => void;
+  /**
+   * Вход в кампанию режима истории. null — кампания не разрешается в задания
+   * (см. storyMissionTrack): вход, ведущий на пустой экран, хуже отсутствия
+   * входа.
+   */
+  onOpenStoryMode: (() => void) | null;
+  /**
+   * Кампания уже начата — отличает «попробовать» от «продолжить».
+   *
+   * Считается по позиции кампании в хранилище, а не по решённым заданиям:
+   * задания недели можно решить и обычным занятием, ни разу не открыв
+   * историю, и тогда главная предлагала бы «продолжить» дело, которого
+   * человек не начинал.
+   */
+  storyStarted: boolean;
   /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
   storyAt: { at: number; total: number } | null;
   /** Вход в режим истории (эксперимент за `?story`). undefined — миссия не разрешена, ссылку не показываем. */
@@ -2854,6 +2861,53 @@ function Home({
        * в 2026-08-12.
        */}
       {isNewUser && <h2 className="home-headline">{t.welcome.headline}</h2>}
+
+      {/*
+       * Кампания режима истории — первым делом на главной.
+       *
+       * **Почему первым.** Новичку четыре трека — это четыре решения до
+       * первого действия, и до 2026-08-20 главная предлагала именно их
+       * (плюс довод «начните с SQL», то есть совет о том, как выбирать).
+       * Кампания даёт другое: один путь, где не выбирают ничего, а идут
+       * за делом. Тем, кто хочет выбрать сам, треки остались строго ниже —
+       * порядок «один путь → или выбери тему» лежит по убыванию уверенности,
+       * а не по важности разделов.
+       *
+       * **Цена решения названа прямо: у новичка карточки треков ушли
+       * под сгиб.** Это отменяет часть замера 2026-08-16, где их поднимали
+       * наверх. Отменяет сознательно: тогда наверху боролись за выбор
+       * из четырёх, теперь наверху стоит ответ на тот же вопрос («с чего
+       * начать»), а выбор из четырёх стал запасным путём. Проверять теперь
+       * по кнопке кампании: её низ обязан быть выше сгиба на 375×812
+       * и 1280×800, обе локали.
+       *
+       * **Вернувшемуся — строкой, а не карточкой.** У него на главной уже
+       * есть своё главное действие (кнопка занятия), и карточка сверху
+       * отодвинула бы её за сгиб: замер до правки давал ей 130px запаса
+       * при высоте карточки около 200. Строка занимает ~64px и обещает
+       * ровно то же.
+       */}
+      {onOpenStoryMode &&
+        (isNewUser ? (
+          <div className="card story-invite">
+            <p className="story-invite-badge">{t.storyMode.badge}</p>
+            <h2>{t.storyMode.homeTitle}</h2>
+            <p className="brief">{t.storyMode.homeBody}</p>
+            <button className="btn" onClick={onOpenStoryMode}>
+              {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="story-invite-row" onClick={onOpenStoryMode}>
+            <span className="story-invite-row-head">
+              <span className="story-invite-row-title">{t.storyMode.homeTitle}</span>
+              <span className="pill">{t.storyMode.badge}</span>
+            </span>
+            <span className="story-invite-row-action">
+              {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn} →
+            </span>
+          </button>
+        ))}
 
       {/*
        * Единственная постоянная ссылка главной, а не разовая карточка новичка:
@@ -3354,29 +3408,21 @@ function Home({
  * справочника или просто когда человек вернулся через неделю и забыл,
  * что где лежит.
  */
+/*
+ * Входа в режим истории здесь больше нет намеренно. Он стоял тут, пока
+ * кампания была скрытым прототипом без другого входа; теперь она встречает
+ * человека на главной и названа там своим именем. Вторая ссылка сюда
+ * вернула бы второе имя одному и тому же разделу — ровно тем дублем,
+ * из-за которого с главной в своё время убрали старую сюжетную линию.
+ */
 function About({
   onSelectTrack,
   onOpenOnboarding,
   onOpenAccount,
-  onOpenStoryMode,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
   onOpenAccount: () => void;
-  /**
-   * Вход в режим истории — единственный внутри приложения, и стоит он
-   * здесь, а не на главной. Довод тот же, по которому раздел спрятан
-   * за `?story` (см. STORY_OPEN_ON_BOOT): незаконченный прототип не занимает
-   * первый экран. Но `?story` — адрес, а установленное приложение
-   * открывается с иконки, без адресной строки, и другого способа туда
-   * попасть у него нет. «О тренажёре» — компромисс: свежий пользователь
-   * сюда не приходит, а тот, кто дочитал до «как это устроено», уже
-   * достаточно любопытен, чтобы прототип его не отпугнул.
-   *
-   * null — если кампания не разрешается в задания (см. storyMissionTrack):
-   * ссылка, ведущая на пустой экран, хуже отсутствия ссылки.
-   */
-  onOpenStoryMode: (() => void) | null;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
@@ -3585,11 +3631,6 @@ function About({
           <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
           <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
           <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
-          {onOpenStoryMode && (
-            <button type="button" className="link-row" onClick={onOpenStoryMode}>
-              {t.about.storyModeLink}
-            </button>
-          )}
         </div>
 
         <div className="card">
