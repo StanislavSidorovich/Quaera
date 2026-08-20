@@ -95,6 +95,11 @@
       "id": "sql-business-case",
       "title": "Breaking down a business situation",
       "summary": "I split a metric's change into factors and answer \"why\", not just \"how much\"."
+    },
+    {
+      "id": "sql-promo-lift",
+      "title": "Promo: lift and the comparison base",
+      "summary": "I measure promo uplift against a base I choose deliberately, and I name that base next to the number, because it can flip the sign of the answer."
     }
   ],
   "tasks": [
@@ -1297,6 +1302,152 @@
         }
       ],
       "explain": "This task is about \"average\" not being one number when the units being averaged are of different sizes. naive_avg_price is the arithmetic mean across sales rows: every week of every SKU weighs the same, no matter how many units it represents. weighted_avg_price is revenue divided by units: it weighs each row by how much was actually bought. Aqualis has several SKUs priced from 38 to 128 per unit with different sales volumes, so the simple average and the true average purchase price diverge by almost eight percent. The move carries over to any pair of \"simple average of a metric\" and \"sum of the numerator divided by sum of the denominator\": average receipt, average margin, average rating. If the weights differ, the two numbers are bound to diverge, and the question is always the same: what is weighted, and what is not."
+    },
+    {
+      "id": "sql-064",
+      "title": "A week with a promotion and a week without one",
+      "brief": "Trade marketing and sales are arguing: one side says the «Milvara» promotions work, the other says the brand is growing anyway. The argument comes down to two numbers nobody has: how much the brand sells in a week with a promotion and in a week without one.",
+      "goal": "For 2025 and the brand «Milvara», return promo_week_units (average unit sales in a week that had a promotion) and base_week_units (the same for a week without one). Round both to whole numbers.",
+      "hints": [
+        "A week counts as a promo week if it holds at least one row with promo_id filled in. That «at least one» is what MAX over a conditional 1 gives you.",
+        "AVG(CASE WHEN condition THEN units END) with no ELSE averages only the matching weeks: where CASE returns NULL, the row stays out of the average."
+      ],
+      "explain": "This is the step without which no conversation about promotions can start: sales are rolled up to the week, and every week now carries a flag saying whether a promotion ran in it. In the fact table that flag lives at row level (one outlet, one SKU, one week), but the comparison happens between whole weeks, so CASE is lifted one level up by MAX: the week is a promo week if a promotion ran anywhere in it. Then AVG(CASE ... THEN units END) with no ELSE produces both averages in a single pass: NULL never enters an average, so promo weeks do not dilute the base and the base does not dilute the promo. «Milvara» came out at 2088 units in a promo week against 1337 without one, and that is already a conversation with numbers in it."
+    },
+    {
+      "id": "sql-065",
+      "title": "Lift for every brand",
+      "brief": "The marketing director is splitting next year's promo budget across brands and wants one table: how much more a week with a promotion sells than an ordinary week, for every FMCG brand.",
+      "goal": "For 2025 and every brand in the FMCG division, return brand, promo_week_units, base_week_units (both rounded to whole numbers) and lift_pct (how much higher the promo week is than the base week, in percent, rounded to one decimal). Sorted by lift_pct descending.",
+      "hints": [
+        "The first step is already written: every week of every brand has its units and its promo flag. What remains is rolling weeks up into brands with GROUP BY brand.",
+        "Percentages: 100.0 * (promo - base) / base. The literal with a decimal point is mandatory, otherwise integer division throws the fraction away."
+      ],
+      "explain": "Lift is a ratio, which is why it compares brands that sell in completely different volumes: «Aqualis» does 4875 units in a promo week and «Nettora» does 1041, yet +138.8% against +82.4% is a fair comparison. The analyst's work starts after that. «Nettora» sits second on lift and that says almost nothing about the health of the brand: the lift is measured against a base from the same year, and the base itself has fallen threefold in two years. Lift answers exactly one question, how different a week with a promotion is from a week without one in the same period, and it answers neither «is the brand growing» nor «did the promotion pay for itself». The second question needs money rather than units: that is sql-068 and sql-070."
+    },
+    {
+      "id": "sql-066",
+      "title": "One promotion, two bases",
+      "brief": "The brand «Nettora» ran a 30% discount from 29 January to 17 February 2026. The category manager asks what it delivered. The query works out average weekly units for the brand three ways: across the promo weeks, across the four weeks before it, and across every week without a promotion in the whole history of the data.",
+      "goal": "Work out which of the two comparisons answers the question «what did the promotion deliver».",
+      "predictQuestion": "Against the four weeks before it, the promo week is 12.5% higher; against the average week without promotions across the whole history, it is 39.3% lower. What did the promotion deliver?",
+      "options": [
+        {
+          "label": "About +12% against the level the brand was at just before the promotion. The second figure measures the two-year decline of the brand itself, not the promotion.",
+          "why": "The base «every week without a promotion» is mostly 2024, when «Nettora» still held shelf space in outlets it later lost. Comparing against it mixes two different changes: the effect of the promotion and a two-year decline. Only a base close in time separates them, which is where the four weeks before the start and the +12.5% come from."
+        },
+        {
+          "label": "The promotion failed: sales during it are 39% below an ordinary week for the brand.",
+          "why": "An «ordinary week» here is an average over two and a half years, and the brand sold twice as much at the start of that period as at the end. Against such a base every week of 2026 looks like a failure, promotion or not, which means the base is not measuring the promotion."
+        },
+        {
+          "label": "The effect of the promotion is the gap between the two estimates: 51.8 percentage points.",
+          "why": "The difference between two lifts measured against different bases is neither a lift nor an effect: it is the distance between two reference points, so it describes the bases rather than the promotion."
+        },
+        {
+          "label": "The numbers are not comparable: during the promotion the brand sold at a reduced price, so the comparison should use revenue rather than units.",
+          "why": "Price would indeed interfere with a revenue comparison, which is exactly why volume lift is measured in units, where the discount has no direct effect. The revenue question is a fair one, but it is the next step (sql-068), not a reason to call these numbers incomparable."
+        }
+      ],
+      "hints": [
+        "Look at which years the third base is made of: it holds three times more promotion-free weeks from 2024 to 2026 than from 2026 alone.",
+        "Ask yourself what happens to each of the two estimates if the brand has simply been declining slowly for two years."
+      ],
+      "explain": "The base is a decision made by the analyst rather than a property of the data, and here it flips even the sign of the answer: +12.5% against -39.3% for one and the same promotion. Both figures are arithmetically correct, but they answer different questions. The four weeks before the start answer «what changed because of the promotion»: a brand does not change much by itself in a month, so the difference sits closest to the effect. The average week across the whole history answers «how is the brand doing compared with itself two years ago», which is a question about the decline of «Nettora», and the answer to it is correct; it simply is not about the promotion. Hence a rule of writing rather than of querying: the base is always named next to the lift. «Plus 12% against the four weeks before the start» is a number that can be checked and challenged; «plus 12%» is a number that means nothing."
+    },
+    {
+      "id": "sql-067",
+      "title": "The promotion ran in one channel only",
+      "brief": "The promotion «Milvara: 2+1» ran from 5 to 20 May 2025 in modern trade only, but its lift was worked out across all sales of the brand, and it came out modest. The channel manager disagrees and asks for a recount inside his own channel. The base is the four weeks before the start, 7 April to 4 May: the brand had no promotions in them.",
+      "goal": "Return two numbers: lift_all_pct (lift across all channels) and lift_modern_trade_pct (lift inside the modern_trade channel alone). Both in percent against the base weeks, rounded to one decimal.",
+      "hints": [
+        "The periods are split by the start date of the promotion: weeks from 2025-05-05 onwards belong to the promotion, earlier weeks to the base.",
+        "Both columns use the same lift formula; only the measure changes, all_units against mt_units."
+      ],
+      "explain": "Lift across all channels is 56.6%, lift inside the channel that ran the promotion is 207.2%: a gap of more than three times, and the smaller number here is not a cautious estimate, it is a wrong one. Both the numerator and the denominator of the first figure carry traditional retail, pharmacies and ecom, where no promotion ran at all: their sales dilute the effect the way water dilutes paint. The rule is simple and carries over to any promotion: the slice you measure lift on has to match the reach of the promotion. Channel is the most common mistake but not the only one. If a promotion ran in one chain, in one region, or on three SKUs out of six, the base and the period are cut the same way. The reach is right there in the reference table: every promotion in dim_promo has a channel column, and the value all is far from universal in it."
+    },
+    {
+      "id": "sql-068",
+      "title": "How much discount was given away",
+      "brief": "Finance is putting together a promo budget review and wants one figure for the August promotion «Milvara: Discount 30%» (promo_id = 47): how much money was handed to the buyer as discount. Discount given is the difference between what the volume sold would have cost at list price and what was actually paid for it. The August price list sits in fact_price with month_start = 2025-08-01.",
+      "goal": "For promo_id = 47, return units (units sold), promo_revenue (actual revenue), revenue_at_list (the same volume valued at list price) and discount_given (the discount handed over). Round every amount to whole numbers.",
+      "hints": [
+        "Value at list price is worked out row by row and only then summed: SUM(f.units * pr.list_price), not the product of two sums.",
+        "Discount given is the difference between the two amounts you already have; it needs no third source."
+      ],
+      "explain": "The promotion cost 231,546 yen of discount against 540,472 yen of revenue, which is 30.0% of the volume valued at list price. Matching the promised 30% is not a tautology but an execution check: retail chains stand between the promo calendar and the shelf, and actual discount depth drifts from plan in both directions. A query like this is the cheapest way to see that, and it is worth running across every promotion rather than only the suspicious ones. The figure then meets the other half of the question: discount given is what the promotion cost, and only a comparison against a base shows what it bought. The answer there is not the obvious one: sql-070."
+    },
+    {
+      "id": "sql-069",
+      "title": "Efficient on paper",
+      "brief": "A finance analyst has sent over a summary of 2025 promotions that ran in every channel: how much discount was given away, how much revenue they brought in above the base of the four weeks before the start, and the ratio of the second to the first. He proposes a conclusion: shallow discounts are more efficient than deep ones, so from now on we only run those.",
+      "goal": "Judge whether the proposed conclusion follows from this table.",
+      "scenario": "Promo         Discount  Uplift  Return\nKrosti 10%      115369  552156     4.8\nFruvia 12%      183714  773768     4.2\nAqualis 12%     136034  568928     4.2\nMilvara 30%     231546  226538     1.0\nFruvia 30%      385474  283809     0.7",
+      "predictQuestion": "Does it follow from this table that shallow discounts are more efficient than deep ones?",
+      "options": [
+        {
+          "label": "No: the return falls with depth almost mechanically, because the denominator grows while the uplift here does not grow with depth at all. A conclusion about depth needs a like-for-like comparison, and this table has none.",
+          "why": "Discount given grows with depth by definition: the same units, a bigger cut on each. The uplift in revenue, meanwhile, shows no relation to depth here (552 thousand for a ten percent promotion, 284 thousand for a thirty percent one), so the ratio falls almost arithmetically. And the table cannot tell apart the reasons the uplift failed to grow: different brands, different seasons, different durations, other brands running promotions at the same time."
+        },
+        {
+          "label": "Yes: a return of 4.8 against 0.7 is nearly a sevenfold gap, and a gap that size cannot be chance.",
+          "why": "The size of a gap says nothing about its cause. The denominator for deep promotions is three times bigger by construction, and that alone produces a gap of several times even if the promotions work identically."
+        },
+        {
+          "label": "Yes, with one caveat: first check that all the promotions ran for the same length of time.",
+          "why": "Duration does need to be levelled, but it is only one of the differences. There are different brands with different trajectories here, different seasons, and overlapping promotions: in 45 of the 122 promo weeks, three or more brands ran promotions at once."
+        },
+        {
+          "label": "The conclusion is wrong because the return is calculated wrongly: the denominator should be promo revenue rather than discount given.",
+          "why": "Uplift over money spent is the usual way to measure promo payback: the denominator holds what was spent. The flaw in this table is not the formula but the fact that it compares promotions that are not comparable."
+        }
+      ],
+      "hints": [
+        "Look at the two columns separately: how the denominator moves with depth, and how the numerator moves.",
+        "Ask what else, besides discount depth, differs between the rows of the table."
+      ],
+      "explain": "Uplift over money spent is the right metric and a ready-made trap at the same time: it falls as the denominator grows, even when the numerator behaves identically. Here that is visible in pure form: the discount triples, the uplift does not grow, the return falls by roughly the same factor. The table does not show that shallow discounts are better; it shows that at this depth and this uplift the return is higher, and in this data the uplift has no relation to depth. A conclusion about depth needs promotions comparable in everything else: one brand, a similar season, the same duration, no other promotions running alongside. In practice this is achieved by design rather than by picking rows from history: the same mechanic runs in different chains at different depths and those are compared with each other. And even there the conclusion stays about revenue rather than profit: margin is not in this data at all, and a return of about 1.0 in revenue means a loss in money."
+    },
+    {
+      "id": "sql-070",
+      "title": "Was the promotion worth the discount",
+      "brief": "The August promotion «Milvara: Discount 30%» looks like a success: unit sales grew almost two and a half times. sql-068 has already established that 231,546 yen of discount was given away on it. The sales director asks a different question: did the promotion bring in more money than it cost. The base is the four weeks before the start, 7 to 28 July.",
+      "goal": "Work out the revenue of the three promo weeks, the same three weeks at base level, and the uplift between them, then say whether the promotion paid for the discount given.",
+      "steps": [
+        {
+          "goal": "For the brand «Milvara», return promo_revenue (revenue of the three promo weeks, 4 to 18 August), base_revenue (average weekly revenue of the four weeks from 7 to 28 July, multiplied by three) and incremental_revenue (the difference between them). Round all three to whole numbers.",
+          "hints": [
+            "Promo revenue is the sum of three weeks; the base level is the average of four weeks multiplied by three. Summing the July weeks outright will not do: there are four of them, not three.",
+            "The uplift is the difference between those same two expressions; it needs no separate query."
+          ]
+        },
+        {
+          "question": "The three promo weeks delivered 540,472 yen of revenue against a base level of 313,934 yen, an uplift of 226,538 yen. You already worked out the discount given on this promotion in the previous task. What do you tell the sales director?",
+          "hints": [
+            "Compare the two amounts head on: which is larger, the revenue uplift or the discount given?",
+            "Remember that revenue is not profit: the cost of the goods sold still has to come out of it."
+          ],
+          "options": [
+            {
+              "label": "Volume grew, but in money the promotion did not pay for itself: the revenue uplift of 226,538 yen is smaller than the 231,546 yen given away as discount, and in profit the gap is wider still, because uplift brings the company only its margin while the discount is lost in full.",
+              "why": "The growth in units was real (3327 against 1353 per week), but every unit went out 30% cheaper, so in money the uplift did not even reach the discount given: 226,538 against 231,546 yen. And that is the optimistic reading: revenue uplift yields the company only its margin share, while the discount is gone entirely."
+            },
+            {
+              "label": "The promotion paid for itself: revenue of the three promo weeks, 540,472 yen, is much larger than the 231,546 yen of discount given.",
+              "why": "That compares the wrong pair. Promo revenue includes what the brand would have sold anyway, the base level of 313,934 yen. Payback is measured only by the uplift over that base, and the uplift is 226,538 yen, which is less than the discount given."
+            },
+            {
+              "label": "The promotion worked: volume grew two and a half times, and that is what promotions are for.",
+              "why": "Volume growth is a result of the promotion but not an answer about payback: the volume was bought with a discount, and the question is precisely whether it was worth the money. Here the revenue uplift did not cover the discount given."
+            },
+            {
+              "label": "The question cannot be answered: without the cost of goods, promo payback cannot be calculated at all.",
+              "why": "Cost of goods is indeed missing for a precise profit answer, but it is not needed to see the main point: the revenue uplift of 226,538 yen is already smaller than the 231,546 yen of discount, and margin can only widen that gap. Missing data prevents refining the conclusion, not reaching it."
+            }
+          ]
+        }
+      ],
+      "explain": "This is the whole review in one task: a promotion with an obvious success in units turned out to be a loss in money, and the entire difference lies in what it is compared against. A revenue uplift of 226,538 yen against 231,546 yen of discount given means every yen of discount came back as a yen of revenue and not one yen more, and revenue is not profit. Three things are worth taking away. First: payback is measured by uplift over a base, never by promo revenue, otherwise every promotion pays for itself, since the brand would have sold anyway. Second: growth in units and growth in money diverge the deeper the discount goes, and the first without the second is not an argument. Third: even a return of about one in revenue is a loss in profit rather than a break-even. What this review cannot work out is the true cost of the promotion: neither cost of goods nor display and print costs are in the data, so the answer here is an upper bound on payback, and it should be spoken as exactly that."
     }
   ]
 }

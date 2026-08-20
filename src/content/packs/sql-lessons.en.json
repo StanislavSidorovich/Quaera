@@ -144,6 +144,15 @@
       "reads": "A brand's decline broken into factors. The outlet count halved while units per outlet held steady, so the problem isn't demand or price, it's lost shelf space. That's a question for the field team and retailer negotiations, not marketing.",
       "wrongWhy": "Technically correct and completely useless. The number \"down 57%\" doesn't answer \"why\" and doesn't point to who should do something about it. A report that leads to no decision hasn't done its job.",
       "selfCheck": "Compare like-for-like periods, a quarter against the same quarter last year. Comparing to the previous quarter mixes seasonality with trend and regularly leads to wrong conclusions."
+    },
+    {
+      "skill": "sql-promo-lift",
+      "title": "Promo: lift and the comparison base",
+      "why": "«The promotion delivered plus 80%» is not yet a number until you say plus 80% against what. Lift is measured against a base, and the base is a decision made by the analyst rather than a property of the data: the week before the promotion, the same period a year ago, the average week without promotions. One and the same promotion gives both a plus and a minus on different bases, which is why the base is said out loud next to the number.",
+      "form": "WITH weekly AS (\n  SELECT week,\n         SUM(measure) AS units,\n         MAX(CASE WHEN promo_id IS NOT NULL THEN 1 ELSE 0 END) AS on_promo\n  FROM fact\n  GROUP BY week\n)\nSELECT AVG(CASE WHEN on_promo = 1 THEN units END) AS promo,\n       AVG(CASE WHEN on_promo = 0 THEN units END) AS base\nFROM weekly",
+      "reads": "A week with a promotion for «Krosti» is 2141 units, a week without one is 1184, a lift of +80.8%. The base is named right in the query: weeks of 2025 in which the brand had no promo rows at all.",
+      "wrongWhy": "The base is worked out across every week in a row, promo weeks included. They pull it upwards (1423 instead of 1184), and the lift drops from 80.8% to 50.4%, the more so the more weeks the promotions took. The rule: the promo period and the base never share a single week.",
+      "selfCheck": "Say it out loud: «lift against what?» If the answer holds no period and no rule for picking base weeks, there is no number yet. Check as well that no week is lost or double counted: promo weeks plus base weeks must add up to exactly the number of weeks in the period."
     }
   ]
 }

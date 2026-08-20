@@ -37,9 +37,9 @@
           "outcome": "You catch row multiplication before the number reaches the person who asked, and you break a heavy query into steps that read on their own."
         },
         {
-          "title": "The neighbouring row",
-          "hook": "Sales for the month are not enough; your manager wants the change against the previous one. A top-3 of products is not enough; the top-3 has to be inside each category. Both questions are about something the row itself does not hold: its neighbours.",
-          "outcome": "You compute rankings inside groups and comparisons with the previous period in one query, without a second pass over the same data."
+          "title": "What to compare against",
+          "hook": "A number on its own means nothing: is 2088 units a week a lot or a little? Meaning appears next to a reference point, and an analyst has three of them: the weeks before a promotion, the previous period, and the neighbours in the same group. Choosing between them is the job.",
+          "outcome": "You measure uplift against a base you name out loud, rankings inside groups, and comparisons with the previous period."
         },
         {
           "title": "Why it dropped",

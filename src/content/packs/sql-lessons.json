@@ -178,6 +178,17 @@
       "wrong": "SELECT d.year, SUM(f.units) AS units\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_date d ON d.date_id = f.week_start\nWHERE p.brand = 'Nettora' AND d.quarter = 1\nGROUP BY d.year",
       "wrongWhy": "Технически верно и совершенно бесполезно. Цифра «упало на 57%» не отвечает на вопрос «почему» и не указывает, кто должен что-то делать. Отчёт, после которого нельзя принять решение, работу не закрывает.",
       "selfCheck": "Сравнивайте одноимённые периоды — квартал с тем же кварталом прошлого года. Сравнение с предыдущим кварталом смешивает сезонность с трендом и регулярно приводит к неверным выводам."
+    },
+    {
+      "skill": "sql-promo-lift",
+      "title": "Промо: лифт и база сравнения",
+      "why": "«Акция дала плюс 80%» — ещё не число, пока не сказано, плюс 80% к чему. Лифт считается против базы, и база — решение аналитика, а не свойство данных: неделя перед акцией, тот же период год назад, средняя неделя без акций. Одна и та же акция на разных базах даёт и плюс, и минус, поэтому база называется вслух рядом с числом.",
+      "form": "WITH weekly AS (\n  SELECT неделя,\n         SUM(мера) AS units,\n         MAX(CASE WHEN promo_id IS NOT NULL THEN 1 ELSE 0 END) AS on_promo\n  FROM факт\n  GROUP BY неделя\n)\nSELECT AVG(CASE WHEN on_promo = 1 THEN units END) AS промо,\n       AVG(CASE WHEN on_promo = 0 THEN units END) AS база\nFROM weekly",
+      "example": "WITH weekly AS (\n  SELECT f.week_start,\n         SUM(f.units) AS units,\n         MAX(CASE WHEN f.promo_id IS NOT NULL THEN 1 ELSE 0 END) AS on_promo\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Krosti'\n    AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY f.week_start\n)\nSELECT ROUND(AVG(CASE WHEN on_promo = 1 THEN units END)) AS promo_week,\n       ROUND(AVG(CASE WHEN on_promo = 0 THEN units END)) AS base_week,\n       ROUND(100.0 * (AVG(CASE WHEN on_promo = 1 THEN units END)\n                    - AVG(CASE WHEN on_promo = 0 THEN units END))\n             / AVG(CASE WHEN on_promo = 0 THEN units END), 1) AS lift_pct\nFROM weekly",
+      "reads": "Неделя с акцией у «Krosti» — 2141 штука, неделя без акции — 1184, лифт +80.8%. База названа прямо в запросе: недели 2025 года, в которых у бренда не было ни одной промо-строки.",
+      "wrong": "WITH weekly AS (\n  SELECT f.week_start,\n         SUM(f.units) AS units,\n         MAX(CASE WHEN f.promo_id IS NOT NULL THEN 1 ELSE 0 END) AS on_promo\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Krosti'\n    AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY f.week_start\n)\nSELECT ROUND(AVG(CASE WHEN on_promo = 1 THEN units END)) AS promo_week,\n       ROUND(AVG(units)) AS base_week\nFROM weekly",
+      "wrongWhy": "База посчитана по всем неделям подряд, вместе с промо-неделями. Они тянут её вверх — 1423 вместо 1184, — и лифт занижается с 80.8% до 50.4%, тем сильнее, чем больше недель заняли акции. Правило: период акции и база не пересекаются ни одной неделей.",
+      "selfCheck": "Спросите вслух: «лифт к чему?» Если в ответе нет периода и правила отбора базовых недель, числа ещё нет. Заодно проверьте, что недели не потерялись и не задвоились: промо-недели плюс базовые должны дать ровно столько недель, сколько в периоде."
     }
   ]
 }
