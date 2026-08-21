@@ -1,368 +1,393 @@
-# Quaera — тренажёр аналитика данных
+English | [Русский](README.ru.md)
 
-**Открываете ссылку и через минуту пишете настоящий запрос к базе вымышленного
-дистрибьютора: ищете, почему упал бренд, и сразу видите, сошёлся ли ответ
-с данными.** Ставить ничего не нужно, регистрации нет, на телефоне работает
-и без интернета.
+# Quaera — a data analyst trainer
 
-**[Открыть приложение → quaera.app](https://quaera.app)**
+**Open the link and within a minute you're writing a real query against
+a fictional distributor's database: hunting for why a brand's sales dropped,
+and seeing right away whether your answer matches the data.** Nothing to
+install, no sign-up, works on a phone and offline.
 
-Если словосочетание «аналитика данных» вам ничего не говорит, начните отсюда:
-**[Что такое аналитика данных](https://quaera.app/?intro)** — экскурс на три
-минуты, написанный без единого профессионального термина.
+**[Open the app → quaera.app](https://quaera.app)**
 
-Технически это мобильное веб-приложение (PWA) для практики SQL, pandas, модели
-данных и суждения аналитика на данных, похожих на рабочие. Код исполняется
-по-настоящему: SQLite и Python (Pyodide) работают целиком в браузере, без
-сервера.
+If "data analytics" doesn't mean much to you yet, start here:
+**[What is data analytics](https://quaera.app/?intro)** — a three-minute
+walkthrough written without a single professional term.
 
-## Что посмотреть за три минуты
+Technically it's a mobile web app (PWA) for practicing SQL, pandas, data
+modeling and analyst judgment on data built to resemble the real thing.
+The code actually executes: SQLite and Python (Pyodide) run entirely
+in the browser, no server involved.
 
-| Кто вы | Куда смотреть |
+## Three minutes, depending on who you are
+
+| Who you are | Where to look |
 | --- | --- |
-| С данными не работаете | [Что такое аналитика данных](https://quaera.app/?intro) — что это за профессия и где она нужна, без терминов |
-| Учите SQL или pandas | [quaera.app](https://quaera.app), трек SQL: 3.5 МБ базы, поднимается за несколько секунд и дальше работает офлайн |
-| Аналитик — или нанимаете аналитика | [Kaiyo Trading: three findings and what they cost](docs/analysis/kaiyo-trading.en.md) — разбор датасета, написанный как рабочий документ аналитика |
-| Пришли посмотреть код | [Как это устроено](#как-это-устроено) ниже и [ROADMAP.md](ROADMAP.md): что проверяется гейтом автоматически, а что требует ручной экспертизы |
+| You don't work with data | [What is data analytics](https://quaera.app/?intro) — what the profession is and where it's needed, no jargon |
+| You're learning SQL or pandas | [quaera.app](https://quaera.app), SQL track: a 3.5 MB database that boots in seconds and then runs offline |
+| You're an analyst — or hiring one | [Kaiyo Trading: three findings and what they cost](docs/analysis/kaiyo-trading.en.md) — a dataset write-up styled as an analyst's actual work product |
+| You're here for the code | [How it's built](#how-its-built) below and [ROADMAP.md](ROADMAP.md): what's checked automatically by a gate and what still needs manual review |
 
-![Главная: кампания «Рабочая неделя аналитика», четыре трека, рекомендованный старт](docs/screenshots/01-home.png)
+![Home screen: the "Analyst's work week" campaign, four tracks, a recommended starting point](docs/screenshots/01-home.png)
 
-## Что внутри
+## What's inside
 
-**Четыре трека — 248 заданий и 71 навык.** Наполнены целиком, вычитаны
-и переведены на английский: интерфейс, задания, карточки приёмов.
+**Four tracks — 248 tasks and 71 skills.** Fully populated, reviewed
+and translated to English: interface, tasks, technique cards.
 
-| Трек | Заданий | Навыков | Как проверяется ответ |
+| Track | Tasks | Skills | How the answer is checked |
 | --- | --- | --- | --- |
-| SQL для аналитика | 76 | 18 | Запрос выполняется в SQLite (sql.js) |
-| Аналитика как профессия | 66 | 20 | Выбор варианта с разбором (`predict`) |
-| Модель данных и BI | 63 | 19 | Выбор варианта с разбором (`predict`) |
-| pandas для аналитика | 43 | 14 | Код выполняется в Python (Pyodide) |
+| SQL for analysts | 76 | 18 | The query runs against SQLite (sql.js) |
+| Analytics as a profession | 66 | 20 | Multiple choice with a full explanation (`predict`) |
+| Data model and BI | 63 | 19 | Multiple choice with a full explanation (`predict`) |
+| pandas for analysts | 43 | 14 | The code runs in Python (Pyodide) |
 
-**Режим истории — рабочая неделя аналитика.** Две недели по пять дней: утром
-заказчик приходит с вопросом, вечером вы приносите находку. Приёмы SQL
-вводятся ровно там, где дело в них упирается, а не по программе курса.
-Помечен в интерфейсе как ранний прототип — сюжет закрыт для SQL, остальные
-треки в него ещё не переложены.
+**Story mode — an analyst's work week.** Two five-day weeks: a client
+brings a question in the morning, you bring back a finding by evening.
+SQL techniques are introduced exactly where the work needs them, not
+in a syllabus order. Marked in the app as an early prototype — the story
+is complete for SQL, the other tracks haven't been carried into it yet.
 
-![Режим истории: понедельник первой недели, бриф от директора по продажам](docs/screenshots/03-story.png)
+![Story mode: Monday of the first week, a brief from the sales director](docs/screenshots/03-story.png)
 
-**Карточка приёма — перед первой задачей на новый навык**, а не курс, который
-листают заранее: форма записи, пример на данных дистрибьютора, частая ошибка.
+**A technique card sits right before the first task on a new skill**,
+rather than a lesson you read ahead of time: the notation, a worked example
+on the distributor's data, a common mistake.
 
-![Карточка приёма: форма записи, пример, частая ошибка](docs/screenshots/02-lesson.png)
+![Technique card: notation, example, common mistake](docs/screenshots/02-lesson.png)
 
-Кроме треков в приложении есть:
+Beyond the tracks, the app also has:
 
-- **Справочник приёмов** — все карточки отдельным экраном, с примером,
-  который можно выполнить прямо в карточке, не открывая задание;
-- **Песочница** — свободный режим на тех же данных: любой запрос, без задания
-  и без подсказок, со списком вопросов рядом, если спросить нечего;
-- **Экран «Данные»** — схема из 12 таблиц с гранулярностью и числом строк,
-  посчитанными от настоящего датасета, а не вписанными руками;
-- **Повторение и напоминания** — интервальный планировщик и push-уведомление,
-  когда тему пора повторить;
-- **Синхронизация — по желанию.** Без входа прогресс живёт в браузере
-  и о вас на сервере нет ни строки; вход нужен ровно для одного — перенести
-  прогресс на второе устройство.
+- **A technique reference** — every card on its own screen, with an example
+  you can run right there without opening a task;
+- **A sandbox** — free-form mode on the same data: any query, no task and
+  no hints, with a list of starter questions next to it if you're not sure
+  what to ask;
+- **A data screen** — a schema of 12 tables with grain and row counts
+  computed from the real dataset, not typed in by hand;
+- **Spaced repetition and reminders** — an interval scheduler and a push
+  notification when it's time to revisit a topic;
+- **Sync — opt-in.** Without signing in, progress lives in the browser and
+  there isn't a single row about you on any server; signing in exists for
+  exactly one purpose — carrying progress to a second device.
 
-Есть и отдельный экран для тех, кто про эту профессию ничего не знает: что
-делают с данными в компании, зачем для этого отдельные инструменты и где так
-работают. Его можно отправить ссылкой знакомому, не объясняя ничего голосом.
+There's also a separate screen for anyone who knows nothing about this
+profession: what companies actually do with data, why that needs dedicated
+tools, and where this kind of work happens. You can send the link to someone
+you know without explaining anything out loud first.
 
-![Экскурс «Что такое аналитика данных»: карта области и первый блок](docs/screenshots/08-intro.png)
+![Walkthrough "What is data analytics": the area map and the first block](docs/screenshots/08-intro.png)
 
-## Чем это отличается от других тренажёров
+## What sets it apart from other trainers
 
-Не количеством задач, а четырьмя вещами.
+Not the number of exercises — four specific things.
 
-**1. Один связный датасет вместо учебных табличек.** Вымышленный дистрибьютор
-FMCG и OTC-фармы «Kaiyo Trading», звезда из 12 таблиц, 156 тысяч строк
-за два с половиной года. Данные согласованы: sell-out агрегируется в sell-in,
-sell-in минус sell-out даёт остатки, планы построены от факта. Все четыре
-трека работают на одних и тех же цифрах — падение бренда из-за потери
-дистрибуции разбирается запросом, датафреймом, мерой DAX и рассуждением,
-и ответы обязаны сходиться.
+**1. One connected dataset instead of textbook tables.** A fictional FMCG
+and OTC-pharma distributor, "Kaiyo Trading" — a star schema of 12 tables,
+156 thousand rows over two and a half years. The data is internally
+consistent: sell-out rolls up into sell-in, sell-in minus sell-out gives
+stock, plans are built from actuals. All four tracks run on the same
+numbers — a brand losing distribution gets worked through as a query,
+a dataframe, a DAX measure and a written argument, and the answers have
+to agree.
 
-**2. Диагностика вместо вердикта.** Ответ сравнивается по результату,
-а не по тексту запроса, и по форме расхождения восстанавливается вероятная
-причина: размножение строк соединением, потерянный фильтр периода, INNER
-вместо LEFT, забытый ORDER BY, опечатка в имени колонки.
+**2. Diagnosis instead of a verdict.** The answer is compared by its
+result, not by the text of the query, and the shape of the mismatch
+reconstructs the likely cause: a join fanning out rows, a dropped date
+filter, `INNER` where `LEFT` was needed, a missing `ORDER BY`, a typo
+in a column name.
 
 <table>
 <tr>
 <td width="50%">
 
-**Задание — реальный запрос к реальной базе.** Условие, редактор с панелью
-токенов под палец, переключатель «Таблица / График» у результата.
+**A task is a real query against a real database.** A prompt, an editor
+with a token panel sized for a thumb, a "Table / Chart" toggle on
+the result.
 
-![Экран задания: условие, редактор SQL, результат таблицей](docs/screenshots/04-task-run.png)
+![Task screen: prompt, SQL editor, result as a table](docs/screenshots/04-task-run.png)
 
 </td>
 <td width="50%">
 
-**Тот же результат — графиком.** Переключатель появляется только там, где
-строить график честно (см. «Как это устроено» → `chartSpec`), а не всегда.
+**The same result — as a chart.** The toggle only appears where a chart
+would be honest (see "How it's built" → `chartSpec`), not everywhere.
 
-![Тот же результат графиком — горизонтальные столбцы по цене](docs/screenshots/05-task-chart.png)
+![The same result as a chart — horizontal bars by price](docs/screenshots/05-task-chart.png)
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-**Проверка исполнением, а не текстом.** Любой запрос с тем же результатом
-принимается; ответ сверяется по данным, которые он вернул.
+**Checked by execution, not by text.** Any query that returns the same
+result is accepted; the answer is verified against the data it actually
+returned.
 
-![Задание решено: зелёный блок «Верно» рядом с редактором](docs/screenshots/06-task-solved.png)
+![Task solved: a green "Correct" panel next to the editor](docs/screenshots/06-task-solved.png)
 
 </td>
 <td width="50%">
 
-**Схема данных — не текст, а живые числа.** Гранулярность и число строк
-каждой таблицы посчитаны от реального датасета, а не вписаны вручную.
+**The data schema is live numbers, not prose.** Grain and row count for
+every table are computed from the real dataset, not written by hand.
 
-![Схема данных: таблицы дистрибьютора с гранулярностью и числом строк](docs/screenshots/07-schema.png)
+![Data schema: distributor tables with grain and row counts](docs/screenshots/07-schema.png)
 
 </td>
 </tr>
 </table>
 
-**3. У каждого утверждения — источник.** Числа, которые задание цитирует
-в тексте (предсказание результата запроса, метрики бизнеса в domain, значение
-меры в model), заранее сверены с датасетом и защищены отдельной проверкой
-в гейте сборки — см. «Сюжеты в данных» ниже.
+**3. Every claim has a source.** Numbers a task quotes in its prose
+(predicting a query's result, a business metric in `domain`, a measure's
+value in `model`) are checked against the dataset ahead of time and
+protected by a dedicated build-time gate — see "Stories in the data" below.
 
-**4. Код исполняется на телефоне.** SQLite и pandas работают в Web Worker
-прямо в браузере, включая офлайн, без сервера — обычно это ограничение
-десктопных инструментов.
+**4. The code runs on a phone.** SQLite and pandas run in a Web Worker
+right in the browser, offline included, no server — usually a limitation
+of desktop-only tools.
 
-## Сюжеты в данных
+## Stories in the data
 
-Задачи опираются не на случайные числа, а на заложенные ситуации:
+Tasks are built on planted situations, not random numbers:
 
-- бренд «Nettora» падает вдвое — не из-за спроса и не из-за цены,
-  а потому что его перестали брать больше половины точек;
-- дистрибьютор «Setouchi Trading» затарил склад в Q4 2025: отношение sell-in
-  к sell-out подскочило с обычных 1.04 до 2.44, вернулось к норме за два
-  квартала — а остатки на складе выросли впятеро и не снизились: поток
-  восстановился, уровень остался (различие потока и запаса — dom-021);
-- разнонаправленная сезонность: вода летом, витамины и жаропонижающие зимой —
-  один и тот же переход месяца даёт то +316%, то +36%, то +3.2% в зависимости
-  от базы сравнения (dom-025);
-- систематический перекос планирования: план по выручке выполняют 3–7
-  торговых представителей из 25 каждый месяц полугодия — распределение
-  выдаёт дефект норматива, которого не видно в среднем проценте (dom-022);
-- запуск «Vitanor Forte» в сентябре 2025 с постепенной раскаткой дистрибуции;
-- отсутствие строки в `fact_sellout` означает «не продавалось», а не ноль;
-- `staging_raw_sellout` — сырой слой с дублями, NULL, датами в четырёх
-  форматах и одной сетью в двух написаниях;
-- одна дата в двух ролях: заказ и отгрузка в `fact_sellin` расходятся
-  на 2–11 дней, и 1979 заказов из 15 362 переезжают отгрузкой в следующий
-  месяц — ровно тот случай, где для модели данных нужны активная
-  и неактивная связь к одному календарю, а не два (mdl-031, mdl-032).
+- the "Nettora" brand's sales are cut in half — not because of demand
+  and not because of price, but because more than half its outlets
+  stopped carrying it;
+- distributor "Setouchi Trading" overstocked in Q4 2025: the sell-in
+  to sell-out ratio spiked from a normal 1.04 to 2.44 and returned
+  to normal within two quarters — but warehouse stock rose fivefold
+  and never came back down: the flow recovered, the level didn't
+  (flow vs. stock, `dom-021`);
+- seasonality pulling in opposite directions: water in summer, vitamins
+  and fever reducers in winter — the same month-over-month transition
+  reads as +316%, +36% or +3.2% depending purely on which base you
+  compare against (`dom-025`);
+- a systematic planning skew: only 3–7 of 25 sales reps hit their revenue
+  target each month of the half-year — the distribution reveals a quota
+  defect invisible in the average percentage (`dom-022`);
+- "Vitanor Forte" launches in September 2025 with a gradual distribution
+  rollout;
+- a missing row in `fact_sellout` means "wasn't sold," not zero;
+- `staging_raw_sellout` is a raw layer with duplicates, NULLs, dates in
+  four different formats and one chain spelled two different ways;
+- one date playing two roles: order date and ship date in `fact_sellin`
+  diverge by 2–11 days, and 1,979 of 15,362 orders ship into the following
+  month — exactly the case where a data model needs one active and one
+  inactive relationship to the same calendar, not two (`mdl-031`, `mdl-032`).
 
-Три из них разобраны до конца и сведены в один документ —
-**[Kaiyo Trading: three findings and what they cost](docs/analysis/kaiyo-trading.en.md)**
-(на английском). Приложение показывает, как задавать вопросы данным; этот
-разбор показывает, как на них отвечают: вопрос → что показали данные →
-что это значит → что делать → чего это стоит, с проверкой альтернативных
-объяснений и ценой каждой находки в деньгах.
+Three of these are worked all the way through in one document —
+**[Kaiyo Trading: three findings and what they cost](docs/analysis/kaiyo-trading.en.md)**.
+The app shows how to ask data questions; this write-up shows how they get
+answered: question → what the data showed → what it means → what to do →
+what it costs, with alternative explanations checked and a dollar figure
+on each finding.
 
-`npm run verify:data` проверяет, что все они на месте: если правка генератора
-убьёт сюжет, эталонные ответы к заданиям молча разъедутся с реальностью.
-Для чисел, которые задание цитирует в тексте (а не только в исполняемом
-эталоне — так устроены все задания в `domain` и `model`), в
-`verify-content.mjs` есть отдельные проверки по каждому такому заданию:
-гейт проверяет не только «запрос выполняется», но и «текст не разошёлся
-с базой».
+`npm run verify:data` checks that all of these are still there: if a change
+to the generator kills a story, the tasks' reference answers would silently
+drift from reality. For numbers a task quotes in its prose (not just in
+an executable reference answer — that's how every task in `domain` and
+`model` is built), `verify-content.mjs` has a dedicated check per task:
+the gate verifies not just "the query runs" but "the text still matches
+the database."
 
 ---
 
-Дальше — для тех, кто открывает код: как поднять локально, из чего собрано
-приложение, как устроен деплой и как добавить задание.
+What follows is for people looking at the code: how to run it locally,
+what it's built from, how deployment works, and how to add a task.
 
-## Запуск
+## Running it
 
 ```bash
 npm install && npm run prepare:assets && npm run dev
 ```
 
-`prepare:assets` копирует рантаймы sql.js и Pyodide, рисует иконки
-и генерирует датасет — без него приложение не поднимется. Открыть
-с телефона можно по адресу из вывода Vite (`--host` включён), там же
-ставится на домашний экран.
+`prepare:assets` copies the sql.js and Pyodide runtimes, draws the icons
+and generates the dataset — the app won't start without it. You can open
+it from your phone at the address Vite prints (`--host` is on), and add
+it to the home screen from there.
 
-| Команда | Что делает |
+| Command | What it does |
 | --- | --- |
-| `npm run dev` | Дев-сервер |
-| `npm run build` | Проверка типов, продакшен-сборка, service worker |
-| `npm run gen:data` | Пересобрать датасет |
-| `npm run verify` | Все 14 гейтов: датасет, контент, планировщик повторений, слияние прогресса, правила графика, раскладка схемы, английская проза, сверка текстом для DAX, миграция хранилища, сверка двух исполнителей, расписание push-напоминаний, ширина колонок в CSS, сюжетная линия и лестница режима истории |
+| `npm run dev` | Dev server |
+| `npm run build` | Type check, production build, service worker |
+| `npm run gen:data` | Rebuild the dataset |
+| `npm run verify` | All 14 gates: dataset, content, spaced-repetition scheduler, progress merge, chart rules, schema layout, English prose, text-based diff for DAX, storage migration, cross-check between the two executors, push-notification schedule, CSS column widths, the story line, and the story-mode ladder |
 
-### Если форкаете: аккаунт и синхронизация
+### If you fork it: account and sync
 
-Вход через Google и синхронизация прогресса работают через Supabase.
-Publishable-ключ и адрес проекта лежат в коде открыто (`src/sync/client.ts`) —
-это не недосмотр: такой ключ попадает в бандл при любом способе хранения,
-а защищает не он, а RLS (`supabase/migrations/0001_progress.sql`, доступ
-только к строке с собственным `auth.uid()`).
+Google sign-in and progress sync run on Supabase. The publishable key
+and project URL sit in the code in plain sight (`src/sync/client.ts`) —
+that's not an oversight: a key like that ends up in the bundle no matter
+how you store it, and the actual protection is RLS
+(`supabase/migrations/0001_progress.sql`, access limited to rows matching
+your own `auth.uid()`).
 
-**Форку нужно заменить обе константы своими**, иначе чужая копия будет
-писать в базу автора. Кроме того, кнопка удаления аккаунта вызывает
-Edge Function `delete-account`, которой **в репозитории нет** — она требует
-`service_role`-ключ, который нельзя класть в браузер, и была выложена через
-редактор дашборда Supabase. Без неё всё остальное работает; удаление
-аккаунта — нет.
+**A fork needs to replace both constants with its own**, otherwise
+a copy of the app would write into the original author's database.
+There's also an account-deletion button that calls a `delete-account`
+Edge Function **not included in this repository** — it needs
+a `service_role` key, which can't go in a browser, and was deployed
+through the Supabase dashboard editor instead. Everything else works
+without it; account deletion doesn't.
 
-## Как это устроено
+## How it's built
 
 ```
-scripts/build-dataset.mjs   генератор датасета (детерминированный seed)
-scripts/verify-dataset.mjs  проверка, что сюжеты в данных на месте
-scripts/verify-content.mjs  проверка, что все эталоны исполняются
-public/sql-worker.js        SQLite в Web Worker: исполнение и сверка с эталоном
-public/python-worker.js     Pyodide+pandas в Web Worker, тот же контракт
-public/sw.js                офлайн-кеш
-src/engine/                 клиенты воркеров, типы, диагностика ошибок
-src/content/                типы контента, паки заданий и их переводы (JSON)
-src/i18n/                   строки интерфейса (ru/en) — отдельно от контента
-src/srs/                    планировщик повторений и локальный прогресс
-src/ui/                     мобильные компоненты
+scripts/build-dataset.mjs   dataset generator (deterministic seed)
+scripts/verify-dataset.mjs  checks that the stories in the data are still there
+scripts/verify-content.mjs  checks that every reference answer actually runs
+public/sql-worker.js        SQLite in a Web Worker: execution and diff against the reference
+public/python-worker.js     Pyodide+pandas in a Web Worker, same contract
+public/sw.js                offline cache
+src/engine/                 worker clients, types, error diagnosis
+src/content/                content types, task packs and their translations (JSON)
+src/i18n/                   interface strings (ru/en) — separate from content
+src/srs/                    spaced-repetition scheduler and local progress
+src/ui/                     mobile components
 ```
 
-Три решения, на которых держится всё остальное:
+Three decisions everything else rests on:
 
-**Контент — данные, не код.** Задание описывается JSON-объектом. Приложение —
-плеер: оно ничего не знает про конкретные задачи. Один и тот же формат
-работает и для треков с исполнителем (`sql`, `python`, эталон проверяется
-запуском), и для треков без него (`domain`, `model`, единственный допустимый
-режим — `predict`, ответ — выбор варианта с разбором). Пак пополняется
-без релиза приложения.
+**Content is data, not code.** A task is a JSON object. The app is a
+player: it knows nothing about any specific task. The same format works
+for tracks with an executor (`sql`, `python` — the reference answer is
+checked by running it) and for tracks without one (`domain`, `model` —
+the only allowed mode is `predict`, a multiple-choice answer with a full
+explanation). A pack can grow without a new app release.
 
-**Сверка исполнением.** Там, где есть исполнитель, запрос или код выполняется
-на реальной базе и сравниваются результирующие наборы, а не текст решения.
-Любое корректное решение принимается, а расхождение даёт материал
-для содержательной подсказки.
+**Verification by execution.** Wherever there's an executor, the query
+or code runs against the real database and the resulting sets are compared,
+not the text of the solution. Any correct solution is accepted, and
+a mismatch becomes material for a substantive hint.
 
-**Интервал назначается навыку, а не заданию.** Человек, решивший задачу
-про топ-3 SKU, запомнил не её, а приём «оконная функция в CTE, фильтр
-снаружи». Повторять нужно приём — и лучше на другой задаче, иначе
-тренируется память на текст условия.
+**The repetition interval belongs to the skill, not the task.** Someone
+who solved the "top-3 SKU" task didn't learn that task — they learned
+"window function in a CTE, filter applied outside it." What needs
+repeating is the technique, ideally on a different task, or you end up
+training recall of the prompt's wording instead.
 
-### Почему PWA, а не нативное приложение
+### Why a PWA and not a native app
 
-Единственный вариант, в котором в одном приложении уживаются SQLite (sql.js)
-и Python с pandas (Pyodide) — оба целиком в браузере, без сервера. Плюс
-установка на домашний экран без сторов и мгновенные обновления. Упаковать
-в Capacitor и отнести в сторы можно позже без переписывания.
+The only setup where SQLite (sql.js) and Python with pandas (Pyodide)
+coexist in one app — both running entirely in the browser, no server.
+Plus install-to-home-screen with no app stores and instant updates.
+Wrapping it in Capacitor for the stores later is possible without
+a rewrite.
 
-### Почему датасет весит 12 МБ
+### Why the dataset is 12 MB
 
-По сети идёт 3.5 МБ (gzip), один раз, дальше — из кеша service worker'а.
-Меньший объём не позволил бы задачам быть похожими на рабочие: на тысяче
-строк не видно ни сезонности, ни разницы между `COUNT(*)` и `COUNT(DISTINCT)`.
+3.5 MB (gzip) goes over the network, once, and after that it's served
+from the service worker's cache. A smaller dataset wouldn't let tasks
+resemble real work: at a thousand rows you can't see seasonality, or
+the difference between `COUNT(*)` and `COUNT(DISTINCT)`.
 
-Файл называется `quaera.dataset`, а не `*.gz`, хотя внутри именно gzip.
-Менеджеры загрузок (IDM, FDM) перехватывают известные архивные расширения,
-и страница получает пустой ответ вместо данных. Сжатие определяется
-по сигнатуре первых байт, поэтому имя файла роли не играет — а заодно
-снимается зависимость от того, проставит ли хостинг заголовок
-`Content-Encoding`.
+The file is named `quaera.dataset`, not `*.gz`, even though it's gzip
+inside. Download managers (IDM, FDM) intercept known archive extensions
+and the page gets an empty response instead of the data. Compression is
+detected from the byte signature, so the file name doesn't matter — and
+it also removes any dependency on whether the host sets a
+`Content-Encoding` header.
 
-### Почему Pyodide грузится по согласию, а не сразу
+### Why Pyodide loads only after consent
 
-Рантайм Python с pandas весит около 52 МБ — на порядок больше датасета.
-Трек `pandas` показывает экран согласия перед первой загрузкой и объясняет
-цену; отказаться можно и продолжить пользоваться картой навыков
-и справочником без него. SQL и остальные треки этого экрана не видят.
+The Python runtime with pandas weighs around 52 MB — an order of
+magnitude more than the dataset. The `pandas` track shows a consent
+screen before the first download and explains the cost; declining still
+leaves the skill map and reference usable without it. SQL and the other
+tracks never show this screen.
 
-## Деплой
+## Deployment
 
-Хостинг — Cloudflare Pages, подключённый к этому репозиторию. Настройки
-сборки:
+Hosted on Cloudflare Pages, connected to this repository. Build settings:
 
-| Параметр | Значение |
+| Setting | Value |
 | --- | --- |
 | Build command | `npm run prepare:assets && npm run build` |
 | Build output directory | `dist` |
-| Node version | из `.node-version` |
+| Node version | from `.node-version` |
 
-Датасет в репозитории не хранится — он генерируется на сборке из
-`scripts/build-dataset.mjs` по фиксированному seed, поэтому на хостинге
-получается тот же файл байт в байт. `_headers` и `_redirects` из `public/`
-Cloudflare подхватывает сам. Деплой автоматический на каждый push в `main`.
+The dataset isn't stored in the repository — it's generated at build time
+from `scripts/build-dataset.mjs` with a fixed seed, so the hosted build
+ends up byte-identical. Cloudflare picks up `_headers` and `_redirects`
+from `public/` on its own. Deploys are automatic on every push to `main`.
 
-Service worker регистрируется только в продакшен-сборке, так что офлайн-режим
-проверяется на боевом адресе или через `npm run build && npm run preview`,
-но не в `npm run dev`.
+The service worker only registers in a production build, so offline mode
+needs to be checked on the live site or via
+`npm run build && npm run preview`, not `npm run dev`.
 
-## Как добавить задание
+## Adding a task
 
-Дописать объект в пак нужного трека (`src/content/packs/<track>-core.json`)
-и прогнать `npm run verify:content`. Проверка не пропустит задание, у которого
-эталон не выполняется, возвращает пустоту, содержит колонку без алиаса,
-требует сортировки без `ORDER BY` или ссылается на несуществующий навык.
-У задания в режиме `predict` должен быть ровно один верный вариант, и у
-каждого варианта — разбор, почему его выбирают.
+Add an object to the relevant track's pack
+(`src/content/packs/<track>-core.json`) and run `npm run verify:content`.
+The check rejects a task whose reference answer doesn't run, returns
+nothing, has an unaliased column, needs a sort but has no `ORDER BY`,
+or points at a skill that doesn't exist. A task in `predict` mode needs
+exactly one correct option, and every option needs an explanation of why
+it's chosen (or not).
 
-Треки без исполнителя кода (`domain`, `model`) работают только в режиме
-`predict`: вместо `predictSql` там поле `scenario` — бизнес-ситуация вместо
-запроса или готовой меры, гейт требует ровно одно из двух. Пак может быть
-наполнен частично: карточка теории и проверка гейтом требуются только для
-навыков, у которых уже есть хотя бы одно задание, а не на весь граф разом —
-так трек можно вести батчами, не блокируя выдачу уже готовых тем.
+Tracks without a code executor (`domain`, `model`) only run in `predict`
+mode: instead of `predictSql` they have a `scenario` field — a business
+situation instead of a query or a ready-made measure, and the gate
+requires exactly one of the two. A pack can be filled in partially: a
+theory card and the gate check are only required for skills that already
+have at least one task, not for the whole graph at once — so a track can
+be built in batches without holding back topics that are already done.
 
-**Перевод на английский** — параллельный файл (`sql-core.json` →
-`sql-core.en.json`), а не поля внутри задания: так перевод не удваивает
-стоимость каждого батча контента немедленно. Мёрджится по id поверх
-русского пака в рантайме (`applyTranslation` в `src/content/index.ts`);
-задания без перевода остаются русскими, а не ломают сборку. Код —
-`solution`, `predictSql`, `starter`, `template` — не переводится и не
-дублируется вовсе: это уже исполняемый и проверенный гейтом текст,
-включая кириллические значения датасета (бренды, города), которые
-одинаковы на любой локали.
+**English translation** lives in a parallel file (`sql-core.json` →
+`sql-core.en.json`), not as fields inside each task — that way translation
+doesn't immediately double the cost of every content batch. It's merged
+by id over the Russian pack at runtime (`applyTranslation` in
+`src/content/index.ts`); untranslated tasks stay in Russian instead of
+breaking the build. Code — `solution`, `predictSql`, `starter`,
+`template` — is never translated or duplicated: it's already executable
+text checked by the gate, including the dataset's Cyrillic values (brand
+names, cities), which are the same in either locale.
 
-## Автор и лицензия
+## Author and license
 
-Станислав Сидорович — [LinkedIn](https://www.linkedin.com/in/stanislavsidorovich).
-Ошибку в задании, спор с разбором или вопрос по коду можно принести
-в [issues](https://github.com/StanislavSidorovich/Quaera/issues).
+Stanislav Sidorovich —
+[LinkedIn](https://www.linkedin.com/in/stanislavsidorovich).
+A wrong task, a disagreement with an explanation, or a question about
+the code can go in [issues](https://github.com/StanislavSidorovich/Quaera/issues).
 
-Код (`src/`, `scripts/`, конфиги) — [Apache-2.0](LICENSE).
+Code (`src/`, `scripts/`, configs) — [Apache-2.0](LICENSE).
 
-Учебный контент — паки заданий и карточки теории в `src/content/packs/`
-(бизнес-постановки, тексты заданий, разборы ответов) — отдельно, по
-[CC BY-NC-SA 4.0](LICENSE-CONTENT): указание авторства обязательно,
-коммерческое использование запрещено, производные — под той же лицензией.
-Разделение сделано потому, что основная ценность проекта — не код-плеер,
-а сюжеты и разборы, завязанные на датасет.
+Learning content — the task packs and theory cards in
+`src/content/packs/` (business framing, task text, answer explanations) —
+is separate, under [CC BY-NC-SA 4.0](LICENSE-CONTENT): attribution
+required, commercial use prohibited, derivatives under the same license.
+The split exists because the project's actual value isn't the code that
+plays the tasks — it's the stories and write-ups built on the dataset.
 
-Стороннее ПО, вшитое в приложение или отдаваемое браузеру (React, sql.js,
-Pyodide и пакеты, загружаемые через него — numpy, pandas, CPython stdlib),
-перечислено со своими лицензиями в
+Third-party software bundled into the app or served to the browser
+(React, sql.js, Pyodide and the packages it loads — numpy, pandas, the
+CPython stdlib) is listed with its licenses in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-## Дальше
+## What's next
 
-Контент закрыт целиком — и задания, и перевод. Песочница, DAX в режиме
-«дописать», синхронизация прогресса, режим истории и экскурс для тех, кто
-вне профессии, тоже сделаны. Дальнейшая работа не про пустые ветки графа,
-а про глубину:
+The content is fully built out — tasks and translation both. Sandbox,
+DAX in fill-in mode, progress sync, story mode, and the walkthrough for
+people outside the profession are all done too. The work ahead isn't
+about filling empty branches of the skill graph — it's about depth:
 
-- **Живые прохождения.** Приложение пока прошёл только автор. Это верхний
-  пункт очереди, и он важнее любой новой функции: где человек застревает,
-  видно только по человеку. Замечание к заданию, спор с разбором или рассказ
-  о том, где вы бросили, — в [issues](https://github.com/StanislavSidorovich/Quaera/issues).
-- **Статистика для аналитика** — значимость, доверительные интервалы,
-  выбросы, A/B: пробел, которого нет ни в одном треке.
-- **Capstone** — сквозной кейс от бизнес-вопроса до рекомендации.
-  Многошаговое задание в движке уже есть, но шаги не передают состояние
-  друг другу; capstone требует именно этого.
-- **Проза сюжетной линии для трёх остальных треков** — сама линия у них
-  выводится и работает, не хватает только текста.
+- **Real people going through it.** So far only the author has completed
+  the app. This is the top of the queue, ahead of any new feature —
+  where someone gets stuck only shows up by watching someone get stuck.
+  A note on a task, a disagreement with an explanation, or where you gave
+  up — all welcome in
+  [issues](https://github.com/StanislavSidorovich/Quaera/issues).
+- **Statistics for analysts** — significance, confidence intervals,
+  outliers, A/B testing: a gap none of the tracks currently cover.
+- **A capstone** — an end-to-end case from a business question to
+  a recommendation. The engine already has a multi-step task type, but
+  steps don't yet pass state to each other, and a capstone needs exactly
+  that.
+- **Story-mode prose for the other three tracks** — the story line itself
+  is already derived and working for them; only the writing is missing.
 
-Порядок, объём и обоснование каждого шага — в [ROADMAP.md](ROADMAP.md), там же
-раздел о том, какая работа проверяется гейтом автоматически, а какая требует
-ручной экспертизы и не может делаться большими батчами, и раздел о том,
-какие предложения из внешних разборов были осознанно отклонены и почему.
+The order, scope and reasoning behind each of these live in
+[ROADMAP.md](ROADMAP.md), along with a section on what's checked
+automatically by a gate versus what needs manual expertise and can't be
+done in large batches, and a section on which suggestions from outside
+reviews were deliberately declined, and why.
