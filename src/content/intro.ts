@@ -110,6 +110,16 @@ export interface IntroJoinFigure {
  * в компоненте, английская половина осталась бы без перевода молча.
  */
 export interface IntroFigureCaptions {
+  /**
+   * Карта области: центр и восемь узлов вокруг него. Стоит выше всей прозы
+   * и служит оглавлением области, а не страницы: человек за пять секунд
+   * видит, из чего работа состоит, и только потом читает подряд.
+   *
+   * Подписи узлов — здесь, а не в компоненте, по общей причине: текст
+   * внутри картинки — такая же проза, и в компоненте английская половина
+   * молча осталась бы русской.
+   */
+  map: { hub: string; nodes: { label: string; note: string }[]; caption: string };
   /** Стена записей. */
   scale: string;
   /** Воронка работы: подписи пяти ступеней и строка под ними. */
@@ -140,6 +150,20 @@ const RU: IntroPageContent = {
   title: 'Что такое аналитика данных',
   lead: 'Три минуты чтения. Ничего знать заранее не нужно.',
   figures: {
+    map: {
+      hub: 'Аналитика данных',
+      nodes: [
+        { label: 'Источники данных', note: 'чеки, склад, цены, план' },
+        { label: 'Сбор и связывание', note: 'свести таблицы по общему номеру' },
+        { label: 'Очистка', note: 'дубли, пропуски, опечатки' },
+        { label: 'Модель данных', note: 'чтобы у всех считалось одинаково' },
+        { label: 'Метрики и KPI', note: 'что именно считать успехом' },
+        { label: 'Анализ и гипотезы', note: 'почему изменилось и что проверить' },
+        { label: 'Дашборды и отчёты', note: 'чтобы ответ видели без аналитика' },
+        { label: 'Решение', note: 'ради чего всё и делалось' },
+      ],
+      caption: 'Восемь частей одной работы. Дальше — каждая по порядку, на примере одной компании.',
+    },
     scale: 'Каждая клетка — одна запись о продаже. Здесь их две сотни, в компании — миллионы. Три из них те самые, которые вы ищете.',
     pipeline: {
       stages: ['Записи', 'Чистые', 'Связанные', 'Метрика', 'Ответ'],
@@ -369,6 +393,20 @@ const EN: IntroPageContent = {
   title: 'What data analytics is',
   lead: 'A three minute read. No prior knowledge needed.',
   figures: {
+    map: {
+      hub: 'Data analytics',
+      nodes: [
+        { label: 'Data sources', note: 'receipts, stock, prices, the plan' },
+        { label: 'Collect and join', note: 'match tables on a shared number' },
+        { label: 'Clean up', note: 'duplicates, gaps, typos' },
+        { label: 'The data model', note: 'so everyone counts the same way' },
+        { label: 'Metrics and KPIs', note: 'what exactly counts as success' },
+        { label: 'Analysis and hypotheses', note: 'why it changed and what to check' },
+        { label: 'Dashboards and reports', note: 'so the answer is visible without an analyst' },
+        { label: 'The decision', note: 'the reason all of this was done' },
+      ],
+      caption: 'Eight parts of one job. Below you will find each of them in turn, on the example of a single company.',
+    },
     scale: 'Every cell is one sales record. There are two hundred here; a company has millions. Three of them are the ones you are looking for.',
     pipeline: {
       stages: ['Records', 'Cleaned', 'Joined', 'Measure', 'Answer'],

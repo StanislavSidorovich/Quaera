@@ -16,11 +16,13 @@ import { useI18n } from '../i18n/context';
  * бессмысленно раньше «как выглядит ответ». Поток `columns`, как
  * на «О тренажёре», расставил бы их по длине текста.
  *
- * **Обе картинки нарисованы разметкой, а не SVG.** Внутри них есть текст,
+ * **Картинки нарисованы разметкой, а не SVG.** Внутри них есть текст,
  * а текст в SVG сжимается вместе с viewBox и не растёт при увеличении
  * шрифта в приложении (A+/A++) — на этом уже обжигались на странице
  * разбора датасета. Таблицами и полосками они вдобавок выглядят как сам
- * тренажёр, а не как чужая иллюстрация.
+ * тренажёр, а не как чужая иллюстрация. Единственный SVG на экране —
+ * иконки карты вверху, и в них нет ни одной буквы: запрет касался текста,
+ * а фигура размером в em растёт вместе со шрифтом.
  */
 export function IntroPage({
   onOpenStoryMode,
@@ -40,6 +42,8 @@ export function IntroPage({
   return (
     <div className="settings-column intro-page">
       <p className="intro-lead">{page.lead}</p>
+
+      <MapFigure map={page.figures.map} />
 
       {page.blocks.map((block) => (
         <section className="card" key={block.id}>
@@ -75,6 +79,142 @@ export function IntroPage({
       </section>
     </div>
   );
+}
+
+/**
+ * Карта области: центр и восемь узлов вокруг него.
+ *
+ * **Сетка, а не круг по координатам.** Кружки на окружности — это
+ * абсолютное позиционирование по фиксированным точкам, и разъезжается оно
+ * ровно там, где подпись переносится на вторую строку: длинные русские
+ * слова, английская локаль, A+/A++. В сетке подпись просто раздвигает
+ * свою клетку. Поэтому же нет и кривых-соединителей: их геометрия
+ * пережила бы только один размер шрифта из трёх.
+ *
+ * **Центр стоит в разметке первым.** На телефоне колонка одна, и «Аналитика
+ * данных» обязана прочитаться до частей — иначе восемь плашек читаются как
+ * список неизвестно чего. На широком экране центр явно посажен во вторую
+ * клетку второго ряда, а восемь узлов сами разбираются по остальным
+ * восьми: порядок чтения при этом остаётся тот же, слева направо.
+ *
+ * **Иконки — фигуры, внутри них нет ни одной буквы.** Запрет на SVG
+ * на этой странице касался текста (он сжимается вместе с viewBox и не
+ * растёт при A+/A++); фигура, размер которой задан в em, растёт вместе
+ * со шрифтом и правилу не противоречит.
+ */
+function MapFigure({ map }: { map: ReturnType<typeof introPage>['figures']['map'] }) {
+  return (
+    <figure className="intro-map card">
+      <div className="intro-map-grid">
+        <div className="intro-map-hub">
+          <span>{map.hub}</span>
+        </div>
+
+        {map.nodes.map((node, i) => (
+          <div className="intro-map-node" key={node.label}>
+            <span className="intro-map-icon" aria-hidden="true">
+              <MapIcon index={i} />
+            </span>
+            <span className="intro-map-label">{node.label}</span>
+            <span className="intro-map-note">{node.note}</span>
+          </div>
+        ))}
+      </div>
+
+      <figcaption>{map.caption}</figcaption>
+    </figure>
+  );
+}
+
+/**
+ * Восемь фигур в одной системе координат 24×24: один и тот же наклон линий,
+ * одна толщина, скруглённые концы. Рисуются `currentColor`, цвет приходит
+ * из CSS — иначе тёмная тема получила бы восемь захардкоженных оттенков.
+ */
+function MapIcon({ index }: { index: number }) {
+  const common = {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.7,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+
+  switch (index) {
+    /* Источники: три стопки записей, лежащие порознь. */
+    case 0:
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="7" height="7" rx="1.5" />
+          <rect x="14" y="4" width="7" height="7" rx="1.5" />
+          <rect x="8.5" y="14" width="7" height="6" rx="1.5" />
+        </svg>
+      );
+    /* Сбор и связывание: два узла и связь между ними. */
+    case 1:
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="7" r="3" />
+          <circle cx="18" cy="17" r="3" />
+          <path d="M8.4 9.2 L15.6 14.8" />
+        </svg>
+      );
+    /* Очистка: сито, сквозь которое проходит не всё. */
+    case 2:
+      return (
+        <svg {...common}>
+          <path d="M3.5 5 H20.5 L14 12.5 V19 L10 21 V12.5 Z" />
+        </svg>
+      );
+    /* Модель данных: центральная таблица и три вокруг — звезда. */
+    case 3:
+      return (
+        <svg {...common}>
+          <rect x="9" y="9" width="6" height="6" rx="1.2" />
+          <path d="M12 9 V4 M9 12 H4 M15 15 L19 19" />
+          <rect x="9" y="1.5" width="6" height="2.5" rx="1" />
+          <rect x="1" y="10.5" width="3" height="3" rx="1" />
+          <rect x="18.5" y="18.5" width="4" height="3" rx="1" />
+        </svg>
+      );
+    /* Метрики: шкала со стрелкой — величина, у которой есть значение. */
+    case 4:
+      return (
+        <svg {...common}>
+          <path d="M3.5 17 A9 9 0 0 1 20.5 17" />
+          <path d="M12 17 L16.5 11.5" />
+          <circle cx="12" cy="17" r="1.4" />
+        </svg>
+      );
+    /* Анализ: увеличительное стекло, а под ним линия, которая меняется. */
+    case 5:
+      return (
+        <svg {...common}>
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="M15.4 15.4 L21 21" />
+          <path d="M7.5 12 L10 9.5 L12 11 L14 7.5" />
+        </svg>
+      );
+    /* Дашборд: три столбика на общей оси. */
+    case 6:
+      return (
+        <svg {...common}>
+          <path d="M3.5 20 H20.5" />
+          <path d="M7 20 V13 M12 20 V6 M17 20 V10" />
+        </svg>
+      );
+    /* Решение: развилка, на которой выбран один путь. */
+    default:
+      return (
+        <svg {...common}>
+          <path d="M12 21 V13" />
+          <path d="M12 13 L5 6" />
+          <path d="M12 13 L19 6" />
+          <circle cx="19" cy="4.5" r="2" />
+        </svg>
+      );
+  }
 }
 
 function IntroBlockBody({
