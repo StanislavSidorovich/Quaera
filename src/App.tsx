@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
 import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
@@ -830,49 +830,82 @@ export default function App() {
   /*
    * Синхронизация с сервером — три эффекта ниже.
    *
-   * Порядок между ними важен и держится на `syncedForRef`: пока первое
-   * слияние для этого пользователя не прошло, отправлять нельзя. Иначе
-   * локальная копия свежеустановленного устройства (пустая) успела бы
-   * перезаписать серверную до того, как их свели, — то есть ровно та потеря
-   * данных, против которой писалась фаза 1.
+   * Порядок между ними важен и держится на `reconciledFor`: пока первое
+   * слияние для этого пользователя не **прошло** (а не просто было начато),
+   * отправлять нельзя. Иначе локальная копия свежеустановленного устройства
+   * (пустая) успела бы перезаписать серверную до того, как их свели, —
+   * то есть ровно та потеря данных, против которой писалась фаза 1.
    */
   const progressRef = useRef(progress);
   progressRef.current = progress;
-  const syncedForRef = useRef<string | null>(null);
+  /*
+   * Для кого первое слияние **состоялось**, а не просто было начато.
+   *
+   * Прежде здесь стоял `useRef`, и его выставляли одной строкой перед
+   * вызовом — то есть по факту попытки. Тогда неудачное чтение серверной
+   * копии всё равно открывало отправку, и через две секунды локальная
+   * (у свежего устройства — пустая) уезжала поверх серверной. Это ровно
+   * та потеря, против которой флаг и заводился: он защищал от гонки
+   * между эффектами, но не от отказа сети.
+   *
+   * Состояние, а не ref, потому что от него зависит эффект отправки ниже:
+   * в момент, когда слияние наконец удалось, тот обязан перезапуститься.
+   */
+  const [reconciledFor, setReconciledFor] = useState<string | null>(null);
+  /** Обмен уже идёт — чтобы два эффекта ниже не запустили его разом. */
+  const syncInFlightRef = useRef(false);
+
+  const runSync = useCallback(async (userId: string) => {
+    if (syncInFlightRef.current) return;
+    syncInFlightRef.current = true;
+    setSyncStatus('syncing');
+    try {
+      const { merged, reconciled, ok } = await syncProgress(userId, progressRef.current);
+      // Сравнение по значению, а не безусловный setProgress: слияние
+      // с пустым сервером возвращает ту же копию, и лишний setState
+      // перезапустил бы эффект отправки ниже без единого изменения.
+      if (JSON.stringify(merged) !== JSON.stringify(progressRef.current)) setProgress(merged);
+      if (reconciled) setReconciledFor(userId);
+      setSyncStatus(reconciled && ok ? 'synced' : 'error');
+    } finally {
+      syncInFlightRef.current = false;
+    }
+  }, []);
 
   useEffect(() => subscribeSession(setSession), []);
 
   useEffect(() => {
     const userId = session?.user.id;
-    if (!userId || syncedForRef.current === userId) return;
-    syncedForRef.current = userId;
-    setSyncStatus('syncing');
-    let cancelled = false;
-    void syncProgress(userId, progressRef.current).then(({ merged, ok }) => {
-      if (cancelled) return;
-      // Сравнение по значению, а не безусловный setProgress: слияние
-      // с пустым сервером возвращает ту же копию, и лишний setState
-      // перезапустил бы эффект отправки ниже без единого изменения.
-      if (JSON.stringify(merged) !== JSON.stringify(progressRef.current)) setProgress(merged);
-      setSyncStatus(ok ? 'synced' : 'error');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
+    if (!userId || reconciledFor === userId) return;
+    void runSync(userId);
+    /*
+     * Повторной попытки отсюда не будет: при неудаче `reconciledFor`
+     * остаётся прежним, зависимости не меняются, и эффект не зациклится.
+     * Повтор берёт на себя эффект ниже — на первое же изменение прогресса.
+     */
+  }, [session, reconciledFor, runSync]);
 
   useEffect(() => {
     const userId = session?.user.id;
-    if (!userId || syncedForRef.current !== userId) return;
+    if (!userId) return;
     /*
      * Задержка, а не отправка на каждое изменение: `progress` меняется
      * на каждой попытке, а занятие — это пять-десять попыток подряд.
      * Две секунды сводят занятие к одной-двум записям и не заставляют
      * ждать: уход со страницы прогресс не теряет, он уже в localStorage.
      */
-    const timer = window.setTimeout(() => void pushProgress(userId, progress), 2000);
+    const timer = window.setTimeout(() => {
+      /*
+       * Пока первое слияние не состоялось, отправлять нельзя — можно
+       * только повторить попытку целиком. Так неудачное чтение
+       * не превращается в тупик: следующее же решённое задание пробует
+       * свести копии снова, и до тех пор ни одна отправка не уходит.
+       */
+      if (reconciledFor !== userId) void runSync(userId);
+      else void pushProgress(userId, progress);
+    }, 2000);
     return () => window.clearTimeout(timer);
-  }, [progress, session]);
+  }, [progress, session, reconciledFor, runSync]);
 
   /** Открытый раздел — на устройство, чтобы пережить перезагрузку (см. initialScreen). */
   useEffect(() => {
@@ -2007,7 +2040,7 @@ export default function App() {
               onSignIn={signInWithGoogle}
               onSignOut={async () => {
                 await signOut();
-                syncedForRef.current = null;
+                setReconciledFor(null);
                 setSyncStatus('idle');
               }}
               /*
@@ -2016,14 +2049,14 @@ export default function App() {
                * в хранилище его токены и продолжает их обновлять — до
                * первого отказа, который случится не здесь и будет выглядеть
                * поломкой на ровном месте. Всё остальное — то же, что
-               * при обычном выходе: без сброса `syncedForRef` следующий
+               * при обычном выходе: без сброса `reconciledFor` следующий
                * вход под другим аккаунтом отправил бы на сервер копию,
                * ещё не сведённую с его собственной.
                */
               onDeleteAccount={async () => {
                 if (!(await deleteAccount())) return false;
                 await signOut();
-                syncedForRef.current = null;
+                setReconciledFor(null);
                 setSyncStatus('idle');
                 return true;
               }}

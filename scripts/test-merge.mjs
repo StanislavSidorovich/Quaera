@@ -43,7 +43,7 @@ try {
   );
   writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
 
-  const { mergeProgress } = await import(pathToFileURL(path.join(outDir, 'sync', 'merge.js')).href);
+  const { mergeProgress, planSync } = await import(pathToFileURL(path.join(outDir, 'sync', 'merge.js')).href);
   const { applyAttempt, emptyProgress, clearedProgress } = await import(
     pathToFileURL(path.join(outDir, 'srs', 'store.js')).href
   );
@@ -327,6 +327,36 @@ try {
       'обрезка дней ассоциативна',
       same(mergeProgress(mergeProgress(a, b), c), mergeProgress(a, mergeProgress(b, c)))
     );
+  }
+
+  // --- planSync: что делать после чтения серверной копии.
+  //
+  //     Ветка с отказом чтения — единственная в синхронизации, где ошибка
+  //     стоит данных, и стоила их однажды: провал чтения принимался
+  //     за пустой сервер, после чего локальная копия уезжала поверх чужой.
+  //     Проверяем именно это, а не форму объекта.
+  {
+    const local = device(emptyProgress(), 4, base0, rng(21)).p;
+    const remote = device(emptyProgress(), 6, base0 + DAY_MS, rng(22)).p;
+
+    const readOk = planSync(local, { ok: true, progress: remote });
+    assertTrue('чтение удалось: сливаем и отправляем', readOk.push && readOk.reconciled);
+    assertTrue('чтение удалось: результат — то же слияние', same(readOk.merged, mergeProgress(local, remote)));
+
+    const readEmpty = planSync(local, { ok: true, progress: null });
+    assertTrue('строки на сервере нет: отправляем свою и считаемся сведёнными', readEmpty.push && readEmpty.reconciled);
+    assertTrue('строки на сервере нет: отправляем ровно локальную', same(readEmpty.merged, local));
+
+    const readFailed = planSync(local, { ok: false });
+    assertTrue('чтение не удалось: НЕ отправляем ничего', readFailed.push === false);
+    assertTrue('чтение не удалось: слияние не состоялось', readFailed.reconciled === false);
+    assertTrue('чтение не удалось: локальная копия не тронута', same(readFailed.merged, local));
+
+    // Тот же случай, но с пустой локальной копией — свежее устройство,
+    // на котором человек только что вошёл. Именно здесь прежняя версия
+    // отправляла пустоту поверх полного серверного прогресса.
+    const fresh = planSync(emptyProgress(), { ok: false });
+    assertTrue('пустое устройство при отказе чтения не отправляет пустоту', fresh.push === false);
   }
 
   console.log(`\n${failed ? `FAILED: ${failed}` : 'OK: все проверки слияния прошли'}`);

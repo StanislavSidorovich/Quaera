@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { mergeProgress } from './merge';
+import { planSync, type RemoteRead } from './merge';
 import { emptyProgress, type Progress } from '../srs/store';
 
 /**
@@ -17,8 +17,18 @@ import { emptyProgress, type Progress } from '../srs/store';
  * объединённый прогресс сразу, даже если запись не удалась.
  */
 
-/** Строка прогресса этого пользователя или null — строки нет либо сеть недоступна. */
-async function pull(userId: string): Promise<Progress | null> {
+/**
+ * Строка прогресса этого пользователя.
+ *
+ * **Возвращает три исхода, а не два, и это здесь главное.** Раньше и отказ
+ * чтения, и отсутствие строки давали `null`, то есть вызывающий не мог их
+ * различить и оба понимал как «на сервере пусто». Цена ошибки —
+ * не косметическая: на «пусто» полагается отправить локальную копию, а если
+ * на деле чтение просто не удалось, эта отправка стирает чужие занятия,
+ * которых мы ни разу не видели. Поэтому `{ ok: false }` отдельно
+ * от `{ ok: true, progress: null }`.
+ */
+async function pull(userId: string): Promise<RemoteRead> {
   const { data, error } = await supabase
     .from('progress')
     .select('data')
@@ -27,9 +37,9 @@ async function pull(userId: string): Promise<Progress | null> {
 
   if (error) {
     console.warn('[sync] не удалось прочитать прогресс:', error.message);
-    return null;
+    return { ok: false };
   }
-  if (!data) return null;
+  if (!data) return { ok: true, progress: null };
 
   /*
    * Проверка формы, а не доверие типу. Строка приходит из базы как jsonb,
@@ -41,9 +51,9 @@ async function pull(userId: string): Promise<Progress | null> {
   const raw = data.data as Partial<Progress> | null;
   if (!raw || typeof raw !== 'object' || raw.version !== 1) {
     console.warn('[sync] строка на сервере не похожа на прогресс — игнорируем');
-    return null;
+    return { ok: true, progress: null };
   }
-  return { ...emptyProgress(), ...raw };
+  return { ok: true, progress: { ...emptyProgress(), ...raw } };
 }
 
 /** true — записалось. false — не записалось, и это не повод что-либо менять на экране. */
@@ -75,18 +85,23 @@ async function push(userId: string, progress: Progress): Promise<boolean> {
 export async function syncProgress(
   userId: string,
   local: Progress
-): Promise<{ merged: Progress; ok: boolean }> {
-  const remote = await pull(userId);
-  const merged = remote ? mergeProgress(local, remote) : local;
-  const ok = await push(userId, merged);
+): Promise<{ merged: Progress; reconciled: boolean; ok: boolean }> {
+  const plan = planSync(local, await pull(userId));
   /*
-   * `ok` отдельно от прогресса: слияние удалось и без записи, объединённую
-   * копию надо показать в любом случае. Отличается только подпись под
-   * кнопкой — «сведено» против «сервер не ответил», — и врать в ней нельзя:
+   * При неудачном чтении не отправляем ничего — разбор в `planSync`.
+   * `ok: false` при этом честно: на сервере наша работа не сохранена.
+   */
+  const ok = plan.push ? await push(userId, plan.merged) : false;
+  /*
+   * Три значения, а не два, потому что различаются три исхода, и подпись
+   * под кнопкой обязана их различать. `reconciled` говорит, видели ли мы
+   * серверную копию вообще (от этого зависит право на дальнейшие отправки);
+   * `ok` — записалась ли наша. Слияние удаётся и без записи, и объединённую
+   * копию надо показать в любом случае, — но врать в подписи нельзя:
    * человек, увидевший «сохранено» при упавшей сети, закроет вкладку
    * спокойно и потеряет ровно то, что берёгся сохранить.
    */
-  return { merged, ok };
+  return { merged: plan.merged, reconciled: plan.reconciled, ok };
 }
 
 /**
