@@ -5393,3 +5393,157 @@ table.sample td.null {
 .home-intro-link {
   margin: 0 0 10px;
 }
+
+/*
+ * Стена записей (блок «что происходит в компании каждый день»).
+ *
+ * Клетки фиксированного размера в auto-fill-сетке: при сужении экрана
+ * меняется число колонок, а не размер клетки. Обратное («колонок всегда
+ * 20») на 320px дало бы клетки по 12px, и три отмеченные стали бы видны
+ * с первого взгляда — то есть картинка сказала бы ровно противоположное
+ * тому, ради чего нарисована.
+ */
+.intro-scale {
+  margin: 12px 0 14px;
+}
+
+.intro-scale-grid {
+  display: grid;
+  /*
+   * `min(10px, 100%)`, а не голые 10px: этого требует гейт test:css-width,
+   * и требует по делу — правило вида «колонка ровно N» он обязан проверять
+   * одинаково, не разбирая, мал N или велик. Обёртка ничего не меняет
+   * (10px влезают в любой экран) и стоит ноль, а исключение в гейте
+   * стоило бы дыры, через которую пройдёт следующая колонка на 440px.
+   */
+  grid-template-columns: repeat(auto-fill, min(10px, 100%));
+  gap: 3px;
+  justify-content: start;
+}
+
+.intro-scale-grid > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+}
+
+.intro-scale-grid > span.is-marked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.intro-scale figcaption,
+.intro-pipeline figcaption {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 10px;
+  max-width: 68ch;
+}
+
+/*
+ * Воронка работы: пять ступеней, каждая у́же предыдущей.
+ */
+.intro-pipeline {
+  margin: 14px 0;
+}
+
+.intro-pipeline-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/*
+ * Сетка, а не флекс-строка, и это не вкус.
+ *
+ * Во флексе процентная ширина полосы считается от места, оставшегося
+ * после подписи, а `flex-shrink` дожимает всё, что не влезло. Замер
+ * первой версии: 271, 264, 208, 152, 96 при задуманных 100, 82.5, 65,
+ * 47.5, 30 — две верхние ступени сравнялись, и воронка перестала
+ * сужаться там, где сужение и есть всё содержание картинки. В сетке
+ * дорожка у всех строк одна и та же (`1fr`), и процент считается от неё.
+ */
+.intro-pipeline-steps li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.intro-pipeline-bar {
+  height: 14px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 55%, var(--bg-sunken));
+  /* Иначе элемент сетки растянется на всю дорожку и процент не сработает. */
+  justify-self: start;
+}
+
+/* Последняя ступень — ответ, ради которого всё и делалось. */
+.intro-pipeline-steps li:last-child .intro-pipeline-bar {
+  background: var(--accent);
+}
+
+.intro-pipeline-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.intro-pipeline-steps li:last-child .intro-pipeline-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/*
+ * Широкий экран: картинка встаёт сбоку от своей прозы.
+ *
+ * Это ответ на пустоту справа от колонки чтения — но не двумя колонками
+ * карточек. Порядок блоков на этой странице несущий (блок «почему одной
+ * таблицы мало» опирается на предыдущий, а Quaera обязана быть последней),
+ * а поток `columns` расставляет карточки по длине текста, как на
+ * «О тренажёре». Поэтому колонка чтения остаётся одна и её потолок в 68
+ * символов не трогается, а вбок уезжает только картинка — она к соседнему
+ * абзацу и относится.
+ *
+ * Порог 1180px, а не «десктоп вообще»: слева 248px бокового меню плюс поля
+ * .content, и до этой ширины карточке не хватает места на два столбца
+ * так, чтобы проза осталась читаемой.
+ */
+@media (min-width: 1180px) {
+  .intro-page {
+    /* Колонка чтения плюс место под картинку сбоку. */
+    max-width: 1000px;
+  }
+
+  .intro-page .card > p,
+  .intro-page .intro-list {
+    max-width: 62ch;
+  }
+
+  .intro-page .intro-scale,
+  .intro-page .intro-pipeline,
+  .intro-page .intro-join {
+    /*
+     * Картинка прижата вправо и обтекается прозой. `float` здесь уместнее
+     * сетки: у карточек разное число абзацев до и после картинки, и сетка
+     * потребовала бы знать это число, то есть переносить раскладку
+     * в контент.
+     */
+    float: right;
+    width: 320px;
+    margin: 0 0 12px 24px;
+  }
+
+  /* Декомпозиция сбоку не уезжает: её строки — сам предмет абзаца. */
+  .intro-page .card::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+}

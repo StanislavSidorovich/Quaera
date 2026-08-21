@@ -44,7 +44,7 @@ export function IntroPage({
       {page.blocks.map((block) => (
         <section className="card" key={block.id}>
           <h2>{block.title}</h2>
-          <IntroBlockBody block={block} join={page.join} />
+          <IntroBlockBody block={block} join={page.join} figures={page.figures} />
         </section>
       ))}
 
@@ -80,9 +80,11 @@ export function IntroPage({
 function IntroBlockBody({
   block,
   join,
+  figures,
 }: {
   block: IntroBlock;
   join: ReturnType<typeof introPage>['join'];
+  figures: ReturnType<typeof introPage>['figures'];
 }) {
   return (
     <>
@@ -109,6 +111,8 @@ function IntroBlockBody({
       )}
 
       {block.figure === 'join' && <JoinFigure join={join} />}
+      {block.figure === 'scale' && <ScaleFigure caption={figures.scale} />}
+      {block.figure === 'pipeline' && <PipelineFigure pipeline={figures.pipeline} />}
 
       {block.after?.map((text, i) => (
         <p key={i}>{text}</p>
@@ -151,6 +155,74 @@ function Decomposition({ rows }: { rows: NonNullable<IntroBlock['rows']> }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+/**
+ * Стена записей: двести клеток, три из них — искомые.
+ *
+ * Показывает то, чего прозой не показать: «много» словами читается как
+ * абстракция, а поле, в котором глаз не находит три отмеченные клетки без
+ * усилия, — как опыт. Ровно это и есть довод существования профессии,
+ * с которого начинается страница.
+ *
+ * Клетки рисуются здесь, а не лежат в контенте: их количество и три
+ * отмеченных — параметры картинки, а не текст. Переводить в них нечего,
+ * подпись приходит из контента.
+ */
+function ScaleFigure({ caption }: { caption: string }) {
+  const CELLS = 200;
+  /*
+   * Отмеченные клетки заданы числами, а не случайны: случайные при каждой
+   * отрисовке прыгали бы, а человек, вернувшийся на страницу, ждёт ту же
+   * картинку. Разнесены по полю, чтобы искать пришлось по всей площади,
+   * и ни одна не стоит с краю — с краю их находят сразу.
+   */
+  const marked = new Set([37, 118, 164]);
+  return (
+    <figure className="intro-scale">
+      <div className="intro-scale-grid" aria-hidden>
+        {Array.from({ length: CELLS }, (_, i) => (
+          <span key={i} className={marked.has(i) ? 'is-marked' : undefined} />
+        ))}
+      </div>
+      <figcaption>{caption}</figcaption>
+    </figure>
+  );
+}
+
+/**
+ * Воронка работы: пять ступеней, каждая у́же предыдущей.
+ *
+ * Пять глаголов списком выше называют, что делает аналитик; картинка
+ * говорит то, чего в списке нет, — что работа **сужает**, и на выходе
+ * остаётся одна фраза. Это же и лечит блок, который в чтении был
+ * слабейшим: список из пяти пунктов без формы читается как оглавление.
+ */
+function PipelineFigure({
+  pipeline,
+}: {
+  pipeline: ReturnType<typeof introPage>['figures']['pipeline'];
+}) {
+  const n = pipeline.stages.length;
+  return (
+    <figure className="intro-pipeline">
+      <ol className="intro-pipeline-steps">
+        {pipeline.stages.map((stage, i) => (
+          <li key={stage}>
+            {/*
+             * Ширина падает от 100% к 30% ровными долями. Числа не значат
+             * ничего измеримого и не притворяются: подписи ступеней стоят
+             * рядом, а величины у этой воронки нет вовсе — форма здесь
+             * говорит «сужается», а не «во столько раз».
+             */}
+            <span className="intro-pipeline-bar" style={{ width: `${100 - (i * 70) / (n - 1)}%` }} />
+            <span className="intro-pipeline-label">{stage}</span>
+          </li>
+        ))}
+      </ol>
+      <figcaption>{pipeline.caption}</figcaption>
+    </figure>
   );
 }
 

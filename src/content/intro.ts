@@ -41,12 +41,24 @@ import type { Locale } from '../i18n/context';
  * девятого блока.
  */
 
-/** Картинка блока. Обе рисуются HTML-ом в IntroPage, а не SVG. */
+/**
+ * Картинка блока. Все рисуются HTML-ом в IntroPage, а не SVG.
+ *
+ * Картинка есть не у каждого блока намеренно: на странице из десяти карточек
+ * иллюстрация над каждой перестаёт что-либо значить — то же правило, что
+ * вывели в режиме истории («картинка открывает момент, а не сопровождает
+ * абзац»). Здесь их четыре на десять блоков, и каждая показывает механику,
+ * которую прозой пришлось бы объяснять абзацем.
+ */
 export type IntroFigure =
+  /** Стена записей: их слишком много, чтобы найти нужные глазами. */
+  | 'scale'
   /** Четыре величины и размер падения у каждой: три просели, чек почти нет. */
   | 'decomposition'
   /** Две таблички, в которых один и тот же номер товара, — что значит «соединить». */
-  | 'join';
+  | 'join'
+  /** Воронка работы: из вороха записей к одной фразе для руководства. */
+  | 'pipeline';
 
 export interface IntroListItem {
   /** Полужирное начало строки: название отрасли, роли, шага. Может отсутствовать. */
@@ -92,10 +104,23 @@ export interface IntroJoinFigure {
   note: string;
 }
 
+/**
+ * Подписи к двум остальным картинкам. Лежат здесь по той же причине, что
+ * и подписи таблиц: текст внутри картинки — такая же проза, и оставь его
+ * в компоненте, английская половина осталась бы без перевода молча.
+ */
+export interface IntroFigureCaptions {
+  /** Стена записей. */
+  scale: string;
+  /** Воронка работы: подписи пяти ступеней и строка под ними. */
+  pipeline: { stages: string[]; caption: string };
+}
+
 export interface IntroPageContent {
   /** Заголовок экрана и одна строка под ним. */
   title: string;
   lead: string;
+  figures: IntroFigureCaptions;
   join: IntroJoinFigure;
   blocks: IntroBlock[];
   /** Хвост: запрос, вопрос читателю и две двери. */
@@ -114,6 +139,13 @@ export interface IntroPageContent {
 const RU: IntroPageContent = {
   title: 'Что такое аналитика данных',
   lead: 'Три минуты чтения. Ничего знать заранее не нужно.',
+  figures: {
+    scale: 'Каждая клетка — одна запись о продаже. Здесь их две сотни, в компании — миллионы. Три из них те самые, которые вы ищете.',
+    pipeline: {
+      stages: ['Записи', 'Чистые', 'Связанные', 'Метрика', 'Ответ'],
+      caption: 'Работа сужает: из вороха записей получается одна фраза, по которой принимают решение. Всё, что отброшено по дороге, отброшено осознанно — в этом и риск профессии.',
+    },
+  },
   join: {
     left: {
       title: 'Продажи',
@@ -143,6 +175,7 @@ const RU: IntroPageContent = {
         { text: 'Почему так вышло?' },
         { text: 'Что теперь делать?' },
       ],
+      figure: 'scale',
       after: [
         'Аналитик — тот, кто превращает разрозненные записи в ответ на такой вопрос.',
       ],
@@ -216,6 +249,7 @@ const RU: IntroPageContent = {
           text: 'показать таблицей, графиком или дашбордом так, чтобы за минуту было видно, что делать.',
         },
       ],
+      figure: 'pipeline',
       after: [
         'Недооценивают обычно второй шаг и четвёртый. Посчитать сумму умеет любой. Выбрать, что именно считать, и не соврать при этом — и есть профессия.',
       ],
@@ -334,6 +368,13 @@ const RU: IntroPageContent = {
 const EN: IntroPageContent = {
   title: 'What data analytics is',
   lead: 'A three minute read. No prior knowledge needed.',
+  figures: {
+    scale: 'Every cell is one sales record. There are two hundred here; a company has millions. Three of them are the ones you are looking for.',
+    pipeline: {
+      stages: ['Records', 'Cleaned', 'Joined', 'Measure', 'Answer'],
+      caption: 'The work narrows: a heap of records becomes one sentence somebody acts on. Everything dropped along the way was dropped on purpose, and that is where the risk of the profession lives.',
+    },
+  },
   join: {
     left: {
       title: 'Sales',
@@ -363,6 +404,7 @@ const EN: IntroPageContent = {
         { text: 'Why did it happen?' },
         { text: 'What should we do about it?' },
       ],
+      figure: 'scale',
       after: [
         'An analyst is the person who turns scattered records into an answer to a question like that.',
       ],
@@ -436,6 +478,7 @@ const EN: IntroPageContent = {
           text: 'present it as a table, a chart or a dashboard so that a minute is enough to see what to do.',
         },
       ],
+      figure: 'pipeline',
       after: [
         'The underrated steps are the second and the fourth. Anyone can add up a column. Choosing what exactly to add up, and not lying in the process, is the profession.',
       ],
