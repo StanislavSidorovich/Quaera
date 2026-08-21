@@ -189,7 +189,7 @@ const RU: IntroPageContent = {
       id: 'everyday',
       title: 'Что происходит в компании каждый день',
       body: [
-        'В любой компании, где много клиентов и сделок, каждый день появляются записи. Кто что купил и когда. Сколько это стоило. Что лежит на складе. Какая была цена и была ли скидка. Кто из сотрудников за это отвечал.',
+        'В любой компании, где много клиентов и сделок, каждый день появляются записи. Кто что купил и когда. Сколько это стоило и что лежит на складе. Какая была цена и была ли скидка. Кто из сотрудников за это отвечал.',
         'Записей быстро становится столько, что просмотреть их глазами нельзя, — их сотни тысяч и миллионы. И лежат они не в одном месте: продажи в одной системе, склад в другой, цены в третьей.',
         'Каждая такая таблица по отдельности почти ничего не говорит. А вопросы у бизнеса всегда одни и те же, и они простые:',
       ],
@@ -336,7 +336,7 @@ const RU: IntroPageContent = {
     },
     {
       id: 'tools',
-      title: 'Чем это делают',
+      title: 'Что для этого нужно знать',
       body: [],
       list: [
         {
@@ -371,7 +371,7 @@ const RU: IntroPageContent = {
       body: [
         'Quaera — это место, где такую работу можно попробовать руками. Не почитать про SQL, а получить рабочий вопрос и ответить на него так, как отвечают на работе.',
         'Внутри лежит Kaiyo Trading — выдуманная компания, которая возит бытовую химию, напитки и лекарства в магазины и аптеки. Компания выдумана, данные — нет: они устроены так же, как настоящие, и запросы к ним исполняются по-настоящему, прямо в браузере, без интернета.',
-        'Двенадцать таблиц, полтораста тысяч строк за два с половиной года, 132 торговые точки, 47 товаров, двенадцать оптовиков.',
+        'Двенадцать таблиц, больше ста пятидесяти тысяч строк за два с половиной года, 132 торговые точки, 47 товаров, двенадцать оптовиков.',
         'Один живой пример из них. У марки бытовой химии продажи за два года упали больше чем вдвое. Точек, которые её вообще брали, было 79 — стало 38. А сколько берёт одна точка из тех, что не бросили: было 128 штук, стало 122. Спрос не изменился. Марка просто исчезла с полок сорока магазинов, по одному, тихо, за полтора года. По общей сумме продаж заметить это невозможно.',
         'Товары повседневного спроса здесь — просто рабочая среда. Предмет практики — сама аналитическая работа, а она переносится и в аптеки, и в банк, и в логистику.',
       ],
@@ -579,7 +579,7 @@ const EN: IntroPageContent = {
     },
     {
       id: 'tools',
-      title: 'What the work is done with',
+      title: 'What you need to know',
       body: [],
       list: [
         {
@@ -614,7 +614,7 @@ const EN: IntroPageContent = {
       body: [
         'Quaera is a place to try that work with your own hands. Not to read about SQL, but to receive a real question and answer it the way it gets answered at work.',
         'Inside it sits Kaiyo Trading, an invented company that delivers home care products, drinks and medicines to shops and pharmacies. The company is invented; the data is not. It is built the way real data is built, and queries against it really execute, right in the browser, with no internet needed.',
-        'Twelve tables, a hundred and fifty thousand rows over two and a half years, 132 outlets, 47 products, twelve wholesalers.',
+        'Twelve tables, more than a hundred and fifty thousand rows over two and a half years, 132 outlets, 47 products, twelve wholesalers.',
         'One live example from them. A home care brand lost more than half its sales in two years. The number of outlets that stocked it went from 79 to 38. Meanwhile the outlets that kept it went from 128 units each to 122. Demand did not change. The brand simply disappeared from the shelves of forty shops, one at a time, quietly, over eighteen months. Watching the sales total, you could not possibly see it.',
         'Consumer goods here are just the working environment. The subject of practice is the analytical work itself, and that carries over to pharmacies, to a bank, to logistics.',
       ],

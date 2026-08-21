@@ -19,6 +19,7 @@
     "sync:pyodide": "node scripts/sync-pyodide.mjs",
     "gen:data": "node scripts/build-dataset.mjs",
     "verify:data": "node scripts/verify-dataset.mjs",
+    "count:rows": "node scripts/count-rows.mjs",
     "verify:content": "node scripts/verify-content.mjs",
     "test:scheduler": "node scripts/test-scheduler.mjs",
     "test:merge": "node scripts/test-merge.mjs",
