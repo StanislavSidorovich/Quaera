@@ -441,7 +441,8 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
             {!tablesByGroup ? (
               <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t.schema.loading}</p>
             ) : (
-              tablesByGroup.map(({ kind, tables }) => (
+              <div className="sandbox-list">
+              {tablesByGroup.map(({ kind, tables }) => (
                 <div key={kind} style={{ marginTop: 12 }}>
                   <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     {t.data.groups[kind].title}
@@ -462,13 +463,15 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                     </button>
                   ))}
                 </div>
-              ))
+              ))}
+              </div>
             )}
           </div>
 
           <div className="card">
             <h2>{t.sandbox.questionsTitle}</h2>
             <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>{t.sandbox.questionsIntro}</p>
+            <div className="sandbox-list">
             {SANDBOX_GROUPS.map((group) => (
               <div key={group} style={{ marginTop: 12 }}>
                 <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -494,6 +497,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                 })}
               </div>
             ))}
+            </div>
           </div>
 
           <div className="card">
