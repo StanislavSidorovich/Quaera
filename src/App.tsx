@@ -2948,12 +2948,17 @@ function Home({
        * есть: пункт бокового меню на десктопе и прямая ссылка `?intro`.
        */}
       {isNewUser && (
-        <button
-          type="button"
-          className="link-row home-intro-link"
-          onClick={onOpenIntro}
-        >
-          {t.home.introLink}
+        <button type="button" className="home-intro-link" onClick={onOpenIntro}>
+          {/*
+           * Знак вопроса — тот же, что у пункта этого раздела в боковом меню,
+           * и он же делает строку опознаваемой без чтения: человек, который
+           * не понимает, о чём сайт, скользит по нему глазами, а не читает
+           * подряд. Декоративен: смысл несёт подпись рядом.
+           */}
+          <span className="home-intro-glyph" aria-hidden>
+            ?
+          </span>
+          <span>{t.home.introLink}</span>
         </button>
       )}
 

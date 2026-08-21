@@ -106,7 +106,7 @@ export const en = {
       'Not sure where to begin? Start with SQL: almost every analyst posting asks for it, it opens with no extra download, and the answer is checked against the result of your query. The other three tracks are open from the start, in any order.',
   },
   home: {
-    introLink: 'New to data work? What the job actually is → 3 minutes',
+    introLink: 'New to data work? What the job is → 3 min',
     dueLabel: 'due for review',
     solvedLabel: 'solved',
     /**
