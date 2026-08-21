@@ -24,6 +24,7 @@ export type SidebarSection =
   | 'sandbox'
   | 'data'
   | 'about'
+  | 'intro'
   | 'account'
   | 'onboarding'
   | null;
@@ -44,6 +45,7 @@ export function Sidebar({
   onSandbox,
   onData,
   onAbout,
+  onIntro,
   onAccount,
   onOnboarding,
   onSelectTrack,
@@ -72,6 +74,8 @@ export function Sidebar({
   onSandbox: () => void;
   onData: () => void;
   onAbout: () => void;
+  /** Экскурс в профессию — для того, кто не понял, о чём вообще сайт. */
+  onIntro: () => void;
   onAccount: () => void;
   onOnboarding: () => void;
   onSelectTrack: (track: Track) => void;
@@ -226,6 +230,23 @@ export function Sidebar({
          * со справочником.
          */}
         <div className="side-foot">
+          {/*
+           * Экскурс — первым в подвале, до «С чего начать».
+           *
+           * Порядок здесь повторяет порядок вопросов, а не важность разделов:
+           * «что это за работа вообще» стоит раньше, чем «с чего начать
+           * заниматься», и заведомо раньше, чем «что такое этот тренажёр».
+           * Человек, которому нужен верхний вопрос, до нижних ещё не дошёл.
+           */}
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'intro' ? 'page' : undefined}
+            onClick={onIntro}
+          >
+            <IconQuestion />
+            {t.nav.intro}
+          </button>
           <button
             type="button"
             className="side-item"
@@ -361,6 +382,20 @@ const IconBook = () => (
     <path d="M8 4.6v8.6" />
     <path d="M8 4.6C7.2 3.6 5.9 3 4.4 3H2.6v8.6h1.8c1.5 0 2.8.6 3.6 1.6" />
     <path d="M8 4.6C8.8 3.6 10.1 3 11.6 3h1.8v8.6h-1.8c-1.5 0-2.8.6-3.6 1.6" />
+  </svg>
+);
+
+/*
+ * Знак вопроса в круге: раздел отвечает не «как здесь всё устроено»
+ * (это IconInfo у «О тренажёре») и не «куда идти» (компас), а на вопрос
+ * человека со стороны — что это вообще за работа. Вопросительный знак —
+ * единственная форма, которая читается так без подписи.
+ */
+const IconQuestion = () => (
+  <svg {...iconProps}>
+    <circle cx="8" cy="8" r="5.9" />
+    <path d="M6.4 6.3c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6c0 1.1-1.6 1.2-1.6 2.4" />
+    <path d="M8 10.9v.5" strokeWidth="1.8" />
   </svg>
 );
 

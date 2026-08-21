@@ -5138,3 +5138,258 @@ table.sample td.null {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ==========================================================================
+ * «Что такое аналитика данных» — экскурс для человека вне профессии.
+ *
+ * Раскладку колонки берёт у .settings-column (одна колонка, 680px, порядок
+ * чтения несущий). Здесь только то, чего в общих стилях нет: две картинки,
+ * нарисованные разметкой, и две «двери» в конце.
+ * ========================================================================== */
+
+.intro-lead {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.intro-page .card {
+  margin-bottom: 16px;
+}
+
+.intro-list {
+  margin: 10px 0;
+  padding-left: 20px;
+  /*
+   * Тот же потолок ширины, что у абзаца карточки (.card p max-width: 68ch):
+   * список здесь несёт прозу целыми фразами, а не короткие метки, и без
+   * потолка его строки становятся длиннее соседних абзацев — глаз теряет
+   * начало следующей строки ровно там, где текст объясняет главное.
+   */
+  max-width: 68ch;
+}
+
+.intro-list li {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+/*
+ * Картинка «раскладываем падение на части»: четыре величины и размер
+ * падения у каждой. Настоящая таблица, а не сетка div — см. довод
+ * в IntroPage.tsx (скринридер обязан прочитать пару «величина, сколько»).
+ */
+.intro-decomp {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 14px;
+  font-size: 13px;
+  /*
+   * `table-layout: fixed` здесь несущий, а не косметика. При обычной
+   * раскладке ширина колонки считается по её содержимому, а в дорожке
+   * полосы содержимого нет — только пустой span с шириной в процентах.
+   * Ячейка сжималась в ноль, процент считался от нуля, и все четыре полосы
+   * получали ширину 0: картинка не рисовалась вовсе, при том что подписи
+   * и числа на месте и в тексте страницы всё выглядит правильно.
+   * Пойман замером ширины полос в браузере — ни один гейт и ни одна вычитка
+   * текста этого не видят.
+   */
+  table-layout: fixed;
+}
+
+.intro-decomp th,
+.intro-decomp td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.intro-decomp th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--text);
+  /*
+   * Колонке подписей нужен пол по ширине, иначе числовая колонка справа
+   * съедает её и «Точек, которые что-то купили» встаёт в четыре строки
+   * рядом с однострочным «−16%». Тот же дефект чинили на странице разбора
+   * датасета. Потолок держит дорожку полосы читаемой на узком экране.
+   */
+  width: 45%;
+  padding-right: 12px;
+}
+
+.intro-decomp-track {
+  /*
+   * Дорожка — фон, полоса внутри неё. Полоса растёт слева направо, от того
+   * края, с которого начинается чтение: выросшая справа налево читается
+   * зеркальной диаграммой, и на этом уже спотыкались в таблице результата.
+   */
+  background: var(--bg-sunken);
+  border-radius: 3px;
+  height: 10px;
+  border-bottom: 1px solid var(--line);
+  /* Своя доля ширины обязательна: см. довод у table-layout выше. */
+  width: 40%;
+  /*
+   * Фон красится только по содержимому, а не по ячейке с отступами.
+   * Иначе дорожки соседних строк смыкаются вертикально и читаются одним
+   * серым прямоугольником на четыре строки — то есть рамкой вокруг полос,
+   * а не дорожкой под каждой.
+   */
+  padding: 7px 0;
+  background-clip: content-box;
+}
+
+.intro-decomp-track > span {
+  display: block;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--text-dim);
+}
+
+.intro-decomp-value {
+  text-align: right;
+  padding-left: 10px;
+  width: 15%;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+/*
+ * Строка-исключение — та единственная, ради которой картинка и нарисована.
+ * Названа цветом и насыщенностью сразу: одного цвета мало, полоса у неё
+ * и без того втрое короче соседних, и вдвоём эти два признака говорят
+ * «смотри сюда» там, где по отдельности каждый читается как случайность.
+ */
+.intro-decomp tr.is-accent th,
+.intro-decomp tr.is-accent .intro-decomp-value {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.intro-decomp tr.is-accent .intro-decomp-track > span {
+  background: var(--accent);
+}
+
+/*
+ * Картинка «соединить таблицы»: две маленькие таблички с одним и тем же
+ * номером товара.
+ */
+.intro-join {
+  margin: 12px 0 14px;
+}
+
+.intro-join-tables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.intro-mini {
+  border-collapse: collapse;
+  font-size: 12px;
+  /*
+   * `min-width: 0` на гибком элементе обязателен: без него табличка не может
+   * стать у́же своего содержимого и вдвоём они уводят страницу вбок на 320px.
+   * Тот же класс ловушки, что `1fr` вместо `minmax(0, 1fr)` в сетках.
+   */
+  min-width: 0;
+}
+
+.intro-mini caption {
+  text-align: left;
+  color: var(--text-dim);
+  font-size: 12px;
+  padding-bottom: 4px;
+}
+
+.intro-mini th,
+.intro-mini td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.intro-mini th {
+  background: var(--bg-sunken);
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/*
+ * Совпавшее значение подсвечено в обеих табличках сразу — в этом вся картинка.
+ * Заливка, а не только цвет текста: одинаковый цвет в двух разных таблицах
+ * взгляд не связывает, а два одинаковых пятна связывает мгновенно.
+ */
+.intro-mini td.is-match {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.intro-join figcaption {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+  max-width: 68ch;
+}
+
+/*
+ * Запрос заказчика в хвосте — набран как чужая речь, а не как призыв
+ * приложения: это та самая фраза, с которой начинается работа, и она обязана
+ * звучать голосом человека со стороны.
+ */
+.intro-quote {
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 12px;
+  margin: 10px 0 12px;
+  font-style: italic;
+}
+
+.intro-doors {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+/*
+ * Дверь — строка-ссылка с подписью под ней, а не кнопка: кнопка в конце
+ * длинного объяснения читается призывом («жми сюда»), а здесь предлагают
+ * выбрать одно из двух и обе одинаково честны.
+ */
+.intro-door {
+  padding: 8px 0;
+}
+
+.intro-door-label {
+  display: block;
+  font-weight: 600;
+}
+
+.intro-door-note {
+  display: block;
+  color: var(--text-dim);
+  font-weight: 400;
+  font-size: 12px;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.intro-foot {
+  font-size: 12px;
+  margin: 0;
+}
+
+/*
+ * Приглашение в экскурс на главной. Отступ снизу маленький и тем же
+ * приёмом, что у ссылки «что входит в тренажёр»: строка держится вплотную
+ * к тому, что под ней, а не висит отдельным блоком.
+ */
+.home-intro-link {
+  margin: 0 0 10px;
+}

@@ -16,7 +16,9 @@ import {
   syncWake,
   type PushState,
 } from './push/client';
+import { introPage } from './content/intro';
 import { DataScreen } from './ui/DataScreen';
+import { IntroPage } from './ui/IntroPage';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
@@ -207,6 +209,32 @@ function readStoryOpenOnBoot(): boolean {
 const STORY_OPEN_ON_BOOT = readStoryOpenOnBoot();
 
 /**
+ * `?intro` — прямая ссылка на экскурс «Что такое аналитика данных».
+ *
+ * Нужна ровно затем же, зачем `?story`: этот экран пишется для человека вне
+ * профессии, а такому человеку ссылку присылают. Открыть приложение и найти
+ * пункт в меню он не обязан — да и меню на телефоне нет вовсе.
+ *
+ * Параметр стирается из адреса той же строкой и по той же причине, что
+ * у `?story`: иначе он живёт в строке навсегда и каждое обновление страницы
+ * возвращает сюда же, из главной было бы не выйти.
+ */
+function readIntroOpenOnBoot(): boolean {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('intro')) return false;
+    const on = params.get('intro') !== '0';
+    params.delete('intro');
+    const rest = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    return on;
+  } catch {
+    return false;
+  }
+}
+const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
+
+/**
  * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
  * валидации режима истории: два «сюжетных» входа рядом путали пользователя.
  * Это флаг видимости, а не удаление — код и экран линии живы; когда решится
@@ -318,6 +346,12 @@ type Screen =
   | { name: 'data' }
   | { name: 'lesson'; skill: string }
   | { name: 'about' }
+  /**
+   * Экскурс в профессию для человека вне её. Отдельный экран, а не карточка
+   * на «О тренажёре»: тот объясняет продукт тому, кто область уже понял,
+   * этот — область тому, кто про продукт ещё не спрашивал.
+   */
+  | { name: 'intro' }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -475,6 +509,13 @@ function initialBoot(locale: Locale): Boot {
    * настоящее задание, а исполнитель и схема приходят из активного трека —
    * войти в неё с чужим значило бы дать SQL-заданию питоновский движок.
    */
+  /*
+   * Экскурс проверяется раньше сохранённого экрана и раньше кампании:
+   * это адрес, присланный человеку снаружи, и он обязан перевесить и то,
+   * где вкладку закрыли в прошлый раз, и всё остальное. Ничего, кроме
+   * локали, ему не нужно — контента вне пака у него нет.
+   */
+  if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);
     if (mission) {
@@ -490,6 +531,7 @@ function initialBoot(locale: Locale): Boot {
     case 'sandbox':
     case 'data':
     case 'about':
+    case 'intro':
     case 'account':
     case 'onboarding':
       return { screen: { name: stored.name }, ...empty };
@@ -1572,6 +1614,7 @@ export default function App() {
     sandbox: 'sandbox',
     data: 'data',
     about: 'about',
+    intro: 'intro',
     account: 'account',
     onboarding: 'onboarding',
   };
@@ -1610,6 +1653,7 @@ export default function App() {
         onSandbox={() => setScreen({ name: 'sandbox' })}
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
+        onIntro={() => setScreen({ name: 'intro' })}
         onAccount={() => setScreen({ name: 'account' })}
         accountEmail={session?.user.email ?? null}
         onOnboarding={() => setScreen({ name: 'onboarding' })}
@@ -1670,6 +1714,13 @@ export default function App() {
                     ? t.lesson.pill
                     : screen.name === 'about'
                       ? t.about.title
+                      : /*
+                         * Заголовок берётся у контента, а не из i18n: там он
+                         * уже есть, и вторая копия той же строки разошлась бы
+                         * с первой при первой же правке формулировки.
+                         */
+                        screen.name === 'intro'
+                        ? introPage(locale).title
                       : screen.name === 'account'
                         ? t.account.title
                       : screen.name === 'onboarding'
@@ -1716,6 +1767,8 @@ export default function App() {
                     ? (lessonBySkill.get(screen.skill)?.title ?? '')
                     : screen.name === 'about'
                       ? t.app.name
+                      : screen.name === 'intro'
+                        ? t.app.name
                       : screen.name === 'account'
                         ? t.app.name
                       : screen.name === 'onboarding'
@@ -1901,6 +1954,7 @@ export default function App() {
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
+              onOpenIntro={() => setScreen({ name: 'intro' })}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
@@ -1931,6 +1985,15 @@ export default function App() {
               onSelectTrack={(track) => { switchTrack(track); }}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onOpenAccount={() => setScreen({ name: 'account' })}
+            />
+          )}
+
+          {screen.name === 'intro' && (
+            <IntroPage
+              /* Та же проверка, что у входа на главной: кампания открывается
+                 только когда её миссия разрешается в задания активного пака. */
+              onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
+              onOpenData={() => setScreen({ name: 'data' })}
             />
           )}
 
@@ -2579,6 +2642,7 @@ function Home({
   onOpenReference,
   onOpenSandbox,
   onOpenAbout,
+  onOpenIntro,
   onOpenOnboarding,
   onSwitchTrack,
   onStartSkill,
@@ -2616,6 +2680,8 @@ function Home({
   onOpenReference: () => void;
   onOpenSandbox: () => void;
   onOpenAbout: () => void;
+  /** Экскурс в профессию. Строку показываем только новичку — довод у самой строки. */
+  onOpenIntro: () => void;
   onOpenOnboarding: () => void;
   onSwitchTrack: (track: Track) => void;
   /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
@@ -2861,6 +2927,35 @@ function Home({
        * в 2026-08-12.
        */}
       {isNewUser && <h2 className="home-headline">{t.welcome.headline}</h2>}
+
+      {/*
+       * Дверь для того, кто не понял, о чём вообще этот сайт.
+       *
+       * **Строка, а не карточка, и не всплывающее окно.** Экскурс сам по себе
+       * длинный, но зовут в него одной строкой: человеку, который в теме,
+       * она стоит 40px и читается за секунду, а перехватывать ею вход
+       * значило бы поставить стену перед кампанией, которую только что
+       * вывели наверх (см. замер сгиба ниже).
+       *
+       * **Выше кампании намеренно.** Тот, кто не понимает, о чём речь,
+       * обязан встретить эту строку раньше, чем предложение начать работу
+       * аналитика: предлагать «первый рабочий день» человеку, который
+       * не знает, чем занимается аналитик, — значит терять его молча.
+       *
+       * **Только новичку.** У вернувшегося вопрос «что это такое» уже
+       * отвечен самим фактом возвращения, а постоянная строка наверху
+       * стоила бы ему высоты экрана каждый день. Постоянные входы для него
+       * есть: пункт бокового меню на десктопе и прямая ссылка `?intro`.
+       */}
+      {isNewUser && (
+        <button
+          type="button"
+          className="link-row home-intro-link"
+          onClick={onOpenIntro}
+        >
+          {t.home.introLink}
+        </button>
+      )}
 
       {/*
        * Кампания режима истории — первым делом на главной.

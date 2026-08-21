@@ -70,6 +70,7 @@ export const en = {
     sandbox: 'Sandbox',
     data: 'Data',
     /** См. комментарий в ru.ts: пункт живёт в подвале меню, а не первым в «Обучении». */
+    intro: 'What analytics is',
     onboarding: 'Where to start',
     about: 'About',
     account: 'Account and data',
@@ -105,6 +106,7 @@ export const en = {
       'Not sure where to begin? Start with SQL: almost every analyst posting asks for it, it opens with no extra download, and the answer is checked against the result of your query. The other three tracks are open from the start, in any order.',
   },
   home: {
+    introLink: 'New to data work? What the job actually is → 3 minutes',
     dueLabel: 'due for review',
     solvedLabel: 'solved',
     /**
