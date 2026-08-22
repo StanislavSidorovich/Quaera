@@ -2840,6 +2840,55 @@ function Home({
     [byTier, progress]
   );
 
+  /**
+   * Сводка по каждому уровню карты навыков — сколько тем начато и сколько
+   * ещё не освоено до конца. `unfinished` считает открытую тему с полосой
+   * меньше единицы: именно этот критерий выбирает уровень, раскрытый
+   * по умолчанию (см. openTiers ниже), и он же печатается в свёрнутой
+   * шапке группы, чтобы свёрнутый уровень не был слепой дверью.
+   */
+  const tierStats = useMemo(
+    () =>
+      byTier.map(([tier, list]) => {
+        let started = 0;
+        let unfinished = 0;
+        for (const s of list) {
+          const st = progress.skills[s.id];
+          const unlocked = isUnlocked(s, progress.skills) || (st?.reps ?? 0) > 0;
+          if ((st?.reps ?? 0) > 0) started += 1;
+          if (unlocked && mastery(st) < 1) unfinished += 1;
+        }
+        return { tier, total: list.length, started, unfinished };
+      }),
+    [byTier, progress]
+  );
+
+  const [openTiers, setOpenTiers] = useState<Set<number>>(() => new Set());
+
+  /**
+   * Раскрытый по умолчанию уровень — первый, где есть незакрытая тема, а не
+   * первый уровень вообще: новичок видит «что от вас хотят», а тот, кто его
+   * прошёл, — уровень, на котором остановился. Пересчитывается только при
+   * смене трека (activeTrack), не при каждом решённом задании — иначе
+   * группа, которую раскрыли вручную, схлопывалась бы обратно на первом же
+   * прогрессе внутри неё.
+   */
+  useEffect(() => {
+    let defaultTier = tierStats.find((t) => t.unfinished > 0)?.tier;
+    if (defaultTier === undefined) defaultTier = tierStats[tierStats.length - 1]?.tier;
+    setOpenTiers(defaultTier === undefined ? new Set() : new Set([defaultTier]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrack]);
+
+  const toggleTier = (tier: number) => {
+    setOpenTiers((prev) => {
+      const next = new Set(prev);
+      if (next.has(tier)) next.delete(tier);
+      else next.add(tier);
+      return next;
+    });
+  };
+
   const ready = activePack.status !== 'draft' && activePack.tasks.length > 0;
   /**
    * Пишет ли человек код в этом треке. Выводится из самих заданий, а не из
@@ -3378,13 +3427,46 @@ function Home({
              * там своя, уже проверенная прокрутка всей страницы.
              */}
             <div className="skill-map-list">
-            {byTier.map(([tier, list]) => (
-              <div key={tier} style={{ marginTop: 12 }}>
-                <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {/* Запасная подпись берётся из локали: у пака без tierNames
-                      захардкоженный «Уровень 2» был бы русским и на английском. */}
-                  {activePack.tierNames?.[tier] ?? t.task.levelLabel(tier)}
-                </p>
+            {byTier.map(([tier, list]) => {
+              const stats = tierStats.find((x) => x.tier === tier);
+              const open = openTiers.has(tier);
+              const groupId = `skill-map-tier-${tier}`;
+              return (
+              <div key={tier} className="skill-map-group" style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  className="skill-map-group-header"
+                  aria-expanded={open}
+                  aria-controls={groupId}
+                  onClick={() => toggleTier(tier)}
+                >
+                  <span className="skill-map-group-title">
+                    {/* Запасная подпись берётся из локали: у пака без tierNames
+                        захардкоженный «Уровень 2» был бы русским и на английском. */}
+                    {activePack.tierNames?.[tier] ?? t.task.levelLabel(tier)}
+                  </span>
+                  <span className="skill-map-group-meta">
+                    {t.home.tierSummary(stats?.started ?? 0, stats?.total ?? list.length)}
+                  </span>
+                  {ready && (
+                    <div
+                      className="bar"
+                      role="img"
+                      aria-label={t.home.masteryAria(Math.round((masteryByTier.find((x) => x.tier === tier)?.avg ?? 0) * 100))}
+                    >
+                      <span
+                        style={{
+                          width: `${Math.max((masteryByTier.find((x) => x.tier === tier)?.avg ?? 0) * 100, 0)}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                  <span className="skill-map-group-chevron" aria-hidden="true">
+                    {open ? '▾' : '▸'}
+                  </span>
+                </button>
+                {open && (
+                <div id={groupId}>
                 {list.map((s) => {
                   const st = progress.skills[s.id];
                   // Уже начатая тема не может быть «закрытой», даже если предпосылка
@@ -3441,8 +3523,11 @@ function Home({
                     </button>
                   );
                 })}
+                </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             </div>
           </div>
 

@@ -1713,6 +1713,50 @@ a.btn {
   color: var(--text-dim);
 }
 
+/*
+ * Заголовок группы уровня — своя кнопка, не текст .muted, как раньше: по
+ * правилу «одинаково оформленные соседи сливаются» она обязана отличаться
+ * от .skill-row видом, а не только тем, что кликабельна, иначе непонятно,
+ * что сворачивает уровень, а что открывает тему. Полоса .bar здесь без
+ * .locked-логики due — это сводка по уровню, а не по конкретной теме.
+ */
+.skill-map-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-map-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.skill-map-group-meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-map-group-chevron {
+  flex: none;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
 .bar {
   width: 64px;
   height: 6px;

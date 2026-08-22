@@ -137,6 +137,9 @@ export const en = {
     overallProgressHint:
       'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it. A low number early on is by design.',
     skillMapTitle: 'Skill map',
+    /** См. комментарий в ru.ts: подпись свёрнутой группы уровня. */
+    tierSummary: (started: number, total: number) =>
+      `${total} ${total === 1 ? 'topic' : 'topics'} · ${started} started`,
     /** См. комментарий в ru.ts: совет по порядку, а не запрет — карта открыта для любой темы. */
     unlockedAfter: (prereqs: string) => `Usually taken after: ${prereqs}`,
     /** Только значение — правило переехало в видимую overallProgressHint, см. ru.ts. */
