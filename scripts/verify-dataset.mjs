@@ -94,6 +94,141 @@ check('Запуск: первых продаж нет раньше сентяб�
 check('Запуск: дистрибуция раскатывается', launch.length > 5 && launch[4].outlets > launch[0].outlets,
   `точек ${launch[0].outlets} → ${launch[4]?.outlets}`);
 
+/*
+ * --- Сюжет 5: точность прогноза спроса (fact_forecast_snapshot).
+ *
+ * Проверяются не числа, а **явления**: каждое из них — предмет будущего
+ * задания, и любое, исчезнув после правки генератора, оставит задание без
+ * ответа. Пороги взяты с запасом от замеренных значений (в скобках), чтобы
+ * гейт ловил пропажу явления, а не дрожание третьего знака.
+ *
+ * Границы сформулированы отношениями, а не константами, ровно по тому же
+ * правилу, что в пробах песочницы: генератор двигает числа, явление обязано
+ * пережить правку.
+ */
+const wmapeByLag = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2)
+  SELECT f.lag_months lag,
+         ROUND(100.0*SUM(ABS(f.forecast_units-a.units))/SUM(a.units),1) wmape,
+         ROUND(100.0*SUM(f.forecast_units-a.units)/SUM(a.units),1) bias,
+         ROUND(AVG(100.0*ABS(f.forecast_units-a.units)/a.units),1) mape
+  FROM fact_forecast_snapshot f
+  JOIN actual a ON a.m=f.month_start AND a.pid=f.product_id
+  GROUP BY 1 ORDER BY 1`);
+console.table(wmapeByLag);
+const lag = Object.fromEntries(wmapeByLag.map((r) => [r.lag, r]));
+check('Прогноз: точность падает с горизонтом', lag[1].wmape < lag[2].wmape && lag[2].wmape < lag[3].wmape,
+  `WMAPE ${lag[1].wmape}% → ${lag[2].wmape}% → ${lag[3].wmape}%`);
+check('Прогноз: горизонт 3 хуже горизонта 1 в полтора раза и более (замер 2.0)',
+  lag[3].wmape > lag[1].wmape * 1.5, `${lag[1].wmape}% против ${lag[3].wmape}%`);
+check('Прогноз: MAPE выше WMAPE на всех горизонтах (замер +2.5…+4.7 п.п.)',
+  wmapeByLag.every((r) => r.mape > r.wmape),
+  wmapeByLag.map((r) => `lag${r.lag}: ${r.mape} против ${r.wmape}`).join(', '));
+
+// Хвост мелких SKU: кричит в процентах, почти не весит в штуках.
+const tail = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2)
+  SELECT CASE WHEN a.units < 200 THEN 'small' ELSE 'big' END grp,
+         COUNT(*) n,
+         ROUND(AVG(100.0*ABS(f.forecast_units-a.units)/a.units),1) mape,
+         SUM(ABS(f.forecast_units-a.units)) err_units
+  FROM fact_forecast_snapshot f
+  JOIN actual a ON a.m=f.month_start AND a.pid=f.product_id
+  WHERE f.lag_months=3 GROUP BY 1`);
+console.table(tail);
+const small = tail.find((r) => r.grp === 'small');
+const big = tail.find((r) => r.grp === 'big');
+check('Прогноз: у мелких SKU процент ошибки заметно выше (замер 49.2 против 30.7)',
+  small.mape > big.mape * 1.3, `${small.mape}% против ${big.mape}%`);
+check('Прогноз: вклад мелких SKU в ошибку в штуках мал (замер 5.2%)',
+  small.err_units < (small.err_units + big.err_units) * 0.12,
+  `${(100 * small.err_units / (small.err_units + big.err_units)).toFixed(1)}% всей ошибки при ${(100 * small.n / (small.n + big.n)).toFixed(0)}% строк`);
+
+// Падающий бренд: планировщик ждёт возврата, и это единственное смещение вверх.
+const biasByBrand = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2)
+  SELECT p.brand, ROUND(100.0*SUM(f.forecast_units-a.units)/SUM(a.units),1) bias
+  FROM fact_forecast_snapshot f
+  JOIN actual a ON a.m=f.month_start AND a.pid=f.product_id
+  JOIN dim_product p ON p.product_id=f.product_id
+  WHERE f.lag_months=3 GROUP BY 1 ORDER BY 2 DESC`);
+console.table(biasByBrand);
+check('Прогноз: «Nettora» — единственный бренд с перепрогнозом (замер +11%)',
+  biasByBrand[0].brand === 'Nettora' && biasByBrand[0].bias > 5
+    && biasByBrand.slice(1).every((r) => r.bias < 0),
+  `${biasByBrand[0].brand} ${biasByBrand[0].bias}%, следующий ${biasByBrand[1].brand} ${biasByBrand[1].bias}%`);
+
+// Новинку прогнозировать не из чего: истории нет.
+const newSku = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2)
+  SELECT CASE WHEN p.launch_date > '2024-01-01'
+                AND f.month_start < date(p.launch_date,'+6 months') THEN 'launch' ELSE 'rest' END grp,
+         ROUND(100.0*SUM(ABS(f.forecast_units-a.units))/SUM(a.units),1) wmape
+  FROM fact_forecast_snapshot f
+  JOIN actual a ON a.m=f.month_start AND a.pid=f.product_id
+  JOIN dim_product p ON p.product_id=f.product_id
+  WHERE f.lag_months=3 GROUP BY 1`);
+const launchErr = newSku.find((r) => r.grp === 'launch');
+const restErr = newSku.find((r) => r.grp === 'rest');
+check('Прогноз: первые полгода новинки — худшая точность (замер 85.5 против 30.9)',
+  launchErr.wmape > restErr.wmape * 2, `${launchErr.wmape}% против ${restErr.wmape}%`);
+
+// Акция в прогноз не попадает: месяцы с началом промо систематически недооценены.
+const promoBias = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2)
+  SELECT CASE WHEN EXISTS (SELECT 1 FROM dim_promo dp
+                           WHERE dp.brand=p.brand
+                             AND substr(dp.start_date,1,7)=substr(f.month_start,1,7))
+              THEN 'promo' ELSE 'plain' END grp,
+         ROUND(100.0*SUM(f.forecast_units-a.units)/SUM(a.units),1) bias
+  FROM fact_forecast_snapshot f
+  JOIN actual a ON a.m=f.month_start AND a.pid=f.product_id
+  JOIN dim_product p ON p.product_id=f.product_id
+  WHERE f.lag_months=3 GROUP BY 1`);
+const promoM = promoBias.find((r) => r.grp === 'promo');
+const plainM = promoBias.find((r) => r.grp === 'plain');
+check('Прогноз: месяцы с началом акции недооценены сильнее (замер −15.6 против −6.0)',
+  promoM.bias < plainM.bias - 4, `${promoM.bias}% против ${plainM.bias}%`);
+
+/*
+ * Наивный прогноз («будет как в прошлом месяце») — бесплатный эталон,
+ * с которым сравнивают работу планировщика. Проверяемое утверждение здесь
+ * неочевидное и потому ценное: на месяц вперёд прогноз наивный обыгрывает
+ * вдвое, а на три месяца — почти не отличается от него. Если это перестанет
+ * быть правдой, задание про пользу прогноза останется без ответа.
+ */
+const naive = rows(`
+  WITH actual AS (
+    SELECT substr(week_start,1,7)||'-01' m, product_id pid, SUM(units) units
+    FROM fact_sellout GROUP BY 1,2),
+  paired AS (
+    SELECT a.m, a.pid, a.units,
+           (SELECT units FROM actual prev WHERE prev.pid=a.pid AND prev.m=date(a.m,'-1 month')) prev
+    FROM actual a)
+  SELECT f.lag_months lag,
+         ROUND(100.0*SUM(ABS(f.forecast_units-pr.units))/SUM(pr.units),1) ours,
+         ROUND(100.0*SUM(ABS(pr.prev-pr.units))/SUM(pr.units),1) naive
+  FROM fact_forecast_snapshot f
+  JOIN paired pr ON pr.m=f.month_start AND pr.pid=f.product_id
+  WHERE pr.prev IS NOT NULL GROUP BY 1 ORDER BY 1`);
+console.table(naive);
+const n1 = naive.find((r) => r.lag === 1);
+const n3 = naive.find((r) => r.lag === 3);
+check('Прогноз: на месяц вперёд заметно лучше наивного (замер 15.4 против 33.3)',
+  n1.ours < n1.naive * 0.7, `${n1.ours}% против ${n1.naive}%`);
+check('Прогноз: на три месяца вперёд преимущество почти исчезает (замер 30.9 против 33.5)',
+  n3.ours > n3.naive * 0.85, `${n3.ours}% против ${n3.naive}%`);
+
 // --- Бизнес-правила, на которых строятся задания на JOIN и фильтры.
 const pharmaChannels = rows(`
   SELECT c.channel, COUNT(*) n FROM fact_sellout f
