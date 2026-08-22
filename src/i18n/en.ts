@@ -186,6 +186,12 @@ export const en = {
     audienceNotLabel: 'What is not here',
     audienceNotBody:
       'Database administration, query plan tuning, data engineering, and machine learning. Those are adjacent professions: they begin where this trainer ends, and promising them in passing would be a lie.',
+    /** См. комментарий в ru.ts: карточка решений и их цены, а не свойств. */
+    whyTitle: 'Why it is built this way',
+    whyGenreBody:
+      'This is not a course, and the difference is one of genre rather than size. A course walks you through a syllabus, sets the pace and eventually ends, and the reason to come back ends with it. A trainer leads nowhere: it does not know your schedule, checks nothing on your behalf and hands out no certificate. It is for people who are past watching and need to practise: regularly, in short sessions, over months. That is why there are no videos here, no lectures, no cohort and no deadline. What there is: tasks on real data, and an explanation of why your answer differed from the reference one.',
+    whyAccountBody:
+      'Signing in is not required, and that was decided before the first line of code rather than arrived at by accident. It came at a real price. The author sees none of your steps, neither the task where you got stuck nor how many people reached the end, and hears about it only when someone writes in. In exchange the whole trainer lives on your device: it works on a plane and in the metro, it cannot leak data it never receives, and it does not charge you an email address for the right to practise. An account arrived later and stayed optional, and it solves exactly one problem: keeping progress in sync between your phone and your laptop.',
     structureTitle: 'Structure',
     structureIntro: (skills: number, tasks: number) =>
       `Right now the tracks add up to ${skills} skills and ${tasks} tasks. The numbers grow with every sprint, and the counter on each track tile is always accurate.`,
