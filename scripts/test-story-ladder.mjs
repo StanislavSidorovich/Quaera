@@ -21,9 +21,20 @@
  * Поэтому в источники показа не входят ни hints, ни explain.
  *
  * **Что считается «напечатать рукой».** У write — то, чего нет в заготовке:
- * starter человек получает даром. У fill — только содержимое пропусков,
- * остальной шаблон стоит перед глазами. У predict — ничего: там читают,
- * а не пишут.
+ * starter человек получает даром. У fill — содержимое пропусков и то, чем
+ * пропуск оборачивается в эталоне (см. typedByHand). У predict — ничего:
+ * там читают, а не пишут.
+ *
+ * **Словарь свой у каждого трека.** До 2026-08-23 он был один и состоял
+ * из чистого SQL, поэтому день на pandas проходил проверку вхолостую:
+ * ни `.groupby(`, ни `.rolling(` в нём не значились, и «новая конструкция
+ * появляется дважды» на таком дне не проверялось вовсе. Сливать словари
+ * в один список было нельзя: `mean` строчными — обычное английское слово,
+ * и английская проза SQL-дней засчитывала бы показ приёма, которого там
+ * не было. Основа словаря — общий список приёмов трека
+ * (scripts/lib/track-constructs.mjs), тот же, по которому verify-content
+ * спрашивает «объяснён ли приём в теории»: два вопроса об одном наборе,
+ * и разъехаться им больше нечем.
  *
  * Отдельно печатается слабое покрытие: конструкция, которую человек до сих
  * пор видел только внутри шаблона или predict-запроса, но которую ни одна
@@ -38,6 +49,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { TRACK_CONSTRUCTS } from './lib/track-constructs.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = mkdtempSync(path.join(tmpdir(), 'quaera--'));
@@ -61,7 +73,7 @@ const check = (name, cond, msg) => (cond ? ok(name) : fail(name, msg));
  * Ключевые слова ищутся в верхнем регистре: русская проза и английская
  * не дают ложных совпадений, пока образец не опускается до строчных букв.
  */
-const VOCAB = [
+const VOCAB_SQL = [
   ['SELECT', /\bSELECT\b/],
   ['FROM', /\bFROM\b/],
   ['AS', /\bAS\b/],
@@ -101,6 +113,77 @@ const VOCAB = [
 ];
 
 /**
+ * Лексикон pandas. Тот же жанр, что и у SQL, но два отличия по существу.
+ *
+ * **Образец здесь сразу и есть рабочая форма.** У SQL пришлось заводить
+ * отдельную карту FORMS: слово HAVING в прозе — не то же самое, что
+ * HAVING SUM(...) > 5000000. В pandas приём почти всегда пишется вызовом,
+ * поэтому образец `\.groupby\s*\(` не срабатывает на слове «группировка»
+ * и не срабатывает даже на слове «groupby» без скобки. Имя без формы
+ * в этот словарь не проходит само собой.
+ *
+ * **Своих образцов здесь мало.** Всё, что перечислено в общем списке
+ * приёмов трека (scripts/lib/track-constructs.mjs), добирается ниже
+ * автоматически — руками записано только то, чего в том списке нет
+ * и не должно быть: маска, две скобки выбора колонок, агрегат в цепочке.
+ * Это не самоочевидные операции вроде .head(), а именно те формы, которые
+ * человек печатает рукой в первый же день и которые в SQL выглядят иначе.
+ */
+const VOCAB_PYTHON = [
+  ['строковый литерал', /'[^']*'/],
+  ['выбор колонок [[...]]', /\[\[/],
+  ['маска по колонке', /\[\s*['"][^'"]+['"]\s*\]\s*(?:==|!=|>=|<=|>|<)/],
+  ['& и | в маске', /\)\s*[&|]\s*\(|\]\s*[&|]\s*\(/],
+  ['~ отрицание маски', /~\s*[\w(]/],
+  ['as_index=False', /as_index\s*=\s*False/],
+  ['агрегат в цепочке', /\.(sum|mean|count|min|max)\s*\(/],
+  ['именованная агрегация', /\w+\s*=\s*\(\s*['"]/],
+  ['.round(', /\.round\s*\(/],
+];
+
+/**
+ * Приёмы трека, которых в лексиконе ещё нет, добираются из общего списка.
+ *
+ * Это и есть ответ на то, из-за чего гейт молчал про pandas: лексикон
+ * был отдельным списком и отставал от пака на целый трек. Теперь новый
+ * приём, добавленный в scripts/lib/track-constructs.mjs ради проверки
+ * «объяснён ли он в теории», сразу становится ступенью и здесь.
+ *
+ * Регистр разбирается по-разному, и это не придирка. Ключевое слово SQL
+ * ищется только в верхнем регистре: `like` строчными — обычное английское
+ * слово, и в английской прозе оно встречается в каждом третьем абзаце.
+ * Имя функции со скобкой безопасно в любом регистре — прозе неоткуда
+ * взять «lag(» случайно, — а pandas-приёмы пишутся строчными всегда.
+ */
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const derive = (track, token) => {
+  const t = token.trim();
+  if (track === 'python') return new RegExp(escapeRe(t).replace(/\\\(/g, '\\s*\\('));
+  const withParen = t.endsWith('(');
+  const body = escapeRe(withParen ? t.slice(0, -1).trim() : t).replace(/\s+/g, '\\s+');
+  return withParen
+    ? new RegExp('\\b(?:' + body + '|' + body.toUpperCase() + ')\\s*\\(')
+    : new RegExp('\\b' + body.toUpperCase() + '\\b');
+};
+
+/** Покрыт ли приём уже написанным образцом — проверяется по самому приёму как по тексту. */
+const covered = (vocab, token) =>
+  vocab.some(([, re]) => new RegExp(re.source, re.flags.includes('i') ? re.flags : re.flags + 'i').test(token.trim()));
+
+const withDerived = (track, vocab) => [
+  ...vocab,
+  ...(TRACK_CONSTRUCTS[track] ?? [])
+    .filter((tok) => !covered(vocab, tok))
+    .map((tok) => [tok.trim(), derive(track, tok)]),
+];
+
+const VOCAB_BY_TRACK = {
+  sql: withDerived('sql', VOCAB_SQL),
+  python: withDerived('python', VOCAB_PYTHON),
+  model: withDerived('model', []),
+};
+
+/**
  * Рабочая форма конструкции — то, по чему её можно напечатать.
  *
  * Правка по живому проходу четверга: подводка честно писала «для этого есть
@@ -118,7 +201,7 @@ const VOCAB = [
  * русская проза, называющая клаузу по имени, в рабочую форму не проходит
  * сама собой. Английская проза отсекается требованием операнда.
  */
-const FORMS = new Map([
+const FORMS_SQL = new Map([
   ['WHERE', /\bWHERE\s+[\w.]+\s*(?:[=<>]|\b(?:BETWEEN|IN|IS|LIKE|NOT)\b)/],
   ['GROUP BY', /\bGROUP\s+BY\s+[\w.]+/],
   ['ORDER BY', /\bORDER\s+BY\s+[\w.]+/],
@@ -136,19 +219,36 @@ const FORMS = new Map([
   ['ELSE', /\bELSE\s+\S/],
 ]);
 
-/** Какие конструкции есть в куске текста. */
-function constructs(text) {
+/**
+ * Карты рабочих форм у pandas нет, и это не пропуск. Приём здесь пишется
+ * вызовом, а образец в лексиконе требует скобку, — то есть имя без формы
+ * в словарь не попадает и без отдельной карты. Появится приём, у которого
+ * форма отличается от имени (как у SQL-клауз), — карта заведётся тогда.
+ */
+const FORMS_BY_TRACK = { sql: FORMS_SQL, python: new Map(), model: new Map() };
+
+/**
+ * Какие конструкции есть в куске текста — глазами своего трека.
+ *
+ * Словарь выбирается по треку дня, а накопитель показанного остаётся
+ * сквозным, и это не противоречие. Имена приёмов у треков не пересекаются
+ * (`SELECT` и `.groupby(` не спутать), поэтому понедельник недели на pandas
+ * честно начинается с нуля по своему инструменту, унаследовав от SQL ровно
+ * то, что и правда общее: строковый литерал.
+ */
+function constructs(text, track) {
   if (!text) return new Set();
   const found = new Set();
-  for (const [name, re] of VOCAB) if (re.test(text)) found.add(name);
+  for (const [name, re] of VOCAB_BY_TRACK[track] ?? []) if (re.test(text)) found.add(name);
   return found;
 }
 
 /** Какие конструкции показаны в рабочей форме — то есть так, что по ним можно напечатать. */
-function inWorkingForm(text) {
+function inWorkingForm(text, track) {
   if (!text) return new Set();
+  const forms = FORMS_BY_TRACK[track] ?? new Map();
   const found = new Set();
-  for (const [name, re] of VOCAB) if ((FORMS.get(name) ?? re).test(text)) found.add(name);
+  for (const [name, re] of VOCAB_BY_TRACK[track] ?? []) if ((forms.get(name) ?? re).test(text)) found.add(name);
   return found;
 }
 
@@ -161,16 +261,32 @@ const introText = (step) => (step.intro ? join([step.intro.title, ...step.intro.
 /**
  * Что человек обязан напечатать сам. Пустое множество у predict — это
  * не пробел в проверке, а свойство режима: там выбирают из вариантов.
+ *
+ * У `fill` считается двумя способами сразу, и второй добавлен вместе
+ * с лексиконом pandas. Содержимое пропуска — фрагмент, а не выражение:
+ * в py-037 человек печатает `rolling`, тогда как образец приёма требует
+ * `.rolling(`, потому что иначе он ловил бы слово «rolling» в прозе.
+ * Поэтому рядом стоит разность «эталон минус шаблон с вычеркнутыми
+ * пропусками»: она видит приём по тому, во что пропуск превращается,
+ * а не по тому, как он выглядит в отрыве от строки. Объединение, а не
+ * замена — первый способ ловит то, что второй пропустит, когда та же
+ * форма уже стоит в шаблоне рядом.
  */
-function typedByHand(task) {
-  if (task.mode === 'write') return minus(constructs(task.solution), constructs(task.starter));
-  if (task.mode === 'fill') return constructs(join(task.blanks ?? []));
+function typedByHand(task, track) {
+  if (task.mode === 'write') return minus(constructs(task.solution, track), constructs(task.starter, track));
+  if (task.mode === 'fill') {
+    const stripped = String(task.template ?? '').replace(/_{2,}/g, '');
+    return new Set([
+      ...constructs(join(task.blanks ?? []), track),
+      ...minus(constructs(task.solution, track), constructs(stripped, track)),
+    ]);
+  }
   return new Set();
 }
 
 /** Что задание показывает после того, как пройдено: шаблон, запрос, эталон, заготовка. */
-const shownByTask = (task) =>
-  constructs(join([task.starter, task.template, task.predictSql, task.solution]));
+const shownByTask = (task, track) =>
+  constructs(join([task.starter, task.template, task.predictSql, task.solution]), track);
 
 /**
  * Что задание кладёт человеку перед глазами, пока он его решает: шаблон
@@ -178,7 +294,7 @@ const shownByTask = (task) =>
  * его видят после решения или по кнопке «показать разбор», а ступень обязана
  * держаться без них (тот же довод, по которому исключены hints и explain).
  */
-const givenByTask = (task) => constructs(join([task.starter, task.template, task.predictSql]));
+const givenByTask = (task, track) => constructs(join([task.starter, task.template, task.predictSql]), track);
 
 try {
   execSync(
@@ -237,10 +353,10 @@ try {
           return;
         }
 
-        const intro = constructs(introText(step));
-        const introForms = inWorkingForm(introText(step));
+        const intro = constructs(introText(step), mission.track);
+        const introForms = inWorkingForm(introText(step), mission.track);
         const available = new Set([...seen, ...intro]);
-        const required = typedByHand(task);
+        const required = typedByHand(task, mission.track);
 
         for (const c of minus(required, available)) {
           gaps.push(`${mission.short} · ${task.id} (${task.mode}) — ${c}`);
@@ -261,7 +377,7 @@ try {
          * HAVING SUM(f.revenue) > 5000000 и говорил, что конструкцию
          * не проходили. Имя не форма.
          */
-        for (const c of minus(givenByTask(task), formShown)) {
+        for (const c of minus(givenByTask(task, mission.track), formShown)) {
           if (!introForms.has(c)) {
             unformed.push(`${mission.short} · ${task.id} (${task.mode}) — ${c}`);
           }
@@ -272,7 +388,7 @@ try {
           namedInProse.add(c);
         }
         for (const c of introForms) formShown.add(c);
-        for (const c of shownByTask(task)) {
+        for (const c of shownByTask(task, mission.track)) {
           seen.add(c);
           formShown.add(c);
         }
@@ -305,29 +421,48 @@ try {
      * Считается по каждой неделе отдельно, а показанное копится сквозь всю
      * кампанию: вторая неделя строится на первой и обязана этим пользоваться,
      * иначе понедельник второй недели пришлось бы начинать с SELECT.
+     *
+     * **Неделя, которая кончается днём-суждением, из этой проверки выпадает,
+     * и об этом печатается строка.** У domain-заданий нет ни шаблона, ни
+     * эталона, поэтому множество показанного у них пустое всегда: пятница
+     * третьей недели проходила проверку не потому, что лестница цела,
+     * а потому, что мерить в том дне нечего. Соблазн взять вместо неё
+     * последний день с кодом был проверен и отвергнут — он назвал дефектом
+     * четверг той же недели, который вводит LIKE совершенно законно, будучи
+     * учебным днём. Обещание относится к закрытию недели, а закрывает её
+     * там суждение, а не код; значит проверять нечего — но молчать об этом
+     * гейт не должен, иначе «ok» на экране означает две разные вещи.
      */
     for (const week of campaign.weeks) {
       const days = campaign.missions.filter((m) => m.week === week.id);
       const last = days[days.length - 1];
       if (!last) continue;
+      const hasCode = last.steps.some((s) => {
+        const task = taskOf(s.taskId, last.track);
+        return task && [task.starter, task.template, task.predictSql, task.solution].some(Boolean);
+      });
+      if (!hasCode) {
+        console.log(`       ${label}${week.id}: финал — день-суждение (${last.id}), конструкций в нём нет, проверять нечего`);
+        continue;
+      }
       const lastAt = campaign.missions.findIndex((m) => m.id === last.id);
       const before = new Set();
       campaign.missions.slice(0, lastAt).forEach((m) =>
         m.steps.forEach((s) => {
-          for (const c of constructs(introText(s))) before.add(c);
+          for (const c of constructs(introText(s), m.track)) before.add(c);
           const task = taskOf(s.taskId, m.track);
-          if (task) for (const c of shownByTask(task)) before.add(c);
+          if (task) for (const c of shownByTask(task, m.track)) before.add(c);
         })
       );
       const fresh = new Set();
       last.steps.forEach((s) => {
         const task = taskOf(s.taskId, last.track);
-        if (task) for (const c of minus(shownByTask(task), before)) fresh.add(c);
+        if (task) for (const c of minus(shownByTask(task, last.track), before)) fresh.add(c);
       });
       check(
         `${label}${week.id}: в финале нет ни одной новой конструкции`,
         fresh.size === 0,
-        `в последнем дне впервые: ${[...fresh].join(', ')}`
+        `в дне ${last.id} впервые: ${[...fresh].join(', ')}`
       );
     }
 

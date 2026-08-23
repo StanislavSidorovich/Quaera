@@ -15,6 +15,7 @@ import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { TRACK_CONSTRUCTS } from './lib/track-constructs.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -803,62 +804,9 @@ function checkTaskLessonDuplicate(pack, lessons) {
  * INSTR может быть закреплена ещё в sql-where, а не в задании, которое её
  * использует три навыка спустя.
  *
- * Список конструкций свой на трек — синтаксис разный, и то, что нужно
- * объяснить, тоже разное. sql проверен и починен первым (ROADMAP §6, п. A);
- * python дописан следом тем же способом: замер, разбор причины у каждой
- * находки, починка — либо в карточке, либо в графе, если конструкция
- * не введена потому, что путь предпосылок обходит скилл, который её учит.
- *
- * В python-списке нет .head()/.tail()/.copy(): это не пробел в объяснении,
- * а операции, самоочевидные по названию, — они не создают того риска, ради
- * которого существует эта проверка (сравнение с SQL: сам SELECT тоже
- * не входит в SQL_CONSTRUCTS). По тому же правилу отклонён `pd.DataFrame(`:
- * замер 2026-08-13 дал на нём ровно одну находку — py-031, где литеральный
- * датафрейм стоит лесами в шаблоне `fill`, а спрашивают в задании melt.
+ * Сами списки живут в scripts/lib/track-constructs.mjs — их читает ещё
+ * и гейт лестницы режима истории, и разъехаться им нельзя.
  */
-const SQL_CONSTRUCTS = [
-  'like', 'offset', 'coalesce', 'ifnull', 'nullif', 'distinct', 'between',
-  'in (', 'union', 'exists', 'substr', 'replace', 'trim', 'upper', 'lower',
-  'cast', 'round', 'strftime', 'date(', 'julianday', 'printf', 'case',
-  'over (', 'partition by', 'row_number', 'rank(', 'dense_rank', 'lag(',
-  'lead(', 'ntile', 'sum(', 'avg(', 'count(', 'min(', 'max(', 'having',
-  'left join', 'inner join', 'group by', 'order by', 'limit', 'with ',
-  'as (', 'abs(', 'length(', 'first_value(', 'last_value(', 'nth_value(',
-];
-
-const PYTHON_CONSTRUCTS = [
-  '.loc[', '.isin(', '.str.', '.astype(', '.assign(', '.fillna(', '.rank(',
-  '.apply(', 'axis=1', 'lambda', '.groupby(', '.merge(', 'dropna=',
-  '.transform(', '.agg(', '.pivot(', '.pivot_table(', '.melt(', '.resample(',
-  '.rolling(', 'np.where(', '.value_counts(', '.nunique(', 'pd.to_datetime(',
-  '.dt.', '.isna(', '.reset_index(', '.set_index(', '.sort_index(',
-  '.sort_values(', 'validate=', '.describe(', '.duplicated(',
-  '.drop_duplicates(', '.shift(', '.diff(', '.cumsum(', '.clip(',
-  '.replace(', '.map(', '.query(', '.to_period(',
-];
-
-/**
- * DAX-функции трека model. Список полный по замеру: собран не из головы,
- * а перечислением всего, что вообще встречается в `template`/`predictSql`
- * заданий пака, — иначе он повторил бы прежнюю ошибку sql-списка, где
- * FIRST_VALUE не проверялась потому, что о ней не вспомнили.
- *
- * Предикат здесь другой, чем у sql и python, и это не поблажка,
- * а следствие устройства трека: **в model нет исполнителя, и кода,
- * который «видно целиком и можно выполнить кнопкой», не существует
- * нигде** — `form` карточки объясняет функцию предложением
- * («TOTALYTD заменяет текущий период на „с начала года по текущую дату“»),
- * а не показывает вызов со скобками. Требовать `NAME(` значило бы завалить
- * весь трек за его честный жанр. Защита от «упомянули в самопроверке»
- * при этом остаётся: корпус тот же, form/example/wrong, а не вся карточка.
- */
-const MODEL_CONSTRUCTS = [
-  'calculate', 'divide', 'sum(', 'sumx', 'averagex', 'countrows', 'values(',
-  'related', 'filter(', 'keepfilters', 'allexcept', 'all(', 'totalytd',
-  'datesytd', 'sameperiodlastyear', 'datesinperiod',
-];
-
-const TRACK_CONSTRUCTS = { sql: SQL_CONSTRUCTS, python: PYTHON_CONSTRUCTS, model: MODEL_CONSTRUCTS };
 
 /**
  * Формы выражений — второй род того же вопроса, и добавлен он по жалобе
