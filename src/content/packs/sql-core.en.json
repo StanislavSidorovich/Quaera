@@ -92,6 +92,11 @@
       "summary": "I find duplicates, fix types, and normalize reference values before building a report on them."
     },
     {
+      "id": "sql-forecast-accuracy",
+      "title": "Forecast accuracy: error and bias",
+      "summary": "I measure forecast error so that misses cannot cancel each other out, and I keep it apart from bias, the steady lean in one direction."
+    },
+    {
       "id": "sql-business-case",
       "title": "Breaking down a business situation",
       "summary": "I split a metric's change into factors and answer \"why\", not just \"how much\"."
@@ -1569,6 +1574,151 @@
         }
       ],
       "explain": "The review the whole skill exists for: «we raised the price» and «we receive less» are both true at once, and there is nothing to argue about once three numbers sit side by side. The list price rose 1.2%, the received price fell 5.2%, the promo share went from 9.9% to 31.7%, and price realization sank from 96.7% to 90.6%. Pricing is owned by the commercial function, the promo plan by trade marketing, and without a shared table each of them is sure they did their job. Hence a reporting rule: price is never shown as a single line. Three at a minimum, list, actual and promo share; four is better, with discount depth added. What this data will not show is how much the company earned on any of it. There is no cost of goods in it, so the conversation stays about revenue per unit rather than margin, and it should be spoken that way."
+    },
+    {
+      "id": "sql-077",
+      "title": "How far off we are",
+      "brief": "The supply chain director is putting together the annual review and asks for a single number: how far the demand forecast sits from actual sales. The planner has no such number, only a feeling that «on the whole it is fine». Forecasts are stored as snapshots in fact_forecast_snapshot: a row is made in advance and never rewritten afterwards, and lag_months says how many months before the month started it was made.",
+      "goal": "For 2025 and forecasts made one month ahead, return wmape_pct: the sum of misses without their sign as a percentage of the sum of actuals. Round to one decimal.",
+      "hints": [
+        "Actuals are stored by week and the forecast by month, so it is the actuals that need rolling up: the first step already does it and gives the same «month and SKU» grain the forecast was made at.",
+        "The sign is removed before the adding: SUM(ABS(...)), not ABS(SUM(...)). The second way lets a shortfall in one month cancel an overshoot in another, and the error slides towards zero."
+      ],
+      "explain": "The first number that makes any conversation about the forecast possible: in 2025 the one month ahead forecast missed by 15.3% of actuals. It is a sum divided by a sum, and each sum earns its place. The ABS in the numerator stops the misses from cancelling: a month short and a month over are two errors rather than none, and somebody paid for both, in idle lines or in write-offs. The denominator makes the number comparable: 15.3% reads the same for a brand selling three hundred thousand units and for one selling twenty thousand. The horizon here is the easiest one, a month ahead, when almost everything is already known. Next to the other horizons this figure will look far better than it is."
+    },
+    {
+      "id": "sql-078",
+      "title": "The further the horizon, the worse it gets",
+      "brief": "Production plans line loading three months ahead and asks whether the far month can be trusted as much as the near one. The snapshots hold all three horizons: the same month forecast one, two and three months before it started.",
+      "goal": "Across all months in the table return lag_months, pairs (how many «month and SKU» pairs are compared at each horizon) and wmape_pct, the error as a percentage of actuals, rounded to one decimal. Sorted by lag_months ascending.",
+      "hints": [
+        "The horizon is already written into the snapshot row, so group by it and derive nothing from the dates.",
+        "The pair count belongs next to the error for a reason: the horizons hold different numbers of pairs, and without that column there is no telling whether the three figures are comparable."
+      ],
+      "explain": "Error grows with the horizon: 15.4% one month ahead, 27% at two months and 30.9% at three. That is a property of time rather than of the model. A month before the start you already know the retailer orders, the promo plan and the stock in the channel; three months out you know none of it. The figures then read like this: the promise «we plan a quarter ahead» rests on a number twice as bad as the one usually cited in its defence. The pairs column is not decoration either. The far horizon holds fewer pairs, 1252 against 1344, because the earliest months of history have no snapshot made that far in advance, and three errors can only be compared knowing the sets almost coincide."
+    },
+    {
+      "id": "sql-079",
+      "title": "The tail that spoils the average",
+      "brief": "In the planner report the error is worked out for every «month and SKU» pair and then averaged across rows. At the three month horizon that gives 35.6%, and nobody wants to walk into the committee with such a figure. Before arguing about it, work out who creates it.",
+      "goal": "At the three month horizon, split the pairs into small (actuals below 200 units) and large ones and return size_group ('small' or 'large'), pairs, mape_pct (the error averaged across rows, in percent), wmape_pct (the same error weighted) and abs_error_units (the sum of misses in units). Round the percentages to one decimal.",
+      "hints": [
+        "The starter already pairs forecast with actuals. One flag column is missing: a CASE on the actuals splits the pairs into two groups, and the grouping runs on that same column.",
+        "The two metrics differ only in where the division happens. The row average is an AVG of a percentage worked out inside each row; the weighted one is the sum of misses divided by the sum of actuals."
+      ],
+      "explain": "The difference between two ways of counting the same thing turned out to sit entirely in the tail: pairs below two hundred units are 331 rows out of 1252, their row averaged error is 49.2% against 30.7% for the large ones, and in units they contribute 15 894 misses out of 302 935, which is 5.2%. That is where the 35.6% in the report comes from: across rows a SKU selling forty units weighs as much as one selling ten thousand, and the tail pulls the figure up. The weighted error answers «how many units did we get wrong», the row average answers «how predictable is a typical SKU». The second question is a fair one, but it is a different one: it decides which items to plan by hand, not how much raw material to order. Showing one metric in place of the other means answering a question nobody asked."
+    },
+    {
+      "id": "sql-080",
+      "title": "Which number goes to the committee",
+      "brief": "The planner is preparing the regular slide and asks which single error metric to use. Both are worked out on exactly the same «month and SKU» pairs at the three month horizon, and they differ only in where the division sits.",
+      "goal": "Predict what the query returns and explain the gap between the two numbers.",
+      "predictQuestion": "Which numbers will the query return, and why did they come apart?",
+      "options": [
+        {
+          "label": "Around 35.6 and 30.9: across rows a small pair weighs as much as a large one, and the tail of small SKUs pulls the first number up",
+          "why": "AVG divides by the number of rows, so a pair of forty units affects the result as much as a pair of ten thousand. Small pairs carry a high percentage by their nature: a miss of twenty units on a base of forty is 50%, and almost nothing in units. The weighted metric divides a sum by a sum, and the weight goes back to volume."
+        },
+        {
+          "label": "The two numbers will match: this is one metric written in two ways, differing only in the order of operations",
+          "why": "The order of operations is the metric here. An average of ratios and a ratio of sums agree exactly when every row is the same size, and in the fact table they differ by a factor of hundreds."
+        },
+        {
+          "label": "The weighted one will come out higher: large SKUs weigh more in it, and that is where the error in units sits",
+          "why": "In units the error really does sit almost entirely on large SKUs, but the weighted metric divides it by an equally large volume of actuals. The higher figure is the one where small pairs get an unearned weight, which is the row average."
+        },
+        {
+          "label": "Around 35.6 and 30.9, and the gap means some pairs have zero actuals, where the percentage error runs to infinity",
+          "why": "The numbers are right and the reason is not. Pairs with zero actuals never enter the comparison at all: actuals arrive through the join, so a month without sales is simply absent. The gap is created by equal weight on rows of unequal size, not by a division by zero."
+        }
+      ],
+      "hints": [
+        "Look at what sits inside AVG in the first column and at what is divided by what in the second.",
+        "Picture two pairs: forty units of actuals with a miss of twenty, and ten thousand units with a miss of a thousand. Work out both metrics on them by hand."
+      ],
+      "explain": "Two metrics, the same data, and almost five points between them: 35.6% against 30.9%. The only difference is the weight of a row. The row average treats every «month and SKU» pair as equal, so the tail of small items, where a miss of twenty units reads as 50%, lifts the total. The weighted one counts units, and in it the same tail holds 5.2% of the error. What goes to the supply chain committee is the weighted figure: the decisions there are how much raw material to order and how many shifts to run, and those are questions about units. The row average stays inside planning as a way to find items that cannot be predicted at all, and there it beats the weighted one. The metric follows the decision, not the number that looks nicer."
+    },
+    {
+      "id": "sql-081",
+      "title": "The brand we always overshoot",
+      "brief": "At the accuracy review the commercial director says the forecast is «always cut low so that people can report overperformance later». The planner answers that nothing is being cut. One table settles it: put bias, the same ratio with the sign kept, next to the error.",
+      "goal": "At the three month horizon and for each brand return brand, bias_pct (bias as a signed percentage of actuals) and wmape_pct (the error without its sign). Round both to one decimal. Sorted by bias_pct descending.",
+      "hints": [
+        "Bias and error differ by one ABS: in the numerator of bias the sign survives, so shortfalls and overshoots cancel each other out, and here that is the point of the quantity rather than a defect.",
+        "The brand lives in the product reference table, so the forecast needs a second join, and the grouping runs on the brand."
+      ],
+      "explain": "The director turned out to be right, though not about everyone: eight brands out of nine are forecast short by 5.9% to 14.7%, and that is exactly the systematic lean he described. The ninth breaks the picture. «Nettora» carries a bias of +11% together with the worst error on the list, 37.7%. The brand has been falling for two years while the planner keeps building in a return to the old level: the error there is not random, it all points one way. Hence how the two columns read. Error is about the quality of the model, bias is about the behaviour of the people who adjust it, and adjust it they always do: fear of a stockout pushes numbers up, a bonus for beating the plan pushes them down. Bias is also cheap to fix: a steady lean can be subtracted as a correction, and part of the error goes away without a single new model."
+    },
+    {
+      "id": "sql-082",
+      "title": "The forecast against the calendar",
+      "brief": "Before arguing about how to improve the forecast, it is worth asking whether it beats the free alternative: «this month we will sell what we sold last month». That forecast needs no planner and no sign off meeting, only the previous row of actuals. The query works out the error of both on the same pairs.",
+      "goal": "Predict how the comparison falls across the horizons.",
+      "predictQuestion": "How will the two numbers fall across the three horizons?",
+      "options": [
+        {
+          "label": "One month ahead the forecast is twice as accurate as the calendar (15.4% against 33.3%), and at three months the difference nearly disappears: 30.9% against 33.5%",
+          "why": "The forecast error grows with the horizon while the calendar error does not depend on the horizon at all: it looks only at the previous month of actuals and has no idea when it was «made». The two lines converge, and at the far horizon the forecast wins 2.6 points, less than a monthly cycle of sign off meetings costs."
+        },
+        {
+          "label": "The forecast wins by roughly a factor of two at all three horizons, because it uses more information",
+          "why": "It has more information only at the near horizon. Three months before the start neither the retailer orders nor the promo plan are known, and the advantage over repeating last month nearly vanishes."
+        },
+        {
+          "label": "The calendar error grows with the horizon too, because it is worked out on the same pairs",
+          "why": "The pairs are the same, but the calculation carries no horizon in it: a naive forecast for a month is the previous month of actuals, whatever lead time it was «announced» at. Small differences between horizons come only from the different sets of months."
+        },
+        {
+          "label": "The calendar will be more accurate at every horizon: repeating last month makes no assumptions",
+          "why": "At the near horizon the forecast wins by more than a factor of two, and that is its legitimate value. It loses not everywhere but at the far horizon, where there was little left to lose."
+        }
+      ],
+      "hints": [
+        "Ask about each line separately: what makes the forecast error move, and what makes the error of repeating last month move.",
+        "The forecast error at all three horizons is already worked out in sql-078: 15.4%, 27% and 30.9%."
+      ],
+      "explain": "Comparing against a free benchmark is the first question to ask of any forecast, and here the answer is uncomfortable: one month ahead the forecast beats repeating last month twice over (15.4% against 33.3%), and at three months it wins 2.6 points (30.9% against 33.5%). The far horizon is exactly the one production and procurement need, the one where the forecast adds almost nothing to the calendar. The conclusion is not that the forecast is useless: at the near horizon it delivers exactly what it exists for. The conclusion is that the value of a forecast is measured by the distance to a benchmark rather than by its absolute error, and measured at each horizon separately. In practice this comparison is called forecast value added, and it is useful precisely because it turns «is our forecast good» into the checkable «is it better than nothing»."
+    },
+    {
+      "id": "sql-083",
+      "title": "The forecast that takes value away",
+      "brief": "sql-082 shows that at three months the forecast barely differs from repeating last month. The company average, however, says nothing about where it helps and where it gets in the way. The planner asks for the comparison broken down by brand: which ones to start the review with, and which to leave alone.",
+      "goal": "Work out, for each brand at the three month horizon, the forecast error and the error of the «same as last month» benchmark, then say what to do with the table.",
+      "steps": [
+        {
+          "goal": "At the three month horizon and for each brand return brand, wmape_model (the forecast error), wmape_naive (the benchmark error) and gain_pp, the difference between them in percentage points, benchmark minus forecast. Round all three to one decimal. Sorted by gain_pp ascending.",
+          "hints": [
+            "The benchmark is worked out before the join with the forecast: first actuals by month and SKU, then the previous month through a window function over the same SKU. Computed after the join, the window would see three rows per month, one per horizon, and shift by the wrong amount.",
+            "The first month of a series has no previous one, and LAG returns nothing there. Those pairs have to leave the comparison, otherwise the two errors are worked out on different sets of rows."
+          ]
+        },
+        {
+          "question": "For «Nettora» the forecast misses by 37.7% against 23.3% for the «same as last month» benchmark, while for «Pyrexan» it is 32.5% against 57.5%. What do you do with a table like this?",
+          "hints": [
+            "Look at the sign of the difference rather than its size: it splits the brands into two different stories.",
+            "Ask which decision this table drives, and for which brands it changes anything at all."
+          ],
+          "options": [
+            {
+              "label": "Split the brands: where the difference is negative the forecast takes accuracy away, and until the cause is found the benchmark is the honest choice; on the rest it gives between five and twenty five points and needs nothing done to it",
+              "why": "The table is not about the quality of the forecast in general but about where it works. A negative difference marks a brand where the planner manual work does worse than nothing, and there are two of those here. On «Pyrexan» and «Rhinolar» the same forecast wins 25 and 19 points, and there is no reason to touch it there."
+            },
+            {
+              "label": "Drop the forecast altogether: it is no better than repeating last month",
+              "why": "That is how the company average reads, and only it. By brand the picture splits: on «Pyrexan» the forecast beats the benchmark by 25 points and on «Rhinolar» by 19. Dropping it would throw that part out along with the problem part."
+            },
+            {
+              "label": "Nothing: the difference for «Krosti» is 0.2 points, so the metric is unstable and it is too early to draw conclusions",
+              "why": "One row near zero does not turn the other eight into noise. For «Nettora» the difference is 14.4 points and for «Pyrexan» it is 25; that is the forecast behaving differently on different brands, not a metric wobbling."
+            },
+            {
+              "label": "The benchmark wins on «Nettora» simply because the brand is falling: on a declining series repeating last month is more accurate by construction",
+              "why": "On a declining series repeating last month overshoots too, since it always takes the higher previous level. It wins here only because the forecast overshoots harder: the bias on «Nettora» is +11% while every other brand sits below zero."
+            }
+          ]
+        }
+      ],
+      "explain": "The task brings two earlier findings together. The bias on «Nettora» was already visible in sql-081, where it looked like a quirk of one brand; the comparison with a benchmark shows what it costs: on that brand the forecast is 14.4 points worse than freely repeating last month. The opposite pole matters just as much. On «Pyrexan» the same forecast wins 25 points, so «the forecast is bad» is as wrong on this data as «the forecast is good». The right conclusion is addressed to somebody: review the brands with a negative difference rather than the method as a whole. Hence the working rule. Forecast accuracy on its own means nothing; what means something is the distance to a benchmark that costs nothing. And the caveat without which the rule lies: the benchmark here is the simplest one, «same as last month». For a seasonal product the fairer comparison is the same month a year ago, and this data allows that too, but whichever benchmark you pick has to be named out loud, because it sets the bar below which a forecast has no point."
     }
   ]
 }

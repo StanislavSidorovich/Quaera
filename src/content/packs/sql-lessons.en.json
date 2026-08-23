@@ -137,6 +137,15 @@
       "selfCheck": "Profile any new export first: row count, duplicates, share of empties, date range, list of distinct values in the key columns."
     },
     {
+      "skill": "sql-forecast-accuracy",
+      "title": "Forecast accuracy: error and bias",
+      "why": "A forecast is always wrong, and the conversation is not about that but about how far off it is and in which direction. Two different quantities answer those two questions, and one cannot stand in for the other. Error (WMAPE) is the sum of misses with the sign removed, divided by the sum of actuals: the sign goes before the adding, so a shortfall in one month is not cancelled by an overshoot in another. Bias is the same ratio with the sign kept: it shows the lean, and a zero in it means balance, not accuracy. Both are a sum divided by a sum rather than an average across rows, because a SKU selling a hundred units cannot weigh as much as one selling ten thousand, and in a row average it weighs exactly that much.",
+      "form": "WMAPE, how far off:\n  SUM(ABS(forecast - actual))\n    / SUM(actual)\nBias, which way:\n  SUM(forecast - actual)\n    / SUM(actual)\n\nActuals are rolled up to month and\nSKU, the same grain the forecast\nwas made at, or there is nothing\nto compare.",
+      "reads": "For «Milvara» in 2025 the one month ahead forecast missed by 17.1% of actuals, while bias sat at 0.6%: no lean at all, and plenty of error. The two numbers answer different questions, and the second one never answers the first.",
+      "wrongWhy": "The sign is still there, so the misses cancelled out: 0.6% instead of 17.1%. A report carrying that figure reads as «the forecast is nearly perfect», when a month short by a thousand units and a month over by a thousand units have simply subtracted. Netting errors is not accuracy: production and the warehouse live one month at a time, not on the yearly sum, and somebody paid for both thousands, in idle lines or in write-offs.",
+      "selfCheck": "Run the same error at the three month horizon. It has to grow, because a forecast made earlier knows less. If it did not grow, or matched to the digit, look at the join: most likely the actuals came from a different month than the one the forecast was made for."
+    },
+    {
       "skill": "sql-business-case",
       "title": "Breaking down a business situation",
       "why": "\"Sales dropped 40%\" isn't an answer; it's the start of the work. The requester needs to know what to do, and for that you need to know which factor moved, and along with it, who owns the problem.",

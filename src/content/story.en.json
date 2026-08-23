@@ -42,9 +42,14 @@
           "outcome": "You measure uplift against a base you name out loud, rankings inside groups, and comparisons with the previous period."
         },
         {
-          "title": "Price and cause",
-          "hook": "The last weeks bring the two questions asked most often. First: the price list went up and the money did not, so where did the difference go. The second arrives as worry rather than a task: a brand has halved and nobody knows why. Neither is answered by a query, but by deciding which query to write.",
-          "outcome": "You work out how much of the list price reached the till and what ate the rest, and you take a situation apart down to its cause: the numbers first, then what they mean for the business."
+          "title": "The promise and the fact",
+          "hook": "Two topics about the same thing from different sides. The company promised something, a price list at the start of the month, a demand forecast three months before it, and then looked at what actually happened. In both cases the gap is not one person making a mistake. It is a quantity you have to measure and then explain.",
+          "outcome": "You work out how much of the list price reached the till and what ate the rest, and you measure forecast error so that misses cannot cancel each other out, with a free benchmark standing next to it."
+        },
+        {
+          "title": "Why it dropped",
+          "hook": "The last question arrives as worry rather than a task: a brand has halved and nobody knows why. There is no new technique here, only every earlier one in the right order. Deciding which query to write is worth more than being able to write it.",
+          "outcome": "You take a situation apart down to its cause, the numbers first and then what they mean for the business, and you say out loud what the data cannot know."
         }
       ]
     }

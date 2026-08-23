@@ -2163,6 +2163,68 @@
         "One option makes the correction invisible to exactly the people already acting on the old version."
       ],
       "explain": "Correcting an error that has already reached people has an order to it, and it does not start with apologies.\n\nFirst: who is acting on this figure. Not \"all forty recipients\" but those whose action tomorrow changes, the team that opened talks with the chains. They are written to first and immediately, because every hour of work on the wrong priority is paid for. Second: what exactly is wrong, in which direction and by how much, not \"there was an error in the table\" but \"e-commerce was missing from the breakdown; it accounts for 80% of the brand's revenue, the chains for 17%\". Third, and this is what gets skipped most often: what has not changed. The main finding about the 46 lost outlets stands. Without that line, a reader who does not know the boundaries of the error quite reasonably stops trusting the whole document, flawless parts included. A stated boundary works the same way as a stated weakness in the data in dom-054: it shows you know where your knowledge ends.\n\nEveryone else gets the short correction next, one paragraph. And only then, in a separate message and without rushing, the cause and what has changed in the process so it does not recur.\n\nThe silent fix looks like the cheapest way out and is the most expensive. People made a decision on the version they saw; two files with the same name will be left in the correspondence, and a month later nobody will be able to prove which table was on the table when the decision was made. The rule is simple: the corrected version carries a date and a \"what changed\" line, and the old one is not deleted but marked superseded (dom-059).\n\nOn apologies: one sentence is enough, then get to the substance. A long act of contrition moves attention from the reader's decision to your feelings and damages trust more than the error itself: the recipient starts to feel something extraordinary happened, when what happened was a lost filter.\n\nAnd the root cause, properly. It is not \"carelessness\"; nothing protects against carelessness. It is the absence of the check that catches this class of error: a breakdown must add up to the report's total. Chains plus traditional trade came to 210 thousand against brand revenue of 1 079 thousand, a discrepancy visible in a second, if anyone does that reconciliation at all. That is the pre-send check (dom-sanity-check): every breakdown of one quantity gives the same total, and when it does not, the thing to look at is not the breakdown but the filter."
+    },
+    {
+      "id": "dom-067",
+      "title": "Three months that add nothing",
+      "brief": "At the annual accuracy review the planner shows the demand forecast error and puts the error of a free benchmark next to it: «we will sell what we sold last month». Production plans line loading three months ahead.",
+      "goal": "Work out what this table implies for the planning cycle.",
+      "scenario": "Forecast error, % of yearly volume:\n\nhorizon     forecast   calendar\n1 month        15%        33%\n2 months       27%        34%\n3 months       31%        34%\n\nCalendar means «we will sell what\nwe sold last month».\nProduction plans three months ahead.",
+      "predictQuestion": "What does this mean for the planning cycle?",
+      "options": [
+        {
+          "label": "At the horizon the forecast exists for, it barely differs from a free benchmark: say that out loud and find the cause first, and improve the model after",
+          "why": "One month ahead the forecast earns its keep: 15% against 33%. At three months the advantage is three points, and that is exactly the horizon production needs. The conversation starts with admitting that the far horizon currently rides on the calendar, not with a new model."
+        },
+        {
+          "label": "The forecast is bad: 31% error is not a forecast, the model has to be replaced",
+          "why": "Bad compared to what? The calendar gives 34% at the same horizon, so «bad» here is a property of the problem rather than of the model. An absolute error with no benchmark says nothing: 31% is a disaster on one product and a good result on another."
+        },
+        {
+          "label": "Extend the forecast horizon to six months so that production can plan more calmly",
+          "why": "Accuracy falls with the horizon, so the sixth month will be worse than the third. Calm comes from an honest statement of what can be trusted at each horizon, not from the length of the forecast."
+        },
+        {
+          "label": "If the calendar is no worse, the planner is not needed: take the benchmark and close the cycle",
+          "why": "At the near horizon the forecast is twice as accurate as the calendar, and procurement and shipments live on that horizon. Dropping the forecast would spend that half to save on the far one."
+        }
+      ],
+      "hints": [
+        "Compare the two columns row by row rather than as a whole: the distance between them matters more than either number.",
+        "Ask at which horizon the decision that the forecast exists for is actually taken."
+      ],
+      "explain": "The first question to ask of any forecast is not «how accurate is it» but «is it better than what costs nothing». The free benchmark here is the simplest one: repeat last month. One month ahead the forecast beats it twice over, and that is its legitimate value; at three months the gap is three points, and the line loading decision is taken exactly there. The distance between forecast and benchmark is called forecast value added, and it is measured at each horizon separately, because a single yearly figure hides the very thing worth seeing. What to do about it is not something the data can say, and that is fine: there are usually two moves, shorten the horizon of firm commitments, or feed the far forecast what people know about the future and the series does not, such as the promo plan, a new retailer, a competitor leaving. One caveat about the benchmark itself: repeating last month works badly for a seasonal product, where the fairer comparison is the same month a year ago. Pick the benchmark in advance and name it out loud, or the argument about the value of forecasting turns into an argument about what to compare it with."
+    },
+    {
+      "id": "dom-068",
+      "title": "Eight run low, one runs high",
+      "brief": "The annual accuracy review carries forecast bias for every brand: how far above or below actuals the forecast sits on average. The planner says it is just spread.",
+      "goal": "Work out what this picture says first of all.",
+      "scenario": "Forecast bias for the year, three month\nhorizon, % of actuals\n(plus means overshot):\n\n  Nettora      +11%\n  Rhinolar      -6%\n  Vitanor       -7%\n  Fruvia        -8%\n  Milvara       -8%\n  Pyrexan      -10%\n  Gastrivo     -11%\n  Krosti       -14%\n  Aqualis      -15%\n\nNettora has been falling for two years.",
+      "predictQuestion": "What does this picture say first of all?",
+      "options": [
+        {
+          "label": "It is about the process rather than the model: eight brands out of nine run low, and a one sided lean comes from people and rules, not from chance",
+          "why": "Random error would scatter pluses and minuses. Eight minuses in a row mean the numbers are steadily pushed one way, usually in the sign off meeting, where a lower forecast is safer for the plan and the bonus. A lean like that can be measured and subtracted as a correction, which is cheaper than any new model."
+        },
+        {
+          "label": "«Nettora» is forecast better than the others: it holds the only plus in the column",
+          "why": "The sign says nothing about accuracy. On a falling brand the forecast runs high because a return to the old level is built into it every month, and the error there is in fact the worst on the list. Bias and accuracy are two different quantities."
+        },
+        {
+          "label": "The model errs systematically and has to be retrained on fresh data",
+          "why": "A model that errs one way on eight brands at once is rare; a lean like that usually comes from manual edits and sign off rules layered on top of the calculation. Retraining leaves the cause untouched, and a quarter later the picture returns."
+        },
+        {
+          "label": "Nothing: a bias within fifteen percent is normal for demand forecasting",
+          "why": "What is normal is the spread, not its one sidedness. Fifteen percent either way is ordinary life; fifteen percent always in the same direction means somebody or something is holding the numbers down."
+        }
+      ],
+      "hints": [
+        "Look at the signs rather than the sizes: how many brands went down and how many went up.",
+        "Ask what this column would look like if the error were random."
+      ],
+      "explain": "Bias answers the question «which way», and the answer here is one sided: eight brands out of nine are forecast below actuals. Chance does not look like that, so somebody is moving the numbers, and it usually happens after the model rather than inside it: a lower demand forecast is safer for the sales plan that bonuses are paid on, and easier in the conversation with production. Hence the practical conclusion: a steady lean is the cheapest part of the error, subtracted as a correction for an improvement with no new model at all, while the random part is far harder to reduce. The ninth row matters more than the eight, though. On the falling brand the lean runs the other way, because a return to the old level is built into the forecast every month, and that is no longer a general rule but the specific expectation of specific people. So the rule for reading the table: show bias and accuracy side by side and never one in place of the other. Bias speaks about the process and the people, error speaks about how predictable the task is at all."
     }
   ]
 }

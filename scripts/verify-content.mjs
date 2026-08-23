@@ -1136,6 +1136,73 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   if (r.rows.length === 2 && !quoted.some((q, i) => !r.rows[i])) console.log('  ok   sql-059: цифры в тексте задания совпадают с датасетом');
 }
 
+/*
+ * dom-067 и dom-068 — первые задания трека domain, чьи сценарии печатают
+ * не выдуманные, а замеренные числа. У трека нет исполнителя кода, поэтому
+ * сценарий здесь ровно так же беззащитен, как разбор predict-задания:
+ * поправка в генераторе молча оставит на экране прошлогоднюю таблицу.
+ *
+ * Числа в сценарии округлены до целых процентов, и проверка это учитывает:
+ * допуск 0.6 пункта означает «целое написано верно», а не «третий знак
+ * не дрогнул». Сами явления (падение точности с горизонтом, единственный
+ * перепрогноз) держит гейт датасета — здесь сверяется только цитата.
+ */
+{
+  const measured = (sql) => runSql(sql).rows;
+  const ACTUAL = `
+    WITH actual AS (
+      SELECT substr(week_start, 1, 7) AS ym, product_id, SUM(units) AS units
+      FROM fact_sellout GROUP BY 1, 2)`;
+  const near = (a, b) => Math.abs(a - b) <= 0.6;
+
+  // dom-067: таблица «горизонт — прогноз — календарь».
+  const horizons = measured(`${ACTUAL},
+    naive AS (
+      SELECT ym, product_id, units,
+             LAG(units) OVER (PARTITION BY product_id ORDER BY ym) AS prev_units
+      FROM actual)
+    SELECT f.lag_months,
+           100.0 * SUM(ABS(f.forecast_units - n.units)) / SUM(n.units) AS ours,
+           100.0 * SUM(ABS(n.prev_units - n.units)) / SUM(n.units) AS naive
+    FROM fact_forecast_snapshot f
+    JOIN naive n ON n.product_id = f.product_id AND n.ym = substr(f.month_start, 1, 7)
+    WHERE n.prev_units IS NOT NULL
+    GROUP BY f.lag_months ORDER BY f.lag_months`);
+  const quoted067 = [[1, 15, 33], [2, 27, 34], [3, 31, 34]];
+  let ok067 = horizons.length === 3;
+  horizons.forEach((row, i) => {
+    const q = quoted067[i];
+    if (!q || row[0] !== q[0] || !near(row[1], q[1]) || !near(row[2], q[2])) {
+      ok067 = false;
+      fail('dom-067', `сценарий разошёлся с данными: в базе ${row.map((v) => Math.round(v * 10) / 10).join(' / ')}, в тексте ${q?.join(' / ')}`);
+    }
+  });
+  if (ok067) console.log('  ok   dom-067: таблица горизонтов в сценарии совпадает с датасетом');
+
+  // dom-068: столбец смещения по брендам, порядок в сценарии тот же.
+  const bias = measured(`${ACTUAL}
+    SELECT p.brand, 100.0 * SUM(f.forecast_units - a.units) / SUM(a.units) AS bias
+    FROM fact_forecast_snapshot f
+    JOIN actual a ON a.product_id = f.product_id AND a.ym = substr(f.month_start, 1, 7)
+    JOIN dim_product p ON p.product_id = f.product_id
+    WHERE f.lag_months = 3
+    GROUP BY p.brand ORDER BY bias DESC`);
+  const quoted068 = [
+    ['Nettora', 11], ['Rhinolar', -6], ['Vitanor', -7], ['Fruvia', -8], ['Milvara', -8],
+    ['Pyrexan', -10], ['Gastrivo', -11], ['Krosti', -14], ['Aqualis', -15],
+  ];
+  let ok068 = bias.length === quoted068.length;
+  if (!ok068) fail('dom-068', `в сценарии ${quoted068.length} брендов, в базе ${bias.length}`);
+  bias.forEach((row, i) => {
+    const q = quoted068[i];
+    if (!q || row[0] !== q[0] || !near(row[1], q[1])) {
+      ok068 = false;
+      fail('dom-068', `сценарий разошёлся с данными: в базе ${row[0]} ${Math.round(row[1] * 10) / 10}%, в тексте ${q?.[0]} ${q?.[1]}%`);
+    }
+  });
+  if (ok068) console.log('  ok   dom-068: столбец смещения в сценарии совпадает с датасетом');
+}
+
 // --- Цифры и факты, которые называет разбор (explain) заданий-предсказаний.
 //
 // У режима predict нет исполнимого эталона, поэтому проверка эталонов выше их не

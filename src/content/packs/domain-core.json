@@ -33,9 +33,7 @@
       "title": "От «сделай дашборд» к постановке",
       "tier": 1,
       "summary": "Довожу запрос до вопроса, ответ на который меняет чьё-то решение, и фиксирую получателя, срок и признак готовности.",
-      "prereqs": [
-        "dom-roles"
-      ]
+      "prereqs": ["dom-roles"]
     },
     {
       "id": "dom-metric-definition",
@@ -43,9 +41,7 @@
       "title": "Определение метрики",
       "tier": 1,
       "summary": "Записываю метрику так, что два человека посчитают её одинаково: источник, фильтры, гранулярность и что из неё исключено.",
-      "prereqs": [
-        "dom-requirements"
-      ]
+      "prereqs": ["dom-requirements"]
     },
     {
       "id": "dom-sanity-check",
@@ -53,9 +49,7 @@
       "title": "Проверки перед отправкой",
       "tier": 1,
       "summary": "Перед отправкой сверяю итог с источником, смотрю на порядок величин и полноту периода — и нахожу ошибку раньше, чем её найдёт получатель.",
-      "prereqs": [
-        "dom-metric-definition"
-      ]
+      "prereqs": ["dom-metric-definition"]
     },
     {
       "id": "dom-value-chain",
@@ -63,9 +57,7 @@
       "title": "Цепочка создания стоимости",
       "tier": 2,
       "summary": "Представляю путь товара от производства до полки и знаю, в каком звене рождаются данные, которые я анализирую.",
-      "prereqs": [
-        "dom-roles"
-      ]
+      "prereqs": ["dom-roles"]
     },
     {
       "id": "dom-order-to-cash",
@@ -73,9 +65,7 @@
       "title": "Order-to-cash",
       "tier": 2,
       "summary": "Читаю статусы документа от заказа до оплаты и понимаю, какой из них означает «продано» для конкретного отчёта.",
-      "prereqs": [
-        "dom-value-chain"
-      ]
+      "prereqs": ["dom-value-chain"]
     },
     {
       "id": "dom-sellin-sellout",
@@ -83,9 +73,7 @@
       "title": "Sell-in и sell-out",
       "tier": 2,
       "summary": "Не путаю отгрузку на склад клиента с продажей конечному покупателю и выбираю источник под вопрос заказчика.",
-      "prereqs": [
-        "dom-value-chain"
-      ]
+      "prereqs": ["dom-value-chain"]
     },
     {
       "id": "dom-planning",
@@ -93,9 +81,7 @@
       "title": "S&OP и прогноз спроса",
       "tier": 2,
       "summary": "Понимаю, как из прогноза спроса получается план отгрузок, и что в этом цикле аналитик обеспечивает, а не украшает.",
-      "prereqs": [
-        "dom-sellin-sellout"
-      ]
+      "prereqs": ["dom-sellin-sellout"]
     },
     {
       "id": "dom-seasonality",
@@ -103,9 +89,7 @@
       "title": "Сезонность и сравнение периодов",
       "tier": 2,
       "summary": "Сравниваю год к году, а не месяц к месяцу, когда в категории есть сезон, и объясняю, почему скользящий год честнее квартала.",
-      "prereqs": [
-        "dom-metric-definition"
-      ]
+      "prereqs": ["dom-metric-definition"]
     },
     {
       "id": "dom-fmcg-distribution",
@@ -113,9 +97,7 @@
       "title": "Дистрибуция и присутствие на полке",
       "tier": 3,
       "summary": "Различаю численную и взвешенную дистрибуцию, читаю ACV и вижу в OOS упущенную выручку, а не техническую строку отчёта.",
-      "prereqs": [
-        "dom-sellin-sellout"
-      ]
+      "prereqs": ["dom-sellin-sellout"]
     },
     {
       "id": "dom-fmcg-consumer",
@@ -123,9 +105,7 @@
       "title": "Проникновение, повторные покупки, скорость",
       "tier": 3,
       "summary": "Раскладываю долю рынка на проникновение, частоту и объём покупки и понимаю, какой именно рычаг просел.",
-      "prereqs": [
-        "dom-fmcg-distribution"
-      ]
+      "prereqs": ["dom-fmcg-distribution"]
     },
     {
       "id": "dom-fmcg-promo",
@@ -133,10 +113,7 @@
       "title": "Промо: отдача и каннибализация",
       "tier": 3,
       "summary": "Считаю отдачу от акции с поправкой на то, что часть роста украдена у соседнего SKU и у будущих недель.",
-      "prereqs": [
-        "dom-fmcg-distribution",
-        "dom-seasonality"
-      ]
+      "prereqs": ["dom-fmcg-distribution", "dom-seasonality"]
     },
     {
       "id": "dom-pharma-rx",
@@ -144,10 +121,7 @@
       "title": "TRx, NRx и доля рынка",
       "tier": 3,
       "summary": "Различаю все выписки и новые назначения и читаю долю рынка в скользящем годе, а не в отдельно взятом месяце.",
-      "prereqs": [
-        "dom-sellin-sellout",
-        "dom-seasonality"
-      ]
+      "prereqs": ["dom-sellin-sellout", "dom-seasonality"]
     },
     {
       "id": "dom-pharma-data",
@@ -155,9 +129,7 @@
       "title": "Панельные данные в фарме",
       "tier": 3,
       "summary": "Помню, что данные IQVIA — это выборка аптек, пересчитанная на рынок, и не выдаю оценку за факт продаж.",
-      "prereqs": [
-        "dom-pharma-rx"
-      ]
+      "prereqs": ["dom-pharma-rx"]
     },
     {
       "id": "dom-decomposition",
@@ -165,10 +137,7 @@
       "title": "Декомпозиция «почему упало»",
       "tier": 3,
       "summary": "Раскладываю изменение показателя на множители и довожу разбор до того звена, у которого есть владелец.",
-      "prereqs": [
-        "dom-seasonality",
-        "dom-fmcg-distribution"
-      ]
+      "prereqs": ["dom-seasonality", "dom-fmcg-distribution"]
     },
     {
       "id": "dom-abc-xyz",
@@ -176,9 +145,7 @@
       "title": "ABC-XYZ сегментация",
       "tier": 3,
       "summary": "Делю ассортимент по вкладу и стабильности спроса и понимаю, какое действие следует за каждой группой.",
-      "prereqs": [
-        "dom-seasonality"
-      ]
+      "prereqs": ["dom-seasonality"]
     },
     {
       "id": "dom-causality",
@@ -186,9 +153,7 @@
       "title": "Корреляция и причинность",
       "tier": 4,
       "summary": "Не принимаю совпадение динамики за причину и знаю, какие объяснения надо исключить, прежде чем что-то утверждать.",
-      "prereqs": [
-        "dom-decomposition"
-      ]
+      "prereqs": ["dom-decomposition"]
     },
     {
       "id": "dom-storytelling",
@@ -196,10 +161,7 @@
       "title": "Вывод вперёд",
       "tier": 4,
       "summary": "Начинаю с ответа и с «так что с того», а ход расчёта держу ниже — по пирамиде Минто, а не по хронологии своей работы; и защищаю этот вывод перед людьми, у которых на него разные интересы.",
-      "prereqs": [
-        "dom-sanity-check",
-        "dom-decomposition"
-      ]
+      "prereqs": ["dom-sanity-check", "dom-decomposition"]
     },
     {
       "id": "dom-chart-choice",
@@ -207,9 +169,7 @@
       "title": "Выбор графика",
       "tier": 4,
       "summary": "Выбираю тип графика под вопрос — сравнение, структура, динамика или связь — и убираю с него всё, что на вопрос не отвечает.",
-      "prereqs": [
-        "dom-storytelling"
-      ]
+      "prereqs": ["dom-storytelling"]
     },
     {
       "id": "dom-governance",
@@ -217,9 +177,7 @@
       "title": "Данные под ответственностью",
       "tier": 4,
       "summary": "Не тащу персональные данные туда, где они не нужны, версионирую расчёт и оставляю после себя документацию.",
-      "prereqs": [
-        "dom-sanity-check"
-      ]
+      "prereqs": ["dom-sanity-check"]
     }
   ],
   "tasks": [
@@ -263,9 +221,7 @@
       "id": "dom-002",
       "track": "domain",
       "skill": "dom-roles",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 2,
       "mode": "predict",
       "title": "Не сходится с учётной системой",
@@ -374,9 +330,7 @@
       "id": "dom-005",
       "track": "domain",
       "skill": "dom-requirements",
-      "alsoTrains": [
-        "dom-roles"
-      ],
+      "alsoTrains": ["dom-roles"],
       "level": 2,
       "mode": "predict",
       "title": "Просят выгрузку, нужен ответ",
@@ -413,9 +367,7 @@
       "id": "dom-006",
       "track": "domain",
       "skill": "dom-requirements",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "Когда задача считается сделанной",
@@ -452,9 +404,7 @@
       "id": "dom-007",
       "track": "domain",
       "skill": "dom-metric-definition",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 2,
       "mode": "predict",
       "title": "Сколько у нас активных клиентов",
@@ -527,9 +477,7 @@
       "id": "dom-009",
       "track": "domain",
       "skill": "dom-metric-definition",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 2,
       "mode": "predict",
       "title": "Метрику уточнили, история поехала",
@@ -566,9 +514,7 @@
       "id": "dom-010",
       "track": "domain",
       "skill": "dom-sanity-check",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 1,
       "mode": "predict",
       "title": "Одиннадцать месяцев",
@@ -641,9 +587,7 @@
       "id": "dom-012",
       "track": "domain",
       "skill": "dom-sanity-check",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "Сверить не с чем",
@@ -680,9 +624,7 @@
       "id": "dom-013",
       "track": "domain",
       "skill": "dom-value-chain",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "Сколько продали в июне",
@@ -719,9 +661,7 @@
       "id": "dom-014",
       "track": "domain",
       "skill": "dom-value-chain",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Доля рынка по своим данным",
@@ -758,9 +698,7 @@
       "id": "dom-015",
       "track": "domain",
       "skill": "dom-value-chain",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Ноль продаж и пустая полка",
@@ -797,9 +735,7 @@
       "id": "dom-016",
       "track": "domain",
       "skill": "dom-order-to-cash",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "Три цифры за один март",
@@ -836,9 +772,7 @@
       "id": "dom-017",
       "track": "domain",
       "skill": "dom-order-to-cash",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Отгрузили 31-го, приняли 2-го",
@@ -875,9 +809,7 @@
       "id": "dom-018",
       "track": "domain",
       "skill": "dom-order-to-cash",
-      "alsoTrains": [
-        "dom-value-chain"
-      ],
+      "alsoTrains": ["dom-value-chain"],
       "level": 2,
       "mode": "predict",
       "title": "Продали на 4.7 миллиона, а денег нет",
@@ -914,9 +846,7 @@
       "id": "dom-019",
       "track": "domain",
       "skill": "dom-sellin-sellout",
-      "alsoTrains": [
-        "dom-value-chain"
-      ],
+      "alsoTrains": ["dom-value-chain"],
       "level": 2,
       "mode": "predict",
       "title": "Один дистрибьютор из двенадцати",
@@ -953,9 +883,7 @@
       "id": "dom-020",
       "track": "domain",
       "skill": "dom-sellin-sellout",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 2,
       "mode": "predict",
       "title": "Какой источник под какой вопрос",
@@ -992,9 +920,7 @@
       "id": "dom-021",
       "track": "domain",
       "skill": "dom-sellin-sellout",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Отношение вернулось к норме",
@@ -1031,9 +957,7 @@
       "id": "dom-022",
       "track": "domain",
       "skill": "dom-planning",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "План не выполняет почти никто",
@@ -1070,9 +994,7 @@
       "id": "dom-023",
       "track": "domain",
       "skill": "dom-planning",
-      "alsoTrains": [
-        "dom-sellin-sellout"
-      ],
+      "alsoTrains": ["dom-sellin-sellout"],
       "level": 2,
       "mode": "predict",
       "title": "Прогноз спроса против плана продаж",
@@ -1109,9 +1031,7 @@
       "id": "dom-024",
       "track": "domain",
       "skill": "dom-planning",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 3,
       "mode": "predict",
       "title": "Слайд с прогнозом",
@@ -1148,9 +1068,7 @@
       "id": "dom-025",
       "track": "domain",
       "skill": "dom-seasonality",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 2,
       "mode": "predict",
       "title": "Плюс 316 процентов за месяц",
@@ -1187,9 +1105,7 @@
       "id": "dom-026",
       "track": "domain",
       "skill": "dom-seasonality",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Чем мерить динамику в марте",
@@ -1226,9 +1142,7 @@
       "id": "dom-027",
       "track": "domain",
       "skill": "dom-seasonality",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Два бренда в одном окне",
@@ -1265,9 +1179,7 @@
       "id": "dom-028",
       "track": "domain",
       "skill": "dom-fmcg-distribution",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Две дистрибуции одного бренда",
@@ -1304,9 +1216,7 @@
       "id": "dom-029",
       "track": "domain",
       "skill": "dom-fmcg-distribution",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 4,
       "mode": "predict",
       "title": "Дистрибуция 94%, а полка пустая",
@@ -1343,9 +1253,7 @@
       "id": "dom-030",
       "track": "domain",
       "skill": "dom-fmcg-distribution",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 4,
       "mode": "predict",
       "title": "Какую дистрибуцию возвращать",
@@ -1382,9 +1290,7 @@
       "id": "dom-031",
       "track": "domain",
       "skill": "dom-fmcg-consumer",
-      "alsoTrains": [
-        "dom-fmcg-distribution"
-      ],
+      "alsoTrains": ["dom-fmcg-distribution"],
       "level": 3,
       "mode": "predict",
       "title": "Шире не значит больше",
@@ -1421,9 +1327,7 @@
       "id": "dom-032",
       "track": "domain",
       "skill": "dom-fmcg-consumer",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Попробовали все, вернулись немногие",
@@ -1460,9 +1364,7 @@
       "id": "dom-033",
       "track": "domain",
       "skill": "dom-fmcg-consumer",
-      "alsoTrains": [
-        "dom-fmcg-distribution"
-      ],
+      "alsoTrains": ["dom-fmcg-distribution"],
       "level": 4,
       "mode": "predict",
       "title": "Скорость ухода с полки",
@@ -1499,9 +1401,7 @@
       "id": "dom-034",
       "track": "domain",
       "skill": "dom-fmcg-promo",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Плюс 146 или плюс 72",
@@ -1538,9 +1438,7 @@
       "id": "dom-035",
       "track": "domain",
       "skill": "dom-fmcg-promo",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Акция, которой почти не было",
@@ -1577,9 +1475,7 @@
       "id": "dom-036",
       "track": "domain",
       "skill": "dom-fmcg-promo",
-      "alsoTrains": [
-        "dom-seasonality"
-      ],
+      "alsoTrains": ["dom-seasonality"],
       "level": 4,
       "mode": "predict",
       "title": "Прирост, который украли у себя",
@@ -1616,9 +1512,7 @@
       "id": "dom-037",
       "track": "domain",
       "skill": "dom-pharma-rx",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "TRx растёт, NRx падает",
@@ -1655,9 +1549,7 @@
       "id": "dom-038",
       "track": "domain",
       "skill": "dom-pharma-rx",
-      "alsoTrains": [
-        "dom-seasonality"
-      ],
+      "alsoTrains": ["dom-seasonality"],
       "level": 3,
       "mode": "predict",
       "title": "Доля рынка, которая скачет вдвое",
@@ -1694,9 +1586,7 @@
       "id": "dom-039",
       "track": "domain",
       "skill": "dom-pharma-rx",
-      "alsoTrains": [
-        "dom-fmcg-distribution"
-      ],
+      "alsoTrains": ["dom-fmcg-distribution"],
       "level": 4,
       "mode": "predict",
       "title": "Запуск, который остановился на полпути",
@@ -1733,9 +1623,7 @@
       "id": "dom-040",
       "track": "domain",
       "skill": "dom-pharma-data",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 3,
       "mode": "predict",
       "title": "Панель против отгрузок",
@@ -1772,9 +1660,7 @@
       "id": "dom-041",
       "track": "domain",
       "skill": "dom-pharma-data",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 4,
       "mode": "predict",
       "title": "Рынок вырос, а покупатели те же",
@@ -1811,9 +1697,7 @@
       "id": "dom-042",
       "track": "domain",
       "skill": "dom-pharma-data",
-      "alsoTrains": [
-        "dom-sellin-sellout"
-      ],
+      "alsoTrains": ["dom-sellin-sellout"],
       "level": 3,
       "mode": "predict",
       "title": "Три числа об одном препарате",
@@ -1850,9 +1734,7 @@
       "id": "dom-043",
       "track": "domain",
       "skill": "dom-decomposition",
-      "alsoTrains": [
-        "dom-fmcg-distribution"
-      ],
+      "alsoTrains": ["dom-fmcg-distribution"],
       "level": 3,
       "mode": "predict",
       "title": "Продажи вдвое ниже, точка продаёт больше",
@@ -1889,9 +1771,7 @@
       "id": "dom-044",
       "track": "domain",
       "skill": "dom-decomposition",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 4,
       "mode": "predict",
       "title": "Кто на самом деле вырос на 22%",
@@ -1928,9 +1808,7 @@
       "id": "dom-045",
       "track": "domain",
       "skill": "dom-decomposition",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 4,
       "mode": "predict",
       "title": "До какого звена доводить разбор",
@@ -1967,9 +1845,7 @@
       "id": "dom-046",
       "track": "domain",
       "skill": "dom-abc-xyz",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 3,
       "mode": "predict",
       "title": "Парето, которого нет",
@@ -2006,9 +1882,7 @@
       "id": "dom-047",
       "track": "domain",
       "skill": "dom-abc-xyz",
-      "alsoTrains": [
-        "dom-seasonality"
-      ],
+      "alsoTrains": ["dom-seasonality"],
       "level": 4,
       "mode": "predict",
       "title": "Нестабильный по расписанию",
@@ -2045,9 +1919,7 @@
       "id": "dom-048",
       "track": "domain",
       "skill": "dom-abc-xyz",
-      "alsoTrains": [
-        "dom-planning"
-      ],
+      "alsoTrains": ["dom-planning"],
       "level": 3,
       "mode": "predict",
       "title": "Что делать с каждой клеткой",
@@ -2084,9 +1956,7 @@
       "id": "dom-049",
       "track": "domain",
       "skill": "dom-causality",
-      "alsoTrains": [
-        "dom-seasonality"
-      ],
+      "alsoTrains": ["dom-seasonality"],
       "level": 4,
       "mode": "predict",
       "title": "Вода и сок растут вместе",
@@ -2123,9 +1993,7 @@
       "id": "dom-050",
       "track": "domain",
       "skill": "dom-causality",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 5,
       "mode": "predict",
       "title": "Лучший продавец года",
@@ -2162,9 +2030,7 @@
       "id": "dom-051",
       "track": "domain",
       "skill": "dom-causality",
-      "alsoTrains": [
-        "dom-fmcg-promo"
-      ],
+      "alsoTrains": ["dom-fmcg-promo"],
       "level": 5,
       "mode": "predict",
       "title": "Чем доказать, что рост дала акция",
@@ -2201,9 +2067,7 @@
       "id": "dom-052",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-decomposition"
-      ],
+      "alsoTrains": ["dom-decomposition"],
       "level": 4,
       "mode": "predict",
       "title": "Первый абзац письма",
@@ -2240,9 +2104,7 @@
       "id": "dom-053",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-roles"
-      ],
+      "alsoTrains": ["dom-roles"],
       "level": 5,
       "mode": "predict",
       "title": "Один вывод, три адресата",
@@ -2279,9 +2141,7 @@
       "id": "dom-054",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 5,
       "mode": "predict",
       "title": "Вывод, в котором вы не уверены",
@@ -2318,9 +2178,7 @@
       "id": "dom-055",
       "track": "domain",
       "skill": "dom-chart-choice",
-      "alsoTrains": [
-        "dom-storytelling"
-      ],
+      "alsoTrains": ["dom-storytelling"],
       "level": 4,
       "mode": "predict",
       "title": "Четыре вопроса — четыре формы",
@@ -2357,9 +2215,7 @@
       "id": "dom-056",
       "track": "domain",
       "skill": "dom-chart-choice",
-      "alsoTrains": [
-        "dom-seasonality"
-      ],
+      "alsoTrains": ["dom-seasonality"],
       "level": 5,
       "mode": "predict",
       "title": "Ось, с которой начинается вывод",
@@ -2396,9 +2252,7 @@
       "id": "dom-057",
       "track": "domain",
       "skill": "dom-chart-choice",
-      "alsoTrains": [
-        "dom-abc-xyz"
-      ],
+      "alsoTrains": ["dom-abc-xyz"],
       "level": 5,
       "mode": "predict",
       "title": "Двадцать девять кусков пирога",
@@ -2435,9 +2289,7 @@
       "id": "dom-058",
       "track": "domain",
       "skill": "dom-governance",
-      "alsoTrains": [
-        "dom-metric-definition"
-      ],
+      "alsoTrains": ["dom-metric-definition"],
       "level": 4,
       "mode": "predict",
       "title": "Три выручки на одном совещании",
@@ -2474,9 +2326,7 @@
       "id": "dom-059",
       "track": "domain",
       "skill": "dom-governance",
-      "alsoTrains": [
-        "dom-sanity-check"
-      ],
+      "alsoTrains": ["dom-sanity-check"],
       "level": 5,
       "mode": "predict",
       "title": "Справочник переписал прошлый год",
@@ -2513,9 +2363,7 @@
       "id": "dom-060",
       "track": "domain",
       "skill": "dom-governance",
-      "alsoTrains": [
-        "dom-roles"
-      ],
+      "alsoTrains": ["dom-roles"],
       "level": 5,
       "mode": "predict",
       "title": "Просьба прислать выгрузку",
@@ -2552,9 +2400,7 @@
       "id": "dom-061",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-fmcg-promo"
-      ],
+      "alsoTrains": ["dom-fmcg-promo"],
       "level": 4,
       "mode": "predict",
       "title": "Плохая новость про чужую работу",
@@ -2591,9 +2437,7 @@
       "id": "dom-062",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-roles"
-      ],
+      "alsoTrains": ["dom-roles"],
       "level": 5,
       "mode": "predict",
       "title": "Три позиции и пятнадцать минут",
@@ -2630,9 +2474,7 @@
       "id": "dom-063",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-decomposition"
-      ],
+      "alsoTrains": ["dom-decomposition"],
       "level": 5,
       "mode": "predict",
       "title": "Метрика, на которой держится чужой отчёт",
@@ -2669,9 +2511,7 @@
       "id": "dom-064",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-requirements"
-      ],
+      "alsoTrains": ["dom-requirements"],
       "level": 4,
       "mode": "predict",
       "title": "Вопрос, на который данных нет",
@@ -2708,9 +2548,7 @@
       "id": "dom-065",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-decomposition"
-      ],
+      "alsoTrains": ["dom-decomposition"],
       "level": 5,
       "mode": "predict",
       "title": "Просят поставить другую цифру",
@@ -2747,9 +2585,7 @@
       "id": "dom-066",
       "track": "domain",
       "skill": "dom-storytelling",
-      "alsoTrains": [
-        "dom-governance"
-      ],
+      "alsoTrains": ["dom-governance"],
       "level": 5,
       "mode": "predict",
       "title": "Ошибка в уже разосланном отчёте",
@@ -2781,6 +2617,80 @@
         "Один из вариантов делает правку невидимой ровно для тех, кто уже действует по старой версии."
       ],
       "explain": "У исправления ошибки, которая уже ушла к людям, есть порядок, и он не про извинения.\n\nПервое — кто действует по этой цифре. Не «все сорок получателей», а те, чьё завтрашнее действие меняется: команда, начавшая переговоры с сетями. Им пишут первыми и сразу, потому что каждый час работы по неверному приоритету оплачен. Второе — что именно неверно, в какую сторону и насколько: не «в таблице была ошибка», а «e-commerce не попал в разрез; на него приходится 80% выручки бренда, на сети 17%». Третье — и это пропускают чаще всего — что не изменилось: главный вывод про потерю 46 точек стоит. Без этой строки получатель, не зная границ ошибки, разумно перестаёт доверять всему документу, включая безупречные части. Заявленная граница ошибки работает так же, как заявленная слабость данных в dom-054: она показывает, что вы контролируете, где кончается ваше знание.\n\nОстальным — короткая правка следом, одним абзацем. И только потом, отдельным сообщением и без спешки, — причина и что изменилось в процессе, чтобы это не повторилось.\n\nТихая правка кажется самым дешёвым выходом и является самым дорогим. Люди приняли решение по версии, которую видели; в переписке останутся два файла с одинаковым именем, и через месяц никто не докажет, какая таблица была на столе в момент решения. Правило простое: исправленная версия получает дату и строку «что изменилось», старая не удаляется, а помечается устаревшей (dom-059).\n\nПро извинения: одной фразы достаточно, дальше — дело. Длинное покаяние переводит внимание с решения читателя на ваши переживания и снижает доверие сильнее, чем сама ошибка: у получателя возникает ощущение, что случилось нечто чрезвычайное, хотя случилась потерянная строка фильтра.\n\nИ разбор причины по существу. Причина здесь не «невнимательность» — от невнимательности не защищает ничто. Причина в отсутствии проверки, которая ловит именно этот класс ошибок: сумма по разрезу обязана сходиться с итогом отчёта. Сети плюс традиционная розница дали 210 тысяч при выручке бренда 1 079 тысяч — расхождение видно за секунду, если такую сверку вообще делать. Это и есть проверка перед отправкой (dom-sanity-check): любой разрез одной величины даёт ту же сумму, а если не даёт — искать надо не в разрезе, а в фильтре."
+    },
+    {
+      "id": "dom-067",
+      "track": "domain",
+      "skill": "dom-planning",
+      "alsoTrains": ["dom-metric-definition"],
+      "level": 3,
+      "mode": "predict",
+      "title": "Три месяца, которые ничего не добавляют",
+      "brief": "На годовом разборе точности планировщик показывает ошибку прогноза спроса и рядом ставит ошибку бесплатного эталона: «продадим столько же, сколько в прошлом месяце». Производство планирует загрузку линий на три месяца вперёд.",
+      "goal": "Определить, что из этой таблицы следует для цикла планирования.",
+      "scenario": "Ошибка прогноза за год, % объёма:\n\nгоризонт    прогноз   календарь\n1 месяц       15%        33%\n2 месяца      27%        34%\n3 месяца      31%        34%\n\nКалендарь — «продадим столько же,\nсколько в прошлом месяце».\nПроизводство планирует на три месяца.",
+      "predictQuestion": "Что это значит для цикла планирования?",
+      "options": [
+        {
+          "label": "На том горизонте, ради которого прогноз и делается, он почти не отличается от бесплатного эталона: это надо показать вслух и разобрать причину, а уже потом улучшать модель",
+          "correct": true,
+          "why": "Прогноз на месяц вперёд стоит своих денег: 15% против 33%. На трёх месяцах преимущество три пункта, и именно этот горизонт нужен производству. Разговор начинается не с новой модели, а с признания, что дальний горизонт сейчас держится на календаре."
+        },
+        {
+          "label": "Прогноз плохой: 31% ошибки — это не прогноз, надо менять модель",
+          "why": "Плохой относительно чего? Календарь на том же горизонте даёт 34%, то есть «плохо» здесь свойство задачи, а не модели. Абсолютная ошибка без эталона не говорит ни о чём: на одном товаре 31% — провал, на другом — хороший результат."
+        },
+        {
+          "label": "Надо удлинить горизонт прогноза до полугода, чтобы производство планировало спокойнее",
+          "why": "Точность падает с горизонтом, и шестой месяц будет хуже третьего. Спокойствие даёт не длина прогноза, а честная оценка того, чему на каждом горизонте можно верить."
+        },
+        {
+          "label": "Раз календарь не хуже, планировщика можно не звать: считать эталоном и закрыть цикл",
+          "why": "На ближнем горизонте прогноз вдвое точнее календаря, и именно им живут закупка и отгрузки. Отказ от прогноза стоил бы этой половины ради экономии на дальнем горизонте."
+        }
+      ],
+      "hints": [
+        "Сравните две колонки на каждой строке отдельно, а не в целом: разница между ними важнее любого из чисел.",
+        "Спросите, на каком горизонте принимается решение, ради которого прогноз вообще делают."
+      ],
+      "explain": "Первый вопрос к любому прогнозу не «насколько он точен», а «лучше ли он того, что не стоит ничего». Бесплатный эталон здесь самый простой: повторить прошлый месяц. На месяц вперёд прогноз обыгрывает его вдвое, и это его законная ценность; на трёх месяцах разница три пункта, а решение о загрузке линий принимается именно там. Разница между прогнозом и эталоном называется forecast value added, и меряют её на каждом горизонте отдельно — общая цифра за год прячет ровно то, что нужно увидеть. Что с этим делать, данные не говорят, и это нормально: варианты обычно два — сократить горизонт твёрдых обязательств или добавить в дальний прогноз то, что о будущем известно людям, а не ряду (план акций, вход в сеть, уход конкурента). И оговорка про сам эталон: повторение прошлого месяца плохо работает на сезонном товаре, там честнее сравнивать с тем же месяцем год назад. Эталон выбирают заранее и называют вслух, иначе спор о пользе прогноза превращается в спор о том, с чем его сравнивать."
+    },
+    {
+      "id": "dom-068",
+      "track": "domain",
+      "skill": "dom-planning",
+      "alsoTrains": ["dom-sanity-check"],
+      "level": 3,
+      "mode": "predict",
+      "title": "Восемь занижают, один завышает",
+      "brief": "В годовом разборе точности по каждому бренду посчитано смещение прогноза: на сколько прогноз в среднем выше или ниже факта. Планировщик говорит, что это просто разброс.",
+      "goal": "Определить, о чём в первую очередь говорит эта картина.",
+      "scenario": "Смещение прогноза за год, горизонт\nтри месяца, % от факта\n(плюс — переоценили):\n\n  Nettora      +11%\n  Rhinolar      -6%\n  Vitanor       -7%\n  Fruvia        -8%\n  Milvara       -8%\n  Pyrexan      -10%\n  Gastrivo     -11%\n  Krosti       -14%\n  Aqualis      -15%\n\nNettora падает второй год подряд.",
+      "predictQuestion": "О чём в первую очередь говорит эта картина?",
+      "options": [
+        {
+          "label": "О процессе, а не о модели: восемь брендов из девяти занижены, а односторонний перекос вносят люди и правила, а не случайность",
+          "correct": true,
+          "why": "Случайная ошибка дала бы плюсы и минусы вперемешку. Восемь минусов подряд означают, что числа систематически двигают в одну сторону — обычно на согласовании, где заниженный прогноз безопаснее для плана и премии. Такой перекос измерим и вычитается поправкой, то есть чинится дешевле любой новой модели."
+        },
+        {
+          "label": "«Nettora» прогнозируют лучше остальных: у него единственный плюс в столбце",
+          "why": "Знак не говорит о точности вовсе. У падающего бренда прогноз завышен потому, что в него каждый месяц закладывают возврат к прежнему уровню, и ошибка по нему как раз худшая в списке. Смещение и точность — две разные величины."
+        },
+        {
+          "label": "Модель систематически ошибается, её надо переобучить на свежих данных",
+          "why": "Модель, ошибающаяся в одну сторону сразу у восьми брендов, — редкость; такой перекос обычно вносят ручные правки и правила согласования поверх расчёта. Переобучение не тронет причину, и через квартал картина вернётся."
+        },
+        {
+          "label": "Ни о чём: смещение в пределах пятнадцати процентов нормально для прогноза спроса",
+          "why": "Нормален разброс, а не его односторонность. Пятнадцать процентов туда и обратно — обычная жизнь; пятнадцать процентов всегда в одну сторону означают, что кто-то или что-то держит числа внизу."
+        }
+      ],
+      "hints": [
+        "Посмотрите на знаки, а не на величины: сколько брендов ушло вниз и сколько вверх.",
+        "Спросите себя, как выглядел бы этот столбец, если бы ошибка была случайной."
+      ],
+      "explain": "Смещение отвечает на вопрос «в какую сторону», и ответ здесь односторонний: восемь брендов из девяти прогнозируются ниже факта. Случайность так не выглядит — значит, числа кто-то двигает, и обычно это происходит не в модели, а после неё: заниженный прогноз спроса безопаснее для плана продаж, по которому считают премию, и мягче для разговора с производством. Отсюда практический вывод: постоянный перекос — самая дешёвая часть ошибки, её вычитают поправкой и получают улучшение без единой новой модели, а случайную часть уменьшить куда труднее. Девятая строка при этом важнее восьми: у падающего бренда перекос обратный, потому что в прогноз каждый месяц закладывают возврат к прежнему уровню, — и это уже не общее правило, а конкретное ожидание конкретных людей. Отсюда правило чтения таблицы: смещение и точность показывают рядом и никогда одно вместо другого. Смещение говорит о процессе и людях, ошибка — о том, насколько задача вообще предсказуема."
     }
   ]
 }
