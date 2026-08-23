@@ -71,6 +71,9 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'dispute' && <Dispute />}
         {scene === 'contract' && <Contract />}
         {scene === 'shift' && <Shift />}
+        {scene === 'raw' && <Raw />}
+        {scene === 'twins' && <Twins />}
+        {scene === 'letter' && <Letter />}
       </svg>
     </div>
   );
@@ -824,6 +827,83 @@ function Request() {
         d="M120 60c40 0 44-23 108-23M120 60h108M120 60c40 0 44 23 108 23"
         strokeWidth="2.2"
       />
+    </g>
+  );
+}
+
+/*
+ * Сырой слой: те же строки, что в витрине, но неровные — разной длины,
+ * с провалами и сдвигами. Акцентом выделена одна строка, выбивающаяся
+ * из ряда сильнее прочих: смысл дня не в том, что данные грязные вообще,
+ * а в том, что беда всегда конкретна и находится штучно.
+ */
+function Raw() {
+  const rows = [18, 36, 54, 72, 90];
+  const widths = [188, 150, 206, 138, 172];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <path d="M40 8v100" strokeWidth="1.6" />
+        {rows.map((y, i) => (
+          <path key={y} d={`M52 ${y}h${widths[i]}`} strokeWidth="2" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <g className="art-far">
+        <path d="M52 27h96M172 27h68M52 63h44M118 63h122M52 99h140" strokeWidth="1.4" strokeDasharray="3 5" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M52 45h74M140 45h48M202 45h34" strokeWidth="2.4" strokeLinecap="butt" />
+    </g>
+  );
+}
+
+/*
+ * Одно имя в двух написаниях: две строки, сходящиеся в одну точку. Акцент
+ * на месте слияния, а не на самих строках — находка дня в том, что это
+ * одна сеть, а не в том, что записей две.
+ */
+function Twins() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="24" y="16" width="96" height="26" rx="3" strokeWidth="1.8" />
+        <rect x="24" y="74" width="96" height="26" rx="3" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-far">
+        <path d="M38 29h68M38 87h52" strokeWidth="1.6" strokeLinecap="butt" />
+        <rect x="212" y="42" width="84" height="32" rx="3" strokeWidth="1.6" strokeDasharray="4 4" />
+        <path d="M228 58h52" strokeWidth="1.5" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M120 29h44c14 0 14 29 28 29M120 87h44c14 0 14-29 28-29M192 58h20M204 52l8 6-8 6" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Письмо, которое читают сверху вниз: первая строка длиннее и жирнее
+ * остальных, под ней короткий столбик текста и три цифры сбоку. Акцент
+ * ровно на первой строке — весь пятничный урок в том, что вывод стоит
+ * первым, а не в конце.
+ */
+function Letter() {
+  const rows = [52, 66, 80, 94];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="34" y="10" width="196" height="98" rx="4" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-far">
+        {rows.map((y) => (
+          <path key={y} d={`M50 ${y}h${y === 94 ? 108 : 164}`} strokeWidth="1.5" strokeLinecap="butt" />
+        ))}
+        <path d="M252 40h44M252 58h44M252 76h30" strokeWidth="1.6" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M50 30h164" strokeWidth="3" strokeLinecap="butt" />
     </g>
   );
 }

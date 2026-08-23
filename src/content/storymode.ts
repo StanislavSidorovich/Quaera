@@ -92,6 +92,10 @@ export type StoryScene =
   | 'scope'
   | 'dispute'
   | 'contract'
+  // сырой слой и то, что из него выходит
+  | 'raw'
+  | 'twins'
+  | 'letter'
   // находки и повороты сюжета
   | 'toolkit'
   | 'foundation'
@@ -1010,7 +1014,7 @@ const ru: StoryCampaign = {
       track: 'domain',
       place: 'Kaiyo Trading · Третья неделя · Понедельник, 9:40',
       short: 'Пн',
-      found: 'За «дашбордом по продажам» стоит решение: куда вести полевую команду. Готово — это оговорённый заранее список, а не ощущение полноты.',
+      found: 'За «дашбордом по продажам» стоит решение: куда вести полевую команду. Готово — оговорённый заранее список.',
       /*
        * Заставка «просьба» стоит у первого задания, а не у брифа: бриф —
        * это встреча, с которой вернулась Аоки-сан, а размытая просьба
@@ -1101,7 +1105,7 @@ const ru: StoryCampaign = {
       track: 'domain',
       place: 'Kaiyo Trading · Третья неделя · Вторник, 10:05',
       short: 'Вт',
-      found: 'Определение записано: активная точка — точка продаж, дистрибьюторы не в счёт; падение — месяц к тому же месяцу год назад.',
+      found: 'Активная точка — розничная, без дистрибьюторов. Падение считаем год к году.',
       scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
       messages: [
         {
@@ -1264,6 +1268,173 @@ const ru: StoryCampaign = {
       hook: [
         'Черновик у Аоки-сан на руках, до первого числа два дня. Осталось то, чего в задаче никто не заказывал: убедиться, что цифры в нём вообще про то, о чём мы думаем.',
         'Завтра спустимся на слой ниже готовых таблиц — в сырую выгрузку, из которой они собираются. Там мы либо найдём Ichiba и Itiba рядом, либо не найдём, и первое хуже.',
+      ],
+    },
+
+    /*
+     * Четверг. Единственный день недели, задачу которого никто не ставил:
+     * он вырос из фразы в коридоре. Поэтому и стоит после среды, а не до
+     * неё — проверять данные «на всякий случай» человек не пойдёт, а
+     * проверять названную версию пойдёт.
+     *
+     * Три задания — один и тот же слой с трёх сторон: регистр (sql-027),
+     * дата как текст (sql-047) и одно имя в двух написаниях (sql-046).
+     * Два первых — predict, и они же ступень: LIKE человек сначала читает
+     * в чужом запросе и только потом печатает своей рукой в sql-046.
+     */
+    {
+      id: 'day-14-raw-layer',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Третья неделя · Четверг, 9:15',
+      short: 'Чт',
+      found: 'Ichiba и Itiba — одна сеть в двух написаниях. Группировать по имени как есть нельзя.',
+      scenes: { brief: 'raw', reflection: 'twins' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Сегодня спускаемся ниже витрины. Всё, чем ты считал две недели, — это уже причёсанные таблицы: даты приведены, имена сведены, дубли убраны. А приходит к нам staging_raw_sellout: то, что отдали системы-источники, как есть. Половина работы аналитика живёт на этом слое, и именно здесь ломаются отчёты, которые „просто считались".»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Я не понимаю, зачем это сейчас. Черновик у меня, цифры сходятся с тем, что я вижу. Ты просто убедись, что мне не придётся отзывать письмо через неделю.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-027',
+          intro: {
+            paras: [
+              'Первое, чего нет у сырого текста, — гарантий. Одно и то же значение приходит в разном регистре, потому что источников несколько и правила у них свои.',
+              'Отбирать такое равенством нельзя: = сравнивает строки побайтово. Для текста есть LIKE, у него другие правила: % означает «любое число любых знаков», _ — ровно один, а латинские буквы разного регистра LIKE по умолчанию считает одинаковыми. Пишется он на месте равенства: WHERE sku_code LIKE \'AQUA001\'.',
+              'Ниже условие без единого подстановочного знака. Реши, что оно вернёт.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«163 против 107 — то есть каждая третья строка по этому артикулу нашлась бы только одним из двух способов. Запомни это как правило: на сыром слое = и LIKE отвечают на разные вопросы, и выбирать между ними надо осознанно, а не по привычке.»',
+          },
+        },
+        {
+          taskId: 'sql-047',
+          intro: {
+            paras: [
+              'Второе, чего нет у сырого текста, — типов. Дата в нём такая же строка, как имя клиента, а сравнение строк идёт по знакам слева направо.',
+              'В витрине это сходило с рук: там даты в формате YYYY-MM-DD, и у него порядок знаков совпадает с порядком времени. Здесь формат неизвестен.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Вот почему на сыром слое период сначала смотрят глазами, а потом фильтруют. Условие не упало и не пожаловалось — оно вернуло число, и число это выглядит как ответ.»',
+          },
+        },
+        {
+          taskId: 'sql-046',
+          intro: {
+            paras: [
+              'И третье — то, ради чего мы сюда пришли. Ито-сан сказал, что сеть записана двумя способами; проверяется это одним запросом, и приём в нём уже знакомый.',
+              'Условная агрегация: SUM(CASE WHEN условие THEN 1 ELSE 0 END) — это «сколько строк подошло». Ты собирал такое на второй неделе, новое здесь только условие: вместо равенства LIKE с процентами по краям, потому что имя сети — часть названия точки, а не всё оно.',
+            ],
+          },
+          after: {
+            from: 'Ито-сан, руководитель полевой команды',
+            text: '«Ну вот, а мне два года отвечали, что это ерунда и я путаю. Теперь у тебя есть число, и с ним разговаривать будут иначе, чем со мной.»',
+          },
+        },
+      ],
+      reflection: [
+        'Обе группы непустые — значит, Ито-сан был прав, и это уже не слух из коридора, а число. Одна сеть живёт в данных под двумя именами, и любой отчёт, сгруппированный по имени как есть, разложит её надвое, ничем не выдав себя: обе половины выглядят как обычные строки.',
+        'Заметь, чего эта проверка стоила и чего она стоит. Полчаса сегодня — против письма, которое пришлось бы отзывать, и разговора, в котором ты объясняешь директору по продажам, почему в её отчёте сеть заняла два места из десяти.',
+        'И общее правило, которое из этого выводится: входящую выгрузку сначала профилируют, а потом считают. Сколько строк, какой диапазон дат, какие уникальные значения в ключевых колонках, сколько пустых. Пять минут против дня разбирательств.',
+      ],
+      hook: [
+        'Числа собраны, слабое место найдено и названо. До первого числа остался день, и вся неделя сходится в один экран текста, который прочитает Аоки-сан.',
+        'Завтра — то, чему ни один движок не научит: как из десятка верных чисел собрать письмо, которое читают сверху вниз и понимают с первой строки. Заодно решишь, что делать с двумя написаниями: промолчать нельзя, а пугать оговорками весь отчёт — тоже.',
+      ],
+    },
+
+    /*
+     * Пятница. Финал недели устроен так же, как в первых двух: ни одной
+     * новой конструкции, только суждение. Разница в том, что здесь суждение
+     * не про числа, а про их подачу, — и это единственный день кампании,
+     * где работа оценивается тем, что с ней сделает читатель.
+     *
+     * Задание про первый абзац (dom-052) считает Nettora по второму
+     * кварталу, а человек две недели считал полугодие: числа не совпадут,
+     * и подводка это называет прямо. Совпадение было бы приятнее, но
+     * расхождение полезнее — во вторник ровно об этом и договаривались,
+     * что период входит в метрику, а не уточняет её.
+     */
+    {
+      id: 'day-15-conclusion-first',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Третья неделя · Пятница, 8:50',
+      short: 'Пт',
+      found: 'Вывод стоит первым, глубина меняется под решение адресата, а у столбцов ось начинается от нуля.',
+      scenes: { brief: 'letter', reflection: 'meeting', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Первое число в понедельник, значит письмо мне нужно сегодня. И имей в виду: я открою его в машине между двумя встречами и прочитаю две строки. Если в этих двух строках не будет главного, дальше я не дочитаю — не потому что не хочу, а потому что приеду.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Вот теперь начинается то, за что аналитика ценят или не ценят. Считать ты научился, и это половина. Вторая половина — сделать так, чтобы посчитанное превратилось в чьё-то решение. Она не в SQL и не в pandas, и проверить её движком нельзя.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-052',
+          intro: {
+            title: 'Вывод вперёд',
+            paras: [
+              'Ты шёл от данных к выводу: сначала таблицы, потом числа, в конце понимание. Изложить хочется в том же порядке — и это ровно та ошибка, которую делают все.',
+              'Читатель идёт наоборот. Первый его вопрос — «что это значит и что мне с этим делать», и только если ответ важен, он спрашивает «откуда это взялось». Поэтому вывод стоит первым, до объяснений и до цифр, а цифры идут под ним и подпирают именно его.',
+              'В задании тот же разбор Nettora, но за второй квартал, а ты считал полугодие — числа другие, и это не описка. Вторник как раз про это: период входит в метрику, и «за квартал» с «за полугодие» — две разные метрики, а не одна с уточнением.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«И посмотри ещё раз на два верхних варианта, они оба начинаются с вывода. Разница в том, что один опирается на посчитанное, а второй требует решения, которого твои числа не выдерживают. Уверенность в первой строке хороша ровно до той границы, где за неё нечем отвечать.»',
+          },
+        },
+        {
+          taskId: 'dom-053',
+          intro: {
+            paras: [
+              'Письмо уйдёт не одному человеку. Аоки-сан прочтёт его в машине, Ито-сан — чтобы понять, куда вести команду, а через месяц отчёт кто-то будет поддерживать вместо тебя.',
+              'Соблазн понятный: сделать три версии под трёх людей. Вопрос в том, что именно в них имеет право отличаться.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Держись этого критерия и с двумя написаниями сети. Аоки-сан хватит строки „в разрезе сетей одна сеть считается дважды, чиним"; Ито-сан это и так знает; а тому, кто возьмёт отчёт после тебя, нужен весь абзац — с именем таблицы и датой, когда мы это увидели.»',
+          },
+        },
+        {
+          taskId: 'dom-056',
+          intro: {
+            paras: [
+              'Последнее на сегодня — картинка, которая пойдёт в приложении. Маркетинг прислал свой слайд, и на нём рост выглядит сильнее, чем он есть.',
+              'Спор об обрезанной оси обычно ведут лозунгами, а решается он одним техническим вопросом: чем именно график кодирует величину.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Забирай слайд и переделывай. Мне на комитете важнее, чтобы через месяц никто не сказал „вы нам это нарисовали", чем чтобы сегодня картинка выглядела бодрее.»',
+          },
+        },
+      ],
+      reflection: [
+        'Письмо ушло. Посмотри, из чего оно собрано: вывод первой строкой, под ним три числа, ниже строка про сети в двух написаниях и одно предложение о том, что делать дальше. Половина недели ушла на то, чтобы эти четыре части имели право там стоять.',
+        'И проследи всю дорогу с понедельника. Пришло ощущение — «нужно видеть картину». Стало решение: куда вести полевую команду. Из решения вывелось определение, из определения — механизм сравнения, из механизма — проверка данных, и только из всего вместе — письмо.',
+        'Ни один шаг этой цепочки не выводится из данных. Данные отвечают на вопрос «сколько», а вся неделя была про вопрос «что именно спрашиваем и кому это нужно» — и это ровно та часть работы, которую нельзя сдать движку.',
+      ],
+      hook: [
+        'Три недели позади. Первая дала инструмент, вторая — расследование, третья — то, что вокруг них: постановку, определение, проверку и подачу. Аналитиком человека делает третья, но без первых двух её не бывает.',
+        'Осталось незакрытое дело: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это до сих пор никем не объяснено.',
+        'Разбирать его запросами неудобно: нужны ряды по неделям и товарам, скользящие средние, сравнение с прошлым месяцем — SQL это умеет, но пишется долго и читается плохо. В понедельник возьмёшь другой инструмент.',
       ],
     },
   ],
@@ -1947,7 +2118,7 @@ const en: StoryCampaign = {
       track: 'domain',
       place: 'Kaiyo Trading · Week three · Monday, 9:40',
       short: 'Mon',
-      found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means an agreed list, not a feeling of completeness.',
+      found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means a list agreed in advance.',
       scenes: { brief: 'meeting', reflection: 'scope', hook: 'split' },
       messages: [
         {
@@ -2020,7 +2191,7 @@ const en: StoryCampaign = {
       track: 'domain',
       place: 'Kaiyo Trading · Week three · Tuesday, 10:05',
       short: 'Tue',
-      found: 'The definition is written down: an active outlet is a retail outlet, distributors do not count, and a fall means April against April a year ago.',
+      found: 'An active outlet is a retail one, distributors excluded. A fall is counted year on year.',
       scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
       messages: [
         {
@@ -2161,6 +2332,150 @@ const en: StoryCampaign = {
       hook: [
         'Aoki san has the draft and there are two days until the first. What is left is the part nobody ordered: making sure the figures in it are about what we think they are about.',
         'Tomorrow we go one layer below the finished tables, into the raw export they are built from. Either Ichiba and Itiba are sitting there side by side or they are not, and the first is worse.',
+      ],
+    },
+
+    {
+      id: 'day-14-raw-layer',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week three · Thursday, 9:15',
+      short: 'Thu',
+      found: 'Ichiba and Itiba are one chain under two spellings. Grouping by the name as it comes is not an option.',
+      scenes: { brief: 'raw', reflection: 'twins' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Today we go below the warehouse. Everything you have counted with for two weeks is already combed through: dates converted, names reconciled, duplicates removed. What actually arrives is staging_raw_sellout, whatever the source systems handed over. Half of an analyst\'s work lives on that layer, and it is where reports that just counted fine quietly break."',
+        },
+        {
+          from: 'Aoki san, sales director',
+          text: '"I do not see why this is happening now. I have the draft, the figures match what I see. Just make sure I will not have to retract that mail a week from now."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-027',
+          intro: {
+            paras: [
+              'The first thing raw text has none of is guarantees. The same value arrives in different letter cases, because there are several sources and each has its own rules.',
+              'Equality will not select that: = compares strings byte by byte. Text has LIKE instead, with different rules: % stands for any number of any characters, _ for exactly one, and by default LIKE treats upper and lower case latin letters as the same. It goes where equality would: WHERE sku_code LIKE \'AQUA001\'.',
+              'Below is a condition with no wildcard in it at all. Decide what it returns.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"163 against 107, so one row in three for that article would be found by only one of the two methods. Keep it as a rule: on the raw layer = and LIKE answer different questions, and you choose between them deliberately rather than out of habit."',
+          },
+        },
+        {
+          taskId: 'sql-047',
+          intro: {
+            paras: [
+              'The second thing raw text has none of is types. A date in it is a string like any customer name, and strings compare character by character from the left.',
+              'In the warehouse that went unpunished: dates there are YYYY-MM-DD, where the order of characters matches the order of time. Here the format is unknown.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"That is why on the raw layer you look at the period with your own eyes before you filter by it. The condition did not fail and did not complain, it returned a number, and that number looks exactly like an answer."',
+          },
+        },
+        {
+          taskId: 'sql-046',
+          intro: {
+            paras: [
+              'And the third thing, the one we came down here for. Ito san said the chain is written two ways, and one query settles it, with a technique you already have.',
+              'Conditional aggregation: SUM(CASE WHEN condition THEN 1 ELSE 0 END) means "how many rows matched". You built these in week two. The only new part is the condition: LIKE with percent signs on both sides instead of equality, because the chain name is part of the outlet name rather than all of it.',
+            ],
+          },
+          after: {
+            from: 'Ito san, field team lead',
+            text: '"There we go. Two years of being told it is nonsense and that I am confusing things. Now you have a number, and a number gets a different conversation than I do."',
+          },
+        },
+      ],
+      reflection: [
+        'Neither group is empty, so Ito san was right, and this is no longer corridor talk but a figure. One chain lives in the data under two names, and any report grouped by the name as it comes splits it in two without a hint: both halves look like perfectly ordinary rows.',
+        'Notice what the check cost and what it is worth. Half an hour today, against a mail that would have to be retracted and a conversation where you explain to the sales director why one chain took two of the ten places in her report.',
+        'And the general rule that follows: you profile an incoming export before you count with it. How many rows, what date range, which unique values in the key columns, how many blanks. Five minutes against a day of untangling.',
+      ],
+      hook: [
+        'The numbers are in and the weak spot is found and named. One day is left before the first, and the whole week comes down to a single screen of text that Aoki san will read.',
+        'Tomorrow brings the part no engine teaches: turning a dozen correct figures into a mail that reads top to bottom and lands in its first line. You also decide what to do about the two spellings. Staying silent is not an option, and hedging the entire report is not one either.',
+      ],
+    },
+
+    {
+      id: 'day-15-conclusion-first',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Week three · Friday, 8:50',
+      short: 'Fri',
+      found: 'The conclusion goes first, the depth changes with the decision the reader makes, and bar charts start their axis at zero.',
+      scenes: { brief: 'letter', reflection: 'meeting', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Aoki san, sales director',
+          text: '"The first falls on Monday, so I need the mail today. And bear in mind: I open it in the car between two meetings and read two lines. If the main thing is not in those two lines I will not read further, not because I do not want to but because I will have arrived."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Here is where analysts are valued or not valued. You have learned to count, and that is half of it. The other half is making what you counted turn into somebody\'s decision. It lives neither in SQL nor in pandas, and no engine can check it."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-052',
+          intro: {
+            title: 'Conclusion first',
+            paras: [
+              'You went from data to conclusion: tables first, then numbers, understanding at the end. You want to write it in that same order, and that is precisely the mistake everyone makes.',
+              'The reader goes the other way. Their first question is what this means and what they should do about it, and only if the answer matters do they ask where it came from. So the conclusion goes first, ahead of explanations and ahead of figures, and the figures sit under it holding it up.',
+              'The task uses the same Nettora analysis but for the second quarter, while you counted a half year, so the numbers differ and that is not a slip. Tuesday was about exactly this: the period is part of the metric, and "for the quarter" and "for the half year" are two metrics rather than one with a footnote.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Now look again at the top two options, both of them open with a conclusion. The difference is that one rests on what you counted and the other demands a decision your numbers cannot carry. Confidence in the first line is good right up to the boundary where you cannot answer for it."',
+          },
+        },
+        {
+          taskId: 'dom-053',
+          intro: {
+            paras: [
+              'The mail goes to more than one person. Aoki san reads it in the car, Ito san reads it to work out where to take the team, and in a month somebody will be maintaining the report instead of you.',
+              'The temptation is obvious: three versions for three people. The question is what in them has the right to differ.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Hold to that criterion for the two spellings as well. Aoki san needs one line, one chain is counted twice in the chain view, we are fixing it. Ito san knows already. And whoever takes the report after you needs the whole paragraph, with the table name and the date we found it."',
+          },
+        },
+        {
+          taskId: 'dom-056',
+          intro: {
+            paras: [
+              'The last thing today is the picture going into the attachment. Marketing sent their slide, and on it the growth looks stronger than it is.',
+              'The argument about a truncated axis is usually fought with slogans, and it is settled by one technical question: what does the chart use to encode the quantity.',
+            ],
+          },
+          after: {
+            from: 'Aoki san, sales director',
+            text: '"Take the slide back and redo it. At the committee I care more that nobody says a month from now that we drew this for them, than that the picture looks livelier today."',
+          },
+        },
+      ],
+      reflection: [
+        'The mail is sent. Look at what it is built from: a conclusion on the first line, three figures under it, a line about the chain in two spellings, and one sentence about what to do next. Half the week went into earning those four parts the right to be there.',
+        'And trace the whole road from Monday. A feeling arrived, "we need to see the picture". It became a decision: where to send the field team. From the decision came the definition, from the definition the comparison mechanism, from the mechanism the check on the data, and only from all of it together, the mail.',
+        'Not one step of that chain comes out of the data. Data answers the question "how much", and the whole week was about the question "what exactly are we asking and who needs it", which is the part of the work you cannot hand to an engine.',
+      ],
+      hook: [
+        'Three weeks are behind you. The first gave you the tool, the second an investigation, the third everything around them: framing, definition, verification and delivery. The third is what makes someone an analyst, and without the first two it does not happen.',
+        'One case is still open: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and nobody has explained it yet.',
+        'Queries are an awkward way to take it apart: it needs series by week and by product, rolling averages, a comparison with the previous month. SQL can do all of that, but it writes slowly and reads badly. On Monday you pick up a different tool.',
       ],
     },
   ],
