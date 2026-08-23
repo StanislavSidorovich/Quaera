@@ -2018,6 +2018,7 @@ export default function App() {
               onSelectTrack={(track) => { switchTrack(track); }}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onOpenAccount={() => setScreen({ name: 'account' })}
+              onOpenIntro={() => setScreen({ name: 'intro' })}
             />
           )}
 
@@ -2083,6 +2084,7 @@ export default function App() {
               lesson={step.lesson}
               executor={executor}
               runnable={activeTrack === 'sql' || activeTrack === 'python'}
+              figure={activeTrack === 'domain'}
               onContinue={advance}
             />
           )}
@@ -2198,6 +2200,7 @@ export default function App() {
                   lesson={lessonBySkill.get(screen.skill)!}
                   executor={lessonExecutor ?? executor!}
                   runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
+                  figure={skillTrack === 'domain'}
                   // Из справочника карточка вела в тупик — с карты навыков в практику
                   // перейти можно было, а отсюда нет (находка 2 из разбора навигации
                   // 2026-08-09). startSkillSession — тот же вход, что и у карты.
@@ -2435,10 +2438,30 @@ function WelcomeIntroBody({ withHeadline = true }: { withHeadline?: boolean }) {
  * сразу под ней идёт следующая карточка, а не ещё один ряд ссылок, поэтому
  * повторить дефект «два ряда ссылок подряд» здесь нечем.
  */
-function WelcomeProofBody({ onOnboarding }: { onOnboarding: () => void }) {
+function WelcomeProofBody({
+  onOnboarding,
+  onOpenIntro,
+}: {
+  onOnboarding: () => void;
+  onOpenIntro: () => void;
+}) {
   const { t } = useI18n();
   return (
     <>
+      {/*
+       * Вопрос «что это вообще такое» стоит раньше вопроса «с чего начать» —
+       * тот же порядок, что в боковом меню (Sidebar.tsx). На телефоне
+       * бокового меню нет, а это единственный постоянный вход в экскурс для
+       * вернувшегося человека: строка на главной (.home-intro-link) видна
+       * только новичку, ровно до первой решённой задачи. Экран «О тренажёре»
+       * при этом достижим с главной всегда — см. about.entryLink там же.
+       */}
+      <button type="button" className="home-intro-link" onClick={onOpenIntro} style={{ marginBottom: 14 }}>
+        <span className="home-intro-glyph" aria-hidden>
+          ?
+        </span>
+        <span>{t.home.introLink}</span>
+      </button>
       <button
         type="button"
         className="link-row"
@@ -2548,11 +2571,17 @@ function ProofSummary({
  * «О тренажёре», то есть с телефона (бокового меню там нет) обе страницы
  * достижимы с любой из них.
  */
-function WelcomeHero({ onOnboarding }: { onOnboarding: () => void }) {
+function WelcomeHero({
+  onOnboarding,
+  onOpenIntro,
+}: {
+  onOnboarding: () => void;
+  onOpenIntro: () => void;
+}) {
   return (
     <div className="card welcome-hero">
       <WelcomeIntroBody />
-      <WelcomeProofBody onOnboarding={onOnboarding} />
+      <WelcomeProofBody onOnboarding={onOnboarding} onOpenIntro={onOpenIntro} />
     </div>
   );
 }
@@ -3637,10 +3666,12 @@ function About({
   onSelectTrack,
   onOpenOnboarding,
   onOpenAccount,
+  onOpenIntro,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
   onOpenAccount: () => void;
+  onOpenIntro: () => void;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
@@ -3652,7 +3683,7 @@ function About({
 
   return (
     <>
-      <WelcomeHero onOnboarding={onOpenOnboarding} />
+      <WelcomeHero onOnboarding={onOpenOnboarding} onOpenIntro={onOpenIntro} />
 
       {/*
        * Три плитки того же вида, что hero-счётчики на главной, — не декор,

@@ -19,5 +19,31 @@ createRoot(document.getElementById('root')!).render(
 // Офлайн — не опция, а условие сценария: заниматься в метро и в самолёте.
 // Регистрируем только в проде: в dev воркер кешировал бы модули Vite и мешал бы разработке.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+  /*
+   * Установленная PWA годами не делает полной навигации — вкладку сворачивают,
+   * а не закрывают, и браузер сам проверяет sw.js на новую версию раз в сутки,
+   * не чаще. Без явной проверки при каждом возврате приложение может неделями
+   * показывать старую сборку контента, хотя код на сервере давно свежий.
+   */
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker
+    .register('/sw.js')
+    .then((reg) => {
+      reg.update().catch(() => undefined);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => undefined);
+      });
+    })
+    .catch(() => undefined);
+
+  /*
+   * Перезагружаем сами, а не ждём, пока человек заметит несовпадение чисел.
+   * `hadController` отсекает первый визит: там controllerchange — это просто
+   * взятие страницы под контроль, а не обновление, и перезагрузка была бы
+   * лишней. На каждом следующем визите controller уже стоит с прошлого раза,
+   * и смена — это всегда реальный апдейт.
+   */
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) window.location.reload();
+  });
 }
