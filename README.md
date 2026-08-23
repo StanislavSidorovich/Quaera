@@ -31,21 +31,23 @@ in the browser, no server involved.
 
 ## What's inside
 
-**Four tracks — 248 tasks and 71 skills.** Fully populated, reviewed
+**Four tracks — 260 tasks and 72 skills.** Fully populated, reviewed
 and translated to English: interface, tasks, technique cards.
 
 | Track | Tasks | Skills | How the answer is checked |
 | --- | --- | --- | --- |
-| SQL for analysts | 76 | 18 | The query runs against SQLite (sql.js) |
-| Analytics as a profession | 66 | 20 | Multiple choice with a full explanation (`predict`) |
+| SQL for analysts | 83 | 19 | The query runs against SQLite (sql.js) |
+| Analytics as a profession | 68 | 20 | Multiple choice with a full explanation (`predict`) |
 | Data model and BI | 63 | 19 | Multiple choice with a full explanation (`predict`) |
-| pandas for analysts | 43 | 14 | The code runs in Python (Pyodide) |
+| pandas for analysts | 46 | 14 | The code runs in Python (Pyodide) |
 
-**Story mode — an analyst's work week.** Two five-day weeks: a client
-brings a question in the morning, you bring back a finding by evening.
-SQL techniques are introduced exactly where the work needs them, not
-in a syllabus order. Marked in the app as an early prototype — the story
-is complete for SQL, the other tracks haven't been carried into it yet.
+**Story mode — an analyst's work week.** Four five-day weeks, twenty days:
+a client brings a question in the morning, you bring back a finding by
+evening. Techniques are introduced exactly where the work needs them, not
+in a syllabus order, and a week can cross tracks — the third one moves
+between the profession track and SQL, the fourth runs on pandas. Marked
+in the app as an early prototype: the campaign is written, the standalone
+story line that runs through a whole track is prose for SQL only.
 
 ![Story mode: Monday of the first week, a brief from the sales director](docs/screenshots/03-story.png)
 
@@ -62,7 +64,7 @@ Beyond the tracks, the app also has:
 - **A sandbox** — free-form mode on the same data: any query, no task and
   no hints, with a list of starter questions next to it if you're not sure
   what to ask;
-- **A data screen** — a schema of 12 tables with grain and row counts
+- **A data screen** — a schema of 13 tables with grain and row counts
   computed from the real dataset, not typed in by hand;
 - **Spaced repetition and reminders** — an interval scheduler and a push
   notification when it's time to revisit a topic;
@@ -82,8 +84,8 @@ you know without explaining anything out loud first.
 Not the number of exercises — four specific things.
 
 **1. One connected dataset instead of textbook tables.** A fictional FMCG
-and OTC-pharma distributor, "Kaiyo Trading" — a star schema of 12 tables,
-156 thousand rows over two and a half years. The data is internally
+and OTC-pharma distributor, "Kaiyo Trading" — a star schema of 13 tables,
+160 thousand rows over two and a half years. The data is internally
 consistent: sell-out rolls up into sell-in, sell-in minus sell-out gives
 stock, plans are built from actuals. All four tracks run on the same
 numbers — a brand losing distribution gets worked through as a query,
@@ -211,7 +213,7 @@ it to the home screen from there.
 | `npm run dev` | Dev server |
 | `npm run build` | Type check, production build, service worker |
 | `npm run gen:data` | Rebuild the dataset |
-| `npm run verify` | All 14 gates: dataset, content, spaced-repetition scheduler, progress merge, chart rules, schema layout, English prose, text-based diff for DAX, storage migration, cross-check between the two executors, push-notification schedule, CSS column widths, the story line, and the story-mode ladder |
+| `npm run verify` | All 15 gates: dataset, content, spaced-repetition scheduler, progress merge, chart rules, schema layout, English prose, text-based diff for DAX, storage migration, cross-check between the two executors, push-notification schedule, CSS column widths, the story line, the story-mode ladder, and the genre of technique-card blocks |
 
 ### If you fork it: account and sync
 
