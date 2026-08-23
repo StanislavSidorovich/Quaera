@@ -574,7 +574,7 @@ export const en = {
     /** См. довод в ru.ts: на главной обещают неделю работы, а не «режим». */
     homeTitle: 'An analyst work week',
     homeBody:
-      'Five working days on one case: the client comes in with a question, you answer it with queries. SQL techniques arrive exactly where the case runs into them, with a brief in the morning and a look at the finding in the evening.',
+      'Five working days on one case: the client comes in with a question, you answer with data. A technique arrives exactly where the case runs into it, with a brief in the morning and a look at the finding in the evening. There are four cases, and by the last one you work in both SQL and pandas.',
     homeStartBtn: 'Start day one',
     homeResumeBtn: 'Resume the case',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */

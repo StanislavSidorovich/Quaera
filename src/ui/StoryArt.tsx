@@ -74,6 +74,8 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'raw' && <Raw />}
         {scene === 'twins' && <Twins />}
         {scene === 'letter' && <Letter />}
+        {scene === 'smooth' && <Smooth />}
+        {scene === 'level' && <Level />}
       </svg>
     </div>
   );
@@ -1080,6 +1082,71 @@ function Coverage() {
       {dots.map((x) => (
         <circle key={x} className="art-line" cx={x} cy="56" r="6" strokeWidth="2.2" />
       ))}
+    </g>
+  );
+}
+
+/*
+ * Сглаживание: тот же ряд двумя линиями.
+ *
+ * Зубчатая — наблюдения как есть, гладкая — скользящее окно поверх них.
+ * Смысл сцены ровно в том, что линий две и они об одном: сглаженный ряд
+ * не заменяет исходный, а ложится рядом, — и именно это говорит подводка
+ * четверга. Начало гладкой линии сдвинуто вправо на три шага: у окна из
+ * четырёх наблюдений первых трёх значений нет, и это тот самый факт,
+ * который спрашивает py-036.
+ */
+function Smooth() {
+  const raw = 'M22 84 44 62 66 88 88 58 110 80 132 52 154 76 176 48 198 70 220 44 242 64 264 40 286 58';
+  const mean = 'M88 76 110 72 132 70 154 66 176 63 198 60 220 56 242 53 264 50 286 47';
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M22 100h276" strokeWidth="1.5" />
+        <path d="M22 20v80" strokeWidth="1.5" />
+      </g>
+
+      {/* окно, из которого посчитана первая точка гладкой линии */}
+      <rect className="art-band" x="22" y="20" width="66" height="80" rx="2" stroke="none" />
+
+      <path className="art-far" d={raw} strokeWidth="1.6" />
+      <path className="art-line" d={mean} strokeWidth="2.6" />
+      <g className="art-near">
+        <circle cx="88" cy="76" r="3.2" strokeWidth="2" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Поток и уровень: столбцы прихода и накопленный остаток одной картинкой.
+ *
+ * Столбцы одинаковы, кроме трёх высоких в середине, — и после них снова
+ * одинаковы: поток вернулся. Линия уровня поднимается вместе со всплеском
+ * и дальше идёт полкой: уровень не вернулся. Вся пятница держится на том,
+ * что это два разных факта об одном партнёре, и здесь они видны сразу,
+ * потому что нарисованы в одних осях.
+ */
+function Level() {
+  const bars = [78, 82, 76, 80, 44, 52, 46, 80, 84, 78, 82, 76];
+  const level = 'M22 96 46 94 70 92 94 90 118 62 142 40 166 30 190 29 214 28 238 28 262 27 286 26';
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far">
+        <path d="M22 100h276" strokeWidth="1.5" />
+        <path d="M22 20v80" strokeWidth="1.5" />
+      </g>
+
+      <g className="art-near">
+        {bars.map((y, i) => (
+          <path key={i} d={`M${34 + i * 22} 100V${y}`} strokeWidth="6" />
+        ))}
+      </g>
+
+      <path className="art-line" d={level} strokeWidth="2.6" />
+      <g className="art-near">
+        <circle cx="286" cy="26" r="3.2" strokeWidth="2" />
+      </g>
     </g>
   );
 }

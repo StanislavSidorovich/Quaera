@@ -121,6 +121,11 @@ export function StoryMode({
   openDayIds,
   onOpenDay,
   onExit,
+  runtimeConsent,
+  consentDeferred,
+  onConfirmDownload,
+  onDeferConsent,
+  onResumeConsent,
 }: {
   /** Вся кампания — полосе дела нужны вопрос расследования и все дни разом. */
   campaign: StoryCampaign;
@@ -146,6 +151,22 @@ export function StoryMode({
   openDayIds: Set<string>;
   /** Открыть день кампании с его брифа. */
   onOpenDay: (missionId: string) => void;
+  /**
+   * Размер закачки движка, если исполнитель дня её ещё ждёт, иначе null.
+   *
+   * Появилось вместе с четвёртой неделей — первой, идущей по треку python.
+   * Без этого день упирался в тупик, который не видно ни одним гейтом:
+   * Pyodide не начинает качаться без явного согласия, спросить согласие
+   * в кампании было негде, и «Проверить» молча крутил многоточие до конца
+   * времён. Карточка стоит на брифе, а не над заданием, и это не косметика:
+   * бриф человек читает минуту-две, и за это время 53 МБ успевают приехать
+   * к тому моменту, когда они впервые нужны.
+   */
+  runtimeConsent: number | null;
+  consentDeferred: boolean;
+  onConfirmDownload: () => void;
+  onDeferConsent: () => void;
+  onResumeConsent: () => void;
   /** Выйти из миссии (на главную). */
   onExit: () => void;
 }) {
@@ -185,6 +206,15 @@ export function StoryMode({
           openDayIds={openDayIds}
           onOpenDay={onOpenDay}
         />
+        {runtimeConsent !== null && (
+          <div className="card">
+            <p className="story-known-title">{t.consent.title}</p>
+            <p className="story-mode-text">{t.consent.body(Math.round(runtimeConsent / 1e6))}</p>
+            <button type="button" className="btn" onClick={onConfirmDownload}>
+              {t.consent.confirmBtn}
+            </button>
+          </div>
+        )}
         <TaskView
           key={step.task.id}
           task={step.task}
@@ -255,6 +285,29 @@ export function StoryMode({
           <>
             <p className="story-mode-badge">{t.storyMode.badge}</p>
             <p className="story-mode-place">{mission.place}</p>
+            {runtimeConsent !== null && !consentDeferred && (
+              <div className="story-known">
+                <p className="story-known-title">{t.consent.title}</p>
+                <p className="story-mode-text">{t.consent.body(Math.round(runtimeConsent / 1e6))}</p>
+                <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
+                <div className="row">
+                  <button type="button" className="btn" onClick={onConfirmDownload}>
+                    {t.consent.confirmBtn}
+                  </button>
+                  <button type="button" className="btn secondary" onClick={onDeferConsent}>
+                    {t.consent.laterBtn}
+                  </button>
+                </div>
+              </div>
+            )}
+            {runtimeConsent !== null && consentDeferred && (
+              <div className="story-known">
+                <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.deferredNote}</p>
+                <button type="button" className="btn secondary" onClick={onResumeConsent}>
+                  {t.consent.resumeBtn(Math.round(runtimeConsent / 1e6))}
+                </button>
+              </div>
+            )}
             {found.length > 0 && (
               <div className="story-known">
                 <p className="story-known-title">{t.storyMode.known}</p>

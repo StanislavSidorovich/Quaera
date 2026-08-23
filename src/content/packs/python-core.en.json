@@ -826,6 +826,58 @@
         "The separator ' / ' is an ordinary constant string between the two columns."
       ],
       "explain": "Adding string columns with + is a vectorized operation: pandas concatenates values element by element for the whole column at once, with no function call on every row. apply(lambda row: f'{row[\"brand\"]} / {row[\"category\"]}', axis=1) produces the same text, but walks the rows in a Python loop, with the same overpayment on interpreter overhead as in py-041/py-042, just on a different operation: string formatting instead of comparing numbers."
+    },
+    {
+      "id": "py-044",
+      "title": "Setouchi shipments by month",
+      "brief": "The 2.44 ratio for «Setouchi Trading» has been discussed for two weeks now, and nobody has shown the shipment series itself: the whole conversation rests on one number for one quarter.",
+      "goal": "Build a monthly series of units for distributor 1: select its rows in fact_sellin and re-bucket the table to monthly frequency with resample.",
+      "hints": [
+        "The partner is recorded in the distributor_id column, and a mask on it keeps the rows of a single distributor.",
+        "resample('MS') needs an aggregating function afterward: on its own it only marks out month boundaries."
+      ],
+      "explain": "A row in fact_sellin is an order line, not a month: there are dozens in a single month, one per product. resample collects them into one point of the series and gives you something a groupby on a text date does not: a continuous time axis. A month with no shipments at all stays in the series as a zero and remains visible, whereas a groupby on the date string would simply not produce that row, and a gap in shipments would look like the absence of a gap."
+    },
+    {
+      "id": "py-045",
+      "title": "A spike against its level",
+      "brief": "Your manager looks at the monthly series and argues with himself: is the autumn of 2025 a spike, or ordinary swings of the kind this series has plenty of?",
+      "goal": "Add a rolling3 column to the monthly series of Setouchi shipments: the rolling mean of units over the last three months.",
+      "hints": [
+        "The window is set in observations: rolling(3) means the last three months of the series, current month included.",
+        "rolling(3) only defines the window; the value is computed by the function after it, .mean()."
+      ],
+      "explain": "The rolling mean is here not to remove the spike but to make visible the level it stands against. The window is deliberately shorter than the phenomenon: the spike lasts three months, and a three-month window rises along with it while still not dissolving it into two years of ordinary work, which is what a yearly window would do. The general rule: a smoothing window is chosen to match the scale of what you want to see, not the smoothness of the line."
+    },
+    {
+      "id": "py-046",
+      "title": "The flow is back, and the stock?",
+      "brief": "By January 2026 «Setouchi Trading» shipments were back to ordinary numbers, and the sales department considers the question closed.",
+      "goal": "Tell a flow from a stock: work out what the inventory series shows once shipments have normalized.",
+      "predictQuestion": "Since January 2026 Setouchi shipments have held at the usual 3.5 to 6 thousand units a month, the same as before the autumn. What will the inventory series at their warehouse show for the last ten months?",
+      "options": [
+        {
+          "label": "Stock grew almost fivefold over the three months of the spike and has held around 21 to 22 thousand units ever since, with no decline",
+          "why": "Shipments are a flow, inventory is a level, and normalizing the first does not by itself touch the second. The goods brought in last autumn have not gone anywhere: they sit there, and the outlets sell them at exactly the same rate as before."
+        },
+        {
+          "label": "Stock returned to the earlier 4 thousand units along with shipments: once the flow normalized, the inventory cleared",
+          "why": "That is what would happen if sales had grown and absorbed what was brought in. But sell-out at Setouchi outlets did not grow in the autumn, it dipped, and has run at the usual level since. There is nothing to clear the stock with."
+        },
+        {
+          "label": "Stock declines steadily from December: the goods are selling through, just more slowly than usual",
+          "why": "A steady decline would mean sales exceed purchases. But shipments came back to the level of sales, not below it, so the stock is not being drawn down. It is standing still."
+        },
+        {
+          "label": "Stock jumps from month to month, so nothing can be said from such a series",
+          "why": "It is the flow that jumps, not the level. Warehouse stock is a cumulative quantity and changes only by the difference between what came in and what went out, which makes its series smooth by nature."
+        }
+      ],
+      "hints": [
+        "A shipment is how much arrived during the month. Stock is how much is lying there at the end of it. The first can return to normal without changing the second.",
+        "Look at the two ends of the series rather than its shape: compare the last value with what it was before the autumn."
+      ],
+      "explain": "This is the difference between a flow and a stock, and it is also why the sell-in to sell-out ratio answers only half the question. The ratio is back to 1.05, meaning the partner again buys exactly what it sells, yet the roughly 22 thousand units brought in beyond demand last autumn are still sitting there. Until they are sold, the next orders will be either smaller than usual or absent altogether, which for us means that any plan for this distributor over the coming quarters is built on sand. «Has the flow returned?» and «are the consequences exhausted?» are different questions, and the second one is read off the level, not the flow."
     }
   ]
 }

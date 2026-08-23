@@ -2177,6 +2177,14 @@ export default function App() {
               onTaskDone={recordAttempt}
               onOpenSchema={openSchema}
               onNext={nextStoryMission(storyMission.mission.id)}
+              runtimeConsent={load.phase === 'consent' ? load.bytes : null}
+              consentDeferred={consentDeferred}
+              onConfirmDownload={() => {
+                requestPersistentStorage();
+                executor?.confirmDownload?.();
+              }}
+              onDeferConsent={() => setConsentDeferred(true)}
+              onResumeConsent={() => setConsentDeferred(false)}
               openDayIds={storyOpenDayIds}
               onOpenDay={(id) => {
                 const day = storyMissions.get(id);

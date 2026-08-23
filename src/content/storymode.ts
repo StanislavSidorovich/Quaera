@@ -85,6 +85,8 @@ export type StoryScene =
   | 'threshold'
   | 'factors'
   | 'shift'
+  | 'smooth'
+  | 'level'
   // разговоры между делом
   | 'corridor'
   // постановка задачи: размытая просьба, граница готового, спор о метрике
@@ -247,6 +249,7 @@ const ru: StoryCampaign = {
     { id: 'w1', question: 'Почему продажи Nettora упали вдвое — и к кому с этим идти?' },
     { id: 'w2', question: 'Кто занял 42 точки Nettora — и можем ли мы это увидеть?' },
     { id: 'w3', question: 'Разбор приняли и просят каждый месяц — какое число должно стоять в отчёте?' },
+    { id: 'w4', question: 'Кто-то отгрузил себе вдвое больше, чем продал: ошибка, умысел или норма — и что мы предлагаем?' },
   ],
   missions: [
     /*
@@ -974,7 +977,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Ваш руководитель',
-            text: '«Одиннадцать дистрибьюторов из двенадцати между 0.97 и 1.04. Двенадцатый — Setouchi Trading, 2.32. Запомни это число, но к Nettora оно отношения не имеет: там всего пять её точек.»',
+            text: '«Одиннадцать дистрибьюторов из двенадцати между 1.03 и 1.05. Двенадцатый — Setouchi Trading, 2.44. Запомни это число, но к Nettora оно отношения не имеет: там всего пять её точек.»',
           },
         },
       ],
@@ -985,7 +988,7 @@ const ru: StoryCampaign = {
       ],
       hook: [
         'Две недели назад ты не мог достать список товаров. Сегодня ты закрыл четыре версии числами, назвал границу того, что данные знают, и не выдал догадку за вывод — это и есть работа, за которую платят.',
-        'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело. Оно подождёт: разбирать его в SQL неудобно, там нужны ряды по неделям и скользящие средние, а для этого нужен другой инструмент.',
+        'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.44. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело. Оно подождёт: разбирать его в SQL неудобно, там нужны ряды по неделям и скользящие средние, а для этого нужен другой инструмент.',
         'Сначала будет другое. В понедельник Аоки-сан вернётся со встречи, и главным на неделе станет не запрос, а вопрос: что именно у тебя просят, когда просят «дашборд».',
       ],
     },
@@ -1029,7 +1032,7 @@ const ru: StoryCampaign = {
         },
         {
           from: 'Ваш руководитель',
-          text: '«Поздравляю, ты только что получил свою первую настоящую задачу. Она звучит проще пятничной и она сложнее: в пятницу тебе принесли вопрос, а сейчас — ощущение. Setouchi с их 2.32 подождёт, к нему вернёмся с другим инструментом. Эту неделю мы потратим на то, чего в SQL нет: понять, что именно у тебя просят, и договориться, когда работа закончена.»',
+          text: '«Поздравляю, ты только что получил свою первую настоящую задачу. Она звучит проще пятничной и она сложнее: в пятницу тебе принесли вопрос, а сейчас — ощущение. Setouchi с их 2.44 подождёт, к нему вернёмся с другим инструментом. Эту неделю мы потратим на то, чего в SQL нет: понять, что именно у тебя просят, и договориться, когда работа закончена.»',
         },
       ],
       steps: [
@@ -1148,7 +1151,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Ваш руководитель',
-            text: '«А теперь примерь это на себя. «Точки, у которых упали продажи» — упали относительно чего? Против прошлого месяца в январе у тебя упадут все подряд, ты сам эту волну видел на первой неделе. Значит, апрель против апреля прошлого года, и сезон в сравнении больше не мешает.»',
+            text: '«А теперь примерь это на себя. „Точки, у которых упали продажи" — упали относительно чего? Против прошлого месяца в январе у тебя упадут все подряд, ты сам эту волну видел на первой неделе. Значит, апрель против апреля прошлого года, и сезон в сравнении больше не мешает.»',
           },
         },
         {
@@ -1433,8 +1436,349 @@ const ru: StoryCampaign = {
       ],
       hook: [
         'Три недели позади. Первая дала инструмент, вторая — расследование, третья — то, что вокруг них: постановку, определение, проверку и подачу. Аналитиком человека делает третья, но без первых двух её не бывает.',
-        'Осталось незакрытое дело: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это до сих пор никем не объяснено.',
+        'Осталось незакрытое дело: Setouchi Trading, 2.44. Кто-то отгрузил себе вдвое больше, чем продал, и это до сих пор никем не объяснено.',
         'Разбирать его запросами неудобно: нужны ряды по неделям и товарам, скользящие средние, сравнение с прошлым месяцем — SQL это умеет, но пишется долго и читается плохо. В понедельник возьмёшь другой инструмент.',
+      ],
+    },
+
+    /*
+     * Четвёртая неделя — второй инструмент и закрытие дела, которое висит
+     * с первой недели. Первый день кампании, идущий по треку python.
+     *
+     * Почему неделя вообще существует: пятница второй недели пообещала,
+     * что Setouchi разберут другим инструментом, — там нужен ряд по месяцам
+     * и скользящее среднее, а в SQL каждый следующий шаг над рядом пишется
+     * новым запросом с самого начала. Обещание стояло в контенте две недели
+     * и до сих пор не было выполнено.
+     *
+     * Лестница здесь начинается заново, и это не оплошность: SELECT не учит
+     * писать .groupby(. Неделя строится как первая — понедельник про то,
+     * как вообще держать инструмент, и только пятница отвечает на вопрос.
+     * Гейт лестницы к моменту написания этой недели научился видеть pandas
+     * (см. VOCAB_BY_TRACK в scripts/test-story-ladder.mjs); до того он молча
+     * пропустил бы любой порядок дней.
+     */
+    {
+      id: 'day-16-another-tool',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Понедельник, 9:05',
+      short: 'Пн',
+      found: 'Таблица в pandas лежит в переменной: одна скобка даёт колонку, две — таблицу.',
+      scenes: { brief: 'toolkit', reflection: 'catalog', hook: 'stray' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Setouchi. Дело висит с первой недели, и висит не потому, что сложное, а потому, что неудобное: там нужен ряд — месяц за месяцем, — и над рядом ещё три-четыре действия подряд. В SQL каждое следующее действие пишется новым запросом от слова SELECT. Возьмёшь другой инструмент: в нём таблица остаётся в руках между шагами.»',
+        },
+        {
+          from: 'Мори-сан, КАМ по дистрибьюторам',
+          text: '«Мне сказали, ты берёшься за Setouchi. Предупрежу сразу: партнёр хороший, работаем восьмой год, и мне не нужна история про то, что они там что-то мутят. Нужен разбор. Если окажется, что напортачили мы сами, — так и скажи, я переживу.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-006',
+          intro: {
+            scene: 'toolkit',
+            title: 'Таблица остаётся в руках',
+            paras: [
+              'pandas — библиотека, в которой таблица живёт в переменной. Запрос отдаёт результат и забывает о нём; здесь все тринадцать таблиц уже лежат готовыми объектами, и к следующему шагу вы обращаетесь по имени, а не пишете всё сначала.',
+              'Объектов два, и путать их дорого. DataFrame — таблица целиком, со строками и колонками. Series — одна колонка. Отсюда странность, на которой спотыкаются все: dim_product[\'brand\'] даёт Series, а dim_product[[\'brand\']] — DataFrame из одной колонки. Одна скобка или две — это выбор типа, а не украшение.',
+              'Ниже обе записи стоят рядом. Прочитайте и скажите, чем результаты отличаются.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Запомни это на всю неделю: половина непонятных ошибок в pandas — это Series там, где ждали DataFrame. Причём падает обычно не та строка, где ошиблись, а следующая за ней.»',
+          },
+        },
+        {
+          taskId: 'py-007',
+          intro: {
+            paras: [
+              'Выбор колонок — то же перечисление, что после SELECT, только список пишется внутри двойных скобок: dim_region[[\'region_name\', \'population\']]. Порядок в списке задаёт порядок колонок в результате.',
+              'Соберите справочник регионов для демографической сводки: название региона и население.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-005',
+          intro: {
+            paras: [
+              'Теперь то же самое рукой и без шаблона. Закупщик просит витрину по прайс-листу: артикул, название, цена.',
+            ],
+          },
+          after: {
+            from: 'Мори-сан, КАМ по дистрибьюторам',
+            text: '«Смотрю, тебя посадили за прайс-лист. Ничего, я тоже с него начинал. Только имей в виду: к пятнице мне нужен разговор про Setouchi, а не про то, сколько у нас позиций.»',
+          },
+        },
+      ],
+      reflection: [
+        'За день не посчитано ни одного числа про Setouchi, и это ровно то же, что было в понедельник первой недели: сначала инструмент, ответы потом.',
+        'Разница с SQL, которая дальше будет работать на вас: там ответ приходит и исчезает, здесь каждый шаг остаётся переменной. Ряд, который в SQL пришлось бы собирать одним длинным запросом, соберётся в четыре строки — и после каждой можно посмотреть, что получилось.',
+      ],
+      hook: [
+        'Завтра — строки. В таблице отгрузок Setouchi не отдельная таблица, а один distributor_id из двенадцати, и первое, что придётся сделать, — отделить его строки от остальных.',
+      ],
+    },
+
+    {
+      id: 'day-17-masks',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Вторник, 9:20',
+      short: 'Вт',
+      found: 'Строки отбирает маска. Условия в ней соединяются знаками & и |, а не словами and и or.',
+      scenes: { brief: 'filter', reflection: 'threshold', hook: 'groups' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Вчера доставал колонки, сегодня — строки. Дальше вся неделя упрётся в один отбор: distributor_id = 1, это и есть Setouchi. Научись отбирать строки уверенно, иначе всё, что посчитаешь поверх, будет посчитано не по тем строкам.»',
+        },
+        {
+          from: 'Мори-сан, КАМ по дистрибьюторам',
+          text: '«Пока ты учишься — вот тебе фактура из первых рук. Осенью они брали много, я это помню и без таблиц. Мы тогда сами предложили: берите под ноябрьское промо. Промо потом отменили.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-003',
+          intro: {
+            scene: 'filter',
+            title: 'Маска вместо WHERE',
+            paras: [
+              'Строки в pandas отбирает маска: выражение, посчитанное для каждой строки отдельно. dim_customer[\'channel\'] == \'ecom\' — это не число и не таблица, а колонка из True и False длиной во всю таблицу.',
+              'Дальше маска ставится в .loc, а рядом с ней — список нужных колонок: dim_customer.loc[маска, [\'customer_id\', \'city\']]. Через запятую в .loc стоят два разных вопроса — какие строки и какие колонки. В SQL они разнесены по разным концам запроса, здесь стоят рядом.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-002',
+          intro: {
+            paras: [
+              'Условий обычно больше одного, и здесь pandas расходится с обычным Python. Слова and и or рассчитаны на одно значение, а у нас их тысячи — по одному на строку. Поэтому маски соединяются знаками: (dim_product[\'list_price\'] > 100) & (dim_product[\'brand\'] == \'Aqualis\'). Скобки вокруг каждой части обязательны — без них приоритет операций разберёт выражение не так.',
+              'Ниже то же самое, но написано словом and. Прочитайте и скажите, что произойдёт.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Хорошая ошибка для второго дня: она падает сразу и громко. Хуже те, что не падают, — до них дойдём в четверг.»',
+          },
+        },
+        {
+          taskId: 'py-001',
+          intro: {
+            paras: [
+              'Теперь рукой, и с третьим приёмом. Когда значений в условии несколько, вместо цепочки из | пишут .isin([\'Aqualis\', \'Fruvia\']) — это точный аналог IN из SQL.',
+              'Отдел промо просит прайс-лист по двум брендам, и только по позициям дороже 100.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'Собран отбор в обе стороны: .loc берёт строки маской и колонки списком. Этого достаточно, чтобы отделить строки Setouchi от остальных одиннадцати дистрибьюторов, а всё остальное на этой неделе будет считаться поверх такого отбора.',
+        'И запомните версию Мори-сан: осенью брали много под промо, промо отменили. Это версия, а не факт, — ровно как «двое уволились» на первой неделе. Данные о ней ничего не знают: отменённого промо в таблицах нет и быть не может.',
+      ],
+      hook: [
+        'Завтра — числа. Отобранные строки сами по себе ничего не говорят: их у Setouchi больше тысячи, по одной на товар и месяц. Чтобы увидеть картину, их придётся свернуть.',
+      ],
+    },
+
+    {
+      id: 'day-18-groups',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Среда, 9:15',
+      short: 'Ср',
+      found: 'groupby уносит ключ группировки в индекс; as_index=False оставляет его колонкой.',
+      scenes: { brief: 'groups', reflection: 'counts', hook: 'calendar' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Сегодня группировка. Она пишется почти как в SQL, и именно поэтому на ней ошибаются: результат выглядит не так, как ждёшь. Разберись с этим сегодня — завтра поверх группировки встанет календарь, и разбираться будет некогда.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Слышала, ты на этой неделе занят Setouchi. Не забудь: мой месячный отчёт с прошлой недели никто не отменял, первое число будет каждый месяц. Но Setouchi важнее, договорились.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-011',
+          intro: {
+            scene: 'groups',
+            title: 'Куда уходит ключ группировки',
+            paras: [
+              'Группировка пишется почти как в SQL: fact_sellout.groupby(\'product_id\')[\'units\'].sum() — сгруппировать, выбрать колонку, свернуть. Разница появляется в результате.',
+              'GROUP BY product_id в SQL возвращает две колонки. Здесь product_id в колонках не окажется: pandas уносит ключ группировки в индекс — служебную ось, по которой строки адресуются. Прочитайте запись ниже и скажите, где после неё окажется product_id.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-013',
+          intro: {
+            paras: [
+              'Индекс нужен не всегда. Вернуть ключ обратно колонкой умеет .reset_index(): он сдвигает индекс в колонки и ставит на его место обычную нумерацию строк.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Это тот случай, когда приём выучивают наизусть и всё равно забывают. Признак простой: если после группировки колонка „пропала", а по ней надо соединять или фильтровать, — она в индексе.»',
+          },
+        },
+        {
+          taskId: 'py-014',
+          intro: {
+            paras: [
+              'Есть и способ не уносить ключ в индекс вовсе: as_index=False прямо в groupby. Дальше он будет стоять почти в каждой строке, которую вы напишете.',
+              'Второе на сегодня — несколько мер сразу. Для этого есть .agg(...), и колонки в нём именуются на месте: n_sku=(\'sku_code\', \'count\') читается как «колонка n_sku — это count по sku_code». Округление идёт отдельным шагом, через .round(1), а не внутри агрегации.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'Приёмов набралось достаточно, чтобы посчитать по Setouchi что угодно: отобрать его строки, свернуть их по месяцу, получить число. Одного не хватает — времени: месяц в таблице пока обычная строка вида 2025-10-01, и pandas не знает, что она значит.',
+        'Заодно поймана привычка, которая дальше сэкономит часы. Ключ группировки уходит в индекс, и следующая операция об этом не предупреждает — она просто делает не то. Из двух способов вернуть его на место as_index=False короче, потому что он не даёт проблеме возникнуть.',
+      ],
+      hook: [
+        'Завтра — ряд во времени: смена частоты и скользящее среднее. Ровно два приёма, ради которых мы сюда и пришли, и после них дело Setouchi станет разбираемым.',
+      ],
+    },
+
+    {
+      id: 'day-19-series',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Четверг, 9:10',
+      short: 'Чт',
+      found: 'resample меняет частоту ряда, rolling сглаживает окном; обеим нужен datetime-индекс.',
+      scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Сегодня то, ради чего мы вообще меняли инструмент. Ряд по неделям, ряд по месяцам, сглаживание — в SQL это оконные функции и три вложенных запроса, здесь два вызова. Завтра ты применишь их к Setouchi, а сегодня научишься на чужих данных, чтобы не спорить с приёмом и с делом одновременно.»',
+        },
+        {
+          from: 'Ито-сан, руководитель полевой команды',
+          text: '«Раз ты про графики. Скажи маркетингу, чтобы перестали присылать понедельные — на них зубцы, и каждый второй зубец обсуждают как событие. Я по ним работать не могу.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-035',
+          intro: {
+            scene: 'calendar',
+            title: 'Ряд, а не таблица с датой',
+            paras: [
+              'Ряд во времени — не то же самое, что таблица, в которой есть дата. Чтобы pandas работал с календарём, дата должна стать индексом и быть настоящей датой, а не строкой. Отсюда три строки подготовки: pd.to_datetime(...) переводит текст в дату, .set_index(...) делает её осью, .sort_index() выстраивает по возрастанию.',
+              'После этого частота ряда меняется одним вызовом: .resample(\'MS\') собирает наблюдения по началам месяцев (Month Start). Считать по-прежнему надо явно — .sum() следом. Это тот же GROUP BY по месяцу, только resample знает календарь: месяц, в котором не было ни одной продажи, останется в ряду нулём, а не исчезнет из него.',
+              'Заготовка ниже уже собрала понедельный ряд по бренду и подготовила индекс. Ваша часть — последняя строка.',
+            ],
+          },
+          after: {
+            from: 'Ито-сан, руководитель полевой команды',
+            text: '«Вот это уже разговор. По месяцам я вижу, что происходит, а не как дрожит стрелка.»',
+          },
+        },
+        {
+          taskId: 'py-036',
+          intro: {
+            paras: [
+              'Второй приём — скользящее окно. weekly[\'units\'].rolling(4).mean() считает среднее по четырём последним наблюдениям и сдвигает окно на шаг вперёд. Зубцы недельного ряда сглаживаются, и становится виден уровень, вокруг которого они пляшут.',
+              'У окна есть край, и поведение на краю неочевидно. Прочитайте запись и скажите, что окажется в первых трёх значениях.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-037',
+          intro: {
+            paras: [
+              'Сглаженный ряд почти всегда нужен рядом с исходным, а не вместо него: по одному видно уровень, по другому — сами наблюдения. Поэтому его добавляют колонкой к той же таблице.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Инструмент собран. Завтра с ним придёшь к Setouchi — и учти, что Мори-сан придёт вместе с тобой.»',
+          },
+        },
+      ],
+      reflection: [
+        'Два приёма, и оба про одно: увидеть в ряде уровень вместо шума. resample меняет частоту — неделя, месяц, квартал; rolling усредняет по окну, не меняя частоты. Первое отвечает на «за какой период», второе — на «на каком фоне».',
+        'И общее условие у них одно: настоящий datetime в индексе. Если дата осталась строкой, resample упадёт, а сортировка по ней в какой-то момент поставит 2025-10-01 перед 2025-09-01 по алфавиту — и никто не заметит.',
+      ],
+      hook: [
+        'Всё готово. Завтра — Setouchi Trading и число 2.44, которое записали на первой неделе и отложили: кто-то отгрузил себе вдвое больше, чем продал.',
+      ],
+    },
+
+    {
+      id: 'day-20-flow-and-level',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Пятница, 9:00',
+      short: 'Пт',
+      found: 'Отгрузки Setouchi вернулись к норме в январе 2026, а остаток с осени стоит на 21–22 тыс. штук.',
+      scenes: { brief: 'meeting', reflection: 'level', hook: 'office' },
+      messages: [
+        {
+          from: 'Мори-сан, КАМ по дистрибьюторам',
+          text: '«Сегодня, значит. Я поднял переписку за осень: в сентябре мы сами предложили им взять больше — под ноябрьское промо, которое потом отменили. Так что если ты нашёл, что они затарились, — это наша инициатива, а не их жадность. И с января они берут как обычно, я проверял.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Хорошо, что причина нашлась. Только она отвечает на вопрос „откуда взялся всплеск", а нас интересует другой: закончился ли он. Это разные вопросы, и второй по отгрузкам не читается вовсе.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-044',
+          intro: {
+            title: 'Ряд, которого никто не видел',
+            paras: [
+              'Всё нужное собрано за неделю: маска по distributor_id, дата в индекс, resample по месяцам. Setouchi — это distributor_id = 1.',
+              'Соберите ряд отгрузок помесячно и посмотрите на него целиком. До сих пор в разговоре фигурировало одно число за один квартал, а всплеск и его последствия видны только на всей длине.',
+            ],
+          },
+          after: {
+            from: 'Мори-сан, КАМ по дистрибьюторам',
+            text: '«Октябрь, ноябрь, декабрь — 10 172, 8 162, 9 869. Обычно у них три с половиной, ну шесть тысяч. Да, это мы. Дальше январь и февраль — как всегда, значит всё вернулось.»',
+          },
+        },
+        {
+          taskId: 'py-045',
+          intro: {
+            paras: [
+              'Спор «всплеск или обычные колебания» решается не глазом, а фоном. Скользящее среднее за три месяца поднимается вместе со всплеском, но не растворяет его: окно короче явления, и на его фоне три осенних месяца стоят отдельно от двух лет обычной работы.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Теперь у тебя есть картинка, которую можно показать не споря. И заметь, что она не отвечает на вопрос — она закрывает спор о том, было ли вообще событие. Ответ будет на третьем шаге.»',
+          },
+        },
+        {
+          taskId: 'py-046',
+          intro: {
+            title: 'Поток и уровень',
+            paras: [
+              'Отгрузка — это сколько пришло за месяц. Остаток — сколько лежит на складе на конец месяца. Первое называется потоком, второе уровнем, и связаны они только через разность: уровень меняется ровно на приход минус расход.',
+              'Отсюда неочевидное следствие, на котором и стоит сегодняшний спор: поток может вернуться к норме, не изменив уровня ни на штуку. Остатки лежат в fact_stock — строка на дистрибьютора, товар и месяц, units_on_hand — сколько лежит на конец месяца.',
+              'Ряд ниже собран тем же способом, что и утренний. Прочитайте и скажите, что в нём.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'В ряде отгрузок два факта, и оба важны. Всплеск: октябрь–декабрь 2025, 10 172, 8 162 и 9 869 штук против обычных трёх с половиной — шести тысяч. Возврат: с января 2026 отгрузки идут ровно как до осени, и Мори-сан прав, когда говорит, что всё вернулось.',
+        'И третий факт, которого в отгрузках не видно вовсе. Остаток вырос почти впятеро и с тех пор стоит: около 22 тыс. штук лежат на складе партнёра и не двигаются. Поток вернулся, уровень остался — ровно та разница, ради которой стоило менять инструмент.',
+        'Что из этого следует, данные уже не скажут, и это ваша часть работы. Пока эти 22 тыс. не продадутся, заказы Setouchi будут либо ниже обычных, либо их не будет вовсе, — а план по этому дистрибьютору на ближайшие кварталы посчитан так, будто их нет. Причину назвал человек, и данные её не подтверждают и не опровергают: отменённого промо в таблицах не существует. Зато последствие они показывают точно, и оно ещё идёт.',
+      ],
+      hook: [
+        'Четыре недели позади. Первая дала инструмент, вторая — расследование, третья — работу вокруг чисел: постановку, определение, проверку и подачу. Четвёртая дала второй инструмент и закрыла дело, которое висело с первого дня.',
+        'Обратите внимание, чем оно закрылось. Не тем, что нашёлся виноватый, — виноватых здесь нет, есть отменённое промо и никем не пересчитанный план. Аналитик здесь нужен был не чтобы поймать партнёра, а чтобы отличить «поток вернулся» от «последствия исчерпаны».',
+        'Дальше — треки. Кампания показала по одному срезу каждого: SQL, работу вокруг чисел, pandas. В треках то же самое разложено по навыкам, с повторениями и в вашем темпе — и там уже вы решаете, что именно вам нужно.',
       ],
     },
   ],
@@ -1445,6 +1789,7 @@ const en: StoryCampaign = {
     { id: 'w1', question: 'Why did Nettora sales fall by half, and whose door do we knock on?' },
     { id: 'w2', question: 'Who took the 42 Nettora outlets, and can we even see it?' },
     { id: 'w3', question: 'The analysis landed and they want it monthly, so what number belongs in the report?' },
+    { id: 'w4', question: 'Somebody shipped themselves twice what they sold: mistake, intent or normal, and what do we propose?' },
   ],
   missions: [
     /* Про устройство недели и выбор заданий см. комментарии в русской кампании выше. */
@@ -2096,7 +2441,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Your manager',
-            text: '"Eleven distributors out of twelve sit between 0.97 and 1.04. The twelfth is Setouchi Trading at 2.32. Remember that number, but it has nothing to do with Nettora: only five of its outlets are there."',
+            text: '"Eleven distributors out of twelve sit between 1.03 and 1.05. The twelfth is Setouchi Trading at 2.44. Remember that number, but it has nothing to do with Nettora: only five of its outlets are there."',
           },
         },
       ],
@@ -2107,7 +2452,7 @@ const en: StoryCampaign = {
       ],
       hook: [
         'Two weeks ago you could not pull a list of products. Today you closed four versions with numbers, named the boundary of what the data knows, and did not pass a guess off as a conclusion. That is the work people are paid for.',
-        'One number stays written down and set aside: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and that is a case of its own. It waits: taking it apart in SQL is awkward, it needs series by week and rolling averages, and that calls for a different tool.',
+        'One number stays written down and set aside: Setouchi Trading, 2.44. Somebody shipped themselves twice what they sold, and that is a case of its own. It waits: taking it apart in SQL is awkward, it needs series by week and rolling averages, and that calls for a different tool.',
         'Something else comes first. On Monday Aoki san is back from the meeting, and the week turns on a question rather than a query: what exactly are you being asked for when you are asked for a dashboard.',
       ],
     },
@@ -2127,7 +2472,7 @@ const en: StoryCampaign = {
         },
         {
           from: 'Your manager',
-          text: '"Congratulations, you have just been handed your first real task. It sounds simpler than Friday and it is harder: on Friday you were brought a question, and this is a feeling. Setouchi and their 2.32 can wait, we come back to that with a different tool. This week goes on what SQL has nothing to say about: working out what you are actually being asked for, and agreeing when the work is finished."',
+          text: '"Congratulations, you have just been handed your first real task. It sounds simpler than Friday and it is harder: on Friday you were brought a question, and this is a feeling. Setouchi and their 2.44 can wait, we come back to that with a different tool. This week goes on what SQL has nothing to say about: working out what you are actually being asked for, and agreeing when the work is finished."',
         },
       ],
       steps: [
@@ -2474,8 +2819,332 @@ const en: StoryCampaign = {
       ],
       hook: [
         'Three weeks are behind you. The first gave you the tool, the second an investigation, the third everything around them: framing, definition, verification and delivery. The third is what makes someone an analyst, and without the first two it does not happen.',
-        'One case is still open: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and nobody has explained it yet.',
+        'One case is still open: Setouchi Trading, 2.44. Somebody shipped themselves twice what they sold, and nobody has explained it yet.',
         'Queries are an awkward way to take it apart: it needs series by week and by product, rolling averages, a comparison with the previous month. SQL can do all of that, but it writes slowly and reads badly. On Monday you pick up a different tool.',
+      ],
+    },
+
+    {
+      id: 'day-16-another-tool',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Monday, 9:05',
+      short: 'Mon',
+      found: 'A pandas table stays in a variable: one bracket gives a column, two give a table.',
+      scenes: { brief: 'toolkit', reflection: 'catalog', hook: 'stray' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Setouchi. That case has been hanging since week one, and not because it is hard: it is awkward. It needs a series, month by month, and then three or four operations on top of that series. In SQL every next operation is a new query starting from the word SELECT. You are taking a different tool: in it the table stays in your hands between steps."',
+        },
+        {
+          from: 'Mori-san, key account manager for distributors',
+          text: '"So you are the one taking on Setouchi. Fair warning: they are a good partner, we have worked with them for eight years, and I do not need a story about them pulling something. I need an analysis. If it turns out we made the mess ourselves, say so, I will live."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-006',
+          intro: {
+            scene: 'toolkit',
+            title: 'The table stays in your hands',
+            paras: [
+              'pandas is a library where a table lives in a variable. A query returns a result and forgets it; here all thirteen tables are already sitting there as ready objects, and the next step addresses them by name instead of writing everything again.',
+              'There are two kinds of object, and confusing them is expensive. A DataFrame is a whole table, rows and columns. A Series is a single column. Hence the oddity everybody trips on: dim_product[\'brand\'] gives a Series, while dim_product[[\'brand\']] gives a DataFrame of one column. One bracket or two is a choice of type, not decoration.',
+              'Both forms stand side by side below. Read them and say how the results differ.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Remember that for the whole week: half of all baffling pandas errors are a Series where a DataFrame was expected. And the line that fails is usually not the line where the mistake was made, it is the next one."',
+          },
+        },
+        {
+          taskId: 'py-007',
+          intro: {
+            paras: [
+              'Selecting columns is the same listing you write after SELECT, except the list goes inside double brackets: dim_region[[\'region_name\', \'population\']]. The order in the list sets the order of columns in the result.',
+              'Put together a region reference for a demographic summary: region name and population.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-005',
+          intro: {
+            paras: [
+              'Now the same thing by hand, with no template. The buyer wants a view of the price list: SKU code, name, price.',
+            ],
+          },
+          after: {
+            from: 'Mori-san, key account manager for distributors',
+            text: '"I see they sat you down with the price list. That is fine, I started there too. Just keep in mind that by Friday I need a conversation about Setouchi, not about how many SKUs we carry."',
+          },
+        },
+      ],
+      reflection: [
+        'Not a single number about Setouchi was computed today, which is exactly what happened on the Monday of week one: the tool first, the answers later.',
+        'The difference from SQL that will start paying off shortly: there the answer arrives and disappears, here every step stays a variable. A series that SQL would make you assemble in one long query takes four lines, and after each one you can look at what came out.',
+      ],
+      hook: [
+        'Tomorrow, rows. In the shipment table Setouchi is not a table of its own, it is one distributor_id out of twelve, and the first thing to do is to separate its rows from the rest.',
+      ],
+    },
+
+    {
+      id: 'day-17-masks',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Tuesday, 9:20',
+      short: 'Tue',
+      found: 'Rows are selected by a mask. Conditions in it are joined with & and |, not with the words "and" and "or".',
+      scenes: { brief: 'filter', reflection: 'threshold', hook: 'groups' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Yesterday you pulled columns, today rows. The rest of the week comes down to one selection: distributor_id = 1, which is Setouchi. Get confident at selecting rows, otherwise everything you compute on top will be computed over the wrong ones."',
+        },
+        {
+          from: 'Mori-san, key account manager for distributors',
+          text: '"While you are learning, here is some background first hand. They took a lot last autumn, I remember that without any tables. We suggested it ourselves: stock up for the November promo. The promo was then cancelled."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-003',
+          intro: {
+            scene: 'filter',
+            title: 'A mask instead of WHERE',
+            paras: [
+              'Rows in pandas are selected by a mask: an expression evaluated separately for every row. dim_customer[\'channel\'] == \'ecom\' is neither a number nor a table, it is a column of True and False as long as the whole table.',
+              'The mask then goes into .loc, with the list of columns you want beside it: dim_customer.loc[mask, [\'customer_id\', \'city\']]. The comma inside .loc separates two different questions, which rows and which columns. SQL puts them at opposite ends of the query; here they stand next to each other.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-002',
+          intro: {
+            paras: [
+              'There is usually more than one condition, and this is where pandas parts ways with ordinary Python. The words "and" and "or" are built for a single value, and we have thousands of them, one per row. So masks are joined by symbols: (dim_product[\'list_price\'] > 100) & (dim_product[\'brand\'] == \'Aqualis\'). The brackets around each part are mandatory; without them operator precedence parses the expression differently than you meant.',
+              'Below is the same thing written with the word "and". Read it and say what happens.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"A good mistake for day two: it fails immediately and loudly. The bad ones are those that do not fail. We get to those on Thursday."',
+          },
+        },
+        {
+          taskId: 'py-001',
+          intro: {
+            paras: [
+              'Now by hand, and with a third technique. When a condition has several values, instead of a chain of | you write .isin([\'Aqualis\', \'Fruvia\']), an exact counterpart of SQL IN.',
+              'The promo team wants the price list for two brands, and only for items above 100.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'Selection now works in both directions: .loc takes rows by a mask and columns by a list. That is enough to separate Setouchi rows from the other eleven distributors, and everything else this week will be computed on top of exactly such a selection.',
+        'And remember Mori-san\'s version: they took a lot last autumn for a promo that was cancelled. That is a version, not a fact, exactly like "two people quit" in week one. The data knows nothing about it: a cancelled promo is not in the tables and could not be.',
+      ],
+      hook: [
+        'Tomorrow, numbers. Selected rows say nothing on their own: Setouchi has over a thousand of them, one per product and month. To see a picture, they have to be collapsed.',
+      ],
+    },
+
+    {
+      id: 'day-18-groups',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Wednesday, 9:15',
+      short: 'Wed',
+      found: 'groupby moves the grouping key into the index; as_index=False keeps it a column.',
+      scenes: { brief: 'groups', reflection: 'counts', hook: 'calendar' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Grouping today. It is written almost like SQL, and that is exactly why people get it wrong: the result does not look the way you expect. Sort this out today, because tomorrow a calendar goes on top of grouping and there will be no time for it."',
+        },
+        {
+          from: 'Aoki-san, sales director',
+          text: '"I hear Setouchi has you busy this week. Do not forget that my monthly report from last week still stands, the first of the month comes every month. But Setouchi matters more right now, agreed."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-011',
+          intro: {
+            scene: 'groups',
+            title: 'Where the grouping key goes',
+            paras: [
+              'Grouping is written almost like SQL: fact_sellout.groupby(\'product_id\')[\'units\'].sum(), meaning group, pick a column, collapse. The difference shows up in the result.',
+              'GROUP BY product_id in SQL returns two columns. Here product_id will not be among the columns at all: pandas moves the grouping key into the index, the service axis that rows are addressed by. Read the line below and say where product_id ends up after it.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-013',
+          intro: {
+            paras: [
+              'The index is not always what you want. .reset_index() brings the key back as a column: it moves the index into the columns and puts ordinary row numbering in its place.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"This is the kind of thing people learn by heart and still forget. The tell is simple: if a column has vanished after grouping and you need it to join or filter on, it is in the index."',
+          },
+        },
+        {
+          taskId: 'py-014',
+          intro: {
+            paras: [
+              'There is also a way not to move the key into the index at all: as_index=False right inside groupby. You will be writing it in nearly every line from here on.',
+              'The second thing today is several measures at once. That is what .agg(...) is for, and columns are named in place: n_sku=(\'sku_code\', \'count\') reads as "the n_sku column is a count over sku_code". Rounding is a separate step, .round(1), rather than something inside the aggregation.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'There are now enough techniques to compute anything about Setouchi: select its rows, collapse them by month, get a number. One thing is missing, time: a month in the table is still an ordinary string like 2025-10-01, and pandas has no idea what it means.',
+        'A habit was picked up along the way that will save hours later. The grouping key moves into the index, and the next operation gives no warning about it, it simply does the wrong thing. Of the two ways to put it back, as_index=False is shorter because it keeps the problem from arising.',
+      ],
+      hook: [
+        'Tomorrow, the series in time: changing frequency and the rolling average. Exactly the two techniques we came here for, and after them the Setouchi case becomes workable.',
+      ],
+    },
+
+    {
+      id: 'day-19-series',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Thursday, 9:10',
+      short: 'Thu',
+      found: 'resample changes the frequency, rolling smooths with a window; both need a datetime index.',
+      scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Today is what we changed tools for. A weekly series, a monthly series, smoothing: in SQL that is window functions and three nested queries, here it is two calls. Tomorrow you apply them to Setouchi; today you learn them on somebody else\'s data, so you are not arguing with the technique and the case at the same time."',
+        },
+        {
+          from: 'Ito-san, field team lead',
+          text: '"Since you are on charts. Tell marketing to stop sending weekly ones. They are all teeth, and every second tooth gets discussed as an event. I cannot work off that."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-035',
+          intro: {
+            scene: 'calendar',
+            title: 'A series, not a table with a date in it',
+            paras: [
+              'A time series is not the same thing as a table that happens to have a date. For pandas to work with the calendar, the date has to become the index and has to be a real date rather than a string. Hence the three lines of preparation: pd.to_datetime(...) turns text into a date, .set_index(...) makes it the axis, .sort_index() puts it in ascending order.',
+              'After that the frequency changes in a single call: .resample(\'MS\') collects observations onto month starts (Month Start). The computing is still explicit, .sum() after it. This is the same GROUP BY by month, except resample knows the calendar: a month with no sales at all stays in the series as a zero instead of vanishing from it.',
+              'The starter below already builds a weekly series for a brand and prepares the index. Your part is the last line.',
+            ],
+          },
+          after: {
+            from: 'Ito-san, field team lead',
+            text: '"Now that is a conversation. By month I can see what is happening, rather than how the needle shakes."',
+          },
+        },
+        {
+          taskId: 'py-036',
+          intro: {
+            paras: [
+              'The second technique is the rolling window. weekly[\'units\'].rolling(4).mean() averages the last four observations and slides the window forward by one. The teeth of a weekly series smooth out, and the level they dance around becomes visible.',
+              'A window has an edge, and behavior at the edge is not obvious. Read the line and say what the first three values will be.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-037',
+          intro: {
+            paras: [
+              'A smoothed series is almost always needed next to the source rather than instead of it: one shows the level, the other shows the observations themselves. So it is added as a column to the same table.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"The tool is assembled. Tomorrow you bring it to Setouchi, and be aware that Mori-san is coming with you."',
+          },
+        },
+      ],
+      reflection: [
+        'Two techniques, both about the same thing: seeing a level in a series instead of noise. resample changes the frequency, to weeks, months or quarters; rolling averages over a window without changing the frequency. The first answers "over what period", the second answers "against what background".',
+        'They share one condition: a real datetime in the index. If the date stays a string, resample fails outright, and sorting by it will at some point put 2025-10-01 before 2025-09-01 alphabetically, with nobody noticing.',
+      ],
+      hook: [
+        'Everything is ready. Tomorrow: Setouchi Trading and the 2.44 that was written down in week one and set aside. Somebody shipped themselves twice what they sold.',
+      ],
+    },
+
+    {
+      id: 'day-20-flow-and-level',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Friday, 9:00',
+      short: 'Fri',
+      found: 'Setouchi shipments returned to normal in January 2026, while the stock has stood at 21 to 22 thousand units since the autumn.',
+      scenes: { brief: 'meeting', reflection: 'level', hook: 'office' },
+      messages: [
+        {
+          from: 'Mori-san, key account manager for distributors',
+          text: '"Today, then. I dug up the correspondence from the autumn: in September we offered it to them ourselves, stock up for the November promo, which was then cancelled. So if you found that they overstocked, that was our initiative and not their greed. And since January they buy as usual, I checked."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Good that a cause turned up. Except it answers where the spike came from, and we care about a different question: is it over. Those are different questions, and the second one cannot be read off shipments at all."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-044',
+          intro: {
+            title: 'The series nobody has seen',
+            paras: [
+              'Everything needed was assembled this week: a mask on distributor_id, the date into the index, resample by month. Setouchi is distributor_id = 1.',
+              'Build the monthly shipment series and look at the whole of it. So far the conversation has run on one number for one quarter, while the spike and its consequences are only visible across the full length.',
+            ],
+          },
+          after: {
+            from: 'Mori-san, key account manager for distributors',
+            text: '"October, November, December: 10,172, 8,162, 9,869. Normally they take three and a half, maybe six thousand. Yes, that was us. And then January and February are as always, so it is all back to normal."',
+          },
+        },
+        {
+          taskId: 'py-045',
+          intro: {
+            paras: [
+              'The argument about "a spike or ordinary swings" is settled by a background, not by eye. A three-month rolling average rises together with the spike but does not dissolve it: the window is shorter than the phenomenon, and against that background the three autumn months stand apart from two years of ordinary work.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Now you have a picture you can show without arguing. And notice that it does not answer the question, it ends the argument about whether there was an event at all. The answer comes on the third step."',
+          },
+        },
+        {
+          taskId: 'py-046',
+          intro: {
+            title: 'Flow and level',
+            paras: [
+              'A shipment is how much arrived during the month. Stock is how much lies in the warehouse at the end of it. The first is called a flow, the second a level, and they are connected only through a difference: the level changes by exactly what came in minus what went out.',
+              'Hence the unobvious consequence that today\'s argument rests on: a flow can return to normal without changing the level by a single unit. Stock lives in fact_stock, one row per distributor, product and month, with units_on_hand for how much is lying there at month end.',
+              'The series below is built the same way as the morning one. Read it and say what is in it.',
+            ],
+          },
+        },
+      ],
+      reflection: [
+        'The shipment series holds two facts, and both matter. The spike: October to December 2025, 10,172, 8,162 and 9,869 units against the usual three and a half to six thousand. The return: since January 2026 shipments run exactly as they did before the autumn, and Mori-san is right that this part is back to normal.',
+        'And a third fact, entirely invisible in shipments. Stock grew almost fivefold and has stood still ever since: some 22 thousand units are lying in the partner\'s warehouse and not moving. The flow returned, the level stayed, which is precisely the distinction that made changing tools worth it.',
+        'What follows from that is no longer something the data will tell you, and that part is yours. Until those 22 thousand sell through, Setouchi orders will be either below normal or absent, while the plan for this distributor for the coming quarters is calculated as if they were not there. The cause was named by a person, and the data neither confirms nor denies it: a cancelled promo does not exist in the tables. The consequence, though, the data shows precisely, and it is still running.',
+      ],
+      hook: [
+        'Four weeks are behind you. The first gave you a tool, the second an investigation, the third the work around the numbers: framing, definition, verification and delivery. The fourth gave a second tool and closed a case that had been hanging since day one.',
+        'Notice how it closed. Not by finding somebody to blame, because there is nobody to blame here, there is a cancelled promo and a plan nobody recalculated. The analyst was needed here not to catch a partner out, but to tell "the flow is back" apart from "the consequences are over".',
+        'Next are the tracks. The campaign showed one slice of each: SQL, the work around numbers, pandas. In the tracks the same material is laid out skill by skill, with repetition and at your own pace, and there it is you who decides what you actually need.',
       ],
     },
   ],
