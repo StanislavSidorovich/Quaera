@@ -5363,6 +5363,121 @@ table.sample td.null {
   margin-bottom: 16px;
 }
 
+/*
+ * Шапка экрана «о треке»: цепочка, числа, пример задания.
+ *
+ * Стоит над сеткой из пяти карточек, а не внутри неё: сетка раскладывает
+ * равноправные карточки по две в ряд, а шапка — вход, и делить ряд ей не
+ * с чем. Своя карточка вместо участия в потоке заодно держит её на всю
+ * ширину на любом экране.
+ */
+.track-intro-head {
+  margin-bottom: 16px;
+}
+
+/*
+ * Цепочка — тот же вид, что на «О тренажёре» (.chain-steps): человек уже
+ * видел этот ряд пилюль там и узнаёт его здесь. Отличие одно и несущее —
+ * шаги этого трека подсвечены, остальные приглушены.
+ */
+.track-intro-chain {
+  margin-bottom: 14px;
+}
+
+.track-intro-chain .chain-step {
+  opacity: 0.45;
+}
+
+/*
+ * Подсвеченный шаг — заливкой акцента, а не только цветом текста: рядом
+ * стоят семь одинаковых пилюль, и разница в одном оттенке шрифта на 12px
+ * читается хуже, чем разница в фоне.
+ */
+.track-intro-chain .chain-step[data-on] {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.track-intro-head-body {
+  display: grid;
+  gap: 16px;
+}
+
+.track-intro-stats {
+  display: flex;
+  gap: 28px;
+  align-items: baseline;
+}
+
+/*
+ * От 900px пример и числа встают в ряд: `auto` у второй колонки означает
+ * «ровно по содержимому», то есть числа не растягиваются и не отбирают
+ * ширину у текста, а забирают ровно ту пустоту, которая оставалась справа
+ * от абзаца, ограниченного 68 символами.
+ */
+@media (min-width: 900px) {
+  .track-intro-head-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 28px;
+  }
+
+  /* Столбиком: в ряд они снова расползлись бы по ширине колонки. */
+  .track-intro-stats {
+    flex-direction: column;
+    gap: 16px;
+    text-align: right;
+  }
+}
+
+/*
+ * Пример утоплен, а не обведён рамкой: рамка внутри карточки читалась бы
+ * второй карточкой, и шапка распалась бы на два блока вместо одного
+ * (тот же довод, по которому на «Данных» развели паспорт и поиск).
+ */
+.track-intro-sample {
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: var(--bg-sunken);
+  /*
+   * По ширине текста, а не колонки. Абзацы внутри и так ограничены 68
+   * символами (.card p), и без этого потолка заливка уезжала на 840px
+   * при тексте в 513 — плашка выглядела пустой на треть, то есть
+   * подсвечивала пустоту вместо примера.
+   */
+  max-width: 68ch;
+}
+
+.track-intro-sample-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.track-intro-sample-brief {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/*
+ * Постановка приглушена относительно ситуации: в задании они тоже стоят
+ * в этом порядке и в этом соотношении, и пример обязан выглядеть как то,
+ * что человек увидит, а не как пересказ.
+ */
+.track-intro-sample-goal {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
 .track-intro {
   display: grid;
   /*

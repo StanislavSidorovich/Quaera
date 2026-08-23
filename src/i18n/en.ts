@@ -456,6 +456,8 @@ export const en = {
     ideaTitle: 'The main idea',
     limitsTitle: "What it doesn't give you",
     bridgeTitle: 'How it connects to the other tracks',
+    /** См. комментарий в ru.ts. */
+    sampleTitle: 'What a task looks like',
     startBtn: 'Start session',
     skipBtn: 'Skip',
   },
