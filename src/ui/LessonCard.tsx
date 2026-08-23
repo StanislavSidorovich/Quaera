@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isFigureBlock } from '../content/figureBlock';
 import type { Lesson } from '../content/types';
 import type { Executor, Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
@@ -64,25 +65,24 @@ interface Props {
    * из готового расчёта, а не запрос, который стоит запускать по кнопке.
    */
   runnable?: boolean;
-  /**
-   * У треков без исполнителя form/example/wrong бывают двух разных жанров,
-   * и путать их вёрстку нельзя (см. .lesson-figure и .lesson-prose
-   * в styles.css): domain — диаграмма, выровненная пробелами и стрелками,
-   * model — проза на 200-300+ знаков. Ложь по умолчанию — жанр «проза»
-   * безопаснее при незаданном значении, потому что перенос по ширине
-   * не ломает верно выровненный текст (только не улучшает диаграмму),
-   * а моноширинный pre без переноса сломал бы длинное предложение молча.
-   */
-  figure?: boolean;
   /** В занятии показываем кнопку перехода к задаче, в справочнике — нет. */
   onContinue?: () => void;
   /** В справочнике — кнопка практики по теме вместо перехода к следующему шагу занятия. */
   onPractice?: () => void;
 }
 
-export function LessonCard({ lesson, executor, runnable = true, figure = false, onContinue, onPractice }: Props) {
+/**
+ * Блок нетехнического трека: диаграмма или проза — решает содержимое, а не
+ * трек (разбор и его цена — в src/content/figureBlock.ts). Жанр считается
+ * у каждого поля отдельно: у одной и той же карточки `form` бывает схемой,
+ * а `wrong` рядом с ней — цитатой заказчика в две строки.
+ */
+function ProseBlock({ text }: { text: string }) {
+  return <pre className={isFigureBlock(text) ? 'lesson-figure' : 'lesson-prose'}>{text}</pre>;
+}
+
+export function LessonCard({ lesson, executor, runnable = true, onContinue, onPractice }: Props) {
   const { t } = useI18n();
-  const proseClass = figure ? 'lesson-figure' : 'lesson-prose';
   return (
     <>
       <div className="card">
@@ -96,11 +96,10 @@ export function LessonCard({ lesson, executor, runnable = true, figure = false, 
         {/*
          * У runnable-треков (sql, python) form — скелет синтаксиса
          * («SELECT колонка FROM таблица»), короткие строки, моноширинный
-         * блок со скроллом уместен как для кода. У остальных двух жанров —
-         * см. комментарий к proseClass выше и .lesson-figure/.lesson-prose
-         * в styles.css.
+         * блок со скроллом уместен как для кода. У остальных жанр решает
+         * содержимое — см. ProseBlock выше.
          */}
-        {runnable ? <pre className="sql-block">{lesson.form}</pre> : <pre className={proseClass}>{lesson.form}</pre>}
+        {runnable ? <pre className="sql-block">{lesson.form}</pre> : <ProseBlock text={lesson.form} />}
       </div>
 
       {/*
@@ -119,7 +118,7 @@ export function LessonCard({ lesson, executor, runnable = true, figure = false, 
       <div className="lesson-compare">
         <div className="card">
           <h2>{t.lesson.exampleTitle}</h2>
-          {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <pre className={proseClass}>{lesson.example}</pre>}
+          {runnable ? <RunnableSql sql={lesson.example} executor={executor} /> : <ProseBlock text={lesson.example} />}
           <p className="muted" style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>
             {lesson.reads}
           </p>
@@ -130,7 +129,7 @@ export function LessonCard({ lesson, executor, runnable = true, figure = false, 
           {runnable ? (
             <RunnableSql sql={lesson.wrong} tone="wrong" executor={executor} />
           ) : (
-            <pre className={proseClass}>{lesson.wrong}</pre>
+            <ProseBlock text={lesson.wrong} />
           )}
           <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, lineHeight: 1.55 }}>{lesson.wrongWhy}</p>
         </div>

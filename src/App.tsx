@@ -2084,7 +2084,6 @@ export default function App() {
               lesson={step.lesson}
               executor={executor}
               runnable={activeTrack === 'sql' || activeTrack === 'python'}
-              figure={activeTrack === 'domain'}
               onContinue={advance}
             />
           )}
@@ -2200,7 +2199,6 @@ export default function App() {
                   lesson={lessonBySkill.get(screen.skill)!}
                   executor={lessonExecutor ?? executor!}
                   runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
-                  figure={skillTrack === 'domain'}
                   // Из справочника карточка вела в тупик — с карты навыков в практику
                   // перейти можно было, а отсюда нет (находка 2 из разбора навигации
                   // 2026-08-09). startSkillSession — тот же вход, что и у карты.
