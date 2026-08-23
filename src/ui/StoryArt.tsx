@@ -70,6 +70,7 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'scope' && <Scope />}
         {scene === 'dispute' && <Dispute />}
         {scene === 'contract' && <Contract />}
+        {scene === 'shift' && <Shift />}
       </svg>
     </div>
   );
@@ -823,6 +824,40 @@ function Request() {
         d="M120 60c40 0 44-23 108-23M120 60h108M120 60c40 0 44 23 108 23"
         strokeWidth="2.2"
       />
+    </g>
+  );
+}
+
+/*
+ * Взгляд на строку назад: столбик строк таблицы, у каждой — своё значение
+ * справа, и акцентом дуга от одной строки к предыдущей. Ряд намеренно
+ * не сворачивается ни во что: смысл окна в том, что строк остаётся столько
+ * же, сколько было, — этим оно и отличается от группировки, которую человек
+ * знает с первой недели.
+ */
+function Shift() {
+  const rows = [20, 42, 64, 86];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        {rows.map((y) => (
+          <rect key={y} x="46" y={y} width="150" height="16" rx="2" strokeWidth="1.6" />
+        ))}
+      </g>
+
+      <g className="art-far">
+        {rows.map((y) => (
+          <path key={y} d={`M60 ${y + 8}h34M120 ${y + 8}h62`} strokeWidth="1.5" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <g className="art-near">
+        {rows.slice(1).map((y) => (
+          <rect key={y} x="214" y={y} width="58" height="16" rx="2" strokeWidth="1.5" strokeDasharray="4 3" />
+        ))}
+      </g>
+
+      <path className="art-line" d="M204 72c22 0 22-22 0-22M204 50l6-5M204 50l6 5" strokeWidth="2.2" />
     </g>
   );
 }

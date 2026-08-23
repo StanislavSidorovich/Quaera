@@ -84,6 +84,7 @@ export type StoryScene =
   | 'dropped'
   | 'threshold'
   | 'factors'
+  | 'shift'
   // разговоры между делом
   | 'corridor'
   // постановка задачи: размытая просьба, граница готового, спор о метрике
@@ -1166,8 +1167,103 @@ const ru: StoryCampaign = {
         'И заметь, чего эта строка стоила: она вывелась не из данных. Ни один запрос не скажет, считать ли дистрибьютора точкой продаж, — это решение людей, и записать его должен тот, кто считает.',
       ],
       hook: [
-        'Определение есть, спорить больше не о чем — завтра наконец руки. Считаем то самое: точки, где апрель просел против апреля прошлого года, и сразу верхние по величине падения.',
-        'Заодно посмотришь, как выглядит вопрос «сколько именно упало» на языке, которым ты уже владеешь: две недели ты собирал ровно эти конструкции.',
+        'Определение есть, спорить больше не о чем — завтра руки. Начнём с механизма, без которого слово «упало» не превращается в число: как поставить рядом текущий период и прошлый.',
+        'Механизм один и тот же, к чему его ни применяй: к месяцу против прошлого месяца, к апрелю против апреля год назад, к точке против неё же самой. Завтра ты его соберёшь.',
+      ],
+    },
+
+    /*
+     * Среда. Возврат в sql после двух дней рассуждения — и первый день
+     * кампании, где трек меняется на границе дня (см. applyStoryTrack).
+     *
+     * Оконная функция вводится ровно там, где она понадобилась по сюжету:
+     * во вторник договорились сравнивать период с периодом, а сравнение
+     * требует, чтобы прошлое значение оказалось в той же строке, что и
+     * текущее. Порядок заданий — ступень: predict показывает LAG в готовом
+     * запросе и сразу на ловушке, write требует его напечатать.
+     *
+     * Беседа недели стоит здесь, у второго задания. Ито-сан приносит факт,
+     * который числами ещё не подтверждён (сеть под двумя именами), и весь
+     * четверг вырастает из него: так факты и приходят в работе — от того,
+     * кто был в поле, а не из таблицы.
+     */
+    {
+      id: 'day-13-against-what',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Третья неделя · Среда, 9:30',
+      short: 'Ср',
+      found: 'Сравнение с прошлым периодом делает LAG. Без PARTITION BY он не видит границы разреза и берёт хвост соседнего.',
+      scenes: { brief: 'calendar', reflection: 'trend', hook: 'dropped' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Определение есть, теперь механика. Слово „упало" всегда означает сравнение, а в таблице текущий месяц и прошлый лежат в разных строках — сложить их одним GROUP BY нельзя. Для этого есть оконные функции: они не сворачивают строки, а дают каждой строке заглянуть на соседнюю.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Мне к первому числу, не забыл? Черновик покажи хоть в среду — я лучше сейчас скажу, что не так, чем в пятницу.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-056',
+          intro: {
+            scene: 'shift',
+            title: 'Заглянуть на строку назад',
+            paras: [
+              'Оконная функция считает по соседям, не сворачивая строк. LAG(units) OVER (ORDER BY month) кладёт в каждую строку значение предыдущей по заданному порядку: месяц и его прошлый месяц оказываются рядом, и разность между ними наконец можно посчитать.',
+              'В скобках после OVER живут два указания. ORDER BY говорит, что считать «предыдущим». PARTITION BY делит результат на независимые части: у каждой свой первый ряд, и через границу окно не заглядывает.',
+              'Ниже запрос без PARTITION BY, и в нём разрезы стоят подряд. Прочитай его и скажи, что окажется в prev_revenue у первой строки второго канала.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Вот за что эту ошибку любят: запрос не падает, столбец заполнен, и только одна строка на весь отчёт — чужая. В твоём случае разрез будет по точкам, а их сорок две: без PARTITION BY ты получишь сорок один правильный ответ и сорок одну неправильную стыковку.»',
+          },
+        },
+        {
+          taskId: 'sql-020',
+          /*
+           * Единственный разговор третьей недели. Ито-сан приносит то же,
+           * что и на первой: не ответ, а версию из поля — и на этот раз она
+           * не про причину падения, а про данные, которыми это падение
+           * считают. Проверяется числами на следующий день, ровно поэтому
+           * стоит в среду.
+           */
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ито-сан, руководитель полевой команды',
+                text: '«О, аналитик. Раз ты теперь считаешь по точкам — учти одну вещь. У нас сеть Ichiba в половине выгрузок записана как Itiba: система приёмки одна, а источника два, и никто это годами не чинит. Мои ребята в отчётах их каждый раз руками сводят.»',
+              },
+              {
+                from: 'Ваш руководитель',
+                text: '«Услышал — и не поверил на слово, а проверил. Если он прав, любая твоя цифра по сетям разъезжается надвое, и заметить это по итогу невозможно: обе половины выглядят как нормальные строки. Завтра посмотрим сырой слой, там это либо есть, либо нет.»',
+              },
+            ],
+          },
+          intro: {
+            paras: [
+              'Теперь то же самое рукой и на своих данных. Заготовка сворачивает год в месяцы — она вчерашняя, ничего нового в ней нет.',
+              'Твоя часть — три колонки поверх: сами штуки, штуки прошлого месяца и изменение в процентах. Процент считается от прошлого: (текущий − прошлый) / прошлый × 100, и множитель пишется как 100.0, иначе целочисленное деление съест дробную часть. У первого месяца прошлого нет, и пусто там — правильный ответ, а не дефект.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Вот эту колонку с процентами я и хотела видеть весь год. И заметь: провалы стоят там же, где ты мне показывал волну на первой неделе. Значит, считаешь ты то же самое, что я вижу глазами, — теперь я тебе верю чуть больше.»',
+          },
+        },
+      ],
+      reflection: [
+        'Механизм собран, и он общий: «упало» — это всегда две величины в одной строке, а поставить их рядом умеет окно. Поменяется только порядок и разрез — сдвиг на месяц или на год, разрез по компании или по точке.',
+        'И сразу цена невнимательности. Окно без PARTITION BY молчит на границе разреза: оно не ошибается, оно честно берёт предыдущую строку — просто эта строка принадлежит другой точке. Ошибка тихая, в отчёте не видна, и найти её можно только зная, что она бывает.',
+        'Заодно за сегодня набралось второе: слова Ито-сан. Пока это не факт, а версия — ровно как «двое уволились» на первой неделе. Проверяется одинаково: числами.',
+      ],
+      hook: [
+        'Черновик у Аоки-сан на руках, до первого числа два дня. Осталось то, чего в задаче никто не заказывал: убедиться, что цифры в нём вообще про то, о чём мы думаем.',
+        'Завтра спустимся на слой ниже готовых таблиц — в сырую выгрузку, из которой они собираются. Там мы либо найдём Ichiba и Itiba рядом, либо не найдём, и первое хуже.',
       ],
     },
   ],
@@ -1990,8 +2086,81 @@ const en: StoryCampaign = {
         'And notice what that line cost. It did not come out of the data. No query can tell you whether a distributor counts as a retail outlet. That is a decision people make, and the person who counts is the one who has to write it down.',
       ],
       hook: [
-        'The definition is settled and there is nothing left to argue about, so tomorrow you finally use your hands. You count the real thing: outlets where April came in below April a year ago, with the biggest falls first.',
-        'You also get to see what "how much exactly did it fall" looks like in a language you already have. Two weeks went into collecting precisely these pieces.',
+        'The definition is settled and there is nothing left to argue about, so tomorrow you use your hands. It starts with the mechanism that turns the word "fell" into a number: putting the current period and the previous one side by side.',
+        'The mechanism is the same whatever you point it at: a month against last month, April against April a year ago, an outlet against itself. Tomorrow you build it.',
+      ],
+    },
+
+    {
+      id: 'day-13-against-what',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week three · Wednesday, 9:30',
+      short: 'Wed',
+      found: 'Comparison with a previous period is what LAG does. Without PARTITION BY it sees no boundary between cuts and picks up the tail of the neighbouring one.',
+      scenes: { brief: 'calendar', reflection: 'trend', hook: 'dropped' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"The definition is done, now the mechanics. The word fell always means a comparison, and in the table this month and last month sit in different rows, so no GROUP BY will bring them together. That is what window functions are for: they do not fold rows, they let each row look at its neighbour."',
+        },
+        {
+          from: 'Aoki san, sales director',
+          text: '"By the first, remember? Show me a draft on Wednesday if you can. I would rather tell you now what is wrong than on Friday."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-056',
+          intro: {
+            scene: 'shift',
+            title: 'Looking one row back',
+            paras: [
+              'A window function counts across neighbours without folding rows away. LAG(units) OVER (ORDER BY month) puts the previous value into each row by the order you name: a month and its previous month end up side by side, and the difference between them can finally be worked out.',
+              'Two instructions live inside the brackets after OVER. ORDER BY says what counts as previous. PARTITION BY splits the result into independent parts: each gets its own first row, and the window never looks across the boundary.',
+              'Below is a query with no PARTITION BY, and the cuts in it sit one after another. Read it and say what lands in prev_revenue for the first row of the second channel.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"This is why that mistake is a favourite: the query does not fail, the column is filled in, and exactly one row in the whole report belongs to somebody else. Your cut will be by outlet, and there are forty two of them: with no PARTITION BY you get forty one correct answers and forty one wrong joins at the seams."',
+          },
+        },
+        {
+          taskId: 'sql-020',
+          interlude: {
+            scene: 'corridor',
+            messages: [
+              {
+                from: 'Ito san, field team lead',
+                text: '"Ah, the analyst. Since you are counting by outlet now, take one thing into account. Half our exports spell the Ichiba chain as Itiba: one intake system, two sources, and nobody has fixed it in years. My people merge them by hand in every report."',
+              },
+              {
+                from: 'Your manager',
+                text: '"Heard, and not taken on trust but checked. If he is right, every figure you produce by chain splits in two, and you cannot spot it from the total: both halves look like perfectly ordinary rows. Tomorrow we open the raw layer, where it either shows up or it does not."',
+              },
+            ],
+          },
+          intro: {
+            paras: [
+              'Now the same thing by hand and on your own data. The starter folds the year into months, and it is yesterday\'s work with nothing new in it.',
+              'Your part is three columns on top: the units themselves, the units of the previous month, and the change in percent. The percent is taken from the previous one, (current minus previous) divided by previous times 100, and the multiplier is written as 100.0 or integer division eats the fractional part. The first month has no previous, and an empty cell there is the right answer rather than a defect.',
+            ],
+          },
+          after: {
+            from: 'Aoki san, sales director',
+            text: '"That percent column is what I have wanted to see all year. And notice: the dips sit exactly where you showed me the wave in week one. So you are counting the same thing I see with my own eyes, which means I trust you slightly more now."',
+          },
+        },
+      ],
+      reflection: [
+        'The mechanism is built and it is a general one. "Fell" always means two values in one row, and a window is what puts them there. Only the order and the cut change: a shift by a month or by a year, a cut by company or by outlet.',
+        'And with it comes the price of inattention. A window with no PARTITION BY goes quiet at the boundary of a cut. It is not making an error, it honestly takes the previous row, that row simply belongs to another outlet. The mistake is silent, invisible in the report, and findable only by someone who knows it exists.',
+        'A second thing came in today as well: what Ito san said. For now it is a version rather than a fact, exactly like "two reps resigned" in week one. It gets checked the same way, with numbers.',
+      ],
+      hook: [
+        'Aoki san has the draft and there are two days until the first. What is left is the part nobody ordered: making sure the figures in it are about what we think they are about.',
+        'Tomorrow we go one layer below the finished tables, into the raw export they are built from. Either Ichiba and Itiba are sitting there side by side or they are not, and the first is worse.',
       ],
     },
   ],
