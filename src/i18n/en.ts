@@ -612,6 +612,14 @@ export const en = {
   task: {
     levelLabel: (n: number) => `Level ${n}`,
     modePredict: 'Predict the result',
+    modeOrder: 'Put the steps in order',
+    /** См. комментарий в ru.ts. */
+    orderNote: 'The order is scrambled. Rearrange it with the arrows.',
+    orderWrongTitle: 'Not the right order',
+    /** См. довод в handleCheck: количество верных позиций не называется. */
+    orderWrongBody: 'We do not show which items sit correctly, because that turns the task into trial and error. Open a hint if you are stuck.',
+    moveUp: (n: number) => `Move item ${n} up`,
+    moveDown: (n: number) => `Move item ${n} down`,
     modeFill: 'Fill in the query',
     modeWrite: 'Write the query',
     /** См. комментарий в ru.ts: переключатель для write/fill на узком экране. */

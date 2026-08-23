@@ -2225,6 +2225,42 @@
         "Ask what this column would look like if the error were random."
       ],
       "explain": "Bias answers the question «which way», and the answer here is one sided: eight brands out of nine are forecast below actuals. Chance does not look like that, so somebody is moving the numbers, and it usually happens after the model rather than inside it: a lower demand forecast is safer for the sales plan that bonuses are paid on, and easier in the conversation with production. Hence the practical conclusion: a steady lean is the cheapest part of the error, subtracted as a correction for an improvement with no new model at all, while the random part is far harder to reduce. The ninth row matters more than the eight, though. On the falling brand the lean runs the other way, because a return to the old level is built into the forecast every month, and that is no longer a general rule but the specific expectation of specific people. So the rule for reading the table: show bias and accuracy side by side and never one in place of the other. Bias speaks about the process and the people, error speaks about how predictable the task is at all."
+    },
+    {
+      "id": "dom-069",
+      "title": "The order of checks before you send",
+      "brief": "The query ran, the number is in front of you, and the meeting is in forty minutes. You have time for all five checks below, but one mistake voids whatever you did after it, so the order here is not free.",
+      "goal": "Arrange the checks so that each one only makes sense once the previous one has passed.",
+      "scenario": "Ready:   Q4 revenue\nNumber:  41,726,300 ¥\nQuery:   ran without errors\nMeeting in: 40 minutes\n\nChecks done: 0 of 5",
+      "orderQuestion": "In what order should these five checks be done?",
+      "items": [
+        {
+          "label": "Confirm you computed what was asked for: which metric, over which period, in which breakdown",
+          "why": "First, because it is the only one that can void every other. A checked, reconciled, beautifully formatted number of the wrong metric is worth nothing, and the person who notices will be the recipient, not the author."
+        },
+        {
+          "label": "Check that the period is closed: the last few days are not still loading and will not change overnight",
+          "why": "Second, because complete data is a precondition for any reconciliation. Reconciling a quarter whose final two days have not arrived means hunting for a gap that does not exist: it will close by itself once the data lands."
+        },
+        {
+          "label": "Reconcile the total against an independent source, an export from the accounting system or last period's report",
+          "why": "Third: this is what catches an error in the calculation itself, a lost join, duplicated rows, the wrong filter. Any earlier and it stands on incomplete data, any later and it is pointless, because everything after it works on a number already taken as true."
+        },
+        {
+          "label": "Look at the breakdown, not only at the total: blanks, outliers, regions sitting at zero",
+          "why": "Fourth, because a total can reconcile while two errors quietly cancel each other out. This check finds what reconciliation misses, but it only pays off once the total is confirmed, otherwise you are dissecting a number that is about to change."
+        },
+        {
+          "label": "Write the definition of the metric next to the number: what is included, what is not, over what period",
+          "why": "Last, because it checks nothing in your data. It insures you against someone else's mistake: the recipient will compare your number with theirs, and a clash of definitions surfaces in the email rather than in a meeting a week later."
+        }
+      ],
+      "hints": [
+        "One of these checks can void any of the other four, however long you spent on them. Start there.",
+        "There is a dependency between reconciling against a source and looking at the breakdown: one of them dissects the result of the other, and it does not work the other way round.",
+        "The final item is the only one that checks nothing in your data at all. It is about what happens after you press send."
+      ],
+      "explain": "The order of checks rests on a single rule: whatever can void the rest goes first. The definition of the metric comes first not because it matters more, but because an error in it makes every later step meaningless. After that the radius shrinks: incomplete data voids the reconciliation, and the reconciliation voids the breakdown. Last comes the only item that checks nothing in the data at all, because it insures against a clash of definitions with the recipient, and the whole skill of framing a request rests on that same rule."
     }
   ]
 }

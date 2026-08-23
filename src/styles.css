@@ -3137,6 +3137,102 @@ tbody tr:last-child td {
   color: var(--text-dim);
 }
 
+/*
+ * ------------------------------------------- задание на порядок (order)
+ *
+ * Собрано из тех же токенов, что `.option`, и намеренно: это второй вид
+ * ответа на том же экране, и выглядеть он должен родственно, а не как
+ * отдельный виджет. Отличие ровно одно и несущее — номер позиции слева:
+ * человек отвечает местом пункта, а не самим пунктом.
+ */
+
+.order-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  border-radius: 11px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.order-item[data-state='correct'] {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+/*
+ * Номер позиции — табличными цифрами и фиксированной ширины: строки
+ * сдвигаются при каждом нажатии стрелки, и «1» уже́ «2» дёргала бы текст
+ * пунктов по горизонтали на каждом шаге.
+ */
+.order-rank {
+  flex: 0 0 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.order-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.order-body .why {
+  display: block;
+  margin-top: 7px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/*
+ * Стрелки столбиком, и это проверено заменой.
+ *
+ * В ряд они выглядят компактнее на широком экране, где текст пункта короткий:
+ * столбик задаёт пункту дно в 60px, и при тексте в две строки снизу остаётся
+ * пустота. Но на 375 px ряд отнимает у текста 32px ширины, текст переносится
+ * на лишнюю строку, и список вырастает сильнее, чем экономит: замер дал 565px
+ * против 503px у столбика. Ширина здесь дороже высоты, потому что первая
+ * влияет на все пункты сразу.
+ */
+.order-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/*
+ * 28px — не «размер иконки», а нижняя граница цели нажатия, которую можно
+ * позволить в вертикальной паре: две кнопки подряд дают 60px сплошной
+ * активной зоны, и промах приводит к соседней стрелке того же пункта,
+ * а не к чужому элементу.
+ */
+.order-move {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.order-move:disabled {
+  opacity: 0.35;
+}
+
 /* ---------------------------------------------------------- подсказки */
 
 .hint {

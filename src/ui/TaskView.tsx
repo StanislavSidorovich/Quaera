@@ -55,6 +55,15 @@ export interface StepDraft {
   code: string;
   blanks: string[];
   chosen: number | null;
+  /**
+   * Текущий порядок пунктов шага `order` — индексы `step.items` слева направо.
+   *
+   * Пустой массив у всех прочих шагов, и он же — «порядок ещё не разложен».
+   * Восстановление из хранилища и правка контента лечатся одним и тем же
+   * условием на экране (длина не сошлась — разложить заново), поэтому
+   * версия хранилища не двигается и старое незаконченное занятие не теряется.
+   */
+  arrangement: number[];
   preview: Preview | null;
   expected: Preview | null;
   feedback: Feedback | null;
@@ -97,6 +106,17 @@ export interface TaskDraftStore {
  */
 export function resolveSteps(task: Task): TaskStep[] {
   if (task.steps?.length) return task.steps;
+  if (task.mode === 'order') {
+    return [
+      {
+        kind: 'order',
+        question: task.orderQuestion ?? '',
+        items: task.items ?? [],
+        scenario: task.scenario,
+        hints: task.hints,
+      },
+    ];
+  }
   if (task.mode === 'predict') {
     return [
       {
@@ -124,6 +144,38 @@ export function resolveSteps(task: Task): TaskStep[] {
   ];
 }
 
+/**
+ * Раскладка пунктов на экране: перестановка, детерминированная от id задания.
+ *
+ * Детерминированная — чтобы возврат на шаг не перетасовывал список заново
+ * (человек запомнил, где что лежало, и второй показ обязан выглядеть так же).
+ *
+ * **И заведомо не тождественная**: последней строкой перестановка, случайно
+ * совпавшая с правильной, поворачивается на один. Иначе существовал бы
+ * класс заданий, решаемых бездействием, и ловить его пришлось бы гейтом —
+ * то есть проверять свойство, которое дешевле сделать невозможным.
+ */
+export function shuffledOrder(seed: string, n: number): number[] {
+  const idx = [...Array(n).keys()];
+  // FNV-1a по строке id — нужна воспроизводимость, а не качество хеша.
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const rnd = () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h ^= h >>> 13;
+    return (h >>> 0) / 4294967296;
+  };
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  if (n > 1 && idx.every((v, i) => v === i)) idx.push(idx.shift() as number);
+  return idx;
+}
+
 /** Пустой черновик шага — то самое состояние, с которого шаг начинается впервые. */
 export function blankStepDraft(step: TaskStep): StepDraft {
   const template = step.kind === 'compute' ? step.template : undefined;
@@ -131,6 +183,7 @@ export function blankStepDraft(step: TaskStep): StepDraft {
     code: step.kind === 'compute' ? step.starter ?? '' : '',
     blanks: new Array(template ? template.split('___').length - 1 : 0).fill(''),
     chosen: null,
+    arrangement: [],
     preview: null,
     expected: null,
     feedback: null,
@@ -362,14 +415,16 @@ export function TaskView({
           <span className="pill">
             {step.kind === 'interpret'
               ? t.task.modePredict
-              : step.mode === 'fill'
-                ? t.task.modeFill
-                : t.task.modeWrite}
+              : step.kind === 'order'
+                ? t.task.modeOrder
+                : step.mode === 'fill'
+                  ? t.task.modeFill
+                  : t.task.modeWrite}
           </span>
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && (
+          {!task.scenario && step.kind !== 'order' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -520,6 +575,18 @@ function StepView({
    * задание в режиме fill проверяется сверкой текста, а «Выполнить» просто
    * нечему выполнять — кнопки быть не должно.
    */
+  /*
+   * Раскладка пунктов: своя, если она сошлась по длине с контентом, иначе
+   * свежая. Второе случается ровно в двух случаях — шаг открыт впервые
+   * и черновик пуст; либо задание правили, и сохранённая раскладка ссылается
+   * на пункты, которых больше нет.
+   */
+  const arrangement =
+    step.kind === 'order' && draft.arrangement.length === step.items.length
+      ? draft.arrangement
+      : step.kind === 'order'
+        ? shuffledOrder(task.id, step.items.length)
+        : [];
   const runsCode = executor.runsCode !== false;
 
   /*
@@ -533,11 +600,13 @@ function StepView({
    * проверка ждёт, пока заполнены все поля.
    */
   const canSubmit =
-    step.kind === 'interpret'
-      ? draft.chosen !== null
-      : !runsCode && step.mode === 'fill'
-        ? draft.blanks.length > 0 && draft.blanks.every((b) => b.trim().length > 0)
-        : composedCode.trim().length > 0;
+    step.kind === 'order'
+      ? true
+      : step.kind === 'interpret'
+        ? draft.chosen !== null
+        : !runsCode && step.mode === 'fill'
+          ? draft.blanks.length > 0 && draft.blanks.every((b) => b.trim().length > 0)
+          : composedCode.trim().length > 0;
 
   /** Разбор ошибки исполнителя — разный по языку: SQLite и Python выдают разные тексты. */
   const diagnoseError = (message: string, traceback?: string): Feedback =>
@@ -568,7 +637,37 @@ function StepView({
     }
   }
 
+  /** Обмен соседей: единственная операция над порядком — см. довод у кнопок ниже. */
+  function move(from: number, to: number) {
+    if (draft.solved || to < 0 || to >= arrangement.length) return;
+    const next = [...arrangement];
+    [next[from], next[to]] = [next[to], next[from]];
+    patch({ arrangement: next });
+  }
+
   async function handleCheck() {
+    if (step.kind === 'order') {
+      /*
+       * Всё или ничего, и без указания, какие пункты уже на местах.
+       *
+       * Число верных позиций превращает задание в перебор: двигаешь пункт,
+       * смотришь на счётчик, повторяешь — и рассуждение, ради которого вид
+       * задания и заводился, пропадает целиком. Незнающему остаются подсказки,
+       * они здесь и есть штатный путь.
+       */
+      const correct = arrangement.every((v, i) => v === i);
+      patch((d) => ({
+        arrangement,
+        solved: correct,
+        wasCorrect: correct,
+        wrongAttempts: d.wrongAttempts + (correct ? 0 : 1),
+        feedback: correct
+          ? { tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] }
+          : { tone: 'warn', title: t.task.orderWrongTitle, body: t.task.orderWrongBody, nudges: [] },
+      }));
+      return;
+    }
+
     if (step.kind === 'interpret') {
       const correct = step.options[draft.chosen ?? -1]?.correct === true;
       patch((d) => ({
@@ -775,6 +874,89 @@ function StepView({
               ))}
               {!draft.solved && (
                 <button className="btn" style={{ marginTop: 4 }} onClick={handleCheck} disabled={draft.chosen === null}>
+                  {t.task.checkBtn}
+                </button>
+              )}
+            </div>
+            {feedbackBlock}
+          </div>
+        </div>
+      ) : step.kind === 'order' ? (
+        /*
+         * Та же сетка, что у интерпретации: ситуация слева, ответ справа.
+         * Своей раскладки этот вид задания не заводит — читать условие
+         * и раскладывать шаги нужно рядом ровно по тому же доводу.
+         */
+        <div className="task-work">
+          <div className="task-situation">
+            <div className="card">
+              {step.scenario ? (
+                <pre className="scenario">{step.scenario}</pre>
+              ) : (
+                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                  {task.brief}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="task-answer">
+            <div className="card">
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{step.question}</p>
+              {/*
+               * Инструкция уходит вместе со стрелками: после зачёта порядок
+               * уже не перепутан и двигать в нём нечего, а строка «расставьте
+               * стрелками» продолжала бы просить о действии, которого больше
+               * нет ни одной кнопки сделать.
+               */}
+              {!draft.solved && (
+                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12 }}>
+                  {t.task.orderNote}
+                </p>
+              )}
+              <ol className="order-list">
+                {arrangement.map((itemIndex, pos) => (
+                  <li key={itemIndex} className="order-item" data-state={draft.solved ? 'correct' : undefined}>
+                    <span className="order-rank">{pos + 1}</span>
+                    <span className="order-body">
+                      {step.items[itemIndex].label}
+                      {draft.solved && <span className="why">{step.items[itemIndex].why}</span>}
+                    </span>
+                    {/*
+                     * Две кнопки со стрелками, а не перетаскивание.
+                     *
+                     * Приоритет здесь телефон, а drag на тач-экране спорит
+                     * с прокруткой страницы и требует своей реализации поверх
+                     * жестов; кнопки же работают и пальцем, и с клавиатуры,
+                     * и под скринридером, и не заводят ни одного нового
+                     * правила раскладки.
+                     */}
+                    {!draft.solved && (
+                      <span className="order-moves">
+                        <button
+                          type="button"
+                          className="order-move"
+                          onClick={() => move(pos, pos - 1)}
+                          disabled={pos === 0}
+                          aria-label={t.task.moveUp(pos + 1)}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="order-move"
+                          onClick={() => move(pos, pos + 1)}
+                          disabled={pos === arrangement.length - 1}
+                          aria-label={t.task.moveDown(pos + 1)}
+                        >
+                          ↓
+                        </button>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+              {!draft.solved && (
+                <button className="btn" style={{ marginTop: 12 }} onClick={handleCheck}>
                   {t.task.checkBtn}
                 </button>
               )}

@@ -50,7 +50,7 @@ export interface Mission {
  * и выбирается, `fill` дописывается в готовый скелет, `write` набирается
  * с нуля и почти всегда с одной неудачной попыткой.
  */
-const MINUTES = { lesson: 1.5, predict: 1.5, fill: 2.5, write: 4, interpret: 1.5 } as const;
+const MINUTES = { lesson: 1.5, predict: 1.5, order: 2, fill: 2.5, write: 4, interpret: 1.5 } as const;
 
 /**
  * Заданий на навык в линии.
@@ -77,8 +77,16 @@ const MAX_SKILLS_PER_MISSION = 3;
 const MISSION_MAX_MINUTES = 18;
 const MISSION_MIN_MINUTES = 6;
 
-/** predict → fill → write: сначала разобранный образец, потом достраивание, потом с нуля. */
-const MODE_RANK: Record<Task['mode'], number> = { predict: 0, fill: 1, write: 2 };
+/**
+ * predict → order → fill → write: сначала разобранный образец, потом сборка
+ * из готовых кусков, потом достраивание, потом с нуля.
+ *
+ * `order` встаёт вторым не по длительности, а по тому, что человек делает:
+ * узнавание позади (ответ он производит сам), но материал ещё дан целиком —
+ * ровно та ступень строительных лесов, между которой и `fill` разницы почти
+ * нет по усилию и есть по тому, что проверяется: порядок против фрагмента.
+ */
+const MODE_RANK: Record<Task['mode'], number> = { predict: 0, order: 1, fill: 2, write: 3 };
 
 /**
  * Глубина навыка в графе — длина самой длинной цепочки предпосылок до него.
@@ -119,7 +127,9 @@ function depthOf(skills: Skill[]): Map<string, number> {
 function taskMinutes(task: Task): number {
   if (task.steps?.length) {
     return task.steps.reduce(
-      (n, step) => n + (step.kind === 'interpret' ? MINUTES.interpret : MINUTES[step.mode]),
+      (n, step) =>
+        n +
+        (step.kind === 'interpret' ? MINUTES.interpret : step.kind === 'order' ? MINUTES.order : MINUTES[step.mode]),
       0
     );
   }

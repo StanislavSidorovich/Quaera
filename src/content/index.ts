@@ -48,6 +48,8 @@ function validate(pack: Pack): Pack {
         const at = `${t.id} шаг ${i + 1}`;
         if (step.kind === 'compute') {
           if (!step.solution) throw new Error(`Пак ${pack.id}: у задания ${at} нет эталонного решения`);
+        } else if (step.kind === 'order') {
+          if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх пунктов`);
         } else if (step.options.filter((o) => o.correct).length !== 1) {
           throw new Error(`Пак ${pack.id}: у задания ${at} должен быть ровно один верный вариант`);
         }
@@ -55,6 +57,11 @@ function validate(pack: Pack): Pack {
     } else if (t.mode === 'predict') {
       if ((t.options ?? []).filter((o) => o.correct).length !== 1) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} должен быть ровно один верный вариант`);
+      }
+    } else if (t.mode === 'order') {
+      // Эталон здесь — сам порядок пунктов, отдельного решения не бывает.
+      if ((t.items ?? []).length < 3) {
+        throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше трёх пунктов для упорядочивания`);
       }
     } else if (!t.solution) {
       throw new Error(`Пак ${pack.id}: у задания ${t.id} нет эталонного решения`);
@@ -129,22 +136,30 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         goal: tt.goal ?? t.goal,
         scenario: tt.scenario ?? t.scenario,
         predictQuestion: tt.predictQuestion ?? t.predictQuestion,
+        orderQuestion: tt.orderQuestion ?? t.orderQuestion,
         hints: tt.hints ?? t.hints,
         explain: tt.explain ?? t.explain,
         options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
+        items: tt.items && t.items ? t.items.map((o, i) => ({ ...o, ...tt.items![i] })) : t.items,
         steps:
           tt.steps && t.steps
             ? t.steps.map((s, i) => {
                 const st = tt.steps![i];
                 if (!st) return s;
-                return s.kind === 'compute'
-                  ? { ...s, goal: st.goal ?? s.goal, hints: st.hints ?? s.hints }
-                  : {
-                      ...s,
-                      question: st.question ?? s.question,
-                      hints: st.hints ?? s.hints,
-                      options: st.options ? s.options.map((o, j) => ({ ...o, ...st.options![j] })) : s.options,
-                    };
+                if (s.kind === 'compute') return { ...s, goal: st.goal ?? s.goal, hints: st.hints ?? s.hints };
+                if (s.kind === 'order')
+                  return {
+                    ...s,
+                    question: st.question ?? s.question,
+                    hints: st.hints ?? s.hints,
+                    items: st.items ? s.items.map((o, j) => ({ ...o, ...st.items![j] })) : s.items,
+                  };
+                return {
+                  ...s,
+                  question: st.question ?? s.question,
+                  hints: st.hints ?? s.hints,
+                  options: st.options ? s.options.map((o, j) => ({ ...o, ...st.options![j] })) : s.options,
+                };
               })
             : t.steps,
       };
@@ -412,7 +427,7 @@ export const trainedSkills = (t: Task): string[] => [t.skill, ...(t.alsoTrains ?
 export function taskTables(task: Task, schema: SchemaDoc | null): string[] {
   if (!schema) return [];
   const stepCode = (task.steps ?? []).flatMap((s) =>
-    s.kind === 'compute' ? [s.starter, s.template, s.solution] : [s.predictSql]
+    s.kind === 'compute' ? [s.starter, s.template, s.solution] : s.kind === 'interpret' ? [s.predictSql] : []
   );
   const code = [task.starter, task.template, task.solution, task.predictSql, ...stepCode]
     .filter(Boolean)

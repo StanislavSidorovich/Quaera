@@ -605,6 +605,41 @@ for (const packId of packs) {
       continue;
     }
 
+    if (t.mode === 'order') {
+      /*
+       * Проверяется только содержание, не раскладка на экране.
+       *
+       * «Перемешанный порядок не совпал с правильным» здесь не проверяется
+       * намеренно: плеер по построению не отдаёт тождественную перестановку
+       * (shuffledOrder в TaskView поворачивает её на один), и гейт, который
+       * сверял бы это ещё раз, проверял бы работу функции, а не контент.
+       */
+      if (!t.orderQuestion) fail(t.id, 'нет вопроса для режима order');
+      if (t.options?.length) fail(t.id, 'у задания order заданы варианты ответа — плеер покажет только пункты');
+      const items = t.items ?? [];
+      if (items.length < 3) fail(t.id, `пунктов ${items.length}, нужно от трёх`);
+      /*
+       * Потолок — не вкусовщина: правильных порядков у длинного списка
+       * человек удержать в голове не может, и задание из рассуждения
+       * превращается в возню со стрелками. Шесть — предел, при котором
+       * последовательность ещё читается целиком.
+       */
+      if (items.length > 6) fail(t.id, `пунктов ${items.length}, больше шести не читается как последовательность`);
+      const labels = new Set();
+      for (const it of items) {
+        if (!it.label?.trim()) fail(t.id, 'у пункта нет текста');
+        if (labels.has(it.label)) fail(t.id, `пункт «${it.label}» повторяется`);
+        labels.add(it.label);
+        if (!it.why || it.why.length < 40) fail(t.id, `у пункта «${it.label}» нет содержательного разбора`);
+      }
+      if (t.scenario) {
+        for (const line of t.scenario.split('\n')) {
+          if (line.length > 39) fail(t.id, `строка scenario длиннее 39 знаков (${line.length}): «${line}»`);
+        }
+      }
+      continue;
+    }
+
     if (t.mode === 'predict') {
       // Предсказывать можно результат кода (predictSql) или последствие
       // решения (scenario) — но не то и другое сразу: плеер рисует что-то одно.
@@ -644,7 +679,7 @@ for (const packId of packs) {
       if (!(pack.track === 'model' && t.mode === 'fill')) {
         fail(
           t.id,
-          `трек «${pack.track}» без исполнителя кода, а задание в режиме «${t.mode}» — допустим predict${pack.track === 'model' ? ' и fill' : ''}`
+          `трек «${pack.track}» без исполнителя кода, а задание в режиме «${t.mode}» — допустим predict, order${pack.track === 'model' ? ' и fill' : ''}`
         );
         continue;
       }
@@ -3038,6 +3073,10 @@ function translationPairs(orig, tr) {
     pairs.push([`варианте ${i + 1}`, orig.options?.[i]?.label, o.label]);
     pairs.push([`разборе варианта ${i + 1}`, orig.options?.[i]?.why, o.why]);
   });
+  (tr.items ?? []).forEach((o, i) => {
+    pairs.push([`пункте ${i + 1}`, orig.items?.[i]?.label, o.label]);
+    pairs.push([`разборе пункта ${i + 1}`, orig.items?.[i]?.why, o.why]);
+  });
   (tr.hints ?? []).forEach((h, i) => pairs.push([`подсказке ${i + 1}`, orig.hints?.[i], h]));
   (tr.steps ?? []).forEach((st, i) => {
     const os = orig.steps?.[i];
@@ -3048,8 +3087,13 @@ function translationPairs(orig, tr) {
       pairs.push([`варианте ${k + 1} шага ${i + 1}`, os?.options?.[k]?.label, o.label]);
       pairs.push([`разборе варианта ${k + 1} шага ${i + 1}`, os?.options?.[k]?.why, o.why]);
     });
+    (st.items ?? []).forEach((o, k) => {
+      pairs.push([`пункте ${k + 1} шага ${i + 1}`, os?.items?.[k]?.label, o.label]);
+      pairs.push([`разборе пункта ${k + 1} шага ${i + 1}`, os?.items?.[k]?.why, o.why]);
+    });
   });
   if (tr.predictQuestion) pairs.push(['вопросе', orig.predictQuestion, tr.predictQuestion]);
+  if (tr.orderQuestion) pairs.push(['вопросе', orig.orderQuestion, tr.orderQuestion]);
   if (tr.explain) pairs.push(['разборе', orig.explain, tr.explain]);
   return pairs;
 }
@@ -3078,6 +3122,10 @@ function translationPairs(orig, tr) {
       }
       if (t.options && (orig.options ?? []).length !== t.options.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`);
+        ok = false;
+      }
+      if (t.items && (orig.items ?? []).length !== t.items.length) {
+        fail(`${packId}.en`, `у задания ${t.id} ${t.items.length} переведённых пунктов вместо ${(orig.items ?? []).length}`);
         ok = false;
       }
       if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
