@@ -577,6 +577,8 @@ export const en = {
     homeTitle: 'An analyst work week',
     homeBody:
       'Five working days on one case: the client comes in with a question, you answer with data. A technique arrives exactly where the case runs into it, with a brief in the morning and a look at the finding in the evening. There are four cases, and by the last one you work in both SQL and pandas.',
+    /** См. комментарий в ru.ts. */
+    weekShort: (n: number) => `Week ${n}`,
     homeStartBtn: 'Start day one',
     homeResumeBtn: 'Resume the case',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */

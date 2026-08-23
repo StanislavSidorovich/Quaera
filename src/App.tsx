@@ -2644,6 +2644,62 @@ function WelcomeHero({
  * с каждым треком — TrackCards и About берут ту же t.tracks.chainStage,
  * чтобы подпись «на каком я шаге» не расходилась между экранами.
  */
+/**
+ * Карта кампании: четыре ряда по пять дней.
+ *
+ * Стоит рядом с прозой карточки на главной и заменяет собой её последнюю
+ * фразу — «дел четыре, и к последнему в руках уже и SQL, и pandas»
+ * абзац сообщает словами то, что карта показывает целиком: сколько это,
+ * из чего состоит и чем меняется от недели к неделе. Заодно занимает
+ * пустоту справа: абзац ограничен 68 символами, а карточка стоит во всю
+ * ширину контента.
+ *
+ * Клетка окрашена по треку своего дня — иначе неделя 3, где дни идут
+ * то по профессии, то по SQL, читалась бы такой же однородной, как
+ * остальные, и карта врала бы ровно в том единственном месте, ради
+ * которого стоит показывать дни по отдельности, а не числом.
+ *
+ * Прогресс здесь не показывается: карточка целиком принадлежит человеку,
+ * который ещё ничего не решал (см. `isNewUser` у места вызова), и
+ * закрашивать ему нечего.
+ */
+function StoryMap() {
+  const { t, locale } = useI18n();
+  const campaign = useMemo(() => storyCampaign(locale), [locale]);
+  const tracks = useMemo(() => {
+    const seen: Track[] = [];
+    for (const m of campaign.missions) if (!seen.includes(m.track)) seen.push(m.track);
+    return seen;
+  }, [campaign]);
+
+  return (
+    <div className="story-map">
+      <div className="story-map-grid">
+        {campaign.weeks.map((week, i) => (
+          <Fragment key={week.id}>
+            <span className="story-map-week">{t.storyMode.weekShort(i + 1)}</span>
+            <span className="story-map-days">
+              {campaign.missions
+                .filter((m) => m.week === week.id)
+                .map((m) => (
+                  <span key={m.id} className={`story-map-day track-${m.track}`} title={m.short} />
+                ))}
+            </span>
+          </Fragment>
+        ))}
+      </div>
+      <p className="story-map-legend">
+        {tracks.map((track) => (
+          <span key={track} className="story-map-legend-item">
+            <span className={`story-map-dot track-${track}`} aria-hidden />
+            {t.tracks.names[track]}
+          </span>
+        ))}
+      </p>
+    </div>
+  );
+}
+
 function ChainDiagram() {
   const { t } = useI18n();
   return (
@@ -3158,10 +3214,15 @@ function Home({
           <div className="card story-invite">
             <p className="story-invite-badge">{t.storyMode.badge}</p>
             <h2>{t.storyMode.homeTitle}</h2>
-            <p className="brief">{t.storyMode.homeBody}</p>
-            <button className="btn" onClick={onOpenStoryMode}>
-              {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
-            </button>
+            <div className="story-invite-body">
+              <div>
+                <p className="brief">{t.storyMode.homeBody}</p>
+                <button className="btn" onClick={onOpenStoryMode}>
+                  {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
+                </button>
+              </div>
+              <StoryMap />
+            </div>
           </div>
         ) : (
           <button type="button" className="story-invite-row" onClick={onOpenStoryMode}>

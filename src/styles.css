@@ -4511,6 +4511,118 @@ table.sample td.null {
 }
 
 /*
+ * Проза и карта рядом от 900px, в столбик ниже.
+ *
+ * `auto` у второй колонки означает «ровно по карте»: она не тянется
+ * и не отбирает ширину у абзаца, а занимает пустоту, которая иначе
+ * оставалась бы справа от текста, ограниченного 68 символами.
+ */
+.story-invite-body {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .story-invite-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 32px;
+  }
+}
+
+/*
+ * Колонки прижаты к правому краю, а не растянуты по ширине карты.
+ *
+ * Ширину карте задаёт легенда — три полных названия трека в строку, — и без
+ * этого метки недель отъезжали от клеток на две сотни пикселей, переставая
+ * читаться подписями к ним. Тот же класс, что «одинаково оформленные соседи
+ * сливаются», только наоборот: связанные элементы разводит пустота.
+ */
+.story-map-grid {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+/* На широком экране карта стоит справа от прозы, и прижимать её надо к тому
+   краю, у которого она живёт; на узком она под прозой, и там левый край
+   общий у всей карточки. */
+@media (min-width: 900px) {
+  .story-map-grid {
+    justify-content: end;
+  }
+}
+
+.story-map-week {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.story-map-days {
+  display: flex;
+  gap: 6px;
+}
+
+/*
+ * День — квадрат со скруглением, не круг: пять квадратов в ряд читаются
+ * отрезком времени, пять кругов — набором значков. Размер 22px взят от
+ * подписи ряда: клетка не должна быть заметно выше строки, рядом с которой
+ * стоит, иначе ряд перестаёт читаться одной строкой.
+ */
+.story-map-day {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--track, var(--accent)) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--track, var(--accent)) 60%, transparent);
+}
+
+.story-map-day.track-domain,
+.story-map-dot.track-domain {
+  --track: var(--track-domain);
+}
+
+.story-map-day.track-sql,
+.story-map-dot.track-sql {
+  --track: var(--track-sql);
+}
+
+.story-map-day.track-python,
+.story-map-dot.track-python {
+  --track: var(--track-python);
+}
+
+.story-map-day.track-model,
+.story-map-dot.track-model {
+  --track: var(--track-model);
+}
+
+.story-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.story-map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.story-map-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--track, var(--accent));
+}
+
+/*
  * Вернувшемуся — строка, а не карточка: главное действие на его главной
  * уже есть (кнопка занятия), и карточка сверху отодвинула бы её за сгиб.
  *
