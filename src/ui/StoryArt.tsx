@@ -68,6 +68,8 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'rival' && <Rival />}
         {scene === 'request' && <Request />}
         {scene === 'scope' && <Scope />}
+        {scene === 'dispute' && <Dispute />}
+        {scene === 'contract' && <Contract />}
       </svg>
     </div>
   );
@@ -821,6 +823,62 @@ function Request() {
         d="M120 60c40 0 44-23 108-23M120 60h108M120 60c40 0 44 23 108 23"
         strokeWidth="2.2"
       />
+    </g>
+  );
+}
+
+/*
+ * Спор о метрике: два столбца под одной и той же подписью, разной высоты,
+ * и акцентом — скоба на разнице между ними. Столбцы намеренно одинаковы
+ * по ширине и стилю: спорят не о том, чей способ лучше, а о том, что вошло
+ * в счёт, и разница — единственное, на что здесь стоит смотреть.
+ */
+function Dispute() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <path d="M30 98h250" strokeWidth="2" />
+        <rect x="62" y="44" width="56" height="54" rx="2" strokeWidth="1.8" />
+        <rect x="150" y="24" width="56" height="74" rx="2" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-far">
+        <path d="M64 108h52M152 108h52" strokeWidth="1.6" strokeLinecap="butt" />
+        <path d="M118 44h114M206 24h26" strokeWidth="1.3" strokeDasharray="4 4" strokeLinecap="butt" />
+      </g>
+
+      <path className="art-line" d="M244 24v20M236 24h16M236 44h16" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Записанное определение: карточка метрики с заголовком и тремя строками,
+ * у каждой — короткое имя поля и значение. Акцент на одной строке, потому
+ * что день упирается не в саму карточку, а в тот её пункт, который обычно
+ * и пропускают. Печать в углу — то, что отличает договорённость от заметки.
+ */
+function Contract() {
+  const rows = [46, 66, 86];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="26" y="14" width="212" height="92" rx="4" strokeWidth="1.8" />
+        <path d="M42 32h96" strokeWidth="2.4" strokeLinecap="butt" />
+      </g>
+
+      <g className="art-far">
+        {rows.map((y) => (
+          <path key={y} d={`M42 ${y}h40M96 ${y}h126`} strokeWidth="1.5" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <g className="art-near">
+        <circle cx="268" cy="80" r="20" strokeWidth="1.8" />
+        <path d="M258 80l7 7 13-14" strokeWidth="2" />
+      </g>
+
+      <path className="art-line" d="M42 66h40M96 66h126" strokeWidth="2.4" strokeLinecap="butt" />
     </g>
   );
 }

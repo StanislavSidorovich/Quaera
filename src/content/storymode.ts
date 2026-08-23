@@ -86,9 +86,11 @@ export type StoryScene =
   | 'factors'
   // разговоры между делом
   | 'corridor'
-  // постановка задачи: размытая просьба и граница готового
+  // постановка задачи: размытая просьба, граница готового, спор о метрике
   | 'request'
   | 'scope'
+  | 'dispute'
+  | 'contract'
   // находки и повороты сюжета
   | 'toolkit'
   | 'foundation'
@@ -1079,6 +1081,95 @@ const ru: StoryCampaign = {
         'Завтра выяснится, что на этот вопрос в компании есть три ответа и все три считаются по-разному. Пока он не решён, любой запрос вернёт число, за которое нельзя отвечать.',
       ],
     },
+
+    /*
+     * Вторник. Второй день подряд без запроса — и это единственное место
+     * недели, где два дня рассуждения стоят рядом. Порядок здесь не выбирали:
+     * считать раньше, чем определена метрика, значит получить число, которое
+     * нечем защитить, — а именно это день и разбирает.
+     *
+     * Три задания — три пункта определения, которые пропускают в этом
+     * порядке: что входит (dom-007), за какой период (dom-008) и что делать,
+     * когда определение меняют (dom-009). Последнее не про сегодняшний
+     * отчёт, а про тот же отчёт через полгода, и в дне оно стоит последним
+     * ровно поэтому.
+     */
+    {
+      id: 'day-12-three-answers',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Третья неделя · Вторник, 10:05',
+      short: 'Вт',
+      found: 'Определение записано: активная точка — точка продаж, дистрибьюторы не в счёт; падение — месяц к тому же месяцу год назад.',
+      scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«Сел писать запрос — и правильно, что не написал. Прежде чем считать точки с падением, сходи на планёрку в 10:00 и послушай первые пять минут. Там сегодня будет ровно твой вопрос, только про клиентов.»',
+        },
+        {
+          from: 'Танака-сан, финансовый контролёр',
+          text: '«Ещё раз для протокола: активных клиентов у нас сто сорок четыре. Цифра из базы, за апрель, я её лично проверял.»',
+        },
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«А у меня в отчёте сто тридцать две. Тоже из базы и тоже за апрель. И знаете, мне надоело каждый месяц выяснять, кто из нас ошибся.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-007',
+          intro: {
+            scene: 'dispute',
+            title: 'Метрика — это не формула',
+            paras: [
+              'Спор в переговорной выглядит как спор об арифметике, но арифметика тут ни при чём: оба числа посчитаны верно и из одной базы.',
+              'Метрика состоит из формулы и границ. Формула отвечает, что делить на что; границы — что вообще попадает в счёт, за какой период и из какого источника. Формулу проговаривают всегда, границы почти никогда, и расходятся отчёты именно на них.',
+              'Смотри на само расхождение, а не на цифры по отдельности. У разницы бывает форма, и по ней видно, о чём на самом деле спорят.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Вот и ответ, и он не в чью-то пользу. Для твоего отчёта берём определение продаж: активная точка — это розничная точка, дистрибьюторы в счёт не идут, потому что ехать к ним полевой команде незачем. Запиши это одной строкой и не в уме.»',
+          },
+        },
+        {
+          taskId: 'dom-008',
+          intro: {
+            paras: [
+              'Первый пункт закрыт: что входит в счёт — известно. Теперь второй, тот, который пропускают чаще всего, потому что он кажется очевидным из контекста.',
+              'Ниже тот же сюжет на другой метрике: формула одна, отчёты два, числа разные.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«А теперь примерь это на себя. «Точки, у которых упали продажи» — упали относительно чего? Против прошлого месяца в январе у тебя упадут все подряд, ты сам эту волну видел на первой неделе. Значит, апрель против апреля прошлого года, и сезон в сравнении больше не мешает.»',
+          },
+        },
+        {
+          taskId: 'dom-009',
+          intro: {
+            paras: [
+              'И третье, которое касается не сегодняшнего отчёта, а того же отчёта через полгода. Определение однажды захотят поправить, и почти всегда по делу.',
+              'Вопрос не в том, менять или нет, а в том, что происходит с уже разосланными числами в момент смены.',
+            ],
+          },
+          after: {
+            from: 'Танака-сан, финансовый контролёр',
+            text: '«Именно так у нас и вышло с возвратами в прошлом году. Половина квартала ушла на объяснения, почему выручка в моей презентации и в витрине разная. С тех пор мы храним дату смены и обе версии рядом.»',
+          },
+        },
+      ],
+      reflection: [
+        'Второй день подряд без единого запроса, и задача за эти два дня изменилась сильнее, чем изменилась бы от любого запроса. Было: «дашборд по продажам, нужно видеть картину». Стало: розничные точки, дистрибьюторы не в счёт, апрель против апреля прошлого года, письмом, к первому числу.',
+        'Это и есть определение метрики: не формула, а формула вместе с границами. Одна строка в шапке отчёта, которая стоит минуты и снимает половину будущих споров — включая тот, который ты сегодня слушал в переговорной.',
+        'И заметь, чего эта строка стоила: она вывелась не из данных. Ни один запрос не скажет, считать ли дистрибьютора точкой продаж, — это решение людей, и записать его должен тот, кто считает.',
+      ],
+      hook: [
+        'Определение есть, спорить больше не о чем — завтра наконец руки. Считаем то самое: точки, где апрель просел против апреля прошлого года, и сразу верхние по величине падения.',
+        'Заодно посмотришь, как выглядит вопрос «сколько именно упало» на языке, которым ты уже владеешь: две недели ты собирал ровно эти конструкции.',
+      ],
+    },
   ],
 };
 
@@ -1824,6 +1915,83 @@ const en: StoryCampaign = {
       hook: [
         'The task sounds simple: outlets whose sales fell. One detail is left, telling the engine what "an outlet whose sales fell" actually is.',
         'Tomorrow it turns out the company holds three answers to that, and all three are counted differently. Until it is settled, any query returns a number you cannot stand behind.',
+      ],
+    },
+
+    {
+      id: 'day-12-three-answers',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Week three · Tuesday, 10:05',
+      short: 'Tue',
+      found: 'The definition is written down: an active outlet is a retail outlet, distributors do not count, and a fall means April against April a year ago.',
+      scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"You sat down to write the query, and you were right not to write it. Before you count outlets with falling sales, drop into the ten o\'clock stand up and listen to the first five minutes. Your exact question comes up there today, only about customers."',
+        },
+        {
+          from: 'Tanaka san, financial controller',
+          text: '"Once more for the record: we have one hundred and forty four active customers. The figure comes from the database, for April, and I checked it myself."',
+        },
+        {
+          from: 'Aoki san, sales director',
+          text: '"And my report says one hundred and thirty two. Also from the database, also for April. And frankly I am tired of working out every month which of us got it wrong."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-007',
+          intro: {
+            scene: 'dispute',
+            title: 'A metric is not a formula',
+            paras: [
+              'The argument in the meeting room looks like an argument about arithmetic, and arithmetic has nothing to do with it: both numbers are correct and both come from the same database.',
+              'A metric is a formula plus its boundaries. The formula answers what is divided by what; the boundaries say what gets counted at all, over which period, and from which source. The formula is always spoken aloud, the boundaries almost never, and reports diverge on exactly those.',
+              'Look at the gap itself rather than at each number alone. A gap has a shape, and the shape shows what the argument is really about.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"There is your answer, and it favours nobody. For your report we take the sales definition: an active outlet is a retail outlet, distributors do not count, because there is no reason to send the field team to them. Write that down in one line, not in your head."',
+          },
+        },
+        {
+          taskId: 'dom-008',
+          intro: {
+            paras: [
+              'The first point is settled: what gets counted is known. Now the second, the one skipped most often because it feels obvious from context.',
+              'Below is the same plot on a different metric: one formula, two reports, two numbers.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Now hold that against your own task. Outlets whose sales fell, fell against what? Against last month, in January every single one of them falls, and you saw that wave yourself in week one. So it is April against April a year ago, and the season stops interfering with the comparison."',
+          },
+        },
+        {
+          taskId: 'dom-009',
+          intro: {
+            paras: [
+              'And the third one, which is not about today\'s report but about the same report six months from now. Sooner or later somebody wants the definition corrected, and usually with good reason.',
+              'The question is not whether to change it. The question is what happens to the numbers already sent out at the moment it changes.',
+            ],
+          },
+          after: {
+            from: 'Tanaka san, financial controller',
+            text: '"That is exactly how it went for us with returns last year. Half a quarter went on explaining why revenue in my deck and revenue in the warehouse were different. Since then we keep the switch date and both versions side by side."',
+          },
+        },
+      ],
+      reflection: [
+        'A second day with no query at all, and over those two days the task changed more than any query would have changed it. It began as "a sales dashboard, we need to see the picture". It is now retail outlets, distributors excluded, April against April a year ago, by email, by the first.',
+        'That is what defining a metric means: not a formula, but a formula together with its boundaries. One line at the top of the report, which costs a minute and removes half the arguments to come, including the one you sat through this morning.',
+        'And notice what that line cost. It did not come out of the data. No query can tell you whether a distributor counts as a retail outlet. That is a decision people make, and the person who counts is the one who has to write it down.',
+      ],
+      hook: [
+        'The definition is settled and there is nothing left to argue about, so tomorrow you finally use your hands. You count the real thing: outlets where April came in below April a year ago, with the biggest falls first.',
+        'You also get to see what "how much exactly did it fall" looks like in a language you already have. Two weeks went into collecting precisely these pieces.',
       ],
     },
   ],
