@@ -738,40 +738,47 @@ export default function App() {
   }, [line, progress]);
 
   /**
-   * Трек миссии режима истории. Кампания привязана к sql
-   * (см. content/storymode.ts), и её задания разрешаются только на своём
-   * треке: тогда исполнитель и схема соответствуют заданию.
+   * Трек миссии, с которой кампания откроется. Нужен входу: тот обязан знать,
+   * куда переключаться, ещё до того, как миссия станет доступной.
    *
-   * Отдельно от storyMissions ниже потому, что нужен раньше него: вход
-   * обязан знать, куда переключаться, ещё до того, как миссия станет
-   * доступной.
+   * Именно у **этой** миссии, а не у кампании целиком: с недели 3 кампания
+   * ведёт человека по разным трекам (понедельник — рассуждение domain,
+   * вторник — руки в sql), и общего трека у неё больше нет.
    */
   const storyMissionTrack = useMemo(() => storyEntryMission(locale)?.track ?? null, [locale]);
 
   /**
-   * Дни кампании, у которых на активном треке нашлись все их задания, — по id.
+   * Дни кампании, у которых нашлись все их задания, — по id.
    *
    * Картой, а не одним днём: экран называет свой по id, и разрешать его нужно
    * в момент отрисовки. День, которому не хватило хотя бы одного задания,
    * сюда не попадает целиком — это тот же приём, что у восстановления
    * занятия: лучше не открыть раздел, чем открыть его с дырой посреди дня,
    * где кнопка «дальше» упирается в пустоту.
+   *
+   * **Задания берутся из пака самой миссии, а не из активного трека.** Раньше
+   * день чужого трека сюда просто не попадал, и кампания физически не могла
+   * уйти из sql: полоса дела теряла деление, «следующий день» упирался
+   * в null, а `?story` у человека с открытым pandas вёл в пустоту. Трек
+   * переключается на входе в день (см. enterStoryMission) — тогда исполнитель
+   * и схема соответствуют заданию, ради чего привязка и заводилась.
    */
   const storyMissions = useMemo(() => {
     const byId = new Map<string, { mission: StoryMission; steps: StoryStepView[] }>();
     for (const mission of storyCampaign(locale).missions) {
-      if (mission.track !== activeTrack) continue;
+      const pack = packForTrack(mission.track, locale);
+      if (!pack) continue;
       const steps: StoryStepView[] = [];
       for (const step of mission.steps) {
-        const task = activePack.tasks.find((tk) => tk.id === step.taskId);
+        const task = pack.tasks.find((tk) => tk.id === step.taskId);
         if (!task) break;
-        steps.push({ task, skillTitle: activePack.skills.find((sk) => sk.id === task.skill)?.title ?? '' });
+        steps.push({ task, skillTitle: pack.skills.find((sk) => sk.id === task.skill)?.title ?? '' });
       }
       if (steps.length !== mission.steps.length) continue;
       byId.set(mission.id, { mission, steps });
     }
     return byId;
-  }, [locale, activePack, activeTrack]);
+  }, [locale]);
 
   const storyMission = screen.name === 'storymode' ? storyMissions.get(screen.missionId) ?? null : null;
 
@@ -1508,17 +1515,32 @@ export default function App() {
    * Прокрутки к выбору трека здесь нет, в отличие от switchTrack: она
    * нужна главной, а мы с главной уходим.
    */
+  /**
+   * Подвести активный трек под день кампании.
+   *
+   * Зовётся на каждом входе в день, а не один раз при открытии режима:
+   * с недели 3 соседние дни живут на разных треках, и переключение — это
+   * событие перехода, а не свойство кампании. Всё, что видит задание внутри
+   * дня, приходит из активного трека: исполнитель, пак, схема. Оставить
+   * трек прежним — значит дать domain-заданию движок SQL и наоборот.
+   *
+   * Прокрутки к выбору трека здесь нет, в отличие от switchTrack: она нужна
+   * главной, а мы с главной уходим.
+   */
+  function applyStoryTrack(track: Track) {
+    if (track === activeTrack) return;
+    setActiveTrack(track);
+    setConsentDeferred(false);
+    try {
+      localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
+    } catch {
+      // см. initialActiveTrack
+    }
+  }
+
   function openStoryMode() {
     if (!storyMissionTrack) return;
-    if (storyMissionTrack !== activeTrack) {
-      setActiveTrack(storyMissionTrack);
-      setConsentDeferred(false);
-      try {
-        localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, storyMissionTrack);
-      } catch {
-        // см. initialActiveTrack
-      }
-    }
+    applyStoryTrack(storyMissionTrack);
     const mission = storyEntryMission(locale);
     if (!mission) return;
     /*
@@ -1541,8 +1563,8 @@ export default function App() {
    *
    * null означает «эта миссия последняя» — тогда крючок прощается словами
    * «продолжение следует» и уводит на главную. Проверяется не только наличие
-   * следующей в кампании, но и то, что она разрешилась в задание на активном
-   * треке: обещать переход, который упрётся в пустой экран, хуже, чем честно
+   * следующей в кампании, но и то, что все её задания нашлись в её паке:
+   * обещать переход, который упрётся в пустой экран, хуже, чем честно
    * закончить кампанию на миссию раньше.
    */
   function nextStoryMission(currentId: string): (() => void) | null {
@@ -1561,6 +1583,7 @@ export default function App() {
         saveStoryMissionId(next.id);
         setStoryReachedId(next.id);
       }
+      applyStoryTrack(next.track);
       setScreen({ name: 'storymode', missionId: next.id, phase: { kind: 'brief' } });
       window.scrollTo({ top: 0 });
     };
@@ -2156,7 +2179,9 @@ export default function App() {
               onNext={nextStoryMission(storyMission.mission.id)}
               openDayIds={storyOpenDayIds}
               onOpenDay={(id) => {
-                if (!storyMissions.has(id)) return;
+                const day = storyMissions.get(id);
+                if (!day) return;
+                applyStoryTrack(day.mission.track);
                 setScreen({ name: 'storymode', missionId: id, phase: { kind: 'brief' } });
                 window.scrollTo({ top: 0 });
               }}

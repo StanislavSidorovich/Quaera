@@ -66,6 +66,8 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'factors' && <Factors />}
         {scene === 'outlets' && <Outlets />}
         {scene === 'rival' && <Rival />}
+        {scene === 'request' && <Request />}
+        {scene === 'scope' && <Scope />}
       </svg>
     </div>
   );
@@ -787,6 +789,72 @@ function Corridor() {
       </g>
 
       <path className="art-line" d="M142 60c-6-6 6-10 0-16M186 60c-6-6 6-10 0-16" strokeWidth="2.2" />
+    </g>
+  );
+}
+
+/*
+ * Размытая просьба: слева пузырь сообщения с двумя строками, справа три
+ * одинаково пустые рамки — три отчёта, каждый из которых честно называется
+ * «дашборд по продажам». Акцентом выделены расходящиеся линии, а не рамки:
+ * беда понедельника не в том, что вариантов три, а в том, что просьба ведёт
+ * ко всем трём сразу и выбрать по ней нельзя.
+ */
+function Request() {
+  const rows = [24, 54, 84];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="18" y="38" width="96" height="44" rx="4" strokeWidth="1.8" />
+        <path d="M34 54h64M34 66h40" strokeWidth="1.6" strokeLinecap="butt" />
+        <path d="M30 82v12l14-12" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-far">
+        {rows.map((y) => (
+          <rect key={y} x="234" y={y} width="68" height="26" rx="3" strokeWidth="1.5" strokeDasharray="4 4" />
+        ))}
+      </g>
+
+      <path
+        className="art-line"
+        d="M120 60c40 0 44-23 108-23M120 60h108M120 60c40 0 44 23 108 23"
+        strokeWidth="2.2"
+      />
+    </g>
+  );
+}
+
+/*
+ * Граница готового: слева четыре пункта списка, справа за вертикальной чертой
+ * те же пункты пунктиром — то, что в задачу не входит. Акцент на самой черте:
+ * весь смысл дня в ней, а не в длине списка. Пунктирное справа намеренно
+ * не короче сплошного слева — «за границей» всегда остаётся столько же,
+ * сколько внутри, и работа заканчивается не тогда, когда сделано всё.
+ */
+function Scope() {
+  const rows = [24, 46, 68, 90];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        {rows.map((y) => (
+          <path key={y} d={`M20 ${y}h116`} strokeWidth="2" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <g className="art-near">
+        {rows.map((y) => (
+          <rect key={y} x="8" y={y - 5} width="10" height="10" rx="2" strokeWidth="1.6" />
+        ))}
+      </g>
+
+      <g className="art-far">
+        {rows.map((y) => (
+          <path key={y} d={`M182 ${y}h130`} strokeWidth="1.6" strokeDasharray="5 5" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      <path className="art-line" d="M160 12v92" strokeWidth="2.4" />
     </g>
   );
 }

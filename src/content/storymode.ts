@@ -46,9 +46,19 @@ import type { Track } from './types';
  * ступенью не считается, AVG(list_price) — считается, потому что по первому
  * напечатать нельзя, а по второму можно.
  *
- * **Пока это вертикальный срез: одна неделя, только SQL, без ветвления.**
- * Вход спрятан за `?story` (см. STORY_ENABLED в App.tsx): код в проде, но
- * показывать всем рано.
+ * **Кампания идёт по разным трекам, и трек — свойство дня, а не кампании.**
+ * Две первые недели целиком на sql: человек отвечает на вопрос, который ему
+ * принесли готовым. С третьей начинается то, чего в SQL нет, — постановка
+ * задачи, определение метрики, защита вывода, — и эти дни живут на domain.
+ * Внутри дня трек один: задание крутится на активном треке, оттуда приходят
+ * исполнитель, пак и схема, поэтому смешать в одном дне рассуждение и запрос
+ * нельзя. Переключение происходит на границе дня (applyStoryTrack в App.tsx),
+ * и любой вход в день — с главной, из полосы дела, по `?story` — обязан идти
+ * через него.
+ *
+ * **Вход открыт всем: кампания стоит на главной** (`?story` остался прямой
+ * ссылкой в текущий день, см. STORY_OPEN_ON_BOOT в App.tsx). Ветвления нет:
+ * человек выбирает ответы внутри заданий, но не путь по кампании.
  */
 
 /**
@@ -76,6 +86,9 @@ export type StoryScene =
   | 'factors'
   // разговоры между делом
   | 'corridor'
+  // постановка задачи: размытая просьба и граница готового
+  | 'request'
+  | 'scope'
   // находки и повороты сюжета
   | 'toolkit'
   | 'foundation'
@@ -226,6 +239,7 @@ const ru: StoryCampaign = {
   weeks: [
     { id: 'w1', question: 'Почему продажи Nettora упали вдвое — и к кому с этим идти?' },
     { id: 'w2', question: 'Кто занял 42 точки Nettora — и можем ли мы это увидеть?' },
+    { id: 'w3', question: 'Разбор приняли и просят каждый месяц — какое число должно стоять в отчёте?' },
   ],
   missions: [
     /*
@@ -964,8 +978,105 @@ const ru: StoryCampaign = {
       ],
       hook: [
         'Две недели назад ты не мог достать список товаров. Сегодня ты закрыл четыре версии числами, назвал границу того, что данные знают, и не выдал догадку за вывод — это и есть работа, за которую платят.',
-        'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело.',
-        'Разбирать его в SQL неудобно: там нужны ряды по неделям и товарам, скользящие средние и сравнение с прошлым месяцем — запросами это пишется долго и читается плохо. В понедельник возьмёшь другой инструмент.',
+        'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.32. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело. Оно подождёт: разбирать его в SQL неудобно, там нужны ряды по неделям и скользящие средние, а для этого нужен другой инструмент.',
+        'Сначала будет другое. В понедельник Аоки-сан вернётся со встречи, и главным на неделе станет не запрос, а вопрос: что именно у тебя просят, когда просят «дашборд».',
+      ],
+    },
+
+    /*
+     * Третья неделя, понедельник. Первый день кампании не на sql — и первый,
+     * где за весь день не написано ни одного запроса.
+     *
+     * **Зачем неделя рассуждения после двух недель рук.** Две недели человек
+     * отвечал на вопрос, который ему принесли готовым: «почему упала Nettora».
+     * В работе так не бывает — приносят «сделай дашборд», и половина работы
+     * аналитика происходит до первой строчки кода. Ставить эту неделю раньше
+     * было нельзя: разговор о постановке пуст, пока человек ни разу не считал
+     * сам, — тогда «что вы решите, посмотрев на него» звучит как афоризм
+     * из книжки, а не как выбор, за который платят днями работы.
+     *
+     * **Почему день не смешанный.** Задание внутри дня крутится на активном
+     * треке: оттуда приходят исполнитель, пак и схема. Положить в один день
+     * рассуждение и запрос значило бы держать на экране два пака сразу —
+     * поэтому трек переключается на границе дня (см. applyStoryTrack
+     * в App.tsx), а не внутри него.
+     */
+    {
+      id: 'day-11-what-they-decide',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Третья неделя · Понедельник, 9:40',
+      short: 'Пн',
+      found: 'За «дашбордом по продажам» стоит решение: куда вести полевую команду. Готово — это оговорённый заранее список, а не ощущение полноты.',
+      /*
+       * Заставка «просьба» стоит у первого задания, а не у брифа: бриф —
+       * это встреча, с которой вернулась Аоки-сан, а размытая просьба
+       * начинается экраном ниже. У крючка своя, третья: он не про просьбу,
+       * а про развилку определений, в которую день упирается.
+       */
+      scenes: { brief: 'meeting', reflection: 'scope', hook: 'split' },
+      messages: [
+        {
+          from: 'Аоки-сан, директор по продажам',
+          text: '«Встреча прошла нормально. Я показала им твоё: сорок две точки живы, покупают у нас на 76 тысяч штук других брендов, а Nettora там больше не берут. Про конкурента я честно сказала, что имени назвать не могу, и это, как ни странно, добавило веса всему остальному. Теперь они хотят видеть это каждый месяц. Сделай дашборд по продажам, чтобы была видна картина.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Поздравляю, ты только что получил свою первую настоящую задачу. Она звучит проще пятничной и она сложнее: в пятницу тебе принесли вопрос, а сейчас — ощущение. Setouchi с их 2.32 подождёт, к нему вернёмся с другим инструментом. Эту неделю мы потратим на то, чего в SQL нет: понять, что именно у тебя просят, и договориться, когда работа закончена.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-004',
+          intro: {
+            scene: 'request',
+            title: 'Просьба — это ещё не задача',
+            paras: [
+              'За две недели ты ни разу не выбирал, что считать: вопрос приносили готовым. Так работа устроена редко. Обычная просьба выглядит как эта — «нужно видеть картину», — и она описывает ощущение, а не задачу.',
+              'Достроить её за заказчика нельзя: «дашборд по продажам» одинаково честно означает и отчёт для полевой команды, и разбор для закупок, и слайд для бренда. Каждый из них считается по-своему, и все три будут отвергнуты, если угадать не тот.',
+              'Уточняющих вопросов много, и они не равны по силе. Один из них сужает пространство сильнее остальных, потому что тянет за собой всё сразу: и метрику, и разрез, и периодичность. С него и начинают.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Спросил — и получил: „решаем, куда отправить полевую команду в этом месяце". Заметь, что произошло с задачей. Не „все продажи", а точки. Не „за период", а месяц к месяцу. И не картинка вообще, а список, по которому в понедельник кто-то поедет.»',
+          },
+        },
+        {
+          taskId: 'dom-005',
+          intro: {
+            paras: [
+              'Следующая просьба пришла в тот же день и с другой стороны — от бренд-менеджера. Она сформулирована предельно конкретно, и именно поэтому её легко выполнить не думая.',
+              'Смотри не на то, что человек просит, а на то, что он собирается с этим делать. Между этими двумя вещами почти всегда есть зазор, и он не от лукавства: заказчик просит тот способ, который считает для тебя доступным.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Тогда так и отправляй: файл вложением, а в теле письма три строки — какие точки просели, насколько и с какого месяца. И сохрани запрос: через месяц она придёт с тем же вопросом про другой бренд, и это будет уже не работа, а две минуты.»',
+          },
+        },
+        {
+          taskId: 'dom-006',
+          intro: {
+            paras: [
+              'И последнее на сегодня — то, о чём договариваются до начала работы, а вспоминают в пятницу вечером.',
+              'У задачи есть момент, в который она закончена. Если его не назвать заранее, его назначит тот, кто откроет отчёт: каждый новый читатель принесёт «а можно ещё разрез», и отказать будет нечем — границы-то не было.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Договорились: список точек с падением за месяц, с величиной падения и дистрибьютором, письмом, к первому числу. Разрез по товарам — отдельная задача, если понадобится. Мне так даже удобнее: я теперь знаю, что получу.»',
+          },
+        },
+      ],
+      reflection: [
+        'За весь день ты не написал ни одного запроса — и это не пауза в работе, это её первая половина. Задача пришла как «дашборд по продажам, нужно видеть картину», а уходит в работу как список точек с падением, помесячно, к первому числу, письмом.',
+        'Посчитай, чего стоил один вопрос про решение. Без него ты бы неделю строил витрину со всеми разрезами сразу, показал её — и услышал: «а где точки, куда ехать?»',
+        'Заметь и обратное: договорённость о готовом защищает не только тебя. Аоки-сан теперь знает, что получит, и ей не нужно проверять, не забыл ли ты чего-то важного.',
+      ],
+      hook: [
+        'Задача звучит просто: точки, у которых продажи упали. Осталась мелочь — сказать движку, что такое «точка, у которой упали продажи».',
+        'Завтра выяснится, что на этот вопрос в компании есть три ответа и все три считаются по-разному. Пока он не решён, любой запрос вернёт число, за которое нельзя отвечать.',
       ],
     },
   ],
@@ -975,6 +1086,7 @@ const en: StoryCampaign = {
   weeks: [
     { id: 'w1', question: 'Why did Nettora sales fall by half, and whose door do we knock on?' },
     { id: 'w2', question: 'Who took the 42 Nettora outlets, and can we even see it?' },
+    { id: 'w3', question: 'The analysis landed and they want it monthly, so what number belongs in the report?' },
   ],
   missions: [
     /* Про устройство недели и выбор заданий см. комментарии в русской кампании выше. */
@@ -1637,8 +1749,81 @@ const en: StoryCampaign = {
       ],
       hook: [
         'Two weeks ago you could not pull a list of products. Today you closed four versions with numbers, named the boundary of what the data knows, and did not pass a guess off as a conclusion. That is the work people are paid for.',
-        'One number stays written down and set aside: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and that is a case of its own.',
-        'Taking it apart in SQL is awkward: it needs series by week and by product, rolling averages and a comparison with the previous month, which queries write slowly and read badly. On Monday you pick up a different tool.',
+        'One number stays written down and set aside: Setouchi Trading, 2.32. Somebody shipped themselves twice what they sold, and that is a case of its own. It waits: taking it apart in SQL is awkward, it needs series by week and rolling averages, and that calls for a different tool.',
+        'Something else comes first. On Monday Aoki san is back from the meeting, and the week turns on a question rather than a query: what exactly are you being asked for when you are asked for a dashboard.',
+      ],
+    },
+
+    {
+      id: 'day-11-what-they-decide',
+      week: 'w3',
+      track: 'domain',
+      place: 'Kaiyo Trading · Week three · Monday, 9:40',
+      short: 'Mon',
+      found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means an agreed list, not a feeling of completeness.',
+      scenes: { brief: 'meeting', reflection: 'scope', hook: 'split' },
+      messages: [
+        {
+          from: 'Aoki san, sales director',
+          text: '"The meeting went well. I showed them your work: forty two outlets alive, buying 76 thousand units of our other brands, and no longer taking Nettora. On the competitor I said plainly that I cannot name anyone, and oddly enough that gave the rest more weight. Now they want to see this every month. Build me a sales dashboard so the picture is visible."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Congratulations, you have just been handed your first real task. It sounds simpler than Friday and it is harder: on Friday you were brought a question, and this is a feeling. Setouchi and their 2.32 can wait, we come back to that with a different tool. This week goes on what SQL has nothing to say about: working out what you are actually being asked for, and agreeing when the work is finished."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'dom-004',
+          intro: {
+            scene: 'request',
+            title: 'A request is not yet a task',
+            paras: [
+              'For two weeks you never chose what to count: the question arrived fully formed. Work is rarely built that way. The ordinary request looks like this one, "we need to see the picture", and it describes a feeling rather than a task.',
+              'You cannot finish it on the requester\'s behalf. "A sales dashboard" honestly means a report for the field team, a breakdown for purchasing, and a slide for the brand, all at once. Each is counted differently, and all three get rejected if you guess the wrong one.',
+              'There are many clarifying questions and they are not equally strong. One narrows the space further than the rest because it pulls everything along with it: the metric, the cut, the frequency. That is the one you start with.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"You asked, and you got it: we decide where to send the field team this month. Notice what happened to the task. Not all sales but outlets. Not a period but month against month. And not a picture in general but a list somebody drives out with on Monday."',
+          },
+        },
+        {
+          taskId: 'dom-005',
+          intro: {
+            paras: [
+              'The next request came the same day from another direction, the brand manager. It is worded with complete precision, which is exactly why it is easy to fulfil without thinking.',
+              'Look past what the person is asking for and at what they intend to do with it. There is almost always a gap between those two, and it is not deceit: people ask for the method they believe is available from you.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Then send it like this: the file attached, and three lines in the body of the mail saying which outlets fell, by how much, and from which month. And keep the query: in a month she comes back with the same question about another brand, and by then it is two minutes rather than a job."',
+          },
+        },
+        {
+          taskId: 'dom-006',
+          intro: {
+            paras: [
+              'And the last one today, the thing agreed before the work starts and remembered on Friday evening.',
+              'Every task has a moment when it is finished. Leave that moment unnamed and it gets named by whoever opens the report: each new reader brings one more "could we also cut it by", and you have nothing to refuse with, because no boundary was ever drawn.',
+            ],
+          },
+          after: {
+            from: 'Aoki san, sales director',
+            text: '"Agreed: outlets whose sales fell over the month, with the size of the fall and the distributor, by email, by the first. A cut by product is a separate task if it turns out to be needed. That suits me better anyway, now I know what I am getting."',
+          },
+        },
+      ],
+      reflection: [
+        'You wrote no query at all today, and that is not a pause in the work, it is the first half of it. The task arrived as "a sales dashboard, we need to see the picture" and goes into work as a list of outlets with declining sales, month by month, by the first, by email.',
+        'Count what that one question about the decision was worth. Without it you would have spent a week building a view with every cut in it, shown it, and heard: "where are the outlets we should drive to?"',
+        'Notice the other side too. Agreeing on what done means protects more than you. Aoki san now knows what she is getting, and she does not have to check whether you forgot something important.',
+      ],
+      hook: [
+        'The task sounds simple: outlets whose sales fell. One detail is left, telling the engine what "an outlet whose sales fell" actually is.',
+        'Tomorrow it turns out the company holds three answers to that, and all three are counted differently. Until it is settled, any query returns a number you cannot stand behind.',
       ],
     },
   ],
