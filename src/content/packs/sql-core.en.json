@@ -1719,6 +1719,17 @@
         }
       ],
       "explain": "The task brings two earlier findings together. The bias on «Nettora» was already visible in sql-081, where it looked like a quirk of one brand; the comparison with a benchmark shows what it costs: on that brand the forecast is 14.4 points worse than freely repeating last month. The opposite pole matters just as much. On «Pyrexan» the same forecast wins 25 points, so «the forecast is bad» is as wrong on this data as «the forecast is good». The right conclusion is addressed to somebody: review the brands with a negative difference rather than the method as a whole. Hence the working rule. Forecast accuracy on its own means nothing; what means something is the distance to a benchmark that costs nothing. And the caveat without which the rule lies: the benchmark here is the simplest one, «same as last month». For a seasonal product the fairer comparison is the same month a year ago, and this data allows that too, but whichever benchmark you pick has to be named out loud, because it sets the bar below which a forecast has no point."
+    },
+    {
+      "id": "sql-084",
+      "title": "The promotion the forecast cannot see",
+      "brief": "The planner already knows how error grows with the horizon and how it leans by brand. The promo calendar never enters the model at all: the forecast is built on regular demand and knows nothing about the promo plan ahead. The sales director asks whether that is expensive.",
+      "goal": "At the three month horizon, split the «month and SKU» pairs into months where the brand started a promotion and the rest, and return grp ('promo' or 'plain'), pairs (the number of pairs), bias_pct (the signed bias as a percentage of actuals), and wmape_pct (the error without its sign). Round both percentages to one decimal.",
+      "hints": [
+        "promo_start is already reduced to one row per brand and start month. Join it to the pairs so that no pair is lost: the promo reference table connects the same way any reference table connects to a fact when part of the fact has no match in it.",
+        "The group is not a column already sitting in paired, it is a fact about the join itself: if a matching row from promo_start was found, its key field is filled in, and if not, it is empty. CASE tests that condition, not some separate flag in the data."
+      ],
+      "explain": "The gap matches the gate: −15.6% versus −6.0%, close to 10 points. Meanwhile wmape is nearly the same for both groups, 32.1% and 30.2%, so promo months are not more wrong on average, they are wrong in the same direction. In sql-081 the bias read as a trait of the brand: «Nettora» gets undershot month after month regardless of the calendar. Here the bias reads as a trait of the moment: any brand, in the month its promotion starts, gets an undershot forecast, because the model is trained on regular demand and cannot see the promo plan ahead. The two biases cost different amounts to fix. A behavioural lean by brand gets fixed by subtracting a correction after the fact. This one is fixable ahead of time: the promo calendar (dim_promo) already exists and is known months before the start, and the only question is whether it feeds the forecast as an input, rather than sitting next to it as a separate table."
     }
   ]
 }

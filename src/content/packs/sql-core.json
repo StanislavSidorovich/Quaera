@@ -161,7 +161,7 @@
       "title": "Точность прогноза: ошибка и смещение",
       "tier": 4,
       "summary": "Меряю ошибку прогноза так, чтобы промахи не гасили друг друга, и отделяю её от смещения — постоянного перекоса в одну сторону.",
-      "prereqs": ["sql-case", "sql-cte", "sql-window-frame"]
+      "prereqs": ["sql-case", "sql-cte", "sql-window-frame", "sql-join-left"]
     },
     {
       "id": "sql-business-case",
@@ -2388,6 +2388,24 @@
         }
       ],
       "explain": "Задание сводит вместе две предыдущие находки. Смещение по «Nettora» было видно ещё в sql-081, и там оно выглядело особенностью одного бренда; сравнение с эталоном показывает его цену: прогноз на этом бренде хуже бесплатного повторения прошлого месяца на 14.4 пункта. Обратный полюс не менее важен — на «Pyrexan» тот же прогноз выигрывает 25 пунктов, и вывод «прогноз плохой» на этих данных неверен ровно так же, как «прогноз хороший». Правильный вывод адресный: разбирать надо бренды с отрицательной разницей, а не метод целиком. Отсюда рабочее правило: точность прогноза сама по себе не значит ничего, значение имеет разница с эталоном, который ничего не стоит. Оговорка, без которой правило врёт: эталон здесь самый простой, «как в прошлом месяце». Для сезонного товара честнее сравнивать с тем же месяцем год назад, и такое сравнение эти данные тоже позволяют, — но выбранный эталон надо называть вслух, потому что он и задаёт планку, ниже которой прогноз не имеет смысла."
+    },
+    {
+      "id": "sql-084",
+      "track": "sql",
+      "skill": "sql-forecast-accuracy",
+      "alsoTrains": ["sql-join-left", "sql-cte"],
+      "level": 4,
+      "mode": "write",
+      "title": "Акция, которую прогноз не видит",
+      "brief": "Планировщик уже знает, как ошибка растёт с горизонтом и как она смещена по брендам. Календарь акций в модель не заходит вовсе — прогноз строится по обычному спросу и ничего не знает про будущий промо-план. Директор по продажам спрашивает, дорого ли это обходится.",
+      "goal": "На горизонте три месяца разделить пары «месяц и SKU» на месяцы, в которые у бренда стартовала акция, и остальные, и вернуть grp — 'promo' или 'plain', pairs — число пар, bias_pct — смещение в процентах от факта со знаком и wmape_pct — ошибку без знака. Оба процента округлить до одного знака.",
+      "starter": "WITH actual AS (\n  SELECT substr(week_start, 1, 7) AS ym,\n         product_id,\n         SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY substr(week_start, 1, 7), product_id\n),\npromo_start AS (\n  SELECT DISTINCT brand, substr(start_date, 1, 7) AS ym\n  FROM dim_promo\n),\npaired AS (\n  SELECT f.month_start,\n         f.forecast_units,\n         a.units AS actual_units,\n         p.brand\n  FROM fact_forecast_snapshot f\n  JOIN actual a ON a.product_id = f.product_id\n               AND a.ym = substr(f.month_start, 1, 7)\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.lag_months = 3\n)\nSELECT ",
+      "solution": "WITH actual AS (\n  SELECT substr(week_start, 1, 7) AS ym,\n         product_id,\n         SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY substr(week_start, 1, 7), product_id\n),\npromo_start AS (\n  SELECT DISTINCT brand, substr(start_date, 1, 7) AS ym\n  FROM dim_promo\n),\npaired AS (\n  SELECT f.month_start,\n         f.forecast_units,\n         a.units AS actual_units,\n         p.brand\n  FROM fact_forecast_snapshot f\n  JOIN actual a ON a.product_id = f.product_id\n               AND a.ym = substr(f.month_start, 1, 7)\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.lag_months = 3\n)\nSELECT CASE WHEN ps.brand IS NOT NULL THEN 'promo' ELSE 'plain' END AS grp,\n       COUNT(*) AS pairs,\n       ROUND(100.0 * SUM(pr.forecast_units - pr.actual_units) / SUM(pr.actual_units), 1) AS bias_pct,\n       ROUND(100.0 * SUM(ABS(pr.forecast_units - pr.actual_units)) / SUM(pr.actual_units), 1) AS wmape_pct\nFROM paired pr\nLEFT JOIN promo_start ps ON ps.brand = pr.brand AND ps.ym = substr(pr.month_start, 1, 7)\nGROUP BY grp",
+      "hints": [
+        "promo_start уже сведён к одной строке на бренд и месяц старта. Соединять его с парами нужно так, чтобы ни одна пара не потерялась — справочник акций подключается тем же способом, каким справочник подключают к факту, когда часть строк факта ему не соответствует.",
+        "Группа — это не колонка из paired, а факт самого соединения: если для пары нашлась строка promo_start, у неё заполнено её ключевое поле, а если нет — оно пустое. CASE проверяет это условие, а не какой-то отдельный флаг в данных."
+      ],
+      "explain": "Разрыв тот же, что в гейте: −15.6% против −6.0%, почти 10 пунктов. При этом wmape у обеих групп почти одинаковый — 32.1% и 30.2%, то есть промо-месяцы не ошибаются сильнее в среднем, они ошибаются в одну и ту же сторону. В sql-081 смещение читалось как черта бренда — «Nettora» занижают из месяца в месяц независимо от календаря. Здесь смещение читается как черта момента: любой бренд в месяц старта акции получает заниженный прогноз, потому что модель обучена на обычном спросе и не видит будущего промо-плана. У двух смещений разная цена исправления. Поведенческий перекос по бренду чинится вычитанием поправки постфактум. Этот перекос устраним заранее — календарь акций (dim_promo) уже существует и известен за месяцы до старта, вопрос только в том, заведён ли он в модель прогноза как вход, а не как отдельная таблица."
     }
   ]
 }
