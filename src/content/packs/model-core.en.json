@@ -1840,6 +1840,116 @@
         "The name reads literally: everything except what is listed."
       ],
       "explain": "ALLEXCEPT clears filters from the whole table named in it and puts back only the listed columns. It is shorthand for listing every column you would otherwise have to clear one by one. The result: in a city row the city filter disappears, the region filter stays, and the measure shows the region total next to the city revenue. The trap here lives in the snowflake. Region sits in a separate lookup table, and a filter arriving from a slicer on dim_region[region_name] is not cleared by this function at all, because it only works with columns of dim_customer. That is exactly why the argument is dim_customer[region_id] and not dim_region[region_name]. You clear and keep on the table you are working with, and confusing the key in the fact with the name in the lookup gives a silently wrong denominator."
+    },
+    {
+      "id": "mdl-064",
+      "title": "A segment that has to be a column",
+      "brief": "The category manager wants every report sliced by price segment: 500 yen and above is premium, cheaper than that is mass. The segment is needed as an axis to slice by, not as a number in a cell.",
+      "goal": "Fill in the condition of a calculated column that labels products by segment.",
+      "hints": [
+        "A column is evaluated in row context: a reference to a table column gives the value of the current row rather than a total over the table.",
+        "The threshold is given in the brief, and what you compare is the list price of the product."
+      ],
+      "explain": "This is the case where a column is the right choice rather than a habit. People are going to slice reports by the segment, so the value has to exist on every row of the dimension in advance: only a materialised value can go onto a slicer, into matrix rows or into a chart legend, while a measure is evaluated at query time and cannot be an axis at all. The price of the decision is low: the column is stored in the model, but it has two distinct values, and column compression works better the lower the cardinality. The opposite mistake is making a column out of something that depends on the slice: such a value is computed once on refresh and freezes, and the reader moves slicers while staring at a number that does not move."
+    },
+    {
+      "id": "mdl-065",
+      "title": "How many products are in the slice",
+      "brief": "The report needs a second figure next to revenue: how many different products were sold in the selected slice. A column cannot hold it, because the number depends on what the reader picked on the page.",
+      "goal": "Fill in the formula of a measure that counts the distinct products in the current context.",
+      "hints": [
+        "What you count is not rows of sales but the distinct values of the product key in them.",
+        "The function is named after the technique: count the distinct ones."
+      ],
+      "explain": "A measure here is not a stylistic choice but the only possible one: the right answer depends on what is selected on the page, so it has to be computed at query time. A column with the same meaning would be computed once on refresh and would show the same number under every slice. It is also worth remembering how DISTINCTCOUNT differs from COUNT and COUNTROWS: the first answers how many different ones, the others answer how many rows, and in a sales table those are different quantities because one product is sold many times. And one more property this measure is liked for: it honestly shrinks as the slice narrows, while the revenue total may stay the same, and together they show whether a wide range produced the result or a single product did."
+    },
+    {
+      "id": "mdl-066",
+      "title": "Months lining up alphabetically",
+      "brief": "In the monthly report the columns run from August to September by way of February: the report sorts month names as text. A column is needed that they can be sorted by properly.",
+      "goal": "Fill in the expression of a sort column that puts months in one increasing order across years.",
+      "hints": [
+        "The month number alone is not enough: January of two different years would get the same value and stand as one position.",
+        "The year has to be shifted left far enough that the month number cannot run into it."
+      ],
+      "explain": "A month name is text, and without a hint any report will sort it alphabetically. The technique is standard: next to the displayed column you add a numeric one whose order matches chronology, and you set it as the sort column. The key subtlety is that the month number on its own will not do: it repeats every year, and over a two year series the Januaries of both years collapse into one position. Multiplying the year by a hundred leaves exactly two digits for the month number, and there are never more than twelve of those, so nothing overflows. The same technique applies to weeks and quarters, and it also explains why the calendar has to be a separate table: there is nowhere for such a column to live in a fact table, and if you put it there the sorting will only work in reports built on that one table."
+    },
+    {
+      "id": "mdl-067",
+      "title": "The empty tail of the chart",
+      "brief": "The calendar runs to the end of the period while sales in it stop last week. The trend chart faithfully draws the rest of the year as zeros, and everyone who looks at it sees a collapse at the end.",
+      "goal": "Fill in the expression of a flag column that separates days that have already arrived from future ones.",
+      "hints": [
+        "The flag is evaluated in the row context of the calendar and has to be true for days that have already arrived.",
+        "In DAX today is returned by a function of its own that takes no arguments."
+      ],
+      "explain": "A calendar has to cover the period in full, including days without a single sale, otherwise the empty intervals disappear and with them the question of why there were none. The other side of that is a tail of future dates which the chart draws as zeros and which reads as a crash. The right cure is not to cut the calendar short but to give the report a flag the future can be filtered out by: the calendar stays complete and the page shows only what has arrived. A column is appropriate here for the same reason as the price segment: people filter by it, so the value has to exist on every row in advance. Worth remembering that the flag is only recomputed when the model refreshes, and a model that has not refreshed for a week will treat today as the future."
+    },
+    {
+      "id": "mdl-068",
+      "title": "How far the row price sits from the overall one",
+      "brief": "An analyst is looking for sales that went well below the usual price. A column is needed for how far the price of this sale differs from the average across the whole table, so one formula holds both the value of the row and the total over all rows.",
+      "goal": "Fill in what gets subtracted: the average price across the whole sales table.",
+      "hints": [
+        "The average price cannot be taken as the average of the per row price column, because price does not add up. It is obtained by dividing revenue by units.",
+        "An aggregate inside a calculated column is not limited to the row, and that is exactly what is wanted here."
+      ],
+      "explain": "The task deliberately puts both halves of row context side by side. The first term, `fact_sellout[avg_price]`, reads as the value of the current row, and that is row context. The second, a sum over a column, ignores row context and answers only to filter context, of which there is none while a column is being computed, so it returns the total over the whole table. The skill card shows exactly this as a mistake; here the same behaviour is used on purpose, and the difference between the two cases is worth holding on to: SUM in a column is not broken, it simply answers a different question. Hence a practical sign: when a column was expected to hold the value of the row and instead holds the same number on every row, the formula has an aggregate where a direct column reference was needed."
+    },
+    {
+      "id": "mdl-069",
+      "title": "Checking revenue without a ready made column",
+      "brief": "The financial controller does not trust the revenue column and asks for it to be recomputed from units and price. As a measure rather than a column: taking up space in the fact table is not wanted, and the slice has to work.",
+      "goal": "Fill in the name of the function that walks the rows of the table and adds up what was computed for each one.",
+      "hints": [
+        "A plain SUM takes one column, while what has to be added is the product of two, so you need a function that creates row context by itself.",
+        "The name of such a function differs from the name of the plain aggregation by one letter at the end."
+      ],
+      "explain": "The difference between SUM and SUMX is exactly where row context comes from. A measure has no row context of its own: it sees filters but not an individual row, so there is nothing in it to multiply two columns with. Functions ending in X take a table as their first argument and create row context themselves, evaluating the expression for every row and adding up the results. The price is honest: an iterator computes row by row and over a fact table it is noticeably more expensive than an aggregation over a ready made column. Hence the usual choice between two solutions: a column occupies memory permanently but is computed once on refresh; a measure occupies none but pays on every query. And it is worth remembering separately that a sum of products is not a product of sums, which is exactly why SUM(units) multiplied by SUM(avg_price) would give a number with no meaning at all."
+    },
+    {
+      "id": "mdl-070",
+      "title": "A discount share that cannot be averaged",
+      "brief": "The report by distributor needs the share of discount in shipments. Right now it is computed as the average of the per row percentages, and in the total row it does not match what dividing the sums gives.",
+      "goal": "Fill in the numerator and the denominator of a measure that computes the share as a ratio of two additive quantities.",
+      "hints": [
+        "The only things that add up are the money amounts: the discount itself and the amount before it. The share is obtained by dividing what has already been added.",
+        "Both quantities sit in the shipments table as neighbouring columns."
+      ],
+      "explain": "A share is not additive: percentages cannot be added, and they can only be averaged at equal weights, which never happens in practice. The average of per row percentages gives a quantity that depends on the number of rows rather than on the amount of money: a shipment of a thousand yen sways it exactly as much as a shipment of a million. The correct technique is the same for any share, any average and any price: compute the ratio of the additive parts in the context where the cell stands. Then a distributor row gets that distributor’s share and the total gets the share across the whole slice, and both turn out weighted by volume on their own. DIVIDE is used instead of a slash for the sake of division by zero: it returns blank rather than an error, and a row with no shipments does not break the whole report."
+    },
+    {
+      "id": "mdl-071",
+      "title": "An average price that is not an average of averages",
+      "brief": "The average selling price in the regional report is computed as the average of the per row price column. In the total row it diverges from revenue divided by units, and the more the regions differ in size, the wider the gap.",
+      "goal": "Fill in the whole formula of the measure: price is computed from two additive quantities of the sales table.",
+      "hints": [
+        "No price may be added up or averaged; what you compute is a ratio of the things that do add up.",
+        "Both parts sit in the sales table: money on top, units underneath."
+      ],
+      "explain": "The same technique as with the discount share, but the mistake here is more durable: an average of prices looks so natural that nobody checks it. Yet price is a per unit quantity, and its average over rows answers the question of what the average price of one report row is rather than what price the goods were sold at on average. The difference shows wherever rows differ in size: one small sale of an expensive item lifts such an average as much as a delivery to a chain does. A ratio of sums gives a volume weighted price, and it recomputes itself under any slice, by region, by brand, by month. A practical sign of the mistake worth remembering: the total row of the report does not equal the ratio of the totals, although by meaning it has to."
+    },
+    {
+      "id": "mdl-072",
+      "title": "A benchmark that does not move with the slicer",
+      "brief": "There is a brand slicer on the page, and next to the revenue of the selected brand the report needs the revenue of Nettora as a benchmark to compare against. It has to stay put whichever brand the reader picks.",
+      "goal": "Fill in the condition that adds a brand filter to the context of the cell.",
+      "hints": [
+        "The condition is written as an equality between a column of the product dimension and a specific value.",
+        "A brand name is text, so it goes in quotation marks."
+      ],
+      "explain": "The filter context of a cell is made up of its row, its column, the slicers on the page and whatever the measure brought with it. Here the measure brings a brand filter, and on its own column that filter replaces whatever stood there, which is precisely why the benchmark does not move with the slicer. The behaviour is chosen deliberately: a benchmark that changes together with the quantity being compared is not a benchmark. The opposite situation, a measure obliged to obey the page, calls for a different solution, and that is where people go wrong most often: a CALCULATE condition replaces by default rather than narrows. The sign by which the defect is recognised in somebody else’s report: the number does not change when the reader clicks the slicer, and it looks like stability rather than a bug."
+    },
+    {
+      "id": "mdl-073",
+      "title": "Two conditions side by side",
+      "brief": "The same benchmark is now wanted more precisely: the revenue of Nettora in Tokyo only. Two conditions are placed side by side, and you have to know what the model will do with them, add them up or intersect them.",
+      "goal": "Fill in both conditions: brand in the product dimension and region name in the region dimension.",
+      "hints": [
+        "Conditions are listed as separate arguments separated by a comma, each one an equality between a column and a value.",
+        "The region comes from its own dimension rather than from the sales table, which holds only the customer key."
+      ],
+      "explain": "Several CALCULATE conditions are intersected rather than added: what remains is what satisfies all of them at once, and the measure returns the revenue of Nettora specifically in Tokyo rather than the sum of two separate slices. This is the first thing to check in an unfamiliar formula with two conditions, because expectation and behaviour part ways for many people here: the word and in a brief describes both intersection and union. The second thing visible here: conditions on different columns live independently of one another, a brand filter replaces what stood on brand, a region filter replaces what stood on region, and a channel slicer on the page survives both. If a union really is needed, it is written as one logical expression inside one argument rather than as two arguments side by side."
     }
   ]
 }
