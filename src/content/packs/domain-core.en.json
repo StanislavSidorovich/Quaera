@@ -2261,6 +2261,361 @@
         "The final item is the only one that checks nothing in your data at all. It is about what happens after you press send."
       ],
       "explain": "The order of checks rests on a single rule: whatever can void the rest goes first. The definition of the metric comes first not because it matters more, but because an error in it makes every later step meaningless. After that the radius shrinks: incomplete data voids the reconciliation, and the reconciliation voids the breakdown. Last comes the only item that checks nothing in the data at all, because it insures against a clash of definitions with the recipient, and the whole skill of framing a request rests on that same rule."
+    },
+    {
+      "id": "dom-070",
+      "title": "A churn report: where to start",
+      "brief": "The sales director asks for \"a churn report by Thursday\". He never defined the word churn, and he never said what decision he will make from the result. You have time for all five steps below before Thursday, but each one has an answer only once the previous one is done.",
+      "goal": "Arrange the steps of framing the request so that each one follows from the previous rather than being guessed.",
+      "scenario": "Request: \"a churn report\"\nFrom:    the sales director\nDue:     Thursday\nQuestions asked so far: 0",
+      "orderQuestion": "In what order should this request be turned into a brief?",
+      "items": [
+        {
+          "label": "Ask what decision will be made from the result and who will make it",
+          "why": "First, because everything else follows from the decision. \"Whom do we try to keep next quarter\" and \"why did revenue fall last quarter\" are two different reports built from the same data, and without the decision you cannot choose between them, only guess."
+        },
+        {
+          "label": "Turn the request into a question that has a checkable answer",
+          "why": "Second, because the decision names an area and the question narrows it to a single answer. Until the question is fixed, the words \"computed correctly\" mean nothing: correctness only exists relative to a question."
+        },
+        {
+          "label": "Agree which metric answers that question, and write its definition down",
+          "why": "Third, because the metric follows from the question and not the other way round. Choosing the metric first means choosing the answer before the question was asked: churn can be counted five ways, and each gives its own number and its own conclusion."
+        },
+        {
+          "label": "Check that the data for that metric exists and covers the period you need",
+          "why": "Fourth, because before this step you do not know what to check for. And before the report is built rather than after: if the history is too short, the metric or the question changes, and reworking the brief now costs ten minutes while reworking it later costs the rest of the week."
+        },
+        {
+          "label": "Put the definition of done and the deadline in writing",
+          "why": "Last, because you can only write down what counts as finished once you know what you are delivering. This step computes nothing: it closes the work against an endless stream of \"could you add one more breakdown\" and turns Thursday into a checkable promise rather than an intention."
+        }
+      ],
+      "hints": [
+        "One of the steps gives all the others their content, and without it each of them comes down to a coin toss.",
+        "Between \"which metric\" and \"does the data exist\" there is a direction: one of them can cancel the other, and only one way round.",
+        "The last step finds out nothing about the subject. It is about how the work ends."
+      ],
+      "explain": "Framing a request is a chain, not a set of questions you may ask in any order. The decision fixes the question, the question fixes the metric, the metric fixes what the data has to contain, and only then does a definition of done exist. The links do not commute: a metric chosen before the question is an answer invented before the task, and you will be defending it in a meeting. Hence a working rule: if you cannot say which decision the result will feed, it is too early to start, not because the requester is wrong but because you have no way to tell a correct report from an incorrect one. One question in a chat thread is cheaper than three days of work aimed at nothing."
+    },
+    {
+      "id": "dom-071",
+      "title": "A definition two people will agree on",
+      "brief": "You are asked to pin down the definition of average selling price: two teams count it differently and have been arguing about it for two months. A definition is written once and then lives next to the number, so it is assembled in a particular order: each item has a subject only after the previous one.",
+      "goal": "Arrange the steps so that each one narrows something already named.",
+      "orderQuestion": "In what order should a metric definition be assembled?",
+      "items": [
+        {
+          "label": "Find out whether an approved definition of this metric already exists somewhere in the company",
+          "why": "First, because this step can cancel all the others. Writing your own definition next to an existing one creates a second truth, and an argument between two teams becomes an argument between three. If a definition exists, the work shrinks to using it."
+        },
+        {
+          "label": "Name the event you are counting and the date field the period is cut by",
+          "why": "Second, because this is the subject of the definition: until you say whether you count a shipment or a sale off the shelf, there is nothing to narrow. The date field belongs here rather than in its own item, because it is a property of the chosen event and not a free choice: an order has its date, a shipment has another."
+        },
+        {
+          "label": "List the exclusions: returns, internal turnover, test counterparties",
+          "why": "Third, because you can only exclude from a set that has already been named. A list of exclusions written earlier hangs in the air: it is unclear whether it comes out of sales, shipments or orders, and those are three different numbers."
+        },
+        {
+          "label": "State the units, the currency and the rounding rule",
+          "why": "Fourth, because this is the form of the answer and it matters once the content is fixed. Half of the everyday disagreements die here: one team reports price per unit in yen, the other per case in thousands, and both believe they are arguing about methodology."
+        },
+        {
+          "label": "Agree it with the owner of the metric and put the definition next to the number",
+          "why": "Last, because agreeing on a half written definition means agreeing on nothing. And next to the number rather than in a separate document: a definition you have to go looking for will be read by nobody, and in a month the same argument starts again."
+        }
+      ],
+      "hints": [
+        "One of the steps can end the work in the first minute. It is also the least pleasant one, because it voids the definition you had already drafted.",
+        "Ask what the exclusions are subtracted from. The answer tells you which item has to come earlier.",
+        "The last two items do not narrow the subject: one sets the form, the other puts the definition into circulation."
+      ],
+      "explain": "A metric definition is assembled from subject to qualifiers rather than the other way round, and that is a dependency rather than a taste: you can only exclude from something named, and only round something already defined. The first step stands apart from the other four, because it is not about content but about whether the work is worth doing at all. A duplicate definition is worse than a missing one, because both look legitimate, and the choice between them will be made by whoever understands them least. The last step is not a formality either: a metric whose definition sits somewhere other than next to the number stops being defined within a quarter, and the argument returns with the same points. One question tests a definition: can two people read it, ask you nothing, and arrive at the same number."
+    },
+    {
+      "id": "dom-072",
+      "title": "Five links and five different numbers",
+      "brief": "A pack of product travels from the plant to the shopper, and at every link somebody counts it. Those counters do not agree, and that is not a bookkeeping error: between the links sits a warehouse, and in that warehouse lies stock that has been shipped but not yet sold.",
+      "goal": "Arrange the links in the order the goods travel, from producer to shopper.",
+      "orderQuestion": "In what order do goods pass through the links of the chain?",
+      "items": [
+        {
+          "label": "The producer ships a batch to the distributor, which is sell-in",
+          "why": "First, because before that shipment the goods are not in the chain at all. It is also the most reliable of the five numbers: your own shipment shows up in your own system the same day, and that is exactly why it gets mistaken for sales so often."
+        },
+        {
+          "label": "The goods sit in the distributor warehouse, which is stock in the channel",
+          "why": "Second, because the warehouse stands between two shipments, and its presence explains the main gap in the chain: sell-in has happened, sell-out has not. Forget this link and you read a stock build as demand."
+        },
+        {
+          "label": "The distributor ships the goods on to a retail outlet",
+          "why": "Third, because you can only ship onward what is already in the warehouse. From this link the data stops being yours: a partner provides it, provides it late, and not always in full."
+        },
+        {
+          "label": "The outlet puts the goods on the shelf",
+          "why": "Fourth, and this is the only link that may never happen: goods delivered to an outlet can sit in the back room all season. Hence the gap between shipped to the outlet and present on the shelf, which is measured by audit rather than by an export."
+        },
+        {
+          "label": "The shopper takes the pack off the shelf, which is sell-out",
+          "why": "Last, because this is the only link where real demand happens. Every earlier number is movement of goods along a pipe, and only this one answers whether anybody wants them."
+        }
+      ],
+      "hints": [
+        "Follow the pack itself rather than the money: in this chain the money travels the other way.",
+        "One of the links is not movement but standing still. It is what explains why two neighbouring numbers disagree.",
+        "One link can fail to happen even though the previous one did. It is the second to last."
+      ],
+      "explain": "The chain sets not only the route of the goods but the order of trust in the numbers. The closer a link sits to the shopper, the more it is worth for a conclusion about demand and the worse the data gets: you see your own shipment today and in full, a sale off the shelf a week later, for some of the outlets, and in somebody else's format. Hence the standard mistake of the industry: reporting sell-in because it is at hand and calling it sales. While channel stock is flat the difference is small; in a quarter closed by pushing volume to a partner, sell-in shows growth the shopper never produced. The practical conclusion: any claim about demand has to name the link it was measured at, and the gap between links is worth keeping visible as its own quantity, which is exactly what channel stock is."
+    },
+    {
+      "id": "dom-073",
+      "title": "From order to cash: five marks",
+      "brief": "The commercial director looks at the report and asks why sales are closed while there is no money in the account. The answer is that a sale and cash are two different marks in one cycle, with three more between them. Each mark has its own date in the system, and confusing them is the most common source of discrepancies in reporting.",
+      "goal": "Arrange the marks of the order-to-cash cycle in the order they occur.",
+      "scenario": "Order 4417, customer \"Bazario\"\nAmount: 4,700,000 ¥\nStatus in the system: shipped\nMoney in the account: none",
+      "orderQuestion": "In what order do the marks of the cycle occur?",
+      "items": [
+        {
+          "label": "The customer places an order and an order date appears",
+          "why": "First, because the whole cycle starts with a commitment from the customer rather than with movement of goods. It is also the earliest and least reliable mark: an order can be changed or cancelled, and planning revenue on it means planning on an intention."
+        },
+        {
+          "label": "The order is confirmed and stock is reserved against it",
+          "why": "Second, because a reservation is only possible against an order that exists. This mark is invisible in sales reporting, yet it explains why free stock is lower than physical stock: part of it has already been promised."
+        },
+        {
+          "label": "The goods leave the warehouse and a shipment date appears",
+          "why": "Third, and this is the key mark of the cycle, because revenue is recognised here. Not at the order, which has not been fulfilled yet, and not at payment, because the money arrives for goods already delivered. This is where the March that was shipped on the 31st and received on the 2nd comes from."
+        },
+        {
+          "label": "An invoice is issued and a receivable appears",
+          "why": "Fourth, because you cannot invoice for something that has not shipped. From this mark the amount lives in reporting twice, as recognised revenue and as an unpaid receivable, and that is not double counting but two sides of one fact."
+        },
+        {
+          "label": "The money lands in the account and the receivable closes",
+          "why": "Last, because payment closes an invoice that was issued. Between the third mark and this one sits the payment term, and its length is the answer to the director: the sales are closed and the money arrives in thirty or sixty days under the contract."
+        }
+      ],
+      "hints": [
+        "Two marks belong to the goods, two belong to the money, and one moves nothing at all.",
+        "Find the mark where revenue is recognised. It is neither the first nor the last, and it is the most common place to get this wrong.",
+        "You cannot invoice for something the customer has not received yet."
+      ],
+      "explain": "The order-to-cash cycle is useful less as a process diagram than as the list of dates an analyst chooses between. The same March yields three different figures depending on whether you cut by order date, shipment date or payment date, and all three are correct, because they answer different questions. The order date speaks about demand, the shipment date about revenue, the payment date about cash. Hence the rule: a report has to name the mark it was built on, because the reader will otherwise substitute their own, a salesperson the order date and a finance manager the payment date. And hence the answer to the director: the gap between sales and cash is not a defect but the payment term, and it is measured in receivables turnover rather than in the sales report."
+    },
+    {
+      "id": "dom-074",
+      "title": "The monthly planning cycle",
+      "brief": "You are asked to run the S&OP cycle in place of a colleague who left. The cycle has several meetings, and at the last one people argued about the plan before actuals were closed, then went away having decided nothing. The order here is not a ritual: each step works with a number the previous one produced.",
+      "goal": "Arrange the steps of the monthly cycle so that each one receives the output of the previous one.",
+      "orderQuestion": "In what order do the steps of the monthly cycle run?",
+      "items": [
+        {
+          "label": "Close last month actuals and refresh the sales history",
+          "why": "First, because everything else is built on that history. A forecast computed on an unclosed month is short by everything that has not landed yet, and arguing about it is pointless: it will change by itself, without a single decision."
+        },
+        {
+          "label": "Produce a statistical forecast from the history, with no manual edits",
+          "why": "Second, because you need a starting point that every later adjustment can attach to. The baseline is computed before people touch it on purpose: otherwise you cannot separate what in the forecast comes from data and what comes from expectations, and there is nothing left to judge the work by."
+        },
+        {
+          "label": "Collect commercial adjustments: promotions, listings, a customer leaving",
+          "why": "Third, because an adjustment adjusts something. Without a baseline the same words are free wishes about volume; with one, each becomes checkable, since a size is named, a reason is named, and in a month you can see whether it happened."
+        },
+        {
+          "label": "Check feasibility: capacity, raw materials, warehouse constraints",
+          "why": "Fourth, because supply answers a demand number that is already fixed. Earlier there is nothing to answer, and starting from constraints yields a plan of what is convenient to produce, so the conversation about demand never happens at all."
+        },
+        {
+          "label": "Agree one plan and lock it as a commitment",
+          "why": "Last, because a decision is taken over a reconciled number rather than instead of one. This is also where the cycle closes: the locked plan becomes what next month actuals from the first step get compared against."
+        }
+      ],
+      "hints": [
+        "One step produces a number, another edits it, a third checks whether that can be delivered. What do all three start from?",
+        "Ask why a machine should forecast at all if people are going to correct it anyway. The answer places both steps.",
+        "Supply answers a question. So the question has to be asked earlier."
+      ],
+      "explain": "The point of the cycle is that demand and the ability to serve it are discussed separately and in this order. Mixing them is the usual failure: when production takes part in sizing demand, the forecast quietly becomes a production plan, and the company stops knowing how much it could actually have sold. The second step exists precisely so that human adjustments stay visible: the difference between the statistical baseline and the agreed plan is the contribution of the commercial team, and it can be measured after the fact by comparing both versions with actuals. The industry calls that comparison forecast value added, and it is the only thing that answers the awkward question of whether monthly meetings improve the forecast or merely move it somewhere more comfortable. The cycle is closed either way: the plan becomes the baseline against which the next month actuals are read."
+    },
+    {
+      "id": "dom-075",
+      "title": "What to do before subtracting one period from another",
+      "brief": "March sits below February on the dashboard and an explanation is expected by lunchtime. Subtracting one number from another takes a second, but the difference means something definite only after preparation, and that preparation runs in one order, because each step works on the result of the previous one.",
+      "goal": "Arrange the preparation steps so that the difference at the end can be read unambiguously.",
+      "orderQuestion": "In what order should a period comparison be prepared?",
+      "items": [
+        {
+          "label": "Choose the comparison base and say it out loud: the same month last year or the previous month",
+          "why": "First, because all the work below is done against the chosen base, and until it is chosen there is nothing to align to. The word \"fell\" without a base means nothing: for a seasonal product, a fall against February and a rise against last March are the same number."
+        },
+        {
+          "label": "Make the periods comparable: working days, month length, the same set of customers and products",
+          "why": "Second, because you can only align a pair that has been chosen. Both adjustments sit in one item on purpose: calendar and perimeter both move the difference without moving demand or price, so this is one job of removing an apparent gap."
+        },
+        {
+          "label": "Strip out known one off events: a promotion, a single large shipment, a customer leaving",
+          "why": "Third, because a one off event is subtracted in the units of an already comparable pair. Stripping a promotion out of periods of different length means subtracting one inaccuracy from another and getting a third one that merely looks tidy."
+        },
+        {
+          "label": "Read what is left and decide whether it is seasonality or a real change",
+          "why": "Fourth, because until this point the residual holds everything at once: calendar, perimeter, promotions and demand itself. Only after the three previous steps does the question \"seasonality or not\" become answerable at all."
+        },
+        {
+          "label": "Test the conclusion on a neighbouring cut: does it hold for another brand or channel",
+          "why": "Last, because you can only test a conclusion that has been stated. This step catches the most expensive error of such work, an explanation that is true for one row and falls apart on the second, which means it was invented."
+        }
+      ],
+      "hints": [
+        "The first step computes nothing and corrects nothing. It only names what we compare against, and without it the other four have no subject.",
+        "Calendar and perimeter sit in one item for a reason: both remove a gap that was never in demand.",
+        "One of the steps does not prepare the comparison but tests a conclusion that already exists. It is last."
+      ],
+      "explain": "The difference between two numbers is the cheapest operation available and the most expensive source of false conclusions, because it always shows something. The order of preparation rests on the fact that each correction is measured in the units of the previous one: you cannot strip a promotion out of incomparable periods, because the size of the promotion itself depends on the length of the period it is counted over. Hence a rule that carries to any comparison: make the pair comparable first, subtract the one off second, and name the residual only then. And one more thing: a conclusion that rests on exactly one row of a report is usually a coincidence rather than a conclusion, and a check on a neighbouring cut costs two minutes and removes most such stories before anybody hears them."
+    },
+    {
+      "id": "dom-076",
+      "title": "Promotion payback: the order of counting",
+      "brief": "The agency has sent its report: the promotion worked, sales in its weeks are well above the weeks before. All it counted is the promotion period itself. Everything that turns that figure into payback is counted afterwards, and each following quantity corrects the previous one, which is why the order here is the method.",
+      "goal": "Arrange the steps of evaluating a promotion so that each one refines the result of the previous one.",
+      "scenario": "Promo: 25% off \"Aqualis\", two weeks\nAgency report: \"a success\"\nCounted: the promo period only\nBase, neighbours, economics: none",
+      "orderQuestion": "In what order should promotion payback be counted?",
+      "items": [
+        {
+          "label": "Establish the base: how much would have sold in those weeks without the promotion",
+          "why": "First, because lift is a difference from a base rather than absolute sales during a promotion. Without a base, every figure in the report answers \"how much did we sell\" rather than \"what did the promotion do\", and those two answers diverge the further into the season you are."
+        },
+        {
+          "label": "Compute the lift: sales in the promotion weeks against the base",
+          "why": "Second, because you can only subtract from a base that has been established. This is the first real measure of payback and at the same time the most inflated one you will see: the next two steps will reduce it, and neither will raise it."
+        },
+        {
+          "label": "Look at the weeks after the promotion: was there a dip",
+          "why": "Third, because the dip is subtracted from the lift you have just computed. The mechanism is simple: the shopper took three packs in advance and did not come back on schedule, so part of the lift was not created by the promotion but borrowed from the weeks that follow."
+        },
+        {
+          "label": "Check the neighbouring items: did volume move over from other SKUs of the same brand",
+          "why": "Fourth, because cannibalisation is subtracted from a lift already cleaned of the dip. Checking it earlier means refining a number that is going to change anyway, and this is the step people skip most often, because it requires looking beyond the promotion itself."
+        },
+        {
+          "label": "Close the economics: what the discount given away cost against the uplift that remains",
+          "why": "Last, because the money question is asked of a final volume figure. This is exactly where a promotion with a confident uplift in units regularly turns out to lose money, and it is the only step that answers whether to run it again."
+        }
+      ],
+      "hints": [
+        "The first two steps give you the largest number you are going to get. After that it only shrinks.",
+        "Two corrections reduce the lift for different reasons: one takes volume from the future, the other from the neighbour on the shelf.",
+        "One step converts units into money and changes the conclusion entirely. It cannot come before the units are final."
+      ],
+      "explain": "Evaluating a promotion is a chain of subtractions from one optimistic number, and the order in it is set by the fact that each correction is computed from the result of the previous one. Hence the practical conclusion: a report that contains only the lift does not overstate the result by a few percent, it answers the wrong question. The dip after the promotion takes part of the uplift from future weeks, cannibalisation takes it from neighbouring items, and the discount takes money off every unit sold, including the ones that would have sold anyway. The caveat without which the method lies: neither the base nor cannibalisation is computed exactly in any dataset, both are estimates, and an honest report names how they were produced next to the number. Hence also a requirement on promotion design: a control group planned in advance costs less than any later reconstruction of the base."
+    },
+    {
+      "id": "dom-077",
+      "title": "A fall: in what order to take it apart",
+      "brief": "This morning the dashboard shows March revenue 18% below February, and there is a meeting at 15:00. A fall can be taken apart top down or at random, and the difference between the two is that the first ends with an address and the second with a plausible story.",
+      "goal": "Arrange the steps so that each one narrows what the previous step has confirmed.",
+      "scenario": "March revenue: 18% below February\nSignal: dashboard, Monday morning\nInvestigated so far: nothing\nMeeting: 15:00",
+      "orderQuestion": "In what order should the fall be taken apart?",
+      "items": [
+        {
+          "label": "Confirm the fall is real: the export landed, the reference tables did not change, the filter is the same",
+          "why": "First, because a noticeable share of these stories ends right here. An export glitch broken down by dimension looks like confident analysis and sounds like a conclusion, but it explains a loading failure rather than a market, and other people will find that out after you do."
+        },
+        {
+          "label": "Split it into volume and price: did we sell fewer units or sell them cheaper",
+          "why": "Second, because this is the first fork, after which two different investigations run with two different owners. Fewer units is a question for demand and shelf, a lower price is a question for discounts and mix, and the two branches share almost no steps."
+        },
+        {
+          "label": "Inside the chosen half find the dimension with the largest contribution: channel, brand, region",
+          "why": "Third, because you can only choose a dimension once you know whether you are chasing volume or price. The same dimension answers differently for each half, and breaking the fall down across all dimensions at once yields a table that implies nothing."
+        },
+        {
+          "label": "Go down to the level where the fall stops dividing: one customer, one SKU",
+          "why": "Fourth, because narrowing continues exactly until the number belongs to something somebody can act on. Stopping earlier means bringing \"the south is down\" to the meeting when in fact two outlets of one chain are down."
+        },
+        {
+          "label": "Name the owner of what you found and what they can do about it",
+          "why": "Last, because an investigation that ends in a number rather than a person changes nothing. This step computes nothing: it turns the result into somebody else's task, and without it the next meeting opens with the same chart."
+        }
+      ],
+      "hints": [
+        "One step can end the whole investigation in the first ten minutes, and it belongs before any breakdown at all.",
+        "Between \"volume or price\" and the choice of dimension there is a direction: one of them decides which dimensions are worth looking at.",
+        "The last step is not about data at all."
+      ],
+      "explain": "The investigation runs top down and narrows, and each narrowing leans on the previous one. The first step stands apart: it is not about the business but about whether there is anything to discuss, and it gets skipped most often exactly when time is short. The volume or price fork comes before the dimensions not by tradition but because it decides which dimensions are informative: a fall caused by discounting is invisible in units by region, however long you search there. The investigation ends in an address rather than a number, and that is not rhetoric: a fall traced to a specific customer has an owner and an action, while a fall traced to a region has only a topic for discussion. A practical rule for when time runs out: better to finish one branch than to half finish both."
+    },
+    {
+      "id": "dom-078",
+      "title": "The order of arguments about a cause",
+      "brief": "Somebody said in the meeting: \"we launched the mailing and sales went up, so the mailing works\". You cannot refute that in one sentence, but you can test it, and the tests line up in an order where each one costs more than the last and only matters for a claim that survived the previous test.",
+      "goal": "Arrange the tests of a causal claim from the cheapest to the decisive one.",
+      "orderQuestion": "In what order should the claim \"this affected that\" be tested?",
+      "items": [
+        {
+          "label": "Check that the association exists in the data rather than in the retelling",
+          "why": "First, because every other test examines an association that has to exist. It costs less than all of them and ends the conversation more often than you would expect: a fair share of confident causal stories rests on two memorable months."
+        },
+        {
+          "label": "Check the direction in time: the cause has to come before the effect",
+          "why": "Second, because this is the cheapest way to kill an entire class of wrong claims, and it runs on the same data as the first step. The classic case is a mailing sent to active buyers, so the growth precedes the mailing rather than following it."
+        },
+        {
+          "label": "Look for a common cause: something that could move both quantities at once",
+          "why": "Third, because a common cause explains an association that is real and correctly directed, meaning one that survived the two previous steps. A season, a competitor promotion or a change of display move both the mailing and the sales without connecting them to each other."
+        },
+        {
+          "label": "Find a comparison: similar customers or outlets it did not reach, over the same period",
+          "why": "Fourth, because a control group costs more than everything before it and is built for the specific claim that made it this far. It is what turns an explanation into evidence: without a comparison you are describing what happened rather than what would have happened otherwise."
+        },
+        {
+          "label": "State which observation would refute the conclusion",
+          "why": "Last, because it is formulated about a finished conclusion. A claim that nothing could refute is a belief rather than a conclusion, and in a meeting it is told apart by that question rather than by the force of the arguments."
+        }
+      ],
+      "hints": [
+        "The first two tests run on data you already have open. They are cheap, which is why they come first.",
+        "A common cause explains an association that exists and points the right way. So both properties have to be established before it.",
+        "One of the tests needs data you have not collected yet, and it is also the strongest one."
+      ],
+      "explain": "Causal tests line up by rising cost, and that is not economy for its own sake: the cheap tests remove the claims that are not worth building a control group for. The order is not arbitrary in substance either: a common cause explains only an association that exists and points the right way, so you look for it third rather than first. The fourth step is the strongest, because it is the only one that answers what would have happened without the intervention, and that question is precisely what the word \"affected\" means. The last test is not about data: it is about whether you left yourself room to be wrong. A conclusion for which you cannot name a refuting observation usually was not tested at all, and the whole difference between an analyst and a persuasive storyteller rests on that same sign."
+    },
+    {
+      "id": "dom-079",
+      "title": "Five blocks and a shrinking audience",
+      "brief": "The quarterly email is ready: four paragraphs, with the conclusion in the last one. The commercial director will read the first ten seconds, his deputy will get to the middle, and an analyst from the neighbouring team will go into the appendix. The blocks of the email line up against that, not against the order in which you did the work.",
+      "goal": "Arrange the blocks of the email so that each one is read by fewer people than the previous.",
+      "scenario": "Email: quarterly results\nReader: the commercial director\nDraft: 4 paragraphs, conclusion last\nWill read: the first 10 seconds",
+      "orderQuestion": "In what order should the blocks of the email be placed?",
+      "items": [
+        {
+          "label": "The conclusion in one sentence: what happened and what you propose doing",
+          "why": "First, because everybody reads it and not everybody goes further. There is a second reason too, an internal one: a sentence you have to write first forces you to hold one conclusion rather than four observations, and half the work on an email goes into it."
+        },
+        {
+          "label": "The single number the conclusion rests on",
+          "why": "Second, because a claim needs support immediately, otherwise the opening line reads as an opinion. One number rather than a table: on this line the reader decides whether to believe you, and at that moment they have nothing to choose between five figures with."
+        },
+        {
+          "label": "The breakdown that explains that number",
+          "why": "Third, because it unfolds an already accepted support for the reader who wants to check. This is the first block that can be skipped without losing the message, which is exactly why it sits after the two mandatory ones rather than between them."
+        },
+        {
+          "label": "Method and caveats: how it was computed, what the data does not know",
+          "why": "Fourth, because one reader in ten needs it, the one who is going to argue with the number. Placed earlier, it buries the conclusion under conditions, and the email starts to look like a report about difficulties rather than an answer."
+        },
+        {
+          "label": "The appendix: tables, exports, queries",
+          "why": "Last, because it exists so the work can be repeated rather than read. Its audience is one person, sometimes you yourself six months later, and that is precisely why it stays in the email."
+        }
+      ],
+      "hints": [
+        "Ask not \"what is logical to tell first\" but \"how many people will read as far as this\".",
+        "The first two blocks are mandatory, the other three can be abandoned at any point without losing the main thing.",
+        "Caveats about method are needed by whoever argues. There are fewer of those than of people who simply read."
+      ],
+      "explain": "An email is built by shrinking audience rather than by the course of the work, and that is the exact reverse of how the work went: you travelled from data to conclusion, the reader travels from conclusion to data. Hence the rule of putting the conclusion first: the last position in an email is the most expensive one, and giving it to your main claim means betting that people will get there. The second block explains why one number is enough: the conclusion line and the support line work together, and separating them with a breakdown leaves the claim without a foundation for the few seconds in which it is accepted or dropped. Caveats about method are neither hidden nor moved to the front: they are addressed to whoever argues, and their place is where such a reader looks for them. One trick tests the whole email: cover everything but the first two lines and ask whether that is enough to decide."
     }
   ]
 }
