@@ -1,0 +1,598 @@
+{
+ "recipes": [
+  {
+   "id": "rc-top",
+   "group": "slice",
+   "tables": [
+    "fact_sellout",
+    "dim_product"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Топ-10 по разрезу",
+    "intent": "Кто в первой десятке по выручке — самый частый вопрос к любым данным.",
+    "knobs": [
+     "brand → category, channel, region_name",
+     "SUM(revenue) → SUM(units)",
+     "LIMIT 10 → сколько строк нужно"
+    ],
+    "pitfall": "Без ORDER BY «топ» не топ: LIMIT отрежет первые попавшиеся строки."
+   },
+   "en": {
+    "title": "Top 10 by any cut",
+    "intent": "Who is in the top ten by revenue: the most common question asked of any data.",
+    "knobs": [
+     "brand → category, channel, region_name",
+     "SUM(revenue) → SUM(units)",
+     "LIMIT 10 → however many rows you need"
+    ],
+    "pitfall": "Without ORDER BY a top is not a top: LIMIT just cuts off whatever came first."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Топ-10 брендов по выручке\n-- Меняйте: разрез, метрику, число строк\nSELECT p.brand,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nGROUP BY p.brand\nORDER BY revenue DESC\nLIMIT 10;",
+     "en": "-- Top 10 brands by revenue\n-- Change: the cut, the metric, the row count\nSELECT p.brand,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nGROUP BY p.brand\nORDER BY revenue DESC\nLIMIT 10;"
+    },
+    "python": {
+     "ru": "# Топ-10 брендов по выручке\n# Меняйте: разрез, метрику, число строк\ndf = fact_sellout.merge(\n    dim_product[['product_id', 'brand']],\n    on='product_id')\ng = df.groupby('brand')['revenue'].sum()\nresult = (g.round()\n           .sort_values(ascending=False)\n           .head(10))",
+     "en": "# Top 10 brands by revenue\n# Change: the cut, the metric, the row count\ndf = fact_sellout.merge(\n    dim_product[['product_id', 'brand']],\n    on='product_id')\ng = df.groupby('brand')['revenue'].sum()\nresult = (g.round()\n           .sort_values(ascending=False)\n           .head(10))"
+    }
+   }
+  },
+  {
+   "id": "rc-share",
+   "group": "slice",
+   "tables": [
+    "fact_sellout",
+    "dim_customer"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Доля в общем итоге",
+    "intent": "Сколько это в процентах от всего — вопрос, который задают сразу после «сколько».",
+    "knobs": [
+     "channel → customer_type, city",
+     "добавьте WHERE, чтобы считать долю внутри периода"
+    ],
+    "pitfall": "Знаменатель обязан быть тем же срезом: с фильтром в одной части и без него в другой доли не сложатся в сто."
+   },
+   "en": {
+    "title": "Share of the total",
+    "intent": "What percentage of the whole this is: the question that follows «how much» every time.",
+    "knobs": [
+     "channel → customer_type, city",
+     "add a WHERE clause to take the share inside a period"
+    ],
+    "pitfall": "The denominator has to be the same cut: filter one side and not the other and the shares stop adding up to a hundred."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Выручка по каналам и доля каждого\n-- Меняйте: разрез и период\nSELECT c.channel,\n       ROUND(SUM(s.revenue)) AS revenue,\n       ROUND(100.0 * SUM(s.revenue) /\n             (SELECT SUM(revenue)\n              FROM fact_sellout), 1) AS pct\nFROM fact_sellout s\nJOIN dim_customer c USING (customer_id)\nGROUP BY c.channel\nORDER BY revenue DESC;",
+     "en": "-- Revenue by channel and each one's share\n-- Change: the cut and the period\nSELECT c.channel,\n       ROUND(SUM(s.revenue)) AS revenue,\n       ROUND(100.0 * SUM(s.revenue) /\n             (SELECT SUM(revenue)\n              FROM fact_sellout), 1) AS pct\nFROM fact_sellout s\nJOIN dim_customer c USING (customer_id)\nGROUP BY c.channel\nORDER BY revenue DESC;"
+    },
+    "python": {
+     "ru": "# Выручка по каналам и доля каждого\n# Меняйте: разрез и период\ndf = fact_sellout.merge(\n    dim_customer[['customer_id', 'channel']],\n    on='customer_id')\ng = df.groupby('channel')['revenue'].sum()\nout = g.round().to_frame('revenue')\nout['pct'] = (100 * g / g.sum()).round(1)\nresult = out.sort_values(\n    'revenue', ascending=False)",
+     "en": "# Revenue by channel and each one's share\n# Change: the cut and the period\ndf = fact_sellout.merge(\n    dim_customer[['customer_id', 'channel']],\n    on='customer_id')\ng = df.groupby('channel')['revenue'].sum()\nout = g.round().to_frame('revenue')\nout['pct'] = (100 * g / g.sum()).round(1)\nresult = out.sort_values(\n    'revenue', ascending=False)"
+    }
+   }
+  },
+  {
+   "id": "rc-period",
+   "group": "slice",
+   "tables": [
+    "fact_sellout",
+    "dim_product"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Срез за период",
+    "intent": "Тот же вопрос, но за квартал, месяц или любые свои даты.",
+    "knobs": [
+     "границы периода в WHERE",
+     "category → brand, division",
+     "данные идут с 2024-01-01 по 2026-06-29"
+    ],
+    "pitfall": "Верхняя граница — строгое «меньше» от начала следующего месяца: BETWEEN по датам легко теряет последний день."
+   },
+   "en": {
+    "title": "A slice of one period",
+    "intent": "The same question, but for a quarter, a month, or any dates of your own.",
+    "knobs": [
+     "the period bounds in WHERE",
+     "category → brand, division",
+     "the data runs 2024-01-01 to 2026-06-29"
+    ],
+    "pitfall": "The upper bound is a strict «less than» the next month's start: a BETWEEN on dates loses the last day all too easily."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Выручка по категориям за квартал\n-- Меняйте: границы периода и разрез\nSELECT p.category,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nWHERE s.week_start >= '2026-01-01'\n  AND s.week_start < '2026-04-01'\nGROUP BY p.category\nORDER BY revenue DESC;",
+     "en": "-- Revenue by category for one quarter\n-- Change: the period bounds and the cut\nSELECT p.category,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nWHERE s.week_start >= '2026-01-01'\n  AND s.week_start < '2026-04-01'\nGROUP BY p.category\nORDER BY revenue DESC;"
+    },
+    "python": {
+     "ru": "# Выручка по категориям за квартал\n# Меняйте: границы периода и разрез\ns = fact_sellout\nperiod = ((s['week_start'] >= '2026-01-01') &\n          (s['week_start'] < '2026-04-01'))\ndf = s[period].merge(\n    dim_product[['product_id', 'category']],\n    on='product_id')\ng = df.groupby('category')['revenue'].sum()\nresult = (g.round()\n           .sort_values(ascending=False))",
+     "en": "# Revenue by category for one quarter\n# Change: the period bounds and the cut\ns = fact_sellout\nperiod = ((s['week_start'] >= '2026-01-01') &\n          (s['week_start'] < '2026-04-01'))\ndf = s[period].merge(\n    dim_product[['product_id', 'category']],\n    on='product_id')\ng = df.groupby('category')['revenue'].sum()\nresult = (g.round()\n           .sort_values(ascending=False))"
+    }
+   }
+  },
+  {
+   "id": "rc-top-in-group",
+   "group": "slice",
+   "tables": [
+    "fact_sellout",
+    "dim_product"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Топ внутри каждой группы",
+    "intent": "Не общий топ, а свои лидеры в каждом дивизионе, канале или регионе.",
+    "knobs": [
+     "rn <= 3 → сколько строк в группе",
+     "division → channel, region_name"
+    ],
+    "pitfall": "Обычный LIMIT здесь не работает: он режет весь список разом, а не каждую группу по отдельности."
+   },
+   "en": {
+    "title": "Top inside each group",
+    "intent": "Not one overall top, but the leaders inside every division, channel, or region.",
+    "knobs": [
+     "rn <= 3 → rows per group",
+     "division → channel, region_name"
+    ],
+    "pitfall": "A plain LIMIT does not do this: it cuts the whole list at once instead of each group on its own."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Топ-3 товара внутри дивизиона\n-- Меняйте: N в rn <= 3 и сам разрез\nWITH t AS (\n  SELECT p.division, p.product_name,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_product p USING (product_id)\n  GROUP BY p.division, p.product_name)\nSELECT division, product_name,\n       ROUND(revenue) AS revenue\nFROM (SELECT t.*, ROW_NUMBER() OVER (\n        PARTITION BY division\n        ORDER BY revenue DESC) AS rn\n      FROM t)\nWHERE rn <= 3\nORDER BY division, revenue DESC;",
+     "en": "-- Top 3 products inside each division\n-- Change: N in rn <= 3, and the cut itself\nWITH t AS (\n  SELECT p.division, p.product_name,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_product p USING (product_id)\n  GROUP BY p.division, p.product_name)\nSELECT division, product_name,\n       ROUND(revenue) AS revenue\nFROM (SELECT t.*, ROW_NUMBER() OVER (\n        PARTITION BY division\n        ORDER BY revenue DESC) AS rn\n      FROM t)\nWHERE rn <= 3\nORDER BY division, revenue DESC;"
+    },
+    "python": {
+     "ru": "# Топ-3 товара внутри дивизиона\n# Меняйте: N в head(3) и сам разрез\ndf = fact_sellout.merge(\n    dim_product[['product_id', 'division',\n                 'product_name']],\n    on='product_id')\ng = df.groupby(\n    ['division', 'product_name'],\n    as_index=False)['revenue'].sum()\ng = g.sort_values(['division', 'revenue'],\n                  ascending=[True, False])\ntop = g.groupby('division').head(3).copy()\ntop['revenue'] = top['revenue'].round()\nresult = top.reset_index(drop=True)",
+     "en": "# Top 3 products inside each division\n# Change: N in head(3), and the cut itself\ndf = fact_sellout.merge(\n    dim_product[['product_id', 'division',\n                 'product_name']],\n    on='product_id')\ng = df.groupby(\n    ['division', 'product_name'],\n    as_index=False)['revenue'].sum()\ng = g.sort_values(['division', 'revenue'],\n                  ascending=[True, False])\ntop = g.groupby('division').head(3).copy()\ntop['revenue'] = top['revenue'].round()\nresult = top.reset_index(drop=True)"
+    }
+   }
+  },
+  {
+   "id": "rc-monthly",
+   "group": "trend",
+   "tables": [
+    "fact_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Помесячная динамика",
+    "intent": "Ряд по месяцам — основа любого разговора о росте и падении.",
+    "knobs": [
+     "substr(..., 1, 7) → 1, 4 для года",
+     "SUM(revenue) → SUM(units)",
+     "добавьте разрез в GROUP BY"
+    ],
+    "pitfall": "Месяц вырезается из строки даты, потому что week_start — текст: с датой другого формата срез поедет."
+   },
+   "en": {
+    "title": "Month by month",
+    "intent": "A monthly series is the ground for any conversation about growth and decline.",
+    "knobs": [
+     "substr(..., 1, 7) → 1, 4 for the year",
+     "SUM(revenue) → SUM(units)",
+     "add a cut to the GROUP BY"
+    ],
+    "pitfall": "The month is cut out of the date string because week_start is text: a date in another format shifts the slice."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Выручка по месяцам\n-- Меняйте: шаг (7 знаков — месяц, 4 — год)\nSELECT substr(week_start, 1, 7) AS month,\n       ROUND(SUM(revenue)) AS revenue\nFROM fact_sellout\nGROUP BY month\nORDER BY month;",
+     "en": "-- Revenue by month\n-- Change the step: 7 chars month, 4 year\nSELECT substr(week_start, 1, 7) AS month,\n       ROUND(SUM(revenue)) AS revenue\nFROM fact_sellout\nGROUP BY month\nORDER BY month;"
+    },
+    "python": {
+     "ru": "# Выручка по месяцам\n# Меняйте: шаг среза str[:7] или str[:4]\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\ng = s.groupby('month',\n              as_index=False)['revenue'].sum()\ng['revenue'] = g['revenue'].round()\nresult = g.sort_values('month')",
+     "en": "# Revenue by month\n# Change the slice step: str[:7] or str[:4]\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\ng = s.groupby('month',\n              as_index=False)['revenue'].sum()\ng['revenue'] = g['revenue'].round()\nresult = g.sort_values('month')"
+    }
+   }
+  },
+  {
+   "id": "rc-rolling",
+   "group": "trend",
+   "tables": [
+    "fact_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Скользящее среднее",
+    "intent": "Сглаживает шум месяца и показывает, куда ряд идёт на самом деле.",
+    "knobs": [
+     "2 PRECEDING → ширина окна",
+     "смените месяц на неделю, чтобы сгладить мельче"
+    ],
+    "pitfall": "Первые месяцы усредняются по неполному окну — это не ошибка, но сравнивать их с остальными нельзя."
+   },
+   "en": {
+    "title": "Rolling average",
+    "intent": "Smooths the noise of a single month and shows where the series actually goes.",
+    "knobs": [
+     "2 PRECEDING → the window width",
+     "switch month to week for finer smoothing"
+    ],
+    "pitfall": "The first months average over a partial window: not an error, but not comparable to the rest either."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Помесячный ряд и среднее за три месяца\n-- Меняйте: ширину окна в PRECEDING\nWITH m AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(revenue) AS revenue\n  FROM fact_sellout\n  GROUP BY month)\nSELECT month,\n       ROUND(revenue) AS revenue,\n       ROUND(AVG(revenue) OVER (\n         ORDER BY month\n         ROWS BETWEEN 2 PRECEDING\n              AND CURRENT ROW)) AS avg3\nFROM m\nORDER BY month;",
+     "en": "-- Monthly series and a three month average\n-- Change: the window width in PRECEDING\nWITH m AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(revenue) AS revenue\n  FROM fact_sellout\n  GROUP BY month)\nSELECT month,\n       ROUND(revenue) AS revenue,\n       ROUND(AVG(revenue) OVER (\n         ORDER BY month\n         ROWS BETWEEN 2 PRECEDING\n              AND CURRENT ROW)) AS avg3\nFROM m\nORDER BY month;"
+    },
+    "python": {
+     "ru": "# Помесячный ряд и среднее за три месяца\n# Меняйте: ширину окна в rolling(3)\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\nm = s.groupby('month',\n              as_index=False)['revenue'].sum()\nm = m.sort_values('month')\nm['avg3'] = (m['revenue']\n             .rolling(3, min_periods=1)\n             .mean().round())\nm['revenue'] = m['revenue'].round()\nresult = m",
+     "en": "# Monthly series and a three month average\n# Change: the window width in rolling(3)\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\nm = s.groupby('month',\n              as_index=False)['revenue'].sum()\nm = m.sort_values('month')\nm['avg3'] = (m['revenue']\n             .rolling(3, min_periods=1)\n             .mean().round())\nm['revenue'] = m['revenue'].round()\nresult = m"
+    }
+   }
+  },
+  {
+   "id": "rc-mom",
+   "group": "trend",
+   "tables": [
+    "fact_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Месяц к месяцу, в процентах",
+    "intent": "Насколько выросли или упали против прошлого месяца.",
+    "knobs": [
+     "LAG(revenue) → LAG(revenue, 12) для года назад",
+     "PARTITION BY брендом — свой ряд у каждого"
+    ],
+    "pitfall": "У первой строки предыдущей нет, и процент там пустой: делить не на что, а не «ноль роста»."
+   },
+   "en": {
+    "title": "Month over month, in percent",
+    "intent": "How far up or down against the month before.",
+    "knobs": [
+     "LAG(revenue) → LAG(revenue, 12) for a year back",
+     "PARTITION BY brand gives each its own series"
+    ],
+    "pitfall": "The first row has nothing before it, so its percent is empty: there is nothing to divide by, which is not «zero growth»."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Прирост к прошлому месяцу\n-- Меняйте: 12 в LAG — сравнение с годом назад\nWITH m AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(revenue) AS revenue\n  FROM fact_sellout\n  GROUP BY month)\nSELECT month,\n       ROUND(revenue) AS revenue,\n       ROUND(100.0 *\n         (revenue - LAG(revenue)\n            OVER (ORDER BY month))\n         / LAG(revenue)\n             OVER (ORDER BY month),\n         1) AS mom_pct\nFROM m\nORDER BY month;",
+     "en": "-- Growth against the previous month\n-- Change: 12 in LAG compares with a year back\nWITH m AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(revenue) AS revenue\n  FROM fact_sellout\n  GROUP BY month)\nSELECT month,\n       ROUND(revenue) AS revenue,\n       ROUND(100.0 *\n         (revenue - LAG(revenue)\n            OVER (ORDER BY month))\n         / LAG(revenue)\n             OVER (ORDER BY month),\n         1) AS mom_pct\nFROM m\nORDER BY month;"
+    },
+    "python": {
+     "ru": "# Прирост к прошлому месяцу\n# Меняйте: periods=12 — сравнение с годом назад\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\nm = s.groupby('month',\n              as_index=False)['revenue'].sum()\nm = m.sort_values('month')\nm['mom_pct'] = (100 * m['revenue']\n                .pct_change(periods=1)).round(1)\nm['revenue'] = m['revenue'].round()\nresult = m",
+     "en": "# Growth against the previous month\n# Change: periods=12 compares with a year back\ns = fact_sellout.copy()\ns['month'] = s['week_start'].str[:7]\nm = s.groupby('month',\n              as_index=False)['revenue'].sum()\nm = m.sort_values('month')\nm['mom_pct'] = (100 * m['revenue']\n                .pct_change(periods=1)).round(1)\nm['revenue'] = m['revenue'].round()\nresult = m"
+    }
+   }
+  },
+  {
+   "id": "rc-yoy",
+   "group": "compare",
+   "tables": [
+    "fact_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Два года рядом, по месяцам",
+    "intent": "Сезонность видна только так: январь против января, а не против декабря.",
+    "knobs": [
+     "годы в CASE — любые из 2024, 2025, 2026",
+     "добавьте разрез, чтобы сравнить по брендам"
+    ],
+    "pitfall": "2026 год в данных неполный, до июня: сравнивать его итог с целым годом нельзя."
+   },
+   "en": {
+    "title": "Two years side by side, by month",
+    "intent": "Seasonality shows up only this way: January against January, not against December.",
+    "knobs": [
+     "the years in CASE: any of 2024, 2025, 2026",
+     "add a cut to compare brands"
+    ],
+    "pitfall": "The year 2026 is partial in this data, through June: its total cannot be set against a full year."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Месяц 2024 против того же месяца 2025\n-- Меняйте: годы в CASE\nSELECT substr(week_start, 6, 2) AS month,\n       ROUND(SUM(CASE\n         WHEN substr(week_start, 1, 4) = '2024'\n         THEN revenue END)) AS y2024,\n       ROUND(SUM(CASE\n         WHEN substr(week_start, 1, 4) = '2025'\n         THEN revenue END)) AS y2025\nFROM fact_sellout\nGROUP BY month\nORDER BY month;",
+     "en": "-- A 2024 month against the same 2025 month\n-- Change: the years in CASE\nSELECT substr(week_start, 6, 2) AS month,\n       ROUND(SUM(CASE\n         WHEN substr(week_start, 1, 4) = '2024'\n         THEN revenue END)) AS y2024,\n       ROUND(SUM(CASE\n         WHEN substr(week_start, 1, 4) = '2025'\n         THEN revenue END)) AS y2025\nFROM fact_sellout\nGROUP BY month\nORDER BY month;"
+    },
+    "python": {
+     "ru": "# Месяц 2024 против того же месяца 2025\n# Меняйте: годы в списке years\ns = fact_sellout.copy()\ns['year'] = s['week_start'].str[:4]\ns['month'] = s['week_start'].str[5:7]\nyears = ['2024', '2025']\np = s[s['year'].isin(years)].pivot_table(\n    index='month', columns='year',\n    values='revenue', aggfunc='sum')\np = p.round()\np.columns = ['y' + c for c in p.columns]\nresult = p.sort_index()",
+     "en": "# A 2024 month against the same 2025 month\n# Change: the years in the years list\ns = fact_sellout.copy()\ns['year'] = s['week_start'].str[:4]\ns['month'] = s['week_start'].str[5:7]\nyears = ['2024', '2025']\np = s[s['year'].isin(years)].pivot_table(\n    index='month', columns='year',\n    values='revenue', aggfunc='sum')\np = p.round()\np.columns = ['y' + c for c in p.columns]\nresult = p.sort_index()"
+    }
+   }
+  },
+  {
+   "id": "rc-plan-fact",
+   "group": "compare",
+   "tables": [
+    "fact_sellout",
+    "fact_target",
+    "dim_product"
+   ],
+   "match": true,
+   "ru": {
+    "title": "План и факт на одной гранулярности",
+    "intent": "Сравнить две таблицы можно только после того, как обе сведены к одному ключу.",
+    "knobs": [
+     "ключ сравнения: месяц и дивизион",
+     "добавьте WHERE по месяцу, чтобы взять один"
+    ],
+    "pitfall": "Соединять факт с планом до агрегации нельзя: план размножится по каждой строке продаж и вырастет в разы."
+   },
+   "en": {
+    "title": "Plan against fact at one grain",
+    "intent": "Two tables can be compared only once both are reduced to the same key.",
+    "knobs": [
+     "the comparison key: month and division",
+     "add a WHERE on month to take a single one"
+    ],
+    "pitfall": "Joining fact to plan before aggregating fans the plan out across every sales row and inflates it several times over."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- План и факт по месяцам и дивизионам\n-- Меняйте: ключ сравнения и период\nWITH fact AS (\n  SELECT substr(s.week_start, 1, 7) AS month,\n         p.division,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_product p USING (product_id)\n  GROUP BY month, p.division),\nplan AS (\n  SELECT substr(month_start, 1, 7) AS month,\n         division,\n         SUM(target_revenue) AS target\n  FROM fact_target\n  GROUP BY month, division)\nSELECT f.month, f.division,\n       ROUND(p.target) AS target,\n       ROUND(f.revenue) AS revenue,\n       ROUND(100.0 * f.revenue / p.target,\n             1) AS pct\nFROM fact f\nJOIN plan p ON p.month = f.month\n           AND p.division = f.division\nORDER BY f.month, f.division;",
+     "en": "-- Plan and fact by month and division\n-- Change: the comparison key and the period\nWITH fact AS (\n  SELECT substr(s.week_start, 1, 7) AS month,\n         p.division,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_product p USING (product_id)\n  GROUP BY month, p.division),\nplan AS (\n  SELECT substr(month_start, 1, 7) AS month,\n         division,\n         SUM(target_revenue) AS target\n  FROM fact_target\n  GROUP BY month, division)\nSELECT f.month, f.division,\n       ROUND(p.target) AS target,\n       ROUND(f.revenue) AS revenue,\n       ROUND(100.0 * f.revenue / p.target,\n             1) AS pct\nFROM fact f\nJOIN plan p ON p.month = f.month\n           AND p.division = f.division\nORDER BY f.month, f.division;"
+    },
+    "python": {
+     "ru": "# План и факт по месяцам и дивизионам\n# Меняйте: ключ сравнения и период\ns = fact_sellout.merge(\n    dim_product[['product_id', 'division']],\n    on='product_id')\ns['month'] = s['week_start'].str[:7]\nfact = s.groupby(\n    ['month', 'division'],\n    as_index=False)['revenue'].sum()\nt = fact_target.copy()\nt['month'] = t['month_start'].str[:7]\nplan = t.groupby(\n    ['month', 'division'],\n    as_index=False)['target_revenue'].sum()\nm = fact.merge(plan, on=['month', 'division'])\nm['pct'] = (100 * m['revenue']\n            / m['target_revenue']).round(1)\nm['target'] = m['target_revenue'].round()\nm['revenue'] = m['revenue'].round()\nresult = m[['month', 'division', 'target',\n            'revenue', 'pct']].sort_values(\n    ['month', 'division'])",
+     "en": "# Plan and fact by month and division\n# Change: the comparison key and the period\ns = fact_sellout.merge(\n    dim_product[['product_id', 'division']],\n    on='product_id')\ns['month'] = s['week_start'].str[:7]\nfact = s.groupby(\n    ['month', 'division'],\n    as_index=False)['revenue'].sum()\nt = fact_target.copy()\nt['month'] = t['month_start'].str[:7]\nplan = t.groupby(\n    ['month', 'division'],\n    as_index=False)['target_revenue'].sum()\nm = fact.merge(plan, on=['month', 'division'])\nm['pct'] = (100 * m['revenue']\n            / m['target_revenue']).round(1)\nm['target'] = m['target_revenue'].round()\nm['revenue'] = m['revenue'].round()\nresult = m[['month', 'division', 'target',\n            'revenue', 'pct']].sort_values(\n    ['month', 'division'])"
+    }
+   }
+  },
+  {
+   "id": "rc-vs-avg",
+   "group": "compare",
+   "tables": [
+    "fact_sellout",
+    "dim_customer"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Против среднего по своей группе",
+    "intent": "Сравнивать клиента со средним по всей базе нечестно: у каналов разный масштаб.",
+    "knobs": [
+     "PARTITION BY channel → region_id, customer_type",
+     "LIMIT 15 → длина списка"
+    ],
+    "pitfall": "Среднее считается по группе, а не по всей таблице: без PARTITION BY аптека сравнивается с сетью."
+   },
+   "en": {
+    "title": "Against the average of its own group",
+    "intent": "Comparing a customer with the average of the whole base is unfair: channels differ in scale.",
+    "knobs": [
+     "PARTITION BY channel → region_id, customer_type",
+     "LIMIT 15 → the length of the list"
+    ],
+    "pitfall": "The average is taken over the group, not the whole table: without PARTITION BY a pharmacy is measured against a chain."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Насколько клиент выше среднего в канале\n-- Меняйте: разрез в PARTITION BY\nWITH c AS (\n  SELECT cu.channel, cu.customer_name,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_customer cu USING (customer_id)\n  GROUP BY cu.channel, cu.customer_name)\nSELECT channel, customer_name,\n       ROUND(revenue) AS revenue,\n       ROUND(revenue - AVG(revenue) OVER (\n         PARTITION BY channel)) AS vs_avg\nFROM c\nORDER BY vs_avg DESC\nLIMIT 15;",
+     "en": "-- How far above its channel average\n-- Change: the cut in PARTITION BY\nWITH c AS (\n  SELECT cu.channel, cu.customer_name,\n         SUM(s.revenue) AS revenue\n  FROM fact_sellout s\n  JOIN dim_customer cu USING (customer_id)\n  GROUP BY cu.channel, cu.customer_name)\nSELECT channel, customer_name,\n       ROUND(revenue) AS revenue,\n       ROUND(revenue - AVG(revenue) OVER (\n         PARTITION BY channel)) AS vs_avg\nFROM c\nORDER BY vs_avg DESC\nLIMIT 15;"
+    },
+    "python": {
+     "ru": "# Насколько клиент выше среднего в канале\n# Меняйте: разрез в groupby под transform\ndf = fact_sellout.merge(\n    dim_customer[['customer_id', 'channel',\n                  'customer_name']],\n    on='customer_id')\nc = df.groupby(\n    ['channel', 'customer_name'],\n    as_index=False)['revenue'].sum()\navg = c.groupby('channel')['revenue']\nc['vs_avg'] = (c['revenue']\n               - avg.transform('mean')).round()\nc['revenue'] = c['revenue'].round()\nresult = c.sort_values(\n    'vs_avg', ascending=False).head(15)",
+     "en": "# How far above its channel average\n# Change: the cut in the groupby under transform\ndf = fact_sellout.merge(\n    dim_customer[['customer_id', 'channel',\n                  'customer_name']],\n    on='customer_id')\nc = df.groupby(\n    ['channel', 'customer_name'],\n    as_index=False)['revenue'].sum()\navg = c.groupby('channel')['revenue']\nc['vs_avg'] = (c['revenue']\n               - avg.transform('mean')).round()\nc['revenue'] = c['revenue'].round()\nresult = c.sort_values(\n    'vs_avg', ascending=False).head(15)"
+    }
+   }
+  },
+  {
+   "id": "rc-enrich",
+   "group": "join",
+   "tables": [
+    "fact_sellout",
+    "dim_product",
+    "dim_customer",
+    "dim_region"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Факт с названиями вместо кодов",
+    "intent": "Заготовка, с которой начинается почти любой разбор: цифры плюс имена.",
+    "knobs": [
+     "уберите лишние справочники",
+     "LIMIT 20 → сколько строк смотреть"
+    ],
+    "pitfall": "Каждый join к справочнику безопасен, только пока ключ в нём уникален: иначе строки размножатся."
+   },
+   "en": {
+    "title": "Facts with names instead of codes",
+    "intent": "The starting point of almost any analysis: numbers plus the names behind them.",
+    "knobs": [
+     "drop the lookups you do not need",
+     "LIMIT 20 → how many rows to look at"
+    ],
+    "pitfall": "Each join to a lookup is safe only while its key is unique there; otherwise the rows fan out."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Продажи с названиями продукта и клиента\n-- Меняйте: набор справочников и сортировку\nSELECT s.week_start, p.product_name,\n       c.customer_name, r.region_name,\n       s.units, ROUND(s.revenue) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nJOIN dim_customer c USING (customer_id)\nJOIN dim_region r USING (region_id)\nORDER BY s.week_start DESC, s.revenue DESC\nLIMIT 20;",
+     "en": "-- Sales with product and customer names\n-- Change: the set of lookups and the sort\nSELECT s.week_start, p.product_name,\n       c.customer_name, r.region_name,\n       s.units, ROUND(s.revenue) AS revenue\nFROM fact_sellout s\nJOIN dim_product p USING (product_id)\nJOIN dim_customer c USING (customer_id)\nJOIN dim_region r USING (region_id)\nORDER BY s.week_start DESC, s.revenue DESC\nLIMIT 20;"
+    },
+    "python": {
+     "ru": "# Продажи с названиями продукта и клиента\n# Меняйте: набор справочников и сортировку\ndf = (fact_sellout\n      .merge(dim_product[['product_id',\n                          'product_name']],\n             on='product_id')\n      .merge(dim_customer[['customer_id',\n                           'customer_name',\n                           'region_id']],\n             on='customer_id')\n      .merge(dim_region[['region_id',\n                         'region_name']],\n             on='region_id'))\ndf = df.sort_values(['week_start', 'revenue'],\n                    ascending=False).head(20)\ndf['revenue'] = df['revenue'].round()\nresult = df[['week_start', 'product_name',\n             'customer_name', 'region_name',\n             'units', 'revenue']]",
+     "en": "# Sales with product and customer names\n# Change: the set of lookups and the sort\ndf = (fact_sellout\n      .merge(dim_product[['product_id',\n                          'product_name']],\n             on='product_id')\n      .merge(dim_customer[['customer_id',\n                           'customer_name',\n                           'region_id']],\n             on='customer_id')\n      .merge(dim_region[['region_id',\n                         'region_name']],\n             on='region_id'))\ndf = df.sort_values(['week_start', 'revenue'],\n                    ascending=False).head(20)\ndf['revenue'] = df['revenue'].round()\nresult = df[['week_start', 'product_name',\n             'customer_name', 'region_name',\n             'units', 'revenue']]"
+    }
+   }
+  },
+  {
+   "id": "rc-left-keep",
+   "group": "join",
+   "tables": [
+    "fact_sellout",
+    "dim_promo"
+   ],
+   "match": true,
+   "ru": {
+    "title": "LEFT, чтобы не потерять строки без пары",
+    "intent": "Продажи вне промо — это большинство строк, и обычный JOIN выбрасывает их молча.",
+    "knobs": [
+     "LEFT JOIN → JOIN, чтобы увидеть потерю",
+     "mechanic → discount_pct, promo_name"
+    ],
+    "pitfall": "У строк без пары все колонки справочника пустые: считать по ним без COALESCE значит потерять целую группу."
+   },
+   "en": {
+    "title": "LEFT so unmatched rows survive",
+    "intent": "Sales outside promo are most of the rows, and a plain JOIN drops them without a word.",
+    "knobs": [
+     "LEFT JOIN → JOIN to watch the loss",
+     "mechanic → discount_pct, promo_name"
+    ],
+    "pitfall": "For unmatched rows every lookup column is empty: counting on them without COALESCE loses a whole group."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Продажи с промо и без него\n-- Меняйте: LEFT на обычный JOIN и сравните\nSELECT COALESCE(m.mechanic, '-') AS mechanic,\n       COUNT(*) AS n_rows,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nLEFT JOIN dim_promo m USING (promo_id)\nGROUP BY mechanic\nORDER BY revenue DESC;",
+     "en": "-- Sales with and without a promo\n-- Change LEFT to a plain JOIN and compare\nSELECT COALESCE(m.mechanic, '-') AS mechanic,\n       COUNT(*) AS n_rows,\n       ROUND(SUM(s.revenue)) AS revenue\nFROM fact_sellout s\nLEFT JOIN dim_promo m USING (promo_id)\nGROUP BY mechanic\nORDER BY revenue DESC;"
+    },
+    "python": {
+     "ru": "# Продажи с промо и без него\n# Меняйте: how='left' на how='inner'\ndf = fact_sellout.merge(\n    dim_promo[['promo_id', 'mechanic']],\n    on='promo_id', how='left')\ndf['mechanic'] = df['mechanic'].fillna('-')\ng = df.groupby('mechanic').agg(\n    n_rows=('revenue', 'size'),\n    revenue=('revenue', 'sum'))\ng['revenue'] = g['revenue'].round()\nresult = g.sort_values(\n    'revenue', ascending=False)",
+     "en": "# Sales with and without a promo\n# Change how='left' to how='inner'\ndf = fact_sellout.merge(\n    dim_promo[['promo_id', 'mechanic']],\n    on='promo_id', how='left')\ndf['mechanic'] = df['mechanic'].fillna('-')\ng = df.groupby('mechanic').agg(\n    n_rows=('revenue', 'size'),\n    revenue=('revenue', 'sum'))\ng['revenue'] = g['revenue'].round()\nresult = g.sort_values(\n    'revenue', ascending=False)"
+    }
+   }
+  },
+  {
+   "id": "rc-two-facts",
+   "group": "join",
+   "tables": [
+    "fact_sellout",
+    "fact_stock"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Два факта в одном отчёте",
+    "intent": "Продажи и остатки лежат в разных таблицах с разной гранулярностью, и это главная ловушка.",
+    "knobs": [
+     "ключ соединения: месяц",
+     "добавьте product_id в обе части, чтобы считать по товару"
+    ],
+    "pitfall": "Сначала каждую таблицу сводим к общему ключу, и только потом соединяем: иначе недельные строки размножат месячные."
+   },
+   "en": {
+    "title": "Two fact tables in one report",
+    "intent": "Sales and stock live in different tables at different grains, and that is the main trap.",
+    "knobs": [
+     "the join key: month",
+     "add product_id to both sides to work per product"
+    ],
+    "pitfall": "Reduce each table to the shared key first and join after: otherwise the weekly rows fan the monthly ones out."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Продажи и остатки по месяцам\n-- Меняйте: ключ соединения и метрики\nWITH sell AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(units) AS sold\n  FROM fact_sellout\n  GROUP BY month),\nstock AS (\n  SELECT substr(month_start, 1, 7) AS month,\n         SUM(units_on_hand) AS on_hand\n  FROM fact_stock\n  GROUP BY month)\nSELECT s.month, s.sold, k.on_hand,\n       ROUND(1.0 * k.on_hand / s.sold,\n             2) AS stock_ratio\nFROM sell s\nJOIN stock k USING (month)\nORDER BY s.month;",
+     "en": "-- Sales and stock by month\n-- Change: the join key and the metrics\nWITH sell AS (\n  SELECT substr(week_start, 1, 7) AS month,\n         SUM(units) AS sold\n  FROM fact_sellout\n  GROUP BY month),\nstock AS (\n  SELECT substr(month_start, 1, 7) AS month,\n         SUM(units_on_hand) AS on_hand\n  FROM fact_stock\n  GROUP BY month)\nSELECT s.month, s.sold, k.on_hand,\n       ROUND(1.0 * k.on_hand / s.sold,\n             2) AS stock_ratio\nFROM sell s\nJOIN stock k USING (month)\nORDER BY s.month;"
+    },
+    "python": {
+     "ru": "# Продажи и остатки по месяцам\n# Меняйте: ключ соединения и метрики\na = fact_sellout.copy()\na['month'] = a['week_start'].str[:7]\nsell = a.groupby('month',\n                 as_index=False)['units'].sum()\nsell = sell.rename(columns={'units': 'sold'})\nb = fact_stock.copy()\nb['month'] = b['month_start'].str[:7]\nstock = b.groupby(\n    'month',\n    as_index=False)['units_on_hand'].sum()\nstock = stock.rename(\n    columns={'units_on_hand': 'on_hand'})\nm = sell.merge(stock, on='month')\nm['stock_ratio'] = (m['on_hand']\n                    / m['sold']).round(2)\nresult = m.sort_values('month')",
+     "en": "# Sales and stock by month\n# Change: the join key and the metrics\na = fact_sellout.copy()\na['month'] = a['week_start'].str[:7]\nsell = a.groupby('month',\n                 as_index=False)['units'].sum()\nsell = sell.rename(columns={'units': 'sold'})\nb = fact_stock.copy()\nb['month'] = b['month_start'].str[:7]\nstock = b.groupby(\n    'month',\n    as_index=False)['units_on_hand'].sum()\nstock = stock.rename(\n    columns={'units_on_hand': 'on_hand'})\nm = sell.merge(stock, on='month')\nm['stock_ratio'] = (m['on_hand']\n                    / m['sold']).round(2)\nresult = m.sort_values('month')"
+    }
+   }
+  },
+  {
+   "id": "rc-dupes",
+   "group": "quality",
+   "tables": [
+    "staging_raw_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Дубли по ключу",
+    "intent": "Первое, что проверяют в чужой выгрузке: не задвоились ли строки.",
+    "knobs": [
+     "набор колонок в GROUP BY — это и есть ключ",
+     "уберите LIMIT, чтобы увидеть все"
+    ],
+    "pitfall": "Дубль определяется ключом, а не строкой целиком: с другим набором колонок ответ будет другим."
+   },
+   "en": {
+    "title": "Duplicates by key",
+    "intent": "The first thing to check in someone else's export: whether rows are doubled.",
+    "knobs": [
+     "the columns in GROUP BY are the key",
+     "drop the LIMIT to see all of them"
+    ],
+    "pitfall": "A duplicate is defined by the key, not by the whole row: a different set of columns gives a different answer."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Ключи, которые встречаются не по разу\n-- Меняйте: набор колонок ключа\nSELECT sale_date, customer_name, sku_code,\n       COUNT(*) AS n\nFROM staging_raw_sellout\nGROUP BY sale_date, customer_name, sku_code\nHAVING COUNT(*) > 1\nORDER BY n DESC, sale_date\nLIMIT 20;",
+     "en": "-- Keys that occur more than once\n-- Change: the set of key columns\nSELECT sale_date, customer_name, sku_code,\n       COUNT(*) AS n\nFROM staging_raw_sellout\nGROUP BY sale_date, customer_name, sku_code\nHAVING COUNT(*) > 1\nORDER BY n DESC, sale_date\nLIMIT 20;"
+    },
+    "python": {
+     "ru": "# Ключи, которые встречаются не по разу\n# Меняйте: набор колонок ключа\nkey = ['sale_date', 'customer_name', 'sku_code']\ng = staging_raw_sellout.groupby(\n    key, as_index=False).size()\ng = g.rename(columns={'size': 'n'})\ndupes = g[g['n'] > 1]\nresult = dupes.sort_values(\n    ['n', 'sale_date'],\n    ascending=[False, True]).head(20)",
+     "en": "# Keys that occur more than once\n# Change: the set of key columns\nkey = ['sale_date', 'customer_name', 'sku_code']\ng = staging_raw_sellout.groupby(\n    key, as_index=False).size()\ng = g.rename(columns={'size': 'n'})\ndupes = g[g['n'] > 1]\nresult = dupes.sort_values(\n    ['n', 'sale_date'],\n    ascending=[False, True]).head(20)"
+    }
+   }
+  },
+  {
+   "id": "rc-nulls",
+   "group": "quality",
+   "tables": [
+    "staging_raw_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Сколько пустых в каждой колонке",
+    "intent": "Пропуски решают, каким метрикам по этой выгрузке вообще можно верить.",
+    "knobs": [
+     "список колонок",
+     "COUNT(*) - COUNT(col) даёт число пустых"
+    ],
+    "pitfall": "COUNT(колонка) не считает пустые, а COUNT(*) считает все строки: разница между ними и есть пропуски."
+   },
+   "en": {
+    "title": "How many blanks in each column",
+    "intent": "Missing values decide which metrics from this export can be trusted at all.",
+    "knobs": [
+     "the list of columns",
+     "COUNT(*) - COUNT(col) gives the blank count"
+    ],
+    "pitfall": "COUNT(column) skips blanks while COUNT(*) counts every row: the gap between them is the missing data."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Заполненность колонок выгрузки\n-- Меняйте: список колонок\nSELECT COUNT(*) AS rows_all,\n       COUNT(sale_date) AS sale_date,\n       COUNT(customer_name) AS customer_name,\n       COUNT(sku_code) AS sku_code,\n       COUNT(units) AS units,\n       COUNT(revenue) AS revenue\nFROM staging_raw_sellout;",
+     "en": "-- How filled in the export columns are\n-- Change: the list of columns\nSELECT COUNT(*) AS rows_all,\n       COUNT(sale_date) AS sale_date,\n       COUNT(customer_name) AS customer_name,\n       COUNT(sku_code) AS sku_code,\n       COUNT(units) AS units,\n       COUNT(revenue) AS revenue\nFROM staging_raw_sellout;"
+    },
+    "python": {
+     "ru": "# Заполненность колонок выгрузки\n# Меняйте: список колонок\ncols = ['sale_date', 'customer_name',\n        'sku_code', 'units', 'revenue']\nraw = staging_raw_sellout\nfilled = raw[cols].notna().sum()\nrow = {'rows_all': len(raw)}\nrow.update(filled.to_dict())\nresult = pd.DataFrame([row])",
+     "en": "# How filled in the export columns are\n# Change: the list of columns\ncols = ['sale_date', 'customer_name',\n        'sku_code', 'units', 'revenue']\nraw = staging_raw_sellout\nfilled = raw[cols].notna().sum()\nrow = {'rows_all': len(raw)}\nrow.update(filled.to_dict())\nresult = pd.DataFrame([row])"
+    }
+   }
+  },
+  {
+   "id": "rc-raw-number",
+   "group": "quality",
+   "tables": [
+    "staging_raw_sellout"
+   ],
+   "match": true,
+   "ru": {
+    "title": "Число, записанное текстом",
+    "intent": "В выгрузке сумма приходит с запятой вместо точки, и SUM по ней врёт молча.",
+    "knobs": [
+     "символ замены в REPLACE",
+     "добавьте свои колонки в ту же проверку"
+    ],
+    "pitfall": "Пустые значения после приведения становятся пустыми, а не нулями, и в сумму не попадают вовсе."
+   },
+   "en": {
+    "title": "A number stored as text",
+    "intent": "The export writes amounts with a comma instead of a dot, and SUM over them lies without a word.",
+    "knobs": [
+     "the character in REPLACE",
+     "add your own columns to the same check"
+    ],
+    "pitfall": "Blanks stay blank after the conversion rather than becoming zeros, so they never reach the sum."
+   },
+   "code": {
+    "sql": {
+     "ru": "-- Сумма читается только после чистки\n-- Меняйте: символ в REPLACE\nSELECT COUNT(*) AS rows_all,\n       SUM(CASE WHEN revenue LIKE '%,%'\n           THEN 1 ELSE 0 END) AS with_comma,\n       ROUND(SUM(CAST(REPLACE(revenue, ',', '.')\n                 AS REAL))) AS revenue_clean\nFROM staging_raw_sellout;",
+     "en": "-- The sum only reads after cleaning\n-- Change: the character in REPLACE\nSELECT COUNT(*) AS rows_all,\n       SUM(CASE WHEN revenue LIKE '%,%'\n           THEN 1 ELSE 0 END) AS with_comma,\n       ROUND(SUM(CAST(REPLACE(revenue, ',', '.')\n                 AS REAL))) AS revenue_clean\nFROM staging_raw_sellout;"
+    },
+    "python": {
+     "ru": "# Сумма читается только после чистки\n# Меняйте: символ в str.replace\nraw = staging_raw_sellout['revenue']\ntext = raw.fillna('').astype(str)\nclean = pd.to_numeric(\n    text.str.replace(',', '.'),\n    errors='coerce')\nresult = pd.DataFrame([{\n    'rows_all': len(raw),\n    'with_comma': int(\n        text.str.contains(',').sum()),\n    'revenue_clean': round(clean.sum())}])",
+     "en": "# The sum only reads after cleaning\n# Change: the character in str.replace\nraw = staging_raw_sellout['revenue']\ntext = raw.fillna('').astype(str)\nclean = pd.to_numeric(\n    text.str.replace(',', '.'),\n    errors='coerce')\nresult = pd.DataFrame([{\n    'rows_all': len(raw),\n    'with_comma': int(\n        text.str.contains(',').sum()),\n    'revenue_clean': round(clean.sum())}])"
+    }
+   }
+  }
+ ]
+}

@@ -512,6 +512,24 @@ export const en = {
     } as Record<'overview' | 'trend' | 'distribution' | 'stock' | 'promo' | 'people' | 'quality', string>,
     questionTablesLabel: 'Where to look:',
     insertAria: (title: string) => `Insert the question "${title}" into the editor`,
+    /** См. довод в ru.ts: рецепты — зеркало вопросов и живут только в песочнице. */
+    recipesTitle: 'Ready-made queries',
+    recipesIntro:
+      'Working queries for the questions that come up most. Editing one to fit your own question is the point, and each says what to change.',
+    /** Подписи групп из RecipeGroup (content/recipes.ts). */
+    recipeGroups: {
+      slice: 'Slices and tops',
+      trend: 'Over time',
+      compare: 'Comparison',
+      join: 'Joining tables',
+      quality: 'Data quality',
+    } as Record<'slice' | 'trend' | 'compare' | 'join' | 'quality', string>,
+    recipeKnobsLabel: 'What to change',
+    recipePitfallLabel: 'Where people slip',
+    recipeInsertBtn: 'To the editor',
+    recipeInsertAria: (title: string) => `Insert the query "${title}" into the editor`,
+    recipeEnvSql: 'A click gives you the SQL version.',
+    recipeEnvPython: 'A click gives you the pandas version.',
     historyTitle: 'Runs in this session',
     historyEmpty: 'Nothing has been run yet.',
     historyRestoreAria: (n: number) => `Restore run #${n} into the editor`,

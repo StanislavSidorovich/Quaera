@@ -2925,6 +2925,135 @@ result = f"{'flag' in df.columns}/{','.join(kinds)}"
   if (!failed) console.log(`  ok   песочница: ${questions.length} вопросов, у каждого проба на датасете`);
 }
 
+// --- Песочница: готовые запросы (src/content/recipes.json).
+//
+// Рецепт обещает больше, чем вопрос: не «ответ на это в данных есть»,
+// а «вот рабочий код, вставьте и запускайте». Обещание проверяется
+// единственным честным способом — код выполняется теми же исполнителями,
+// что и эталоны заданий, и обязан вернуть непустой результат. Рецепт,
+// падающий с ошибкой, хуже отсутствующего: человек берёт его как опору
+// и первым делом отлаживает чужую опечатку.
+//
+// Второе обещание — «то же самое на другом языке»: у рецепта два варианта
+// кода, SQL и pandas, и они обязаны дать один результат. Это тот же довод,
+// по которому сверяется карточка сравнения инструментов: эталона мы не
+// знаем и не обязаны знать, важно, что два разных движка на одних данных
+// приходят к одному ответу.
+//
+// Третье — перевод. Код зависит от локали, потому что комментарии внутри
+// него и есть подсказка про ручки (см. шапку content/recipes.ts). Но
+// **переводу дозволены только комментарии**: строки кода без них обязаны
+// совпасть пословно. Отсюда экономия, ради которой правило и заведено, —
+// прогонять достаточно одну локаль, а не обе. Без этой сверки английский
+// рецепт был бы единственным кодом в приложении, который никто не выполнял.
+{
+  const { recipes } = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'recipes.json'), 'utf8'));
+  const GROUPS = new Set(['slice', 'trend', 'compare', 'join', 'quality']);
+  /** Комментарий целой строкой — единственная форма, в которой рецепту позволена проза. */
+  const commentLine = (line, env) => (env === 'sql' ? /^\s*--/.test(line) : /^\s*#/.test(line));
+  const codeOnly = (text, env) => text.split('\n').filter((l) => !commentLine(l, env)).join('\n');
+
+  const ids = recipes.map((r) => r.id);
+  if (new Set(ids).size !== ids.length) fail('recipes', 'дублирующиеся id рецептов');
+
+  for (const r of recipes) {
+    if (!GROUPS.has(r.group)) fail(r.id, `неизвестная группа «${r.group}»`);
+    for (const table of r.tables) {
+      if (!schemaTableNames.has(table)) fail(r.id, `рецепт отсылает к таблице «${table}», которой нет в schema.json`);
+    }
+    for (const locale of ['ru', 'en']) {
+      const text = r[locale];
+      if (!text?.title || !text?.intent || !text?.pitfall) fail(r.id, `нет заголовка, задачи или ловушки на локали ${locale}`);
+      if (!Array.isArray(text?.knobs) || text.knobs.length < 2) fail(r.id, `на локали ${locale} меньше двух ручек — рецепт без ручек это готовый ответ, а не заготовка`);
+    }
+
+    for (const env of ['sql', 'python']) {
+      const ru = r.code?.[env]?.ru;
+      const en = r.code?.[env]?.en;
+      if (typeof ru !== 'string' || typeof en !== 'string') {
+        fail(r.id, `нет кода ${env} на обеих локалях`);
+        continue;
+      }
+      // Перевод меняет комментарии и только их.
+      if (codeOnly(ru, env) !== codeOnly(en, env)) {
+        fail(r.id, `${env}: перевод изменил не только комментарии — сам код обязан совпасть пословно`);
+      }
+      // Кириллица в непрокомментированной строке означает, что проза
+      // уехала в сам запрос, и английский рецепт покажет русский текст.
+      for (const line of en.split('\n')) {
+        if (!commentLine(line, env) && /[А-Яа-яЁё]/.test(line)) fail(r.id, `${env}: кириллица в строке кода «${line.trim()}»`);
+      }
+      // Ручки обязаны быть названы и внутри кода: панель остаётся на экране,
+      // а работать человек будет в редакторе.
+      const comments = ru.split('\n').filter((l) => commentLine(l, env));
+      if (comments.length < 2) fail(r.id, `${env}: меньше двух строк комментария — в редакторе рецепт останется без подсказки про ручки`);
+      for (const line of ru.concat('\n', en).split('\n')) {
+        // 48 знаков — не вкусовщина: в редакторе на 375px помещается 37
+        // (замер шириной textarea.sql делённой на ширину знака моноширинным
+        // шрифтом), перенос по словам там мягкий, и строка до 48 знаков
+        // разрывается ровно один раз. Всё, что длиннее, на телефоне
+        // становится тремя строками и перестаёт читаться отступами.
+        if (line.length > 48) fail(r.id, `${env}: строка ${line.length} знаков — «${line.trim().slice(0, 30)}…» на телефоне разорвётся больше одного раза`);
+      }
+    }
+  }
+
+  // Исполнение. Прогоняется русская локаль: английская уже сверена с ней
+  // построчно выше, и разойтись они могут только комментарием.
+  for (const r of recipes) {
+    let a = null;
+    let b = null;
+    try {
+      a = runSql(r.code.sql.ru);
+    } catch (e) {
+      fail(r.id, `sql не выполняется: ${e.message}`);
+    }
+    try {
+      b = await runPython(r.code.python.ru);
+    } catch (e) {
+      fail(r.id, `pandas не выполняется: ${e.message}`);
+    }
+    if (!a || !b) continue;
+    if (!a.rows.length) fail(r.id, 'sql вернул пустой результат — рецепту нечего показать');
+    if (!b.rows.length) fail(r.id, 'pandas вернул пустой результат — рецепту нечего показать');
+    if (r.match === false) {
+      if (!r.matchWhy) fail(r.id, 'match: false без matchWhy — расхождение движков обязано быть объяснено, а не просто разрешено');
+      else console.log(`  ok   ${r.id}: сверка движков отключена намеренно — ${r.matchWhy}`);
+      continue;
+    }
+    if (a.rows.length !== b.rows.length) {
+      fail(r.id, `строк не поровну: sql ${a.rows.length}, pandas ${b.rows.length}`);
+      continue;
+    }
+    if (a.columns.join(',') !== b.columns.join(',')) {
+      fail(r.id, `колонки разошлись: sql [${a.columns.join(', ')}], pandas [${b.columns.join(', ')}]`);
+      continue;
+    }
+    let mismatch = null;
+    for (let i = 0; i < a.rows.length && !mismatch; i++) {
+      for (let j = 0; j < a.columns.length; j++) {
+        const x = a.rows[i][j];
+        const y = b.rows[i][j];
+        // «Нет значения» два движка пишут по-разному: SQL отдаёт NULL,
+        // pandas — NaN, который в JSON превращается в пропущенное поле.
+        // Это одно и то же утверждение, и разводить их значило бы ловить
+        // разницу форматов вместо разницы ответов.
+        const empty = (v) => v === null || v === undefined || (typeof v === 'number' && Number.isNaN(v));
+        if (empty(x) && empty(y)) continue;
+        // Допуск в единицу — не небрежность: сумма float складывается
+        // движками в разном порядке, и расхождение в последнем разряде
+        // говорит о порядке сложения, а не о разной цифре.
+        const same = typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) <= 1 : x === y;
+        if (!same) mismatch = `строка ${i + 1}, колонка ${a.columns[j]}: sql «${x}», pandas «${y}»`;
+      }
+    }
+    if (mismatch) fail(r.id, `sql и pandas дали разное — ${mismatch}`);
+    else console.log(`  ok   ${r.id}: sql и pandas сходятся (${a.rows.length} строк, колонки ${a.columns.join(', ')})`);
+  }
+
+  if (!failed) console.log(`  ok   песочница: ${recipes.length} готовых запросов, каждый выполнен обоими исполнителями`);
+}
+
 // --- Онбординг: один вопрос — три ответа (src/content/tools-compare.json).
 //
 // Карточка на экране «С чего начать» показывает новичку один и тот же вопрос,

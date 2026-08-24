@@ -2055,6 +2055,96 @@ a.btn {
 }
 
 /*
+ * Готовый запрос свёрнут в <details>: шестнадцать раскрытых рецептов —
+ * простыня, а не список (довод целиком у места вызова в Sandbox.tsx).
+ *
+ * Своя стрелка вместо системного треугольника — тот же приём и тот же
+ * довод, что у .welcome-proof summary: системный маркер в Safari
+ * не поддаётся ни цвету, ни размеру.
+ */
+.sandbox-recipe {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+
+.sandbox-recipe:last-child {
+  border-bottom: none;
+}
+
+.sandbox-recipe summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 20px;
+}
+
+.sandbox-recipe summary::-webkit-details-marker {
+  display: none;
+}
+
+.sandbox-recipe summary::after {
+  content: '⌄';
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.sandbox-recipe[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.sandbox-recipe summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sandbox-recipe-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/*
+ * Задача рецепта переносится по словам, а не обрезается многоточием, —
+ * тот же довод, что у списка таблиц под вопросом: это и есть содержание
+ * строки, по нему рецепт и выбирают.
+ */
+.sandbox-recipe summary small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  white-space: normal;
+}
+
+.sandbox-recipe-label {
+  margin: 10px 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.sandbox-recipe-knobs {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.sandbox-recipe-pitfall {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/*
  * Ряд «Очистить / Сохранить скрипт / Выполнить» — три кнопки не влезают
  * в 390px (замер: 401 > 390, 169px «Сохранить скрипт» + 84 + 96 + два
  * зазора по 10 + отступы карточки). На ≤479px кнопка сохранения переносится

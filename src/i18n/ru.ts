@@ -1102,6 +1102,35 @@ export const ru = {
     } as Record<'overview' | 'trend' | 'distribution' | 'stock' | 'promo' | 'people' | 'quality', string>,
     questionTablesLabel: 'Где смотреть:',
     insertAria: (title: string) => `Вставить вопрос «${title}» в редактор`,
+    /**
+     * Готовые запросы — зеркало списка вопросов: там задача без решения,
+     * здесь решение без задачи. Довод, почему это не разбавляет тренажёр
+     * готовыми ответами, и почему рецепты живут только в песочнице, —
+     * в шапке content/recipes.ts.
+     *
+     * Вступление обязано сказать две вещи: код рабочий и его меняют
+     * под себя. Про язык говорит отдельная строка ниже, и она — целое
+     * предложение, а не хвост «вариант на SQL»: список один на оба языка,
+     * и человек на вкладке Python иначе ждал бы от клика SQL, а обрывок
+     * в две трети строки читался бы подписью неизвестно к чему.
+     */
+    recipesTitle: 'Готовые запросы',
+    recipesIntro:
+      'Рабочие запросы под частые задачи. Их и надо править под свой вопрос — что именно, сказано в каждом.',
+    /** Подписи групп из RecipeGroup (content/recipes.ts) — названы задачей, а не приёмом. */
+    recipeGroups: {
+      slice: 'Срез и топ',
+      trend: 'Динамика',
+      compare: 'Сравнение',
+      join: 'Связывание таблиц',
+      quality: 'Качество данных',
+    } as Record<'slice' | 'trend' | 'compare' | 'join' | 'quality', string>,
+    recipeKnobsLabel: 'Что менять',
+    recipePitfallLabel: 'Где ошибаются',
+    recipeInsertBtn: 'В редактор',
+    recipeInsertAria: (title: string) => `Вставить запрос «${title}» в редактор`,
+    recipeEnvSql: 'Клик даст вариант на SQL.',
+    recipeEnvPython: 'Клик даст вариант на pandas.',
     historyTitle: 'Запуски в этой сессии',
     historyEmpty: 'Пока ничего не выполнялось.',
     historyRestoreAria: (n: number) => `Вернуть в редактор запуск №${n}`,

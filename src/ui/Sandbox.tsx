@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, isSandboxStarter, sandboxStarter, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
+import { RECIPES, RECIPE_GROUPS, recipeCode, recipeText, type Recipe, type RecipeGroup } from '../content/recipes';
 import { diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { getExecutor } from '../engine/executors';
 import { GROUP_ORDER, groupTables } from '../engine/schemaGroups';
@@ -229,6 +230,16 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
       tables: schema.tables.filter((tb) => group.get(tb.table) === kind),
     })).filter((g) => g.tables.length > 0);
   }, [schema]);
+
+  const recipesByGroup = useMemo(() => {
+    const map = new Map<RecipeGroup, Recipe[]>();
+    for (const r of RECIPES) {
+      const list = map.get(r.group) ?? [];
+      list.push(r);
+      map.set(r.group, list);
+    }
+    return map;
+  }, []);
 
   const questionsByGroup = useMemo(() => {
     const map = new Map<SandboxGroup, SandboxQuestion[]>();
@@ -497,6 +508,66 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
                 })}
               </div>
             ))}
+            </div>
+          </div>
+
+          {/*
+           * Готовые запросы стоят **ниже** вопросов, и это не про важность.
+           * Первым человеку предлагается вопрос без решения: упереться
+           * в пустой редактор и вспомнить самому — то, ради чего тренажёр
+           * и написан. Рецепт — второй ответ на то же затруднение, для тех
+           * случаев, когда нужен не тренажёр, а рабочий скелет. Довод
+           * целиком (worked example effect и его обратная сторона) —
+           * в шапке content/recipes.ts.
+           *
+           * Каждый рецепт свёрнут в <details>, а не разложен строкой,
+           * по двум причинам сразу: шестнадцать раскрытых карточек с кодом
+           * не список, а простыня, — и потому что рецепт предполагается
+           * прочитать до вставки. Ручки и ловушка видны раньше, чем код
+           * уедет в редактор; сама вставка при этом в один клик, кнопкой
+           * внутри.
+           */}
+          <div className="card">
+            <h2>{t.sandbox.recipesTitle}</h2>
+            <p className="muted" style={{ margin: '0 0 4px', fontSize: 13 }}>{t.sandbox.recipesIntro}</p>
+            <p className="muted" style={{ margin: '0 0 10px', fontSize: 12 }}>
+              {env === 'sql' ? t.sandbox.recipeEnvSql : t.sandbox.recipeEnvPython}
+            </p>
+            <div className="sandbox-list">
+              {RECIPE_GROUPS.map((group) => (
+                <div key={group} style={{ marginTop: 12 }}>
+                  <p className="muted" style={{ margin: '0 0 2px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {t.sandbox.recipeGroups[group]}
+                  </p>
+                  {(recipesByGroup.get(group) ?? []).map((r) => {
+                    const text = recipeText(r, locale);
+                    return (
+                      <details key={r.id} className="sandbox-recipe">
+                        <summary>
+                          <span className="sandbox-recipe-title">{text.title}</span>
+                          <small>{text.intent}</small>
+                        </summary>
+                        <p className="sandbox-recipe-label">{t.sandbox.recipeKnobsLabel}</p>
+                        <ul className="sandbox-recipe-knobs">
+                          {text.knobs.map((knob) => (
+                            <li key={knob}>{knob}</li>
+                          ))}
+                        </ul>
+                        <p className="sandbox-recipe-label">{t.sandbox.recipePitfallLabel}</p>
+                        <p className="sandbox-recipe-pitfall">{text.pitfall}</p>
+                        <button
+                          type="button"
+                          className="pill sandbox-inline-btn"
+                          onClick={() => putCode(env, recipeCode(r, env, locale))}
+                          aria-label={t.sandbox.recipeInsertAria(text.title)}
+                        >
+                          {t.sandbox.recipeInsertBtn}
+                        </button>
+                      </details>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 
