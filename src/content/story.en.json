@@ -83,6 +83,88 @@
           "outcome": "You write transformations as a chain and you know where a copy appears and where a view on the original data does, and you replace a loop over rows with a vectorised operation, because the difference here is an order of magnitude rather than a matter of style."
         }
       ]
+    },
+    "model": {
+      "opening": "Same company, but the person asking has changed. They no longer want a number, they want a dashboard: something people slice for themselves, each in their own way, with the figure adding up in every slice and no new query written for any of them.\n\nSeven missions build such a report from nothing: first what it is made of, then why measures return something other than what was expected. You run no code here. DAX lives inside a model and a browser has nothing to execute it with, so the tasks are readings of other people's decisions and formulas completed from a pattern.",
+      "ending": "The base is covered. You split data into facts and dimensions, you explain why a measure under a slicer returns something other than expected, and you can name the price of every spare column. The finale is short by design rather than by oversight: time intelligence is not a new topic but a test of whether the previous one has settled. While CALCULATE reads as WHERE, a year to date total looks like a set of incantations; after it, like one and the same act on a date filter.\n\nThe other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
+      "missions": [
+        {
+          "title": "A schema of its own",
+          "hook": "A developer offers you read access straight into the production database: the schema is already there, why build a second one. The whole first mission is the answer to that. A schema convenient for writing is inconvenient for reading, and before counting anything you have to be able to say in words what one row of a fact table means.",
+          "outcome": "You explain why a report needs a layer of its own, you name the grain of any table in words, and you split data into facts and dimensions."
+        },
+        {
+          "title": "Roads between tables",
+          "hook": "The tables are connected, and now what matters is not what they hold but which way a filter travels along a relationship. Two things surface here: sometimes more than one road leads to the same dimension, and the model does not pick the better one, it refuses to decide for you. And the mess that makes a single outlet appear as four rows is cleaned earlier, in the preparation layer, not in a measure.",
+          "outcome": "You set relationships with the cardinality and filter direction you meant, you recognise ambiguity before it multiplies revenue, and you clean data where cleaning is cheapest."
+        },
+        {
+          "title": "What a measure sees",
+          "hook": "The first measure is written, and with it comes a question neither a query nor a dataframe ever asks: what does it actually see. A cell is filtered by its row, its column, a slicer on the page and the formula itself, and the number depends on that whole set. The same mission settles what gets computed once on refresh and what gets computed per slice, and why dates in a model get a table of their own.",
+          "outcome": "For any cell you can list the filters acting on it, you choose between a measure and a column deliberately, and you stop filtering by date straight from the fact table."
+        },
+        {
+          "title": "A row, a total and two dates",
+          "hook": "The same conversation from the other side: SUM in a calculated column returns the total over the whole table rather than the value of its own row. Then comes what does not add up across every slice: stock on hand for a quarter as a single sum means nothing. And a calendar that has to answer two questions at once, by order date and by shipping date.",
+          "outcome": "You tell row context from filter context, you refuse to add up what cannot be added, and you attach one calendar to two dates without a second copy of it."
+        },
+        {
+          "title": "What the model costs",
+          "hook": "The model works, and the questions turn operational. An outlet moved to another region, and last year's revenue quietly moved with it. The nightly refresh stopped finishing before morning. Memory ran out, and someone has to decide which column is the most expensive of all. None of the three is about formulas.",
+          "outcome": "You answer which region a customer was in at the time of the deal, you refresh only what changed, and you know that a model is inflated by the cardinality of columns rather than by the number of rows."
+        },
+        {
+          "title": "Replacing, not filtering",
+          "hook": "The heaviest mission of the track and its centre of gravity. CALCULATE is not WHERE: it does not pick rows, it replaces a filter that is already in place. Everything else follows from that. A measure called inside an iterator counts something other than the same formula in a column, and a relationship whose key is unique on neither side is resolved with a bridge rather than a straight line.",
+          "outcome": "You read CALCULATE as a replacement of context, you predict context transition inside an iterator, and you resolve many-to-many with a bridge instead of inflated totals."
+        },
+        {
+          "title": "Dates as a test",
+          "hook": "The last mission is short, and it is not a stump. Time intelligence introduces no new idea: a running total, a rolling year and the previous period are the same act on a date filter that CALCULATE was taken apart for. If the previous mission has settled, this one reads straight through; if it has not, this is where you find out.",
+          "outcome": "You compute a running total and a comparison with last year, and you can say what each of those functions does to the filter on dates."
+        }
+      ]
+    },
+    "domain": {
+      "opening": "Same company and the same people, except that here you never open a tool at all. The task arrives in words, count the sales for the quarter, and before writing a query you have to work out whose sales: before or after discounts, shipments out of the warehouse or purchases off the shelf. The disagreements people argue about in meetings turn out more often to be disagreements about definitions than about arithmetic.\n\nSeven missions run from whose question is this to how to say the answer so that it lands. You write no code here. Nothing checks a judgement about a business automatically, so the tasks are decisions with a reading of why the other options are worse, and steps of reasoning to be put in the right order.",
+      "ending": "The base is covered. You turn a request into a question with an owner and a decision behind it, you tell a shipment apart from a sale off the shelf, you split a drop into factors, and you know where the things the data can support come to an end.\n\nThe finale of this track is not a calculation but a conversation: the conclusion first, the working underneath, the chart chosen for the question. The other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
+      "missions": [
+        {
+          "title": "Whose question is this",
+          "hook": "\"Make me a sales dashboard, I need to see the picture\", and nothing more. The first part of an analyst's work happens before the data: who is asking, which decision changes with the answer, and who to pass on a question that is not yours. And sales for June means three different things to finance, to distribution and to a brand manager, because each of them counts a different link in the path of the goods.",
+          "outcome": "You turn a request into a question with an addressee, a deadline and a definition of done, and you know at which link of the chain the data you count is born."
+        },
+        {
+          "title": "What sold means",
+          "hook": "Sales and finance name different counts of active customers; both come from one database for one month and both are computed correctly. Then a single March turns out to have three revenue totals, all of them legitimate, and sold means now what left the warehouse, now what was bought off the shelf. A metric has to be written down so that two people compute it the same way.",
+          "outcome": "You write a metric definition in full, you read the statuses of a document from order to cash, and you pick between sell-in and sell-out for the question in front of you."
+        },
+        {
+          "title": "Before you press send",
+          "hook": "The report is ready and looks reasonable, which is exactly the danger. The yearly series has eleven months instead of twelve, and the trend only looks better for it. A second habit appears here: compare against something it is fair to compare against. Growth of several times in a month for vitamins is a season rather than a success, and the annual planning cycle knows about it in advance.",
+          "outcome": "You reconcile the total with the source and check that the period is complete before sending, you compare year on year where there is a season, and you know what an analyst is accountable for in the planning cycle."
+        },
+        {
+          "title": "Shelf, shopper, promotion",
+          "hook": "Here the domain itself begins. Numeric distribution fell while weighted distribution rose, and both reports are right. The product is listed almost everywhere and the shelf is empty. Market share is made of how many people bought, how often and how much, and it is always one of the three that sagged. And the lift from a promotion still has to be reduced by what it stole from the neighbouring SKU and from the weeks to come.",
+          "outcome": "You tell numeric distribution from weighted, you split market share into penetration, frequency and volume, and you measure the return on a promotion with cannibalisation taken out."
+        },
+        {
+          "title": "Splitting into factors",
+          "hook": "Why did it drop is answered by division rather than by guesswork. Revenue is half of what it was while the average outlet sells more, so the cause is not the outlets but their number. In pharma the same thing is arranged less simply: total prescriptions grow while new ones fall, and those are two different pieces of news. And an assortment splits not only by contribution but by how stable demand is, with the action following from the pair rather than from either alone.",
+          "outcome": "You take a breakdown down to the link that has an owner, you read market share on a rolling year, and you assign an action to every cell of an ABC-XYZ matrix."
+        },
+        {
+          "title": "Where a number came from and what it proves",
+          "hook": "Three departments name three revenues for one year and nobody made a mistake. A pharmacy panel is a sample projected onto the market, not a record of sales. A reference table updated by replacing a single value has rewritten last year. And two series moving together on a chart mean nothing until the simpler explanations have been ruled out.",
+          "outcome": "You can say where a number came from and what it is able to support, you do not pass an estimate off as a fact, and you know which explanations have to be excluded before speaking about a cause."
+        },
+        {
+          "title": "How you say it",
+          "hook": "The last mission is about what happens to an analysis once it is finished. The email starts with the answer rather than with the working. Bad news about somebody else's work has to be delivered to people who have a stake in it. And the form of a chart is chosen for the question rather than for a consistent house style: an axis that does not start at zero draws the conclusion for the reader.",
+          "outcome": "You put the conclusion and the so what first, you defend it in front of people with an interest in it, and you choose a chart for the question and strip everything else off it."
+        }
+      ]
     }
   }
 }
