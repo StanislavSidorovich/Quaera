@@ -3,7 +3,7 @@
   "version": 1,
   "tracks": {
     "sql": {
-      "opening": "You have started as an analyst at a distributor of FMCG and over-the-counter pharma. The company moves goods from manufacturers into chains, pharmacies, traditional retail and online; two and a half years of data sit in the database you have just been given access to.\n\nEight missions cover your first weeks: from \"pull me the price list\" to \"work out why the brand collapsed\". The people asking are the same ones you meet outside the line: the brand manager, finance, the commercial director.",
+      "opening": "You have started as an analyst at a distributor of FMCG and over-the-counter pharma. The company moves goods from manufacturers into chains, pharmacies, traditional retail and online; two and a half years of data sit in the database you have just been given access to.\n\nNine missions cover your first weeks: from \"pull me the price list\" to \"work out why the brand collapsed\". The people asking are the same ones you meet outside the line: the brand manager, finance, the commercial director.",
       "ending": "The base is covered. You have gone from a plain selection to a full business case, and you know where SQL stays silent: a join that multiplies rows, a NULL that eats your filter, a grain nobody mentioned.\n\nThe other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
       "missions": [
         {

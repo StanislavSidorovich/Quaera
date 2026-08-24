@@ -32,7 +32,42 @@ const TRACKS = ['sql', 'python', 'model', 'domain'];
 const MAX_SKILLS = 3;
 const MAX_MINUTES = 18;
 const MIN_MINUTES = 6;
-const MODE_RANK = { predict: 0, fill: 1, write: 2 };
+/*
+ * Порядок режимов по убыванию помощи. `order` обязан быть здесь наравне
+ * с остальными: без него ранг такого задания — undefined, сравнение с ним
+ * всегда ложно, а `Math.max(prev, undefined)` даёт NaN и отравляет проверку
+ * до конца навыка. Проверка затухания при этом не падает, а молча перестаёт
+ * смотреть — ровно то, что случилось после пачки `order` в domain.
+ */
+const MODE_RANK = { predict: 0, order: 1, fill: 2, write: 3 };
+
+/**
+ * Числительные, которыми проза называет длину линии.
+ *
+ * Гейт сверяет состав миссий и их количество, но фраза «Восемь миссий»
+ * внутри абзаца для него — просто текст, и когда линия выросла до девяти,
+ * вступление осталось со старым числом. Тот же класс, что «2.32 в прозе»
+ * и «двенадцать таблиц» в экскурсе: число, набранное руками рядом с числом,
+ * которое считается, расходится молча.
+ */
+const NUMERALS = {
+  ru: { два: 2, две: 2, три: 3, четыре: 4, пять: 5, шесть: 6, семь: 7, восемь: 8, девять: 9, десять: 10, одиннадцать: 11, двенадцать: 12 },
+  en: { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 },
+};
+
+/** Число миссий, названное в тексте, или null, если проза его не называет. */
+function claimedMissionCount(text, locale) {
+  // `\b` в конце русского варианта стоять не может: границу слова JS считает
+  // по ASCII-`\w`, и после «й» она не срабатывает вовсе — первая редакция
+  // проверки молча пропускала ровно тот случай, ради которого написана.
+  const re = locale === 'en' ? /([A-Za-z0-9]+)\s+missions\b/gi : /([А-Яа-яЁё0-9]+)\s+миссий(?![А-Яа-яЁё])/gi;
+  for (const m of text.matchAll(re)) {
+    const token = m[1].toLowerCase();
+    const value = /^\d+$/.test(token) ? Number(token) : NUMERALS[locale][token];
+    if (value !== undefined) return value;
+  }
+  return null;
+}
 
 let failed = 0;
 const fail = (name, msg) => {
@@ -182,6 +217,13 @@ try {
     }
     check(`${label}все поля прозы заполнены`, emptyFields.length === 0, emptyFields.join(', '));
 
+    const claimedRu = claimedMissionCount(prose.opening, 'ru');
+    check(
+      `${label}число миссий во вступлении совпадает с линией`,
+      claimedRu === null || claimedRu === line.length,
+      `вступление обещает ${claimedRu} миссий, линия даёт ${line.length}`
+    );
+
     /*
      * Перевод — целиком или никак. Наполовину переведённая линия читается
      * хуже непереведённой: половина связок на чужом языке выглядит поломкой,
@@ -207,6 +249,13 @@ try {
       if (!en[field]?.trim()) enEmpty.push(field);
     }
     check(`${label}перевод покрывает линию целиком`, enEmpty.length === 0, enEmpty.join(', '));
+
+    const claimedEn = claimedMissionCount(en.opening, 'en');
+    check(
+      `${label}число миссий во вступлении совпадает с линией (en)`,
+      claimedEn === null || claimedEn === line.length,
+      `вступление обещает ${claimedEn} миссий, линия даёт ${line.length}`
+    );
   }
 } finally {
   rmSync(outDir, { recursive: true, force: true });
