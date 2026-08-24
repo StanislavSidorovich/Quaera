@@ -576,7 +576,10 @@ export const en = {
     /** См. довод в ru.ts: на главной обещают неделю работы, а не «режим». */
     homeTitle: 'An analyst work week',
     homeBody:
-      'Five working days on one case: the client comes in with a question, you answer with data. A technique arrives exactly where the case runs into it, with a brief in the morning and a look at the finding in the evening. There are four cases, and by the last one you work in both SQL and pandas.',
+      'Five working days on one case: the client comes in with a question, you answer with data.',
+    /** См. довод в ru.ts: хвост абзаца показывается только там, где рядом с прозой есть место. */
+    homeBodyMore:
+      'A technique arrives exactly where the case runs into it, with a brief in the morning and a look at the finding in the evening. There are four cases, and by the last one you work in both SQL and pandas.',
     /** См. комментарий в ru.ts. */
     weekShort: (n: number) => `Week ${n}`,
     homeStartBtn: 'Start day one',

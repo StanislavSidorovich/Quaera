@@ -4503,6 +4503,10 @@ table.sample td.null {
 .story-invite {
   border-top: 3px solid color-mix(in srgb, var(--accent) 60%, var(--line));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+  /* Раскладка карточки зависит от места в ней, а не от устройства, и место
+     съедает zoom крупного шрифта — поэтому @container, а не @media
+     (довод целиком в шапке scripts/test-css-width.mjs). */
+  container-type: inline-size;
 }
 
 .story-invite-badge {
@@ -4530,11 +4534,30 @@ table.sample td.null {
   gap: 20px;
 }
 
-@media (min-width: 900px) {
+@container (min-width: 640px) {
   .story-invite-body {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 32px;
+  }
+}
+
+/*
+ * Хвост абзаца живёт ровно там же, где вторая колонка: рядом с картой
+ * место есть, под картой его нет. В столбик карточка целиком не влезала
+ * на первый экран при крупном шрифте — замер и выбор «резать текст,
+ * а не карту» описаны в i18n/ru.ts у homeBodyMore.
+ *
+ * display: none, а не визуальное скрытие: то же самое сказано рядом
+ * картой, и второй раз читать это скринридеру незачем.
+ */
+.story-invite-more {
+  display: none;
+}
+
+@container (min-width: 640px) {
+  .story-invite-more {
+    display: inline;
   }
 }
 
@@ -4557,9 +4580,27 @@ table.sample td.null {
 /* На широком экране карта стоит справа от прозы, и прижимать её надо к тому
    краю, у которого она живёт; на узком она под прозой, и там левый край
    общий у всей карточки. */
-@media (min-width: 900px) {
+@container (min-width: 640px) {
   .story-map-grid {
     justify-content: end;
+  }
+}
+
+/*
+ * В столбик карта стоит последней, и её отступы решают, попадает ли низ
+ * карточки на первый экран телефона: при крупном шрифте запас там
+ * измеряется десятком пикселей. Уменьшены только зазоры — клетка и кегль
+ * остались прежними, потому что уменьшать надо пустоту, а не то,
+ * что читают.
+ */
+@container (max-width: 639px) {
+  .story-map-grid {
+    gap: 6px 10px;
+  }
+
+  .story-map-legend {
+    margin-top: 8px;
+    gap: 3px 10px;
   }
 }
 

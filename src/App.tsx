@@ -3216,7 +3216,11 @@ function Home({
             <h2>{t.storyMode.homeTitle}</h2>
             <div className="story-invite-body">
               <div>
-                <p className="brief">{t.storyMode.homeBody}</p>
+                <p className="brief">
+                  {t.storyMode.homeBody}
+                  {/* Хвост абзаца — только там, где рядом с прозой стоит карта; довод и замер в ru.ts. */}
+                  <span className="story-invite-more"> {t.storyMode.homeBodyMore}</span>
+                </p>
                 <button className="btn" onClick={onOpenStoryMode}>
                   {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
                 </button>
