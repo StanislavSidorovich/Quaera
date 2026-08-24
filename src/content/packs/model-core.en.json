@@ -1950,6 +1950,138 @@
         "The region comes from its own dimension rather than from the sales table, which holds only the customer key."
       ],
       "explain": "Several CALCULATE conditions are intersected rather than added: what remains is what satisfies all of them at once, and the measure returns the revenue of Nettora specifically in Tokyo rather than the sum of two separate slices. This is the first thing to check in an unfamiliar formula with two conditions, because expectation and behaviour part ways for many people here: the word and in a brief describes both intersection and union. The second thing visible here: conditions on different columns live independently of one another, a brand filter replaces what stood on brand, a region filter replaces what stood on region, and a channel slicer on the page survives both. If a union really is needed, it is written as one logical expression inside one argument rather than as two arguments side by side."
+    },
+    {
+      "id": "mdl-078",
+      "title": "The order of preparation steps",
+      "brief": "A query in the preparation layer builds a sales table out of a raw export: it drops what is not needed, cleans the key, sets types, attaches a lookup and rolls the rows up. All five steps are written correctly and their order is scrambled, so the query either fails or pulls the whole table into memory.",
+      "goal": "Put the steps of the query in the order they have to run in.",
+      "orderQuestion": "In what order do the steps of the query have to run?",
+      "items": [
+        {
+          "label": "Drop the columns and rows that will not reach the report",
+          "why": "First, because up to this step the table is as wide and as long as it will ever be. While the transformations stay simple the source can run them itself and hand back data already narrowed; the first step it does not understand breaks that hand off, and everything below it is pulled into memory in full."
+        },
+        {
+          "label": "Bring the key to one spelling",
+          "why": "Second, because the key is what the join needs and the join stands below. A row with a stray space or a different case will find no match, and the defect surfaces after the table is assembled, in a number rather than in a step."
+        },
+        {
+          "label": "Set the column types",
+          "why": "Third: converting to a date or a number does not survive rubbish in the text, so it comes after the cleaning rather than before. And necessarily before the roll up, otherwise adding up a text column glues values together instead of doing arithmetic."
+        },
+        {
+          "label": "Join the lookup table",
+          "why": "Fourth, once both sides are narrowed and their keys share one spelling. A join costs more the wider and longer the tables are, and any step skipped above turns here from a one line fix into a rebuild of the result."
+        },
+        {
+          "label": "Roll the rows up into a total",
+          "why": "Last, because after the roll up the original rows are gone. Anything not done before this point has to start again from reading the source, and this is the only irreversible step of the pipeline."
+        }
+      ],
+      "hints": [
+        "Ask each step what it leaves for the next one: one narrows the data, another makes the key usable, a third makes arithmetic possible at all.",
+        "One of the five steps is irreversible: after it the original rows no longer exist."
+      ],
+      "explain": "The order of steps in a preparation layer is not a matter of taste but two different kinds of dependency at once. The first kind is correctness: types are not set over dirty text, a join finds no match on an unnormalised key, and a roll up destroys the very thing those steps work with. The second kind is cost, and it is less obvious: while the steps stay simple the preparation engine turns them into a query against the source and makes the source do the work, and the first transformation the source cannot do breaks that hand off, so the rest of the pipeline runs on data pulled into memory. Hence a rule that carries over to any pipeline rather than this one alone: narrow before you clean, clean before you join, join before you roll up. The sign of a violation, visible without a profiler: a refresh that suddenly takes minutes instead of seconds after one harmless looking step was added at the start."
+    },
+    {
+      "id": "mdl-079",
+      "title": "The order of setting up an incremental refresh",
+      "brief": "A full refresh has stopped fitting into the night, and the model is being moved onto an incremental one. The five setup steps are known but were done in a random order, so the policy either cannot find the parameters or is configured against a filter that does not exist yet.",
+      "goal": "Put the setup steps in the order in which each next one becomes possible at all.",
+      "orderQuestion": "In what order is an incremental refresh set up?",
+      "items": [
+        {
+          "label": "Create two parameters holding the start and the end of the window",
+          "why": "First, because everything else refers to them. The policy looks the parameters up by strictly defined names and by the date and time type, and having failed to find them it simply will not offer itself for configuration, leaving you to conclude the feature is unavailable."
+        },
+        {
+          "label": "Filter the table by those parameters",
+          "why": "Second, because parameters on their own cut nothing. It is the filter that limits the data, and the policy only substitutes different boundary values into it; without a filter the refresh will faithfully reread the whole history without complaining once."
+        },
+        {
+          "label": "Make sure the source runs the filter rather than the preparation engine",
+          "why": "Third, before the policy is configured rather than after the first slow night. If the filter is not handed to the source, every partition still pulls the whole table, and the refresh ends up slower than a full one while the setup looks formally correct."
+        },
+        {
+          "label": "Set how much history to keep and how much of it to reread",
+          "why": "Fourth, because only now does the policy have both the parameters and the filter that relies on them. This is also where the main trade off is decided: the reread window has to cover the period over which the source still corrects the past."
+        },
+        {
+          "label": "Publish and let the first refresh run through in full",
+          "why": "Last, and this is the point of no return: the first refresh slices the history into partitions and runs long, once. Changing the filter or the boundaries after it means throwing that slicing away and repeating the night."
+        }
+      ],
+      "hints": [
+        "Ask each step what has to exist already for it to run at all.",
+        "One step configures nothing and checks instead, and it stands before checking becomes too late."
+      ],
+      "explain": "An incremental refresh is assembled from four independent parts, and each next one leans on the previous: parameters give the names, the filter gives the limit, handing the filter to the source gives the whole exercise its point, and the policy ties this into a schedule. The order here is a dependency rather than a convention: skip a step and you get not an error but a setup that runs empty. The most expensive place is the third: a setup that does not hand the filter to the source looks entirely healthy, passes every check the interface makes, and makes the refresh slower than it was. Second by cost is the fifth, because it is irreversible in practical terms: the partitioning is built once, and any change of boundaries after publishing costs another full night. Hence the habit that saves that night: everything that can be checked before publishing is checked before it."
+    },
+    {
+      "id": "mdl-080",
+      "title": "Revenue jumped: what to check first",
+      "brief": "After one more table was added to the model, revenue in the report grew several times over. There is no error anywhere, the report opens, every measure computes. The investigation has to be run so that each step narrows the circle of suspects rather than adding guesses.",
+      "goal": "Put the steps of the investigation in the order in which each next one only makes sense after the previous.",
+      "orderQuestion": "In what order do you take the inflated number apart?",
+      "items": [
+        {
+          "label": "Compare the measure total with no slicers against the sum in the source",
+          "why": "First, because this step separates two entirely different defects. If the overall total is already inflated the model is at fault; if the total matches and only the breakdowns lie, the problem is filter direction, and the second half of the checks will not be needed at all."
+        },
+        {
+          "label": "Remove the newly added table from the model and measure again",
+          "why": "Second, because it is the only check that names the culprit in one move and it costs a minute. Until it is done, any reasoning about relationships stays a guess about a table whose guilt has not been established."
+        },
+        {
+          "label": "Look at how many roads lead from the fact table to the suspect",
+          "why": "Third, because the question only makes sense once a pair of tables has been named. Ambiguity is a property of the path between two specific tables rather than of the model in general, and looking for it earlier means walking the entire schema."
+        },
+        {
+          "label": "Check the cardinality of every relationship on the path you found",
+          "why": "Fourth: what inflates a sum is a relationship whose key is not unique where the model expects uniqueness. This is the most frequent cause, and it is checked faster than direction because it does not require running the report."
+        },
+        {
+          "label": "Check the filter direction of each of those relationships",
+          "why": "Last, because direction only matters on a relationship with the right cardinality. A many-to-many relationship distorts the sum no matter which way the filter runs, and fixing direction before cardinality treats the symptom."
+        }
+      ],
+      "hints": [
+        "The first two steps answer who is at fault, the last three answer what exactly is wrong with them. The two cannot be mixed.",
+        "One of the five steps makes the whole second half unnecessary if the answer turns out to be definite."
+      ],
+      "explain": "The principle behind this sequence is narrowing the circle of suspects rather than ranking hypotheses by plausibility. Every step here only makes sense after the previous one: until you know whether the total is inflated or only the breakdowns are, you do not even know what kind of defect you are after; until the table is named there is no path to take; until the path is found there is no cardinality to check; and while the cardinality is wrong, filter direction explains nothing. The temptation people give in to most often is to start in the middle, opening the schema and staring at relationships. That works on a model of five tables and stops working on a model of fifteen, while the habit stays. Worth remembering separately is the property of the second step: a check that names the culprit in one move and costs a minute has to come before any check that requires reasoning, even when the reasoning looks obvious."
+    },
+    {
+      "id": "mdl-081",
+      "title": "What happens to a cell, step by step",
+      "brief": "A measure called inside an iterator gives something other than the same formula written as a column. The whole explanation fits into the order in which a cell is evaluated: each next stage works on the result of the previous one.",
+      "goal": "Put the stages of evaluating a cell in the order in which they happen.",
+      "orderQuestion": "In what order is a report cell evaluated?",
+      "items": [
+        {
+          "label": "The filter context of the cell forms: its row, its column, the slicers on the page",
+          "why": "First, because everything else is a change to what has already formed. Up to this moment there is simply nothing to change, and that is exactly why one and the same measure returns different numbers in neighbouring cells with an identical formula."
+        },
+        {
+          "label": "CALCULATE applies its arguments to that context",
+          "why": "Second, because the arguments of CALCULATE are described relative to what already stands there: a plain condition replaces the filter on its column, KEEPFILTERS intersects with it, ALL clears it. Without the first stage none of the three words means anything."
+        },
+        {
+          "label": "The iterator starts its pass and creates row context",
+          "why": "Third, and it matters that row context is created inside the already modified filter context rather than beside it: the pass runs over a table narrowed by everything that happened above, not over the original one."
+        },
+        {
+          "label": "Calling a measure inside the pass turns the current row into a filter",
+          "why": "Last, and this is context transition itself. It is only possible once row context already exists, and that is exactly why the same formula written as a column computes something else: a column has row context, but there is nothing inside it doing the calling."
+        }
+      ],
+      "hints": [
+        "Ask each stage what has to exist already for it to change anything.",
+        "Context transition is neither first nor second: it needs both of the previous things at once."
+      ],
+      "explain": "Context transition stops being a riddle at the exact moment the order of stages falls into place: filter context forms, CALCULATE changes it, an iterator inside the changed context creates row context, and a measure call turns that row back into a filter. Every pair of neighbouring stages is bound by a dependency rather than by habit: there is nothing to change until the context has formed; nothing to iterate over until it is settled what to iterate over; nothing to turn into a filter until there is a row. The practical value of this chain is that it explains two different observations with one mechanism. First: SUMX over a table with a measure call inside computes something other than SUMX with the same formula spelled out in place. Second: a calculated column with a measure call inside unexpectedly returns the value of its own row rather than a total, because context transition happens there too, under the same condition as here."
     }
   ]
 }

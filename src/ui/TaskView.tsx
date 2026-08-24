@@ -888,17 +888,21 @@ function StepView({
          * и раскладывать шаги нужно рядом ровно по тому же доводу.
          */
         <div className="task-work">
-          <div className="task-situation">
-            <div className="card">
-              {step.scenario ? (
+          {/*
+           * Левая колонка появляется только вместе с ситуацией. Раньше без
+           * `scenario` сюда падал `task.brief` — тот самый абзац, который уже
+           * напечатан над этим блоком: на девяти заданиях условие стояло
+           * на экране дважды, в трёхстах пикселях друг от друга. Пустой
+           * колонки после правки не остаётся — auto-fit в .task-work
+           * схлопывает пустой трек, и ответ занимает ширину целиком.
+           */}
+          {step.scenario && (
+            <div className="task-situation">
+              <div className="card">
                 <pre className="scenario">{step.scenario}</pre>
-              ) : (
-                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                  {task.brief}
-                </p>
-              )}
+              </div>
             </div>
-          </div>
+          )}
           <div className="task-answer">
             <div className="card">
               <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{step.question}</p>
