@@ -63,7 +63,8 @@ Beyond the tracks, the app also has:
   you can run right there without opening a task;
 - **A sandbox** — free-form mode on the same data: any query, no task and
   no hints, with a list of starter questions next to it if you're not sure
-  what to ask;
+  what to ask, plus sixteen ready-made queries for the tasks that come up
+  most, each in SQL and pandas and each naming what to change in it;
 - **A data screen** — a schema of 13 tables with grain and row counts
   computed from the real dataset, not typed in by hand;
 - **Spaced repetition and reminders** — an interval scheduler and a push
