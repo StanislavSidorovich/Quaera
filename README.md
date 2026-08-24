@@ -31,13 +31,13 @@ in the browser, no server involved.
 
 ## What's inside
 
-**Four tracks — 261 tasks and 72 skills.** Fully populated, reviewed
+**Four tracks — 272 tasks and 72 skills.** Fully populated, reviewed
 and translated to English: interface, tasks, technique cards.
 
 | Track | Tasks | Skills | How the answer is checked |
 | --- | --- | --- | --- |
 | SQL for analysts | 84 | 19 | The query runs against SQLite (sql.js) |
-| Analytics as a profession | 68 | 20 | Multiple choice with a full explanation (`predict`) |
+| Analytics as a profession | 79 | 20 | Multiple choice with a full explanation (`predict`) plus arranging the steps of an argument (`order`) |
 | Data model and BI | 63 | 19 | Multiple choice with a full explanation (`predict`) |
 | pandas for analysts | 46 | 14 | The code runs in Python (Pyodide) |
 
