@@ -52,6 +52,37 @@
           "outcome": "You take a situation apart down to its cause, the numbers first and then what they mean for the business, and you say out loud what the data cannot know."
         }
       ]
+    },
+    "python": {
+      "opening": "Same company, same dataset, a different tool. A query hands you a finished answer; in pandas the data stays in your hands as an object you keep working on: reshape it, smooth a series, join it with a file that was never in the database.\n\nFive missions cover what an analyst does in a notebook, from \"I read the table and I know what is in it\" to \"the same calculation, without a loop over rows\". The track is written as a continuation of SQL and explains some of its ideas by comparison, which blocks nothing here.",
+      "ending": "The base is covered. You have gone from \"what is in the variable\" to a chain that computes a whole column at once, and you know where pandas stays silent: an index that took the column, a missing value in a grouping key, a join that multiplied rows, a copy standing in for the original data.\n\nThe finale here is not a business case but a habit of writing so that the calculation survives the next question. The other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
+      "missions": [
+        {
+          "title": "What is in the variable",
+          "hook": "In a database the column types are declared and the engine picks the order of evaluation. Here it is the other way round: steps run exactly as written, and nobody declared the types, they were guessed while reading. So the first thing you learn is not a calculation but the habit of knowing, after every line, what is now in the variable: a table or a column, a number or text.",
+          "outcome": "You select rows with a mask and columns through loc, and you look at the types before the arithmetic rather than after a sum of numbers has glued strings together."
+        },
+        {
+          "title": "The index and the first summary",
+          "hook": "The first summary brings a question SQL never asks: the column you grouped by has disappeared from the table. It has not disappeared. It moved into the index, a structure kept apart from the data that decides how rows line up with each other. And before any summary it is worth looking at the data itself: one stray category moves an average further than you would expect.",
+          "outcome": "You build a summary with groupby knowing in advance what comes back and what ends up in the index, and you catch an outlier or a stray category before either reaches the report."
+        },
+        {
+          "title": "A summary that comes back to the rows",
+          "hook": "A summary rarely just gets shown. More often its value has to come back to every row: the share of this sale in the sales of that product, a rank inside a brand. That is what transform is for. Two silent losses surface in the same place: grouping drops rows with a missing key without a word, and a join on a key that is not unique multiplies them just as quietly.",
+          "outcome": "You return a value at the original grain, you stop losing rows to a missing key, and you check the cardinality of a join before the total grows several times over."
+        },
+        {
+          "title": "The shape of the table",
+          "hook": "Next the data has to be moved rather than counted. The receiving system takes the long format only, a human wants the same report wide, and a shipment series has to be monthly although the database keeps it weekly. Shape here is not decoration: it decides how many steps the next calculation will take.",
+          "outcome": "You move a table between wide and long, change the frequency of a series with resample, compute a rolling window, and bring the data to a state where one row is one observation."
+        },
+        {
+          "title": "The chain and the cost of a step",
+          "hook": "The last mission is not about a new calculation but about how it is written. A flag set on a slice never reaches the original table, and the code does not complain once. And apply over rows gives the same answer as a vectorised operation: on a table of regions you cannot see the difference, on the sales table it is the difference between a second and a minute.",
+          "outcome": "You write transformations as a chain and you know where a copy appears and where a view on the original data does, and you replace a loop over rows with a vectorised operation, because the difference here is an order of magnitude rather than a matter of style."
+        }
+      ]
     }
   }
 }
