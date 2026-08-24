@@ -46,8 +46,8 @@ a client brings a question in the morning, you bring back a finding by
 evening. Techniques are introduced exactly where the work needs them, not
 in a syllabus order, and a week can cross tracks — the third one moves
 between the profession track and SQL, the fourth runs on pandas. Marked
-in the app as an early prototype: the campaign is written, the standalone
-story line that runs through a whole track is prose for SQL only.
+in the app as an early prototype. Alongside it runs a standalone story
+line through each track, written out for all four.
 
 ![Story mode: Monday of the first week, a brief from the sales director](docs/screenshots/03-story.png)
 
@@ -385,8 +385,6 @@ about filling empty branches of the skill graph — it's about depth:
   a recommendation. The engine already has a multi-step task type, but
   steps don't yet pass state to each other, and a capstone needs exactly
   that.
-- **Story-mode prose for the other three tracks** — the story line itself
-  is already derived and working for them; only the writing is missing.
 
 The order, scope and reasoning behind each of these live in
 [ROADMAP.md](ROADMAP.md), along with a section on what's checked
