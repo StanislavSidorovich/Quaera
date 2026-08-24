@@ -309,14 +309,36 @@ export function StoryMode({
               </div>
             )}
             {found.length > 0 && (
-              <div className="story-known">
-                <p className="story-known-title">{t.storyMode.known}</p>
-                <ul>
-                  {found.map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-              </div>
+              /*
+               * От трёх находок и выше папка дела сама начинала уводить
+               * первую реплику брифа за сгиб (замер 764 при окне 812 держался
+               * только для недели из одной-двух находок; к среде-четвергу
+               * список догоняет и снова выталкивает содержимое вниз).
+               * <details> сворачивает её по умолчанию своими силами — код
+               * не следит за состоянием, раскрытие целиком в руках браузера.
+               */
+              found.length >= 3 ? (
+                <details className="story-known">
+                  <summary className="story-known-title">
+                    {t.storyMode.known}
+                    <small>{t.storyMode.knownCount(found.length)}</small>
+                  </summary>
+                  <ul>
+                    {found.map((f, i) => (
+                      <li key={i}>{f}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : (
+                <div className="story-known">
+                  <p className="story-known-title">{t.storyMode.known}</p>
+                  <ul>
+                    {found.map((f, i) => (
+                      <li key={i}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )
             )}
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (

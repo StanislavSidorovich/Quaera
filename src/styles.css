@@ -4921,6 +4921,56 @@ table.sample td.null {
 }
 
 /*
+ * Свёрнутая папка дела — от трёх находок и выше (StoryMode.tsx). Тот же
+ * шеврон, что у details.table-doc: до нажатия он один отвечает на вопрос
+ * «сюда можно нажать», раз штатный маркер <details> здесь тоже скрыт.
+ */
+details.story-known > summary {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 20px;
+}
+
+details.story-known > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.story-known > summary::after {
+  content: '';
+  position: absolute;
+  right: 2px;
+  top: 3px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--text-dim);
+  border-bottom: 1.5px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details.story-known > summary::after {
+    transition: none;
+  }
+}
+
+details.story-known[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+/* Счётчик под заголовком — своим кеглем, а не заглавными буквами заголовка. */
+details.story-known > summary small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-dim);
+}
+
+/*
  * Заставки фаз (StoryArt.tsx).
  *
  * Полоса во всю ширину карточки и с фиксированным отношением сторон: высота

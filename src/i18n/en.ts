@@ -592,6 +592,8 @@ export const en = {
     /** См. довод в ru.ts. */
     dayBack: (short: string) => `Back to ${short}`,
     known: 'What we know so far',
+    /** См. комментарий в ru.ts: счётчик для свёрнутой папки дела. */
+    knownCount: (n: number) => `${n} finding${n === 1 ? '' : 's'}`,
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',
