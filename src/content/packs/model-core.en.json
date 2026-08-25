@@ -673,7 +673,7 @@
       "predictQuestion": "What does the \"Tokyo\" row show, if there's no brand slicer on the page at all?",
       "hints": [
         "The brand condition sits inside CALCULATE, not outside the measure. Does it need an external slicer to fire?",
-        "Compare with mdl-019: there the condition came from a page slicer. Where does it come from here?"
+        "Compare with the task about what a cell filter is made of: there the condition came from a page slicer. Where does it come from here?"
       ],
       "explain": "A cell's filter context isn't made up only of rows, columns and page slicers; there's a fourth source: conditions baked into the measure itself via CALCULATE. A filter like this doesn't depend on what's selected outside it: it applies every time the measure is invoked, whether there's a brand slicer on the page or not. The practical takeaway: two measures shown side by side on a report (\"Revenue\" and \"Nettora Revenue\") can behave differently under the exact same set of external slicers, and understanding why takes more than looking at the report page, you have to look inside the measure's own formula.",
       "options": [
@@ -778,7 +778,7 @@
       "predictQuestion": "Why does revenue inside SUMX here behave like the current row's value, rather than the table's total?",
       "hints": [
         "SUMX isn't an ordinary aggregating function like SUM; it's an iterator: it walks rows one at a time.",
-        "Ask: who creates row context in this example: a calculated column (like mdl-022), or SUMX itself?"
+        "Ask: who creates row context in this example: a calculated column (like in the task about SUM inside a row-level column), or SUMX itself?"
       ],
       "explain": "In the previous two tasks, row context already existed; a calculated column supplied it, and SUM inside it ignored that context, because SUM only responds to filter context. Here the source is different: SUMX itself creates row context by walking fact_sellout row by row, and for each row it evaluates the expression passed to it inside that exact context, only afterward summing the results across every row. That's why inside SUMX a direct column reference means the current iteration row's value, not the table's total. This is the key difference between iterator functions (SUMX, AVERAGEX, FILTER) and ordinary aggregating functions: they don't just aggregate; they iterate, and at every step of the iteration the formula inside has its own row context, one the function itself built.",
       "options": [
@@ -859,9 +859,9 @@
       "predictQuestion": "What's causing the discrepancy, and how do you fix it?",
       "hints": [
         "Compare 370,142 to the sum of the distributor's twelve monthly stock figures. Does it come close?",
-        "Remember mdl-026: the same effect showed up across a quarter's three months, here it's across a year's twelve."
+        "Remember the task about quarterly stock as one sum: the same effect showed up across a quarter's three months, here it's across a year's twelve."
       ],
-      "explain": "The mistake at annual scale is the same as the quarterly one in mdl-026, just more visible: summing twelve snapshots of growing stock gives a total several times larger than any of the values it's built from, because every snapshot partly re-counts the same physical goods that sat in the warehouse for more than one month. A measure meant to answer \"stock at year end\" has to take the value on the year's last date, not sum the intermediate snapshots. The practical lesson goes wider than this one case: any measure built over a semi-additive quantity needs a separate formula for every time breakdown; annual, quarterly and monthly versions of stock don't reduce to each other by simple summing, unlike revenue, where the annual measure is exactly the sum of the monthly ones.",
+      "explain": "The mistake at annual scale is the same as the quarterly one in the task about quarterly stock as one sum, just more visible: summing twelve snapshots of growing stock gives a total several times larger than any of the values it's built from, because every snapshot partly re-counts the same physical goods that sat in the warehouse for more than one month. A measure meant to answer \"stock at year end\" has to take the value on the year's last date, not sum the intermediate snapshots. The practical lesson goes wider than this one case: any measure built over a semi-additive quantity needs a separate formula for every time breakdown; annual, quarterly and monthly versions of stock don't reduce to each other by simple summing, unlike revenue, where the annual measure is exactly the sum of the monthly ones.",
       "options": [
         {
           "label": "The measure sums 12 monthly stock snapshots instead of taking the snapshot at year end. The fix is to replace SUM with the value at the end of the period",
@@ -998,9 +998,9 @@
       "predictQuestion": "What does a plain Revenue measure compute with a \"March 2025\" slicer?",
       "hints": [
         "A dashed relationship exists in the model but doesn't carry the filter. How many paths does the filter from the calendar have left?",
-        "Compare with mdl-014: the dashed line showed up there for the same reason, to give the filter a single path."
+        "Compare with the task where the model refused to choose: the dashed line showed up there for the same reason, to give the filter a single path."
       ],
-      "explain": "An inactive relationship is a way to have a second path in the model without creating ambiguity. By default the filter travels only along the active one, and every measure computes the same way, by order date. A measure that needs the calendar's second role switches it on locally: CALCULATE(SUM(net_amount), USERELATIONSHIP(fact_sellin[ship_date], dim_date[date_id])). A measure like this gets its own name, something like \"Revenue by shipment\", and a person opening the field list sees two distinctly named measures instead of one with an unresolved meaning. It's the same principle as in mdl-015: the choice between interpretations is made explicit and local, not by flipping a switch on the whole model.",
+      "explain": "An inactive relationship is a way to have a second path in the model without creating ambiguity. By default the filter travels only along the active one, and every measure computes the same way, by order date. A measure that needs the calendar's second role switches it on locally: CALCULATE(SUM(net_amount), USERELATIONSHIP(fact_sellin[ship_date], dim_date[date_id])). A measure like this gets its own name, something like \"Revenue by shipment\", and a person opening the field list sees two distinctly named measures instead of one with an unresolved meaning. It's the same principle as in the task about keeping the two paths apart: the choice between interpretations is made explicit and local, not by flipping a switch on the whole model.",
       "options": [
         {
           "label": "¥3,303,414: by order date, because the filter only travels along the active relationship. The inactive one plays no part until it's switched on explicitly",
@@ -1012,7 +1012,7 @@
         },
         {
           "label": "The sum of both figures, because the March filter travels along both relationships",
-          "why": "If both relationships were active at once, the model simply wouldn't let you create them; that would be the ambiguity from mdl-014. That's exactly why the second one is marked inactive: to keep the filter's path singular."
+          "why": "If both relationships were active at once, the model simply wouldn't let you create them; that would be the ambiguity from the task where the model refused to choose. That's exactly why the second one is marked inactive: to keep the filter's path singular."
         },
         {
           "label": "An ambiguity error: two relationships between the same pair of tables aren't allowed",
@@ -1117,7 +1117,7 @@
       "scenario": "Report: rows are promos,\nmeasure is the promo's brand\nrevenue.\n\nSum across every row:\nmore than ¥126,911,191\n(fact_sellout's full total)\n\nThe report's Total row:\nexactly ¥126,911,191.",
       "predictQuestion": "Why is the sum of the rows bigger than the total, while the total itself is correct?",
       "hints": [
-        "Remember mdl-021: the Total row computes in its own filter context, it doesn't sum what's visible above it.",
+        "Remember the task about the Total row at the bottom of a table: the Total row computes in its own filter context, it doesn't sum what's visible above it.",
         "Can one sale belong to several promos of the same brand at once?"
       ],
       "explain": "A many-to-many relationship inherently produces overlapping breakdowns: the same fact belongs to several elements of a dimension at once. So the sum of the visible rows and the Total row legitimately diverge; they're computed in different filter contexts, and the total doesn't sum the rows, it recomputes the measure with no promo condition. This isn't a defect of the bridge, it's a property of the relationship it honestly describes. The practical takeaway for an analyst: on reports with m2m breakdowns, either keep the Total row and explain it, or drop it entirely, but never \"fix\" it by dividing, since dividing changes the measure's meaning rather than correcting an error. And it's worth checking the question itself separately: if the business genuinely needs revenue for a specific promo, the breakdown should be built on promo_id, where there's no duplication at all.",
@@ -1177,7 +1177,7 @@
       "goal": "Work out which filters act on the calculation.",
       "predictQuestion": "What does the measure return with a region slicer?",
       "hints": [
-        "Compare with mdl-037: there the condition and the slicer were on the same column, here they're on different ones.",
+        "Compare with the task where the measure computed one brand and the page slicer was set to another: there the condition and the slicer were on the same column, here they're on different ones.",
         "CALCULATE replaces filters selectively. On which columns exactly?"
       ],
       "explain": "This shows the other half of the rule, without which the first half looks alarming. CALCULATE doesn't \"break the context\" wholesale; it acts precisely, only on the columns mentioned in its conditions. Filters on every other column pass straight through and combine with the measure's condition. This is exactly what makes measures with baked-in conditions practically useful: \"Aqualis Revenue\" stays «Aqualis»'s revenue under any brand slicer, while still honestly breaking down by region, month and channel. To remove the external filter entirely you need an explicit ALL, a different technique, with a different meaning and different consequences.",
@@ -1206,7 +1206,7 @@
         "In the «Fruvia» row, what are the numerator and denominator individually?",
         "The denominator needs a context with no brand filter. Which function removes a filter from a column?"
       ],
-      "explain": "Any share is a ratio of a value in the current context to a value in a wider one, and the whole difficulty is setting that wider context explicitly. Without CALCULATE, both halves of the formula live in the same row-level filter context and give identical numbers. ALL removes the filter from the specified column, giving the denominator full reach: in the «Fruvia» row the numerator stays ¥25,465,980, the denominator becomes ¥126,911,191, and the share comes out to 20.1%. Notice the difference from the constant in mdl-017: ALL recomputes along with every other slicer. Filter by Tokyo and the denominator becomes Tokyo's revenue, and the shares still sum to a hundred percent. That's exactly why shares are written with ALL, not a hard-coded number.",
+      "explain": "Any share is a ratio of a value in the current context to a value in a wider one, and the whole difficulty is setting that wider context explicitly. Without CALCULATE, both halves of the formula live in the same row-level filter context and give identical numbers. ALL removes the filter from the specified column, giving the denominator full reach: in the «Fruvia» row the numerator stays ¥25,465,980, the denominator becomes ¥126,911,191, and the share comes out to 20.1%. Notice the difference from the constant in the task where the same share was set up as a calculated column: ALL recomputes along with every other slicer. Filter by Tokyo and the denominator becomes Tokyo's revenue, and the shares still sum to a hundred percent. That's exactly why shares are written with ALL, not a hard-coded number.",
       "options": [
         {
           "label": "The numerator and denominator compute in the same row-level filter context. The denominator needs freeing from the brand filter, via CALCULATE with ALL",
@@ -1218,7 +1218,7 @@
         },
         {
           "label": "The denominator needs replacing with the constant 126911191: total revenue across the database",
-          "why": "That gives a correct result right up to the first slicer: with a region filter, the numerator narrows while the hard-coded constant stays the same, and the shares stop summing to 100%. That's exactly the mistake covered in mdl-017."
+          "why": "That gives a correct result right up to the first slicer: with a region filter, the numerator narrows while the hard-coded constant stays the same, and the shares stop summing to 100%. That's exactly the mistake covered in the task where the same brand share was set up two ways, as a calculated column and as a measure."
         },
         {
           "label": "The matrix is built wrong: shares should be computed at the visual level, not the measure level",
@@ -1233,7 +1233,7 @@
       "goal": "Work out why the results diverge.",
       "predictQuestion": "Why do a measure and a column with an identical formula give different numbers?",
       "hints": [
-        "Remember mdl-022: SUM inside a calculated column aggregates the whole table. What's different for a measure?",
+        "Remember the task about SUM inside a row-level column: SUM inside a calculated column aggregates the whole table. What's different for a measure?",
         "Invoking a measure is always implicitly wrapped in CALCULATE. What does CALCULATE do to row context?"
       ],
       "explain": "This is exactly where the two kinds of context meet. Row context gives a formula access to the current row's values, but aggregating functions don't read it; they only look at filter context. Context transition turns one into the other: inside CALCULATE, the current row becomes a filter, \"every row where the key columns match.\" Invoking a measure is implicitly wrapped in CALCULATE, so a measure in a matrix automatically picks up the brand filter and gives ¥25,465,980. A calculated column has no such wrapping; its SUM sees an empty filter and aggregates everything, ¥126,911,191 in every one of the lookup's 47 rows. To make a column behave like a measure, wrapping its formula in CALCULATE by hand is enough.",
@@ -1507,7 +1507,7 @@
         "Where is the region of a sale physically stored: in the fact row, or in the lookup table?",
         "The report recomputes every time it is opened. Where does it get the region for a sale that happened a year ago?"
       ],
-      "explain": "An ordinary lookup table answers the question \"which region is this outlet in now,\" and that is the only question it can answer. A report for last year asks a different one: \"which region was it in at the time of the sale.\" The difference between these questions is invisible while nothing changes, and it surfaces silently on the day the lookup gets edited: the regional total changes retroactively, nothing breaks, nobody gets a warning. This is the same class of error as the frozen column in mdl-016, only mirrored, there a value failed to recompute when it should have, here it recomputed when it should not have. The fix is versioning the lookup table, where each state has its own period of validity and the fact references the version that was current on the date of the event.",
+      "explain": "An ordinary lookup table answers the question \"which region is this outlet in now,\" and that is the only question it can answer. A report for last year asks a different one: \"which region was it in at the time of the sale.\" The difference between these questions is invisible while nothing changes, and it surfaces silently on the day the lookup gets edited: the regional total changes retroactively, nothing breaks, nobody gets a warning. This is the same class of error as the frozen column in the task where brand share got hard-coded as a number, only mirrored, there a value failed to recompute when it should have, here it recomputed when it should not have. The fix is versioning the lookup table, where each state has its own period of validity and the fact references the version that was current on the date of the event.",
       "options": [
         {
           "label": "This outlet's entire 2024 sales history moves to «Kanagawa», as if it had always been there",
@@ -1724,7 +1724,7 @@
         "How many distinct products remain after dropping a year? And how many were there before?",
         "Which matters more to the business: freeing memory, or keeping the ability to compute growth against last year?"
       ],
-      "explain": "Trimming history is intuitively the most obvious way to shrink a model and almost always the least rewarding. A column's weight is made up of its dictionary of distinct values plus the references into it; deleting rows only reduces the second part, while the first (the bulk of the weight for expensive columns) stays nearly untouched, because values repeat across years. What gets given up in exchange is year-over-year comparison, which is exactly the capability history is kept for. The right order is the reverse: first remove columns that appear in no report (see mdl-055), then reduce precision where it is excessive (rounding amounts, for instance), and only then, if that was not enough, discuss the depth of history with the business as a deliberate trade-off.",
+      "explain": "Trimming history is intuitively the most obvious way to shrink a model and almost always the least rewarding. A column's weight is made up of its dictionary of distinct values plus the references into it; deleting rows only reduces the second part, while the first (the bulk of the weight for expensive columns) stays nearly untouched, because values repeat across years. What gets given up in exchange is year-over-year comparison, which is exactly the capability history is kept for. The right order is the reverse: first remove columns that appear in no report (see the task about the most expensive column), then reduce precision where it is excessive (rounding amounts, for instance), and only then, if that was not enough, discuss the depth of history with the business as a deliberate trade-off.",
       "options": [
         {
           "label": "Noticeably less than 41%: the number of distinct values in the expensive columns barely changes. And year-over-year comparison is lost for good",
@@ -1763,7 +1763,7 @@
         },
         {
           "label": "Delete the revenue column and compute revenue as units × price from the lookup table",
-          "why": "List price and actual sale price are different quantities (see mdl-009): sales happen at discounts and on promotion. Such a calculation would give revenue without discounts, replacing a correct number with a wrong one to save memory."
+          "why": "List price and actual sale price are different quantities (see the task about where to store the price): sales happen at discounts and on promotion. Such a calculation would give revenue without discounts, replacing a correct number with a wrong one to save memory."
         },
         {
           "label": "Split revenue into two columns: roubles and kopecks separately, each with a smaller dictionary",

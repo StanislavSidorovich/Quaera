@@ -3322,5 +3322,64 @@ function translationPairs(orig, tr) {
   console.log(`  ok   файлов перевода на диске: ${enFiles.length}, все проверены`);
 }
 
+// --- Ссылки на задания по внутреннему id в тексте, который читает человек.
+/**
+ * `sql-025` и подобное — адрес внутри пака, а не имя, которое где-нибудь
+ * показано. На экране задания видны уровень, название навыка, режим
+ * и заголовок; идентификатора нет нигде, включая адресную строку. Поэтому
+ * фраза «сравните это с sql-024» для читателя не разрешается ни во что:
+ * он не может ни узнать это задание, ни открыть его. Замер до постановки
+ * гейта — 130 таких мест в паках обеих локалей.
+ *
+ * Чинится это описанием словами: «в задании про цену со скидкой». Описание
+ * переживает и перенумерацию, и перевод, а id не переживает даже вставку
+ * одного задания в середину пачки.
+ *
+ * Запрет действует только на поля, которые попадают на экран. Внутренние
+ * комментарии в `.ts`, ROADMAP и сам ключ `id` под него не подпадают
+ * намеренно: там id — это адрес по назначению, и он полезен.
+ */
+{
+  const HUMAN_FIELDS = new Set([
+    'brief',
+    'goal',
+    'hints',
+    'explain',
+    'predictQuestion',
+    'orderQuestion',
+    'question',
+    'label',
+    'why',
+    'wrongWhy',
+  ]);
+  const TASK_REF = /\b(?:sql|py|dom|mdl)-\d{3}\b/;
+  const packsDir = path.join(root, 'src', 'content', 'packs');
+  const files = readdirSync(packsDir).filter((f) => f.endsWith('.json'));
+  let hits = 0;
+  let scanned = 0;
+  for (const file of files) {
+    const walk = (node, key, where) => {
+      if (typeof node === 'string') {
+        if (!HUMAN_FIELDS.has(key)) return;
+        scanned++;
+        const m = node.match(TASK_REF);
+        if (m) {
+          fail(file, `${where} поле ${key} ссылается на «${m[0]}» — читателю этот id нигде не показан, нужно описание словами`);
+          hits++;
+        }
+        return;
+      }
+      if (Array.isArray(node)) return node.forEach((v, i) => walk(v, key, `${where}[${i}]`));
+      if (node && typeof node === 'object') {
+        const self = node.id ?? node.skill;
+        const next = typeof self === 'string' ? `${self}:` : where;
+        for (const [k, v] of Object.entries(node)) walk(v, k, next);
+      }
+    };
+    walk(JSON.parse(readFileSync(path.join(packsDir, file), 'utf8')), null, `${file}:`);
+  }
+  if (!hits) console.log(`  ok   ссылок на задания по id в видимом тексте нет: ${scanned} полей в ${files.length} паках`);
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);

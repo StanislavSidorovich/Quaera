@@ -628,7 +628,7 @@
         ".str.upper() upper-cases every string in the column in one call.",
         "nunique() counts the number of unique values, exactly what's needed to see how many codes remain after normalization."
       ],
-      "explain": "58 → 29: exactly half of the codes were the same product, written in a different case. Casting to a single case before counting isn't cosmetic: nunique() compares strings character by character, and to it «nett005» is not the same product as «NETT005». SQL has the same idea (COUNT(DISTINCT UPPER(sku_code))), but SQLite's UPPER and LOWER are limited to the ASCII range (see sql-027), while pandas's .str.upper() follows full Unicode rules. You can't see the difference on these codes, because they're Latin; it shows up on the first reference table with diacritics or Cyrillic, and it shows up silently, as under-merging, not as an error. Hence the working habit: test case normalization on data whose alphabet isn't only English."
+      "explain": "58 → 29: exactly half of the codes were the same product, written in a different case. Casting to a single case before counting isn't cosmetic: nunique() compares strings character by character, and to it «nett005» is not the same product as «NETT005». SQL has the same idea (COUNT(DISTINCT UPPER(sku_code))), but SQLite's UPPER and LOWER are limited to the ASCII range (see the task about LIKE and case), while pandas's .str.upper() follows full Unicode rules. You can't see the difference on these codes, because they're Latin; it shows up on the first reference table with diacritics or Cyrillic, and it shows up silently, as under-merging, not as an error. Hence the working habit: test case normalization on data whose alphabet isn't only English."
     },
     {
       "id": "py-033",
@@ -762,7 +762,7 @@
         ".copy() right after the filter says explicitly: from here on you're working with an independent table, not a view onto the source, and the warning stops appearing.",
         ".assign(name=value) adds a column and returns a new table in that same call; the chain can continue without being broken by an intermediate variable."
       ],
-      "explain": ".copy() and .assign() are what turn the previous task from a trap into a working technique: .copy() explicitly fixes independence from the source table, instead of leaving pandas to guess whether this is a view or a copy, and .assign() adds a column while staying inside one chain of calls, rather than going through a separate df['col'] = .... It's precisely the absence of an extra intermediate variable and of direct assignment through [] that guards against the scenario that broke py-038."
+      "explain": ".copy() and .assign() are what turn the previous task from a trap into a working technique: .copy() explicitly fixes independence from the source table, instead of leaving pandas to guess whether this is a view or a copy, and .assign() adds a column while staying inside one chain of calls, rather than going through a separate df['col'] = .... It's precisely the absence of an extra intermediate variable and of direct assignment through [] that guards against the scenario that broke the flag in the previous task."
     },
     {
       "id": "py-040",
@@ -773,7 +773,7 @@
         ".loc[mask, 'column'] = value is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
         ".copy() here is only so that fact_sellout isn't modified directly in this task; the .loc[...] = ... technique itself works without it, if modifying the table is what you actually intend."
       ],
-      "explain": ".loc[mask, 'column'] = value is a single operation instead of the two consecutive index lookups that left pandas unable to tell whether you were working with a view or a copy. The very same flag that failed to appear in py-038 lands reliably here, because there's no intermediate object that can be discarded by accident."
+      "explain": ".loc[mask, 'column'] = value is a single operation instead of the two consecutive index lookups that left pandas unable to tell whether you were working with a view or a copy. The very same flag that failed to appear in the task about the flag that landed nowhere lands reliably here, because there's no intermediate object that can be discarded by accident."
     },
     {
       "id": "py-041",
@@ -825,7 +825,7 @@
         "pandas string columns are added with the + operator just like ordinary Python strings, but element by element, for every row at once.",
         "The separator ' / ' is an ordinary constant string between the two columns."
       ],
-      "explain": "Adding string columns with + is a vectorized operation: pandas concatenates values element by element for the whole column at once, with no function call on every row. apply(lambda row: f'{row[\"brand\"]} / {row[\"category\"]}', axis=1) produces the same text, but walks the rows in a Python loop, with the same overpayment on interpreter overhead as in py-041/py-042, just on a different operation: string formatting instead of comparing numbers."
+      "explain": "Adding string columns with + is a vectorized operation: pandas concatenates values element by element for the whole column at once, with no function call on every row. apply(lambda row: f'{row[\"brand\"]} / {row[\"category\"]}', axis=1) produces the same text, but walks the rows in a Python loop, with the same overpayment on interpreter overhead as in the tasks about a region priority without apply and about the same result at a different price, just on a different operation: string formatting instead of comparing numbers."
     },
     {
       "id": "py-044",

@@ -129,7 +129,7 @@
       "example": "dim_product (47 rows, 9 brands) and dim_promo (89 promos, the same 9 brands). Brand repeats on both sides. The \"product × promo\" bridge holds 465 unique pairs: for brand «Nettora» that's 5 products × 10 promos = 50 bridge rows.",
       "reads": "Every bridge row is one specific \"this product took part in this promo\" pair. Both source tables connect to the bridge the way a lookup connects to a fact table, and the key no longer repeats on either relationship.",
       "wrong": "Link dim_product and dim_promo directly on the brand column, since it exists in both tables.",
-      "wrongWhy": "A relationship like that matches group to group, not row to row, and every pair inside a group becomes its own row in the calculation. That's exactly how revenue in mdl-013 grew from ¥126,911,191 to ¥1,262,668,596, exactly tenfold, matching the number of promos per brand. A model usually won't even let you make a relationship like this active, but a join made in a query that bypasses the model is protected by nothing.",
+      "wrongWhy": "A relationship like that matches group to group, not row to row, and every pair inside a group becomes its own row in the calculation. That's exactly how revenue in the task about a tenfold jump grew from ¥126,911,191 to ¥1,262,668,596, exactly tenfold, matching the number of promos per brand. A model usually won't even let you make a relationship like this active, but a join made in a query that bypasses the model is protected by nothing.",
       "selfCheck": "Take the relationship's key and count row totals and distinct-value totals in both tables. Matches anywhere: an ordinary relationship. Matches nowhere: you need a bridge."
     },
     {
