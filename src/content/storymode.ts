@@ -256,6 +256,26 @@ const ru: StoryCampaign = {
      * Понедельник. Ни одного вопроса про Nettora по существу — день целиком
      * про инструмент. Это и есть ответ на скачок: до пятницы человек должен
      * успеть увидеть каждую конструкцию пятничного запроса по отдельности.
+     *
+     * **День открывается чтением, а не письмом (sql-085 перед sql-001).**
+     * До правки 2026-08-25 понедельник был единственным днём из двадцати без
+     * единого predict или fill: три write подряд, и первое же действие нового
+     * человека — написать запрос в пустом редакторе. Замер режимов по всем
+     * дням показал, что правило в кампании уже есть и просто не дошло до
+     * первого дня: понедельник написан раньше, чем лестницу вывели, а день 16
+     * (первый день pandas, то есть тот же «день первый» другого трека) собран
+     * уже правильно — predict, fill, write. Здесь та же ступень: sql-085
+     * спрашивает, что вернёт SELECT из одной колонки, и отвечает на неё
+     * ровно первый абзац подводки, а рукой человек пишет уже вторым шагом.
+     *
+     * Побочно из этого вышло то, чего не было: подводка перестала выкладывать
+     * обе идеи разом. SELECT/FROM объясняется перед чтением, алиас — перед
+     * заданием, где его печатают. Это правило кампании («подводки ровно перед
+     * нуждой»), которое понедельник до сих пор нарушал.
+     *
+     * Реплики после sql-085 намеренно нет: правило StoryStep.after — реплика
+     * говорит о числе, которое кого-то удивило, а предсказание про имя колонки
+     * такого числа не даёт.
      */
     {
       id: 'day-1-first-day',
@@ -277,13 +297,21 @@ const ru: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-001',
+          taskId: 'sql-085',
           intro: {
             scene: 'catalog',
             title: 'Из чего состоит запрос',
             paras: [
               'Запрос к базе — это два ответа на два вопроса: что показать и откуда взять. SELECT перечисляет колонки, FROM называет таблицу. Всё остальное, что ты увидишь на этой неделе, — уточнения поверх этих двух слов.',
-              'Колонку можно переименовать на выходе: list_price AS price вернёт те же числа, но в отчёте они пойдут под коротким именем. Это не косметика — заголовки колонок читают люди, а не только движок.',
+              'Начнём с чтения, а не с письма: вот чужой запрос, скажи, что он вернёт. Разбирать написанное до тебя аналитику приходится чаще, чем писать с нуля, — и ошибка в чужом запросе стоит ровно столько же, сколько в своём.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-001',
+          intro: {
+            paras: [
+              'Теперь то же самое рукой, и с одной добавкой. Колонку можно переименовать на выходе: list_price AS price вернёт те же числа, но в отчёте они пойдут под коротким именем. Это не косметика — заголовки колонок читают люди, а не только движок.',
             ],
           },
           after: {
@@ -1813,13 +1841,21 @@ const en: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-001',
+          taskId: 'sql-085',
           intro: {
             scene: 'catalog',
             title: 'What a query is made of',
             paras: [
               'A query answers two questions: what to show and where to take it from. SELECT lists the columns, FROM names the table. Everything else you meet this week is a refinement on top of those two words.',
-              'A column can be renamed on the way out: list_price AS price returns the same numbers under a shorter heading. That is not decoration. Column headings are read by people, not only by the engine.',
+              'Start by reading rather than writing: here is somebody else\'s query, say what it returns. An analyst picks apart queries written by other people more often than writing one from scratch, and a mistake in their query costs exactly what a mistake in yours does.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-001',
+          intro: {
+            paras: [
+              'Now the same thing by hand, with one addition. A column can be renamed on the way out: list_price AS price returns the same numbers under a shorter heading. That is not decoration. Column headings are read by people, not only by the engine.',
             ],
           },
           after: {

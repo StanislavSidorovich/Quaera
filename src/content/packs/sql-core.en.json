@@ -1730,6 +1730,36 @@
         "The group is not a column already sitting in paired, it is a fact about the join itself: if a matching row from promo_start was found, its key field is filled in, and if not, it is empty. CASE tests that condition, not some separate flag in the data."
       ],
       "explain": "The gap matches the gate: −15.6% versus −6.0%, close to 10 points. Meanwhile wmape is nearly the same for both groups, 32.1% and 30.2%, so promo months are not more wrong on average, they are wrong in the same direction. In sql-081 the bias read as a trait of the brand: «Nettora» gets undershot month after month regardless of the calendar. Here the bias reads as a trait of the moment: any brand, in the month its promotion starts, gets an undershot forecast, because the model is trained on regular demand and cannot see the promo plan ahead. The two biases cost different amounts to fix. A behavioural lean by brand gets fixed by subtracting a correction after the fact. This one is fixable ahead of time: the promo calendar (dim_promo) already exists and is known months before the start, and the only question is whether it feeds the forecast as an input, rather than sitting next to it as a separate table."
+    },
+    {
+      "id": "sql-085",
+      "title": "Where did the prices go",
+      "brief": "A colleague asked for an export of the product range and sent over their first query. The file came back with a single column, and they are convinced the database «lost» the prices.",
+      "goal": "Determine what the query returns.",
+      "predictQuestion": "What does this query against the dim_product price list return?",
+      "options": [
+        {
+          "label": "Product names, one column, one row per product, and not a single price",
+          "why": "FROM supplies the rows and SELECT picks columns out of them. The list holds product_name and nothing else, so that is exactly what comes back: the prices went nowhere, nobody asked for them."
+        },
+        {
+          "label": "Every column in the table: with no other conditions, the engine returns whole rows",
+          "why": "Every column is what SELECT * returns, a star in place of the list. Naming columns is itself the choice: anything left out of the list stays out of the result."
+        },
+        {
+          "label": "Names and prices: price is the main thing in a price list, so the engine adds it",
+          "why": "The engine has no idea this table is called a price list or that price is the important part of it. It never extends the column list by meaning, it takes exactly what is written."
+        },
+        {
+          "label": "An error: the query never says how many rows to return, or in what order",
+          "why": "SELECT and FROM already make a complete query. Order comes from ORDER BY and row count from LIMIT, but both are optional: without them every row comes back, in no particular order."
+        }
+      ],
+      "hints": [
+        "Look at the list right after SELECT. How many column names are in it?",
+        "The price is there in the table. The question is different: does a column nobody named end up in the result?"
+      ],
+      "explain": "This is the first fork where a beginner loses time: the result of a query looks like the same table with restrictions on it, when it is really a set assembled from scratch. SELECT does not display a table, it lists what the answer should be built from, and a column missing from that list will not appear under any circumstances. The same idea explains a habit that costs more than the mistake: SELECT * feels like a safe «take everything just in case», while in practice it drags service fields into the export and quietly changes its shape the moment somebody adds a column to the table. The working rule is simple: list the columns the recipient of the report actually needs, and only those."
     }
   ]
 }
