@@ -3344,7 +3344,25 @@ tbody tr:last-child td {
 
 .hint-btn {
   width: 100%;
-  min-height: 42px;
+  min-height: 46px;
+  border-radius: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/*
+ * Сдаться — легальный, но не поощряемый ход (см. комментарий у giveUp
+ * в TaskView): тише подсказки и по весу, и по контрасту, а не общий
+ * .btn.secondary — та же заливка карточки читалась бы как второе
+ * приглашение нажать, конкурирующее с подсказкой прямо над ней.
+ */
+.giveup-btn {
+  width: 100%;
+  min-height: 38px;
   border-radius: 10px;
   border: 1px dashed var(--line);
   color: var(--text-dim);

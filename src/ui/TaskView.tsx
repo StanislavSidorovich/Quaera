@@ -1073,7 +1073,7 @@ function StepView({
       )}
 
       {!draft.solved && (
-        <button className="btn secondary" onClick={giveUp}>
+        <button className="giveup-btn" onClick={giveUp}>
           {t.task.giveUpBtn}
         </button>
       )}
