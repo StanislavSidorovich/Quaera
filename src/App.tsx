@@ -1268,6 +1268,50 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeTrack]);
 
+  /**
+   * Переключение языка обязано менять и содержимое занятия, а не только обвязку.
+   *
+   * Очередь занятия держит сами объекты задания и карточки (см. Step), собранные
+   * на той локали, что была в момент сборки. Обвязка (`t`) и заголовок шапки
+   * читают локаль на каждом рендере и переключаются сразу, а очередь остаётся
+   * прежней — на экране получалась смесь: «Selecting and aliasing · Theory»
+   * в шапке над русской карточкой приёма. Чинилось это только перезагрузкой,
+   * потому что initialBoot собирает очередь заново уже по новой локали, —
+   * отсюда и F5, без которого язык менялся наполовину.
+   *
+   * Пересобираем по id, а не подбираем занятие заново: index, maxIndex,
+   * черновики и зачтённые попытки обязаны пережить переключение языка —
+   * его меняют посреди задачи, а не вместо неё. Шаг, которому не нашлось
+   * пары, остаётся как был: перевод накладывается на те же id
+   * (см. applyTranslation), так что это невозможно, но дыра в очереди была бы
+   * хуже строки на чужом языке.
+   *
+   * Сравнение по ссылке, а не по содержимому: packForTrack и lessonBySkillFor
+   * кешируют по локали и на неизменной локали отдают те же самые объекты,
+   * поэтому `changed` остаётся ложным и лишнего setScreen не случается.
+   */
+  useEffect(() => {
+    setScreen((s) => {
+      if (s.name !== 'session') return s;
+      const pack = packForTrack(activeTrack, locale);
+      const taskById = pack ? new Map(pack.tasks.map((t) => [t.id, t])) : null;
+      let changed = false;
+      const queue = s.queue.map((step): Step => {
+        if (step.kind === 'lesson') {
+          const lesson = lessonBySkill.get(step.lesson.skill);
+          if (!lesson || lesson === step.lesson) return step;
+          changed = true;
+          return { kind: 'lesson', lesson };
+        }
+        const task = taskById?.get(step.task.id);
+        if (!task || task === step.task) return step;
+        changed = true;
+        return { kind: 'task', task };
+      });
+      return changed ? { ...s, queue } : s;
+    });
+  }, [locale, activeTrack, lessonBySkill]);
+
   /** Отложенная запись черновика не должна потеряться при закрытии вкладки. */
   useEffect(() => {
     const flush = () => {
