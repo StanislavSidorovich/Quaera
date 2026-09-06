@@ -5,6 +5,7 @@ import { getExecutor } from '../engine/executors';
 import { GROUP_ORDER, groupTables } from '../engine/schemaGroups';
 import type { LoadState, Preview, SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { localizeSandboxCode } from '../sandbox/localize';
 import { deleteScript, loadSandboxStore, saveScript, type SandboxStore } from '../sandbox/store';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
@@ -124,6 +125,21 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
   useEffect(() => {
     if (env === 'python') pythonExecutor.init().catch(() => undefined);
   }, [env, pythonExecutor]);
+
+  /*
+   * Наша проза в редакторе едет за языком интерфейса: заготовка, вставленный
+   * вопрос, комментарии рецепта. Построчно и только дословные совпадения —
+   * набранное человеком не совпадёт ни с чем (см. sandbox/localize.ts).
+   * Отменённая замена (`replaced`) переводится вместе с буфером: «Вернуть»
+   * обязано вернуть тот же текст, что человек видел, а не его прежний язык.
+   */
+  useEffect(() => {
+    setCodeByEnv((prev) => ({
+      sql: localizeSandboxCode(prev.sql, locale),
+      python: localizeSandboxCode(prev.python, locale),
+    }));
+    setReplaced((prev) => (prev ? { ...prev, code: localizeSandboxCode(prev.code, locale) } : prev));
+  }, [locale]);
 
   // Результат предыдущего языка не может быть результатом на этом — это
   // разные движки над разным кодом, смешивать их на экране нечестно.
