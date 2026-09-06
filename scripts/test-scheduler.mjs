@@ -155,6 +155,146 @@ try {
     );
   }
 
+  // --- review: оценка 2 двигает интервал вперёд, а не топчется на месте.
+  //
+  // Раньше вторая ветка возвращала 2 при входе <= 2, а третья умножала на
+  // ease * 0.7 и при низкой лёгкости давала тот же день. Навык, который
+  // человек стабильно решает верно со второй попытки, оставался просроченным
+  // каждое занятие и вытеснял новый материал: на симуляции человек застревал
+  // на пяти навыках из девятнадцати. Проверка на монотонность, а не на числа:
+  // числа — вопрос настройки, движение вперёд — инвариант.
+  {
+    let state = initialSkillState();
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    let stuck = 0;
+    for (let i = 0; i < 12; i++) {
+      const before = state.intervalDays;
+      state = review(state, 2, now);
+      if (i > 0 && state.intervalDays <= before) stuck++;
+    }
+    assertEq('review(2): интервал растёт на каждом повторении', stuck, 0);
+    assertTrue('review(2): за 12 повторений интервал вышел за неделю', state.intervalDays > 7, `получено ${state.intervalDays}`);
+  }
+
+  // --- selectSession: у занятия состав, а не приоритет.
+  //
+  // Синтетика: десять навыков просрочены, пять ещё не тронуты. До правки
+  // просроченные забирали все пять слотов, и новый материал не показывался
+  // больше никогда — человек упирался в круг из повторений и уходил.
+  {
+    const now = new Date('2026-02-01T00:00:00.000Z');
+    const skills = [];
+    const tasks = [];
+    for (let i = 0; i < 10; i++) {
+      skills.push(skill(`old-${i}`, 1));
+      tasks.push(task(`t-old-${i}-a`, `old-${i}`), task(`t-old-${i}-b`, `old-${i}`, 2));
+    }
+    for (let i = 0; i < 5; i++) {
+      skills.push(skill(`new-${i}`, 2));
+      tasks.push(task(`t-new-${i}`, `new-${i}`));
+    }
+    const states = {};
+    const solved = new Set();
+    for (let i = 0; i < 10; i++) {
+      states[`old-${i}`] = {
+        ...initialSkillState(),
+        reps: 2,
+        lastGrade: 2,
+        intervalDays: 3,
+        lastReviewedAt: new Date(now.getTime() - DAY(4 + i)).toISOString(),
+        dueAt: new Date(now.getTime() - DAY(1)).toISOString(),
+      };
+      solved.add(`t-old-${i}-a`);
+    }
+    const session = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 5, now });
+    const dueSteps = session.filter((t) => states[t.skill] && new Date(states[t.skill].dueAt) <= now);
+    assertTrue('selectSession: повторения не занимают занятие целиком', dueSteps.length <= 3, `повторений ${dueSteps.length} из ${session.length}`);
+    assertTrue(
+      'selectSession: новый навык показан, хотя просроченного хватило бы на всё занятие',
+      session.some((t) => t.skill.startsWith('new-')),
+      `состав: ${session.map((t) => t.skill).join(', ')}`
+    );
+  }
+
+  // --- selectSession: последний шаг — передышка, если ей есть чем быть.
+  //
+  // Определение выбрано замером: уже решённое задание на навыке, чей срок
+  // не наступит и в ближайшие сутки. Не «навык освоен на такую-то оценку»:
+  // у отвечающего верно со второй попытки оценка 2 — потолок, и такой фильтр
+  // отсекал бы ровно того, ради кого шаг заводится.
+  {
+    const now = new Date('2026-02-01T00:00:00.000Z');
+    const skills = [skill('due-1', 1), skill('due-2', 1), skill('calm', 1), skill('fresh', 2)];
+    const tasks = [
+      task('t-due-1', 'due-1'),
+      task('t-due-2', 'due-2'),
+      task('t-calm-a', 'calm'),
+      task('t-calm-b', 'calm', 2),
+      task('t-fresh', 'fresh'),
+    ];
+    const states = {
+      'due-1': { ...initialSkillState(), reps: 1, lastGrade: 2, intervalDays: 2, dueAt: new Date(now.getTime() - DAY(1)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(3)).toISOString() },
+      'due-2': { ...initialSkillState(), reps: 1, lastGrade: 2, intervalDays: 2, dueAt: new Date(now.getTime() - DAY(1)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(3)).toISOString() },
+      calm: { ...initialSkillState(), reps: 2, lastGrade: 2, intervalDays: 9, dueAt: new Date(now.getTime() + DAY(7)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(2)).toISOString() },
+    };
+    const solved = new Set(['t-calm-a']);
+    const session = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 4, now });
+    const last = session[session.length - 1];
+    assertEq('selectSession: занятие кончается знакомым навыком', last?.skill, 'calm');
+    assertTrue('selectSession: передышка — уже решённое задание', solved.has(last?.id), `получено ${last?.id}`);
+  }
+
+  // --- selectSession: срок, истекающий сегодня, передышкой не считается.
+  //
+  // На интервале в один день срок наступает прямо посреди занятия, и такой
+  // шаг оказывается повторением впритык, а не отдыхом. Замер поймал это
+  // последним шагом, помеченным как повторение.
+  {
+    const now = new Date('2026-02-01T00:00:00.000Z');
+    const skills = [skill('edge', 1), skill('other', 2)];
+    const tasks = [task('t-edge-a', 'edge'), task('t-edge-b', 'edge', 2), task('t-other', 'other')];
+    const states = {
+      edge: { ...initialSkillState(), reps: 1, lastGrade: 2, intervalDays: 1, dueAt: new Date(now.getTime() + 3600000).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(1)).toISOString() },
+    };
+    const session = selectSession({ skills, tasks, states, solvedTaskIds: new Set(['t-edge-a']), size: 2, now });
+    assertTrue(
+      'selectSession: навык со сроком сегодня не ставится передышкой',
+      session[session.length - 1]?.id !== 't-edge-a',
+      `последний шаг ${session[session.length - 1]?.id}`
+    );
+  }
+
+  // --- selectSession: передышка идёт по кругу, а не липнет к одному навыку.
+  //
+  // Две прежние сортировки — по самому дальнему сроку и по освоенности —
+  // самоусиливались: побывавший передышкой получал повторение и по обоим
+  // ключам уходил вперёд. В замере это дало один и тот же навык восемь
+  // занятий подряд. Ключ «кого дольше не было» разворачивает эффект.
+  {
+    const now = new Date('2026-02-01T00:00:00.000Z');
+    const skills = [skill('calm-a', 1), skill('calm-b', 1), skill('fresh', 2)];
+    const tasks = [task('t-a', 'calm-a'), task('t-b', 'calm-b'), task('t-fresh', 'fresh')];
+    const base = { ...initialSkillState(), reps: 2, lastGrade: 2, intervalDays: 9 };
+    const states = {
+      'calm-a': { ...base, dueAt: new Date(now.getTime() + DAY(7)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(2)).toISOString() },
+      'calm-b': { ...base, dueAt: new Date(now.getTime() + DAY(7)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(5)).toISOString() },
+    };
+    const solved = new Set(['t-a', 't-b']);
+    const first = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 2, now });
+    assertEq('selectSession: передышкой идёт тот, кого дольше не было', first[first.length - 1]?.skill, 'calm-b');
+    const after = { ...states, 'calm-b': { ...states['calm-b'], lastReviewedAt: now.toISOString() } };
+    const second = selectSession({ skills, tasks, states: after, solvedTaskIds: solved, size: 2, now });
+    assertEq('selectSession: на следующем занятии передышка сменилась', second[second.length - 1]?.skill, 'calm-a');
+  }
+
+  // --- selectSession: первому занятию передышку взять неоткуда, и это верно.
+  {
+    const skills = [skill('a', 1), skill('b', 1), skill('c', 1)];
+    const tasks = [task('t-a', 'a'), task('t-b', 'b'), task('t-c', 'c')];
+    const session = selectSession({ skills, tasks, states: {}, solvedTaskIds: new Set(), size: 5, maxNewSkills: 3 });
+    assertEq('selectSession: первое занятие целиком из нового', session.length, 3);
+  }
+
   // --- selectSession: пустая программа не падает.
   {
     const session = selectSession({ skills: [], tasks: [], states: {}, solvedTaskIds: new Set() });

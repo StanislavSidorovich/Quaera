@@ -75,9 +75,26 @@ export function review(state: SkillState, grade: Grade, now = new Date()): Skill
   const easeDelta = grade === 2 ? -0.15 : grade === 3 ? 0 : 0.1;
   next.ease = Math.min(MAX_EASE, Math.max(MIN_EASE, state.ease + easeDelta));
 
+  /*
+   * Оценка 2 (верно, но не с первого раза) обязана двигать интервал вперёд.
+   * Раньше вторая ветка возвращала 2 при входе <= 2, а третья умножала
+   * на ease * 0.7 — то есть при ease 1.3 давала 0.91 и после округления
+   * тот же день. Навык, который человек стабильно решает верно со второй
+   * попытки, не отпускал никогда: интервал вечно стоял на двух днях,
+   * навык каждое занятие снова был просрочен и вытеснял новый материал.
+   * Замер на симуляции: при занятиях раз в три дня человек застревал
+   * на пяти навыках из девятнадцати и с четвёртого занятия ходил по кругу.
+   *
+   * Нижняя граница «+1 день» держит рост при любой лёгкости. Для оценок
+   * 3 и 4 она недостижима (множитель там от 1.3), то есть ничего не меняет.
+   */
   if (state.intervalDays === 0) next.intervalDays = grade === 2 ? 1 : 2;
-  else if (state.intervalDays <= 2) next.intervalDays = grade === 2 ? 2 : 5;
-  else next.intervalDays = Math.round(state.intervalDays * next.ease * (grade === 2 ? 0.7 : 1));
+  else if (state.intervalDays <= 2) next.intervalDays = grade === 2 ? 3 : 5;
+  else
+    next.intervalDays = Math.max(
+      state.intervalDays + 1,
+      Math.round(state.intervalDays * next.ease * (grade === 2 ? 0.7 : 1))
+    );
 
   next.intervalDays = Math.min(next.intervalDays, 180);
   next.dueAt = new Date(now.getTime() + next.intervalDays * DAY_MS).toISOString();
@@ -122,7 +139,18 @@ export interface SelectionInput {
 /**
  * Подбор сессии.
  *
- * Приоритет: сначала просроченные повторения, потом новый материал.
+ * У занятия состав, а не приоритет. Раньше здесь стояла приоритетная
+ * очередь: сначала все просроченные повторения, потом что останется. При
+ * пяти заданиях в занятии это означало, что человеку, набравшему пять
+ * просроченных навыков, новый материал не показывался больше никогда.
+ * Замер на симуляции (одинаково во всех четырёх треках): отвечающий верно,
+ * но со второй попытки, проходил за пятнадцать занятий 5 навыков из 19
+ * при занятиях раз в три дня и 9 из 19 через день — дальше круг из одних
+ * повторений. Это выглядит как «бросил», а на деле продукт кончился.
+ *
+ * Поэтому два слота занятия зарезервированы: один под новый материал,
+ * один под передышку. Повторения берут остальное — потолок, а не приоритет.
+ *
  * Внутри — перемешивание навыков: два задания подряд на один приём дают
  * иллюзию усвоения, потому что второе решается по образцу первого.
  */
@@ -150,9 +178,9 @@ export function selectSession({
 
   const chosen: Task[] = [];
   const usedSkills: string[] = [];
-  const take = (list: Skill[]) => {
+  const take = (list: Skill[], limit: number) => {
     for (const s of list) {
-      if (chosen.length >= size) return;
+      if (chosen.length >= limit) return;
       const t = pickFor(s.id);
       if (t && !chosen.some((c) => c.id === t.id)) {
         chosen.push(t);
@@ -161,7 +189,56 @@ export function selectSession({
     }
   };
 
-  take(due);
+  /*
+   * Передышка — задание, которое человек уже решал успешно, на навыке
+   * с самым дальним сроком, то есть на самом уверенно освоенном из доступных.
+   *
+   * Определение выбрано замером, а не на слух. Напрашивавшееся «навык тронут,
+   * а срок ещё впереди» не работает для того, ради кого передышка и заводится:
+   * при интервалах в один-два дня и занятиях раз в три дня просрочено всегда
+   * всё, таких навыков ноль во всех замеренных занятиях. Условие «и оценка
+   * не ниже 3» отсекало бы его вторично: у отвечающего со второй попытки
+   * оценка 2 — потолок. Уже решённое задание доступно всегда со второго
+   * занятия и даёт то самое «я это умею», ради чего шаг и нужен.
+   */
+  const solvedFor = (skillId: string) => tasks.filter((t) => t.skill === skillId && solvedTaskIds.has(t.id));
+  /*
+   * Кандидаты в передышку — навыки, у которых срок ещё впереди и есть уже
+   * решённое задание. Оценка в отбор не входит намеренно: условие «и не ниже
+   * трёх» отсекало бы ровно того, ради кого шаг заводится, — у отвечающего
+   * верно, но со второй попытки, оценка 2 потолок.
+   *
+   * Порядок — кого дольше не было. Ключ выбран после двух неудачных: и «самый
+   * дальний срок», и «самая высокая освоенность» самоусиливаются, потому что
+   * побывавший передышкой получает повторение и по обоим ключам уходит вперёд.
+   * В замере это давало один и тот же навык восемь занятий подряд. По давности
+   * всё наоборот: свежее касание отправляет навык в конец очереди, и передышка
+   * идёт по кругу сама.
+   *
+   * Само наличие таких навыков у слабого обеспечено правкой интервала выше:
+   * пока оценка 2 держала интервал на двух днях, просрочено было всегда всё,
+   * и кандидатов не находилось ни в одном из двенадцати замеренных занятий.
+   */
+  const tomorrow = new Date(now.getTime() + DAY_MS);
+  const restSkills = unlocked
+    .filter(
+      (s) =>
+        (states[s.id]?.reps ?? 0) > 0 &&
+        // Именно с запасом в сутки, а не просто `!isDue`. На интервале в один
+        // день срок истекает прямо посреди занятия: в замере такой шаг вставал
+        // последним и оказывался повторением впритык, а не отдыхом.
+        !isDue(states[s.id], tomorrow) &&
+        solvedFor(s.id).length > 0
+    )
+    .sort((a, b) => Date.parse(states[a.id].lastReviewedAt ?? '') - Date.parse(states[b.id].lastReviewedAt ?? ''));
+
+  // Тело занятия — всё, кроме передышки: она приставляется последним шагом.
+  const bodySize = restSkills.length ? size - 1 : size;
+
+  // Потолок повторений. Ровно он оставляет место новому материалу; без него
+  // цикл ниже не выполнялся бы ни разу, как только просроченных набирается
+  // на целое занятие.
+  take(due, Math.min(bodySize, Math.max(1, size - 2)));
 
   // Новый материал берём разворачивая границу графа прямо внутри сессии:
   // скилл, взятый пять минут назад, считается пройденным для следующего.
@@ -173,7 +250,7 @@ export function selectSession({
   );
   const byTier = [...skills].sort((a, b) => a.tier - b.tier);
   let introduced = 0;
-  while (chosen.length < size && introduced < maxNewSkills) {
+  while (chosen.length < bodySize && introduced < maxNewSkills) {
     const next = byTier.find(
       (s) =>
         !usedSkills.includes(s.id) &&
@@ -189,7 +266,8 @@ export function selectSession({
 
   // Добираем практикой по уже затронутым навыкам, а не новыми темами:
   // добор не должен обходить ограничение на количество нового за занятие.
-  if (chosen.length < size) {
+  const topUp = (limit: number) => {
+    if (chosen.length >= limit) return;
     const allowed = new Set([...satisfied, ...usedSkills]);
     const rest = tasks
       .filter(
@@ -198,14 +276,40 @@ export function selectSession({
           unlocked.some((s) => s.id === t.skill) &&
           !chosen.some((c) => c.id === t.id)
       )
-      .sort((a, b) => Number(solvedTaskIds.has(a.id)) - Number(solvedTaskIds.has(b.id)) || a.level - b.level);
+      // Просроченные навыки в самом конце: потолок выше ограничивает отбор
+      // по навыкам, но добор шёл мимо него и мог набрать то же самое ещё раз.
+      .sort(
+        (a, b) =>
+          Number(isDue(states[a.skill], now)) - Number(isDue(states[b.skill], now)) ||
+          Number(solvedTaskIds.has(a.id)) - Number(solvedTaskIds.has(b.id)) ||
+          a.level - b.level
+      );
     for (const t of rest) {
-      if (chosen.length >= size) break;
+      if (chosen.length >= limit) break;
       chosen.push(t);
     }
-  }
+  };
+  topUp(bodySize);
 
-  return interleave(chosen);
+  // Перебором, а не первым подходящим: у кандидата во главе очереди все
+  // решённые задания могут уже стоять в занятии, и тогда передышка потерялась
+  // бы при живых следующих кандидатах.
+  let restStep: Task | undefined;
+  for (const s of restSkills) {
+    if (usedSkills.includes(s.id) || chosen.some((c) => c.skill === s.id)) continue;
+    const free = solvedFor(s.id).filter((t) => !chosen.some((c) => c.id === t.id));
+    if (!free.length) continue;
+    restStep = free[Math.floor(Math.random() * free.length)];
+    break;
+  }
+  if (!restStep) {
+    // Все освоенные навыки заняты самим занятием — материал на исходе.
+    // Тогда занятие обычной длины лучше короткого.
+    topUp(size);
+    return interleave(chosen);
+  }
+  // Последний шаг, а не средний: на нём человек решает, вернётся ли завтра.
+  return [...interleave(chosen), restStep];
 }
 
 /** Разносим задания одного навыка, насколько это возможно при данном наборе. */
