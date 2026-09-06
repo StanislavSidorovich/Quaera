@@ -154,6 +154,21 @@ export interface SelectionInput {
  * Внутри — перемешивание навыков: два задания подряд на один приём дают
  * иллюзию усвоения, потому что второе решается по образцу первого.
  */
+/**
+ * Результат подбора занятия.
+ *
+ * `restTaskId` — id задания-передышки, если оно попало в состав, иначе
+ * `null`. Раньше передышка была неотличима от прочих заданий занятия: сам
+ * приём («уже решённое, чтобы почувствовать, что умеешь») существовал
+ * только в комментарии к алгоритму, а на экране показывался как обычная
+ * задача. Человек читал это как баг — тренажёр вернул то, что уже решено, —
+ * а не как задуманную передышку.
+ */
+export interface SessionPick {
+  tasks: Task[];
+  restTaskId: string | null;
+}
+
 export function selectSession({
   skills,
   tasks,
@@ -162,7 +177,7 @@ export function selectSession({
   size = 5,
   maxNewSkills = 3,
   now = new Date(),
-}: SelectionInput): Task[] {
+}: SelectionInput): SessionPick {
   const unlocked = skills.filter((s) => isUnlocked(s, states));
   const due = unlocked.filter((s) => (states[s.id]?.reps ?? 0) > 0 && isDue(states[s.id], now));
 
@@ -306,10 +321,10 @@ export function selectSession({
     // Все освоенные навыки заняты самим занятием — материал на исходе.
     // Тогда занятие обычной длины лучше короткого.
     topUp(size);
-    return interleave(chosen);
+    return { tasks: interleave(chosen), restTaskId: null };
   }
   // Последний шаг, а не средний: на нём человек решает, вернётся ли завтра.
-  return [...interleave(chosen), restStep];
+  return { tasks: [...interleave(chosen), restStep], restTaskId: restStep.id };
 }
 
 /** Разносим задания одного навыка, насколько это возможно при данном наборе. */

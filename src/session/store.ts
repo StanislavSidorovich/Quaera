@@ -26,8 +26,15 @@ import type { StepDraft, TaskDraft } from '../ui/TaskView';
 
 const KEY = 'quaera.session.v1';
 
-/** Шаг очереди в хранилище — тот же Step, но ссылкой, а не содержимым. */
-export type StoredStep = { kind: 'lesson'; skill: string } | { kind: 'task'; id: string };
+/**
+ * Шаг очереди в хранилище — тот же Step, но ссылкой, а не содержимым.
+ *
+ * `isRest` у задачи — та же пометка передышки, что и в Step (см. App.tsx):
+ * без неё восстановленное занятие (F5, «Вернуться к занятию») забывало бы,
+ * что шаг задуман как пауза, и человек снова читал бы уже решённое задание
+ * как сбой тренажёра.
+ */
+export type StoredStep = { kind: 'lesson'; skill: string } | { kind: 'task'; id: string; isRest?: boolean };
 
 /**
  * Черновик шага задания без `preview`/`expected`.

@@ -559,6 +559,8 @@ export const en = {
     homeBtn: 'Home',
     prevAria: 'Previous step',
     stepAria: (i: number) => `Step ${i}`,
+    /** См. комментарий в ru.ts: пропуск не пишет попытку в SRS, в отличие от «Дальше» после решения. */
+    skipAria: 'Skip',
     /** См. комментарий в ru.ts: возврат на линию вместо главной, когда занятие было миссией. */
     lineBtn: 'Back to the line',
   },
@@ -638,6 +640,9 @@ export const en = {
   },
   task: {
     levelLabel: (n: number) => `Level ${n}`,
+    /** См. комментарий в ru.ts: пилюля передышки и её tooltip. */
+    restLabel: 'Breather',
+    restLabelTitle: 'A task you already solved, placed here on purpose so the skill feels solid, not by mistake.',
     modePredict: 'Predict the result',
     modeOrder: 'Put the steps in order',
     /** См. комментарий в ru.ts. */

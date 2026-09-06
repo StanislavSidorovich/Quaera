@@ -139,7 +139,7 @@ try {
     const states = {
       a: { ...initialSkillState(), reps: 1, lastGrade: 3, dueAt: new Date(now.getTime() - DAY(1)).toISOString() },
     };
-    const session = selectSession({ skills, tasks, states, solvedTaskIds: new Set(), size: 1, now });
+    const { tasks: session } = selectSession({ skills, tasks, states, solvedTaskIds: new Set(), size: 1, now });
     assertEq('selectSession: просроченный навык выбран первым', session[0]?.skill, 'a');
   }
 
@@ -147,7 +147,7 @@ try {
   {
     const skills = [skill('a', 1), skill('b', 2, ['a']), skill('c', 1)];
     const tasks = [task('t-a1', 'a'), task('t-b1', 'b'), task('t-c1', 'c')];
-    const session = selectSession({ skills, tasks, states: {}, solvedTaskIds: new Set(), size: 5, maxNewSkills: 1 });
+    const { tasks: session } = selectSession({ skills, tasks, states: {}, solvedTaskIds: new Set(), size: 5, maxNewSkills: 1 });
     assertTrue('selectSession: без прогресса вводится не больше maxNewSkills навыков', session.length <= 1);
     assertTrue(
       'selectSession: первый навык без предпосылок (b не мог быть введён раньше a)',
@@ -206,7 +206,7 @@ try {
       };
       solved.add(`t-old-${i}-a`);
     }
-    const session = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 5, now });
+    const { tasks: session } = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 5, now });
     const dueSteps = session.filter((t) => states[t.skill] && new Date(states[t.skill].dueAt) <= now);
     assertTrue('selectSession: повторения не занимают занятие целиком', dueSteps.length <= 3, `повторений ${dueSteps.length} из ${session.length}`);
     assertTrue(
@@ -238,10 +238,11 @@ try {
       calm: { ...initialSkillState(), reps: 2, lastGrade: 2, intervalDays: 9, dueAt: new Date(now.getTime() + DAY(7)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(2)).toISOString() },
     };
     const solved = new Set(['t-calm-a']);
-    const session = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 4, now });
+    const { tasks: session, restTaskId } = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 4, now });
     const last = session[session.length - 1];
     assertEq('selectSession: занятие кончается знакомым навыком', last?.skill, 'calm');
     assertTrue('selectSession: передышка — уже решённое задание', solved.has(last?.id), `получено ${last?.id}`);
+    assertEq('selectSession: restTaskId называет тот же шаг', restTaskId, last?.id);
   }
 
   // --- selectSession: срок, истекающий сегодня, передышкой не считается.
@@ -256,12 +257,13 @@ try {
     const states = {
       edge: { ...initialSkillState(), reps: 1, lastGrade: 2, intervalDays: 1, dueAt: new Date(now.getTime() + 3600000).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(1)).toISOString() },
     };
-    const session = selectSession({ skills, tasks, states, solvedTaskIds: new Set(['t-edge-a']), size: 2, now });
+    const { tasks: session, restTaskId } = selectSession({ skills, tasks, states, solvedTaskIds: new Set(['t-edge-a']), size: 2, now });
     assertTrue(
       'selectSession: навык со сроком сегодня не ставится передышкой',
       session[session.length - 1]?.id !== 't-edge-a',
       `последний шаг ${session[session.length - 1]?.id}`
     );
+    assertEq('selectSession: restTaskId пуст без кандидата в передышку', restTaskId, null);
   }
 
   // --- selectSession: передышка идёт по кругу, а не липнет к одному навыку.
@@ -280,10 +282,11 @@ try {
       'calm-b': { ...base, dueAt: new Date(now.getTime() + DAY(7)).toISOString(), lastReviewedAt: new Date(now.getTime() - DAY(5)).toISOString() },
     };
     const solved = new Set(['t-a', 't-b']);
-    const first = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 2, now });
+    const { tasks: first, restTaskId: firstRestId } = selectSession({ skills, tasks, states, solvedTaskIds: solved, size: 2, now });
     assertEq('selectSession: передышкой идёт тот, кого дольше не было', first[first.length - 1]?.skill, 'calm-b');
+    assertEq('selectSession: restTaskId называет передышку первого занятия', firstRestId, first[first.length - 1]?.id);
     const after = { ...states, 'calm-b': { ...states['calm-b'], lastReviewedAt: now.toISOString() } };
-    const second = selectSession({ skills, tasks, states: after, solvedTaskIds: solved, size: 2, now });
+    const { tasks: second } = selectSession({ skills, tasks, states: after, solvedTaskIds: solved, size: 2, now });
     assertEq('selectSession: на следующем занятии передышка сменилась', second[second.length - 1]?.skill, 'calm-a');
   }
 
@@ -291,14 +294,15 @@ try {
   {
     const skills = [skill('a', 1), skill('b', 1), skill('c', 1)];
     const tasks = [task('t-a', 'a'), task('t-b', 'b'), task('t-c', 'c')];
-    const session = selectSession({ skills, tasks, states: {}, solvedTaskIds: new Set(), size: 5, maxNewSkills: 3 });
+    const { tasks: session } = selectSession({ skills, tasks, states: {}, solvedTaskIds: new Set(), size: 5, maxNewSkills: 3 });
     assertEq('selectSession: первое занятие целиком из нового', session.length, 3);
   }
 
   // --- selectSession: пустая программа не падает.
   {
-    const session = selectSession({ skills: [], tasks: [], states: {}, solvedTaskIds: new Set() });
+    const { tasks: session, restTaskId } = selectSession({ skills: [], tasks: [], states: {}, solvedTaskIds: new Set() });
     assertEq('selectSession: пустой граф даёт пустую сессию', session.length, 0);
+    assertEq('selectSession: пустой граф не называет передышку', restTaskId, null);
   }
 
   console.log(`\n${failed ? `FAILED: ${failed}` : 'OK: все проверки планировщика прошли'}`);

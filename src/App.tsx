@@ -334,7 +334,16 @@ function storyMissionAfter(locale: Locale, id: string): StoryMission | null {
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
  * больше не показывается — только по запросу из справочника.
  */
-type Step = { kind: 'lesson'; lesson: Lesson } | { kind: 'task'; task: Task };
+type Step =
+  | { kind: 'lesson'; lesson: Lesson }
+  /**
+   * `isRest` — этот шаг задание-передышка (см. selectSession в scheduler.ts):
+   * уже решённое задание, вставленное намеренно, чтобы дать почувствовать
+   * освоенность, а не просроченное повторение. Без пометки экран задачи
+   * не отличим от обычного — «тренажёр вернул то, что я уже решил» читается
+   * как баг, а не как задуманная пауза.
+   */
+  | { kind: 'task'; task: Task; isRest?: boolean };
 
 type Screen =
   | { name: 'home' }
@@ -480,7 +489,7 @@ function buildSessionQueue(stored: StoredSession, locale: Locale): Step[] | null
     } else {
       const task = taskById?.get(s.id);
       if (!task) return null;
-      queue.push({ kind: 'task', task });
+      queue.push({ kind: 'task', task, isRest: s.isRest });
     }
   }
   return queue.length ? queue : null;
@@ -1168,7 +1177,7 @@ export default function App() {
 
   function startSession() {
     if (!activePack.tasks.length) return; // черновой трек — заданий ещё нет
-    const picked = selectSession({
+    const { tasks: picked, restTaskId } = selectSession({
       skills: activePack.skills,
       tasks: activePack.tasks,
       states: progress.skills,
@@ -1177,7 +1186,7 @@ export default function App() {
     });
     if (!picked.length) return;
 
-    startQueue(withLessons(picked));
+    startQueue(withLessons(picked, restTaskId));
   }
 
   /**
@@ -1191,7 +1200,7 @@ export default function App() {
    * разъедься эти два входа, и линия начала бы вести себя не как занятие
    * ровно там, где человек впервые видит тему.
    */
-  function withLessons(tasks: Task[]): Step[] {
+  function withLessons(tasks: Task[], restTaskId: string | null = null): Step[] {
     const introduced = new Set<string>();
     const queue: Step[] = [];
     for (const task of tasks) {
@@ -1201,7 +1210,7 @@ export default function App() {
         introduced.add(task.skill);
         queue.push({ kind: 'lesson', lesson });
       }
-      queue.push({ kind: 'task', task });
+      queue.push({ kind: 'task', task, isRest: task.id === restTaskId });
     }
     return queue;
   }
@@ -1220,7 +1229,9 @@ export default function App() {
       version: 2,
       track: snapshot.track,
       steps: snapshot.queue.map((s) =>
-        s.kind === 'lesson' ? { kind: 'lesson', skill: s.lesson.skill } : { kind: 'task', id: s.task.id }
+        s.kind === 'lesson'
+          ? { kind: 'lesson', skill: s.lesson.skill }
+          : { kind: 'task', id: s.task.id, isRest: s.isRest }
       ),
       index: snapshot.index,
       maxIndex: snapshot.maxIndex,
@@ -1421,7 +1432,15 @@ export default function App() {
       if (next >= s.queue.length) {
         return {
           name: 'done',
-          solved: s.queue.filter((q) => q.kind === 'task').length,
+          /*
+           * Реально записанные попытки, а не число задач в очереди. Раньше
+           * это было одно и то же: до кнопки-пропуска очередь заканчивалась
+           * только через handleDone на каждой задаче, и «дошёл до конца»
+           * означало «решил всё». Пропуск разорвал это равенство — досчитать
+           * длиной очереди значило бы приписать человеку решённым и то, что
+           * он листнул мимо.
+           */
+          solved: recordedTasksRef.current.size,
           fromStory: queueMission(s.queue) !== null,
         };
       }
@@ -1996,6 +2015,20 @@ export default function App() {
             </div>
           )}
           {/*
+           * Пропуск шага — не пишет попытку в SRS (см. advance(): та же
+           * функция, что двигает занятие после решения, просто без записи).
+           * Раньше единственным выходом с задания, которое не хочется решать
+           * сейчас, было закрыть вкладку — а на следующем заходе занятие
+           * поднималось с того же места (см. initialBoot), и человек снова
+           * упирался в то же задание. Симметрична «назад» по другую сторону
+           * точек прогресса.
+           */}
+          {screen.name === 'session' && (
+            <button className="icon-btn" onClick={() => advance()} aria-label={t.session.skipAria}>
+              ⏭
+            </button>
+          )}
+          {/*
            * Группа вынесена в свой контейнер по тому же приёму, что и
            * progress-dots ниже: на узком экране это тоже целая строка,
            * а не три элемента, которые остаются в потоке шапки и сжимают
@@ -2212,6 +2245,7 @@ export default function App() {
                       : undefined
                 }
                 onOpenSchema={openSchema}
+                isRest={step.isRest}
                 onDone={(o) => handleDone(step.task, o)}
               />
             );
