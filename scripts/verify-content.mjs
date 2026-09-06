@@ -53,6 +53,25 @@ _con.close()
   return pyodidePromise;
 }
 
+/**
+ * Отказы обвязки приходят кодом, а не фразой (WORKER_CODE в src/engine/types.ts):
+ * в приложении их переводит локаль показа, у гейта локали нет и не нужно —
+ * но и печатать `__worker__:noResult` в отчёт незачем. Словарь короткий
+ * намеренно: сюда попадают только те коды, которые может поднять контент.
+ * Незнакомый код остаётся как есть — видно, что появился новый.
+ */
+const WORKER_MESSAGES = {
+  noResult: 'код не создаёт переменную result',
+  pythonSyntax: 'синтаксическая ошибка',
+  tooManyRows: 'результат содержит слишком много строк',
+};
+const workerCodeText = (message) => {
+  if (!message.startsWith('__worker__:')) return message;
+  const [code, ...args] = message.slice('__worker__:'.length).split(String.fromCharCode(31));
+  const text = WORKER_MESSAGES[code];
+  return text ? [text, ...args].join(': ') : message;
+};
+
 /** Запускает код заданий ровно тем же путём, что и public/python-worker.js — контракт result=, чистая ошибка при провале. */
 async function runPython(code) {
   const pyodide = await getPyodide();
@@ -63,7 +82,7 @@ async function runPython(code) {
   } finally {
     runCellFn.destroy();
   }
-  if (!out.ok) throw new Error(out.message);
+  if (!out.ok) throw new Error(workerCodeText(out.message));
   return { columns: out.table.columns, rows: out.table.rows };
 }
 

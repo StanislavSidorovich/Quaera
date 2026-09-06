@@ -1,5 +1,5 @@
-import { WORKER_FAILURE } from './types';
-import type { Comparison, Feedback, Mismatch } from './types';
+import { WORKER_ARG, WORKER_CODE, WORKER_FAILURE } from './types';
+import type { Comparison, Feedback, Mismatch, WorkerCode } from './types';
 import type { Locale } from '../i18n/context';
 import { diagnoseText } from './diagnoseText';
 
@@ -64,9 +64,33 @@ export function closest(name: string, candidates: string[]): string | null {
  * ровно тот класс дефекта, из-за которого весь этот модуль и оставался
  * русским, только спрятанный ещё лучше — не в комментарии, а в сигнатуре.
  */
+/**
+ * Код отказа от обвязки воркера → фраза на языке интерфейса.
+ *
+ * Отдельная экспортируемая функция, а не ветка внутри diagnoseSqlError:
+ * такие коды приходят двумя разными путями. Ошибка запроса едет в разбор
+ * (там ниже), а отказ загрузки датасета — прямо в экран ошибки в App.tsx,
+ * мимо всякой диагностики. Одно место перевода на оба пути.
+ *
+ * `null` на незнакомом коде — намеренно: показывающая сторона тогда покажет
+ * исходное сообщение. Воркеры лежат в public/ и обновляются вместе с бандлом,
+ * так что рассинхрон возможен только при частично протухшем кеше, и в этом
+ * случае служебная строка на экране честнее пустого места.
+ */
+export function workerCodeText(message: string, locale: Locale): string | null {
+  if (!message.startsWith(WORKER_CODE)) return null;
+  const [code, ...args] = message.slice(WORKER_CODE.length).split(WORKER_ARG);
+  const render = diagnoseText[locale].worker[code as WorkerCode];
+  return render ? render(args) : null;
+}
+
 export function diagnoseSqlError(message: string, knownNames: string[], locale: Locale): Feedback {
   const T = diagnoseText[locale];
   if (message === WORKER_FAILURE) return T.workerFailure();
+  // До регулярок ниже: это отказы, не дошедшие до SQLite вовсе, и его
+  // словами они не описываются.
+  const fromWorker = workerCodeText(message, locale);
+  if (fromWorker) return T.sqlFallback(fromWorker);
   const m = message.toLowerCase();
 
   const noColumn = /no such column:\s*([\w.]+)/i.exec(message);
@@ -117,6 +141,9 @@ export function diagnosePythonError(
   const T = diagnoseText[locale];
   if (message === WORKER_FAILURE) return T.workerFailure();
 
+  const fromWorker = workerCodeText(message, locale);
+  if (fromWorker) return T.pythonFallback(null, fromWorker, localizeTraceback(traceback, locale));
+
   const keyError = /^KeyError:\s*'([^']+)'/.exec(message);
   if (keyError) {
     const name = keyError[1];
@@ -128,7 +155,23 @@ export function diagnosePythonError(
   }
 
   const [, kind, detail] = /^(\w+):\s*([\s\S]*)$/.exec(message) ?? [null, null, null];
-  return T.pythonFallback(kind, detail ?? message, traceback);
+  return T.pythonFallback(kind, detail ?? message, localizeTraceback(traceback, locale));
+}
+
+/**
+ * Кадры traceback приходят кодами, а не готовой строкой.
+ *
+ * Номер строки и её текст собирает python-bootstrap.py, у которого локали нет
+ * ещё меньше, чем у воркера, — он исполняется внутри Pyodide. Последняя строка
+ * traceback (`TypeError: …`) кодом не оборачивается: это слова самого CPython,
+ * английские в любой локали, ровно как сообщения SQLite в разборе SQL.
+ */
+function localizeTraceback(traceback: string, locale: Locale): string {
+  if (!traceback) return traceback;
+  return traceback
+    .split('\n')
+    .map((line) => workerCodeText(line, locale) ?? line)
+    .join('\n');
 }
 
 // -------------------------------------------------- расхождение с эталоном

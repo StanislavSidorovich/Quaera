@@ -1,7 +1,7 @@
 {
-  "name": "Quaera — тренажёр аналитика",
+  "name": "Quaera: a data analyst trainer",
   "short_name": "Quaera",
-  "description": "SQL, модель данных и метрики FMCG/pharma. Практика с реальным исполнением запросов, офлайн.",
+  "description": "SQL, the data model and FMCG/pharma metrics. Practice with queries that really run, offline.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -9,7 +9,7 @@
   "orientation": "any",
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
-  "lang": "ru",
+  "lang": "en",
   "categories": ["education", "productivity"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

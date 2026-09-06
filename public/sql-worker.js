@@ -17,6 +17,18 @@
 importScripts('/sqljs/sql-wasm.js');
 importScripts('/grade-lib.js');
 
+/**
+ * Отказ, о котором воркер сообщает кодом, а не фразой.
+ *
+ * Воркер лежит вне бандла и локали не знает — а его текст доезжает до экрана
+ * как есть: пока здесь стояли русские фразы, английский интерфейс отвечал
+ * «Здесь выполняются только читающие запросы». Формат и список кодов —
+ * WORKER_CODE / WorkerCode в src/engine/types.ts, фразы — в diagnoseText.ts.
+ * Здесь литерал продублирован намеренно: импортировать оттуда нечего.
+ */
+const WORKER_ARG = String.fromCharCode(31); // U+001F, см. WORKER_ARG в src/engine/types.ts
+const workerError = (code, ...args) => new Error(['__worker__:' + code, ...args].join(WORKER_ARG));
+
 /** Сколько строк отдаём на превью. Полный результат остаётся в воркере. */
 const PREVIEW_ROWS = 200;
 /** Защита от запроса, который случайно свернул декартово произведение. */
@@ -36,10 +48,10 @@ function stripComments(sql) {
  */
 function assertReadOnly(sql) {
   const clean = stripComments(sql).trim().replace(/;\s*$/, '');
-  if (!clean) throw new Error('Пустой запрос');
-  if (clean.includes(';')) throw new Error('Выполняется только один запрос за раз — уберите точку с запятой в середине');
+  if (!clean) throw workerError('emptyQuery');
+  if (clean.includes(';')) throw workerError('multiStatement');
   if (!/^(select|with)\b/i.test(clean)) {
-    throw new Error('Здесь выполняются только читающие запросы: начните с SELECT или WITH');
+    throw workerError('readOnly');
   }
   return clean;
 }
@@ -55,7 +67,9 @@ function run(sql) {
       if (!columns.length) columns.push(...stmt.getColumnNames());
       rows.push(stmt.get());
       if (rows.length > MAX_ROWS) {
-        throw new Error(`Запрос вернул больше ${MAX_ROWS.toLocaleString('ru-RU')} строк — вероятно, потерялось условие соединения`);
+        // Разряды числа разделяет локаль показа, а не воркер: у русской
+        // и английской записи разделители разные.
+        throw workerError('tooManyRows', MAX_ROWS);
       }
     }
     if (!columns.length) columns.push(...stmt.getColumnNames());
@@ -78,22 +92,18 @@ function run(sql) {
  */
 async function loadDatabase(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Не удалось загрузить датасет: HTTP ${res.status}`);
+  if (!res.ok) throw workerError('datasetHttp', res.status);
   let buf = await res.arrayBuffer();
   // Ответ на порядки меньше ожидаемого означает, что до нас запрос кто-то перехватил:
   // чаще всего это менеджер загрузок или блокировщик в браузере. Без явной проверки
   // это всплывает где-то глубже как невнятная ошибка про длину массива.
   if (buf.byteLength < 65536) {
-    throw new Error(
-      `Датасет пришёл обрезанным: ${buf.byteLength} байт вместо примерно 3.5 МБ. ` +
-        'Обычно это менеджер загрузок (IDM, FDM) или расширение браузера, перехватывающее файл. ' +
-        'Отключите перехват для этого адреса или откройте страницу в режиме инкогнито без расширений.'
-    );
+    throw workerError('datasetTruncated', buf.byteLength);
   }
   const magic = new Uint8Array(buf, 0, 2);
   if (magic[0] === 0x1f && magic[1] === 0x8b) {
     if (typeof DecompressionStream === 'undefined') {
-      throw new Error('Браузер не поддерживает распаковку gzip — обновите браузер');
+      throw workerError('noGzip');
     }
     buf = await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   }
@@ -114,7 +124,7 @@ self.onmessage = async (e) => {
       reply(await loadDatabase(payload.url));
       return;
     }
-    if (!db) throw new Error('База ещё не загружена');
+    if (!db) throw workerError('dbNotReady');
 
     if (type === 'exec') {
       const r = run(payload.sql);
@@ -159,7 +169,7 @@ self.onmessage = async (e) => {
       return;
     }
 
-    throw new Error(`Неизвестная команда: ${type}`);
+    throw workerError('unknownCommand', type);
   } catch (err) {
     fail(err);
   }

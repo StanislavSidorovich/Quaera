@@ -1,4 +1,4 @@
-import type { CompareReason, Feedback } from './types';
+import type { CompareReason, Feedback, WorkerCode } from './types';
 import type { Locale } from '../i18n/context';
 
 /**
@@ -52,6 +52,16 @@ export interface DiagnoseText {
   workerFailure: () => Feedback;
   pythonKeyError: (name: string, hint: string | null) => Feedback;
   pythonFallback: (kind: string | null, detail: string, traceback: string) => Feedback;
+  /**
+   * Отказы обвязки воркера — те, что до движка не доходят вовсе (WorkerCode
+   * в types.ts). Record по union'у, а не словарь по строке: код без перевода
+   * роняет `tsc`, ровно как поле локали без пары.
+   *
+   * Аргументы приходят строками в том порядке, в каком их положил воркер, —
+   * приводить к числу здесь, а не в воркере: форматирование разрядов
+   * и склонение всё равно принадлежат локали.
+   */
+  worker: Record<WorkerCode, (args: string[]) => string>;
 
   // ---------------------------------------------- расхождение с эталоном
   ratioExact: (k: number) => Feedback;
@@ -178,6 +188,28 @@ const ru: DiagnoseText = {
     body: detail,
     nudges: traceback ? traceback.split('\n').filter(Boolean) : [],
   }),
+
+  worker: {
+    datasetHttp: ([status]) => `Не удалось загрузить датасет: HTTP ${status}`,
+    datasetTruncated: ([bytes]) =>
+      `Датасет пришёл обрезанным: ${bytes} байт вместо примерно 3.5 МБ. ` +
+      'Обычно это менеджер загрузок (IDM, FDM) или расширение браузера, перехватывающее файл. ' +
+      'Отключите перехват для этого адреса или откройте страницу в режиме инкогнито без расширений.',
+    noGzip: () => 'Браузер не поддерживает распаковку gzip — обновите браузер',
+    unknownCommand: ([type]) => `Неизвестная команда: ${type}`,
+    emptyQuery: () => 'Пустой запрос',
+    multiStatement: () => 'Выполняется только один запрос за раз — уберите точку с запятой в середине',
+    readOnly: () => 'Здесь выполняются только читающие запросы: начните с SELECT или WITH',
+    tooManyRows: ([max]) =>
+      `Запрос вернул больше ${Number(max).toLocaleString('ru-RU')} строк — вероятно, потерялось условие соединения`,
+    dbNotReady: () => 'База ещё не загружена',
+    bootstrapHttp: ([status]) => `Не удалось загрузить обвязку исполнителя: HTTP ${status}`,
+    pythonNotReady: () => 'Python ещё не загружен',
+    noResult: () =>
+      'Код не создаёт переменную result — присвойте ей то, что нужно проверить, например: result = fact_sellout.groupby(...)...',
+    pythonSyntax: ([detail, line]) => `Синтаксическая ошибка: ${detail} (строка ${line})`,
+    frame: ([line, src]) => `Строка ${line}: ${src}`,
+  },
 
   ratioExact: (k) => ({
     tone: 'warn',
@@ -419,6 +451,28 @@ const en: DiagnoseText = {
     body: detail,
     nudges: traceback ? traceback.split('\n').filter(Boolean) : [],
   }),
+
+  worker: {
+    datasetHttp: ([status]) => `Could not load the dataset: HTTP ${status}`,
+    datasetTruncated: ([bytes]) =>
+      `The dataset arrived truncated: ${bytes} bytes instead of roughly 3.5 MB. ` +
+      'This is usually a download manager (IDM, FDM) or a browser extension intercepting the file. ' +
+      'Turn the interception off for this address, or open the page in a private window with no extensions.',
+    noGzip: () => 'This browser cannot decompress gzip. Please update it.',
+    unknownCommand: ([type]) => `Unknown command: ${type}`,
+    emptyQuery: () => 'The query is empty',
+    multiStatement: () => 'Only one query runs at a time. Remove the semicolon in the middle.',
+    readOnly: () => 'Only read queries run here: start with SELECT or WITH',
+    tooManyRows: ([max]) =>
+      `The query returned more than ${Number(max).toLocaleString('en-US')} rows, so the join condition was probably lost`,
+    dbNotReady: () => 'The database has not loaded yet',
+    bootstrapHttp: ([status]) => `Could not load the runner harness: HTTP ${status}`,
+    pythonNotReady: () => 'Python has not loaded yet',
+    noResult: () =>
+      'The code does not create a variable called result. Assign to it whatever should be checked, for example: result = fact_sellout.groupby(...)...',
+    pythonSyntax: ([detail, line]) => `Syntax error: ${detail} (line ${line})`,
+    frame: ([line, src]) => `Line ${line}: ${src}`,
+  },
 
   ratioExact: (k) => ({
     tone: 'warn',

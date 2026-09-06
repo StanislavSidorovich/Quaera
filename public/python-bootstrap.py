@@ -14,6 +14,16 @@ import pandas as pd
 
 MAX_ROWS = 200000  # см. MAX_ROWS в sql-worker.js — та же защита от нечаянного декартова произведения
 
+# Отказ, о котором обвязка сообщает кодом, а не фразой. Локали здесь нет
+# и быть не может: код исполняется внутри Pyodide, куда i18n не доезжает,
+# а сообщение уходит на экран как есть. Формат и список кодов — WORKER_CODE
+# и WorkerCode в src/engine/types.ts, фразы — в engine/diagnoseText.ts.
+WORKER_ARG = chr(31)  # U+001F
+
+
+def _worker_error(code, *args):
+    return "__worker__:" + WORKER_ARG.join([code] + [str(a) for a in args])
+
 
 def _has_meaningful_index(obj):
     # Критерий — не тип индекса, а есть ли у него имя. После обычной
@@ -39,7 +49,7 @@ def _to_table(obj):
         if _has_meaningful_index(obj):
             obj = obj.reset_index()
         if len(obj) > MAX_ROWS:
-            raise ValueError(f"Результат содержит больше {MAX_ROWS:,} строк — вероятно, потерялось условие соединения".replace(",", " "))
+            raise ValueError(_worker_error("tooManyRows", MAX_ROWS))
         # to_json на MultiIndex-колонках (после pivot_table с несколькими value-колонками)
         # даёт кортежи — json их не понимает, поэтому колонки всегда приводим к плоским строкам.
         if isinstance(obj.columns, pd.MultiIndex):
@@ -73,8 +83,13 @@ def _clean_traceback(exc, code):
     lines = []
     for f in frames:
         src = f.line or ""
-        lines.append(f"  Строка {f.lineno}: {src}")
-    lines.append(f"{type(exc).__name__}: {exc}")
+        lines.append(_worker_error("frame", f.lineno, src))
+    # Отказ, поднятый самой обвязкой, уже показан в теле разбора кодом —
+    # повторять его последней строкой traceback незачем, а приписанное имя
+    # исключения ("NameError: __worker__:noResult") ещё и сломало бы разбор
+    # кода на стороне показа.
+    if not str(exc).startswith("__worker__:"):
+        lines.append(f"{type(exc).__name__}: {exc}")
     return "\n".join(lines)
 
 
@@ -91,11 +106,16 @@ def _run_cell(code):
         tree = ast.parse(code, mode="exec", filename="<cell>")
         exec(compile(tree, "<cell>", "exec"), ns)
         if "result" not in ns:
-            raise NameError("Код не создаёт переменную result — присвойте ей то, что нужно проверить, например: result = fact_sellout.groupby(...)...")
+            raise NameError(_worker_error("noResult"))
         return {"ok": True, "table": _to_table(ns["result"]), "stdout": stdout.getvalue()}
     except SyntaxError as e:
-        return {"ok": False, "message": f"Синтаксическая ошибка: {e.msg} (строка {e.lineno})", "traceback": "", "stdout": stdout.getvalue()}
+        return {"ok": False, "message": _worker_error("pythonSyntax", e.msg, e.lineno), "traceback": "", "stdout": stdout.getvalue()}
     except Exception as e:
-        return {"ok": False, "message": f"{type(e).__name__}: {e}", "traceback": _clean_traceback(e, code), "stdout": stdout.getvalue()}
+        # Имя питоновского исключения — часть сообщения (diagnose.ts читает
+        # его как заголовок разбора), но только для настоящих ошибок кода.
+        # К коду отказа его приписывать нельзя: код перестанет опознаваться.
+        text = str(e)
+        message = text if text.startswith("__worker__:") else f"{type(e).__name__}: {e}"
+        return {"ok": False, "message": message, "traceback": _clean_traceback(e, code), "stdout": stdout.getvalue()}
     finally:
         sys.stdout = old_stdout

@@ -3,6 +3,7 @@ import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs
 import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
+import { workerCodeText } from './engine/diagnose';
 import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
@@ -1999,8 +2000,15 @@ export default function App() {
             <div className="feedback error">
               <h3>{t.loadError.title}</h3>
               {/* Воркер мог не сказать ничего — тогда показываем свою фразу
-                  на языке интерфейса, а не служебную метку. */}
-              <p>{load.message === WORKER_FAILURE ? t.loadError.workerBody : load.message}</p>
+                  на языке интерфейса, а не служебную метку. А если сказал —
+                  сказал кодом (см. WORKER_CODE в engine/types.ts), и фразу
+                  к нему подбирает локаль показа. Сообщения самой сети
+                  («Failed to fetch») кодом не оборачиваются и идут как есть. */}
+              <p>
+                {load.message === WORKER_FAILURE
+                  ? t.loadError.workerBody
+                  : workerCodeText(load.message ?? '', locale) ?? load.message}
+              </p>
               <button className="btn secondary" onClick={() => location.reload()}>
                 {t.loadError.reloadBtn}
               </button>

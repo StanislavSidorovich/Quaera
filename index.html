@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -7,7 +7,17 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
     <meta name="theme-color" content="#0b1020" />
-    <meta name="description" content="Тренажёр аналитика данных: SQL, pandas, метрики FMCG и фармы. Запрос выполняется в браузере, ответ сверяется с данными. Офлайн, без регистрации." />
+    <!--
+      Статика вокруг приложения — на английском, тем же решением, что og-теги
+      ниже: initialLocale() отдаёт 'en' всем, у кого браузер не русский,
+      то есть по-английски приложение открывается у большинства случайных
+      посетителей. Русскому посетителю lang и title переписывает I18nProvider
+      при первом же рендере (см. i18n/context.tsx), а description и манифест
+      не переписывает никто и никогда: их читают краулер и установщик PWA
+      до всякого JavaScript. Раньше здесь стояли русские фразы, и английский
+      сниппет в поиске был русским.
+    -->
+    <meta name="description" content="A data analyst trainer: SQL, pandas and FMCG/pharma metrics. The query runs in your browser and the answer is checked against the data. Offline, no sign-up." />
 
     <!--
       Авторство в самой странице: приложение раздаётся по HTTP отдельно
@@ -63,7 +73,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
       Имя на домашнем экране iOS. Без этого тега Safari берёт <title> целиком —
-      то есть «Quaera — тренажёр аналитика», и подпись под иконкой обрезается.
+      то есть «Quaera: a data analyst trainer», и подпись под иконкой обрезается.
       Замораживается в момент «На экран Домой» и потом не обновляется никогда.
     -->
     <meta name="apple-mobile-web-app-title" content="Quaera" />
@@ -71,7 +81,7 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <title>Quaera — тренажёр аналитика</title>
+    <title>Quaera: a data analyst trainer</title>
   </head>
   <body>
     <div id="root"></div>

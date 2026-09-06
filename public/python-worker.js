@@ -19,6 +19,10 @@
 
 importScripts('/grade-lib.js');
 
+/** См. тот же помощник и его обоснование в public/sql-worker.js. */
+const WORKER_ARG = String.fromCharCode(31); // U+001F, см. WORKER_ARG в src/engine/types.ts
+const workerError = (code, ...args) => new Error(['__worker__:' + code, ...args].join(WORKER_ARG));
+
 const DATASET_URL = '/data/quaera.dataset';
 const PREVIEW_ROWS = 200;
 
@@ -27,19 +31,15 @@ let pyodide = null;
 /** Тот же приём, что и в sql-worker.js: gzip определяется по сигнатуре байт, не по имени/заголовкам. */
 async function fetchDataset(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Не удалось загрузить датасет: HTTP ${res.status}`);
+  if (!res.ok) throw workerError('datasetHttp', res.status);
   let buf = await res.arrayBuffer();
   if (buf.byteLength < 65536) {
-    throw new Error(
-      `Датасет пришёл обрезанным: ${buf.byteLength} байт вместо примерно 3.5 МБ. ` +
-        'Обычно это менеджер загрузок (IDM, FDM) или расширение браузера, перехватывающее файл. ' +
-        'Отключите перехват для этого адреса или откройте страницу в режиме инкогнито без расширений.'
-    );
+    throw workerError('datasetTruncated', buf.byteLength);
   }
   const magic = new Uint8Array(buf, 0, 2);
   if (magic[0] === 0x1f && magic[1] === 0x8b) {
     if (typeof DecompressionStream === 'undefined') {
-      throw new Error('Браузер не поддерживает распаковку gzip — обновите браузер');
+      throw workerError('noGzip');
     }
     buf = await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   }
@@ -68,7 +68,7 @@ async function ensurePyodide() {
   pyodide = await loadPyodide({ indexURL: '/pyodide/' });
   await pyodide.loadPackage(['pandas', 'sqlite3']);
   const bootstrapRes = await fetch('/python-bootstrap.py');
-  if (!bootstrapRes.ok) throw new Error(`Не удалось загрузить обвязку исполнителя: HTTP ${bootstrapRes.status}`);
+  if (!bootstrapRes.ok) throw workerError('bootstrapHttp', bootstrapRes.status);
   await pyodide.runPythonAsync(await bootstrapRes.text());
 }
 
@@ -122,7 +122,7 @@ self.onmessage = async (e) => {
       reply(await loadDataset(payload.url));
       return;
     }
-    if (!pyodide) throw new Error('Python ещё не загружен');
+    if (!pyodide) throw workerError('pythonNotReady');
 
     if (type === 'exec') {
       const r = await runCell(payload.code);
@@ -178,7 +178,7 @@ self.onmessage = async (e) => {
       return;
     }
 
-    throw new Error(`Неизвестная команда: ${type}`);
+    throw workerError('unknownCommand', type);
   } catch (err) {
     fail(err);
   }
