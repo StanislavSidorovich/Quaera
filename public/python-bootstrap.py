@@ -9,7 +9,7 @@ result= разъедется между тем, что видит ученик, 
 а не два похожих куска кода в разных языках рантайма.
 """
 
-import ast, io, json, sys, traceback
+import ast, io, json, linecache, sys, traceback
 import pandas as pd
 
 MAX_ROWS = 200000  # см. MAX_ROWS в sql-worker.js — та же защита от нечаянного декартова произведения
@@ -102,6 +102,11 @@ def _run_cell(code):
     stdout = io.StringIO()
     old_stdout = sys.stdout
     sys.stdout = stdout
+    # Код исполняется под именем "<cell>", которого на файловой системе нет,
+    # поэтому linecache сам его не найдёт, и traceback.extract_tb() вернул бы
+    # кадры без текста строки ("Строка 2:" с пустым хвостом). Кладём исходник
+    # в кеш руками — тогда кадр показывает ту самую строку, на которой упало.
+    linecache.cache["<cell>"] = (len(code), None, code.splitlines(True), "<cell>")
     try:
         tree = ast.parse(code, mode="exec", filename="<cell>")
         exec(compile(tree, "<cell>", "exec"), ns)
@@ -119,3 +124,4 @@ def _run_cell(code):
         return {"ok": False, "message": message, "traceback": _clean_traceback(e, code), "stdout": stdout.getvalue()}
     finally:
         sys.stdout = old_stdout
+        linecache.cache.pop("<cell>", None)
