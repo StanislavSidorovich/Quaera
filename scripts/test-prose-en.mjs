@@ -98,6 +98,9 @@ const targets = () => {
     // Экскурс «Что такое аналитика данных» — та же схема, что у storymode:
     // обе локали в одном .ts, в замер идёт только английская половина.
     'src/content/intro.ts',
+    // Брошюра «Quaera in four pages» — английская целиком, русской половины
+    // пока нет; русские здесь только комментарии, и их отбрасывает englishOnly.
+    'src/content/overview.ts',
     'src/content/tools-compare.json',
   ];
 };

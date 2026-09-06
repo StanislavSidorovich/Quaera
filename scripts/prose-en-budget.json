@@ -14,6 +14,7 @@
     "src/content/tools-compare.json": 1,
     "src/content/story.en.json": 0,
     "src/content/storymode.ts": 0,
-    "src/content/intro.ts": 0
+    "src/content/intro.ts": 0,
+    "src/content/overview.ts": 0
   }
 }
