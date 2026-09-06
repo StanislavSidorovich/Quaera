@@ -140,7 +140,24 @@ export function toStoredDraft(d: TaskDraft): StoredDraft {
   };
 }
 
-/** Обратно в черновик: таблицы восстанавливаются пустыми, их вернёт «Выполнить». */
+/**
+ * Обратно в черновик: таблицы восстанавливаются пустыми, их вернёт «Выполнить».
+ *
+ * Разбор из старого хранилища гасится. До сентября 2026 в `feedback` лежал
+ * собранный по локали текст, теперь — повод с полем `kind` (см. ui/feedback.ts);
+ * без этой проверки занятие, начатое на прошлой сборке, показало бы объект
+ * без заголовка и без тона. Версия хранилища при этом не двигается: поднять
+ * её значило бы выбросить всё незаконченное занятие целиком ради одного блока
+ * под редактором, который возвращается первой же проверкой.
+ */
 export function fromStoredDraft(d: StoredDraft): TaskDraft {
-  return { stepIndex: d.stepIndex, steps: d.steps.map((s) => ({ ...s, preview: null, expected: null })) };
+  return {
+    stepIndex: d.stepIndex,
+    steps: d.steps.map((s) => ({
+      ...s,
+      preview: null,
+      expected: null,
+      feedback: s.feedback && 'kind' in s.feedback ? s.feedback : null,
+    })),
+  };
 }

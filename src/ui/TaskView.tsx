@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Task, TaskStep } from '../content/types';
 import { taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
-import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
+import { renderFeedback, type FeedbackSource } from './feedback';
 import { ResultTable } from './ResultTable';
 
 /**
@@ -66,7 +66,7 @@ export interface StepDraft {
   arrangement: number[];
   preview: Preview | null;
   expected: Preview | null;
-  feedback: Feedback | null;
+  feedback: FeedbackSource | null;
   solved: boolean;
   wasCorrect: boolean;
   wrongAttempts: number;
@@ -616,11 +616,19 @@ function StepView({
           ? draft.blanks.length > 0 && draft.blanks.every((b) => b.trim().length > 0)
           : composedCode.trim().length > 0;
 
-  /** Разбор ошибки исполнителя — разный по языку: SQLite и Python выдают разные тексты. */
-  const diagnoseError = (message: string, traceback?: string): Feedback =>
-    task.track === 'python'
-      ? diagnosePythonError(message, suggestions, traceback ?? '', locale)
-      : diagnoseSqlError(message, suggestions, locale);
+  /**
+   * Текст разбора собирается на рендере, а не в момент проверки: в черновике
+   * лежит повод (см. ui/feedback.ts), и переключение языка меняет разбор
+   * на месте, а не после перезагрузки — которая его как раз и закрепляла.
+   */
+  const feedback =
+    draft.feedback &&
+    renderFeedback(draft.feedback, {
+      t,
+      locale,
+      runtime: task.track === 'python' ? 'python' : 'sql',
+      suggestions,
+    });
 
   async function handleRun() {
     if (step.kind !== 'compute') return;
@@ -635,7 +643,7 @@ function StepView({
       patch({ preview: r });
     } catch (e) {
       const err = e as Error & { traceback?: string };
-      patch({ preview: null, feedback: diagnoseError(err.message, err.traceback) });
+      patch({ preview: null, feedback: { kind: 'execError', message: err.message, traceback: err.traceback } });
     } finally {
       setRunning(false);
       // На узком экране Run/Check и есть момент, когда естественно
@@ -669,9 +677,7 @@ function StepView({
         solved: correct,
         wasCorrect: correct,
         wrongAttempts: d.wrongAttempts + (correct ? 0 : 1),
-        feedback: correct
-          ? { tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] }
-          : { tone: 'warn', title: t.task.orderWrongTitle, body: t.task.orderWrongBody, nudges: [] },
+        feedback: correct ? { kind: 'correct' } : { kind: 'orderWrong' },
       }));
       return;
     }
@@ -682,9 +688,7 @@ function StepView({
         solved: true,
         wasCorrect: correct,
         wrongAttempts: d.wrongAttempts + (correct ? 0 : 1),
-        feedback: correct
-          ? { tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] }
-          : { tone: 'warn', title: t.task.wrongOptionTitle, body: t.task.wrongOptionBody, nudges: [] },
+        feedback: correct ? { kind: 'correct' } : { kind: 'wrongOption' },
       }));
       return;
     }
@@ -701,17 +705,12 @@ function StepView({
         patch({
           solved: true,
           wasCorrect: true,
-          feedback: { tone: 'warn', title: t.task.correctTitle, body: '', nudges: [] },
+          feedback: { kind: 'correct' },
         });
       } else {
         patch((d) => ({
           wrongAttempts: d.wrongAttempts + 1,
-          feedback: {
-            tone: 'warn',
-            title: t.task.blanksWrongTitle(verdict.wrongIndexes.length),
-            body: t.task.blanksWrongBody(verdict.wrongIndexes.map((i) => i + 1)),
-            nudges: [],
-          },
+          feedback: { kind: 'blanksWrong', wrongIndexes: verdict.wrongIndexes },
         }));
       }
       patch({ mobilePanel: 'results' });
@@ -727,7 +726,11 @@ function StepView({
         patch((d) => ({
           preview: null,
           wrongAttempts: d.wrongAttempts + 1,
-          feedback: diagnoseError(res.message, res.status === 'code_error' ? res.traceback : undefined),
+          feedback: {
+            kind: 'execError',
+            message: res.message,
+            traceback: res.status === 'code_error' ? res.traceback : undefined,
+          },
         }));
         return;
       }
@@ -738,13 +741,8 @@ function StepView({
           wasCorrect: true,
           expected: null,
           feedback: {
-            tone: 'warn',
-            title: t.task.correctTitle,
-            body: '',
-            nudges: [],
-            style: res.comparison.columnNamesDiffer
-              ? t.task.columnNameNote(res.comparison.expectedCols.join(', '))
-              : undefined,
+            kind: 'correct',
+            expectedCols: res.comparison.columnNamesDiffer ? res.comparison.expectedCols : undefined,
           },
         });
       } else {
@@ -752,12 +750,12 @@ function StepView({
           preview: res.preview,
           wrongAttempts: d.wrongAttempts + 1,
           expected: res.expectedPreview,
-          feedback: diagnoseComparison(res.comparison, locale),
+          feedback: { kind: 'comparison', comparison: res.comparison },
         }));
       }
     } catch (e) {
       const err = e as Error & { traceback?: string };
-      patch({ feedback: diagnoseError(err.message, err.traceback) });
+      patch({ feedback: { kind: 'execError', message: err.message, traceback: err.traceback } });
     } finally {
       setRunning(false);
       patch({ mobilePanel: 'results' });
@@ -771,21 +769,24 @@ function StepView({
    * в двух разных ветках разметки (write/fill — рядом с редактором,
    * interpret — под вариантами ответа), а один и тот же узел не может
    * физически стоять в двух местах одновременно.
+   *
+   * Зачёт опознаётся поводом, а не совпадением заголовка с `t.task.correctTitle`:
+   * сравнение двух локализованных строк здесь разъезжалось от одного
+   * переключения языка — заголовок в черновике оставался прежним, а правая
+   * часть сравнения уже переехала, и зелёная рамка пропадала.
    */
-  const feedbackBlock = draft.feedback && (
-    <div
-      className={`feedback ${draft.solved && draft.feedback.title === t.task.correctTitle ? 'ok' : draft.feedback.tone}`}
-    >
-      <h3>{draft.feedback.title}</h3>
-      {draft.feedback.body && <p>{draft.feedback.body}</p>}
-      {draft.feedback.nudges.length > 0 && (
+  const feedbackBlock = feedback && (
+    <div className={`feedback ${draft.solved && draft.feedback?.kind === 'correct' ? 'ok' : feedback.tone}`}>
+      <h3>{feedback.title}</h3>
+      {feedback.body && <p>{feedback.body}</p>}
+      {feedback.nudges.length > 0 && (
         <ul>
-          {draft.feedback.nudges.map((n, i) => (
+          {feedback.nudges.map((n, i) => (
             <li key={i}>{n}</li>
           ))}
         </ul>
       )}
-      {draft.feedback.style && <div className="style-note">{draft.feedback.style}</div>}
+      {feedback.style && <div className="style-note">{feedback.style}</div>}
     </div>
   );
 
@@ -817,7 +818,7 @@ function StepView({
       solved: true,
       wasCorrect: false,
       hintsShown: step.hints.length,
-      feedback: { tone: 'warn', title: t.task.giveUpTitle, body: t.task.giveUpBody, nudges: [] },
+      feedback: { kind: 'giveUp' },
     });
 
   return (
@@ -1052,10 +1053,10 @@ function StepView({
        * write/fill: у interpret расхождение с эталоном не считается,
        * там неверный ответ разбирается вариантами, а не diagnoseComparison.
        */}
-      {!draft.solved && draft.feedback?.reflexive && (
+      {!draft.solved && feedback?.reflexive && (
         <div className="reflexive">
           <span className="reflexive-label">{t.task.reflexiveLabel}</span>
-          {draft.feedback.reflexive}
+          {feedback.reflexive}
         </div>
       )}
 

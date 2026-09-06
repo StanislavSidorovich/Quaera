@@ -3,7 +3,7 @@ import { ru } from './ru';
 import { en } from './en';
 
 export type Locale = 'ru' | 'en';
-type Strings = typeof ru;
+export type Strings = typeof ru;
 
 const STORAGE_KEY = 'quaera-locale';
 const dict: Record<Locale, Strings> = { ru, en };

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SANDBOX_GROUPS, SANDBOX_QUESTIONS, isSandboxStarter, sandboxStarter, sandboxText, type SandboxGroup, type SandboxQuestion } from '../content/sandbox';
 import { RECIPES, RECIPE_GROUPS, recipeCode, recipeText, type Recipe, type RecipeGroup } from '../content/recipes';
-import { diagnosePythonError, diagnoseSqlError, type Feedback } from '../engine/diagnose';
 import { getExecutor } from '../engine/executors';
 import { GROUP_ORDER, groupTables } from '../engine/schemaGroups';
 import type { LoadState, Preview, SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { deleteScript, loadSandboxStore, saveScript, type SandboxStore } from '../sandbox/store';
 import { CodeEditor } from './CodeEditor';
+import { renderFeedback, type FeedbackSource } from './feedback';
 import { ResultTable } from './ResultTable';
 
 /**
@@ -59,7 +59,8 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
 
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<Preview | null>(null);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  /** Повод для разбора, а не его текст: язык подбирается на рендере (см. ui/feedback.ts). */
+  const [failure, setFailure] = useState<FeedbackSource | null>(null);
 
   const [sqlLoad, setSqlLoad] = useState<LoadState>({ phase: 'idle' });
   const [pyLoad, setPyLoad] = useState<LoadState>({ phase: 'idle' });
@@ -128,7 +129,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
   // разные движки над разным кодом, смешивать их на экране нечестно.
   useEffect(() => {
     setResult(null);
-    setFeedback(null);
+    setFailure(null);
   }, [env]);
 
   const activeExecutor = env === 'sql' ? sqlExecutor : pythonExecutor;
@@ -141,16 +142,13 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     return [...tables, ...columns];
   }, [schema]);
 
-  const diagnoseError = (message: string, traceback?: string): Feedback =>
-    env === 'python'
-      ? diagnosePythonError(message, suggestions, traceback ?? '', locale)
-      : diagnoseSqlError(message, suggestions, locale);
+  const feedback = failure && renderFeedback(failure, { t, locale, runtime: env, suggestions });
 
   const notReady = activeLoad.phase === 'consent' || activeLoad.phase === 'loading';
 
   async function handleRun() {
     setRunning(true);
-    setFeedback(null);
+    setFailure(null);
     try {
       const r = await activeExecutor.exec(code);
       setResult(r);
@@ -158,7 +156,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     } catch (e) {
       setResult(null);
       const err = e as Error & { traceback?: string };
-      setFeedback(diagnoseError(err.message, err.traceback));
+      setFailure({ kind: 'execError', message: err.message, traceback: err.traceback });
     } finally {
       setRunning(false);
     }
@@ -167,7 +165,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
   function handleClear() {
     setCode('');
     setResult(null);
-    setFeedback(null);
+    setFailure(null);
   }
 
   /** Вставляет вопрос комментарием — не заменяет то, что уже набрано, повторный клик не дублирует строку. */

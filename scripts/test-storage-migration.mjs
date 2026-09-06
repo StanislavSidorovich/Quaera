@@ -11,10 +11,17 @@
  * приоритет уже существующего нового ключа, отказ записи и то, что в коде
  * не осталось ключа со старым именем.
  *
+ * Здесь же — второй переезд, уже не ключей, а содержимого: `feedback`
+ * в черновике шага стал поводом (`kind`) вместо собранного по локали текста.
+ * Занятие, начатое на прошлой сборке, лежит в localStorage со старой формой,
+ * и молчит оно точно так же: экран не падает, просто блок разбора приходит
+ * без заголовка и тона.
+ *
  * Запуск: npm run test:storage-migration (входит в npm run verify).
  */
 import { execSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -54,6 +61,23 @@ try {
   const { migrateStorageKeys, STORAGE_RENAMES } = await import(
     pathToFileURL(path.join(outDir, 'migrateStorage.js')).href
   );
+
+  /*
+   * session/store.ts берётся esbuild'ом, а не tsc, как migrateStorage.ts выше:
+   * у него есть импорты типов из ui/TaskView, и tsc ради них тянет на проверку
+   * весь остальной код вместе с JSX и контент-паками. Типы здесь и не нужны —
+   * их уже проверил `npx tsc --noEmit`; нужна одна чистая функция.
+   */
+  const { transformSync } = await import('esbuild');
+  const storePath = path.join(outDir, 'session-store.cjs');
+  writeFileSync(
+    storePath,
+    transformSync(readFileSync(path.join(root, 'src/session/store.ts'), 'utf8'), {
+      loader: 'ts',
+      format: 'cjs',
+    }).code
+  );
+  const { fromStoredDraft } = createRequire(import.meta.url)(storePath);
 
   // --- список пар ---
   check(STORAGE_RENAMES.length > 0, 'список переименований пуст');
@@ -114,6 +138,30 @@ try {
     check(store.getItem(secondNew) === 'б', 'отказ на одном ключе остановил перенос остальных');
   }
 
+  // --- черновик со старой формой разбора: текст гасится, повод переживает ---
+  {
+    const legacy = { tone: 'warn', title: 'Нет колонки sku_count', body: '', nudges: [] };
+    const source = { kind: 'comparison', comparison: { ok: false, reason: 'rows' } };
+    const stored = {
+      stepIndex: 0,
+      steps: [
+        { code: 'select 1', feedback: legacy, solved: false },
+        { code: 'select 2', feedback: source, solved: true },
+        { code: 'select 3', feedback: null, solved: false },
+      ],
+    };
+    const draft = fromStoredDraft(stored);
+    check(draft.steps[0].feedback === null, 'разбор старой формы дожил до экрана — покажется без заголовка');
+    check(draft.steps[1].feedback === source, 'повод новой формы потерян — решённый шаг остался без разбора');
+    check(draft.steps[2].feedback === null, 'пустой разбор перестал быть пустым');
+    check(draft.steps[0].code === 'select 1', 'вместе с разбором потерян набранный код');
+    check(draft.steps[1].solved === true, 'вместе с разбором потерян зачёт шага');
+    check(
+      draft.steps.every((s) => s.preview === null && s.expected === null),
+      'таблицы восстановились не пустыми'
+    );
+  }
+
   // --- в коде не осталось ключа со старым именем ---
   {
     const files = [];
@@ -143,4 +191,6 @@ if (failures.length) {
   console.error('Перенос хранилища сломан:\n' + failures.map((f) => `  — ${f}`).join('\n'));
   process.exit(1);
 }
-console.log('storage-migration: перенос ключей querium-* → quaera-* проверен по шести свойствам');
+console.log(
+  'storage-migration: перенос ключей querium-* → quaera-* и переезд разбора черновика на повод проверены'
+);
