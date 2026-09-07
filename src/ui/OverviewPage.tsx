@@ -290,7 +290,7 @@ function SchemaFigure({ schema, caption }: { schema: SchemaDoc | null; caption: 
   return (
     <I18nContext.Provider value={{ locale: 'en', t: en, setLocale: () => undefined }}>
       <figure className="overview-schema">
-        <SchemaMap doc={schema} onOpenTable={() => undefined} />
+        <SchemaMap doc={schema} />
         <figcaption>{caption}</figcaption>
       </figure>
     </I18nContext.Provider>

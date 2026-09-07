@@ -733,7 +733,9 @@ export const en = {
     /** См. довод у mapTitle в ru.ts: подписи колонок здесь, геометрия — в schemaMap.ts. */
     mapTitle: 'How the tables connect',
     mapIntro:
-      'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star, and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names. Click a table to open its description below.',
+      'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star, and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names.',
+    /** Приглашение нажать — только там, где нажатие действительно работает (см. SchemaMap). */
+    mapIntroOpen: 'Click a table to open its description below.',
     mapAria: 'Diagram of the links between tables',
     mapFactsLabel: 'Facts',
     mapDimsLabel: 'Lookups',

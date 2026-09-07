@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { LAYOUT, buildSchemaLayout } from './schemaLayout';
@@ -18,23 +18,32 @@ import { LAYOUT, buildSchemaLayout } from './schemaLayout';
  * Узлы — настоящие кнопки, а не картинка: <g role="button" tabIndex={0}>
  * с обработчиком Enter/Space. Клик открывает описание таблицы ниже
  * на этом же экране — иначе схема осталась бы украшением, из которого
- * некуда пойти.
+ * некуда пойти. Кнопками узлы становятся только при переданном
+ * `onOpenTable`: без него (брошюра `?overview`) роль, фокус и приглашение
+ * нажать сняты — см. довод у пропа.
  */
 export function SchemaMap({
   doc,
   onOpenTable,
 }: {
   doc: SchemaDoc;
-  /** Раскрыть и показать таблицу в списке ниже. */
-  onOpenTable: (table: string) => void;
+  /**
+   * Раскрыть и показать таблицу в списке ниже. Необязателен: в брошюре
+   * `?overview` списка таблиц нет вовсе, и раскрывать нечего. Тогда узлы
+   * перестают быть кнопками, а абзац над схемой не зовёт нажимать —
+   * обещание действия, которого нет, хуже отсутствия обещания, и на
+   * распечатанном листе оно вдобавок бессмысленно.
+   */
+  onOpenTable?: (table: string) => void;
 }) {
   const { t } = useI18n();
   const map = useMemo(() => buildSchemaLayout(doc), [doc]);
+  const open = onOpenTable;
 
   return (
     <>
       <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.55 }}>
-        {t.data.mapIntro}
+        {open ? `${t.data.mapIntro} ${t.data.mapIntroOpen}` : t.data.mapIntro}
       </p>
       {/*
        * Своя горизонтальная прокрутка, а не вписывание по ширине: тот же
@@ -101,17 +110,21 @@ export function SchemaMap({
           {map.nodes.map((n) => (
             <g
               key={n.table}
-              className={`schema-node group-${n.group}`}
-              role="button"
-              tabIndex={0}
-              aria-label={t.data.mapOpenAria(n.table)}
-              onClick={() => onOpenTable(n.table)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onOpenTable(n.table);
-                }
-              }}
+              className={`schema-node group-${n.group}${open ? '' : ' is-static'}`}
+              {...(open
+                ? {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-label': t.data.mapOpenAria(n.table),
+                    onClick: () => open(n.table),
+                    onKeyDown: (e: ReactKeyboardEvent<SVGGElement>) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        open(n.table);
+                      }
+                    },
+                  }
+                : {})}
             >
               <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={10} />
               <text x={n.x + LAYOUT.padX} y={n.y + n.h / 2} dominantBaseline="central">

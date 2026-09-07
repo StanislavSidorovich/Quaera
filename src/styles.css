@@ -3960,6 +3960,15 @@ table.sample td.null {
   cursor: pointer;
 }
 
+/*
+ * Схема без раскрытия таблиц (брошюра `?overview`): узел не кнопка,
+ * и курсор-рука не должен обещать нажатие. Подсветку по наведению
+ * снимает отсутствие класса-кнопки у :hover ниже.
+ */
+.schema-node.is-static {
+  cursor: default;
+}
+
 .schema-node rect {
   fill: var(--bg-sunken);
   stroke: var(--group-color);
@@ -3972,7 +3981,7 @@ table.sample td.null {
   fill: var(--text);
 }
 
-.schema-node:hover rect {
+.schema-node:not(.is-static):hover rect {
   fill: color-mix(in srgb, var(--group-color) 14%, var(--bg-sunken));
 }
 
@@ -6829,6 +6838,84 @@ details.story-known > summary small {
   .overview-page .card[data-block='data'],
   .overview-page .card[data-block='limits'] {
     break-before: page;
+  }
+
+  /*
+   * Плотность печатной копии. Экранные отступы в 16px между абзацами
+   * рассчитаны на прокрутку, а на листе каждый лишний пиксель платится
+   * целым листом: блок `data` вылезал за лист на 78px и уводил последний
+   * абзац на отдельную страницу с двумя строками. Замер печатной
+   * раскладки — `.cache/print-measure.mjs` (лист 698x1026 px при полях
+   * в полдюйма), он воспроизводит число листов Page.printToPDF.
+   */
+  .overview-page .card p {
+    margin: 10px 0;
+  }
+
+  .overview-schema {
+    margin: 10px 0;
+  }
+
+  /*
+   * Легенда схемы в две колонки. На экране их включает `min-width: 1024px`,
+   * а лист A4 при полудюймовых полях — это 698px содержимого, то есть
+   * медиазапрос не срабатывает и четыре подписи выстраиваются в столбик
+   * на 174px. Ровно тот случай, ради которого правило «колонки считает
+   * ширина, а не устройство»: на листе места на две колонки хватает,
+   * и они экономят 90px — больше, чем блок `data` вылезал за лист.
+   */
+  .schema-map-legend {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 8px;
+  }
+
+  /*
+   * Диаграмма печатается в девять десятых экранного размера. Это не
+   * вкусовщина, а запас: блок `data` вылезал за лист на восемь пикселей,
+   * и подгонка «ровно в обрез» ломалась бы от любой правки абзаца выше.
+   * На бумаге подписи таблиц остаются читаемыми — печать идёт с плотностью
+   * принтера, а не с 96 dpi экрана.
+   */
+  .overview-schema svg.schema-map {
+    max-height: 320px;
+    width: auto;
+  }
+
+  .overview-schema figcaption {
+    margin-top: 4px;
+  }
+
+  /*
+   * Списки на листе — в две колонки, по тому же доводу, что и легенда
+   * схемы: экранная раскладка рассчитана на прокрутку, где столбик
+   * ничего не стоит, а на бумаге он платится листом. `max-width: 68ch`
+   * держит длину строки на экране и на листе становится вредным: справа
+   * от списка остаётся треть листа пустого места.
+   */
+  .overview-tracks {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 16px;
+  }
+
+  .overview-list {
+    max-width: none;
+    columns: 2;
+    column-gap: 28px;
+  }
+
+  .overview-list li,
+  .overview-tracks li {
+    break-inside: avoid;
+  }
+
+  /*
+   * Фигуру и таблицу лист рвать не должен: голая шапка таблицы внизу листа
+   * и подпись, оторванная от диаграммы, читаются как дефект печати.
+   */
+  .overview-page figure,
+  .overview-task-table {
+    break-inside: avoid;
   }
 
   .overview-page .muted,
