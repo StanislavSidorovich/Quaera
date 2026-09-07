@@ -18,8 +18,10 @@ import {
   type PushState,
 } from './push/client';
 import { introPage } from './content/intro';
+import { overviewPage } from './content/overview';
 import { DataScreen } from './ui/DataScreen';
 import { IntroPage } from './ui/IntroPage';
+import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { QueryLoop } from './ui/QueryLoop';
 import { Sandbox } from './ui/Sandbox';
@@ -256,6 +258,29 @@ function readIntroOpenOnBoot(): boolean {
 const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
 
 /**
+ * `?overview` — прямая ссылка на брошюру «Quaera in four pages».
+ *
+ * Тот же приём и та же причина, что у `?intro` и `?story`: адресат
+ * (преподаватель, решающий, отдавать ли ссылку группе) получает эту
+ * страницу вложением в письмо, а не находит её в меню — в меню её и нет
+ * намеренно, см. src/content/overview.ts.
+ */
+function readOverviewOpenOnBoot(): boolean {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('overview')) return false;
+    const on = params.get('overview') !== '0';
+    params.delete('overview');
+    const rest = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    return on;
+  } catch {
+    return false;
+  }
+}
+const OVERVIEW_OPEN_ON_BOOT = readOverviewOpenOnBoot();
+
+/**
  * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
  * валидации режима истории: два «сюжетных» входа рядом путали пользователя.
  * Это флаг видимости, а не удаление — код и экран линии живы; когда решится
@@ -382,6 +407,12 @@ type Screen =
    * этот — область тому, кто про продукт ещё не спрашивал.
    */
   | { name: 'intro' }
+  /**
+   * Брошюра для того, кто решает, стоит ли отдавать ссылку группе или тратить
+   * на неё вечер, — не занимающийся. Открывается только `?overview`
+   * и печатью, в боковое меню не поставлена (см. src/content/overview.ts).
+   */
+  | { name: 'overview' }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -546,6 +577,7 @@ function initialBoot(locale: Locale): Boot {
    * локали, ему не нужно — контента вне пака у него нет.
    */
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
+  if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);
     if (mission) {
@@ -562,6 +594,7 @@ function initialBoot(locale: Locale): Boot {
     case 'data':
     case 'about':
     case 'intro':
+    case 'overview':
     case 'account':
     case 'onboarding':
       return { screen: { name: stored.name }, ...empty };
@@ -1861,6 +1894,8 @@ export default function App() {
                          */
                         screen.name === 'intro'
                         ? introPage(locale).title
+                      : screen.name === 'overview'
+                        ? overviewPage(locale).title
                       : screen.name === 'account'
                         ? t.account.title
                       : screen.name === 'onboarding'
@@ -1909,6 +1944,13 @@ export default function App() {
                       ? t.app.name
                       : screen.name === 'intro'
                         ? t.app.name
+                      : screen.name === 'overview'
+                        ? /*
+                           * Пусто: заголовок уже говорит «Quaera in four
+                           * pages», и подпись тем же словом строкой ниже
+                           * читалась бы как опечатка, а не как бренд.
+                           */
+                          null
                       : screen.name === 'account'
                         ? t.app.name
                       : screen.name === 'onboarding'
@@ -2156,6 +2198,14 @@ export default function App() {
                  только когда её миссия разрешается в задания активного пака. */
               onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
               onOpenData={() => setScreen({ name: 'data' })}
+            />
+          )}
+
+          {screen.name === 'overview' && (
+            <OverviewPage
+              schema={schema}
+              onOpenApp={() => setScreen({ name: 'home' })}
+              onOpenIntro={() => setScreen({ name: 'intro' })}
             />
           )}
 

@@ -272,7 +272,7 @@ const EN: OverviewPageContent = {
       title: 'One company, thirteen tables, all of it connected',
       body: [
         'Every task runs on one dataset: Kaiyo Trading, a fictional distributor of FMCG and over the counter pharma in Japan. Thirteen tables, 159,740 rows, two and a half years of daily records, 144 outlets and 47 products.',
-        'It is internally consistent, and that is the expensive part. Sell out rolls up into sell in. Sell in minus sell out gives stock. Plans are built from actuals, prices carry promotions, forecasts are stored as snapshots so you can ask how wrong the forecast made last month turned out to be.',
+        'It is internally consistent, and that is the expensive part. Sell out rolls up into sell in. Sell in minus sell out gives stock. Plans are built from actuals, prices carry promotions, forecasts are stored as snapshots so you can ask how wrong the forecast for last month turned out to be.',
         'One consequence matters for learning. A brand losing distribution is the same event in all four tracks: you find it with a query, then with a dataframe, then as a DAX measure, then you write the sentence a sales director can act on. The four answers have to agree, because they come from the same rows.',
       ],
       figure: 'schema',
@@ -334,7 +334,7 @@ const EN: OverviewPageContent = {
     appLabel: 'Open the app',
     appNote: 'quaera.app, four tracks, no sign-up',
     introLabel: 'What is data analytics',
-    introNote: 'Three minutes for someone new to the profession, written without a single professional term',
+    introNote: 'Three minutes for someone new to the profession, written without a single professional term (quaera.app/?intro).',
     termsTitle: 'Terms, in full',
     terms: [
       { label: 'Free', text: 'for everyone, with no paid tier waiting behind it.' },

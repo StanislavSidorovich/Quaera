@@ -6498,3 +6498,354 @@ details.story-known > summary small {
     max-width: 78ch;
   }
 }
+
+/* =========================================================== overview.tsx */
+/*
+ * Брошюра «Quaera in four pages» — тот же адресат вне приложения, что
+ * у экскурса, но читает её человек, решающий, отдавать ли ссылку группе,
+ * а не занимающийся сам. Ширина колонки та же, что у `.intro-page`, по той
+ * же причине: картинки во всю ширину карточки.
+ */
+.overview-page {
+  max-width: 750px;
+}
+
+.overview-page .card {
+  margin-bottom: 16px;
+}
+
+/*
+ * Печатный заголовок. На экране заголовок экрана печатает топбар (h1 шапки,
+ * см. App.tsx) — здесь он был бы вторым тем же текстом. При печати топбар
+ * гасится целиком, и без своего заголовка распечатка осталась бы без имени.
+ */
+.overview-print-title {
+  display: none;
+}
+
+.overview-print-btn {
+  margin-bottom: 4px;
+}
+
+/* -------------------------------------------------------- полоса чисел */
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 16px;
+  margin: 4px 0 6px;
+}
+
+@media (min-width: 560px) {
+  .overview-stats {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.overview-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.15;
+}
+
+.overview-stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+/* --------------------------------------------------------- полоса дней */
+/*
+ * Занятие, восемь пустых клеток, момент, когда навык понадобился. Число
+ * пустых клеток — часть высказывания (см. src/content/overview.ts) и здесь
+ * не меняется: раскладка только красит клетки по `kind`.
+ */
+.overview-gap-row {
+  display: flex;
+  gap: 5px;
+  margin: 10px 0 6px;
+}
+
+.overview-gap-cell {
+  flex: 1;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.overview-gap-cell.is-lesson {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.overview-gap-cell.is-later {
+  background: var(--track-sql);
+  border-color: var(--track-sql);
+}
+
+.overview-gap-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+/* ------------------------------------------------------------- треки */
+.overview-tracks {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.overview-tracks li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--bg-sunken);
+}
+
+.overview-track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.overview-track-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.overview-tracks p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------- задание */
+.overview-task {
+  margin: 10px 0 4px;
+}
+
+.overview-task-prompt {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+/*
+ * Настоящая таблица результата, узкая и по правому краю у чисел — тот же
+ * приём, что у `.intro-decomp`: скринридер обязан прочитать пару «месяц,
+ * число точек», а не наткнуться на сетку из div.
+ */
+.overview-task-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.overview-task-table th,
+.overview-task-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 5px 8px;
+  text-align: right;
+}
+
+.overview-task-table th:first-child,
+.overview-task-table td:first-child {
+  text-align: left;
+}
+
+.overview-task-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.overview-task-ellipsis td {
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 12px;
+  border-bottom: none;
+}
+
+.overview-task .feedback {
+  margin: 10px 0;
+}
+
+.overview-task figcaption {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+/* -------------------------------------------------------------- схема */
+.overview-schema figcaption {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* --------------------------------------------------- списки и условия */
+.overview-list {
+  margin: 10px 0;
+  padding-left: 20px;
+  max-width: 68ch;
+}
+
+.overview-list li {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+/* «Чего здесь нет» — приглушённым цветом, а не тем же весом, что «что покрыто»: */
+.overview-omits {
+  color: var(--text-dim);
+}
+
+.overview-terms-title {
+  font-size: 13px;
+  margin: 16px 0 4px;
+  color: var(--text-dim);
+}
+
+.overview-author {
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+/* =============================================================== печать */
+/*
+ * Единственный экран приложения с кнопкой печати, поэтому все print-правила
+ * лежат здесь одним блоком, а не разбросаны по местам, которые они трогают.
+ *
+ * **Топбар и боковое меню гасятся целиком.** `.overview-print-title` берёт
+ * на себя работу заголовка топбара; меню разделов распечатке не нужно —
+ * это лист для того, кому её переслали, а не для занимающегося.
+ *
+ * **Разбивка на четыре листа — атрибутом `data-block`, а не догадкой
+ * браузера.** `break-before: page` стоит перед блоками `what`, `data`
+ * и `limits`: лист 1 — проблема; лист 2 — что это и как проверяется;
+ * лист 3 — один датасет; лист 4 — границы и как отдать.
+ *
+ * **Тёмная тема на бумаге не нужна.** Распечатка всегда светлая и чёрным
+ * по белому, независимо от темы, в которой её печатают, — читатель PDF-файла
+ * тему приложения не выбирал и не должен получить тёмный фон на бумаге.
+ */
+@media print {
+  .sidebar,
+  .topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body,
+  .app,
+  .shell,
+  .content {
+    background: #fff;
+  }
+
+  .app {
+    display: block;
+    max-width: none;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .overview-print-title {
+    display: block;
+    font-size: 22px;
+    margin: 0 0 4px;
+    color: #000;
+  }
+
+  .overview-page,
+  .overview-page .card {
+    background: #fff;
+    color: #000;
+  }
+
+  .overview-page .card {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0;
+    padding: 0 0 14px;
+    margin-bottom: 14px;
+  }
+
+  .overview-page .card[data-block='closing'] {
+    border-bottom: none;
+  }
+
+  .overview-page .card[data-block='what'],
+  .overview-page .card[data-block='data'],
+  .overview-page .card[data-block='limits'] {
+    break-before: page;
+  }
+
+  .overview-page .muted,
+  .overview-page figcaption,
+  .overview-stat-label,
+  .overview-track-count,
+  .overview-tracks p,
+  .overview-list.overview-omits {
+    color: #555;
+  }
+
+  .overview-stat-value {
+    color: #000;
+  }
+
+  .overview-task pre.sql-block {
+    white-space: pre-wrap;
+    background: #f4f4f4;
+    color: #000;
+    border-color: #ccc;
+  }
+
+  .overview-gap-cell,
+  .overview-tracks li {
+    background: #f4f4f4;
+    border-color: #ccc;
+  }
+
+  .overview-gap-cell.is-lesson,
+  .overview-gap-cell.is-later {
+    background: #999;
+    border-color: #999;
+  }
+
+  .feedback.ok,
+  .feedback.warn {
+    background: none;
+    border: 1px solid #ccc;
+  }
+
+  .intro-door-label {
+    color: #000;
+  }
+
+  .intro-door-note {
+    color: #555;
+  }
+}
