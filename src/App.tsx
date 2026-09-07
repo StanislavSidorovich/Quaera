@@ -457,6 +457,12 @@ function backTarget(current: Screen, locale: Locale): Screen {
     if (step?.kind === 'task') {
       const lessonIndex = lessonStepIndex(current.queue, step.task.skill);
       if (lessonIndex >= 0 && lessonIndex < current.index) return { ...current, index: lessonIndex };
+      // Занятие без карточки в очереди — обычное дело для повторения:
+      // приём уже показывали в прошлый раз, и в эту очередь его не кладут.
+      // «Назад» тогда ведёт на карточку приёма из справочника, а не на
+      // главную: выход на главную стоил бы всего занятия (см. backTarget
+      // для session выше и разбор в ROADMAP, «Кнопка "назад"...»).
+      return { name: 'lesson', skill: step.task.skill };
     }
   }
   return { name: 'home' };
