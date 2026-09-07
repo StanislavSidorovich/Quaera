@@ -87,8 +87,8 @@
       "title": "Row multiplication from a join",
       "why": "A join doesn't add facts, but it can count the same fact several times over. Totals blow up by a multiple, and the query looks correct the whole time, with no sign anything is wrong.",
       "form": "One row of the left table must match exactly one\nrow of the right table. Otherwise the measures duplicate.\n\nCounts before and after, as two subqueries in one row:\n\nSELECT (SELECT COUNT(*) FROM fact) AS rows_before,\n       (SELECT COUNT(*) FROM fact JOIN lookup ...)\n         AS rows_after",
-      "reads": "The correct version: product_id is unique in the dimension table, every sales row finds exactly one match, the row count doesn't change.",
-      "wrongWhy": "A brand can have up to eleven promotions, and every sales row matches every one of them. Revenue grows by exactly a factor of eleven. A suspiciously round integer multiplier is close to a sure sign that a join duplicated facts.",
+      "reads": "The correct version: product_id is unique in the dimension table, every sales row finds exactly one match. The rows column is the counter from the self-check: Aqualis has 24,309 sales rows, and the same 24,309 come out of the join.",
+      "wrongWhy": "Every sales row matched every promotion of its own brand, and the rows column shows it directly: 24,309 rows for Aqualis became 218,781. Each brand has its own multiplier, equal to its number of promotions: nine for Aqualis, eleven for Fruvia. Revenue grew by exactly the same factor. A whole-number multiplier that is the same for the row count and for the total is close to a sure sign that a join duplicated facts.",
       "selfCheck": "Compare COUNT(*) before and after adding a JOIN. Changed, and you didn't plan for it: the measures can no longer be trusted as-is."
     },
     {

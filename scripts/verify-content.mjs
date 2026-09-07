@@ -1085,6 +1085,60 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   else console.log(`  ok   sql-013: акций на бренд — ${lo}–${hi} (совпадает с текстом задания)`);
 }
 
+// Карточка sql-fanout цитирует числа так же, как их цитируют задания, а до
+// 2026-09-07 её никто не сверял: в ней стояло «выручка вырастет ровно
+// в одиннадцать раз», хотя множитель равен числу акций бренда и он свой
+// у каждого — от девяти до одиннадцати. Соседний sql-013 говорил «по 9-11
+// акций» и был под гейтом, карточка на том же экране говорила «одиннадцать»
+// и под гейтом не была. Отсюда проверка: числа берутся из базы, форматируются
+// обеими локалями и ищутся в прозе карточки. Гейт падает и тогда, когда
+// поехали данные, и тогда, когда кто-то перепишет абзац мимо чисел.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+        WHERE p.brand = 'Aqualis') AS before_join,
+      (SELECT COUNT(*) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id
+         JOIN dim_promo m ON m.brand = p.brand WHERE p.brand = 'Aqualis') AS after_join,
+      (SELECT COUNT(*) FROM dim_promo WHERE brand = 'Aqualis') AS promo_aqualis,
+      (SELECT COUNT(*) FROM dim_promo WHERE brand = 'Fruvia') AS promo_fruvia`);
+  const [beforeJoin, afterJoin, promoAqualis, promoFruvia] = r.rows[0];
+
+  if (afterJoin !== beforeJoin * promoAqualis) {
+    fail('sql-fanout', `множитель размножения ${afterJoin / beforeJoin} не равен числу акций «Aqualis» (${promoAqualis}) — карточка объясняет механизм, которого в данных нет`);
+  } else if (promoAqualis === promoFruvia) {
+    fail('sql-fanout', `у «Aqualis» и «Fruvia» одинаково акций (${promoAqualis}) — карточка называет их как пример разных множителей`);
+  } else {
+    const cards = {
+      ru: JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-lessons.json'), 'utf8')),
+      en: JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-lessons.en.json'), 'utf8')),
+    };
+    // Разряды разделяет пробел в русском и запятая в английском — так числа
+    // набраны в остальной прозе паков, и так их увидит читатель.
+    const groupBy3 = (n, sep) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+    const quoted = {
+      ru: [beforeJoin, afterJoin].map((n) => groupBy3(n, ' ')),
+      en: [beforeJoin, afterJoin].map((n) => groupBy3(n, ',')),
+    };
+    let quotedOk = true;
+    for (const [locale, doc] of Object.entries(cards)) {
+      const card = doc.lessons.find((l) => l.skill === 'sql-fanout');
+      if (!card) {
+        fail('sql-fanout', `карточки нет в sql-lessons${locale === 'en' ? '.en' : ''}.json`);
+        quotedOk = false;
+        continue;
+      }
+      const prose = `${card.reads} ${card.wrongWhy}`;
+      for (const n of quoted[locale]) {
+        if (prose.includes(n)) continue;
+        fail('sql-fanout', `в прозе карточки (${locale}) нет числа ${n} — счётчик строк назван не тем числом или абзац переписан мимо него`);
+        quotedOk = false;
+      }
+    }
+    if (quotedOk) console.log(`  ok   sql-fanout: «Aqualis» ${beforeJoin} строк до соединения и ${afterJoin} после — ровно ${promoAqualis} акций, у «Fruvia» ${promoFruvia}`);
+  }
+}
+
 // sql-023 цитирует конкретные цифры в тексте задания. Если данные поехали, текст соврёт.
 {
   const r = runSql(`

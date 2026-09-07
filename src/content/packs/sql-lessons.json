@@ -107,10 +107,10 @@
       "title": "Размножение строк соединением",
       "why": "Соединение не добавляет фактов, но может посчитать один и тот же факт несколько раз. Суммы вырастают в разы, при этом запрос выглядит правильным и не выдаёт никаких признаков ошибки.",
       "form": "На одну строку левой таблицы должна приходиться\nровно одна строка правой. Иначе меры задвоятся.\n\nСчётчик до и после — двумя подзапросами в одной строке:\n\nSELECT (SELECT COUNT(*) FROM факт) AS rows_before,\n       (SELECT COUNT(*) FROM факт JOIN справочник ...)\n         AS rows_after",
-      "example": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand",
-      "reads": "Правильный вариант: product_id уникален в справочнике, каждая строка продаж находит ровно одну пару, число строк не меняется.",
-      "wrong": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_promo   m ON m.brand = p.brand\nGROUP BY p.brand",
-      "wrongWhy": "У бренда до одиннадцати акций, и каждая строка продаж совпадёт с каждой из них. Выручка вырастет ровно в одиннадцать раз. Ровный целый коэффициент — почти верный признак того, что соединение размножило факты.",
+      "example": "SELECT p.brand,\n       ROUND(SUM(f.revenue)) AS revenue,\n       COUNT(*) AS rows\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand",
+      "reads": "Правильный вариант: product_id уникален в справочнике, каждая строка продаж находит ровно одну пару. Колонка rows — тот самый счётчик из самопроверки: 24 309 строк продаж «Aqualis» дали после соединения те же 24 309.",
+      "wrong": "SELECT p.brand,\n       ROUND(SUM(f.revenue)) AS revenue,\n       COUNT(*) AS rows\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_promo   m ON m.brand = p.brand\nGROUP BY p.brand",
+      "wrongWhy": "Каждая строка продаж совпала с каждой акцией своего бренда, и в колонке rows это видно прямо: 24 309 строк «Aqualis» превратились в 218 781. Множитель у каждого бренда свой и равен числу его акций — девять у «Aqualis», одиннадцать у «Fruvia». Ровно во столько же раз выросла и выручка: целый коэффициент, одинаковый для числа строк и для суммы, почти верный признак того, что соединение размножило факты.",
       "selfCheck": "Сравните COUNT(*) до и после добавления JOIN. Изменилось, а вы этого не планировали — считать меры уже нельзя."
     },
     {
