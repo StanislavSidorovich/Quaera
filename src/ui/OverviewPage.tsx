@@ -2,7 +2,8 @@ import { Fragment } from 'react';
 import { overviewPage } from '../content/overview';
 import type { OverviewBlock, OverviewTaskFigure } from '../content/overview';
 import type { SchemaDoc } from '../engine/types';
-import { useI18n } from '../i18n/context';
+import { I18nContext, useI18n } from '../i18n/context';
+import { en } from '../i18n/en';
 import { SchemaMap } from './SchemaMap';
 
 /**
@@ -265,13 +266,22 @@ function TaskFigure({ task }: { task: OverviewTaskFigure }) {
  *
  * `onOpenTable` — заглушка: карточка таблицы, которую SchemaMap открывает
  * по клику, здесь не нужна, брошюра показывает форму, а не читает столбцы.
+ *
+ * `SchemaMap` сам читает язык из `useI18n()`, а брошюра обязана оставаться
+ * английской независимо от переключателя в шапке (тот виден на этой же
+ * странице) — иначе подписи схемы («FACTS», легенда) переключаются на
+ * русский, а весь текст вокруг них из `overview.ts` остаётся английским.
+ * Значение контекста подменено локально, без побочных эффектов
+ * `I18nProvider` (`document.documentElement.lang` и `<title>` не трогает).
  */
 function SchemaFigure({ schema, caption }: { schema: SchemaDoc | null; caption: string }) {
   if (!schema) return null;
   return (
-    <figure className="overview-schema">
-      <SchemaMap doc={schema} onOpenTable={() => undefined} />
-      <figcaption>{caption}</figcaption>
-    </figure>
+    <I18nContext.Provider value={{ locale: 'en', t: en, setLocale: () => undefined }}>
+      <figure className="overview-schema">
+        <SchemaMap doc={schema} onOpenTable={() => undefined} />
+        <figcaption>{caption}</figcaption>
+      </figure>
+    </I18nContext.Provider>
   );
 }

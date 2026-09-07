@@ -23,7 +23,7 @@ function initialLocale(): Locale {
   return typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 }
 
-const I18nContext = createContext<{ locale: Locale; t: Strings; setLocale: (l: Locale) => void } | null>(null);
+export const I18nContext = createContext<{ locale: Locale; t: Strings; setLocale: (l: Locale) => void } | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
