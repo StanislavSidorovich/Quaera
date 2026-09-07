@@ -73,6 +73,17 @@ export function OverviewPage({
           </button>
         </div>
 
+        {/*
+         * Только для печати: на экране обе двери сверху уже кликабельны,
+         * а на бумаге живой ссылки нет вовсе. Тот же адрес, что у appNote
+         * (?overview, а не главная) — читатель распечатки получает живую
+         * версию того же листа, а не другую страницу.
+         */}
+        <p className="overview-print-qr">
+          <img src="/overview-qr.svg" alt="" width={96} height={96} />
+          <span>{page.closing.qrCaption}</span>
+        </p>
+
         <h3 className="overview-terms-title">{page.closing.termsTitle}</h3>
         <ul className="overview-list">
           {page.closing.terms.map((item, i) => (

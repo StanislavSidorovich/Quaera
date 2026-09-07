@@ -6527,6 +6527,15 @@ details.story-known > summary small {
   margin-bottom: 4px;
 }
 
+/*
+ * QR на распечатке. На экране обе двери из .intro-doors уже кликабельны —
+ * код нужен только тому, кто держит бумагу, поэтому на экране элемент
+ * убран целиком, а не просто уменьшен.
+ */
+.overview-print-qr {
+  display: none;
+}
+
 /* -------------------------------------------------------- полоса чисел */
 .overview-stats {
   display: grid;
@@ -6777,6 +6786,25 @@ details.story-known > summary small {
     font-size: 22px;
     margin: 0 0 4px;
     color: #000;
+  }
+
+  .overview-print-qr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .overview-print-qr img {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+
+  .overview-print-qr span {
+    font-size: 12px;
+    color: #555;
+    max-width: 30ch;
   }
 
   .overview-page,

@@ -138,6 +138,7 @@ export interface OverviewPageContent {
     appNote: string;
     introLabel: string;
     introNote: string;
+    qrCaption: string;
     termsTitle: string;
     terms: OverviewListItem[];
     author: string;
@@ -335,6 +336,7 @@ const EN: OverviewPageContent = {
     appNote: 'quaera.app, four tracks, no sign-up',
     introLabel: 'What is data analytics',
     introNote: 'Three minutes for someone new to the profession, written without a single professional term (quaera.app/?intro).',
+    qrCaption: 'Scan to open this page, live: quaera.app/?overview',
     termsTitle: 'Terms, in full',
     terms: [
       { label: 'Free', text: 'for everyone, with no paid tier waiting behind it.' },
