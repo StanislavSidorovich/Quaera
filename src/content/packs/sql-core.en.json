@@ -661,6 +661,18 @@
       "explain": "INNER JOIN shows only the intersection: a dim_customer row for which fact_sellout has at least one matching sale. Distributors serve outlets but don't sell to the end buyer themselves, so they have zero rows in the sales fact, and they silently drop out of the report. This is exactly the mechanism that will later call for a LEFT JOIN (the task about the coverage map for a new product): if a report needs to show \"every customer, even those with no sales\", INNER JOIN is structurally the wrong tool for that, not because anything is broken, but because it's designed as an intersection, not a union."
     },
     {
+      "id": "sql-086",
+      "title": "The new SKU across sales channels",
+      "brief": "The new \"Vitanor Forte x30\" was meant to be a pharmacy product. The brand manager wants to confirm it worked out that way: where it sells and where not a single unit moved. A channel with no sales is as much of an answer as a channel with sales, and it must not drop out of the report.",
+      "goal": "Complete the query so that it returns all five sales channels with the units of the new SKU in each, showing 0 where there were no sales.",
+      "hints": [
+        "Build from the lookup: every channel has to survive, not only the ones where the SKU turned up.",
+        "The filter on the product is a condition on the right table. In WHERE it cuts out the channels with no sales of the new SKU, which are exactly the ones the report is for.",
+        "SUM over an empty set returns NULL, not 0. COALESCE turns it into a zero."
+      ],
+      "explain": "The three decisions in this query are the whole technique. First: build from the table whose rows all have to survive, the lookup rather than the fact. Second: put the condition on the right table in ON. In WHERE it is checked after the join, where unmatched rows hold NULL, and the LEFT JOIN silently turns into an INNER one. Third: SUM over an empty set gives NULL rather than 0, and in a report that reads as a hole, not as a zero. The answer here reads at a glance: 756 units in pharmacies and zero in the other four channels. The SKU did stay a pharmacy product, and the only reason that can be seen is that four zero rows did not disappear."
+    },
+    {
       "id": "sql-014",
       "title": "Where did the new product reach",
       "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report; it's built specifically for them, so they must not disappear.",
