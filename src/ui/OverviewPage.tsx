@@ -7,7 +7,7 @@ import { en } from '../i18n/en';
 import { SchemaMap } from './SchemaMap';
 
 /**
- * «Quaera in four pages» — брошюра для того, кто решает, отдавать ли ссылку
+ * «Quaera at a glance» — брошюра для того, кто решает, отдавать ли ссылку
  * группе или тратить на неё вечер, а не для занимающегося.
  *
  * Открывается только прямой ссылкой (`?overview`) или печатью того, кому её
@@ -15,15 +15,22 @@ import { SchemaMap } from './SchemaMap';
  * Раскладка и печать — код; вся проза, включая подписи внутри картинок и то,
  * какие числа настоящие, живёт в модуле контента и разобрана там.
  *
- * **Печатный заголовок дублирует заголовок шапки приложения.** На экране его
- * не видно (`.overview-print-title` скрыт по умолчанию): при печати `.topbar`
- * и `.sidebar` гасятся целиком (см. `@media print` в styles.css), и без своего
- * заголовка распечатка осталась бы без имени вовсе.
+ * **Шапка распечатки видна только на бумаге.** На экране имя приложения уже
+ * стоит в топбаре и в шапке бокового меню, и третья копия читалась бы как
+ * задвоение; при печати `.topbar` и `.sidebar` гасятся целиком, и без своей
+ * шапки распечатка осталась бы без имени и без знака вовсе.
  *
  * **Разбивка на печатные листы — атрибутом `data-block`, а не догадкой
- * браузера.** `break-before: page` в CSS стоит перед блоками `what`, `data`
- * и `limits` — это и есть четыре листа из названия: проблема; что это плюс
- * как проверяется; один датасет; границы плюс как отдать.
+ * браузера.** `break-before: page` в CSS стоит перед блоками `task`, `limits`,
+ * разделителем `.overview-divider` и блоком `gap`. Отсюда пять листов:
+ * 1 — что это плюс четыре трека, 2 — как проверяется задание, 3 — границы
+ * и как отдать группе (на этом самодостаточная часть кончается), 4 — датасет
+ * и схема, 5 — зачем это нужно плюс условия.
+ *
+ * **Адрес сайта стоит в надзаголовке каждого раздела и только на печати.**
+ * Читатель PDF получает лист, на котором адрес есть, какой бы лист ему
+ * ни переслали; на экране он был бы шестой копией того, что уже в адресной
+ * строке.
  */
 export function OverviewPage({
   schema,
@@ -39,7 +46,13 @@ export function OverviewPage({
 
   return (
     <div className="settings-column overview-page">
-      <h1 className="overview-print-title">{page.title}</h1>
+      <header className="overview-masthead">
+        <BrandMark />
+        <div>
+          <span className="overview-masthead-word">{page.masthead.word}</span>
+          <span className="overview-masthead-tagline">{page.masthead.tagline}</span>
+        </div>
+      </header>
 
       <p className="intro-lead">{page.lead}</p>
 
@@ -50,58 +63,104 @@ export function OverviewPage({
       <StatsRow stats={page.stats} />
 
       {page.blocks.map((block) => (
-        <section className="card" data-block={block.id} key={block.id}>
-          <h2>{block.title}</h2>
-          <OverviewBlockBody block={block} page={page} schema={schema} />
-        </section>
+        <Fragment key={block.id}>
+          {block.id === 'data' && (
+            <div className="overview-divider">
+              <h2>{page.dividerTitle}</h2>
+              <p>{page.dividerNote}</p>
+            </div>
+          )}
+
+          <section className="card" data-block={block.id}>
+            <p className="overview-kicker">
+              <span className="overview-kicker-num">{block.kicker}</span>
+              <span className="overview-kicker-url">{page.siteUrl}</span>
+            </p>
+            <h2 className="overview-h2">{block.title}</h2>
+            <OverviewBlockBody block={block} page={page} schema={schema} />
+
+            {block.id === 'closing' && (
+              <>
+                {/*
+                 * На экране двери — единственный путь отсюда в приложение
+                 * и в экскурс. На бумаге они дублируют QR ниже и стоили
+                 * лишних 119px печатного листа, поэтому `no-print`.
+                 */}
+                <div className="intro-doors no-print">
+                  <button type="button" className="link-row intro-door" onClick={onOpenApp}>
+                    <span className="intro-door-label">{page.closing.appLabel} →</span>
+                    <span className="intro-door-note">{page.closing.appNote}</span>
+                  </button>
+                  <button type="button" className="link-row intro-door" onClick={onOpenIntro}>
+                    <span className="intro-door-label">{page.closing.introLabel} →</span>
+                    <span className="intro-door-note">{page.closing.introNote}</span>
+                  </button>
+                </div>
+
+                {/*
+                 * Только для печати: тот же адрес, что у appNote (?overview,
+                 * а не главная) — читатель распечатки получает живую версию
+                 * того же листа, а не другую страницу.
+                 */}
+                <p className="overview-print-qr">
+                  <img src="/overview-qr.svg" alt="" width={96} height={96} />
+                  <span>{page.closing.qrCaption}</span>
+                </p>
+              </>
+            )}
+
+            {/*
+             * Условия и подпись автора стоят в конце последнего раздела,
+             * а не отдельной карточкой: на самодостаточных листах 1-3 они
+             * заняли бы место, которое там дороже, а тому, кто дочитал
+             * до конца, они нужны в одном месте.
+             */}
+            {block.id === 'gap' && (
+              <>
+                <h3 className="overview-terms-title">{page.closing.termsTitle}</h3>
+                <ul className="overview-list">
+                  {page.closing.terms.map((item, i) => (
+                    <li key={i}>
+                      {item.label ? (
+                        <>
+                          <b>{item.label}</b> — {item.text}
+                        </>
+                      ) : (
+                        item.text
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="muted overview-author">{page.closing.author}</p>
+              </>
+            )}
+          </section>
+        </Fragment>
       ))}
-
-      <section className="card" data-block="closing">
-        <h2>{page.closing.title}</h2>
-        {page.closing.body.map((text, i) => (
-          <p key={i}>{text}</p>
-        ))}
-
-        <div className="intro-doors">
-          <button type="button" className="link-row intro-door" onClick={onOpenApp}>
-            <span className="intro-door-label">{page.closing.appLabel} →</span>
-            <span className="intro-door-note">{page.closing.appNote}</span>
-          </button>
-          <button type="button" className="link-row intro-door" onClick={onOpenIntro}>
-            <span className="intro-door-label">{page.closing.introLabel} →</span>
-            <span className="intro-door-note">{page.closing.introNote}</span>
-          </button>
-        </div>
-
-        {/*
-         * Только для печати: на экране обе двери сверху уже кликабельны,
-         * а на бумаге живой ссылки нет вовсе. Тот же адрес, что у appNote
-         * (?overview, а не главная) — читатель распечатки получает живую
-         * версию того же листа, а не другую страницу.
-         */}
-        <p className="overview-print-qr">
-          <img src="/overview-qr.svg" alt="" width={96} height={96} />
-          <span>{page.closing.qrCaption}</span>
-        </p>
-
-        <h3 className="overview-terms-title">{page.closing.termsTitle}</h3>
-        <ul className="overview-list">
-          {page.closing.terms.map((item, i) => (
-            <li key={i}>
-              {item.label ? (
-                <>
-                  <b>{item.label}</b> — {item.text}
-                </>
-              ) : (
-                item.text
-              )}
-            </li>
-          ))}
-        </ul>
-
-        <p className="muted overview-author">{page.closing.author}</p>
-      </section>
     </div>
+  );
+}
+
+/**
+ * Знак приложения: три растущих столбца и каретка запроса под ними. Та же
+ * геометрия и те же цвета, что у `drawMark` в scripts/gen-icons.mjs, но
+ * разметкой, а не картинкой: PNG-иконка нарисована на тёмном фоне приложения
+ * и на белом листе печаталась бы тёмным квадратом.
+ */
+function BrandMark() {
+  const bars = [
+    { x: 6, y: 44, h: 30, fill: '#38bdf8' },
+    { x: 36.5, y: 26, h: 48, fill: '#818cf8' },
+    { x: 67, y: 8, h: 66, fill: '#4ade80' },
+  ];
+  return (
+    <svg className="overview-mark" viewBox="0 0 100 100" width="40" height="40" aria-hidden focusable="false">
+      {bars.map((bar) => (
+        <rect key={bar.x} x={bar.x} y={bar.y} width="19" height={bar.h} rx="3" fill={bar.fill} />
+      ))}
+      <rect x="6" y="83" width="50" height="6" rx="3" fill="#94a3b8" />
+      <rect x="62" y="83" width="20" height="6" rx="3" fill="#cbd5e1" />
+    </svg>
   );
 }
 

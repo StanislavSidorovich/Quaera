@@ -1,8 +1,8 @@
 import type { Locale } from '../i18n/context';
 
 /**
- * «Quaera in four pages» — брошюра о тренажёре для того, кто решает,
- * стоит ли на него тратить вечер или отдавать ему группу.
+ * «Quaera at a glance» — брошюра о тренажёре для того, кто решает, стоит ли
+ * на него тратить вечер или отдавать ему группу.
  *
  * **Адресат назван прямо, и он не занимающийся.** Первый конкретный —
  * преподаватель восьмичасового крэш-курса по SQL, которому надо за три
@@ -15,13 +15,26 @@ import type { Locale } from '../i18n/context';
  * которого никто не давал; привязку к конкретному курсу делает личное
  * письмо, а страница остаётся годной для всех троих.
  *
+ * **Три листа сути, дальше подробности — и это структура, а не порядок
+ * блоков.** Название «Quaera in four pages» обещало число листов, которого
+ * вёрстка не давала: содержимого 4657px при ёмкости листа 1026px, четыре
+ * листа недостижимы без снятия 13% текста. Обещание заменено на другое,
+ * выполнимое, и нигде не названо числом листов: на экране листов нет
+ * вовсе, а текст один и тот же. **Листы 1-3 самодостаточны** (что это,
+ * как проверяется задание, чего здесь нет и как отдать группе),
+ * листы 4-5 отделены
+ * заголовком «In more detail» и нужны тому, кто решил разбираться.
+ * Отсюда и порядок: «почему это вообще нужно» уехало в конец, потому
+ * что забывание после интенсива преподаватель знает лучше меня, а вот
+ * чем проверяется ответ — не знает.
+ *
  * **Четыре правила письма, из которых собран текст.**
  *
  * 1. **Границы стоят отдельным блоком и не смягчены.** Блок «What is here,
- *    and what is not» — не оговорка внизу, а пятый разворот. Довод не
- *    в скромности: преподаватель, увидевший лендинг без границ, дальше
- *    не читает, а отказ по причине, названной нами самими, дешевле отказа
- *    по причине, найденной им.
+ *    and what is not» — не оговорка внизу, а третий лист, то есть внутри
+ *    самодостаточной части. Довод не в скромности: преподаватель, увидевший
+ *    лендинг без границ, дальше не читает, а отказ по причине, названной
+ *    нами самими, дешевле отказа по причине, найденной им.
  *
  * 2. **Числа только снятые запросом.** 287 заданий и 72 навыка посчитаны
  *    по пакам, 13 таблиц и 159 740 строк — `npm run count:rows`, падение
@@ -112,6 +125,12 @@ export interface OverviewTaskFigure {
 
 export interface OverviewBlock {
   id: string;
+  /**
+   * Номер и имя раздела в надзаголовке. Номер — часть содержания, а не
+   * оформления: он говорит читателю распечатки, сколько разделов всего
+   * и где он сейчас, поэтому живёт здесь, а не считается в компоненте.
+   */
+  kicker: string;
   title: string;
   body: string[];
   figure?: OverviewFigure;
@@ -122,18 +141,24 @@ export interface OverviewBlock {
 }
 
 export interface OverviewPageContent {
+  /** Заголовок экрана в топбаре приложения. На печати его нет. */
   title: string;
+  /** Шапка распечатки: знак, имя и одна фраза о том, что это. */
+  masthead: { word: string; tagline: string };
   lead: string;
   printLabel: string;
+  /** Адрес в надзаголовке каждого раздела. Виден только на печати. */
+  siteUrl: string;
   stats: OverviewStat[];
   gap: OverviewGapFigure;
   tracks: OverviewTrack[];
   task: OverviewTaskFigure;
   schemaCaption: string;
+  /** Заголовок-разделитель перед подробностями: конец самодостаточной части. */
+  dividerTitle: string;
+  dividerNote: string;
   blocks: OverviewBlock[];
   closing: {
-    title: string;
-    body: string[];
     appLabel: string;
     appNote: string;
     introLabel: string;
@@ -146,9 +171,16 @@ export interface OverviewPageContent {
 }
 
 const EN: OverviewPageContent = {
-  title: 'Quaera in four pages',
-  lead: 'What it is, how one task works, what data sits underneath, and what it deliberately does not do. Written for someone deciding whether to spend an evening on it or hand it to a group.',
+  title: 'Quaera at a glance',
+
+  masthead: {
+    word: 'Quaera',
+    tagline: 'A browser trainer for the working part of data analysis. Nothing to install, no account, offline after the first load.',
+  },
+
+  lead: 'Written for someone deciding whether to spend an evening on it or hand it to a group. Everything that decision needs comes first; the detail waits at the end.',
   printLabel: 'Print or save as PDF',
+  siteUrl: 'quaera.app',
 
   stats: [
     { value: '287', label: 'tasks' },
@@ -230,19 +262,13 @@ const EN: OverviewPageContent = {
 
   schemaCaption: 'The schema as the app draws it, with the row count of every table read from the database rather than typed in by hand.',
 
+  dividerTitle: 'In more detail',
+  dividerNote: 'Everything needed to decide is above. What follows is for a reader who wants to know what the data is and why the app exists at all.',
+
   blocks: [
     {
-      id: 'gap',
-      title: 'Four hours on a Saturday, and then Wednesday',
-      body: [
-        'A course does its job in the room. Someone explains SELECT, WHERE and GROUP BY, every step follows from the last one, and by the final exercise it all makes sense. None of that is wrong.',
-        'The trouble starts on the way home. The next time SQL comes up may be a week later, and the part that has to be recalled without help is exactly the part nobody practiced: which table to start from, whether that join quietly multiplies rows, why the total came out larger than the sum of its parts.',
-        'Watching a query being written and writing one yourself are two different skills, and only the second one shows up in an interview.',
-      ],
-      figure: 'gap',
-    },
-    {
       id: 'what',
+      kicker: '01',
       title: 'Open a link, write a query',
       body: [
         'Quaera is a browser app for practicing the working part of data analysis: SQL, pandas, the data model behind a BI report, and the judgment that turns a number into an answer.',
@@ -257,19 +283,74 @@ const EN: OverviewPageContent = {
     },
     {
       id: 'task',
+      kicker: '02',
       title: 'Checked by running it, not by matching text',
       body: [
         'A task is a question against the distributor database. You write the query in an editor, with no multiple choice underneath.',
         'The answer is compared by what it returns. Any query producing the right result is accepted, whether or not it looks like the one I would have written.',
-        'When the result does not match, the app does not say wrong. The shape of the difference usually names the cause, and that is what comes back: every group multiplied by the same whole number is a join fanning out rows, groups shifted by different amounts is a period filter that went missing, the same rows in a different order is a missing ORDER BY, a column that exists in the schema but not in the tables you named is said in exactly those words.',
+        'When the result does not match, the app does not say wrong. The shape of the difference names the cause, and that is what comes back: every group multiplied by the same whole number is a join fanning out rows, groups shifted by different amounts is a period filter that went missing, the same rows in a different order is a missing ORDER BY.',
       ],
       figure: 'task',
       after: [
-        'This is the part a person practicing alone cannot get from a book, and the part a teacher has no time to do thirty times on a Saturday afternoon.',
+        'This is the part a person practicing alone cannot get from a book, and the part a teacher has no time to do thirty times in an afternoon.',
+      ],
+    },
+    {
+      id: 'limits',
+      kicker: '03',
+      title: 'What is here, and what is not',
+      body: ['Covered, with tasks that run and are checked:'],
+      list: [
+        {
+          label: 'Querying',
+          text: 'SELECT, WHERE, GROUP BY, HAVING, joins of every kind, subqueries, CTEs, window functions, and the arithmetic of shares and growth on top of them.',
+        },
+        {
+          label: 'The same work in pandas',
+          text: 'filtering, grouping, merges, time series, each technique next to the SQL it corresponds to.',
+        },
+        {
+          label: 'The model behind a report',
+          text: 'star schema, grain, keys, filter context, DAX measures checked as text.',
+        },
+        {
+          label: 'Judgment',
+          text: 'what the question really was, which metric answers it, and how to say the finding in one sentence.',
+        },
+      ],
+      after: ['Not here, and in most cases on purpose:'],
+      omits: [
+        {
+          label: 'Creating and changing tables',
+          text: 'CREATE TABLE, INSERT, schema design. The database in the browser is read only by design: every task is checked against a reference result, and a database anyone can rewrite has no reference left. If a course covers that part, this app starts where it ends.',
+        },
+        {
+          label: 'A teacher dashboard',
+          text: 'no group report, no grades, no certificate. Progress lives on the student device and nowhere else, which also means I cannot tell you who finished what.',
+        },
+        {
+          label: 'Your database',
+          text: 'the tasks are written against this dataset. A schema built by someone else is a feature rather than a gap: a student who cannot fall back on remembering the table from class has to read it instead.',
+        },
+        {
+          label: 'A course',
+          text: 'no lectures, no video, no cohort, no deadline. It is what happens between the lessons, and it stops being useful the moment it pretends otherwise.',
+        },
+      ],
+    },
+    {
+      id: 'closing',
+      kicker: '04',
+      title: 'One link is the whole handover',
+      body: [
+        'For yourself: open the app and take the SQL track. The first task arrives inside a minute, and the technique card comes with it.',
+        'For a group: nothing to install, no accounts, no lab machines, no license per seat. Fifteen people on school wifi load 3.5 MB once and keep working offline afterwards.',
+        'If a set of tasks phrased in your own words would make it usable in your programme, I will write them. That is a week of work, and I would rather spend it on a group that will actually run it.',
       ],
     },
     {
       id: 'data',
+      kicker: '05',
       title: 'One company, thirteen tables, all of it connected',
       body: [
         'Every task runs on one dataset: Kaiyo Trading, a fictional distributor of FMCG and over the counter pharma in Japan. Thirteen tables, 159,740 rows, two and a half years of daily records, 144 outlets and 47 products.',
@@ -282,56 +363,19 @@ const EN: OverviewPageContent = {
       ],
     },
     {
-      id: 'limits',
-      title: 'What is here, and what is not',
-      body: ['Covered, with tasks that run and are checked:'],
-      list: [
-        {
-          label: 'Querying',
-          text: 'SELECT, WHERE, GROUP BY, HAVING, joins of every kind, subqueries, CTEs, window functions, and the arithmetic of shares and growth on top of them.',
-        },
-        {
-          label: 'The same work in pandas',
-          text: 'filtering, grouping, merges, time series, each technique placed next to the SQL it corresponds to.',
-        },
-        {
-          label: 'The model behind a report',
-          text: 'star schema, grain, keys, filter context, DAX measures checked as text.',
-        },
-        {
-          label: 'Judgment',
-          text: 'what the question really was, which metric answers it, what the number does not prove, and how to say the finding in one sentence.',
-        },
+      id: 'gap',
+      kicker: '06',
+      title: 'The lesson ends. The need comes later.',
+      body: [
+        'A course does its job in the room. Someone explains a topic, every step follows from the last one, and by the final exercise it all makes sense. None of that is wrong.',
+        'The trouble starts on the way home. The next time the topic comes up may be days later, and the part that has to be recalled without help is exactly the part nobody practiced: which table to start from, whether that join quietly multiplies rows, why the total came out larger than the sum of its parts.',
+        'Watching a query being written and writing one yourself are two different skills, and only the second one shows up in an interview. Being able to come back to a topic on any of the days that follow is what turns the first into the second.',
       ],
-      after: ['Not here, and in most cases on purpose:'],
-      omits: [
-        {
-          label: 'Creating and changing tables',
-          text: 'CREATE TABLE, INSERT, schema design. The database in the browser is read only by design: every task is checked against a reference result, and a database anyone can rewrite has no reference left. If a course covers that part, this app starts where it ends.',
-        },
-        {
-          label: 'A teacher dashboard',
-          text: 'no group report, no grades, no certificate. Progress lives on the device the student is working on and nowhere else, which also means I cannot tell you who finished what.',
-        },
-        {
-          label: 'Your database',
-          text: 'the tasks are written against this dataset. A schema built by someone else is a feature rather than a gap: a student who cannot fall back on remembering the table from class has to read it instead.',
-        },
-        {
-          label: 'A course',
-          text: 'no lectures, no video, no cohort, no deadline. It is what happens between the lessons, and it stops being useful the moment it pretends otherwise.',
-        },
-      ],
+      figure: 'gap',
     },
   ],
 
   closing: {
-    title: 'One link is the whole handover',
-    body: [
-      'For yourself: open the app and take the SQL track. The first task arrives inside a minute, and the technique card comes with it.',
-      'For a group: there is nothing to install, no accounts to create, no lab machines and no license per seat. Fifteen people on school wifi load 3.5 MB once and keep working offline afterwards, including on the way home.',
-      'If a set of tasks phrased in your own words would make it usable in your programme, I will write them. That is a week of work, and I would rather spend it on a group that will actually run it.',
-    ],
     appLabel: 'Open the app',
     appNote: 'quaera.app, four tracks, no sign-up',
     introLabel: 'What is data analytics',
@@ -347,10 +391,10 @@ const EN: OverviewPageContent = {
       },
       {
         label: 'Data',
-        text: 'without an account, nothing about a student exists on any server. Signing in is optional and does exactly one thing: it carries progress to a second device.',
+        text: 'without an account, nothing about a student exists on any server. Signing in is optional and carries progress to a second device.',
       },
     ],
-    author: 'Built by Stanislav Sidorovich, a PMO and project controls specialist in industrial construction, as the trainer I wanted while getting these skills back myself.',
+    author: 'Built by Stanislav Sidorovich, as the trainer I wanted while getting these skills back myself.',
   },
 };
 

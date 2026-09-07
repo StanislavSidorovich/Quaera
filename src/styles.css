@@ -6524,16 +6524,80 @@ details.story-known > summary small {
 }
 
 /*
- * Печатный заголовок. На экране заголовок экрана печатает топбар (h1 шапки,
- * см. App.tsx) — здесь он был бы вторым тем же текстом. При печати топбар
- * гасится целиком, и без своего заголовка распечатка осталась бы без имени.
+ * Шапка распечатки: знак, имя, одна фраза. На экране имя уже стоит в топбаре
+ * (h1 шапки, см. App.tsx) и в шапке бокового меню — третья копия читалась бы
+ * как задвоение. При печати топбар гасится целиком, и без этой шапки
+ * распечатка осталась бы без имени и без знака вовсе.
  */
-.overview-print-title {
+.overview-masthead {
   display: none;
 }
 
 .overview-print-btn {
   margin-bottom: 4px;
+}
+
+/* ------------------------------------------------- начало раздела */
+/*
+ * Надзаголовок раздела: номер слева, адрес сайта справа. Номер нужен и на
+ * экране (сколько разделов всего и где читатель сейчас), адрес — только
+ * на бумаге, где адресной строки нет; на экране это была бы шестая копия
+ * того, что и так в окне браузера.
+ */
+.overview-kicker {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.overview-kicker-url {
+  display: none;
+}
+
+/*
+ * Заголовок раздела со своей линейкой. Класс собственный, а не `.card h2`:
+ * тот же h2 стоит на полусотне других карточек приложения, и «поточнее
+ * селектор» здесь означал бы правку, которая рано или поздно уедет туда.
+ */
+.overview-h2 {
+  margin: 0 0 10px;
+}
+
+.overview-h2::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ------------------------------------------- граница самодостаточной части */
+/*
+ * Листы 1-3 отвечают на всё, ради чего брошюру открыли. Разделитель говорит
+ * это вслух: дальше подробности, и не прочитать их — не значит недочитать.
+ */
+.overview-divider {
+  margin: 24px 0 16px;
+  padding-top: 14px;
+  border-top: 2px solid var(--accent);
+}
+
+.overview-divider h2 {
+  margin: 0 0 4px;
+}
+
+.overview-divider p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
 }
 
 /*
@@ -6753,18 +6817,27 @@ details.story-known > summary small {
  * Единственный экран приложения с кнопкой печати, поэтому все print-правила
  * лежат здесь одним блоком, а не разбросаны по местам, которые они трогают.
  *
- * **Топбар и боковое меню гасятся целиком.** `.overview-print-title` берёт
+ * **Топбар и боковое меню гасятся целиком.** `.overview-masthead` берёт
  * на себя работу заголовка топбара; меню разделов распечатке не нужно —
  * это лист для того, кому её переслали, а не для занимающегося.
  *
- * **Разбивка на четыре листа — атрибутом `data-block`, а не догадкой
- * браузера.** `break-before: page` стоит перед блоками `what`, `data`
- * и `limits`: лист 1 — проблема; лист 2 — что это и как проверяется;
- * лист 3 — один датасет; лист 4 — границы и как отдать.
+ * **Разбивка на листы — атрибутом `data-block`, а не догадкой браузера.**
+ * `break-before: page` стоит перед `task`, `limits`, разделителем
+ * `.overview-divider` и `gap`. Отсюда пять листов: 1 — что это и четыре
+ * трека; 2 — как проверяется задание; 3 — границы и как отдать группе
+ * (здесь самодостаточная часть кончается); 4 — датасет и схема;
+ * 5 — зачем это нужно и условия.
  *
- * **Тёмная тема на бумаге не нужна.** Распечатка всегда светлая и чёрным
- * по белому, независимо от темы, в которой её печатают, — читатель PDF-файла
- * тему приложения не выбирал и не должен получить тёмный фон на бумаге.
+ * **Тёмная тема на бумаге не нужна.** Распечатка всегда светлая, независимо
+ * от темы, в которой её печатают: читатель PDF-файла тему приложения не
+ * выбирал и не должен получить тёмный фон на бумаге.
+ *
+ * **Но не чёрно-белая.** Раньше печать гасила цвет целиком — решение про
+ * тонер, которого никто не тратит: брошюру читают вложением в письме,
+ * с экрана. Акцент остался ровно на пяти вещах (знак, номер раздела,
+ * линейка под заголовком, цифры статистики, рамки вердикта), всё
+ * остальное чёрным и серым, поэтому на чёрно-белом принтере лист
+ * не теряет ничего, кроме цвета.
  */
 @media print {
   .sidebar,
@@ -6790,11 +6863,82 @@ details.story-known > summary small {
     padding: 0;
   }
 
-  .overview-print-title {
+  /*
+   * Шапка первого листа. Знак и имя стоят на одной линии с подписью,
+   * под ними акцентная линейка во всю ширину: это единственное место
+   * распечатки, которое читатель видит до того, как решил читать.
+   */
+  .overview-masthead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #2563eb;
+  }
+
+  .overview-mark {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .overview-masthead-word {
     display: block;
-    font-size: 22px;
-    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
     color: #000;
+  }
+
+  .overview-masthead-tagline {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #444;
+  }
+
+  .overview-kicker {
+    margin: 0 0 4px;
+    font-size: 10px;
+    color: #2563eb;
+  }
+
+  .overview-kicker-url {
+    display: inline;
+    color: #888;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .overview-h2 {
+    font-size: 19px;
+    margin: 0 0 8px;
+  }
+
+  .overview-h2::after {
+    height: 3px;
+    margin-top: 6px;
+    background: #2563eb;
+  }
+
+  .overview-divider {
+    break-before: page;
+    margin: 0 0 10px;
+    padding: 0 0 7px;
+    border-top: none;
+    border-bottom: 2px solid #2563eb;
+  }
+
+  .overview-divider h2 {
+    font-size: 19px;
+    color: #000;
+  }
+
+  .overview-divider p {
+    color: #444;
   }
 
   .overview-print-qr {
@@ -6830,13 +6974,21 @@ details.story-known > summary small {
     margin-bottom: 14px;
   }
 
-  .overview-page .card[data-block='closing'] {
+  /*
+   * Черта снизу отделяет разделы внутри листа. У последнего раздела листа
+   * она не нужна: линия у самого края читается как обрыв текста.
+   */
+  .overview-page .card[data-block='what'],
+  .overview-page .card[data-block='task'],
+  .overview-page .card[data-block='closing'],
+  .overview-page .card[data-block='data'],
+  .overview-page .card[data-block='gap'] {
     border-bottom: none;
   }
 
-  .overview-page .card[data-block='what'],
-  .overview-page .card[data-block='data'],
-  .overview-page .card[data-block='limits'] {
+  .overview-page .card[data-block='task'],
+  .overview-page .card[data-block='limits'],
+  .overview-page .card[data-block='gap'] {
     break-before: page;
   }
 
@@ -6877,7 +7029,7 @@ details.story-known > summary small {
    * принтера, а не с 96 dpi экрана.
    */
   .overview-schema svg.schema-map {
-    max-height: 320px;
+    max-height: 250px;
     width: auto;
   }
 
@@ -6927,15 +7079,38 @@ details.story-known > summary small {
     color: #555;
   }
 
+  /*
+   * Шесть цифр акцентом. Это второе, что видит глаз после шапки, и первое,
+   * что вообще можно прочитать за секунду: 287 заданий, 13 таблиц, 0 регистраций.
+   */
   .overview-stat-value {
-    color: #000;
+    color: #2563eb;
   }
 
+  /*
+   * Запрос на бумаге плотнее экранного. Десять строк SQL при экранном
+   * междустрочии 1.55 съедали 87px сверх листа и уводили подпись фигуры
+   * на отдельную страницу; читаемость моноширинного текста от 1.35
+   * не страдает, а лист экономится целиком.
+   */
   .overview-task pre.sql-block {
     white-space: pre-wrap;
     background: #f4f4f4;
     color: #000;
     border-color: #ccc;
+    padding: 9px 10px;
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+
+  .overview-task .feedback {
+    margin: 8px 0;
+    padding: 10px;
+  }
+
+  .overview-task-table th,
+  .overview-task-table td {
+    padding: 3px 8px;
   }
 
   .overview-gap-cell,
@@ -6950,10 +7125,27 @@ details.story-known > summary small {
     border-color: #999;
   }
 
-  .feedback.ok,
+  /*
+   * Вердикт и промах — единственные два цветных блока в теле брошюры.
+   * Цвет здесь несёт смысл, а не украшает: зелёное «Correct» и жёлтое
+   * «когда не сошлось» — это и есть показанная обратная связь тренажёра.
+   */
+  .feedback.ok {
+    background: none;
+    border: 1px solid #15803d;
+  }
+
   .feedback.warn {
     background: none;
-    border: 1px solid #ccc;
+    border: 1px solid #a16207;
+  }
+
+  .feedback.ok h3 {
+    color: #15803d;
+  }
+
+  .feedback.warn h3 {
+    color: #a16207;
   }
 
   .intro-door-label {
