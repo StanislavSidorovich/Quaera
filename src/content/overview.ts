@@ -36,7 +36,7 @@ import type { Locale } from '../i18n/context';
  *    лендинг без границ, дальше не читает, а отказ по причине, названной
  *    нами самими, дешевле отказа по причине, найденной им.
  *
- * 2. **Числа только снятые запросом.** 287 заданий и 72 навыка посчитаны
+ * 2. **Числа только снятые запросом.** 293 задания и 73 навыка посчитаны
  *    по пакам, 13 таблиц и 159 740 строк — `npm run count:rows`, падение
  *    Nettora (74 точки в январе, 40 в декабре) снято запросом к тому самому
  *    файлу, который уезжает в браузер. Ни одного числа по памяти:
@@ -183,8 +183,8 @@ const EN: OverviewPageContent = {
   siteUrl: 'quaera.app',
 
   stats: [
-    { value: '287', label: 'tasks' },
-    { value: '72', label: 'technique cards' },
+    { value: '293', label: 'tasks' },
+    { value: '73', label: 'technique cards' },
     { value: '13', label: 'tables' },
     { value: '159,740', label: 'rows of data' },
     { value: '3.5 MB', label: 'to load, once' },
@@ -210,8 +210,8 @@ const EN: OverviewPageContent = {
   tracks: [
     {
       name: 'SQL for analysts',
-      count: '85 tasks',
-      note: 'From a first SELECT to window functions. You write the query, it runs.',
+      count: '91 tasks',
+      note: 'From how a table is declared to window functions. You write the query, it runs.',
     },
     {
       name: 'Analytics as a profession',
@@ -322,7 +322,7 @@ const EN: OverviewPageContent = {
       omits: [
         {
           label: 'Creating and changing tables',
-          text: 'CREATE TABLE, INSERT, schema design. The database in the browser is read only by design: every task is checked against a reference result, and a database anyone can rewrite has no reference left. If a course covers that part, this app starts where it ends.',
+          text: 'Read here, never run. The SQL track opens with a card and five tasks on what CREATE TABLE and INSERT do. The database in the browser is read only by design: every task is checked against a reference result, and a database anyone can rewrite has no reference left.',
         },
         {
           label: 'A teacher dashboard',
