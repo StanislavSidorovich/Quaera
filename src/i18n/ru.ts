@@ -47,6 +47,12 @@ const plural = (n: number, one: string, few: string, many: string) => {
   return many;
 };
 
+/**
+ * Число строк форматируется здесь, а не у вызывающего: форма слова зависит
+ * от числа, и строка «14 100» её уже не подскажет — отсюда было «1 строк».
+ */
+const rowCount = (n: number) => `${n.toLocaleString('ru-RU')} ${plural(n, 'строка', 'строки', 'строк')}`;
+
 export const ru = {
   app: {
     name: 'Quaera',
@@ -1434,8 +1440,8 @@ export const ru = {
      * Формулировка при этом остаётся одна на оба места: два «Одна строка = »
      * в разных файлах разъехались бы при первой же правке.
      */
-    grainLabel: (grain: string, rows?: string) =>
-      rows ? `Одна строка = ${grain} · ${rows} строк` : `Одна строка = ${grain}`,
+    grainLabel: (grain: string, rows?: number) =>
+      rows === undefined ? `Одна строка = ${grain}` : `Одна строка = ${grain} · ${rowCount(rows)}`,
     closeBtn: 'Закрыть',
     ariaLabel: 'Схема данных',
     copyAria: (name: string) => `Скопировать «${name}»`,
@@ -1533,7 +1539,7 @@ export const ru = {
   result: {
     stdoutLabel: 'Вывод print()',
     noColumns: 'Запрос не вернул колонок.',
-    rowsSuffix: (n: string) => `${n} строк`,
+    rowsSuffix: (n: number) => rowCount(n),
     truncatedSuffix: (n: number) => ` · показаны первые ${n}`,
     tableTab: 'Таблица',
     chartTab: 'График',

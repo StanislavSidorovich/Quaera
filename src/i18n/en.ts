@@ -14,6 +14,9 @@ const langGenitive = (track: 'sql' | 'model' | 'python' | 'domain') => (track ==
 /** См. комментарий в ru.ts: одни границы периода на две подписи, тире здесь другое. */
 const periodRange = (from: string, to: string) => `${from} – ${to}`;
 
+/** См. комментарий в ru.ts: форма слова зависит от числа, поэтому число форматируется здесь. */
+const rowCount = (n: number) => `${n.toLocaleString('en-US')} ${n === 1 ? 'row' : 'rows'}`;
+
 export const en = {
   app: {
     name: 'Quaera',
@@ -701,8 +704,8 @@ export const en = {
     title: 'Data schema',
     loading: 'Loading schema…',
     /** См. комментарий в ru.ts: в списке таблиц песочницы объём не нужен, формулировка одна на оба места. */
-    grainLabel: (grain: string, rows?: string) =>
-      rows ? `One row = ${grain} · ${rows} rows` : `One row = ${grain}`,
+    grainLabel: (grain: string, rows?: number) =>
+      rows === undefined ? `One row = ${grain}` : `One row = ${grain} · ${rowCount(rows)}`,
     closeBtn: 'Close',
     ariaLabel: 'Data schema',
     copyAria: (name: string) => `Copy "${name}"`,
@@ -766,7 +769,7 @@ export const en = {
   result: {
     stdoutLabel: 'print() output',
     noColumns: 'The query returned no columns.',
-    rowsSuffix: (n: string) => `${n} rows`,
+    rowsSuffix: (n: number) => rowCount(n),
     truncatedSuffix: (n: number) => ` · showing the first ${n}`,
     tableTab: 'Table',
     chartTab: 'Chart',

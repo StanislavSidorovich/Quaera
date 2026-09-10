@@ -41,7 +41,6 @@ interface Props {
 
 export function TableDoc({ table, open, detailsRef, highlightColumns, links }: Props) {
   const { t, locale } = useI18n();
-  const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
 
   /**
    * Копирование имени колонки по клику — набирать `commercial_category_id`
@@ -65,7 +64,7 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
     <details ref={detailsRef} open={open || undefined} className="table-doc">
       <summary>
         <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title[locale]}
-        <small>{t.schema.grainLabel(table.grain[locale], table.row_count.toLocaleString(numberLocale))}</small>
+        <small>{t.schema.grainLabel(table.grain[locale], table.row_count)}</small>
         {links}
       </summary>
       {table.columns.map((c) => {

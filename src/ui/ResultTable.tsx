@@ -130,7 +130,7 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
         </div>
       )}
       <p className="muted" style={{ margin: '6px 0 0' }}>
-        {t.result.rowsSuffix(data.totalRows.toLocaleString(numberLocale))}
+        {t.result.rowsSuffix(data.totalRows)}
         {data.truncated ? t.result.truncatedSuffix(data.rows.length) : ''}
       </p>
     </div>
