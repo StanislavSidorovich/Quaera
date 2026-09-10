@@ -228,6 +228,8 @@ export const en = {
     repoBtn: 'Source code on GitHub',
     licenseBody:
       'The application code is under Apache-2.0. The learning content (tasks, explanations, technique cards, the dataset storylines) is under CC BY-NC-SA 4.0: you may reuse it with attribution to the author, for non-commercial purposes, and keeping the same licence on anything derived from it.',
+    /** См. комментарий в ru.ts и в App.tsx: страница `?overview` для рассылки, ссылка тихая и последняя на экране. */
+    overviewLink: 'Printable page: Quaera at a glance →',
     tracksWhyTitle: 'Why these tracks, in this order',
     /** См. комментарий в ru.ts: единственное место, где цепочка объяснена прозой, а не нарисована. */
     chainBody:

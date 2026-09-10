@@ -2195,6 +2195,7 @@ export default function App() {
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onOpenAccount={() => setScreen({ name: 'account' })}
               onOpenIntro={() => setScreen({ name: 'intro' })}
+              onOpenOverview={() => setScreen({ name: 'overview' })}
             />
           )}
 
@@ -3929,11 +3930,13 @@ function About({
   onOpenOnboarding,
   onOpenAccount,
   onOpenIntro,
+  onOpenOverview,
 }: {
   onSelectTrack: (track: Track) => void;
   onOpenOnboarding: () => void;
   onOpenAccount: () => void;
   onOpenIntro: () => void;
+  onOpenOverview: () => void;
 }) {
   const { t, locale } = useI18n();
   const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
@@ -4202,6 +4205,17 @@ function About({
         <p className="muted" style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55 }}>
           {t.about.licenseBody}
         </p>
+        {/*
+         * Ссылка на брошюру `?overview` — намеренно здесь, а не на видном
+         * месте. Страница рассчитана на одного адресата за раз (письмом),
+         * не на посетителя приложения: `link-row` того же тихого вида,
+         * что accountLink у «Приватности», и стоит последней строкой
+         * последней карточки экрана — только для того, кто уже знает,
+         * что ищет, и не хочет держать адрес в голове.
+         */}
+        <button type="button" className="link-row" onClick={onOpenOverview} style={{ marginTop: 10 }}>
+          {t.about.overviewLink}
+        </button>
       </div>
       </div>
     </>
