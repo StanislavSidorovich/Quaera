@@ -6,7 +6,7 @@
     "what": "SQL is how an analyst pulls data out of a source system: a database, a warehouse, a data mart. It isn't a programming language in the usual sense; there are no loops, no variables, and you don't write an algorithm: you describe what result you want, and the database engine decides how to compute it.\n\nThat's where the whole track's central feature comes from: a mistake in SQL rarely breaks the query. More often it runs without a single complaint and returns something other than what you meant, and the only way to notice is by the meaning of the number, not by an error message.",
     "where": "Pulling data for a report that no longer fits in Excel. Testing a hypothesis before building a dashboard: a query takes minutes, assembling a model takes half a day. Answering \"why did it dip in March\" while the question is still someone's problem. Finding where two numbers that were supposed to match diverged.\n\nSQL is asked for in analyst job postings more than any other tool, and technical interviews usually start with it.",
     "idea": "A query doesn't work with a row, it works with the whole table, a set. That's why SQL has no \"loop through and check\": there's \"filter\", \"group\", \"join\", and each step turns one table into another. You have to think in terms of the result, not the path to it.\n\nThe second thing worth accepting right away: the order you write things in doesn't match the order they execute in. SELECT is written first and runs almost last, after FROM, WHERE and GROUP BY. That alone answers half of a beginner's questions: why an alias from SELECT isn't visible in WHERE, how HAVING differs from WHERE, and why a filter put in the wrong place silently changes the result.",
-    "limits": "SQL fetches and aggregates; it doesn't explain. Asked \"why did it drop\", it answers \"by this much, and here's where\"; the reason has to be pieced together yourself; that's what the \"Analytics as a profession\" track is for.\n\nIt's clumsy wherever the calculation is iterative, branches, or needs intermediate state, or needs statistics beyond an average; that's pandas territory.\n\nAnd every engine has its own dialect. SQLite, PostgreSQL, ClickHouse and BigQuery diverge on window functions, on date handling, and even on small things like whether LOWER understands Cyrillic; in SQLite it doesn't, and a search quietly breaks exactly where everything looked fine. A technique is worth remembering together with the engine it works on.",
+    "limits": "SQL fetches and aggregates; it doesn't explain. Asked \"why did it drop\", it answers \"by this much, and here's where\"; the reason has to be pieced together yourself; that's what the \"Analytics as a profession\" track is for.\n\nIt's clumsy wherever the calculation is iterative, branches, or needs intermediate state, or needs statistics beyond an average; that's pandas territory.\n\nAnd every engine has its own dialect. SQLite, PostgreSQL, ClickHouse and BigQuery diverge on window functions, on date handling, and even on small things like whether LOWER understands Cyrillic; in SQLite it doesn't, and a search quietly breaks exactly where everything looked fine. A technique is worth remembering together with the engine it works on.\n\nAnd one limit of this app rather than of the language: the database here is read only. The track shows CREATE TABLE and INSERT on its very first card and asks what they will do, but they cannot be run, because every task is checked against a reference result on data that never changes. UPDATE, DELETE, ALTER and table design are not practiced at all.",
     "bridge": "The same working question runs through all four tracks, and the answers have to agree; it's the same data underneath.\n\nBrand «Nettora»'s revenue falling by almost half: here you'll pull the numbers with a query; in pandas you'll assemble the same thing through groupby and merge, except the result stays an object in memory you can keep working with; in \"Analytics as a profession\" you'll work out why numeric distribution fell harder than weighted distribution and what that means for negotiations; in Power BI you'll wrap it as a measure that recalculates under any slice.\n\nIf the answers disagree, that's not a difference between tools; it's somebody's mistake."
   },
   "tierNames": {
@@ -16,6 +16,11 @@
     "4": "Advanced"
   },
   "skills": [
+    {
+      "id": "sql-schema",
+      "title": "How a table is declared",
+      "summary": "I read a table's declaration before the first query: which columns, of what type, which one is the key, and what the database will do with an insert."
+    },
     {
       "id": "sql-select",
       "title": "Selecting and aliasing",
@@ -1772,6 +1777,156 @@
         "The price is there in the table. The question is different: does a column nobody named end up in the result?"
       ],
       "explain": "This is the first fork where a beginner loses time: the result of a query looks like the same table with restrictions on it, when it is really a set assembled from scratch. SELECT does not display a table, it lists what the answer should be built from, and a column missing from that list will not appear under any circumstances. The same idea explains a habit that costs more than the mistake: SELECT * feels like a safe «take everything just in case», while in practice it drags service fields into the export and quietly changes its shape the moment somebody adds a column to the table. The working rule is simple: list the columns the recipient of the report actually needs, and only those."
+    },
+    {
+      "id": "sql-087",
+      "title": "What the sales table promises",
+      "brief": "You have just been given access to the database, and the first thing you open is the declaration of the outlet sales table, before writing a single query against it. Reference tables will soon have to be joined to it, and it pays to know in advance which column appears in it exactly once.",
+      "goal": "Determine which column's values the table promises never to repeat.",
+      "predictQuestion": "Which column does this declaration make unique?",
+      "options": [
+        {
+          "label": "sellout_id",
+          "why": "The only column with PRIMARY KEY. It is a promise made by the table itself: the database will refuse a second row with the same sellout_id, however the data is loaded."
+        },
+        {
+          "label": "customer_id",
+          "why": "An outlet sells every week and many different products, so its number repeats across thousands of rows: 132 outlets over 118,449 rows of sales. It is unique in the customer table, where it is the key; here it is a reference to that table."
+        },
+        {
+          "label": "The combination of week_start, customer_id and product_id: week, outlet and product",
+          "why": "In meaning a row does describe one outlet's week for one product, and today the data has no repeats of that combination. But the declaration does not make it unique: the next load can bring in a duplicate, and the database will accept it."
+        },
+        {
+          "label": "None: fact tables are not given a key",
+          "why": "They are, and this one has it on sellout_id. In warehouses fact tables are indeed often left without a key to speed up loading, but then nothing stops a duplicate row, and it has to be found with a query."
+        }
+      ],
+      "hints": [
+        "Look for the words in the declaration that promise uniqueness.",
+        "A column name ending in _id does not make it the key of this table: some of those columns point to other tables."
+      ],
+      "explain": "A table declaration answers a question the data cannot: not «does this repeat right now» but «can it ever repeat». There is one key here, sellout_id, a row number, and it is almost useless for analysis: there is nothing to join on it. The columns customer_id and product_id are references to reference tables where they are the keys. That is why joining sales to a reference table gives each sales row exactly one match, while joining two tables where neither side is unique starts multiplying rows. A habit that pays off at once: before joining, find which side holds the key."
+    },
+    {
+      "id": "sql-088",
+      "title": "A second brand under a taken number",
+      "brief": "A colleague is setting up a brand reference table in their own working database and inserts rows one at a time. On the second insert they slip and repeat a number that is already taken.",
+      "goal": "Determine what the database will do with the second insert.",
+      "predictQuestion": "What happens on the second insert?",
+      "options": [
+        {
+          "label": "An error: number 1 is taken, and the table keeps one row, Aqualis",
+          "why": "PRIMARY KEY promises one row per value, and the database keeps that promise by refusing: UNIQUE constraint failed. The first row is untouched, the second is not written."
+        },
+        {
+          "label": "The second row replaces the first, and number 1 becomes Nettora",
+          "why": "Replacing is done by separate commands that are written explicitly: INSERT OR REPLACE or ON CONFLICT … DO UPDATE. A plain INSERT never touches a row that is already there."
+        },
+        {
+          "label": "The table ends up with two rows numbered 1",
+          "why": "That would happen if brand_id were declared as plain INTEGER, with no key. A key is declared precisely so that a duplicate becomes impossible at write time instead of being found later with a query."
+        },
+        {
+          "label": "The second insert is silently skipped, with no error",
+          "why": "Skipping silently is what INSERT OR IGNORE does, and it too is written explicitly when duplicates are expected. A plain INSERT reports a key violation, and that is useful: a load that fails on a duplicate is better than a load that swallowed it."
+        }
+      ],
+      "hints": [
+        "What does PRIMARY KEY promise about the values in the column?",
+        "A row can be replaced or skipped, but those are separate commands, and they are written explicitly."
+      ],
+      "explain": "A key is checked on write, not on read, and that is its value to an analyst: everything sitting in a table with a key has already passed the check. It also marks the limit of trust. A table with a declared key has no duplicates on it; a table without one can hold anything, however many times you have seen it clean. When revenue in a report suddenly doubles, the first question is whether the reference table had a key."
+    },
+    {
+      "id": "sql-089",
+      "title": "A brand with no name",
+      "brief": "The same colleague is in a hurry and inserts the next brand with only its number: the name, they decide, can be added later.",
+      "goal": "Determine what the database will do with this insert.",
+      "predictQuestion": "What happens on the insert?",
+      "options": [
+        {
+          "label": "An error: brand_name is declared NOT NULL, so the row is not written",
+          "why": "The database would fill a column left out of the insert with NULL, but the declaration promises that column never holds NULL. The promise is checked on every write, hence NOT NULL constraint failed."
+        },
+        {
+          "label": "A row is written with an empty string '' in brand_name",
+          "why": "An empty string is a value, and it would have to be written explicitly. A column missing from the insert gets its default value, and no default is set here, which means NULL."
+        },
+        {
+          "label": "A row is written with NULL in brand_name",
+          "why": "That is exactly what would happen without NOT NULL: a skipped column gets NULL. But the declaration does not allow it, and the database keeps the promise by refusing rather than by staying quiet."
+        },
+        {
+          "label": "An error: the insert names one column while the table has two",
+          "why": "The column list in an insert may be shorter than the table; that is what it is written for, and the rest get their default values. This error does happen without a list, when there are fewer values than columns."
+        }
+      ],
+      "hints": [
+        "What value does a column get when the insert does not name it?",
+        "And what does the declaration of brand_name say about that value?"
+      ],
+      "explain": "NOT NULL is the cheapest promise a table can make, and the most useful one to whoever reads it: on such a column there is no three-valued logic to think about, and a filter on it will not lose rows. In this app's database no column is declared NOT NULL, and that is normal for analytical copies: the source system holds the constraints, and tables arrive in the warehouse without them. That is why later in the track empty cells are found with a query rather than trusted to the declaration."
+    },
+    {
+      "id": "sql-090",
+      "title": "Twelve in words",
+      "brief": "Stock figures arrived from the warehouse in a file someone had edited by hand. A colleague loads it row by row, and in one row the quantity is written as a word.",
+      "goal": "Determine what SQLite will do with such a value.",
+      "predictQuestion": "What happens on the second insert in SQLite?",
+      "options": [
+        {
+          "label": "The row is written, and the INTEGER column holds the text 'twelve'",
+          "why": "In SQLite a column type is a preference, not a ban. It turns the string '12' into the number 12, because that works without loss, while 'twelve' does not turn into a number, and the database stores it as it is, as text."
+        },
+        {
+          "label": "An error: a word cannot be written to an INTEGER column",
+          "why": "That is what PostgreSQL will say: there a column type is a law. SQLite works differently, and a query moved from one database to another can start quietly accepting what used to be refused."
+        },
+        {
+          "label": "The row is written, and units ends up NULL",
+          "why": "The database puts NULL where there is no value, and here there is one. SQLite will not replace something it does not understand with emptiness: it keeps exactly what it was given."
+        },
+        {
+          "label": "The row is written, and units ends up 0",
+          "why": "A zero in place of unreadable text is how MySQL behaves with strict mode turned off. SQLite does not spoil the value: it stays the text 'twelve', and the surprise shows up later, when something is summed."
+        }
+      ],
+      "hints": [
+        "The first insert also passes a number in quotes. What happens to it?",
+        "In SQLite a column type suggests how to store a value but does not forbid storing it differently."
+      ],
+      "explain": "This is the same mistake the whole track is built around, only on the way in rather than on the way out: nothing failed, and everything looks fine. A row with text in a numeric column passes any load, then a sum quietly counts it as zero, and the warehouse stock comes out twelve units short with not a single error message. In PostgreSQL the same load would fail on the second row. So a type in the declaration is not a guarantee until you know the engine, and it is the data itself that is worth checking: typeof(units) shows what actually sits in the column."
+    },
+    {
+      "id": "sql-091",
+      "title": "In what order to load reference tables",
+      "brief": "You are moving part of the database into a new one where foreign keys are enforced: a sales rep points to a region, an outlet points to a region and to a rep, a sale points to an outlet. That database will reject a row that points to one not loaded yet.",
+      "goal": "Arrange the loading of tables so that no insert fails.",
+      "orderQuestion": "In what order should the tables be loaded?",
+      "items": [
+        {
+          "label": "Regions (dim_region)",
+          "why": "First, because both reps and outlets point to a region, while the region table points to nothing. Loading it later means the very first rep insert fails."
+        },
+        {
+          "label": "Sales reps (dim_rep)",
+          "why": "Second: every rep is assigned to a region, and the region has to be in the database by then. They cannot come after the outlets either, because an outlet points to its rep."
+        },
+        {
+          "label": "Outlets (dim_customer)",
+          "why": "Third, because an outlet has two references, to a region and to a rep, and both targets are loaded above. This is where people slip most often: it seems an outlet only needs its region, and the rep gets forgotten."
+        },
+        {
+          "label": "Sales at outlets (fact_sellout)",
+          "why": "Last: every sales row points to an outlet, and loading the fact before the reference table gets every row refused. For fact tables the rule has no exceptions: first everything they point to."
+        }
+      ],
+      "hints": [
+        "Start with the table that points to no other table.",
+        "An outlet has two references, not one. Both targets have to be in the database before it."
+      ],
+      "explain": "Loading order follows from the references, not from how important the tables are: first what is pointed to, then what points. There is a single chain here: region, rep, outlet, sale, and each link points to the one before it, so no pair can be swapped. In this app's database foreign keys are not declared at all, and SQLite does not enforce even declared ones by default, so here a load in any order would go through without an error. The relationship does not disappear because of that: it is described in the data schema and rests on the load being honest. That is why later in the track rows without a match are found with a join rather than assumed impossible."
     }
   ]
 }

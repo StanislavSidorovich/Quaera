@@ -2,6 +2,15 @@
   "id": "sql-lessons",
   "lessons": [
     {
+      "skill": "sql-schema",
+      "title": "How a table is declared",
+      "why": "An analyst almost never creates tables (that is the job of developers and data engineers), but reads their declarations all the time. CREATE TABLE is a list of promises: which columns exist, what type each has, which one is the key. PRIMARY KEY promises one row per value: the database will refuse a second region with the same number, and a join on that column will not multiply rows. NOT NULL promises the column has no empty cells. Whatever is not declared is not promised, even if the data happens to look that way today. The database in this app is read only, because every task is checked against a reference result on data that never changes, so CREATE TABLE and INSERT are read and predicted here rather than run. UPDATE, DELETE, ALTER and schema design are not practiced at all: writing tables is learned by hand, on your own database.",
+      "form": "CREATE TABLE table_name (\n  key_col  INTEGER PRIMARY KEY,\n  name_col TEXT NOT NULL,\n  ref_col  INTEGER REFERENCES other (key_col)\n)\n\nINSERT INTO table_name (key_col, name_col)\nVALUES (1, 'value')",
+      "reads": "The real declaration of the regions table that the track's queries run against. The key here is region_id: the database will refuse a second region with the same number, and a join on this column will not multiply rows. The other columns are declared by type only: no table in this database has NOT NULL or REFERENCES. That a region_id in the customer table really exists among the regions is promised not by the database but by whoever filled it, which is why later in the track rows without a match are found with a query.",
+      "wrongWhy": "Sixteen rows, and the region number never repeats in them. But that is an observation, not a promise: the data shows neither the column types nor which column is the key, and without a key tomorrow's load can bring in a duplicate. The declaration says what is guaranteed; SELECT says what is in the table right now.",
+      "selfCheck": "Run the same query for dim_product in the sandbox and answer without looking at the rows: which column is the key, and does the table promise that a product always has a price?"
+    },
+    {
       "skill": "sql-select",
       "title": "Selecting and aliasing",
       "why": "Every report starts with deciding which columns belong in it. Extra ones aren't harmless: the reader spends time figuring out what each one means, and loses trust in numbers they don't understand. A column's name is part of the answer, not a technical detail. SELECT can hold not just a column but an expression over one: a discounted price, a share, a difference. Such a column is stored nowhere; it's computed on the fly, and it needs an alias, otherwise the formula's own text ends up as the header. A fractional result is almost always worth wrapping in ROUND(expression, 2); otherwise a price like 431.99999999999994 rides into the report, and the first question will be about that, not about the discount.",

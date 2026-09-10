@@ -8,8 +8,8 @@
       "missions": [
         {
           "title": "First day",
-          "hook": "The first thing you are asked for is not a report but an extract: the brand manager needs the price list, finance needs part of it. Every piece of work against a database starts with the same two questions: which columns, and which rows.",
-          "outcome": "You pull the columns you need out of a table and cut the rows you do not. Every later query in the track starts here."
+          "hook": "You get database access in the morning, and the first thing you do is open the table declarations: which columns they have, and which one is the key. Then the first request arrives, and it is not a report but an extract: the brand manager needs the price list, finance needs part of it. Every piece of work against a database starts with the same two questions: which columns, and which rows.",
+          "outcome": "You read a table's declaration, pull the columns you need out of it and cut the rows you do not. Every later query in the track starts here."
         },
         {
           "title": "Top of the list, empty cells",

@@ -1424,6 +1424,152 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   } else console.log(`  ok   sql-027: LIKE находит ${lk} строк там, где = находит ${eq}`);
 }
 
+// Навык «Как объявлена таблица» (sql-schema, задания sql-087…sql-091). Его код —
+// не читающий запрос, а объявление таблицы со вставками, и в приложении он только
+// показывается: воркер пропускает одни SELECT/WITH. Верный вариант поэтому держится
+// на утверждении о движке, которое не проверит ни один эталон, и проверить его
+// можно одним способом — выполнить. Выполняется на пустой базе в памяти, а не
+// на общей: запись в общую испортила бы каждую следующую сверку этого прогона.
+{
+  const sqlPack = readPack('sql-core');
+  const sqlPackEn = readPack('sql-core.en');
+  const byId = (pack, id) => pack.tasks.find((t) => t.id === id);
+  const correctLabel = (id) => byId(sqlPack, id)?.options?.find((o) => o.correct)?.label ?? '';
+  const scratch = (code, pragma) => {
+    const d = new SQL.Database();
+    if (pragma) d.run(pragma);
+    let error = null;
+    for (const stmt of code.split(';').map((s) => s.trim()).filter(Boolean)) {
+      try {
+        d.run(stmt);
+      } catch (e) {
+        error = e.message;
+        break;
+      }
+    }
+    return { d, error };
+  };
+  const rowsOf = (d, q) => d.exec(q)[0]?.values ?? [];
+  const squash = (s) => s.replace(/\s+/g, ' ').replace(/\s*([(),])\s*/g, '$1').trim().toLowerCase();
+  const group = (n, sep) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+
+  // sql-087: показанное объявление — то самое, что лежит в базе, ключ в нём один,
+  // а числа и «сегодня повторов нет» в разборах вариантов сняты с данных.
+  {
+    const t = byId(sqlPack, 'sql-087');
+    const real = runSql("SELECT sql FROM sqlite_master WHERE name = 'fact_sellout'").rows[0]?.[0] ?? '';
+    const pk = runSql("SELECT name FROM pragma_table_info('fact_sellout') WHERE pk > 0").rows.map((r) => r[0]);
+    const [rows, outlets, triples] = runSql(`
+      SELECT COUNT(*), COUNT(DISTINCT customer_id),
+             (SELECT COUNT(*) FROM (SELECT DISTINCT week_start, customer_id, product_id FROM fact_sellout))
+      FROM fact_sellout`).rows[0];
+    const ru = JSON.stringify(t);
+    const en = JSON.stringify(byId(sqlPackEn, 'sql-087') ?? {});
+    if (squash(t.predictSql) !== squash(real)) {
+      fail('sql-087', 'объявление в задании разошлось с sqlite_master: задание показывает не ту таблицу, что лежит в базе');
+    } else if (pk.join() !== 'sellout_id' || correctLabel('sql-087') !== 'sellout_id') {
+      fail('sql-087', `ключ в базе [${pk}], верный вариант «${correctLabel('sql-087')}»`);
+    } else if (!ru.includes(`${outlets} точки на ${group(rows, ' ')} строк`) || !en.includes(`${outlets} outlets over ${group(rows, ',')} rows`)) {
+      fail('sql-087', `в продажах ${outlets} точек на ${rows} строк, а разбор варианта называет другие числа`);
+    } else if (triples !== rows) {
+      fail('sql-087', `разбор обещает, что сочетание неделя × точка × товар сегодня не повторяется, а различных сочетаний ${triples} на ${rows} строк`);
+    } else console.log(`  ok   sql-087: объявление совпадает с базой, ключ sellout_id, ${outlets} точки на ${rows} строк`);
+  }
+
+  // sql-088: вторая вставка с занятым ключом отклонена, первая строка не тронута.
+  {
+    const { d, error } = scratch(byId(sqlPack, 'sql-088').predictSql);
+    const rows = rowsOf(d, 'SELECT brand_id, brand_name FROM brand');
+    if (!/UNIQUE constraint failed: brand\.brand_id/.test(error ?? '') || JSON.stringify(rows) !== '[[1,"Aqualis"]]' || !correctLabel('sql-088').startsWith('Ошибка')) {
+      fail('sql-088', `ждали отказ по ключу и одну строку Aqualis, получили «${error}» и ${JSON.stringify(rows)}`);
+    } else console.log(`  ok   sql-088: ${error}, в таблице одна строка`);
+  }
+
+  // sql-089: пропущенная колонка с NOT NULL — отказ. Разбор неверного варианта
+  // утверждает ещё и обратное: без списка колонок ошибка была бы другой.
+  {
+    const code = byId(sqlPack, 'sql-089').predictSql;
+    const { error } = scratch(code);
+    const noList = scratch(code.replace('INSERT INTO brand (brand_id)', 'INSERT INTO brand')).error;
+    if (!/NOT NULL constraint failed: brand\.brand_name/.test(error ?? '') || !correctLabel('sql-089').includes('NOT NULL')) {
+      fail('sql-089', `ждали отказ по NOT NULL, получили «${error}»`);
+    } else if (!/has 2 columns but 1 values/.test(noList ?? '')) {
+      fail('sql-089', `вставка без списка колонок дала «${noList}», а разбор обещает ошибку числа значений`);
+    } else console.log(`  ok   sql-089: ${error}`);
+  }
+
+  // sql-090: текст в колонке INTEGER SQLite принимает, число в кавычках приводит,
+  // а сумма считает текст нулём — на этих трёх фактах стоят вариант и разбор.
+  {
+    const { d, error } = scratch(byId(sqlPack, 'sql-090').predictSql);
+    const types = error ? [] : rowsOf(d, 'SELECT typeof(units) FROM stock ORDER BY sku').map((r) => r[0]);
+    const sum = error ? null : rowsOf(d, 'SELECT SUM(units) FROM stock')[0]?.[0];
+    if (error || types.join() !== 'integer,text' || sum !== 12 || !correctLabel('sql-090').includes("'twelve'")) {
+      fail('sql-090', `ошибка «${error}», типы [${types}], сумма ${sum}: разбор держится на integer,text и сумме 12`);
+    } else console.log('  ok   sql-090: \'12\' стало числом, \'twelve\' осталось текстом, сумма 12');
+  }
+
+  // sql-091: порядок пунктов обязан быть единственным. Связи берутся из схемы
+  // данных (references в schema.json), а не из текста задания: каждый пункт
+  // ссылается на предыдущий, и ни один не ссылается на стоящий позже. Иначе
+  // в цепочке нашлась бы пара, которую можно переставить, и задание врало бы.
+  {
+    const refs = new Map(
+      schemaDoc.tables.map((tb) => [
+        tb.table,
+        new Set(tb.columns.filter((c) => c.references && c.references.table !== tb.table).map((c) => c.references.table)),
+      ])
+    );
+    const t = byId(sqlPack, 'sql-091');
+    const tEn = byId(sqlPackEn, 'sql-091');
+    let bad = 0;
+    for (const [locale, items] of [['ru', t.items], ['en', tEn?.items ?? []]]) {
+      const names = items.map((it) => it.label.match(/\b(?:dim|fact)_[a-z_]+\b/g) ?? []);
+      if (names.length !== t.items.length || names.some((n) => n.length !== 1)) {
+        fail('sql-091', `${locale}: в каждом пункте должна стоять ровно одна таблица`);
+        bad++;
+        continue;
+      }
+      const seq = names.map((n) => n[0]);
+      for (let i = 0; i < seq.length; i++) {
+        if (i > 0 && !refs.get(seq[i])?.has(seq[i - 1])) {
+          fail('sql-091', `${locale}: ${seq[i]} не ссылается на ${seq[i - 1]}, эту пару можно переставить`);
+          bad++;
+        }
+        for (let j = i + 1; j < seq.length; j++) {
+          if (refs.get(seq[i])?.has(seq[j])) {
+            fail('sql-091', `${locale}: ${seq[i]} ссылается на ${seq[j]}, а стоит раньше`);
+            bad++;
+          }
+        }
+      }
+    }
+    // Разбор: SQLite проверяет внешние ключи только после PRAGMA foreign_keys = ON.
+    const ddl = 'CREATE TABLE p (id INTEGER PRIMARY KEY); CREATE TABLE c (id INTEGER PRIMARY KEY, p_id INTEGER REFERENCES p (id)); INSERT INTO c VALUES (1, 99)';
+    const off = scratch(ddl).error;
+    const on = scratch(ddl, 'PRAGMA foreign_keys = ON').error;
+    if (off || !/FOREIGN KEY constraint failed/.test(on ?? '')) {
+      fail('sql-091', `разбор говорит, что SQLite по умолчанию ключи не проверяет: без PRAGMA «${off}», с PRAGMA «${on}»`);
+      bad++;
+    }
+    if (!bad) console.log('  ok   sql-091: порядок единственный по схеме данных, внешние ключи в SQLite проверяются только с PRAGMA');
+  }
+
+  // Карточка приёма: шестнадцать регионов в антипримере и «ни NOT NULL,
+  // ни REFERENCES ни у одной таблицы» в разборе примера (им же вторит sql-089).
+  {
+    const regions = runSql('SELECT COUNT(*) FROM dim_region').rows[0][0];
+    const declared = runSql("SELECT COUNT(*) FROM sqlite_master WHERE sql LIKE '%NOT NULL%' OR sql LIKE '%REFERENCES%'").rows[0][0];
+    const lessonRu = readPack('sql-lessons').lessons.find((l) => l.skill === 'sql-schema');
+    const lessonEn = readPack('sql-lessons.en').lessons.find((l) => l.skill === 'sql-schema');
+    if (regions !== 16 || !lessonRu?.wrongWhy.startsWith('Шестнадцать') || !lessonEn?.wrongWhy.startsWith('Sixteen')) {
+      fail('sql-schema', `в карточке шестнадцать регионов, в базе ${regions}`);
+    } else if (declared !== 0) {
+      fail('sql-schema', `карточка и sql-089 говорят, что ограничений в базе нет, а объявлены они у ${declared} таблиц`);
+    } else console.log(`  ok   sql-schema: ${regions} регионов, ни NOT NULL, ни REFERENCES в базе нет`);
+  }
+}
+
 // Трек domain цитирует опорные числа бизнеса в тексте заданий и карточек.
 // Проверять их особенно важно: исполнимого эталона там нет вообще, и разойтись
 // с датасетом текст может совершенно молча.

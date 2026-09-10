@@ -32,6 +32,10 @@ export const SQL_CONSTRUCTS = [
   'lead(', 'ntile', 'sum(', 'avg(', 'count(', 'min(', 'max(', 'having',
   'left join', 'inner join', 'group by', 'order by', 'limit', 'with ',
   'as (', 'abs(', 'length(', 'first_value(', 'last_value(', 'nth_value(',
+  // Объявление таблицы — только на чтение (навык sql-schema). `not null` сюда
+  // не входит намеренно: подстрокой он совпал бы с IS NOT NULL в фильтрах,
+  // и гейт требовал бы карточку про DDL у половины трека.
+  'create table', 'insert into', 'primary key',
 ];
 
 export const PYTHON_CONSTRUCTS = [
