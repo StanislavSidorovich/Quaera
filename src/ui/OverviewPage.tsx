@@ -1,8 +1,8 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { overviewPage } from '../content/overview';
 import type { OverviewBlock, OverviewTaskFigure } from '../content/overview';
 import type { SchemaDoc } from '../engine/types';
-import { I18nContext, useI18n } from '../i18n/context';
+import { I18nContext, documentTitleFor, useI18n } from '../i18n/context';
 import { en } from '../i18n/en';
 import { SchemaMap } from './SchemaMap';
 
@@ -44,6 +44,35 @@ export function OverviewPage({
   const { locale } = useI18n();
   const page = overviewPage(locale);
 
+  /**
+   * Заголовок вкладки на этом экране — всегда «Quaera at a glance», а не
+   * из языка интерфейса (см. i18n/context.tsx): это ровно то, что PDF-ридер
+   * показывает колонтитулом на каждом листе и что браузер подставляет
+   * именем файла при «Печать → Сохранить как PDF». Раньше тут стоял русский
+   * заголовок топбара — печать с русской локалью давала PDF с русским
+   * именем даже для англоязычного письма.
+   *
+   * Присвоение — внутри `setTimeout(…, 0)`, не синхронно в теле эффекта.
+   * Причина в порядке коммита React: `I18nProvider` — предок этого
+   * компонента, и его собственный эффект (та же строка `document.title = …`)
+   * коммитится ПОСЛЕ эффектов потомков в одном и том же коммите — эффекты
+   * потомков всегда раньше эффектов предков. При прямом заходе по ссылке
+   * `?overview` оба эффекта срабатывают на одном монтировании: синхронное
+   * присвоение здесь получало заголовок на долю секунды раньше, чем его
+   * перезаписывал `I18nProvider`, — вкладка открывалась с русским
+   * заголовком независимо от того, что показано здесь. Макротаск
+   * гарантированно выполняется после того, как коммит целиком завершён.
+   */
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      document.title = page.title;
+    }, 0);
+    return () => {
+      window.clearTimeout(id);
+      document.title = documentTitleFor(locale);
+    };
+  }, [page.title, locale]);
+
   return (
     <div className="settings-column overview-page">
       <header className="overview-masthead">
@@ -56,7 +85,13 @@ export function OverviewPage({
 
       <p className="intro-lead">{page.lead}</p>
 
-      <button type="button" className="link-row overview-print-btn no-print" onClick={() => window.print()}>
+      {/*
+       * Полноразмерная кнопка, а не тихая ссылка: это единственное действие
+       * на всём экране, и та же роль, что у «Установить» на «О тренажёре» —
+       * secondary, потому что решение ещё не принято, страница только
+       * открылась.
+       */}
+      <button type="button" className="btn secondary overview-print-btn no-print" onClick={() => window.print()}>
         {page.printLabel}
       </button>
 
@@ -73,7 +108,15 @@ export function OverviewPage({
 
           <section className="card" data-block={block.id}>
             <p className="overview-kicker">
-              <span className="overview-kicker-num">{block.kicker}</span>
+              {/*
+               * Знак приложения на каждом разделе, а не только в шапке
+               * первого листа: любая страница, попавшая в руки отдельно
+               * (переслали, распечатали не с начала), остаётся узнаваемой.
+               */}
+              <span className="overview-kicker-left">
+                <BrandMark size={13} className="overview-kicker-mark" />
+                <span className="overview-kicker-num">{block.kicker}</span>
+              </span>
               <span className="overview-kicker-url">{page.siteUrl}</span>
             </p>
             <h2 className="overview-h2">{block.title}</h2>
@@ -114,9 +157,39 @@ export function OverviewPage({
              * а не отдельной карточкой: на самодостаточных листах 1-3 они
              * заняли бы место, которое там дороже, а тому, кто дочитал
              * до конца, они нужны в одном месте.
+             *
+             * Быстрый старт и врезка про `?intro` — тоже здесь, а не в
+             * «One link is the whole handover» (лист 3), где им самое
+             * место логически. Причина в замере, а не во вкусе: лист 3
+             * уже стоял на 99.7% заполнения, и оба блока туда не влезали
+             * без седьмого печатного листа. Последний лист, наоборот, был
+             * самым пустым (698 из 1026px, 68%) — единственный, где два
+             * практических абзаца перед условиями не создают лишний лист,
+             * а заполняют существующую пустоту. Порядок чтения всё равно
+             * работает: «почему забывают» → «как попробовать за пять
+             * минут» → «если это для новичка» → условия.
              */}
             {block.id === 'gap' && (
               <>
+                <div className="overview-quickstart">
+                  <h3 className="overview-quickstart-title">{page.closing.quickStart.title}</h3>
+                  <ol className="overview-quickstart-steps">
+                    {page.closing.quickStart.steps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+
+                {/*
+                 * Только на бумаге: на экране та же ссылка на `?intro` уже
+                 * кликабельна дверью на предыдущем листе, второй копией
+                 * текста была бы просто шумом.
+                 */}
+                <div className="overview-callout print-only">
+                  <b>{page.closing.introCallout.title}</b>
+                  <p>{page.closing.introCallout.text}</p>
+                </div>
+
                 <h3 className="overview-terms-title">{page.closing.termsTitle}</h3>
                 <ul className="overview-list">
                   {page.closing.terms.map((item, i) => (
@@ -147,14 +220,14 @@ export function OverviewPage({
  * разметкой, а не картинкой: PNG-иконка нарисована на тёмном фоне приложения
  * и на белом листе печаталась бы тёмным квадратом.
  */
-function BrandMark() {
+function BrandMark({ size = 40, className = 'overview-mark' }: { size?: number; className?: string }) {
   const bars = [
     { x: 6, y: 44, h: 30, fill: '#38bdf8' },
     { x: 36.5, y: 26, h: 48, fill: '#818cf8' },
     { x: 67, y: 8, h: 66, fill: '#4ade80' },
   ];
   return (
-    <svg className="overview-mark" viewBox="0 0 100 100" width="40" height="40" aria-hidden focusable="false">
+    <svg className={className} viewBox="0 0 100 100" width={size} height={size} aria-hidden focusable="false">
       {bars.map((bar) => (
         <rect key={bar.x} x={bar.x} y={bar.y} width="19" height={bar.h} rx="3" fill={bar.fill} />
       ))}

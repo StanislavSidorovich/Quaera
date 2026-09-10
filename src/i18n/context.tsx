@@ -23,6 +23,16 @@ function initialLocale(): Locale {
   return typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 }
 
+/**
+ * Вынесена наружу, а не инлайном в эффекте ниже: `OverviewPage` временно
+ * переопределяет заголовок вкладки (брошюра — «Quaera at a glance» всегда,
+ * не по языку интерфейса) и на уходе с экрана должен вернуть ровно то, что
+ * отсюда отдаёт `I18nProvider`, — без второй копии словаря заголовков.
+ */
+export function documentTitleFor(locale: Locale): string {
+  return dict[locale].app.documentTitle;
+}
+
 export const I18nContext = createContext<{ locale: Locale; t: Strings; setLocale: (l: Locale) => void } | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -48,7 +58,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // до всякого JS. Превью ссылки на LinkedIn — отдельное решение.
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = dict[locale].app.documentTitle;
+    document.title = documentTitleFor(locale);
   }, [locale]);
 
   const value = useMemo(() => ({ locale, t: dict[locale], setLocale }), [locale]);

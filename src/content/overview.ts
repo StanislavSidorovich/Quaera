@@ -167,6 +167,21 @@ export interface OverviewPageContent {
     termsTitle: string;
     terms: OverviewListItem[];
     author: string;
+    /**
+     * «Куда нажать сначала» — три шага в саму живую страницу, а не
+     * пересказ того, что и так на листах 1-3. Появился 2026-09-10: без
+     * него преподаватель, решивший попробовать, читает про приложение,
+     * но не знает, с какой кнопки начать.
+     */
+    quickStart: { title: string; steps: string[] };
+    /**
+     * Врезка про `?intro` — только на бумаге (см. `print-only` в
+     * OverviewPage.tsx). На экране та же ссылка уже кликабельна отдельной
+     * дверью в разделе «One link is the whole handover»; на бумаге до этой
+     * правки её не было вовсе. Оба поля рендерятся в блоке `gap` (последний
+     * лист), а не здесь, — разбор места в комментарии у JSX.
+     */
+    introCallout: { title: string; text: string };
   };
 }
 
@@ -178,7 +193,7 @@ const EN: OverviewPageContent = {
     tagline: 'A browser trainer for the working part of data analysis. Nothing to install, no account, offline after the first load.',
   },
 
-  lead: 'Written for someone deciding whether to spend an evening on it or hand it to a group. Everything that decision needs comes first; the detail waits at the end.',
+  lead: 'What quaera.app is and how it helps people learning data analysis, students especially, keep what a course taught them. The first sections are enough to decide; the rest is detail.',
   printLabel: 'Print or save as PDF',
   siteUrl: 'quaera.app',
 
@@ -395,6 +410,18 @@ const EN: OverviewPageContent = {
       },
     ],
     author: 'Built by Stanislav Sidorovich, as the trainer I wanted while getting these skills back myself.',
+    quickStart: {
+      title: 'Five minutes to see it',
+      steps: [
+        'Open quaera.app and pick SQL for analysts. The first card, How a table is declared, has a Run the example button.',
+        'Start a session: up to five tasks, seven to ten minutes.',
+        'Open the Sandbox and run any query of your own against the thirteen tables. The schema is under Data.',
+      ],
+    },
+    introCallout: {
+      title: 'New to the field?',
+      text: 'Send them quaera.app/?intro first: three minutes on what an analyst does, without a single professional term.',
+    },
   },
 };
 

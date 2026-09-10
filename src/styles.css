@@ -6524,12 +6524,35 @@ details.story-known > summary small {
 }
 
 /*
- * Шапка распечатки: знак, имя, одна фраза. На экране имя уже стоит в топбаре
- * (h1 шапки, см. App.tsx) и в шапке бокового меню — третья копия читалась бы
- * как задвоение. При печати топбар гасится целиком, и без этой шапки
- * распечатка осталась бы без имени и без знака вовсе.
+ * Шапка брошюры: знак, имя, фраза. Раньше была только на бумаге — довод был
+ * «на экране имя уже стоит в топбаре, третья копия читалась бы задвоением».
+ * 2026-09-10 автор попросил знак и на экране тоже: это единственный экран
+ * приложения, который открывают отдельной вкладкой по прямой ссылке
+ * и который затем существует сам по себе — как письмо, а не раздел меню.
+ * На экране версия компактнее печатной (без фразы, она дублирует lead
+ * ниже почти дословно) — только знак и имя, тем же кеглем, что заголовок
+ * карточки. Печатная версия переопределяет размеры и включает фразу
+ * ниже, в @media print.
  */
 .overview-masthead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.overview-masthead .overview-mark {
+  width: 28px;
+  height: 28px;
+}
+
+.overview-masthead-word {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.overview-masthead-tagline {
   display: none;
 }
 
@@ -6547,12 +6570,23 @@ details.story-known > summary small {
 .overview-kicker {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
+}
+
+/* Знак и номер раздела вместе, одним флекс-элементом слева от адреса. */
+.overview-kicker-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.overview-kicker-mark {
+  flex-shrink: 0;
 }
 
 .overview-kicker-url {
@@ -6563,9 +6597,14 @@ details.story-known > summary small {
  * Заголовок раздела со своей линейкой. Класс собственный, а не `.card h2`:
  * тот же h2 стоит на полусотне других карточек приложения, и «поточнее
  * селектор» здесь означал бы правку, которая рано или поздно уедет туда.
+ *
+ * Кегль крупнее базовых 15px — раздел брошюры должен читаться подзаголовком
+ * письма, а не рядовой карточкой приложения; на бумаге разница ещё заметнее
+ * (см. @media print).
  */
 .overview-h2 {
   margin: 0 0 10px;
+  font-size: 17px;
 }
 
 .overview-h2::after {
@@ -6812,6 +6851,59 @@ details.story-known > summary small {
   font-size: 12px;
 }
 
+/* --------------------------------------------------- куда нажать сначала */
+.overview-quickstart {
+  margin: 16px 0 0;
+}
+
+.overview-quickstart-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.overview-quickstart-steps {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.overview-quickstart-steps li {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------- врезка intro */
+/*
+ * `print-only`: обратный `no-print` (тот уже определён внутри @media print
+ * этого же файла). Родовое имя, а не `overview-*`, потому что назначение
+ * общее — на экране скрыт, на бумаге виден, — а первое применение здесь.
+ */
+.print-only {
+  display: none;
+}
+
+.overview-callout {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+}
+
+.overview-callout b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.overview-callout p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 /* =============================================================== печать */
 /*
  * Единственный экран приложения с кнопкой печати, поэтому все print-правила
@@ -6846,6 +6938,10 @@ details.story-known > summary small {
     display: none !important;
   }
 
+  .print-only {
+    display: block;
+  }
+
   html,
   body,
   .app,
@@ -6854,9 +6950,21 @@ details.story-known > summary small {
     background: #fff;
   }
 
+  /*
+   * Размер шрифта приложения (A/A+/A++, см. .app.font-lg/.font-xl выше)
+   * сбрасывается на печати безусловно. Он сделан через `zoom` и уходит
+   * на печать вместе с текстом — у человека с включённым A+ то же письмо
+   * печаталось в 8 листов вместо 5, потому что `break-before: page` считает
+   * пиксели уже увеличенного макета. Брошюра — одно и то же письмо для
+   * любого адресата, у кого что бы ни стояло в настройках приложения.
+   * `!important` бьёт `.app.font-lg`/`.font-xl` по весу правила, а не
+   * по специфичности: без него они остались бы сильнее голого `.app`.
+   */
   .app {
     display: block;
     max-width: none;
+    zoom: 1 !important;
+    --zoom: 1 !important;
   }
 
   .content {
@@ -6902,7 +7010,7 @@ details.story-known > summary small {
 
   .overview-kicker {
     margin: 0 0 4px;
-    font-size: 10px;
+    font-size: 12px;
     color: #2563eb;
   }
 
@@ -6914,12 +7022,12 @@ details.story-known > summary small {
   }
 
   .overview-h2 {
-    font-size: 19px;
+    font-size: 24px;
     margin: 0 0 8px;
   }
 
   .overview-h2::after {
-    height: 3px;
+    height: 4px;
     margin-top: 6px;
     background: #2563eb;
   }
@@ -7029,7 +7137,13 @@ details.story-known > summary small {
    * принтера, а не с 96 dpi экрана.
    */
   .overview-schema svg.schema-map {
-    max-height: 250px;
+    /*
+     * 250 → 230px 2026-09-10: раздел вырос из-за более крупного заголовка
+     * (.overview-h2 19 → 24px) и знака в надзаголовке — тот же лист был
+     * подогнан «в обрез» ещё в прошлый заход, и 5px лишних в каждом
+     * заголовке брошюры на этом листе переполняли его на 15px.
+     */
+    max-height: 230px;
     width: auto;
   }
 
@@ -7063,10 +7177,14 @@ details.story-known > summary small {
 
   /*
    * Фигуру и таблицу лист рвать не должен: голая шапка таблицы внизу листа
-   * и подпись, оторванная от диаграммы, читаются как дефект печати.
+   * и подпись, оторванная от диаграммы, читаются как дефект печати. Та же
+   * причина у врезки и списка шагов — оторванный заголовок от текста ниже
+   * читается так же плохо, а по высоте оба заведомо меньше листа.
    */
   .overview-page figure,
-  .overview-task-table {
+  .overview-task-table,
+  .overview-quickstart,
+  .overview-callout {
     break-inside: avoid;
   }
 
@@ -7154,5 +7272,38 @@ details.story-known > summary small {
 
   .intro-door-note {
     color: #555;
+  }
+
+  .overview-quickstart {
+    margin-top: 12px;
+  }
+
+  .overview-quickstart-title,
+  .overview-quickstart-steps li {
+    font-size: 12px;
+  }
+
+  .overview-quickstart-steps li {
+    margin: 4px 0;
+  }
+
+  /*
+   * Единственная врезка со сплошной рамкой в акцентный цвет, а не серой
+   * чертой соседей: врезка отвечает на вопрос, который читатель ещё не
+   * задал (что делать, если это не мне, а новичку рядом), и её нужно
+   * замечать боковым зрением, не читая раздел целиком.
+   */
+  .overview-callout {
+    margin-top: 12px;
+    background: none;
+    border-color: #2563eb;
+  }
+
+  .overview-callout b {
+    color: #000;
+  }
+
+  .overview-callout p {
+    color: #444;
   }
 }
