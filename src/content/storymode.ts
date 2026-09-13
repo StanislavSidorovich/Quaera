@@ -1083,7 +1083,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Ваш руководитель',
-            text: '«Одиннадцать дистрибьюторов из двенадцати между 1.03 и 1.05. Двенадцатый — Setouchi Trading, 2.44. Запомни это число, но к Nettora оно отношения не имеет: там всего пять её точек.»',
+            text: '«Одиннадцать дистрибьюторов из двенадцати между 1.04 и 1.05. Двенадцатый — Setouchi Trading, 2.44. Запомни это число, но к Nettora оно отношения не имеет: там всего пять её точек.»',
           },
         },
       ],
@@ -2614,7 +2614,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Your manager',
-            text: '"Eleven distributors out of twelve sit between 1.03 and 1.05. The twelfth is Setouchi Trading at 2.44. Remember that number, but it has nothing to do with Nettora: only five of its outlets are there."',
+            text: '"Eleven distributors out of twelve sit between 1.04 and 1.05. The twelfth is Setouchi Trading at 2.44. Remember that number, but it has nothing to do with Nettora: only five of its outlets are there."',
           },
         },
       ],

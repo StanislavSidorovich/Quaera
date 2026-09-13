@@ -1109,7 +1109,7 @@
       "id": "sql-022",
       "title": "Who overstocked the warehouse",
       "brief": "The CFO is unhappy: Q4 2025 shipments grew, but retail sales didn't. There's a suspicion that one of the distributors loaded up on stock to hit an annual bonus. That kind of stockpile comes back as a shipment drop next quarter, so it needs to be found now.",
-      "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor (name), sell_in (units shipped for the months 2025-10-01 through 2025-12-01), sell_out (units sold at outlets for the weeks 2025-09-29 through 2025-12-28), and ratio (the first divided by the second, rounded to two decimal places). Ordered by ratio descending.",
+      "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor (name), sell_in (units shipped for the months 2025-10-01 through 2025-12-01), sell_out (units sold at outlets for the weeks that start in October through December, week_start 2025-10-06 through 2025-12-29), and ratio (the first divided by the second, rounded to two decimal places). Ordered by ratio descending.",
       "hints": [
         "Shipments and sales live at different granularities. Compute them in two separate CTEs, then join.",
         "The link between an outlet and its distributor is the served_by_distributor_id column in dim_customer.",
