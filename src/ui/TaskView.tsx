@@ -639,8 +639,40 @@ function StepView({
     if (!draft.solved) patch({ feedback: null });
     if (draft.solved) setExplored(true);
     try {
-      const r = await executor.exec(composedCode);
-      patch({ preview: r });
+      if (draft.solved) {
+        /*
+         * Зачёт уже стоит, но заметка про имена колонок — не вердикт, а факт
+         * про запрос, который сейчас в редакторе. Если её не освежить, она
+         * переживает любую правку алиасов: человек читает совет, исправляет
+         * запрос, жмёт «Выполнить» — а внизу всё ещё «имена отличаются»
+         * про алиасы, которых уже нет. sql_error/code_error ведут себя как
+         * раньше: они и так перезаписывали обратную связь.
+         */
+        const res: GradeResult = await executor.grade(composedCode, step.solution, {
+          orderMatters: step.orderMatters,
+        });
+        if (res.status === 'sql_error' || res.status === 'code_error') {
+          patch({
+            preview: null,
+            feedback: {
+              kind: 'execError',
+              message: res.message,
+              traceback: res.status === 'code_error' ? res.traceback : undefined,
+            },
+          });
+        } else {
+          patch({
+            preview: res.preview,
+            feedback: {
+              kind: 'correct',
+              expectedCols: res.comparison.columnNamesDiffer ? res.comparison.expectedCols : undefined,
+            },
+          });
+        }
+      } else {
+        const r = await executor.exec(composedCode);
+        patch({ preview: r });
+      }
     } catch (e) {
       const err = e as Error & { traceback?: string };
       patch({ preview: null, feedback: { kind: 'execError', message: err.message, traceback: err.traceback } });

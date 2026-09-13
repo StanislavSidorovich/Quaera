@@ -103,9 +103,9 @@ const ru: DiagnoseText = {
 
   noColumn: (name, hint) => ({
     tone: 'error',
-    title: `Нет колонки ${name}`,
+    title: `Нет колонки «${name}»`,
     body: hint
-      ? `Похоже на опечатку: в схеме есть ${hint}.`
+      ? `Похоже на опечатку: в схеме есть «${hint}».`
       : 'Такой колонки нет ни в одной из таблиц запроса. Откройте схему и проверьте, в какой таблице она живёт.',
     nudges: [
       'Эта колонка точно в той таблице, которую вы присоединили?',
@@ -115,8 +115,8 @@ const ru: DiagnoseText = {
 
   columnElsewhere: (name) => ({
     tone: 'error',
-    title: `Колонки ${name} нет в этих таблицах`,
-    body: `Имя написано верно — такая колонка в датасете есть, но лежит в другой таблице, а в запросе её нет. Откройте схему и посмотрите, где ${name} живёт на самом деле.`,
+    title: `Колонки «${name}» нет в этих таблицах`,
+    body: `Имя написано верно — такая колонка в датасете есть, но лежит в другой таблице, а в запросе её нет. Откройте схему и посмотрите, где «${name}» живёт на самом деле.`,
     nudges: [
       'Скорее всего, не хватает соединения: нужную таблицу надо присоединить по ключу.',
       'Если таблица уже в запросе — проверьте алиас: колонка ищется в той, что названа в FROM и JOIN, а не во всём датасете.',
@@ -125,14 +125,14 @@ const ru: DiagnoseText = {
 
   noTable: (name, hint) => ({
     tone: 'error',
-    title: `Нет таблицы ${name}`,
-    body: hint ? `Возможно, имелась в виду ${hint}.` : 'Проверьте список таблиц в схеме данных.',
+    title: `Нет таблицы «${name}»`,
+    body: hint ? `Возможно, имелась в виду «${hint}».` : 'Проверьте список таблиц в схеме данных.',
     nudges: ['Имена таблиц: dim_* — справочники, fact_* — факты, staging_* — сырой слой.'],
   }),
 
   ambiguousColumn: (name) => ({
     tone: 'error',
-    title: `Неоднозначная колонка ${name}`,
+    title: `Неоднозначная колонка «${name}»`,
     body: 'Такая колонка есть больше чем в одной из соединённых таблиц, и SQLite не знает, какую вы имеете в виду.',
     nudges: ['Добавьте префикс: f.product_id или p.product_id.'],
   }),
@@ -366,9 +366,9 @@ const en: DiagnoseText = {
 
   noColumn: (name, hint) => ({
     tone: 'error',
-    title: `No column ${name}`,
+    title: `No column "${name}"`,
     body: hint
-      ? `Looks like a typo: the schema has ${hint}.`
+      ? `Looks like a typo: the schema has "${hint}".`
       : 'No table in this query has that column. Open the schema and check which table it lives in.',
     nudges: [
       'Is that column really in the table you joined?',
@@ -378,8 +378,8 @@ const en: DiagnoseText = {
 
   columnElsewhere: (name) => ({
     tone: 'error',
-    title: `No ${name} in these tables`,
-    body: `The name is spelled right — the dataset does have that column, but it lives in another table, and that table is not in your query. Open the schema and see where ${name} actually sits.`,
+    title: `No "${name}" in these tables`,
+    body: `The name is spelled right — the dataset does have that column, but it lives in another table, and that table is not in your query. Open the schema and see where "${name}" actually sits.`,
     nudges: [
       'Most likely a join is missing: the table it belongs to has to be joined in on its key.',
       'If the table is already in the query, check the alias: a column is looked up in what FROM and JOIN name, not across the whole dataset.',
@@ -388,14 +388,14 @@ const en: DiagnoseText = {
 
   noTable: (name, hint) => ({
     tone: 'error',
-    title: `No table ${name}`,
-    body: hint ? `You may have meant ${hint}.` : 'Check the list of tables in the data schema.',
+    title: `No table "${name}"`,
+    body: hint ? `You may have meant "${hint}".` : 'Check the list of tables in the data schema.',
     nudges: ['Table names: dim_* are lookups, fact_* are facts, staging_* is the raw layer.'],
   }),
 
   ambiguousColumn: (name) => ({
     tone: 'error',
-    title: `Ambiguous column ${name}`,
+    title: `Ambiguous column "${name}"`,
     body: 'More than one of the joined tables has that column, and SQLite cannot tell which one you mean.',
     nudges: ['Add a prefix: f.product_id or p.product_id.'],
   }),
