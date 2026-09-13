@@ -89,9 +89,14 @@ try {
 
   // --- review: интервал растёт с лёгкостью и не превышает 180 дней.
   {
+    // Каждое повторение — в свой срок: в один присест интервал не растёт вовсе
+    // (см. проверку ниже), и потолок так было бы не достать.
     let state = initialSkillState();
-    const now = new Date('2026-01-01T00:00:00.000Z');
-    for (let i = 0; i < 20; i++) state = review(state, 4, now);
+    let at = new Date('2026-01-01T00:00:00.000Z');
+    for (let i = 0; i < 20; i++) {
+      state = review(state, 4, at);
+      at = new Date(state.dueAt);
+    }
     assertTrue('review: интервал ограничен 180 днями', state.intervalDays <= 180, `получено ${state.intervalDays}`);
     assertTrue('review: ease ограничен сверху 2.8', state.ease <= 2.8, `получено ${state.ease}`);
   }
@@ -100,8 +105,33 @@ try {
   assertEq('mastery: нетронутый навык → 0', mastery(undefined), 0);
   {
     const weak = review(initialSkillState(), 2);
-    const strong = review(review(review(initialSkillState(), 4), 4), 4);
+    let strong = review(initialSkillState(), 4);
+    strong = review(strong, 4, new Date(strong.dueAt));
+    strong = review(strong, 4, new Date(strong.dueAt));
     assertTrue('mastery: сильнее после нескольких хороших повторений', mastery(strong) > mastery(weak));
+  }
+
+  // --- review: успехи в один присест интервал не растят.
+  //
+  // Кампания даёт по два-четыре задания на один приём за день. Пока каждое
+  // из них шло отдельным повторением, день 6 отправлял LEFT JOIN на 39 дней
+  // (2 → 5 → 14 → 39), а неделя 4 — даты и ряды на 180: приёмы самых трудных
+  // дней пропадали из повторений на месяцы.
+  {
+    const t0 = new Date('2026-03-01T09:00:00.000Z');
+    const minutes = (n) => new Date(t0.getTime() + n * 60000);
+    let s = review(initialSkillState(), 4, t0);
+    const first = s.intervalDays;
+    const firstEase = s.ease;
+    for (let i = 1; i <= 3; i++) s = review(s, 4, minutes(10 * i));
+    assertEq('review: четыре успеха за полчаса — интервал первого', s.intervalDays, first);
+    assertEq('review: в присест лёгкость не раскачивается', s.ease, firstEase);
+    assertEq('review: повторения в присест всё же посчитаны', s.reps, 4);
+    const nextDay = review(s, 4, new Date(t0.getTime() + DAY(1)));
+    assertTrue('review: на следующий день интервал снова растёт', nextDay.intervalDays > first, `получено ${nextDay.intervalDays}`);
+    // Провал, а за ним успех в тот же присест: успех назначает первый интервал.
+    const lapsed = review(review(initialSkillState(), 1, t0), 4, minutes(5));
+    assertEq('review: успех после провала в присест — первый интервал', lapsed.intervalDays, 2);
   }
 
   // --- isDue
@@ -165,11 +195,12 @@ try {
   // числа — вопрос настройки, движение вперёд — инвариант.
   {
     let state = initialSkillState();
-    const now = new Date('2026-01-01T00:00:00.000Z');
+    let at = new Date('2026-01-01T00:00:00.000Z');
     let stuck = 0;
     for (let i = 0; i < 12; i++) {
       const before = state.intervalDays;
-      state = review(state, 2, now);
+      state = review(state, 2, at);
+      at = new Date(state.dueAt);
       if (i > 0 && state.intervalDays <= before) stuck++;
     }
     assertEq('review(2): интервал растёт на каждом повторении', stuck, 0);
