@@ -500,7 +500,7 @@ const ru: StoryCampaign = {
             scene: 'calendar',
             title: 'Группировать по тому, чего в таблице нет',
             paras: [
-              'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7) даёт 2025-03.',
+              'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7), то есть «с первого символа взять семь», даёт 2025-03.',
               'Группировать можно не только по колонке, но и по выражению. Чтобы не повторять его дважды, пишут GROUP BY 1 — «по первой колонке в SELECT».',
               'Год в шаблоне уже отобран: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
               'Как это выглядело вчера, на ассортименте по брендам:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании два места оставлены пустыми — чем считаем штуки и по чему группируем.',
@@ -559,7 +559,7 @@ const ru: StoryCampaign = {
     /*
      * Четверг. Последняя ступень перед пятницей: соединение, его цена
      * и точки как метрика. После этого дня в пятничном запросе не остаётся
-     * ни одной конструкции, которую человек видит впервые.
+     * ни одной конструкции, которую человеку пришлось бы писать впервые.
      */
     {
       id: 'day-4-join',
@@ -638,7 +638,7 @@ const ru: StoryCampaign = {
     /*
      * Пятница. Единственный день недели, где не вводится ни одной новой
      * конструкции: запрос в задании собран из понедельничного SELECT,
-     * вторничного COUNT(DISTINCT), средней группировки и четвергового JOIN.
+     * вторничного COUNT(DISTINCT), средней группировки и четвергового JOIN; второй JOIN к dim_date и 1.0 * в нём новые, но задание на чтение, и подводка называет их вслух.
      * Ровно поэтому от человека здесь просят не запрос, а суждение —
      * кампания растёт весом суждения, а не длиной запроса.
      */
@@ -657,7 +657,7 @@ const ru: StoryCampaign = {
         },
         {
           from: 'Ваш руководитель',
-          text: '«Не ищи причину внутри одного числа — разложи его. Штуки — это число точек, где бренд стоит, умноженное на продажи в одной точке. Разрез по первым кварталам трёх лет я уже собрал, он в задании над запросом; собран он ровно из того, что ты делал вчера и позавчера. Сегодня от тебя нужен не запрос, а суждение: назвать виновника и удержать это имя под вопросами. Ошибёшься — Аоки-сан в 11:00 постучит не в ту дверь.»',
+          text: '«Не ищи причину внутри одного числа — разложи его. Проданные штуки — это число точек, где бренд стоит, умноженное на то, сколько штук в среднем уходит через одну точку. Разрез по первым кварталам трёх лет я уже собрал, он в задании над запросом; собран он ровно из того, что ты делал вчера и позавчера. Сегодня от тебя нужен не запрос, а суждение: назвать виновника и удержать это имя под вопросами. Ошибёшься — Аоки-сан в 11:00 постучит не в ту дверь.»',
         },
       ],
       steps: [
@@ -669,13 +669,13 @@ const ru: StoryCampaign = {
             paras: [
               'Любое падение раскладывается на множители, и это единственный способ спорить о причинах не наугад. Штуки = число точек × продажи на точку. Выручка = штуки × цена. Пока число целое, версий у него столько же, сколько людей в переговорной; как только оно разложено, вопрос сводится к одному: какой множитель поехал.',
               'Как это читается — на другом случае. Бренд продавал 1000 штук в месяц, стало 500. Раскладываем: точек было 50, стало 48 — почти не изменилось; продаж на точку было 20, стало 10.4 — ровно вдвое. Полка на месте, а берут с неё вдвое меньше: это спрос, и разговор пойдёт с маркетингом. Была бы обратная картина — точек 50 против 24 при тех же 20 на точку — виноват доступ, и разговор пойдёт с полевой командой.',
-              'В задании разрез уже посчитан и стоит над запросом: по первым кварталам 2024, 2025 и 2026 — штуки, число точек, продажи на точку и средняя цена. Сам запрос читается целиком: JOIN из четверга, COUNT(DISTINCT) из вторника, GROUP BY из среды. Сравнивай 2024 с 2026 и ищи множитель, который изменился сильнее остальных.',
+              'В задании разрез уже посчитан и стоит над запросом: по первым кварталам 2024, 2025 и 2026 — штуки, число точек, продажи на точку и средняя цена. Сам запрос читается целиком: JOIN из четверга, COUNT(DISTINCT) из вторника, GROUP BY из среды. Нового в нём две детали, и писать их не придётся: второй JOIN, к календарю dim_date, даёт год и квартал по дате недели, а 1.0 * нужен, чтобы деление целых штук на целое число точек не отбросило дробь. Сравнивай 2024 с 2026 и ищи множитель, который изменился сильнее остальных.',
             ],
           },
         },
       ],
       reflection: [
-        'Точек было 79, стало 37 — больше половины полок бренд потерял. Продажи в одной точке при этом почти не двинулись: 127.9 против 116.4, обычные колебания. Там, где Nettora ещё стоит, её берут как брали.',
+        'Точек было 79, стало 37 — больше половины полок бренд потерял. Продажи в одной точке при этом почти не двинулись: 127.9 против 116.4, а в 2025-м, при всех 79 точках, было и 103.3. Этот показатель гуляет из года в год, но вдвое не падал ни разу. Там, где Nettora ещё стоит, её берут как брали.',
         'Вот теперь это ответ, а не уточнённый вопрос. У него есть не только виновник, но и владелец: не маркетинг и не цена, а переговоры с сетями и работа полевой команды. Заметь, что изменилось за неделю — в понедельник ты не мог достать даже список товаров, сегодня называешь причину падения и адресата.',
       ],
       hook: [
@@ -2057,7 +2057,7 @@ const en: StoryCampaign = {
             scene: 'calendar',
             title: 'Grouping by something the table does not hold',
             paras: [
-              'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7) gives 2025-03.',
+              'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7), meaning "from the first character take seven", gives 2025-03.',
               'You can group not only by a column but by an expression. To avoid writing it twice, people write GROUP BY 1, meaning "by the first column in SELECT".',
               'The year is already picked in the template: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
               'Here is how it looked yesterday, on the assortment by brand:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves two spots blank: what to compute the units with, and what to group by.',
@@ -2195,7 +2195,7 @@ const en: StoryCampaign = {
         },
         {
           from: 'Your manager',
-          text: '"Do not look for the cause inside a single number, break it apart. Units are the number of outlets carrying the brand multiplied by sales in one outlet. I already pulled the split across the first quarters of three years, and it sits above the query in your task; it is built from exactly what you did yesterday and the day before. Today I need a judgment from you rather than a query: name the culprit and hold that name under questioning. Get it wrong and Aoki knocks on the wrong door at 11:00."',
+          text: '"Do not look for the cause inside a single number, break it apart. Units sold are the number of outlets carrying the brand multiplied by how many units one outlet sells on average. I already pulled the split across the first quarters of three years, and it sits above the query in your task; it is built from exactly what you did yesterday and the day before. Today I need a judgment from you rather than a query: name the culprit and hold that name under questioning. Get it wrong and Aoki knocks on the wrong door at 11:00."',
         },
       ],
       steps: [
@@ -2207,13 +2207,13 @@ const en: StoryCampaign = {
             paras: [
               'Any decline breaks into factors, and that is the only way to argue about causes without guessing. Units = outlets × sales per outlet. Revenue = units × price. While the number stays whole it carries as many theories as there are people in the room; once it is broken apart the question narrows to one: which factor moved.',
               'Here is how that reads on a different case. A brand sold 1000 units a month and now sells 500. Break it apart: outlets went from 50 to 48, barely a change; sales per outlet went from 20 to 10.4, exactly half. The shelf is intact and people take half as much from it, so that is demand and the conversation goes to marketing. Flip the picture, outlets 50 against 24 with the same 20 per outlet, and the culprit is access, so the conversation goes to the field team.',
-              'In your task the split is already computed and sits above the query: first quarters of 2024, 2025 and 2026, with units, outlets, sales per outlet and average price. The query itself reads end to end: the JOIN from Thursday, COUNT(DISTINCT) from Tuesday, GROUP BY from Wednesday. Compare 2024 with 2026 and find the factor that moved more than the rest.',
+              'In your task the split is already computed and sits above the query: first quarters of 2024, 2025 and 2026, with units, outlets, sales per outlet and average price. The query itself reads end to end: the JOIN from Thursday, COUNT(DISTINCT) from Tuesday, GROUP BY from Wednesday. Two details are new, and you will not have to write them: the second JOIN, to the calendar dim_date, gives the year and quarter of each week, and 1.0 * keeps the division of whole units by a whole outlet count from dropping the fraction. Compare 2024 with 2026 and find the factor that moved more than the rest.',
             ],
           },
         },
       ],
       reflection: [
-        'Outlets went from 79 to 37, so the brand lost more than half of its shelves. Sales in a single outlet barely moved, 127.9 against 116.4, ordinary fluctuation. Where Nettora is still on the shelf, people buy it the way they always did.',
+        'Outlets went from 79 to 37, so the brand lost more than half of its shelves. Sales in a single outlet barely moved, 127.9 against 116.4, and in 2025, with all 79 outlets, the figure was as low as 103.3. It wanders from year to year but has never halved. Where Nettora is still on the shelf, people buy it the way they always did.',
         'Now this is an answer rather than a sharper question. It has a culprit and it has an owner: not marketing and not price, but negotiations with the chains and the work of the field team. Notice what changed in a week. On Monday you could not even pull a list of products; today you name the cause of a decline and the person who owns it.',
       ],
       hook: [

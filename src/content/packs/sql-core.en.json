@@ -608,7 +608,7 @@
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
       "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
-        "Count distinct customers with the same function as in SELECT: DISTINCT customer_id.",
+        "An outlet is a customer of the distributor, so count distinct customer_id with the same function as in SELECT.",
         "After HAVING, sorting goes from higher revenue to lower; the keyword goes after the column name."
       ],
       "explain": "One condition in HAVING checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each. Unlike the task about premium brands, which had a single threshold condition, here you can see how combining metrics screens out brands that are strong on only one dimension, exactly what a category manager needs for a shelf-expansion decision."
@@ -1130,11 +1130,11 @@
         },
         {
           "label": "A drop in demand: shoppers switched to other brands",
-          "why": "A demand drop would first show up as lower sales per outlet. Here that figure stays within about ten percent, within normal fluctuation."
+          "why": "A demand drop would first show up as lower sales per outlet. Here the 2026 figure is only 9% below 2024 (116.4 against 127.9), and in 2025, with all 79 outlets, it was lower still at 103.3. The figure wanders from year to year but has never halved, while the outlet count did."
         },
         {
           "label": "A price too high pushed buyers away",
-          "why": "Price rose from 184.7 to 203.8 (about 10% over two years), which is below inflation and doesn't explain a halving. A price effect would also have shown up in sales per outlet."
+          "why": "Price rose from 184.7 to 203.8, about 10% over two years, and almost all of the increase came in 2025. If price had pushed buyers away, sales per outlet would have fallen, yet in 2026 they are almost where they were in 2024. The halving sits in the other factor, the outlet count."
         },
         {
           "label": "Seasonality: Q1 is weak for household chemicals",
@@ -1145,7 +1145,7 @@
         "Break total units down into two factors: number of outlets and sales per outlet.",
         "See which factor moved more."
       ],
-      "explain": "This is a standard analytical technique: any change is decomposed into factors, and the question reduces to which factor moved. Units = outlet count × sales per outlet; revenue = units × price; sales per outlet = purchase count × average basket. Once it's clear that distribution fell, not demand, the problem's owner changes too: this isn't a question for marketing or pricing, it's for the field team and chain negotiations. In FMCG this metric is measured formally as numeric distribution (share of outlets carrying the product) and weighted distribution (the same share, weighted by outlet turnover). A drop in weighted distribution alone means the brand fell out of specifically the large outlets, which is far worse."
+      "explain": "This is a standard analytical technique: any change is decomposed into factors, and the question reduces to which factor moved. Units = outlet count × sales per outlet; revenue = units × price; revenue per outlet = purchase count × average basket. Once it's clear that distribution fell, not demand, the problem's owner changes too: this isn't a question for marketing or pricing, it's for the field team and chain negotiations. In FMCG this metric is measured formally as numeric distribution (share of outlets carrying the product) and weighted distribution (the same share, weighted by outlet turnover). A drop in weighted distribution alone means the brand fell out of specifically the large outlets, which is far worse."
     },
     {
       "id": "sql-057",
