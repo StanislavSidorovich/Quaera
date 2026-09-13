@@ -70,6 +70,12 @@ export type StoryScene =
   // рабочее место: общий кадр начала дня
   | 'office'
   | 'desk'
+  // натюрморты утра: стол со своими предметами дня (пилот — неделя 4)
+  | 'desk-frames'
+  | 'desk-mask'
+  | 'desk-index'
+  | 'desk-series'
+  | 'boardroom'
   // приёмы, которые вводит подводка
   | 'catalog'
   | 'filter'
@@ -1493,7 +1499,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Понедельник, 9:05',
       short: 'Пн',
       found: 'Таблица в pandas лежит в переменной: одна скобка даёт колонку, две — таблицу.',
-      scenes: { brief: 'toolkit', reflection: 'catalog', hook: 'stray' },
+      scenes: { brief: 'desk-frames', reflection: 'catalog', hook: 'stray' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1559,7 +1565,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Вторник, 9:20',
       short: 'Вт',
       found: 'Строки отбирает маска. Условия в ней соединяются знаками & и |, а не словами and и or.',
-      scenes: { brief: 'filter', reflection: 'threshold', hook: 'groups' },
+      scenes: { brief: 'desk-mask', reflection: 'threshold', hook: 'groups' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1621,7 +1627,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Среда, 9:15',
       short: 'Ср',
       found: 'groupby уносит ключ группировки в индекс; as_index=False оставляет его колонкой.',
-      scenes: { brief: 'groups', reflection: 'counts', hook: 'calendar' },
+      scenes: { brief: 'desk-index', reflection: 'counts', hook: 'calendar' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1682,7 +1688,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Четверг, 9:10',
       short: 'Чт',
       found: 'resample меняет частоту ряда, rolling сглаживает окном; первому нужна дата, а не текст, второму — строки по порядку времени.',
-      scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
+      scenes: { brief: 'desk-series', reflection: 'smooth', hook: 'trend' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1775,7 +1781,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Отгрузки Setouchi вернулись к норме в январе 2026, а остаток с осени стоит на 21–22 тыс. штук.',
-      scenes: { brief: 'meeting', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom', reflection: 'level', hook: 'office' },
       messages: [
         {
           from: 'Мори-сан, КАМ по дистрибьюторам',
@@ -2894,7 +2900,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Monday, 9:05',
       short: 'Mon',
       found: 'A pandas table stays in a variable: one bracket gives a column, two give a table.',
-      scenes: { brief: 'toolkit', reflection: 'catalog', hook: 'stray' },
+      scenes: { brief: 'desk-frames', reflection: 'catalog', hook: 'stray' },
       messages: [
         {
           from: 'Your manager',
@@ -2960,7 +2966,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Tuesday, 9:20',
       short: 'Tue',
       found: 'Rows are selected by a mask. Conditions in it are joined with & and |, not with the words "and" and "or".',
-      scenes: { brief: 'filter', reflection: 'threshold', hook: 'groups' },
+      scenes: { brief: 'desk-mask', reflection: 'threshold', hook: 'groups' },
       messages: [
         {
           from: 'Your manager',
@@ -3022,7 +3028,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Wednesday, 9:15',
       short: 'Wed',
       found: 'groupby moves the grouping key into the index; as_index=False keeps it a column.',
-      scenes: { brief: 'groups', reflection: 'counts', hook: 'calendar' },
+      scenes: { brief: 'desk-index', reflection: 'counts', hook: 'calendar' },
       messages: [
         {
           from: 'Your manager',
@@ -3083,7 +3089,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Thursday, 9:10',
       short: 'Thu',
       found: 'resample changes the frequency, rolling smooths with a window; the first needs a date rather than text, the second needs rows in time order.',
-      scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
+      scenes: { brief: 'desk-series', reflection: 'smooth', hook: 'trend' },
       messages: [
         {
           from: 'Your manager',
@@ -3160,7 +3166,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Friday, 9:00',
       short: 'Fri',
       found: 'Setouchi shipments returned to normal in January 2026, while the stock has stood at 21 to 22 thousand units since the autumn.',
-      scenes: { brief: 'meeting', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom', reflection: 'level', hook: 'office' },
       messages: [
         {
           from: 'Mori-san, key account manager for distributors',

@@ -5201,6 +5201,55 @@ details.story-known > summary small {
   opacity: 0.09;
 }
 
+/*
+ * Сцены-места: натюрморт рабочего стола и переговорная (StoryArt.tsx,
+ * DeskStill и Boardroom). Здесь уже не линии, а плоские заливки предметов.
+ *
+ * Палитра выведена из цветов темы через color-mix, а не набрана своими hex:
+ * дерево, бумага и экран сами темнеют в тёмной теме и светлеют в светлой,
+ * и сцене не нужны четыре копии палитры по числу блоков темы в начале файла.
+ * Тёплые тона берутся у цветов треков — они и так общие для обеих тем.
+ *
+ * Акцент по-прежнему один на сцену, и это то, о чём говорит бриф дня:
+ * линия на мониторе, отобранные строки, всплеск на доске. Метка «сегодня»
+ * на календаре намеренно не акцентная — она окрашена цветом шапки
+ * календаря, иначе у сцены стало бы два главных места.
+ */
+.story-art {
+  --art-paper: var(--bg-raised);
+  --art-body: color-mix(in srgb, var(--text-dim) 55%, var(--bg-sunken));
+  --art-screen: color-mix(in srgb, var(--accent) 6%, var(--bg-raised));
+  --art-wood: color-mix(in srgb, var(--track-model) 28%, var(--bg-sunken));
+  --art-wood-edge: color-mix(in srgb, var(--track-model) 48%, var(--bg-sunken));
+  --art-glass: color-mix(in srgb, var(--accent) 16%, var(--bg-sunken));
+  --art-leaf: color-mix(in srgb, var(--track-sql) 75%, var(--bg-sunken));
+  --art-pot: color-mix(in srgb, var(--track-model) 65%, var(--bg-sunken));
+  --art-note: color-mix(in srgb, var(--track-model) 40%, var(--bg-raised));
+  --art-mug: color-mix(in srgb, var(--track-python) 60%, var(--bg-raised));
+  --art-floor: color-mix(in srgb, var(--text-dim) 10%, var(--bg-sunken));
+}
+
+.story-art .art-paper { fill: var(--art-paper); }
+.story-art .art-body { fill: var(--art-body); }
+.story-art .art-screen { fill: var(--art-screen); }
+.story-art .art-wood { fill: var(--art-wood); }
+.story-art .art-wood-edge { fill: var(--art-wood-edge); }
+.story-art .art-glass { fill: var(--art-glass); }
+.story-art .art-leaf { fill: var(--art-leaf); }
+.story-art .art-pot { fill: var(--art-pot); }
+.story-art .art-note { fill: var(--art-note); }
+.story-art .art-mug { fill: var(--art-mug); }
+.story-art .art-floor { fill: var(--art-floor); }
+
+/* Ячейки календаря: будущие дни бледнее прошедших. */
+.story-art .art-cell { fill: currentColor; opacity: 0.25; }
+.story-art .art-cell-past { fill: currentColor; opacity: 0.6; }
+
+/* Столбцы на доске и отобранное на экране: серые данные и одно акцентное место. */
+.story-art .art-bar { fill: currentColor; opacity: 0.45; }
+.story-art .art-accent { fill: var(--accent); }
+.story-art .art-pick { fill: var(--accent); opacity: 0.2; }
+
 /* ------------------------------------------------------------- десктоп */
 
 /*

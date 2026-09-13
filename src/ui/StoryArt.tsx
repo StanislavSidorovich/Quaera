@@ -26,6 +26,7 @@
  * был бы недоступен через экранный диктор — а разбор миссии обязан
  * читаться целиком голосом.
  */
+import type { ReactNode } from 'react';
 import type { StoryScene } from '../content/storymode';
 
 /*
@@ -37,10 +38,65 @@ import type { StoryScene } from '../content/storymode';
 /** Общая рамка сцен: одна ширина и одна высота на все фазы. */
 const VIEW_BOX = '0 0 320 116';
 
-export function StoryArt({ scene }: { scene: StoryScene }) {
+/**
+ * Момент дня — то, что сцена-место берёт из самой миссии, а не из своего
+ * описания: какой день недели отмечен на календаре и сколько на часах.
+ * Выводится из порядка дня в неделе и из строки места («…Четверг, 9:10»):
+ * число, набранное руками рядом с уже записанным, расходится молча.
+ */
+export interface StoryMoment {
+  /** 0 — понедельник, 4 — пятница; за пределами — день без отметки. */
+  weekday: number;
+  /** «9:10» из строки места; без него часы показывают девять, начало дня. */
+  time?: string;
+}
+
+/*
+ * Места рисуются натюрмортом, идеи — схемой (решено 2026-09-13, пилот —
+ * неделя 4). Схема хороша, когда сцена объясняет приём: группировку,
+ * соединение, окно. Для утра дня она была не тем жанром: рабочее место
+ * из трёх линий читалось как ещё одна схема, и утра кампании сливались
+ * в одно. Натюрморт даёт утру фактуру без людей: на мониторе идея этого дня,
+ * на календаре отмечен этот день, часы показывают время из строки места,
+ * над телефоном — сообщение, если в брифе пишет не постоянный собеседник.
+ *
+ * Людей по-прежнему нет, и причина прежняя (см. шапку файла): присутствие
+ * передают предметы — две кружки на столе переговорной, стикер, который
+ * кто-то оставил на мониторе.
+ *
+ * Стол один и тот же каждое утро, меняется только то, что на нём: узнаваемое
+ * утро дороже разнообразия, и разницу между днями несёт предмет дня,
+ * а не перестановка мебели. Акцент — один, на мониторе: это то, о чём бриф.
+ */
+interface DeskSetup {
+  /** Что на мониторе — идея дня в том виде, в каком она лежала бы на экране. */
+  screen: () => ReactNode;
+  /** Распечатки на столе. */
+  papers?: boolean;
+  /** Стикер на мониторе — напоминание, которое кто-то оставил. */
+  note?: boolean;
+  /** Сообщение над телефоном — в брифе пишет тот, кто пишет не каждый день. */
+  ping?: boolean;
+}
+
+const DESK_SCENES: Partial<Record<StoryScene, DeskSetup>> = {
+  // Пн: новый инструмент — ячейки блокнота, и под каждой остаётся таблица. Мори-сан пишет впервые.
+  'desk-frames': { screen: ScreenNotebook, ping: true },
+  // Вт: отбор строк маской; распечатка на столе — фактура Мори-сан «из первых рук».
+  'desk-mask': { screen: ScreenMask, papers: true },
+  // Ср: ключ группировки ушёл в индекс; стикер — напоминание Аоки-сан про месячный отчёт.
+  'desk-index': { screen: ScreenIndex, note: true },
+  // Чт: зубцы недельного ряда и сглаженная линия; пишет Ито-сан, на столе понедельные распечатки.
+  'desk-series': { screen: ScreenSeries, papers: true, note: true, ping: true },
+};
+
+export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryMoment }) {
+  const desk = DESK_SCENES[scene];
   return (
     <div className="story-art" aria-hidden>
       <svg viewBox={VIEW_BOX} role="presentation" preserveAspectRatio="xMidYMid meet">
+        {desk && <DeskStill moment={moment} setup={desk} />}
+        {scene === 'boardroom' && <Boardroom moment={moment} />}
         {scene === 'office' && <Office />}
         {scene === 'desk' && <Desk />}
         {scene === 'filter' && <Filter />}
@@ -78,6 +134,291 @@ export function StoryArt({ scene }: { scene: StoryScene }) {
         {scene === 'level' && <Level />}
       </svg>
     </div>
+  );
+}
+
+/* ------------------------------------------------------ сцены-места */
+
+/*
+ * Утро за своим столом. Раскладка общая на все дни; что лежит на мониторе
+ * и вокруг — из DeskSetup. Предметы — плоские заливки из палитры .story-art
+ * (styles.css), контуры и мелкие детали — приглушённым цветом линий.
+ */
+function DeskStill({ moment, setup }: { moment?: StoryMoment; setup: DeskSetup }) {
+  return (
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {/* окно с жалюзи: утро, а не ночь */}
+      <rect className="art-glass" x="14" y="8" width="64" height="48" rx="2" />
+      <path className="art-far" d="M14 16h64M14 24h64M14 32h64M14 40h64M14 48h64" stroke="currentColor" strokeWidth="0.6" fill="none" />
+      <WallCalendar weekday={moment?.weekday} />
+      <WallClock cx={286} cy={24} r={11} time={moment?.time} />
+
+      <rect className="art-wood" x="0" y="88" width="320" height="28" />
+      <rect className="art-wood-edge" x="0" y="88" width="320" height="2.5" />
+
+      {/* растение — та же единственная деталь не по работе, что в кадре офиса */}
+      <rect className="art-pot" x="96" y="76" width="12" height="12" rx="1.5" />
+      <path className="art-leaf" d="M102 76c-6-2-8-8-7-13 5 2 8 7 7 13zM102 76c5-3 7-9 5-14-5 3-7 8-5 14z" />
+
+      {setup.papers && <Printouts />}
+
+      <rect className="art-body" x="118" y="28" width="100" height="56" rx="3" />
+      <rect className="art-screen" x="123" y="33" width="90" height="46" rx="1.5" />
+      {setup.screen()}
+      <rect className="art-body" x="164" y="84" width="8" height="3" />
+      <rect className="art-body" x="152" y="86" width="32" height="2.5" rx="1" />
+      {setup.note && <rect className="art-note" x="205" y="23" width="13" height="13" transform="rotate(8 211 29)" />}
+
+      <rect className="art-paper" x="134" y="95" width="68" height="9" rx="1.5" />
+      <path className="art-far" d="M138 98.2h60M138 100.8h60" stroke="currentColor" strokeWidth="0.9" strokeDasharray="2.4 1.4" fill="none" />
+
+      {/* своя кружка: одна и та же каждое утро */}
+      <rect className="art-mug" x="236" y="91" width="13" height="15" rx="2" />
+      <path d="M249 95c5 0 5 7 0 7" style={{ stroke: 'var(--art-mug)' }} strokeWidth="1.4" fill="none" />
+      <path className="art-far" d="M240 87c-2-3 2-5 0-8M245 87c-2-3 2-5 0-8" stroke="currentColor" strokeWidth="0.9" fill="none" />
+
+      <rect className="art-body" x="262" y="98" width="22" height="11" rx="2" />
+      {setup.ping && <Ping />}
+    </g>
+  );
+}
+
+/*
+ * Календарь на стене: пять рабочих дней в три недели. Прошедшие дни темнее
+ * будущих, сегодняшний окрашен цветом шапки — не акцентом, акцент в сцене
+ * принадлежит монитору.
+ */
+function WallCalendar({ weekday }: { weekday?: number }) {
+  const current = 1;
+  const cells = [];
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 5; c++) {
+      const isToday = r === current && c === weekday;
+      const isPast = r < current || (r === current && weekday !== undefined && c < weekday);
+      cells.push(
+        <rect
+          key={`${r}-${c}`}
+          className={isToday ? 'art-pot' : isPast ? 'art-cell-past' : 'art-cell'}
+          x={95 + c * 5.6}
+          y={22 + r * 7}
+          width="4"
+          height="4"
+          rx="0.6"
+        />
+      );
+    }
+  }
+  return (
+    <g>
+      <rect className="art-paper" x="92" y="10" width="32" height="36" rx="2" />
+      <rect className="art-pot" x="92" y="10" width="32" height="8" rx="2" />
+      {cells}
+    </g>
+  );
+}
+
+/** Настенные часы. Стрелки по строке «9:10»; без времени — девять, начало дня. */
+function WallClock({ cx, cy, r, time }: { cx: number; cy: number; r: number; time?: string }) {
+  const m = /(\d{1,2}):(\d{2})/.exec(time ?? '');
+  const minutes = m ? Number(m[2]) : 0;
+  const hours = (m ? Number(m[1]) % 12 : 9) + minutes / 60;
+  const tip = (turn: number, len: number) =>
+    `${(cx + Math.sin(turn * 2 * Math.PI) * len).toFixed(1)} ${(cy - Math.cos(turn * 2 * Math.PI) * len).toFixed(1)}`;
+  return (
+    <g>
+      <circle className="art-paper" cx={cx} cy={cy} r={r} />
+      <circle className="art-mid" cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth="1.2" />
+      {/*
+        * Часовая короче и толще минутной: на 9:15 стрелки ложатся в одну
+        * линию, и одинаковые читались бы знаком «минус», а не временем.
+        */}
+      <path d={`M${cx} ${cy}L${tip(hours / 12, r * 0.45)}`} stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+      <path d={`M${cx} ${cy}L${tip(minutes / 60, r * 0.8)}`} stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+    </g>
+  );
+}
+
+/** Распечатки на столе: верхний лист со столбиками, под ним ещё один. */
+function Printouts() {
+  return (
+    <g>
+      <rect className="art-paper" x="40" y="91" width="40" height="22" transform="rotate(5 58 100)" />
+      <g transform="rotate(-8 58 100)">
+        <rect className="art-paper" x="36" y="90" width="40" height="22" />
+        <rect className="art-far" x="36" y="90" width="40" height="22" fill="none" stroke="currentColor" strokeWidth="0.6" />
+        <path className="art-far" d="M40 94h22M40 97h16" stroke="currentColor" strokeWidth="0.9" fill="none" />
+        <path className="art-mid" d="M43 109v-5M49 109v-8M55 109v-6M61 109v-9M67 109v-4" stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Сообщение над телефоном. Хвост закрашен бумагой поверх контура пузыря —
+ * так пузырь и хвост читаются одной фигурой без стыка.
+ */
+function Ping() {
+  return (
+    <g>
+      <rect className="art-paper" x="256" y="60" width="48" height="22" rx="4" />
+      <rect className="art-mid" x="256" y="60" width="48" height="22" rx="4" fill="none" stroke="currentColor" strokeWidth="0.8" />
+      <path className="art-paper" d="M265 81l-2 7 9-7z" />
+      <path className="art-mid" d="M265 82l-2 6 8-6" fill="none" stroke="currentColor" strokeWidth="0.8" />
+      <path className="art-mid" d="M261 67h38M261 72h38M261 77h22" stroke="currentColor" strokeWidth="1.1" fill="none" />
+    </g>
+  );
+}
+
+/*
+ * Экраны дня. Всё внутри прямоугольника 123..213 × 33..79 — это экран
+ * монитора DeskStill. Акцентная деталь на каждом одна.
+ */
+
+/** Пн: блокнот — строка кода, под ней таблица, и так ячейка за ячейкой: таблица остаётся в руках. */
+function ScreenNotebook() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-far" d="M127 37v15M127 56v20" strokeWidth="1.2" />
+      <path className="art-line" d="M131 39h34" strokeWidth="2" />
+      <g className="art-mid" strokeWidth="0.8">
+        <rect x="131" y="43" width="42" height="9" />
+        <path d="M131 46.5h42M145 43v9M159 43v9" />
+      </g>
+      <path className="art-mid" d="M131 58h26" strokeWidth="2" />
+      <g className="art-mid" strokeWidth="0.8">
+        <rect x="131" y="62" width="56" height="13" />
+        <path d="M131 65.5h56M131 70h56M145 62v13M159 62v13M173 62v13" />
+      </g>
+    </g>
+  );
+}
+
+/** Вт: таблица, в которой маска отобрала две строки из семи. */
+function ScreenMask() {
+  const rows = [38, 44, 50, 56, 62, 68, 74];
+  const picked = new Set([44, 62]);
+  return (
+    <g>
+      {rows
+        .filter((y) => picked.has(y))
+        .map((y) => (
+          <rect key={`band-${y}`} className="art-pick" x="126" y={y - 2.8} width="84" height="5.6" rx="1" />
+        ))}
+      <g fill="none" stroke="currentColor" strokeLinecap="butt">
+        {rows.map((y, i) => (
+          <path
+            key={y}
+            className={picked.has(y) ? 'art-near' : 'art-far'}
+            d={`M130 ${y}h14M150 ${y}h24M180 ${y}h${i % 2 ? 16 : 24}`}
+            strokeWidth="1.6"
+          />
+        ))}
+      </g>
+      {[...picked].map((y) => (
+        <path key={`mark-${y}`} className="art-line" d={`M126.5 ${y - 2}v4`} strokeWidth="1.6" />
+      ))}
+    </g>
+  );
+}
+
+/** Ср: результат группировки — ключ ушёл в индекс, отдельный столбец слева. */
+function ScreenIndex() {
+  const rows = [
+    { y: 40, w: 40 },
+    { y: 48, w: 58 },
+    { y: 56, w: 30 },
+    { y: 64, w: 48 },
+    { y: 72, w: 36 },
+  ];
+  return (
+    <g strokeLinecap="butt">
+      <rect className="art-pick" x="127" y="36" width="16" height="40" rx="1" />
+      <g fill="none" stroke="currentColor">
+        {rows.map((r) => (
+          <path key={`key-${r.y}`} className="art-near" d={`M130 ${r.y}h10`} strokeWidth="1.4" />
+        ))}
+        {rows.map((r) => (
+          <path key={`bar-${r.y}`} className="art-mid" d={`M148 ${r.y}h${r.w}`} strokeWidth="4" />
+        ))}
+      </g>
+      <path className="art-line" d="M143.5 36v40" strokeWidth="1.2" />
+    </g>
+  );
+}
+
+/** Чт: недельный ряд с зубцами и сглаженная линия поверх него — ровно то, о чём просит Ито-сан. */
+function ScreenSeries() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinejoin="round">
+      <path className="art-far" d="M128 74h80" strokeWidth="0.8" />
+      <path
+        className="art-mid"
+        d="M128 58 133 50 138 62 143 47 148 60 153 52 158 64 163 49 168 58 173 44 178 55 183 46 188 57 193 42 198 53 203 45 208 50"
+        strokeWidth="1"
+      />
+      <path className="art-line" d="M128 57C140 56 150 55 160 55S185 51 208 48" strokeWidth="2" />
+    </g>
+  );
+}
+
+/*
+ * Переговорная в день встречи. На доске — ряд отгрузок, о котором встреча,
+ * и акцент на трёх осенних месяцах: их и обсуждают. Ответ пятницы (остаток,
+ * который стоит) на доске не нарисован намеренно — бриф его не знает,
+ * его найдёт человек. Две кружки на столе: встреча на двоих.
+ */
+function Boardroom({ moment }: { moment?: StoryMoment }) {
+  const bars = [14, 16, 12, 15, 32, 27, 31, 15, 13];
+  return (
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <rect className="art-floor" x="0" y="72" width="320" height="44" />
+
+      <rect className="art-paper" x="22" y="10" width="114" height="52" rx="2" />
+      <rect className="art-mid" x="22" y="10" width="114" height="52" rx="2" fill="none" stroke="currentColor" strokeWidth="0.9" />
+      <path className="art-far" d="M30 54h98" stroke="currentColor" strokeWidth="0.7" fill="none" />
+      {bars.map((h, i) => (
+        <rect key={i} className={i >= 4 && i <= 6 ? 'art-accent' : 'art-bar'} x={32 + i * 10.6} y={54 - h} width="7" height={h} />
+      ))}
+      <path className="art-mid" d="M28 65h102" stroke="currentColor" strokeWidth="1.6" fill="none" />
+
+      <WallClock cx={166} cy={26} r={11} time={moment?.time} />
+
+      {/* экран на стене: чей-то дашборд, не наш вопрос */}
+      <rect className="art-body" x="196" y="10" width="100" height="52" rx="2" />
+      <rect className="art-screen" x="202" y="16" width="26" height="12" rx="1" />
+      <rect className="art-screen" x="232" y="16" width="26" height="12" rx="1" />
+      <rect className="art-screen" x="262" y="16" width="28" height="12" rx="1" />
+      <path className="art-far" d="M205 22h12M235 22h9M265 22h15" stroke="currentColor" strokeWidth="1.6" fill="none" />
+      <rect className="art-screen" x="202" y="32" width="88" height="24" rx="1" />
+      <path className="art-mid" d="M205 52 216 47 227 49 238 42 249 45 260 39 271 41 286 36" stroke="currentColor" strokeWidth="1.2" fill="none" />
+
+      {/* спинки стульев по дальнюю сторону стола */}
+      <g className="art-body">
+        <rect x="84" y="66" width="20" height="14" rx="4" />
+        <rect x="124" y="66" width="20" height="14" rx="4" />
+        <rect x="176" y="66" width="20" height="14" rx="4" />
+        <rect x="216" y="66" width="20" height="14" rx="4" />
+      </g>
+
+      <polygon className="art-wood" points="70,78 250,78 282,104 38,104" />
+
+      <rect className="art-body" x="110" y="72" width="30" height="18" rx="1.5" />
+      <rect className="art-screen" x="112.5" y="74.5" width="25" height="13" rx="0.8" />
+      <polygon className="art-body" points="106,90 144,90 148,94 102,94" />
+
+      <rect className="art-paper" x="178" y="86" width="24" height="13" transform="rotate(-6 190 92)" />
+      <rect className="art-mug" x="222" y="87" width="8" height="8" rx="1.5" />
+      <rect className="art-mug" x="78" y="89" width="8" height="8" rx="1.5" />
+
+      <g className="art-body">
+        <rect x="76" y="104" width="24" height="10" rx="4" />
+        <rect x="148" y="104" width="24" height="10" rx="4" />
+        <rect x="222" y="104" width="24" height="10" rx="4" />
+      </g>
+
+      <rect className="art-pot" x="298" y="74" width="12" height="12" rx="1.5" />
+      <path className="art-leaf" d="M304 74c-6-2-8-9-7-14 5 2 8 8 7 14zM304 74c5-3 7-10 5-15-5 3-7 9-5 15z" />
+    </g>
   );
 }
 

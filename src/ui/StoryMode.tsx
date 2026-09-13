@@ -279,7 +279,21 @@ export function StoryMode({
         />
 
       <div className="card story-mode">
-        {scene && <StoryArt scene={scene} />}
+        {/*
+          * Сцене-месту нужен момент дня: календарь отмечает этот день недели,
+          * часы показывают время из строки места. Берём их из самой миссии,
+          * а не из описания сцены — иначе одно и то же «9:10» жило бы в двух
+          * местах и однажды разошлось.
+          */}
+        {scene && (
+          <StoryArt
+            scene={scene}
+            moment={{
+              weekday: weekDays.findIndex((m) => m.id === mission.id),
+              time: /\d{1,2}:\d{2}/.exec(mission.place)?.[0],
+            }}
+          />
+        )}
 
         {phase.kind === 'brief' && (
           <>
