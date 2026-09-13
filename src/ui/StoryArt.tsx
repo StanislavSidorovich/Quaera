@@ -173,6 +173,7 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'groups' && <Groups />}
         {scene === 'trend' && <Trend />}
         {scene === 'split' && <Split />}
+        {scene === 'branches' && <Branches />}
         {scene === 'factors' && <Factors />}
         {scene === 'outlets' && <Outlets />}
         {scene === 'rival' && <Rival />}
@@ -713,32 +714,65 @@ function Office() {
   );
 }
 
+/* ------------------------------------------------------ сцены-идеи */
+
 /*
- * Что делает GROUP BY, одной картинкой: слева стопка недельных строк,
- * справа — три столбца, в которые они сложились. Стрелка посередине
- * и есть агрегат. Ровно та мысль, которую абзацы теории объясняют словами.
+ * Идеи в цвете (решено 2026-09-13, пилот — Groups, Split, Threshold, Branches).
+ * До пилота идеи рисовались одноцветной линией, и это было честно, пока
+ * линия ничего не утверждала. Цвет утверждает, поэтому правила строже:
+ *
+ * — Цвет — это связь. Оттенок появляется в сцене не меньше двух раз
+ *   и связывает два места одной мыслью: строку и её столбец, разрыв
+ *   и скобку, значение в строке и метку, которую оно подставило.
+ *   Оттенок, встреченный один раз, — украшение, его не бывает.
+ * — Группы — оттенками треков (`art-cat-1…3`), и только в сценах про
+ *   разрез на группы. Больше трёх групп не рисуется: на 116 пикселях
+ *   четвёртый оттенок уже не отличить.
+ * — Отобранное и отброшенное — не оттенком, а заливкой против контура:
+ *   прошедшее залито бледным акцентом (как отобранные строки на мониторе
+ *   утра), отсечённое — пустой пунктирный контур. Иначе «прошло» спорило
+ *   бы с группами и придумывало «зелёный значит хорошо».
+ * — Разница между двумя величинами — залитая площадь между ними, тёплым
+ *   `art-gap`, и тем же тоном отмечен её размер.
+ * — Акцент по-прежнему один: действие или предмет, о котором текст рядом.
+ * — Сцена с цветом несёт один смысл. Перед раскраской перечислить все
+ *   места, где она стоит (grep по `scene`), и где смысл другой — завести
+ *   свою сцену. Так появилась Branches: над CASE стоял Split, и залитый
+ *   разрыв «бренд против рынка» соврал бы там прямо.
+ */
+
+/*
+ * Что делает GROUP BY, одной картинкой: слева стопка строк, окрашенных
+ * группой, справа — столбцы тех же цветов, в которые они сложились.
+ * Стрелка посередине и есть агрегат, она — акцент. Высота столбца
+ * не набрана руками, а считается из строк: сумма длин строк группы.
+ * Картинка тем самым верна буквально, и правка строк её не обманет.
  */
 function Groups() {
-  const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  /** Длина строки и её группа (1…3). */
+  const rows: Array<[number, 1 | 2 | 3]> = [
+    [74, 2], [50, 1], [68, 3], [68, 2], [62, 3], [74, 2],
+    [62, 1], [70, 3], [62, 2], [44, 1], [56, 3], [74, 2],
+  ];
+  const groups = [1, 2, 3] as const;
+  const sums = groups.map((g) => rows.filter(([, rg]) => rg === g).reduce((s, [w]) => s + w, 0));
+  const tallest = Math.max(...sums);
+  const columnX = [214, 244, 274];
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        {rows.map((i) => (
-          <path key={i} d={`M16 ${14 + i * 8}h${i % 3 === 0 ? 74 : i % 3 === 1 ? 62 : 68}`} strokeWidth="3" strokeLinecap="butt" />
-        ))}
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {rows.map(([w, g], i) => (
+        <rect key={i} className={`art-cat-${g}`} x="16" y={11 + i * 8} width={w} height="6" rx="1.5" />
+      ))}
 
-      <g className="art-far">
-        <path d="M118 60h56" strokeWidth="1.5" />
-        <path d="m166 54 8 6-8 6" strokeWidth="1.5" />
-      </g>
+      <path className="art-line" d="M118 60h56m-8-6 8 6-8 6" strokeWidth="2.4" />
 
-      <g className="art-near">
-        <path d="M200 100h104" strokeWidth="1.8" />
-        <rect x="214" y="60" width="22" height="40" rx="2" strokeWidth="1.6" />
-        <rect x="244" y="34" width="22" height="66" rx="2" strokeWidth="1.6" />
-        <rect x="274" y="50" width="22" height="50" rx="2" strokeWidth="1.6" />
-      </g>
+      <path className="art-far" d="M200 100h104" stroke="currentColor" strokeWidth="1.6" fill="none" />
+      {groups.map((g, k) => {
+        const h = Math.round((sums[k] / tallest) * 66);
+        return (
+          <rect key={g} className={`art-cat-${g}-soft`} x={columnX[k]} y={100 - h} width="22" height={h} rx="2" strokeWidth="1.6" />
+        );
+      })}
     </g>
   );
 }
@@ -773,8 +807,18 @@ function Trend() {
  * Крючок к следующей миссии: у категории провал сезонный и она возвращается,
  * а один бренд уходит вдвое и не возвращается. Две линии из одной точки —
  * это и есть вопрос «почему именно Nettora», нарисованный формой.
+ *
+ * Разрыв между ними залит: это то, что сезоном не объясняется, и о нём
+ * крючок. Скобка справа того же тона — размер разрыва. Под линией бренда
+ * серая площадь — то, что у бренда осталось; вместе с разрывом она
+ * и составляет категорию. Площади не перекрываются: тёплое поверх серого
+ * в светлой теме смешивалось в бурый.
  */
 function Split() {
+  const category = 'M22 40 58 44 94 62 130 46 166 38 202 42 238 36 274 40';
+  const brand = 'M22 40 58 46 94 66 130 70 166 76 202 80 238 84 274 86';
+  /** Та же линия бренда задом наперёд — чтобы замкнуть площадь разрыва. */
+  const brandBack = '274 86 238 84 202 80 166 76 130 70 94 66 58 46';
   return (
     <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
       <g className="art-far">
@@ -782,22 +826,56 @@ function Split() {
         <path d="M22 16v84" strokeWidth="1.5" />
       </g>
 
+      <path className="art-ground" d={`${brand} 274 100 22 100Z`} />
+      <path className="art-gap-area" d={`${category} ${brandBack}Z`} />
+
       {/* категория: просела и вернулась */}
       <g className="art-mid">
-        <path d="M22 40 58 44 94 62 130 46 166 38 202 42 238 36 274 40" strokeWidth="2.4" />
+        <path d={category} strokeWidth="2.4" />
       </g>
 
       {/* бренд: тот же старт, но обратно не поднялся */}
-      <path className="art-line" d="M22 40 58 46 94 66 130 70 166 76 202 80 238 84 274 86" strokeWidth="2.6" />
-      <g className="art-near">
-        <circle cx="274" cy="86" r="3.4" strokeWidth="2" />
-      </g>
+      <path className="art-line" d={brand} strokeWidth="2.8" />
+      <circle className="art-dot" cx="274" cy="86" r="3.8" />
 
-      {/* разрыв между линиями назван вертикальной скобкой, без подписи */}
-      <g className="art-far">
-        <path d="M292 40v46" strokeWidth="1.2" strokeDasharray="3 4" />
-        <path d="M288 40h8M288 86h8" strokeWidth="1.2" />
-      </g>
+      <path className="art-gap-mark" d="M292 40v46M288 40h8M288 86h8" strokeWidth="1.6" />
+    </g>
+  );
+}
+
+/*
+ * CASE: условие решает не «попадёт ли строка», а что подставить в новую
+ * колонку для этой строки. Слева строки, у каждой ячейка канала;
+ * справа колонка, которую CASE дописывает, — она обведена акцентом.
+ * Метка того же оттенка, что ячейка, по которой сработала ветка. Строки
+ * без цветной ячейки не подошли ни под одну ветку и получили метку ELSE —
+ * третий оттенок, который у ячеек не встречается: ELSE ловит всё остальное.
+ *
+ * Своя сцена, а не Split: до 2026-09-13 над CASE стояли две расходящиеся
+ * линии, и пока они были одноцветной схемой, это сходило за «развилку».
+ * С залитым разрывом «бренд против рынка» картинка утверждала бы то,
+ * о чём подводка не говорит.
+ */
+function Branches() {
+  /** Ветка, по которой прошла строка: 1 — ecom, 2 — pharmacy, 0 — ни одна (ELSE). */
+  const rows: Array<0 | 1 | 2> = [1, 0, 2, 0, 1, 0, 2];
+  return (
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {rows.map((branch, i) => {
+        const y = 21 + i * 12;
+        return (
+          <g key={i}>
+            <rect
+              className={branch ? `art-cat-${branch}-soft` : 'art-cell-none'}
+              x="54" y={y - 3} width="16" height="6" rx="1.5" strokeWidth="1.2"
+            />
+            <path className="art-mid" d={`M78 ${y}h40M124 ${y}h28M158 ${y}h${i % 2 ? 14 : 22}`} stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
+            <path className="art-far" d={`M186 ${y}h20`} stroke="currentColor" strokeWidth="1.2" strokeDasharray="2 3" fill="none" />
+            <rect className={`art-cat-${branch || 3}`} x="214" y={y - 3} width="54" height="6" rx="1.5" />
+          </g>
+        );
+      })}
+      <rect className="art-line" x="208" y="10" width="66" height="94" rx="4" strokeWidth="1.8" />
     </g>
   );
 }
@@ -1279,6 +1357,12 @@ function Dropped() {
  * Порог после группировки: столбики уже посчитаны по группам, и линия
  * отсекает те, что не дотянули. Акцент — сама линия: HAVING это она,
  * а не столбики.
+ *
+ * Прошедшее залито бледным акцентом — тем же языком, что отобранные
+ * строки на мониторе утра маски; отсечённое остаётся пустым пунктирным
+ * контуром: его в ответе нет. Сцена стоит и над HAVING, и в итоге дня
+ * масок («дороже 100»), и в обоих местах значит одно: условие оставляет
+ * то, что выше линии.
  */
 function Threshold() {
   const bars = [
@@ -1293,16 +1377,16 @@ function Threshold() {
   ];
   const cut = 50;
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-far">
-        <path d="M18 102h288" strokeWidth="1.5" />
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M18 102h288" stroke="currentColor" strokeWidth="1.5" fill="none" />
 
-      {bars.map((b) => (
-        <g key={b.x} className={b.h >= cut ? 'art-near' : 'art-far'}>
-          <rect x={b.x} y={102 - b.h} width="20" height={b.h} rx="2" strokeWidth="1.7" />
-        </g>
-      ))}
+      {bars.map((b) =>
+        b.h >= cut ? (
+          <rect key={b.x} className="art-kept" x={b.x} y={102 - b.h} width="20" height={b.h} rx="2" strokeWidth="1.6" />
+        ) : (
+          <rect key={b.x} className="art-dropped" x={b.x} y={102 - b.h} width="20" height={b.h} rx="2" strokeWidth="1.4" strokeDasharray="3 3" />
+        ),
+      )}
 
       <path className="art-line" d="M14 52h292" strokeWidth="2.4" strokeDasharray="7 5" />
     </g>

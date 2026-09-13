@@ -107,6 +107,7 @@ export type StoryScene =
   | 'join'
   | 'dropped'
   | 'threshold'
+  | 'branches'
   | 'factors'
   | 'shift'
   | 'smooth'
@@ -795,7 +796,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-042',
           intro: {
-            scene: 'split',
+            scene: 'branches',
             title: 'Условие внутри строки результата',
             paras: [
               'До сих пор условие отбирало строки: WHERE решал, попадёт строка в ответ или нет. CASE решает другое — что подставить в колонку для этой строки.',
@@ -2316,7 +2317,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-042',
           intro: {
-            scene: 'split',
+            scene: 'branches',
             title: 'A condition inside the row',
             paras: [
               'So far a condition picked rows: WHERE decided whether a row reached the answer. CASE decides something else, namely what goes into a column for this row.',

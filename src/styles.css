@@ -5250,6 +5250,45 @@ details.story-known > summary small {
 .story-art .art-accent { fill: var(--accent); }
 .story-art .art-pick { fill: var(--accent); opacity: 0.2; }
 
+/*
+ * Идеи в цвете (пилот 2026-09-13; правила — в StoryArt.tsx над Groups).
+ * Цвет в схемах идей — связь, а не украшение: оттенок стоит в сцене
+ * минимум дважды и связывает два места одной мыслью.
+ *
+ * Группы берут цвета треков: они вне блоков темы и уже читаются заливкой
+ * на --bg-sunken обеих тем. Домен (синий) не берётся — его не отличить
+ * от акцента. Мягкий вариант (столбец, ячейка) — тот же оттенок, смешанный
+ * с поверхностью карточки, поэтому в тёмной теме он темнеет сам.
+ */
+.story-art {
+  --art-cat-1: color-mix(in srgb, var(--track-sql) 85%, var(--bg-sunken));
+  --art-cat-2: color-mix(in srgb, var(--track-python) 85%, var(--bg-sunken));
+  --art-cat-3: color-mix(in srgb, var(--track-model) 85%, var(--bg-sunken));
+  --art-gap: color-mix(in srgb, var(--err) 40%, var(--track-model));
+  --art-kept: color-mix(in srgb, var(--accent) 22%, var(--bg-sunken));
+  --art-kept-edge: color-mix(in srgb, var(--accent) 70%, var(--bg-sunken));
+}
+
+.story-art .art-cat-1 { fill: var(--art-cat-1); stroke: none; }
+.story-art .art-cat-2 { fill: var(--art-cat-2); stroke: none; }
+.story-art .art-cat-3 { fill: var(--art-cat-3); stroke: none; }
+.story-art .art-cat-1-soft { fill: color-mix(in srgb, var(--art-cat-1) 30%, var(--bg-raised)); stroke: var(--art-cat-1); }
+.story-art .art-cat-2-soft { fill: color-mix(in srgb, var(--art-cat-2) 30%, var(--bg-raised)); stroke: var(--art-cat-2); }
+.story-art .art-cat-3-soft { fill: color-mix(in srgb, var(--art-cat-3) 30%, var(--bg-raised)); stroke: var(--art-cat-3); }
+/* Ячейка, не подошедшая ни под одну ветку: без оттенка. */
+.story-art .art-cell-none { fill: currentColor; opacity: 0.3; stroke: none; }
+
+/* Разница двух величин: площадь между ними и скобка её размера — один тон. */
+.story-art .art-gap-area { fill: var(--art-gap); stroke: none; opacity: 0.38; }
+.story-art .art-gap-mark { stroke: var(--art-gap); fill: none; }
+/* Площадь под фоновой величиной — фон, не предмет. */
+.story-art .art-ground { fill: currentColor; stroke: none; opacity: 0.1; }
+.story-art .art-dot { fill: var(--accent); stroke: none; }
+
+/* Прошло условие — залито бледным акцентом; не прошло — пустой контур. */
+.story-art .art-kept { fill: var(--art-kept); stroke: var(--art-kept-edge); }
+.story-art .art-dropped { fill: none; stroke: currentColor; opacity: 0.4; }
+
 /* ------------------------------------------------------------- десктоп */
 
 /*
