@@ -152,7 +152,6 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {desk && <DeskStill moment={moment} setup={desk} />}
         {board && <Boardroom moment={moment} setup={board} />}
         {scene === 'office' && <Office />}
-        {scene === 'desk' && <Desk />}
         {scene === 'filter' && <Filter />}
         {scene === 'sort' && <Sort />}
         {scene === 'fold' && <Fold />}
@@ -185,6 +184,8 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'twins' && <Twins />}
         {scene === 'smooth' && <Smooth />}
         {scene === 'level' && <Level />}
+        {scene === 'channels' && <Channels />}
+        {scene === 'definitions' && <Definitions />}
       </svg>
     </div>
   );
@@ -674,42 +675,40 @@ function Boardroom({ moment, setup }: { moment?: StoryMoment; setup: BoardSetup 
 }
 
 /*
- * Первый день на месте: окно с городом, ряд столов, на ближнем — монитор
- * с тем самым столбчатым знаком. Акцентом выделен ровно один стол: это
- * «твоё место», и больше ничего в кадре внимания не просит.
+ * Хук дня 20, последнего: кампания закрывается, дальше — треки на свой
+ * выбор. Натюрморт (2026-09-13, восьмой заход), а не схема: дальние столы
+ * пусты, твой экран включён, но на нём ничего не показано — куда идти
+ * дальше, решает не картинка. Цвет не взят намеренно: тем, о которых
+ * говорит крючок (SQL, работа вокруг чисел, pandas), у домена нет своего
+ * оттенка (сливается с акцентом, см. правило над `Groups`), а закрашивать
+ * два трека из трёх значило бы выбрать за читателя.
  */
 function Office() {
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    <g strokeLinecap="round" strokeLinejoin="round">
       {/* окно во всю заднюю стену и город за ним */}
-      <g className="art-far">
+      <g className="art-far" fill="none" stroke="currentColor">
         <rect x="24" y="10" width="272" height="44" rx="4" strokeWidth="1.5" />
         <path d="M24 40h272" strokeWidth="1" />
         <path d="M108 10v44M212 10v44" strokeWidth="1" />
         <path d="M40 40V26h14v14M62 40V20h10v20M96 40V30h9v10M132 40V24h12v16M158 40V32h8v8M236 40V22h11v18M256 40V31h9v9" strokeWidth="1.2" />
       </g>
 
-      {/* дальний ряд столов */}
-      <g className="art-mid">
-        <path d="M36 78h60M52 78v10M84 78v10" strokeWidth="1.5" />
-        <rect x="52" y="62" width="28" height="16" rx="2" strokeWidth="1.3" />
-        <path d="M224 78h60M240 78v10M272 78v10" strokeWidth="1.5" />
-        <rect x="240" y="62" width="28" height="16" rx="2" strokeWidth="1.3" />
+      {/* дальний ряд столов: те же места, что утром, сейчас пустые */}
+      <g className="art-body">
+        <rect x="52" y="62" width="28" height="16" rx="2" />
+        <rect x="240" y="62" width="28" height="16" rx="2" />
       </g>
+      <path className="art-far" d="M36 78h60M52 78v10M84 78v10M224 78h60M240 78v10M272 78v10" stroke="currentColor" strokeWidth="1.5" fill="none" />
 
-      {/* твоё место: монитор со столбцами */}
-      <g className="art-near">
-        <path d="M118 100h84M134 100v8M186 100v8" strokeWidth="1.8" />
-        <rect x="130" y="66" width="60" height="34" rx="3" strokeWidth="1.8" />
-        <path d="M144 90v-8M156 90v-14M168 90v-20M180 90v-11" strokeWidth="3" strokeLinecap="butt" />
-      </g>
+      {/* твоё место: экран включён и пуст */}
+      <rect className="art-body" x="130" y="66" width="60" height="34" rx="3" />
+      <rect className="art-screen" x="135" y="71" width="50" height="24" rx="1.5" />
+      <path className="art-far" d="M118 100h84M134 100v8M186 100v8" stroke="currentColor" strokeWidth="1.8" fill="none" />
 
-      {/* растение в углу — единственная деталь не по работе, и её достаточно */}
-      <g className="art-mid">
-        <path d="M292 104V88" strokeWidth="1.5" />
-        <path d="M292 92c-7 0-11-4-11-9 6 0 11 4 11 9zM292 90c6 0 10-4 10-9-6 0-10 4-10 9z" strokeWidth="1.3" />
-        <path d="M286 104h12" strokeWidth="2" />
-      </g>
+      {/* растение в углу — та же единственная деталь не по работе, что в кадре стола */}
+      <rect className="art-pot" x="286" y="98" width="12" height="12" rx="1.5" />
+      <path className="art-leaf" d="M292 98c-6-2-8-9-7-14 5 2 8 8 7 14zM292 98c5-3 7-10 5-15-5 3-7 9-5 15z" />
     </g>
   );
 }
@@ -739,6 +738,27 @@ function Office() {
  *   места, где она стоит (grep по `scene`), и где смысл другой — завести
  *   свою сцену. Так появилась Branches: над CASE стоял Split, и залитый
  *   разрыв «бренд против рынка» соврал бы там прямо.
+ *
+ * Остаток 26 идей и четыре сцены-места разобраны 2026-09-13 (восьмой
+ * заход, Sonnet). Раскрашено семь: filter, sort, counts, dropped, scope,
+ * dispute, outlets — у каждой был свой кандидат в отобранное/отброшенное
+ * или в разницу величин. Девятнадцать остались линией, потому что
+ * связывать нечем: catalog, fold, calendar, stray, tables, join, factors,
+ * shift, smooth, level, request, contract, toolkit, foundation, coverage,
+ * sellout, trend, rival, twins — «группа» там не про разрез на категории
+ * (join, twins — связь одной пары, а не до трёх групп), «отобранное/
+ * отброшенное» ничего не выбирает (fold, calendar, factors — свёртка или
+ * разложение, не отбор), а «разница» ничего не сравнивает (trend, smooth,
+ * level — один ряд или ряд и его сглаживание, не два значения). rival
+ * не тронут отдельно: у него уже есть довод против цвета в собственном
+ * комментарии («форма важнее цвета» — два оттенка на одной полке
+ * пришлось бы объяснять).
+ *
+ * Нашлись две сцены не по плану, обе разобраны ниже, у Channels
+ * и Definitions: outlets стоял за двумя разными мыслями сразу
+ * (потерянная полка и выручка на точку), а хук дня 11 держался на split
+ * и предрешал развилку дня 12. Проверка перед раскраской (grep по scene)
+ * поймала обе.
  */
 
 /*
@@ -920,9 +940,10 @@ function Factors() {
  * но на 116 пикселях высоты читается как шум, а сцена обязана сообщать одно
  * — «занято меньше половины» — и сообщать это до чтения текста.
  *
- * Акцент достаётся оставшимся, а не потерянным, хотя история про потерю:
- * отсутствие нечем выделить. Это совпадает с мыслью фазы — там, где бренд
- * ещё стоит, продажи живые, и упал не спрос, а доступ к полке.
+ * Занятые места — `art-kept`, освободившиеся — `art-dropped`: та же пара,
+ * что у HAVING в `threshold`, только здесь «отсечено» не запросом,
+ * а рынком. Акцент всё равно достаётся оставшимся, а не потерянным:
+ * там, где бренд ещё стоит, продажи живые, и упал не спрос, а доступ к полке.
  */
 function Outlets() {
   const rows = [22, 54, 86];
@@ -930,27 +951,21 @@ function Outlets() {
   const perRow = 12;
   const kept = [6, 6, 5];
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    <g strokeLinecap="round" strokeLinejoin="round">
       {rows.map((y, r) => (
         <g key={y}>
           {/* сама полка */}
-          <g className="art-far">
-            <path d={`M22 ${y + 11}h276`} strokeWidth="1.5" />
-          </g>
+          <path className="art-far" d={`M22 ${y + 11}h276`} stroke="currentColor" strokeWidth="1.5" fill="none" />
 
           {/* занятые места */}
-          <g className="art-near">
-            {Array.from({ length: kept[r] }, (_, i) => (
-              <circle key={i} cx={34 + i * 24} cy={y} r="5" strokeWidth="2" />
-            ))}
-          </g>
+          {Array.from({ length: kept[r] }, (_, i) => (
+            <circle key={i} className="art-kept" cx={34 + i * 24} cy={y} r="5" strokeWidth="1.8" />
+          ))}
 
-          {/* освободившиеся: контур пунктиром — место есть, товара нет */}
-          <g className="art-far">
-            {Array.from({ length: perRow - kept[r] }, (_, i) => (
-              <circle key={i} cx={34 + (kept[r] + i) * 24} cy={y} r="5" strokeWidth="1.4" strokeDasharray="2 3" />
-            ))}
-          </g>
+          {/* освободившиеся: пустой пунктирный контур — место есть, товара нет */}
+          {Array.from({ length: perRow - kept[r] }, (_, i) => (
+            <circle key={i} className="art-dropped" cx={34 + (kept[r] + i) * 24} cy={y} r="5" strokeWidth="1.4" strokeDasharray="2 3" />
+          ))}
         </g>
       ))}
     </g>
@@ -1094,62 +1109,32 @@ function Join() {
 }
 
 /*
- * Рабочее место: монитор с таблицей на экране, клавиатура, остывающий кофе.
- * Общий кадр начала дня — брифы вторника, среды и четверга открываются им
- * одинаково, и это намеренно: одно и то же утро, одно и то же место,
- * меняется только вопрос. Понедельник и пятница получают `office`, потому
- * что первый день и день встречи — не рядовое утро.
- */
-function Desk() {
-  return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <rect x="86" y="10" width="148" height="72" rx="4" strokeWidth="1.8" />
-        <path d="M160 82v10M136 96h48" strokeWidth="1.8" />
-        <rect x="96" y="100" width="128" height="9" rx="2" strokeWidth="1.5" />
-      </g>
-
-      <g className="art-far">
-        <path d="M100 28h60M100 40h84M100 52h72" strokeWidth="2.2" strokeLinecap="butt" />
-      </g>
-
-      {/* строка, ради которой человек и сел за стол */}
-      <path className="art-line" d="M100 64h48" strokeWidth="2.8" strokeLinecap="butt" />
-
-      <g className="art-far">
-        <path d="M256 62h30v26h-30z" strokeWidth="1.6" />
-        <path d="M286 68h5a5 5 0 0 1 0 12h-5" strokeWidth="1.4" />
-        <path d="M264 54v-8M272 54v-11M280 54v-8" strokeWidth="1.2" />
-      </g>
-    </g>
-  );
-}
-
-/*
- * Отбор строк: слева пришло много, справа осталось меньше, между ними
- * воронка. Акцент на самой воронке — она и есть WHERE, о котором говорит
- * подводка; строки по обе стороны одинаково второстепенны.
+ * Отбор строк: слева пришло много, воронка посередине — она и есть WHERE,
+ * о котором говорит подводка. Справа — то, что прошло: три строки, залитые
+ * `art-kept`, тем же языком, что отобранные строки на мониторе утра маски.
+ * Отсечённые не рисуются: вход остаётся одинаково второстепенным по обе
+ * стороны, а какие именно строки не прошли — воронка не помнит.
  */
 function Filter() {
+  const kept = [42, 58, 74];
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <path d="M20 26h84M20 42h84M20 58h84M20 74h84M20 90h84" strokeWidth="2.6" strokeLinecap="butt" />
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-mid" d="M20 26h84M20 42h84M20 58h84M20 74h84M20 90h84" stroke="currentColor" strokeWidth="2.6" strokeLinecap="butt" fill="none" />
 
-      <path className="art-line" d="M122 22h72l-25 30v34l-22 9V52z" strokeWidth="2.2" />
+      <path className="art-line" d="M122 22h72l-25 30v34l-22 9V52z" strokeWidth="2.2" fill="none" stroke="currentColor" />
 
-      <g className="art-near">
-        <path d="M216 42h80M216 58h80M216 74h80" strokeWidth="2.6" strokeLinecap="butt" />
-      </g>
+      {kept.map((y) => (
+        <rect key={y} className="art-kept" x="216" y={y - 4} width="80" height="8" rx="2" strokeWidth="1.4" />
+      ))}
     </g>
   );
 }
 
 /*
- * Сортировка и обрезка: столбики выстроены по убыванию, и рамкой назван
- * не самый высокий столбик, а верхняя часть списка целиком — LIMIT берёт
- * сколько сказано, а не одного победителя.
+ * Сортировка и обрезка: столбики уже выстроены по убыванию, и LIMIT берёт
+ * верхние — не одного победителя, а сколько сказано. Отобранные залиты
+ * `art-kept`, остаток — пустым пунктиром `art-dropped`: тот же язык,
+ * что у HAVING в `threshold`, только порог здесь не по значению, а по ранту.
  */
 function Sort() {
   const bars = [
@@ -1162,19 +1147,24 @@ function Sort() {
     { x: 230, h: 24 },
     { x: 264, h: 18 },
   ];
+  const keptCount = 3;
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-far">
-        <path d="M18 102h284" strokeWidth="1.5" />
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M18 102h284" stroke="currentColor" strokeWidth="1.5" fill="none" />
 
-      <g className="art-mid">
-        {bars.map((b) => (
-          <rect key={b.x} x={b.x} y={102 - b.h} width="22" height={b.h} rx="2" strokeWidth="1.6" />
-        ))}
-      </g>
-
-      <rect className="art-line" x="18" y="16" width="112" height="94" rx="4" strokeWidth="2.2" />
+      {bars.map((b, i) => (
+        <rect
+          key={b.x}
+          className={i < keptCount ? 'art-kept' : 'art-dropped'}
+          x={b.x}
+          y={102 - b.h}
+          width="22"
+          height={b.h}
+          rx="2"
+          strokeWidth={i < keptCount ? 1.6 : 1.4}
+          strokeDasharray={i < keptCount ? undefined : '3 3'}
+        />
+      ))}
     </g>
   );
 }
@@ -1208,35 +1198,36 @@ function Fold() {
 /*
  * Три способа посчитать одно и то же множество: все ячейки, только
  * заполненные, только разные. Слева направо число убывает — это и есть
- * весь смысл сцены. Акцент на третьей колонке: COUNT(DISTINCT) — та,
- * ради которой подводка написана и которая понадобится в пятницу.
+ * весь смысл сцены. Средняя и правая колонки честно рисуют то, что метод
+ * исключает: пропущенные NULL и повторы залиты пустым пунктиром
+ * `art-dropped`, оставшиеся — `art-kept`. До этой правки колонка DISTINCT
+ * просто не рисовала исключённые повторы, и её честность держалась на слово.
  */
 function Counts() {
   const ys = [18, 34, 50, 66, 82, 98];
   return (
     <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* всё подряд */}
+      {/* всё подряд: COUNT(*) не различает строки */}
       <g className="art-mid">
         {ys.map((y) => (
           <circle key={y} cx="60" cy={y} r="6" strokeWidth="1.8" />
         ))}
       </g>
 
-      {/* только заполненные */}
-      <g className="art-mid">
-        {ys.slice(0, 4).map((y) => (
-          <circle key={y} cx="160" cy={y} r="6" strokeWidth="1.8" />
-        ))}
-      </g>
-      <g className="art-far">
-        {ys.slice(4).map((y) => (
-          <circle key={y} cx="160" cy={y} r="6" strokeWidth="1.4" strokeDasharray="2 3" />
-        ))}
-      </g>
+      {/* только заполненные: COUNT(колонка) пропускает NULL */}
+      {ys.slice(0, 4).map((y) => (
+        <circle key={y} className="art-kept" cx="160" cy={y} r="6" strokeWidth="1.6" />
+      ))}
+      {ys.slice(4).map((y) => (
+        <circle key={y} className="art-dropped" cx="160" cy={y} r="6" strokeWidth="1.4" strokeDasharray="2 3" />
+      ))}
 
-      {/* только разные */}
+      {/* только разные: DISTINCT оставляет по одному значению из повторов */}
       {ys.slice(0, 3).map((y) => (
-        <circle key={y} className="art-line" cx="260" cy={y} r="6" strokeWidth="2.2" />
+        <circle key={y} className="art-kept" cx="260" cy={y} r="6" strokeWidth="1.6" />
+      ))}
+      {ys.slice(3).map((y) => (
+        <circle key={y} className="art-dropped" cx="260" cy={y} r="6" strokeWidth="1.4" strokeDasharray="2 3" />
       ))}
     </g>
   );
@@ -1327,28 +1318,32 @@ function Sellout() {
 
 /*
  * Цена соединения: часть строк ушла в результат, а часть провалилась мимо
- * него — молча, пунктиром, вниз за кадр. Акцент на этом падении, потому что
- * подводка ровно о нём: ошибки не будет, строк просто не станет.
+ * него — молча, вниз за кадр. Строка слева, которой не нашлось пары, залита
+ * пустым пунктиром `art-dropped» — тем же языком, что и строки, отсечённые
+ * HAVING в `threshold`. Строки, дошедшие до результата справа, — `art-kept`.
+ * Сама «пропажа» внизу остаётся монохромной: она не строка из левой таблицы,
+ * а обобщённый знак «где-то была пара, которой не нашлось», и красить его
+ * в одиночный оттенок значило бы использовать цвет для украшения.
  */
 function Dropped() {
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <rect x="20" y="12" width="146" height="58" rx="4" strokeWidth="1.7" />
-        <path d="M34 28h104M34 42h86M34 56h112" strokeWidth="2.2" strokeLinecap="butt" />
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <rect className="art-mid" x="20" y="12" width="146" height="58" rx="4" stroke="currentColor" strokeWidth="1.7" fill="none" />
+      <path className="art-mid" d="M34 28h104M34 42h86" stroke="currentColor" strokeWidth="2.2" strokeLinecap="butt" fill="none" />
+      <path className="art-dropped" d="M34 56h112" strokeWidth="2.2" strokeLinecap="butt" strokeDasharray="4 3" />
 
-        <rect x="222" y="12" width="78" height="58" rx="4" strokeWidth="1.7" />
-        <path d="M236 28h50M236 42h42" strokeWidth="2.2" strokeLinecap="butt" />
-      </g>
+      <rect className="art-mid" x="222" y="12" width="78" height="58" rx="4" stroke="currentColor" strokeWidth="1.7" fill="none" />
+      <path className="art-kept" d="M236 28h50" strokeWidth="3" strokeLinecap="butt" />
+      <path className="art-kept" d="M236 42h42" strokeWidth="3" strokeLinecap="butt" />
 
-      <g className="art-far">
+      <g className="art-far" fill="none" stroke="currentColor">
         <path d="M178 41h32" strokeWidth="1.8" />
         <path d="m204 35 6 6-6 6" strokeWidth="1.8" />
       </g>
 
       {/* то, чему не нашлось пары */}
-      <path className="art-line" d="M118 78v18" strokeWidth="2" strokeDasharray="4 4" />
-      <path className="art-line" d="m111 89 7 9 7-9" strokeWidth="2" />
+      <path className="art-line" d="M118 78v18" strokeWidth="2" strokeDasharray="4 4" fill="none" />
+      <path className="art-line" d="m111 89 7 9 7-9" strokeWidth="2" fill="none" />
     </g>
   );
 }
@@ -1421,57 +1416,59 @@ function Toolkit() {
 }
 
 /*
- * Переговорная перед встречей: экран на стене, стол, часы. Акцент отдан
- * часам — крючок четверга держится не на комнате, а на «завтра в 11:00».
+ * Переговорная перед встречей: экран на стене, стол, часы. Натюрморт
+ * (2026-09-13, восьмой заход) — та же материя, что у стола и `Boardroom`
+ * (`art-body`/`art-screen`/`art-wood`/`art-mug`), а не контур. Пара кружек
+ * на столе — тем же языком, что в `Boardroom`: встреча на двоих. Акцент
+ * по-прежнему только часы — крючки держатся не на комнате, а на времени.
  */
 function Meeting() {
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-far">
-        <rect x="70" y="12" width="130" height="50" rx="3" strokeWidth="1.6" />
-        <path d="M84 30h94M84 42h64" strokeWidth="2" strokeLinecap="butt" />
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <rect className="art-body" x="70" y="12" width="130" height="50" rx="3" />
+      <rect className="art-screen" x="76" y="18" width="118" height="38" rx="1.5" />
 
-      <g className="art-mid">
-        <path d="M52 100h216" strokeWidth="2" />
-        <path d="M78 100 96 76h128l18 24" strokeWidth="1.8" />
-        <path d="M96 88h128" strokeWidth="1.2" />
-      </g>
+      <path className="art-mid" d="M52 100h216" stroke="currentColor" strokeWidth="2" fill="none" />
+      <path className="art-mid" d="M78 100 96 76h128l18 24" stroke="currentColor" strokeWidth="1.8" fill="none" />
+      <rect className="art-wood" x="96" y="85" width="128" height="4" />
 
-      <g className="art-near">
-        <circle cx="264" cy="34" r="18" strokeWidth="1.8" />
-      </g>
-      <path className="art-line" d="M264 34V22M264 34l9 6" strokeWidth="2.2" />
+      {/* пара кружек: здесь ждут вдвоём */}
+      <rect className="art-mug" x="112" y="90" width="10" height="10" rx="1.6" />
+      <rect className="art-mug" x="198" y="90" width="10" height="10" rx="1.6" />
+
+      <circle className="art-paper" cx="264" cy="34" r="18" />
+      <circle className="art-mid" cx="264" cy="34" r="18" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path className="art-line" d="M264 34V22M264 34l9 6" strokeWidth="2.2" fill="none" />
     </g>
   );
 }
 
 /*
  * Разговор между делом: две чашки на узком столике у автомата, пар над ними
- * и дверной проём в стороне. Акцент на пар — единственное движение в кадре,
- * и оно же единственное, что отличает эту сцену от рабочего места: здесь
- * никто не работает, здесь разговаривают.
+ * и дверной проём в стороне. Натюрморт (2026-09-13, восьмой заход) —
+ * столик и чашки теперь той же материей, что стол и кружка утра
+ * (`art-wood`/`art-mug`), а не контуром. Акцент на пар — единственное
+ * движение в кадре, и оно же единственное, что отличает эту сцену
+ * от рабочего места: здесь никто не работает, здесь разговаривают.
  */
 function Corridor() {
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-far">
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-far" fill="none" stroke="currentColor">
         <path d="M24 22v78M24 22h56v78" strokeWidth="1.6" />
         <path d="M232 20h64v54h-64z" strokeWidth="1.6" />
         <path d="M244 36h40M244 48h28" strokeWidth="1.6" strokeLinecap="butt" />
       </g>
 
-      <g className="art-mid">
-        <path d="M96 100h136" strokeWidth="2" />
-        <path d="M118 100V84h92v16" strokeWidth="1.8" />
-      </g>
+      <path className="art-mid" d="M118 100V84h92v16" stroke="currentColor" strokeWidth="1.8" fill="none" />
+      <rect className="art-wood" x="96" y="97" width="136" height="3.5" />
 
-      <g className="art-near">
-        <path d="M132 84V68h20v16zM176 84V68h20v16z" strokeWidth="1.8" />
-        <path d="M152 72h6a4 4 0 0 1 0 8h-6M196 72h6a4 4 0 0 1 0 8h-6" strokeWidth="1.4" />
-      </g>
+      <rect className="art-mug" x="132" y="72" width="16" height="12" rx="2" />
+      <path d="M148 75c4 0 4 6 0 6" style={{ stroke: 'var(--art-mug)' }} strokeWidth="1.3" fill="none" />
+      <rect className="art-mug" x="176" y="72" width="16" height="12" rx="2" />
+      <path d="M192 75c4 0 4 6 0 6" style={{ stroke: 'var(--art-mug)' }} strokeWidth="1.3" fill="none" />
 
-      <path className="art-line" d="M142 60c-6-6 6-10 0-16M186 60c-6-6 6-10 0-16" strokeWidth="2.2" />
+      <path className="art-line" d="M142 60c-6-6 6-10 0-16M186 60c-6-6 6-10 0-16" strokeWidth="2.2" fill="none" />
     </g>
   );
 }
@@ -1567,26 +1564,27 @@ function Shift() {
 }
 
 /*
- * Спор о метрике: два столбца под одной и той же подписью, разной высоты,
- * и акцентом — скоба на разнице между ними. Столбцы намеренно одинаковы
- * по ширине и стилю: спорят не о том, чей способ лучше, а о том, что вошло
- * в счёт, и разница — единственное, на что здесь стоит смотреть.
+ * Спор о метрике: два столбца под одной и той же подписью, разной высоты.
+ * Столбцы намеренно одинаковы по ширине и стилю: спорят не о том, чей
+ * способ лучше, а о том, что вошло в счёт. Разница между ними — учебный
+ * пример устройства «разница величин» из правил: заливка `art-gap-area`
+ * между вершинами столбцов и скоба `art-gap-mark` того же тона.
  */
 function Dispute() {
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <path d="M30 98h250" strokeWidth="2" />
-        <rect x="62" y="44" width="56" height="54" rx="2" strokeWidth="1.8" />
-        <rect x="150" y="24" width="56" height="74" rx="2" strokeWidth="1.8" />
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-mid" d="M30 98h250" stroke="currentColor" strokeWidth="2" fill="none" />
+      <rect className="art-mid" x="62" y="44" width="56" height="54" rx="2" stroke="currentColor" strokeWidth="1.8" fill="none" />
+      <rect className="art-mid" x="150" y="24" width="56" height="74" rx="2" stroke="currentColor" strokeWidth="1.8" fill="none" />
 
-      <g className="art-far">
+      <rect className="art-gap-area" x="118" y="24" width="32" height="20" />
+
+      <g className="art-far" fill="none" stroke="currentColor">
         <path d="M64 108h52M152 108h52" strokeWidth="1.6" strokeLinecap="butt" />
         <path d="M118 44h114M206 24h26" strokeWidth="1.3" strokeDasharray="4 4" strokeLinecap="butt" />
       </g>
 
-      <path className="art-line" d="M244 24v20M236 24h16M236 44h16" strokeWidth="2.2" />
+      <path className="art-gap-mark" d="M244 24v20M236 24h16M236 44h16" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </g>
   );
 }
@@ -1624,34 +1622,31 @@ function Contract() {
 
 /*
  * Граница готового: слева четыре пункта списка, справа за вертикальной чертой
- * те же пункты пунктиром — то, что в задачу не входит. Акцент на самой черте:
- * весь смысл дня в ней, а не в длине списка. Пунктирное справа намеренно
- * не короче сплошного слева — «за границей» всегда остаётся столько же,
- * сколько внутри, и работа заканчивается не тогда, когда сделано всё.
+ * те же по счёту пункты пунктиром — то, что в задачу не входит. Отобранное
+ * и отброшенное здесь совпадают буквально с `art-kept`/`art-dropped»:
+ * галочка залита, пункт вне границы — пустой пунктирный контур. Пунктирное
+ * справа намеренно не короче сплошного слева — «за границей» всегда
+ * остаётся столько же, сколько внутри, и работа заканчивается не тогда,
+ * когда сделано всё. Черта посередине — сама граница, ей нужен свой,
+ * нейтральный акцент, а не один из двух исходов.
  */
 function Scope() {
   const rows = [24, 46, 68, 90];
   return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        {rows.map((y) => (
-          <path key={y} d={`M20 ${y}h116`} strokeWidth="2" strokeLinecap="butt" />
-        ))}
-      </g>
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {rows.map((y) => (
+        <path key={`row-${y}`} className="art-mid" d={`M20 ${y}h116`} stroke="currentColor" strokeWidth="2" strokeLinecap="butt" fill="none" />
+      ))}
 
-      <g className="art-near">
-        {rows.map((y) => (
-          <rect key={y} x="8" y={y - 5} width="10" height="10" rx="2" strokeWidth="1.6" />
-        ))}
-      </g>
+      {rows.map((y) => (
+        <rect key={y} className="art-kept" x="8" y={y - 5} width="10" height="10" rx="2" strokeWidth="1.6" />
+      ))}
 
-      <g className="art-far">
-        {rows.map((y) => (
-          <path key={y} d={`M182 ${y}h130`} strokeWidth="1.6" strokeDasharray="5 5" strokeLinecap="butt" />
-        ))}
-      </g>
+      {rows.map((y) => (
+        <path key={y} className="art-dropped" d={`M182 ${y}h130`} strokeWidth="1.6" strokeDasharray="5 5" strokeLinecap="butt" fill="none" />
+      ))}
 
-      <path className="art-line" d="M160 12v92" strokeWidth="2.4" />
+      <path className="art-line" d="M160 12v92" strokeWidth="2.4" fill="none" stroke="currentColor" />
     </g>
   );
 }
@@ -1769,6 +1764,77 @@ function Level() {
       <g className="art-near">
         <circle cx="286" cy="26" r="3.2" strokeWidth="2" />
       </g>
+    </g>
+  );
+}
+
+/*
+ * Находка не по плану (2026-09-13, восьмой заход): `outlets` стоял разом
+ * за «бренд потерял полку» (пятница недели 1) и за «выручка на точку
+ * не зависит от их числа» (среда недели 2) — те же кружки-полки честно
+ * рисуют первое и молчат про второе. Своя сцена, а не перекраска: два
+ * канала разного размера, столбец — выручка на одну точку канала,
+ * ряд точек под ним — сколько точек у канала вообще. E-com высокий
+ * и малолюдный, розница низкая и многолюдная — сама разница в счёте
+ * точек и есть довод «сравнивать общей суммой нельзя». Цвет — группа
+ * (`art-cat-1…2`, каналов два, оба ниже потолка в три): столбец и его
+ * же точки одного оттенка, потому что счёт точек объясняет высоту
+ * столбца, а не соседствует с ней просто так.
+ */
+function Channels() {
+  const ecomDots = 4;
+  const retailDots = 11;
+  return (
+    <g strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M20 100h280" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* высота столбца — выручка на одну точку канала */}
+      <rect className="art-cat-1" x="46" y="20" width="40" height="80" rx="3" />
+      <rect className="art-cat-2" x="146" y="78" width="40" height="22" rx="3" />
+
+      {/* число точек канала — тот самый знаменатель */}
+      {Array.from({ length: ecomDots }, (_, i) => (
+        <circle key={i} className="art-cat-1-soft" cx={54 + i * 9} cy="108" r="3.4" strokeWidth="1.4" />
+      ))}
+      {Array.from({ length: retailDots }, (_, i) => (
+        <circle key={i} className="art-cat-2-soft" cx={150 + i * 12} cy="108" r="3.4" strokeWidth="1.4" />
+      ))}
+    </g>
+  );
+}
+
+/*
+ * Находка не по плану (2026-09-13, восьмой заход): хук дня 11 стоял на
+ * `split` — «категория просела и вернулась, бренд просел и не вернулся».
+ * Разрыв «бренд против рынка» предрешал бы одно из трёх определений,
+ * которые день 12 разводит свободно (что считать точкой, за какой период,
+ * что делать при смене определения) — ни одно из них не про рынок вовсе.
+ * Своя сцена, нейтральная: один термин ветвится на три ответа, и три знака
+ * внутри рамок — три РАЗНЫХ, но ни один не назван верным. Цвета здесь
+ * нет намеренно: назвать один из трёх ответов оттенком значило бы выбрать
+ * за читателя то, что день 12 ещё только собирается решить.
+ */
+function Definitions() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-near">
+        <rect x="18" y="42" width="60" height="32" rx="4" strokeWidth="1.8" />
+      </g>
+
+      <g className="art-far">
+        <path d="M84 58c30-26 30-26 90-34M84 58h96M84 58c30 26 30 26 90 34" strokeWidth="1.6" />
+      </g>
+
+      <g className="art-mid">
+        <rect x="184" y="12" width="46" height="30" rx="3" strokeWidth="1.6" />
+        <rect x="184" y="43" width="46" height="30" rx="3" strokeWidth="1.6" />
+        <rect x="184" y="74" width="46" height="30" rx="3" strokeWidth="1.6" />
+      </g>
+
+      {/* три разных знака — три разных ответа, ни один не назван верным */}
+      <circle className="art-line" cx="207" cy="27" r="6" strokeWidth="2" />
+      <rect className="art-line" x="200" y="51" width="14" height="14" rx="1.5" strokeWidth="2" />
+      <path className="art-line" d="M200 96l7-12 7 12z" strokeWidth="2" />
     </g>
   );
 }

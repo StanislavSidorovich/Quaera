@@ -69,7 +69,6 @@ import type { Track } from './types';
 export type StoryScene =
   // рабочее место: общий кадр начала дня
   | 'office'
-  | 'desk'
   // натюрморты утра: стол со своими предметами дня (пилот — неделя 4,
   // 2026-09-13; недели 1–3 перерисованы по тем же правилам вторым заходом
   // того же дня)
@@ -130,7 +129,12 @@ export type StoryScene =
   | 'split'
   | 'meeting'
   | 'outlets'
-  | 'rival';
+  | 'rival'
+  // ещё две находки не по плану (2026-09-13, восьмой заход): 'outlets' стоял
+  // разом за «потеряли полку» и за «выручка на точку», а хук дня 11 — за
+  // «есть три ответа» и предрешал их форму. У каждой — своя сцена
+  | 'channels'
+  | 'definitions';
 
 export interface StoryMessage {
   /** Кто пишет: имя и роль. Живой заказчик — дешёвый и уместный источник эмоции. */
@@ -857,7 +861,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Среда, 9:10',
       short: 'Ср',
       found: 'Выручка на точку не зависит от их числа: в e-com 3.2 млн на точку, в традиционной рознице 21.7 тыс.',
-      scenes: { brief: 'desk-per-outlet', reflection: 'outlets', hook: 'tables' },
+      scenes: { brief: 'desk-per-outlet', reflection: 'channels', hook: 'tables' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1075,7 +1079,7 @@ const ru: StoryCampaign = {
        * начинается экраном ниже. У крючка своя, третья: он не про просьбу,
        * а про развилку определений, в которую день упирается.
        */
-      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'split' },
+      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'definitions' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -2372,7 +2376,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Wednesday, 9:10',
       short: 'Wed',
       found: 'Revenue per outlet does not depend on their count: 3.2 million per outlet in ecom, 21.7 thousand in traditional retail.',
-      scenes: { brief: 'desk-per-outlet', reflection: 'outlets', hook: 'tables' },
+      scenes: { brief: 'desk-per-outlet', reflection: 'channels', hook: 'tables' },
       messages: [
         {
           from: 'Your manager',
@@ -2554,7 +2558,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Monday, 9:40',
       short: 'Mon',
       found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means a list agreed in advance.',
-      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'split' },
+      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'definitions' },
       messages: [
         {
           from: 'Aoki san, sales director',
