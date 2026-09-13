@@ -4,8 +4,17 @@ import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
-import { storyPreviousCase, storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
+import {
+  storyClosesWeek,
+  storyPreviousCase,
+  storyWeekOf,
+  type StoryCampaign,
+  type StoryMission,
+} from '../content/storymode';
+import type { Progress } from '../srs/store';
+import type { PushState } from '../push/client';
 import { StoryProgress } from './StoryProgress';
+import { StoryWeekSummary, type WeekDay } from './StoryWeekSummary';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -19,6 +28,7 @@ import { StoryProgress } from './StoryProgress';
  *   → [разговор между делом → подводка → задание] столько раз, сколько
  *     заданий в дне
  *   → суждение (это уже ответ заказчику? ещё нет)
+ *   → [итог недели — только у дня, который неделю закрывает]
  *   → крючок (что осталось и куда ведёт сюжет).
  *
  * Разговор между делом есть у одного шага на неделю (см. StoryStep.interlude),
@@ -41,6 +51,7 @@ export type StoryPhase =
   | { kind: 'intro'; step: number }
   | { kind: 'task'; step: number }
   | { kind: 'reflection' }
+  | { kind: 'summary' }
   | { kind: 'hook' };
 
 /**
@@ -51,15 +62,21 @@ export type StoryPhase =
  * Подводка появляется только у тех шагов, где она написана: задание, которому
  * нечего предпослать, идёт сразу за предыдущим. Пустой экран ради симметрии
  * читался бы как заминка.
+ *
+ * Итог недели стоит после суждения и перед крючком: суждение закрывает дело,
+ * итог — неделю самого человека, а крючок уводит в новое дело. Поставь итог
+ * после крючка — и он читался бы приложением к уже сказанному «до понедельника».
  */
-export function storyPhases(mission: StoryMission): StoryPhase[] {
+export function storyPhases(campaign: StoryCampaign, mission: StoryMission): StoryPhase[] {
   const phases: StoryPhase[] = [{ kind: 'brief' }];
   mission.steps.forEach((step, i) => {
     if (step.interlude) phases.push({ kind: 'interlude', step: i });
     if (step.intro) phases.push({ kind: 'intro', step: i });
     phases.push({ kind: 'task', step: i });
   });
-  phases.push({ kind: 'reflection' }, { kind: 'hook' });
+  phases.push({ kind: 'reflection' });
+  if (storyClosesWeek(campaign, mission.id)) phases.push({ kind: 'summary' });
+  phases.push({ kind: 'hook' });
   return phases;
 }
 
@@ -71,8 +88,8 @@ function samePhase(a: StoryPhase, b: StoryPhase): boolean {
   return true;
 }
 
-function phaseAt(mission: StoryMission, phase: StoryPhase, delta: number): StoryPhase | null {
-  const phases = storyPhases(mission);
+function phaseAt(campaign: StoryCampaign, mission: StoryMission, phase: StoryPhase, delta: number): StoryPhase | null {
+  const phases = storyPhases(campaign, mission);
   const i = phases.findIndex((p) => samePhase(p, phase));
   if (i < 0) return null;
   return phases[i + delta] ?? null;
@@ -91,13 +108,13 @@ function phaseAt(mission: StoryMission, phase: StoryPhase, delta: number): Story
  * (см. `recorded` ниже), решение лежит в черновиках, и перечитать свой
  * запрос — законное желание. Второй записи это не заводит.
  */
-export function storyPhaseBefore(mission: StoryMission, phase: StoryPhase): StoryPhase | null {
-  return phaseAt(mission, phase, -1);
+export function storyPhaseBefore(campaign: StoryCampaign, mission: StoryMission, phase: StoryPhase): StoryPhase | null {
+  return phaseAt(campaign, mission, phase, -1);
 }
 
 /** Следующий экран дня, либо null на крючке (дальше уже переход между днями). */
-export function storyPhaseAfter(mission: StoryMission, phase: StoryPhase): StoryPhase | null {
-  return phaseAt(mission, phase, 1);
+export function storyPhaseAfter(campaign: StoryCampaign, mission: StoryMission, phase: StoryPhase): StoryPhase | null {
+  return phaseAt(campaign, mission, phase, 1);
 }
 
 /** Задание дня вместе с названием приёма — разрешается в App по паку активного трека. */
@@ -129,6 +146,9 @@ export function StoryMode({
   lesson,
   onOpenLesson,
   onCloseLesson,
+  summaryDays,
+  progress,
+  onEnablePush,
 }: {
   /** Вся кампания — полосе дела нужны вопрос расследования и все дни разом. */
   campaign: StoryCampaign;
@@ -152,8 +172,8 @@ export function StoryMode({
   onNext: (() => void) | null;
   /** id дней, куда разрешён возврат, — см. storyOpenDayIds в App. */
   openDayIds: Set<string>;
-  /** Открыть день кампании с его брифа. */
-  onOpenDay: (missionId: string) => void;
+  /** Открыть день кампании — с брифа, если экран не назван. */
+  onOpenDay: (missionId: string, phase?: StoryPhase) => void;
   /**
    * Размер закачки движка, если исполнитель дня её ещё ждёт, иначе null.
    *
@@ -182,6 +202,12 @@ export function StoryMode({
   onOpenLesson?: () => void;
   /** Закрыть карточку и вернуться в то же задание. */
   onCloseLesson: () => void;
+  /** Дни недели этого дня с их заданиями — итогу недели нужна вся неделя. */
+  summaryDays: WeekDay[];
+  /** Прогресс — итог недели считает состояния приёмов на момент показа. */
+  progress: Progress;
+  /** Включить напоминания — кнопка в итоге недели, рядом с датой повторения. */
+  onEnablePush: () => Promise<PushState>;
 }) {
   const { t } = useI18n();
 
@@ -193,7 +219,7 @@ export function StoryMode({
    */
   const recorded = useRef(new Set<string>());
 
-  const after = storyPhaseAfter(mission, phase);
+  const after = storyPhaseAfter(campaign, mission, phase);
 
   function goNext() {
     if (after) onPhase(after);
@@ -302,6 +328,10 @@ export function StoryMode({
    * Дверь в прошлое дело — только на первом дне недели, где её и ищут.
    * На остальных днях та же ссылка была бы шумом: назад по своей неделе
    * ведёт полоса.
+   *
+   * Ведёт на итог той недели, а не на бриф её пятницы: итог и есть обзор
+   * закрытого дела — все находки разом и что стало с приёмами с тех пор, —
+   * а полоса над ним по-прежнему открывает любой день той недели.
    */
   const previousCase = weekDays[0]?.id === mission.id ? storyPreviousCase(campaign, mission.id) : null;
 
@@ -406,7 +436,7 @@ export function StoryMode({
               <button
                 type="button"
                 className="btn secondary"
-                onClick={() => onOpenDay(previousCase.id)}
+                onClick={() => onOpenDay(previousCase.id, { kind: 'summary' })}
               >
                 {t.storyMode.previousCase}
               </button>
@@ -457,6 +487,15 @@ export function StoryMode({
                 {p}
               </p>
             ))}
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
+            </button>
+          </>
+        )}
+
+        {phase.kind === 'summary' && (
+          <>
+            <StoryWeekSummary days={summaryDays}progress={progress} onEnablePush={onEnablePush} />
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}
             </button>

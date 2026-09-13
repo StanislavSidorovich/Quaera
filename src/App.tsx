@@ -31,7 +31,7 @@ import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, type StoryPhase, type StoryStepView } from './ui/StoryMode';
-import { storyCampaign, type StoryMission } from './content/storymode';
+import { storyCampaign, storyWeekOf, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -456,8 +456,9 @@ function backTarget(current: Screen, locale: Locale): Screen {
      * задание, а может три, и подводка есть не у каждого. Поэтому миссию
      * приходится поднять из кампании — по её id и текущей локали.
      */
-    const mission = storyCampaign(locale).missions.find((m) => m.id === current.missionId);
-    const before = mission ? storyPhaseBefore(mission, current.phase) : null;
+    const campaign = storyCampaign(locale);
+    const mission = campaign.missions.find((m) => m.id === current.missionId);
+    const before = mission ? storyPhaseBefore(campaign, mission, current.phase) : null;
     if (before) return { ...current, phase: before };
   }
   if (current.name === 'session') {
@@ -2357,13 +2358,18 @@ export default function App() {
               onDeferConsent={() => setConsentDeferred(true)}
               onResumeConsent={() => setConsentDeferred(false)}
               openDayIds={storyOpenDayIds}
-              onOpenDay={(id) => {
+              onOpenDay={(id, phase) => {
                 const day = storyMissions.get(id);
                 if (!day) return;
                 applyStoryTrack(day.mission.track);
-                setScreen({ name: 'storymode', missionId: id, phase: { kind: 'brief' } });
+                setScreen({ name: 'storymode', missionId: id, phase: phase ?? { kind: 'brief' } });
                 window.scrollTo({ top: 0 });
               }}
+              summaryDays={(storyWeekOf(storyCampaign(locale), storyMission.mission.id)?.missions ?? []).flatMap(
+                (m) => storyMissions.get(m.id) ?? []
+              )}
+              progress={progress}
+              onEnablePush={() => enablePush(progress, allSkillIds, locale)}
               onExit={() => setScreen({ name: 'home' })}
               lesson={(() => {
                 const skill = screen.lesson;

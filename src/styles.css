@@ -5114,6 +5114,65 @@ table.sample td.null {
 }
 
 /*
+ * Итог недели (StoryWeekSummary.tsx). Заголовки блоков — тем же тихим
+ * кеглем заглавными, что и у папки дела: экран читают сверху вниз как одну
+ * сводку, и крупные заголовки разбили бы её на четыре отдельные карточки.
+ */
+.story-summary-h {
+  margin: 24px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/*
+ * Строки «приём — состояние» и «задание — как далось». Состояние справа
+ * и переносится под название, когда рядом нет места (320 px при A++), —
+ * не многоточием: обрезанное «вернётся 18 с…» теряет ровно дату.
+ */
+.story-summary-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-summary-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.story-summary-list li:last-child {
+  border-bottom: 0;
+}
+
+.story-summary-note {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/*
+ * «Пора повторить» — единственное состояние, которое зовёт к действию, но
+ * выделено цветом текста, а не жирным: к концу недели срок подходит у шести
+ * приёмов из восьми, и шесть жирных строк подряд читались стеной. К действию
+ * зовёт абзац «Когда дальше», здесь достаточно отличить от «вернётся».
+ */
+.story-summary-note.is-due {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/*
  * Свёрнутая папка дела — от трёх находок и выше (StoryMode.tsx). Тот же
  * шеврон, что у details.table-doc: до нажатия он один отвечает на вопрос
  * «сюда можно нажать», раз штатный маркер <details> здесь тоже скрыт.

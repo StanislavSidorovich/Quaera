@@ -3332,6 +3332,17 @@ export function storyWeekOf(
   return { week, missions: campaign.missions.filter((m) => m.week === week.id) };
 }
 
+/**
+ * Закрывает ли день свою неделю — после него идёт итог недели.
+ *
+ * Считается по кампании, а не по метке «Пт»: неделя — это список её дней,
+ * и последний в нём закрывает дело, как бы он ни назывался.
+ */
+export function storyClosesWeek(campaign: StoryCampaign, missionId: string): boolean {
+  const days = storyWeekOf(campaign, missionId)?.missions;
+  return !!days && days[days.length - 1]?.id === missionId;
+}
+
 /** Кампания режима истории для локали. */
 export function storyCampaign(locale: Locale = 'ru'): StoryCampaign {
   return locale === 'en' ? en : ru;

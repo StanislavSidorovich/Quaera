@@ -630,6 +630,36 @@ export const en = {
     previousCase: 'Back to the previous case',
     toBeContinued: 'To be continued',
     finish: 'Home',
+    /** См. довод в ru.ts: состояния приёма словами, а не процентом. */
+    weekDone: 'Week closed',
+    summaryTitle: 'The week in review',
+    summaryFound: 'What the case established',
+    summarySkills: 'What you can do now',
+    skillDue: 'due for review',
+    skillHolds: 'holding',
+    skillBack: (date: string) => `back on ${date}`,
+    summarySkillsNote:
+      'A technique keeps coming back for review until it holds on its own: first after a couple of days, then less and less often. One day with it is not enough for anyone.',
+    summaryWeek: 'How the week went',
+    summaryTally: (total: number, clean: number, helped: number, shown: number) => {
+      const parts = [`${clean} on the first try without hints`];
+      if (helped) parts.push(`${helped} with a hint or after a wrong attempt`);
+      if (shown) parts.push(`${shown} via the breakdown`);
+      return `${total} task${total === 1 ? '' : 's'} this week: ${parts.join(', ')}.`;
+    },
+    hardLead:
+      'This is where it was hardest. These techniques come back for review before the others, on purpose: what was hard gets repeated sooner.',
+    hardShown: 'via the breakdown',
+    hardAttempt: (n: number) => `on attempt ${n}`,
+    noneHard: 'No task needed the breakdown or a second attempt.',
+    summaryNext: 'What comes next',
+    nextDueToday: (n: number) =>
+      `You can review today: ${n} technique${n === 1 ? '' : 's'} from this week ${n === 1 ? 'is' : 'are'} due.`,
+    nextDue: (date: string, n: number) =>
+      `Next review: ${date}, when ${n} technique${n === 1 ? '' : 's'} from this week come${n === 1 ? 's' : ''} back.`,
+    nextWhere:
+      'Reviews run as a regular session from the home screen: there techniques come back when they are due, while the campaign moves on to a new case.',
+    remindBtn: 'Remind me when it is due',
   },
   lesson: {
     pill: 'Technique',
