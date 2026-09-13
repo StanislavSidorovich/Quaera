@@ -1681,7 +1681,7 @@ const ru: StoryCampaign = {
       track: 'python',
       place: 'Kaiyo Trading · Четвёртая неделя · Четверг, 9:10',
       short: 'Чт',
-      found: 'resample меняет частоту ряда, rolling сглаживает окном; обеим нужен datetime-индекс.',
+      found: 'resample меняет частоту ряда, rolling сглаживает окном; первому нужна дата, а не текст, второму — строки по порядку времени.',
       scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
       messages: [
         {
@@ -1694,14 +1694,40 @@ const ru: StoryCampaign = {
         },
       ],
       steps: [
+        /*
+         * День открывается чтением, а не письмом (py-047 перед py-035) — та же
+         * правка, что у первого дня кампании 2026-08-25. До 2026-09-13 четверг
+         * вводил пять конструкций разом и три из них, подготовку даты, объяснял
+         * одним абзацем прямо перед первым write. Теперь у подготовки свой шаг:
+         * человек читает код без pd.to_datetime и предсказывает, что resample
+         * упадёт.
+         *
+         * sort_index получил честную причину там, где она работает, — у rolling:
+         * окно берёт соседей по порядку строк и на неотсортированном ряду тихо
+         * врёт (проверено: [nan, 50.5, 51, 51.5] против [nan, 1.5, 51, 100.5]),
+         * а resample раскладывает по месяцам и без сортировки. Этим же выполнено
+         * обещание вторника «хуже те, что не падают, — до них дойдём в четверг»:
+         * до правки итог дня подменял его неверной фразой про сортировку
+         * строк-дат по алфавиту, хотя даты вида 2025-09-01 сортируются верно.
+         */
         {
-          taskId: 'py-035',
+          taskId: 'py-047',
           intro: {
             scene: 'calendar',
             title: 'Ряд, а не таблица с датой',
             paras: [
-              'Ряд во времени — не то же самое, что таблица, в которой есть дата. Чтобы pandas работал с календарём, дата должна стать индексом и быть настоящей датой, а не строкой. Отсюда три строки подготовки: pd.to_datetime(...) переводит текст в дату, .set_index(...) делает её осью, .sort_index() выстраивает по возрастанию.',
-              'После этого частота ряда меняется одним вызовом: .resample(\'MS\') собирает наблюдения по началам месяцев (Month Start). Считать по-прежнему надо явно — .sum() следом. Это тот же GROUP BY по месяцу, только resample знает календарь: месяц, в котором не было ни одной продажи, останется в ряду нулём, а не исчезнет из него.',
+              'Ряд во времени — не то же самое, что таблица, в которой есть дата. Чтобы pandas работал с календарём, дата должна стать осью таблицы, индексом: weekly.set_index(\'week_start\'). Тогда строки адресуются датами, и всё, что считается по ряду, знает, какая неделя за какой.',
+              'Но индекс — только место. Что в нём лежит, решает тип, а колонка week_start пришла из базы текстом вида 2024-01-01. Вы видите в нём дату, pandas — строку. Перевести текст в дату — отдельный вызов, pd.to_datetime(weekly[\'week_start\']), и делают его до set_index.',
+              'Ниже коллега этот вызов пропустил и сразу меняет частоту: .resample(\'MS\') собирает недели в месяцы. Прочитайте и скажите, что произойдёт.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-035',
+          intro: {
+            paras: [
+              'Лечится одной строкой до set_index: weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\']). Рядом обычно стоит третий вызов подготовки, .sort_index(), — он выстраивает даты по возрастанию. Для resample он не обязателен, а зачем нужен, станет видно на следующем шаге.',
+              'После подготовки частота меняется одним вызовом: .resample(\'MS\') собирает наблюдения по началам месяцев (Month Start). Считать по-прежнему надо явно — .sum() следом. Это тот же GROUP BY по месяцу, только resample знает календарь: месяц, в котором не было ни одной продажи, останется в ряду нулём, а не исчезнет из него.',
               'Заготовка ниже уже собрала понедельный ряд по бренду и подготовила индекс. Ваша часть — последняя строка.',
             ],
           },
@@ -1715,7 +1741,8 @@ const ru: StoryCampaign = {
           intro: {
             paras: [
               'Второй приём — скользящее окно. weekly[\'units\'].rolling(4).mean() считает среднее по четырём последним наблюдениям и сдвигает окно на шаг вперёд. Зубцы недельного ряда сглаживаются, и становится виден уровень, вокруг которого они пляшут.',
-              'У окна есть край, и поведение на краю неочевидно. Прочитайте запись и скажите, что окажется в первых трёх значениях.',
+              'Здесь и нужен .sort_index(). Окно берёт соседей по порядку строк, а не по датам: если строки стоят не по времени, rolling усреднит недели, соседние в таблице, но не в календаре, — и не упадёт. Это та ошибка, которая не падает: число получится, просто не то.',
+              'У окна есть и край, и поведение на краю неочевидно. Прочитайте запись и скажите, что окажется в первых трёх значениях.',
             ],
           },
         },
@@ -1734,7 +1761,7 @@ const ru: StoryCampaign = {
       ],
       reflection: [
         'Два приёма, и оба про одно: увидеть в ряде уровень вместо шума. resample меняет частоту — неделя, месяц, квартал; rolling усредняет по окну, не меняя частоты. Первое отвечает на «за какой период», второе — на «на каком фоне».',
-        'И общее условие у них одно: настоящий datetime в индексе. Если дата осталась строкой, resample упадёт, а сортировка по ней в какой-то момент поставит 2025-10-01 перед 2025-09-01 по алфавиту — и никто не заметит.',
+        'И условие у них общее — подготовленный индекс, но без него они ломаются по-разному. resample без настоящей даты падает сразу и громко: с этой ошибки начался день. rolling без сортировки не падает вовсе: он усредняет соседние строки, а не соседние недели, и выдаёт правдоподобное число. Первую ошибку поймает pandas, вторую — только вы.',
       ],
       hook: [
         'Всё готово. Завтра — Setouchi Trading и число 2.44, которое записали на первой неделе и отложили: кто-то отгрузил себе вдвое больше, чем продал.',
@@ -3055,7 +3082,7 @@ const en: StoryCampaign = {
       track: 'python',
       place: 'Kaiyo Trading · Week four · Thursday, 9:10',
       short: 'Thu',
-      found: 'resample changes the frequency, rolling smooths with a window; both need a datetime index.',
+      found: 'resample changes the frequency, rolling smooths with a window; the first needs a date rather than text, the second needs rows in time order.',
       scenes: { brief: 'calendar', reflection: 'smooth', hook: 'trend' },
       messages: [
         {
@@ -3069,13 +3096,23 @@ const en: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'py-035',
+          taskId: 'py-047',
           intro: {
             scene: 'calendar',
             title: 'A series, not a table with a date in it',
             paras: [
-              'A time series is not the same thing as a table that happens to have a date. For pandas to work with the calendar, the date has to become the index and has to be a real date rather than a string. Hence the three lines of preparation: pd.to_datetime(...) turns text into a date, .set_index(...) makes it the axis, .sort_index() puts it in ascending order.',
-              'After that the frequency changes in a single call: .resample(\'MS\') collects observations onto month starts (Month Start). The computing is still explicit, .sum() after it. This is the same GROUP BY by month, except resample knows the calendar: a month with no sales at all stays in the series as a zero instead of vanishing from it.',
+              'A time series is not the same thing as a table that happens to have a date. For pandas to work with the calendar, the date has to become the axis of the table, the index: weekly.set_index(\'week_start\'). Then rows are addressed by dates, and everything computed over the series knows which week comes after which.',
+              'But the index is only a place. What sits in it is decided by the type, and the week_start column came from the database as text like 2024-01-01. You see a date in it; pandas sees a string. Turning text into a date is a separate call, pd.to_datetime(weekly[\'week_start\']), and it goes before set_index.',
+              'Below, a colleague skipped that call and goes straight to changing the frequency: .resample(\'MS\') collects weeks into months. Read it and say what will happen.',
+            ],
+          },
+        },
+        {
+          taskId: 'py-035',
+          intro: {
+            paras: [
+              'The fix is one line before set_index: weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\']). A third preparation call usually sits next to it, .sort_index(), which puts the dates in ascending order. resample does not need it; why it matters becomes clear at the next step.',
+              'After the preparation the frequency changes in a single call: .resample(\'MS\') collects observations onto month starts (Month Start). The computing is still explicit, .sum() after it. This is the same GROUP BY by month, except resample knows the calendar: a month with no sales at all stays in the series as a zero instead of vanishing from it.',
               'The starter below already builds a weekly series for a brand and prepares the index. Your part is the last line.',
             ],
           },
@@ -3089,7 +3126,8 @@ const en: StoryCampaign = {
           intro: {
             paras: [
               'The second technique is the rolling window. weekly[\'units\'].rolling(4).mean() averages the last four observations and slides the window forward by one. The teeth of a weekly series smooth out, and the level they dance around becomes visible.',
-              'A window has an edge, and behavior at the edge is not obvious. Read the line and say what the first three values will be.',
+              'This is where .sort_index() earns its place. The window takes neighbors in row order, not in date order: if the rows are not in time order, rolling averages weeks that are neighbors in the table but not on the calendar, and it does not fail. This is the error that does not fail: you get a number, just the wrong one.',
+              'The window also has an edge, and behavior at the edge is not obvious. Read the line and say what the first three values will be.',
             ],
           },
         },
@@ -3108,7 +3146,7 @@ const en: StoryCampaign = {
       ],
       reflection: [
         'Two techniques, both about the same thing: seeing a level in a series instead of noise. resample changes the frequency, to weeks, months or quarters; rolling averages over a window without changing the frequency. The first answers "over what period", the second answers "against what background".',
-        'They share one condition: a real datetime in the index. If the date stays a string, resample fails outright, and sorting by it will at some point put 2025-10-01 before 2025-09-01 alphabetically, with nobody noticing.',
+        'The condition they share is a prepared index, but without it they break in different ways. resample without a real date fails at once and loudly: that is the error the day started with. rolling without sorting does not fail at all: it averages neighboring rows rather than neighboring weeks and hands back a plausible number. pandas catches the first error; only you can catch the second.',
       ],
       hook: [
         'Everything is ready. Tomorrow: Setouchi Trading and the 2.44 that was written down in week one and set aside. Somebody shipped themselves twice what they sold.',

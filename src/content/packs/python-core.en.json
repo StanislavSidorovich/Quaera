@@ -878,6 +878,36 @@
         "Look at the two ends of the series rather than its shape: compare the last value with what it was before the autumn."
       ],
       "explain": "This is the difference between a flow and a stock, and it is also why the sell-in to sell-out ratio answers only half the question. The ratio is back to 1.05, meaning the partner again buys exactly what it sells, yet the roughly 22 thousand units brought in beyond demand last autumn are still sitting there. Until they are sold, the next orders will be either smaller than usual or absent altogether, which for us means that any plan for this distributor over the coming quarters is built on sand. «Has the flow returned?» and «are the consequences exhausted?» are different questions, and the second one is read off the level, not the flow."
+    },
+    {
+      "id": "py-047",
+      "title": "A date that stayed text",
+      "brief": "A colleague built a weekly sales series for «Aqualis» and wants to roll it up into months for a meeting. The week_start column became the index but was never converted to a date.",
+      "goal": "Understand why resample needs an index of real dates, not text that looks like dates.",
+      "predictQuestion": "The week_start column came from the database as text like '2024-01-01', and the colleague skipped converting it: «you can see they're dates anyway». What will the last line do?",
+      "options": [
+        {
+          "label": "It fails with a TypeError: resample only works with an index of dates, and this index is text",
+          "why": "To a person '2024-01-01' is a date; to pandas it's a string, and the index is whatever the column was when it came from the database. resample needs a calendar, where a month ends and which weeks fall into it, and text has no calendar. So the error is loud and on its own line, and the fix is one line: pd.to_datetime(...) before set_index."
+        },
+        {
+          "label": "It returns a monthly series: pandas recognizes dates in strings like 2024-01-01 on its own",
+          "why": "pandas can recognize dates in text, but only when asked: pd.to_datetime, or parse_dates when reading. set_index doesn't change the column's type; the index stays the same text the column was."
+        },
+        {
+          "label": "It adds up the weeks by the first seven characters of the date, which means by month",
+          "why": "resample doesn't cut strings or look at characters. Grouping by a .str[:7] slice would have to be written by hand, and that's exactly the workaround that breaks on the first quarter or rolling window: text dates don't contain them."
+        },
+        {
+          "label": "It returns the same weekly series: since the frequency can't change, pandas leaves it alone",
+          "why": "resample can't decline quietly: if there's nothing to change the frequency from, it doesn't hand back the original, it fails. That's good news: weeks silently returned instead of months would only get noticed in the meeting."
+        }
+      ],
+      "hints": [
+        "Follow the type of week_start from reading the table to set_index: nothing along the way changes it.",
+        "resample sorts observations into calendar months. Does text have a calendar?"
+      ],
+      "explain": "This is a convenient error: it fails immediately, on the line where the mistake is. That's why preparing a series takes two steps: pd.to_datetime turns text into a date, set_index makes it the axis, and only then does resample know where a month ends. The order matters: set_index without to_datetime still gives you an index, just a text one, exactly as here. The third call often written next to them, sort_index, doesn't prevent this error and isn't needed by resample, which sorts observations into months itself. Sorting matters for operations that take neighbors in row order, rolling for example."
     }
   ]
 }

@@ -31,7 +31,7 @@ in the browser, no server involved.
 
 ## What's inside
 
-**Four tracks — 293 tasks and 73 skills.** Fully populated, reviewed
+**Four tracks — 294 tasks and 73 skills.** Fully populated, reviewed
 and translated to English: interface, tasks, technique cards.
 
 | Track | Tasks | Skills | How the answer is checked |
@@ -39,7 +39,7 @@ and translated to English: interface, tasks, technique cards.
 | SQL for analysts | 91 | 20 | The query runs against SQLite (sql.js) |
 | Analytics as a profession | 79 | 20 | Multiple choice with a full explanation (`predict`) plus arranging the steps of an argument (`order`) |
 | Data model and BI | 77 | 19 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) |
-| pandas for analysts | 46 | 14 | The code runs in Python (Pyodide) |
+| pandas for analysts | 47 | 14 | The code runs in Python (Pyodide) |
 
 **Story mode — an analyst's work week.** Four five-day weeks, twenty days:
 a client brings a question in the morning, you bring back a finding by
