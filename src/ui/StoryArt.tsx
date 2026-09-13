@@ -186,6 +186,7 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'level' && <Level />}
         {scene === 'channels' && <Channels />}
         {scene === 'definitions' && <Definitions />}
+        {scene === 'absent' && <Absent />}
       </svg>
     </div>
   );
@@ -1835,6 +1836,42 @@ function Definitions() {
       <circle className="art-line" cx="207" cy="27" r="6" strokeWidth="2" />
       <rect className="art-line" x="200" y="51" width="14" height="14" rx="1.5" strokeWidth="2" />
       <path className="art-line" d="M200 96l7-12 7 12z" strokeWidth="2" />
+    </g>
+  );
+}
+
+/*
+ * Находка grep-проверки (2026-09-13, одиннадцатый заход): `coverage` стояла
+ * разом за «выручка бренда и охват» (день 4, положительный счёт точек, где
+ * бренд есть) и за реплику дня 6 «список получен, но заметь, чего в нём
+ * нет» — прямо противоположный смысл на той же картинке. Своя сцена.
+ *
+ * Список слева — то, что anti-join действительно даёт: обычный результат
+ * запроса, приглушённый (art-mid), потому что это уже объяснено раньше
+ * в дне. Акцент, единственный в сцене, — карточка справа: вопрос, на
+ * который в данных нет ответа вовсе, кто стоит на полке вместо нас.
+ * Разрыв между списком и карточкой ничем не заполнен — запрос одно
+ * с другим не соединяет, и не может.
+ */
+function Absent() {
+  const rows = [24, 42, 60, 78, 96];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="18" y="14" width="150" height="90" rx="4" strokeWidth="1.7" />
+        {rows.map((y) => (
+          <path key={y} d={`M32 ${y}h122`} strokeWidth="2.2" strokeLinecap="butt" />
+        ))}
+      </g>
+
+      {/* карточка вопроса без ответа: пунктир — вне того, что запрос достаёт */}
+      <rect className="art-line" x="220" y="24" width="80" height="68" rx="4" strokeWidth="1.8" strokeDasharray="4 4" />
+      <path
+        className="art-line"
+        d="M250 46c0-7.5 6.5-11 12-11 6.5 0 12 4 12 11 0 6-5 8-9 11-2.3 1.7-3 3.6-3 6.4"
+        strokeWidth="2.2"
+      />
+      <circle cx="260" cy="80" r="1.8" fill="currentColor" stroke="none" />
     </g>
   );
 }

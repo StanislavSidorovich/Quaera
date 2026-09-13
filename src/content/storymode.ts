@@ -134,7 +134,11 @@ export type StoryScene =
   // разом за «потеряли полку» и за «выручка на точку», а хук дня 11 — за
   // «есть три ответа» и предрешал их форму. У каждой — своя сцена
   | 'channels'
-  | 'definitions';
+  | 'definitions'
+  // находка grep-проверки (2026-09-13, одиннадцатый заход): 'coverage' стояла
+  // разом за «выручка и охват» (день 4) и за «список получен, а чего в нём
+  // нет» (день 6, реплика про кого нет в продажах) — два разных смысла
+  | 'absent';
 
 export interface StoryMessage {
   /** Кто пишет: имя и роль. Живой заказчик — дешёвый и уместный источник эмоции. */
@@ -716,7 +720,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Понедельник, 9:05',
       short: 'Пн',
       found: 'Точки без Nettora называются поимённо. Обычное соединение их не показывает: в продажах их нет.',
-      scenes: { brief: 'desk-gap', reflection: 'coverage', hook: 'split' },
+      scenes: { brief: 'desk-gap', reflection: 'absent', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -2257,7 +2261,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Monday, 9:05',
       short: 'Mon',
       found: 'Outlets without Nettora can be named one by one. An ordinary join never shows them: they are absent from sales.',
-      scenes: { brief: 'desk-gap', reflection: 'coverage', hook: 'split' },
+      scenes: { brief: 'desk-gap', reflection: 'absent', hook: 'split' },
       messages: [
         {
           from: 'Aoki-san, sales director',
