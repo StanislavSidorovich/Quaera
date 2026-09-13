@@ -1845,6 +1845,10 @@ const ru: StoryCampaign = {
               'Ряд ниже собран тем же способом, что и утренний. Прочитайте и скажите, что в нём.',
             ],
           },
+          after: {
+            from: 'Мори-сан, КАМ по дистрибьюторам',
+            text: '«Двадцать две тысячи на складе, а я всем говорил, что всё вернулось. В понедельник тебя посадили за прайс-лист, а на следующей неделе я иду к Setouchi — и иду с этим рядом, а не со своей перепиской.»',
+          },
         },
       ],
       reflection: [
@@ -3229,6 +3233,10 @@ const en: StoryCampaign = {
               'Hence the unobvious consequence that today\'s argument rests on: a flow can return to normal without changing the level by a single unit. Stock lives in fact_stock, one row per distributor, product and month, with units_on_hand for how much is lying there at month end.',
               'The series below is built the same way as the morning one. Read it and say what is in it.',
             ],
+          },
+          after: {
+            from: 'Mori-san, key account manager for distributors',
+            text: '"Twenty-two thousand in their warehouse, and I kept telling everyone it was all back to normal. On Monday they sat you down with the price list; next week I go to Setouchi, and I go with this series, not with my correspondence."',
           },
         },
       ],
