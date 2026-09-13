@@ -1,5 +1,5 @@
 import type { Comparison, Feedback } from '../engine/types';
-import { diagnoseComparison, diagnosePythonError, diagnoseSqlError } from '../engine/diagnose';
+import { diagnoseComparison, diagnosePythonError, diagnoseSqlError, idComparedToTextHint } from '../engine/diagnose';
 import type { Locale, Strings } from '../i18n/context';
 
 /**
@@ -21,10 +21,10 @@ import type { Locale, Strings } from '../i18n/context';
  * что у неслучайной перестановки в shuffledOrder: дефект дешевле сделать
  * невозможным, чем ловить гейтом.
  *
- * Поводов семь, потому что записей в `feedback` ровно семь. Три из них
- * (`execError`, `comparison`) идут в engine/diagnose и несут его входные
- * данные; остальные четыре — интерфейсные вердикты, у них своего текста нет
- * вообще, только имя случая.
+ * Поводов восемь, потому что записей в `feedback` ровно восемь. Четыре из них
+ * (`execError`, `comparison`, `reRunDiffers`) идут в engine/diagnose и несут
+ * его входные данные; остальные — интерфейсные вердикты, у них своего текста
+ * нет вообще, только имя случая.
  */
 export type FeedbackSource =
   /** Зачёт. `expectedCols` — имена колонок эталона, если свои названы иначе. */
@@ -35,8 +35,20 @@ export type FeedbackSource =
   | { kind: 'giveUp' }
   /** Отказ исполнителя: сообщение движка и, у Python, относящийся к заданию traceback. */
   | { kind: 'execError'; message: string; traceback?: string }
-  /** Расхождение с эталоном — вход diagnoseComparison, чистые данные без прозы. */
-  | { kind: 'comparison'; comparison: Comparison };
+  /**
+   * Расхождение с эталоном — вход diagnoseComparison, чистые данные без прозы.
+   * `code` — текст запроса на момент проверки, только для эвристики
+   * «*_id сравнивается с текстом» (idComparedToTextHint); сам разбор
+   * расхождения строится из comparison и code не трогает.
+   */
+  | { kind: 'comparison'; comparison: Comparison; code?: string }
+  /**
+   * Зачёт уже стоит, но запущенный заново запрос дал другой результат —
+   * см. handleRun в TaskView. Зачёт и расписание повторения это не меняет,
+   * поэтому повод отдельный от `comparison`: тон и заголовок нейтральные,
+   * а не «ошибка», хотя разбор расхождения — тот же diagnoseComparison.
+   */
+  | { kind: 'reRunDiffers'; comparison: Comparison; code?: string };
 
 export interface FeedbackContext {
   t: Strings;
@@ -82,7 +94,21 @@ export function renderFeedback(src: FeedbackSource, ctx: FeedbackContext): Feedb
       return ctx.runtime === 'python'
         ? diagnosePythonError(src.message, ctx.suggestions, src.traceback ?? '', locale)
         : diagnoseSqlError(src.message, ctx.suggestions, locale);
-    case 'comparison':
-      return diagnoseComparison(src.comparison, locale);
+    case 'comparison': {
+      const diag = diagnoseComparison(src.comparison, locale);
+      const idHint = src.code ? idComparedToTextHint(src.code, locale) : null;
+      return idHint ? { ...diag, nudges: [idHint, ...diag.nudges] } : diag;
+    }
+    case 'reRunDiffers': {
+      const diag = diagnoseComparison(src.comparison, locale);
+      const idHint = src.code ? idComparedToTextHint(src.code, locale) : null;
+      return {
+        ...diag,
+        tone: 'warn',
+        title: t.task.reRunDiffersTitle,
+        body: `${t.task.reRunDiffersLead} ${diag.title}. ${diag.body}`,
+        nudges: idHint ? [idHint, ...diag.nudges] : diag.nudges,
+      };
+    }
   }
 }

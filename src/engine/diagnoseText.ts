@@ -50,6 +50,12 @@ export interface DiagnoseText {
   sqlFallback: (message: string) => Feedback;
   /** Воркер отвалился, не сказав почему (WORKER_FAILURE) — прозы от него не пришло. */
   workerFailure: () => Feedback;
+  /**
+   * Колонка `*_id` сравнивается со строкой в кавычках — движок не ошибается,
+   * просто ничего не находит. Отдельная строка, не Feedback: добавляется
+   * нудж-строкой к уже собранному разбору расхождения, а не подменяет его.
+   */
+  idComparedToText: (column: string, value: string) => string;
   pythonKeyError: (name: string, hint: string | null) => Feedback;
   pythonFallback: (kind: string | null, detail: string, traceback: string) => Feedback;
   /**
@@ -172,6 +178,9 @@ const ru: DiagnoseText = {
     body: 'Выполнение прервалось до того, как движок успел что-то сообщить, — дело не в вашем коде. Обычно помогает перезагрузка страницы.',
     nudges: [],
   }),
+
+  idComparedToText: (column, value) =>
+    `Колонка «${column}» хранит номер, а не название — в продажах товар записан числовым ключом. Сравнение «${column} = '${value}'» ошибкой не будет: SQLite просто не найдёт совпадений и тихо вернёт пустоту.`,
 
   pythonKeyError: (name, hint) => ({
     tone: 'error',
@@ -435,6 +444,9 @@ const en: DiagnoseText = {
     body: 'Execution stopped before the engine could report anything — this is not about your code. Reloading the page usually clears it.',
     nudges: [],
   }),
+
+  idComparedToText: (column, value) =>
+    `Column "${column}" holds a number, not a name — in sales the product is recorded by a numeric key. Comparing "${column} = '${value}'" is not an error: SQLite simply finds no match and quietly returns nothing.`,
 
   pythonKeyError: (name, hint) => ({
     tone: 'error',

@@ -683,6 +683,8 @@ export const en = {
     /** Label above the reflexive question, between the diagnosis and the hint button. */
     reflexiveLabel: 'Before you look at the hint',
     correctTitle: 'Correct',
+    reRunDiffersTitle: 'Credit stands, this run differs',
+    reRunDiffersLead: 'The earlier answer is credited and that stays true. But this particular run gives a different result:',
     wrongOptionTitle: 'Not quite',
     wrongOptionBody: 'The breakdown of every option is below.',
     giveUpTitle: "Let's break it down",

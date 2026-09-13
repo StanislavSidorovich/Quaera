@@ -660,13 +660,26 @@ function StepView({
               traceback: res.status === 'code_error' ? res.traceback : undefined,
             },
           });
-        } else {
+        } else if (res.status === 'correct') {
           patch({
             preview: res.preview,
             feedback: {
               kind: 'correct',
               expectedCols: res.comparison.columnNamesDiffer ? res.comparison.expectedCols : undefined,
             },
+          });
+        } else {
+          /*
+           * Зачёт уже стоит (draft.solved), а этот прогон — нет: `res.status`
+           * здесь 'incorrect'. Раньше эта ветка не проверялась вовсе и любой
+           * прогон после зачёта красился в «Верно» независимо от результата —
+           * человек мог сдаться, посмотреть эталон, вписать свой неверный
+           * запрос и увидеть зелёную рамку поверх него. `solved`/`wasCorrect`
+           * не трогаем: они про сданный ответ, а не про этот прогон.
+           */
+          patch({
+            preview: res.preview,
+            feedback: { kind: 'reRunDiffers', comparison: res.comparison, code: composedCode },
           });
         }
       } else {
@@ -782,7 +795,7 @@ function StepView({
           preview: res.preview,
           wrongAttempts: d.wrongAttempts + 1,
           expected: res.expectedPreview,
-          feedback: { kind: 'comparison', comparison: res.comparison },
+          feedback: { kind: 'comparison', comparison: res.comparison, code: composedCode },
         }));
       }
     } catch (e) {

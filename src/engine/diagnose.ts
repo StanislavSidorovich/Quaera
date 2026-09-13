@@ -1,7 +1,7 @@
+import { diagnoseText } from './diagnoseText';
 import { WORKER_ARG, WORKER_CODE, WORKER_FAILURE } from './types';
 import type { Comparison, Feedback, Mismatch, WorkerCode } from './types';
 import type { Locale } from '../i18n/context';
-import { diagnoseText } from './diagnoseText';
 
 /**
  * Превращение расхождения с эталоном в адресную подсказку.
@@ -206,6 +206,23 @@ function analyseRatios(mismatches: Mismatch[], locale: Locale): Feedback | null 
 
   const sample = mismatches[0];
   return T.wrongValues(sample.key, sample.column, sample.expected, sample.got);
+}
+
+/**
+ * Колонка `*_id` во всём датасете хранит число, а не название. Сравнение
+ * с текстовым литералом (`f.product_id = 'Vitanor Forte x30'`) SQLite не
+ * считает ошибкой — типовая коэрция просто не находит совпадений, и запрос
+ * тихо возвращает пустой результат вместо понятного отказа. `diagnoseSqlError`
+ * здесь бессилен: движок не пожаловался вовсе, дело переходит в сравнение
+ * с эталоном. Эвристика по имени колонки, а не по схеме: своего доступа
+ * к типам колонок у diagnose нет, а `*_id` числовой ключ во всём датасете
+ * без исключений.
+ */
+const ID_TEXT_LITERAL = /(\w*_id)\s*=\s*'([^']*)'/i;
+
+export function idComparedToTextHint(query: string, locale: Locale): string | null {
+  const m = ID_TEXT_LITERAL.exec(query);
+  return m ? diagnoseText[locale].idComparedToText(m[1], m[2]) : null;
 }
 
 export function diagnoseComparison(cmp: Comparison, locale: Locale): Feedback {
