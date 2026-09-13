@@ -88,15 +88,69 @@ const DESK_SCENES: Partial<Record<StoryScene, DeskSetup>> = {
   'desk-index': { screen: ScreenIndex, note: true },
   // Чт: зубцы недельного ряда и сглаженная линия; пишет Ито-сан, на столе понедельные распечатки.
   'desk-series': { screen: ScreenSeries, papers: true, note: true, ping: true },
+
+  /*
+   * Недели 1–3, перерисовка по правилам пилота (2026-09-13, второй заход).
+   * Экран — идея дня в виде, в каком она лежала бы на мониторе; papers/
+   * note/ping — по конкретному факту брифа этого дня, не по шаблону.
+   */
+  // Пн w1, первый день: прайс на экране. Аоки-сан пишет впервые за всю кампанию.
+  'desk-price': { screen: ScreenCatalog, ping: true },
+  // Вт w1: счёт вместо перечня. Аоки-сан просит цифры «к пятнице» — напоминание о сроке.
+  'desk-tally': { screen: ScreenTally, note: true },
+  // Ср w1: форма года — волна без причины внутри неё.
+  'desk-wave': { screen: ScreenWave },
+  // Чт w1: две таблицы сходятся по ключу.
+  'desk-link': { screen: ScreenLink },
+  // Пн w2: список точек, часть строк — пунктиром: продаж бренда там нет. Напоминание о вопросе с прошлой встречи.
+  'desk-gap': { screen: ScreenGap, note: true },
+  // Вт w2: одна выручка распадается на акционную и обычную часть. На столе — распечатка прайса, на который ссылается руководитель.
+  'desk-split-bar': { screen: ScreenSplitBar, papers: true },
+  // Ср w2: выручка на одну точку — два бизнеса разного размера рядом.
+  'desk-per-outlet': { screen: ScreenPerOutlet },
+  // Чт w2: одна строка соединения размножается в несколько. На столе — распечатки прежних отчётов с той же ошибкой.
+  'desk-fanout': { screen: ScreenFanout, papers: true },
+  // Вт w3: спор о метрике. Танака-сан, финансовый контролёр, пишет впервые за всю кампанию.
+  'desk-dispute': { screen: ScreenDispute, ping: true },
+  // Ср w3: строка смотрит на предыдущую — окно вместо свёртки. Аоки-сан просит черновик «хоть в среду».
+  'desk-lookback': { screen: ScreenLookback, note: true },
+  // Чт w3: сырые строки неровные, две из них — одно и то же имя. Профилирование выгрузки на бумаге.
+  'desk-raw-row': { screen: ScreenRawRow, papers: true },
+  // Пт w3: письмо — первая строка длиннее и жирнее остальных. Срок жёсткий, отмечен на стикере.
+  'desk-lede': { screen: ScreenLede, note: true },
+};
+
+/*
+ * Переговорная, параметризованная (2026-09-13, второй заход): доска
+ * рисует то, о чём именно эта встреча, — раскладка та же, что в пилоте
+ * недели 4, но данные приходят снаружи, а не зашиты в функцию.
+ */
+interface BoardSetup {
+  /** Столбцы на доске — форма, о которой встреча. */
+  bars: number[];
+  /** Индексы столбцов с акцентом. */
+  accent: number[];
+}
+
+const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
+  // Пт w1: падение по первым кварталам трёх лет — то, с чем Аоки-сан идёт к бренду.
+  'boardroom-nettora': { bars: [34, 29, 16], accent: [2] },
+  // Пт w2: отношение отгрузок к продажам по двенадцати дистрибьюторам — один выше остальных.
+  'boardroom-supply': { bars: [15, 16, 14, 15, 17, 14, 16, 15, 14, 17, 15, 32], accent: [11] },
+  // Пн w3: то, что Аоки-сан только что показала бренду — точки, которые остались, и точки, которые ушли.
+  'boardroom-dashboard': { bars: [37, 42], accent: [1] },
+  // Пт w4: ряд отгрузок Setouchi — всплеск на три месяца (пилот, перенесено из прежней константы).
+  'boardroom-setouchi': { bars: [14, 16, 12, 15, 32, 27, 31, 15, 13], accent: [4, 5, 6] },
 };
 
 export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryMoment }) {
   const desk = DESK_SCENES[scene];
+  const board = BOARD_SCENES[scene];
   return (
     <div className="story-art" aria-hidden>
       <svg viewBox={VIEW_BOX} role="presentation" preserveAspectRatio="xMidYMid meet">
         {desk && <DeskStill moment={moment} setup={desk} />}
-        {scene === 'boardroom' && <Boardroom moment={moment} />}
+        {board && <Boardroom moment={moment} setup={board} />}
         {scene === 'office' && <Office />}
         {scene === 'desk' && <Desk />}
         {scene === 'filter' && <Filter />}
@@ -127,9 +181,7 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'dispute' && <Dispute />}
         {scene === 'contract' && <Contract />}
         {scene === 'shift' && <Shift />}
-        {scene === 'raw' && <Raw />}
         {scene === 'twins' && <Twins />}
-        {scene === 'letter' && <Letter />}
         {scene === 'smooth' && <Smooth />}
         {scene === 'level' && <Level />}
       </svg>
@@ -362,13 +414,204 @@ function ScreenSeries() {
 }
 
 /*
- * Переговорная в день встречи. На доске — ряд отгрузок, о котором встреча,
- * и акцент на трёх осенних месяцах: их и обсуждают. Ответ пятницы (остаток,
- * который стоит) на доске не нарисован намеренно — бриф его не знает,
- * его найдёт человек. Две кружки на столе: встреча на двоих.
+ * Экраны недель 1–3, перерисовка по правилам пилота: та же идея, что
+ * читалась днём на схеме-подводке, но сжатая в 90×46 монитора.
  */
-function Boardroom({ moment }: { moment?: StoryMoment }) {
-  const bars = [14, 16, 12, 15, 32, 27, 31, 15, 13];
+
+/** Пн w1: прайс на экране — строки читаются, колонка цены отмечена акцентом. */
+function ScreenCatalog() {
+  const rows = [40, 47, 54, 61, 68, 75];
+  const widths = [46, 34, 50, 30, 42, 36];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-far" d="M127 37h60" strokeWidth="1" />
+      <g className="art-mid" strokeWidth="1.6">
+        {rows.map((y, i) => (
+          <path key={y} d={`M127 ${y}h${widths[i]}`} />
+        ))}
+      </g>
+      <g className="art-line" strokeWidth="2">
+        {rows.map((y) => (
+          <path key={`p-${y}`} d={`M192 ${y}h13`} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+/** Вт w1: строки таблицы сворачиваются в одно число — счёт вместо перечня. */
+function ScreenTally() {
+  return (
+    <g fill="none" stroke="currentColor">
+      <g className="art-mid" strokeWidth="1.6" strokeLinecap="butt">
+        <path d="M127 39h26M127 45h32M127 51h20M127 57h28" />
+      </g>
+      <path className="art-line" d="M168 48h14" strokeWidth="1.8" strokeLinecap="round" />
+      <path className="art-line" d="m179 44 5 4-5 4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect className="art-near" x="190" y="38" width="18" height="16" rx="2" strokeWidth="1.6" />
+    </g>
+  );
+}
+
+/** Ср w1: форма года — линия с провалом и пиком, ни одного бренда в ней не различить. */
+function ScreenWave() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M127 76h82" strokeWidth="0.8" />
+      <path className="art-line" d="M129 60 141 70 153 50 165 44 177 58 189 48 201 62 209 46" strokeWidth="2" />
+    </g>
+  );
+}
+
+/** Чт w1: две таблицы наконец сходятся по общему ключу. */
+function ScreenLink() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <g className="art-mid" strokeWidth="1.4">
+        <rect x="127" y="38" width="34" height="30" rx="1.5" />
+        <path d="M127 47h34" strokeWidth="0.9" />
+        <rect x="177" y="38" width="34" height="30" rx="1.5" />
+        <path d="M177 47h34" strokeWidth="0.9" />
+      </g>
+      <path className="art-line" d="M133 52h22M183 52h22" strokeWidth="2" />
+      <g className="art-near" strokeLinecap="round">
+        <circle cx="161" cy="52" r="2.4" strokeWidth="1.6" />
+        <circle cx="177" cy="52" r="2.4" strokeWidth="1.6" />
+      </g>
+    </g>
+  );
+}
+
+/** Пн w2: список точек, часть строк — пунктиром: продаж бренда там нет. */
+function ScreenGap() {
+  const rows = [39, 47, 55, 63, 71];
+  const missing = new Set([55, 71]);
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      {rows.map((y) => (
+        <path
+          key={y}
+          className={missing.has(y) ? 'art-far' : 'art-mid'}
+          d={`M127 ${y}h60`}
+          strokeWidth={missing.has(y) ? 1.2 : 1.8}
+          strokeDasharray={missing.has(y) ? '3 3' : undefined}
+        />
+      ))}
+      {[...missing].map((y) => (
+        <path key={`m-${y}`} className="art-line" d={`M191 ${y - 2}v4`} strokeWidth="1.8" strokeLinecap="round" />
+      ))}
+    </g>
+  );
+}
+
+/** Вт w2: одна выручка — акционная часть внутри неё, снизу и меньше. */
+function ScreenSplitBar() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <rect className="art-mid" x="140" y="38" width="24" height="38" strokeWidth="1.6" />
+      <rect className="art-line" x="140" y="66" width="24" height="10" strokeWidth="1.6" />
+      <path className="art-far" d="M170 46h30M170 70h20" strokeWidth="1.6" />
+    </g>
+  );
+}
+
+/** Ср w2: выручка на одну точку — два бизнеса разного размера рядом. */
+function ScreenPerOutlet() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-far" d="M127 76h80" strokeWidth="0.9" />
+      <rect className="art-line" x="135" y="44" width="18" height="32" strokeWidth="1.6" />
+      <rect className="art-mid" x="170" y="62" width="18" height="14" strokeWidth="1.6" />
+    </g>
+  );
+}
+
+/** Чт w2: одна строка соединения размножается в несколько — цена ошибки. */
+function ScreenFanout() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-mid" d="M127 44h30" strokeWidth="2" />
+      <g className="art-line" strokeWidth="1.6">
+        <path d="M163 44 195 36" />
+        <path d="M163 44 195 44" />
+        <path d="M163 44 195 52" />
+        <path d="M163 44 195 60" />
+      </g>
+      <g className="art-far" strokeWidth="1.2">
+        <path d="M199 36h10M199 44h10M199 52h10M199 60h10" />
+      </g>
+    </g>
+  );
+}
+
+/** Вт w3: одна подпись, два столбца разной высоты — спор не про арифметику. */
+function ScreenDispute() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-far" d="M129 76h74" strokeWidth="0.9" />
+      <rect className="art-mid" x="140" y="52" width="18" height="24" strokeWidth="1.6" />
+      <rect className="art-line" x="172" y="40" width="18" height="36" strokeWidth="1.6" />
+    </g>
+  );
+}
+
+/** Ср w3: строка смотрит на предыдущую — окно вместо свёртки. */
+function ScreenLookback() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <g className="art-mid" strokeWidth="1.6">
+        <rect x="127" y="40" width="46" height="12" rx="1.5" />
+        <rect x="127" y="58" width="46" height="12" rx="1.5" />
+      </g>
+      <path className="art-line" d="M150 58c-14 0-14-18 0-18" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+      <path className="art-line" d="m145 41 5-5 5 5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+/** Чт w3: сырые строки неровные, а две из них отмечены акцентом — одно имя в двух написаниях. */
+function ScreenRawRow() {
+  const rows = [39, 47, 55, 63, 71];
+  const widths = [50, 34, 58, 40, 46];
+  const twins = new Set([1, 3]);
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      {rows.map((y, i) => (
+        <path
+          key={y}
+          className={twins.has(i) ? 'art-line' : 'art-mid'}
+          d={`M127 ${y}h${widths[i]}`}
+          strokeWidth={twins.has(i) ? 2 : 1.6}
+        />
+      ))}
+    </g>
+  );
+}
+
+/** Пт w3: письмо — первая строка длиннее и жирнее остальных, вывод стоит первым. */
+function ScreenLede() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-line" d="M127 41h80" strokeWidth="2.6" />
+      <g className="art-far" strokeWidth="1.2">
+        <path d="M127 51h70M127 58h74M127 65h50" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Переговорная в день встречи. На доске — форма, о которой встреча, и акцент
+ * на столбцах, которые обсуждают; данные и акцент приходят параметром
+ * (`BoardSetup`), доска общая. Ответ дня на доске не рисуется намеренно —
+ * бриф его не знает, его найдёт человек. Две кружки на столе: встреча
+ * на двоих.
+ */
+function Boardroom({ moment, setup }: { moment?: StoryMoment; setup: BoardSetup }) {
+  const chartX0 = 30;
+  const chartWidth = 98;
+  const gap = chartWidth / setup.bars.length;
+  const barWidth = Math.min(gap * 0.66, 9);
   return (
     <g strokeLinecap="round" strokeLinejoin="round">
       <rect className="art-floor" x="0" y="72" width="320" height="44" />
@@ -376,8 +619,15 @@ function Boardroom({ moment }: { moment?: StoryMoment }) {
       <rect className="art-paper" x="22" y="10" width="114" height="52" rx="2" />
       <rect className="art-mid" x="22" y="10" width="114" height="52" rx="2" fill="none" stroke="currentColor" strokeWidth="0.9" />
       <path className="art-far" d="M30 54h98" stroke="currentColor" strokeWidth="0.7" fill="none" />
-      {bars.map((h, i) => (
-        <rect key={i} className={i >= 4 && i <= 6 ? 'art-accent' : 'art-bar'} x={32 + i * 10.6} y={54 - h} width="7" height={h} />
+      {setup.bars.map((h, i) => (
+        <rect
+          key={i}
+          className={setup.accent.includes(i) ? 'art-accent' : 'art-bar'}
+          x={chartX0 + i * gap + (gap - barWidth) / 2}
+          y={54 - h}
+          width={barWidth}
+          height={h}
+        />
       ))}
       <path className="art-mid" d="M28 65h102" stroke="currentColor" strokeWidth="1.6" fill="none" />
 
@@ -1175,33 +1425,6 @@ function Request() {
 }
 
 /*
- * Сырой слой: те же строки, что в витрине, но неровные — разной длины,
- * с провалами и сдвигами. Акцентом выделена одна строка, выбивающаяся
- * из ряда сильнее прочих: смысл дня не в том, что данные грязные вообще,
- * а в том, что беда всегда конкретна и находится штучно.
- */
-function Raw() {
-  const rows = [18, 36, 54, 72, 90];
-  const widths = [188, 150, 206, 138, 172];
-  return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <path d="M40 8v100" strokeWidth="1.6" />
-        {rows.map((y, i) => (
-          <path key={y} d={`M52 ${y}h${widths[i]}`} strokeWidth="2" strokeLinecap="butt" />
-        ))}
-      </g>
-
-      <g className="art-far">
-        <path d="M52 27h96M172 27h68M52 63h44M118 63h122M52 99h140" strokeWidth="1.4" strokeDasharray="3 5" strokeLinecap="butt" />
-      </g>
-
-      <path className="art-line" d="M52 45h74M140 45h48M202 45h34" strokeWidth="2.4" strokeLinecap="butt" />
-    </g>
-  );
-}
-
-/*
  * Одно имя в двух написаниях: две строки, сходящиеся в одну точку. Акцент
  * на месте слияния, а не на самих строках — находка дня в том, что это
  * одна сеть, а не в том, что записей две.
@@ -1221,32 +1444,6 @@ function Twins() {
       </g>
 
       <path className="art-line" d="M120 29h44c14 0 14 29 28 29M120 87h44c14 0 14-29 28-29M192 58h20M204 52l8 6-8 6" strokeWidth="2.2" />
-    </g>
-  );
-}
-
-/*
- * Письмо, которое читают сверху вниз: первая строка длиннее и жирнее
- * остальных, под ней короткий столбик текста и три цифры сбоку. Акцент
- * ровно на первой строке — весь пятничный урок в том, что вывод стоит
- * первым, а не в конце.
- */
-function Letter() {
-  const rows = [52, 66, 80, 94];
-  return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <rect x="34" y="10" width="196" height="98" rx="4" strokeWidth="1.8" />
-      </g>
-
-      <g className="art-far">
-        {rows.map((y) => (
-          <path key={y} d={`M50 ${y}h${y === 94 ? 108 : 164}`} strokeWidth="1.5" strokeLinecap="butt" />
-        ))}
-        <path d="M252 40h44M252 58h44M252 76h30" strokeWidth="1.6" strokeLinecap="butt" />
-      </g>
-
-      <path className="art-line" d="M50 30h164" strokeWidth="3" strokeLinecap="butt" />
     </g>
   );
 }

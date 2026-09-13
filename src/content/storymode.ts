@@ -70,12 +70,30 @@ export type StoryScene =
   // рабочее место: общий кадр начала дня
   | 'office'
   | 'desk'
-  // натюрморты утра: стол со своими предметами дня (пилот — неделя 4)
+  // натюрморты утра: стол со своими предметами дня (пилот — неделя 4,
+  // 2026-09-13; недели 1–3 перерисованы по тем же правилам вторым заходом
+  // того же дня)
   | 'desk-frames'
   | 'desk-mask'
   | 'desk-index'
   | 'desk-series'
-  | 'boardroom'
+  | 'desk-price'
+  | 'desk-tally'
+  | 'desk-wave'
+  | 'desk-link'
+  | 'desk-gap'
+  | 'desk-split-bar'
+  | 'desk-per-outlet'
+  | 'desk-fanout'
+  | 'desk-dispute'
+  | 'desk-lookback'
+  | 'desk-raw-row'
+  | 'desk-lede'
+  // переговорная, параметризованная доска (см. BoardSetup в StoryArt.tsx)
+  | 'boardroom-nettora'
+  | 'boardroom-supply'
+  | 'boardroom-dashboard'
+  | 'boardroom-setouchi'
   // приёмы, которые вводит подводка
   | 'catalog'
   | 'filter'
@@ -101,9 +119,7 @@ export type StoryScene =
   | 'dispute'
   | 'contract'
   // сырой слой и то, что из него выходит
-  | 'raw'
   | 'twins'
-  | 'letter'
   // находки и повороты сюжета
   | 'toolkit'
   | 'foundation'
@@ -290,7 +306,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:14',
       short: 'Пн',
       found: 'Прайс читается насквозь: колонки, отбор, сортировка. Продаж в нём нет ни одной.',
-      scenes: { brief: 'office', reflection: 'toolkit', hook: 'tables' },
+      scenes: { brief: 'desk-price', reflection: 'toolkit', hook: 'tables' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -383,7 +399,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
       short: 'Вт',
       found: 'Считать по разрезам умеем. «Сколько продали» и «в скольких точках продавали» — разные числа.',
-      scenes: { brief: 'desk', reflection: 'foundation', hook: 'sellout' },
+      scenes: { brief: 'desk-tally', reflection: 'foundation', hook: 'sellout' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -466,7 +482,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
       short: 'Ср',
       found: 'Форма года найдена: зимний спад и летний пик. Но волна посчитана по всей рознице разом, а не по одной Nettora.',
-      scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
+      scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -552,7 +568,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:30',
       short: 'Чт',
       found: 'Бренд соединяется с продажами. На руках выручка бренда и число точек, где он стоит.',
-      scenes: { brief: 'desk', reflection: 'coverage', hook: 'meeting' },
+      scenes: { brief: 'desk-link', reflection: 'coverage', hook: 'meeting' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -633,7 +649,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:40',
       short: 'Пт',
       found: 'Причина названа: бренд потерял полку, а не спрос. Владелец проблемы — полевая команда.',
-      scenes: { brief: 'office', reflection: 'outlets', hook: 'rival' },
+      scenes: { brief: 'boardroom-nettora', reflection: 'outlets', hook: 'rival' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -686,7 +702,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Понедельник, 9:05',
       short: 'Пн',
       found: 'Точки без Nettora называются поимённо. Обычное соединение их не показывает: в продажах их нет.',
-      scenes: { brief: 'office', reflection: 'coverage', hook: 'split' },
+      scenes: { brief: 'desk-gap', reflection: 'coverage', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -764,7 +780,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Вторник, 9:20',
       short: 'Вт',
       found: 'Бренд жил не на скидке: за 2025 год 5.4 млн базовых продаж против 1.4 млн в акциях.',
-      scenes: { brief: 'desk', reflection: 'factors', hook: 'trend' },
+      scenes: { brief: 'desk-split-bar', reflection: 'factors', hook: 'trend' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -840,7 +856,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Среда, 9:10',
       short: 'Ср',
       found: 'Выручка на точку не зависит от их числа: в e-com 3.2 млн на точку, в традиционной рознице 21.7 тыс.',
-      scenes: { brief: 'desk', reflection: 'outlets', hook: 'tables' },
+      scenes: { brief: 'desk-per-outlet', reflection: 'outlets', hook: 'tables' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -915,7 +931,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Четверг, 9:30',
       short: 'Чт',
       found: 'Соединение не по ключу размножает строки: 4 370 строк продаж Nettora превращаются в 43 700.',
-      scenes: { brief: 'desk', reflection: 'counts', hook: 'meeting' },
+      scenes: { brief: 'desk-fanout', reflection: 'counts', hook: 'meeting' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -986,7 +1002,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Цепочка сбалансирована: отгрузили примерно столько же, сколько продали. Дефицита не было.',
-      scenes: { brief: 'office', reflection: 'rival', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'rival', hook: 'toolkit' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1058,7 +1074,7 @@ const ru: StoryCampaign = {
        * начинается экраном ниже. У крючка своя, третья: он не про просьбу,
        * а про развилку определений, в которую день упирается.
        */
-      scenes: { brief: 'meeting', reflection: 'scope', hook: 'split' },
+      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -1143,7 +1159,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Вторник, 10:05',
       short: 'Вт',
       found: 'Активная точка — розничная, без дистрибьюторов. Падение считаем год к году.',
-      scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
+      scenes: { brief: 'desk-dispute', reflection: 'contract', hook: 'counts' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1235,7 +1251,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Среда, 9:30',
       short: 'Ср',
       found: 'Сравнение с прошлым периодом делает LAG. Без PARTITION BY он не видит границы разреза и берёт хвост соседнего.',
-      scenes: { brief: 'calendar', reflection: 'trend', hook: 'dropped' },
+      scenes: { brief: 'desk-lookback', reflection: 'trend', hook: 'dropped' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1326,7 +1342,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Четверг, 9:15',
       short: 'Чт',
       found: 'Ichiba и Itiba — одна сеть в двух написаниях. Группировать по имени как есть нельзя.',
-      scenes: { brief: 'raw', reflection: 'twins' },
+      scenes: { brief: 'desk-raw-row', reflection: 'twins' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1409,7 +1425,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Пятница, 8:50',
       short: 'Пт',
       found: 'Вывод стоит первым, глубина меняется под решение адресата, а у столбцов ось начинается от нуля.',
-      scenes: { brief: 'letter', reflection: 'meeting', hook: 'toolkit' },
+      scenes: { brief: 'desk-lede', reflection: 'meeting', hook: 'toolkit' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -1781,7 +1797,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Отгрузки Setouchi вернулись к норме в январе 2026, а остаток с осени стоит на 21–22 тыс. штук.',
-      scenes: { brief: 'boardroom', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom-setouchi', reflection: 'level', hook: 'office' },
       messages: [
         {
           from: 'Мори-сан, КАМ по дистрибьюторам',
@@ -1861,7 +1877,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:14',
       short: 'Mon',
       found: 'The price list reads end to end: columns, filter, order. It holds no sales at all.',
-      scenes: { brief: 'office', reflection: 'toolkit', hook: 'tables' },
+      scenes: { brief: 'desk-price', reflection: 'toolkit', hook: 'tables' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -1943,7 +1959,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
       short: 'Tue',
       found: 'We can count by dimension. "How many sales" and "in how many outlets" are different numbers.',
-      scenes: { brief: 'desk', reflection: 'foundation', hook: 'sellout' },
+      scenes: { brief: 'desk-tally', reflection: 'foundation', hook: 'sellout' },
       messages: [
         {
           from: 'Your manager',
@@ -2019,7 +2035,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
       short: 'Wed',
       found: 'The shape of the year is found: a winter trough and a summer peak. But the wave was counted across all retail at once, not for Nettora alone.',
-      scenes: { brief: 'desk', reflection: 'trend', hook: 'split' },
+      scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'split' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -2093,7 +2109,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:30',
       short: 'Thu',
       found: 'The brand joins to sales. We hold brand revenue and the number of outlets it sits in.',
-      scenes: { brief: 'desk', reflection: 'coverage', hook: 'meeting' },
+      scenes: { brief: 'desk-link', reflection: 'coverage', hook: 'meeting' },
       messages: [
         {
           from: 'Your manager',
@@ -2167,7 +2183,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:40',
       short: 'Fri',
       found: 'The cause is named: the brand lost shelf, not demand. The problem belongs to the field team.',
-      scenes: { brief: 'office', reflection: 'outlets', hook: 'rival' },
+      scenes: { brief: 'boardroom-nettora', reflection: 'outlets', hook: 'rival' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -2208,7 +2224,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Monday, 9:05',
       short: 'Mon',
       found: 'Outlets without Nettora can be named one by one. An ordinary join never shows them: they are absent from sales.',
-      scenes: { brief: 'office', reflection: 'coverage', hook: 'split' },
+      scenes: { brief: 'desk-gap', reflection: 'coverage', hook: 'split' },
       messages: [
         {
           from: 'Aoki-san, sales director',
@@ -2281,7 +2297,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Tuesday, 9:20',
       short: 'Tue',
       found: 'The brand was not living on discounts: 5.4 million of base sales in 2025 against 1.4 million on promotion.',
-      scenes: { brief: 'desk', reflection: 'factors', hook: 'trend' },
+      scenes: { brief: 'desk-split-bar', reflection: 'factors', hook: 'trend' },
       messages: [
         {
           from: 'Your manager',
@@ -2351,7 +2367,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Wednesday, 9:10',
       short: 'Wed',
       found: 'Revenue per outlet does not depend on their count: 3.2 million per outlet in ecom, 21.7 thousand in traditional retail.',
-      scenes: { brief: 'desk', reflection: 'outlets', hook: 'tables' },
+      scenes: { brief: 'desk-per-outlet', reflection: 'outlets', hook: 'tables' },
       messages: [
         {
           from: 'Your manager',
@@ -2420,7 +2436,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Thursday, 9:30',
       short: 'Thu',
       found: 'A join on a non key field multiplies rows: 4 370 rows of Nettora sales become 43 700.',
-      scenes: { brief: 'desk', reflection: 'counts', hook: 'meeting' },
+      scenes: { brief: 'desk-fanout', reflection: 'counts', hook: 'meeting' },
       messages: [
         {
           from: 'Your manager',
@@ -2485,7 +2501,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Friday, 9:00',
       short: 'Fri',
       found: 'The chain is balanced: roughly as much was shipped as was sold. There was no shortage.',
-      scenes: { brief: 'office', reflection: 'rival', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'rival', hook: 'toolkit' },
       messages: [
         {
           from: 'Your manager',
@@ -2533,7 +2549,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Monday, 9:40',
       short: 'Mon',
       found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means a list agreed in advance.',
-      scenes: { brief: 'meeting', reflection: 'scope', hook: 'split' },
+      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'split' },
       messages: [
         {
           from: 'Aoki san, sales director',
@@ -2606,7 +2622,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Tuesday, 10:05',
       short: 'Tue',
       found: 'An active outlet is a retail one, distributors excluded. A fall is counted year on year.',
-      scenes: { brief: 'desk', reflection: 'contract', hook: 'counts' },
+      scenes: { brief: 'desk-dispute', reflection: 'contract', hook: 'counts' },
       messages: [
         {
           from: 'Your manager',
@@ -2683,7 +2699,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Wednesday, 9:30',
       short: 'Wed',
       found: 'Comparison with a previous period is what LAG does. Without PARTITION BY it sees no boundary between cuts and picks up the tail of the neighbouring one.',
-      scenes: { brief: 'calendar', reflection: 'trend', hook: 'dropped' },
+      scenes: { brief: 'desk-lookback', reflection: 'trend', hook: 'dropped' },
       messages: [
         {
           from: 'Your manager',
@@ -2756,7 +2772,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Thursday, 9:15',
       short: 'Thu',
       found: 'Ichiba and Itiba are one chain under two spellings. Grouping by the name as it comes is not an option.',
-      scenes: { brief: 'raw', reflection: 'twins' },
+      scenes: { brief: 'desk-raw-row', reflection: 'twins' },
       messages: [
         {
           from: 'Your manager',
@@ -2827,7 +2843,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Friday, 8:50',
       short: 'Fri',
       found: 'The conclusion goes first, the depth changes with the decision the reader makes, and bar charts start their axis at zero.',
-      scenes: { brief: 'letter', reflection: 'meeting', hook: 'toolkit' },
+      scenes: { brief: 'desk-lede', reflection: 'meeting', hook: 'toolkit' },
       messages: [
         {
           from: 'Aoki san, sales director',
@@ -3166,7 +3182,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Friday, 9:00',
       short: 'Fri',
       found: 'Setouchi shipments returned to normal in January 2026, while the stock has stood at 21 to 22 thousand units since the autumn.',
-      scenes: { brief: 'boardroom', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom-setouchi', reflection: 'level', hook: 'office' },
       messages: [
         {
           from: 'Mori-san, key account manager for distributors',
