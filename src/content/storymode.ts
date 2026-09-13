@@ -805,6 +805,16 @@ const ru: StoryCampaign = {
      * Вторник. CASE: две ветки внутри одного агрегата. Сюжетно день закрывает
      * версию «дело в цене» — и закрывает её отрицательным результатом, который
      * в работе бывает чаще положительного.
+     *
+     * **Открывается разминкой на знакомом (sql-092).** День идёт сразу после
+     * самого тяжёлого в кампании: в понедельник рукой печатались LEFT JOIN,
+     * подзапрос и IS NULL разом. Поэтому первым шагом стоит запрос, где нового
+     * нет ничего — соединение, группировка по выражению, ROUND(AVG(...)), всё
+     * из первой недели. Правило: день после тяжёлого открывается задачей,
+     * которая решится с первого раза и даст делу число. Число здесь настоящее
+     * вдвойне: до правки бриф называл цены «204.7 → 207», которых не даёт
+     * ни одно окно данных, а теперь их считает сам человек (202.6 → 204.8 →
+     * 206.5 за полугодие 2026).
      */
     {
       id: 'day-7-promo-or-price',
@@ -817,7 +827,7 @@ const ru: StoryCampaign = {
       messages: [
         {
           from: 'Ваш руководитель',
-          text: '«Версия про цену проверяется быстрее всех, поэтому с неё и начнём. Прайс мы уже видели: за год Nettora подорожала с 204.7 до 207 иен, это чуть больше процента. Так что вопрос не в прайсе, а в скидке: если бренд последние два года стоял в промо и на нём держался, отмена акции объясняет падение без всяких конкурентов.»',
+          text: '«Версия про цену проверяется быстрее всех, поэтому с неё и начнём. Сначала прайс: посчитай среднюю цену Nettora по годам, тут всё из первой недели. Если прайс почти не двигался, вопрос не в нём, а в скидке: если бренд последние два года стоял в промо и на нём держался, отмена акции объясняет падение без всяких конкурентов.»',
         },
         {
           from: 'Аоки-сан, директор по продажам',
@@ -825,6 +835,19 @@ const ru: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-092',
+          intro: {
+            paras: [
+              'Разминка на знакомом. Соединение со справочником — из четверга первой недели, группировка по выражению — из среды, ROUND(AVG(...)) — из вторника. Нового в этом запросе нет ничего, есть только вопрос.',
+              'Год берётся так же, как в среду месяц, только короче: substr(fp.month_start, 1, 4). Соединение уже стоит в заготовке, осталось написать, что выбрать, кого отобрать и по чему свернуть.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Процент в год. Таким прайсом бренд вдвое не уронишь. Вычёркиваем, остаётся скидка.»',
+          },
+        },
         {
           taskId: 'sql-042',
           intro: {
@@ -2353,7 +2376,7 @@ const en: StoryCampaign = {
       messages: [
         {
           from: 'Your manager',
-          text: '"The price version checks out faster than any other, so we start there. We have seen the price list already: over the year Nettora went from 204.7 to 207 yen, a little over one percent. So the question is not the list price but the discount. If the brand spent two years on promotion and stood on it, the end of a promotion explains the fall with no competitor at all."',
+          text: '"The price version checks out faster than any other, so we start there. First the list price: work out Nettora\'s average price by year, all of it from week one. If the list price barely moved, the question is not the list price but the discount. If the brand spent two years on promotion and stood on it, the end of a promotion explains the fall with no competitor at all."',
         },
         {
           from: 'Aoki-san, sales director',
@@ -2361,6 +2384,19 @@ const en: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-092',
+          intro: {
+            paras: [
+              'A warm-up on familiar ground. The join to a dimension comes from Thursday of week one, grouping by an expression from Wednesday, ROUND(AVG(...)) from Tuesday. Nothing in this query is new; only the question is.',
+              'The year is taken the way the month was on Wednesday, just shorter: substr(fp.month_start, 1, 4). The join is already in the starter; what is left is what to select, what to filter and what to group by.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"One percent a year. A list price like that does not halve a brand. Cross it out; the discount is what remains."',
+          },
+        },
         {
           taskId: 'sql-042',
           intro: {

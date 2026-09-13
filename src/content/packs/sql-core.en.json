@@ -1927,6 +1927,17 @@
         "An outlet has two references, not one. Both targets have to be in the database before it."
       ],
       "explain": "Loading order follows from the references, not from how important the tables are: first what is pointed to, then what points. There is a single chain here: region, rep, outlet, sale, and each link points to the one before it, so no pair can be swapped. In this app's database foreign keys are not declared at all, and SQLite does not enforce even declared ones by default, so here a load in any order would go through without an error. The relationship does not disappear because of that: it is described in the data schema and rests on the load being honest. That is why later in the track rows without a match are found with a join rather than assumed impossible."
+    },
+    {
+      "id": "sql-092",
+      "title": "Nettora list price by year",
+      "brief": "Before the discount conversation, your manager asks you to check whether Nettora's list price moved: the average list price of its products in each year.",
+      "goal": "Return year (the year as YYYY) and avg_price (the average list price of Nettora products for the year, rounded to one decimal), ordered by year ascending.",
+      "hints": [
+        "Prices live in fact_price by month (month_start), the brand in dim_product. The year is the first four characters of the date: substr(fp.month_start, 1, 4).",
+        "Filter the brand with WHERE p.brand = 'Nettora' and group by the first column: GROUP BY 1."
+      ],
+      "explain": "Average price does not care whether the year is complete: 2026 runs only to June in the data, and 206.5 for the half year compares fairly with 204.8 for the whole of 2025. A sum cannot do that: half a year of revenue is half the annual figure simply because the period is half as long. So before comparing years, ask whether the measure is a level or a flow. Price is a level; revenue and units are flows."
     }
   ]
 }

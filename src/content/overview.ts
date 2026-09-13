@@ -36,7 +36,7 @@ import type { Locale } from '../i18n/context';
  *    лендинг без границ, дальше не читает, а отказ по причине, названной
  *    нами самими, дешевле отказа по причине, найденной им.
  *
- * 2. **Числа только снятые запросом.** 294 задания и 73 навыка посчитаны
+ * 2. **Числа только снятые запросом.** 295 заданий и 73 навыка посчитаны
  *    по пакам, 13 таблиц и 159 740 строк — `npm run count:rows`, падение
  *    Nettora (74 точки в январе, 40 в декабре) снято запросом к тому самому
  *    файлу, который уезжает в браузер. Ни одного числа по памяти:
@@ -198,7 +198,7 @@ const EN: OverviewPageContent = {
   siteUrl: 'quaera.app',
 
   stats: [
-    { value: '294', label: 'tasks' },
+    { value: '295', label: 'tasks' },
     { value: '73', label: 'technique cards' },
     { value: '13', label: 'tables' },
     { value: '159,740', label: 'rows of data' },
@@ -225,7 +225,7 @@ const EN: OverviewPageContent = {
   tracks: [
     {
       name: 'SQL for analysts',
-      count: '91 tasks',
+      count: '92 tasks',
       note: 'From how a table is declared to window functions. You write the query, it runs.',
     },
     {
