@@ -699,6 +699,15 @@ const ru: StoryCampaign = {
      * Понедельник. Левое соединение: единственный способ увидеть тех,
      * кого в факте нет вовсе. Обычный JOIN показывает только тех, у кого
      * продажи были, — то есть ровно не тех, кого мы ищем.
+     *
+     * Первый шаг — fill (sql-086), а не write. До 2026-09-13 день открывался
+     * sql-014 (write/3), где впервые и разом печатались LEFT JOIN, условие
+     * в ON и первый во всём треке подзапрос; живое прохождение упёрлось
+     * в этот скачок. Теперь приём сначала собирается из трёх пропусков при
+     * готовом подзапросе, и только потом пишется цепочкой из двух соединений.
+     * Мерило «открывается чтением» — не режим задания, а то, сколько нового
+     * человек печатает рукой: в днях 4 и 8 первый шаг тоже write, но новая
+     * конструкция там лежит в заготовке (JOIN в sql-012, весь WITH в sql-045).
      */
     {
       id: 'day-6-who-is-missing',
@@ -720,14 +729,28 @@ const ru: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-014',
+          taskId: 'sql-086',
           intro: {
             scene: 'join',
             title: 'Соединение, которое никого не теряет',
             paras: [
-              'Четверговый JOIN оставляет только совпавшие пары. Если по региону не продали ни штуки, региона в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
-              'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Считается он так:\n\nSELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\n\nCOALESCE(SUM(f.units), 0) подменяет пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
-              'Второе, что понадобится: условие отбора товара можно спрятать в запрос внутри запроса.\n\nAND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\')\n\nВнутренний SELECT возвращает одно значение, и с ним сравнивают как с числом. Важно, что стоит он в ON, а не в WHERE, — почему, увидишь на следующем шаге.',
+              'Четверговый JOIN оставляет только совпавшие пары. Если в каком-то канале новинку не продали ни разу, канала в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
+              'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Пишется он так:\n\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n\nТовар, который не продался ни разу, останется в ответе. COALESCE(SUM(f.units), 0) подменяет его пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
+              'Второе, что понадобится, — условие на товар. В fact_sellout товар записан не названием, а номером, поэтому номер сначала достают запросом внутри запроса. Читать его стоит в два хода. Внутренний запрос сам по себе\n\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n\nвернёт одно число — 43. Внешний подставит это число на место скобок, как если бы вместо (SELECT …) было написано 43. Сравнить с названием напрямую, f.product_id = \'Vitanor Forte x30\', не выйдет: номер с текстом не совпадёт ни в одной строке, и запрос без единой ошибки покажет ноль везде.',
+              'Стоит это условие в ON, а не в WHERE, — почему, покажет третье задание дня. Здесь запрос почти собран: подзапрос уже написан, не хватает трёх слов.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Бренд-менеджеру этого хватит. Теперь та же карта по регионам, и там подвох: в продажах региона нет вовсе, он записан у точки, в dim_customer. Соединений станет два.»',
+          },
+        },
+        {
+          taskId: 'sql-014',
+          intro: {
+            paras: [
+              'Карта по регионам — та же форма, только цепочкой: регион → точка → продажи. Первое соединение уже в заготовке, второе, к fact_sellout, с условием на товар в ON, допиши сам.',
+              'Второе соединение обязано быть LEFT: сделай его обычным, и регионы без новинки выпадут из ответа — так же, как выпали бы каналы в прошлом задании. Первое — тоже LEFT, на случай региона без единой точки.',
             ],
           },
           after: {
@@ -753,8 +776,9 @@ const ru: StoryCampaign = {
             scene: 'dropped',
             title: 'Признак того, что пары не нашлось',
             paras: [
-              'Теперь по делу: точки, где Nettora не продавалась ни разу. Приём тот же, но нам нужны именно несовпавшие строки — а у них колонки правой таблицы пусты.',
-              'Проверяется это не равенством, а отдельным словом:\n\nWHERE f.sellout_id IS NULL\n\nС NULL нельзя сравниться через =: пустота не равна ничему, включая саму себя. IS NULL — единственный способ спросить «здесь пусто?».',
+              'Теперь по делу: точки, где Nettora не продавалась ни разу. У бренда пять товаров, а не один, поэтому подзапрос в ON вернёт не одно число, а список из пяти, и сравнивают с ним через IN, а не через =: строка продаж подходит, если её товар — любой из пяти.',
+              'Прежде чем фильтровать, представь, что соберёт такой LEFT JOIN. У точки, где Nettora продавалась, строк много — по одной на каждую неделю и товар, и sellout_id в них заполнен. У точки, где её не было ни разу, строка ровно одна: слева имя и город, справа пусто во всех колонках fact_sellout. Нужны ровно такие строки.',
+              'Спросить «здесь пусто?» можно только отдельным словом:\n\nf.sellout_id IS NULL\n\nЧерез = не выйдет: пустота не равна ничему, даже самой себе. Проверяют колонку, которая у настоящей продажи пустой не бывает, — надёжнее всего ключ. WHERE в заготовке уже стоит, поэтому условие дописывается после AND, второй WHERE не нужен.',
             ],
           },
           after: {
@@ -2246,14 +2270,28 @@ const en: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-014',
+          taskId: 'sql-086',
           intro: {
             scene: 'join',
             title: 'A join that loses nobody',
             paras: [
-              'Thursday JOIN keeps matched pairs only. If a region sold not a single unit, that region is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
-              'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\nSELECT r.region_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_region r\nLEFT JOIN dim_customer c ON c.region_id = r.region_id\n\nCOALESCE(SUM(f.units), 0) turns emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
-              'The second thing you will need: a filter value can come from a query inside the query.\n\nAND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\')\n\nThe inner SELECT returns one value and is compared like a number. What matters is that it sits in ON and not in WHERE. The next step shows why.',
+              'Thursday JOIN keeps matched pairs only. If the new SKU never sold in some channel, that channel is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
+              'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n\nA product that never sold stays in the answer. COALESCE(SUM(f.units), 0) turns its emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
+              'The second thing you will need is a condition on the product. fact_sellout records a product by its number, not its name, so the number is fetched first by a query inside the query. Read it in two moves. On its own, the inner query\n\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n\nreturns a single number: 43. The outer query puts that number where the brackets stand, as if 43 were written instead of (SELECT …). Comparing with the name directly, f.product_id = \'Vitanor Forte x30\', gets you nowhere: a number never matches text, and the query shows zero everywhere without a single error.',
+              'This condition sits in ON and not in WHERE; the third task of the day shows why. Here the query is almost complete: the subquery is written for you, and three words are missing.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"That will do for the brand manager. Now the same map by region, with a catch: sales hold no region at all, the region belongs to the outlet in dim_customer. That makes two joins."',
+          },
+        },
+        {
+          taskId: 'sql-014',
+          intro: {
+            paras: [
+              'The regional map has the same shape, only as a chain: region, then outlet, then sales. The first join is already in the starter; the second one, to fact_sellout, with the product condition in ON, is yours to write.',
+              'The second join has to be LEFT: make it a plain join and regions without the new SKU drop out of the answer, just as channels would have in the previous task. The first is LEFT too, in case a region has no outlet at all.',
             ],
           },
           after: {
@@ -2279,8 +2317,9 @@ const en: StoryCampaign = {
             scene: 'dropped',
             title: 'The mark of a pair that was never found',
             paras: [
-              'Now to the case: outlets where Nettora never sold at all. Same technique, but this time we want the unmatched rows, and their right hand columns are empty.',
-              'That is asked with a word of its own, not with equality:\n\nWHERE f.sellout_id IS NULL\n\nNULL cannot be compared with =, because emptiness equals nothing, itself included. IS NULL is the only way to ask "is this empty?".',
+              'Now to the case: outlets where Nettora never sold at all. The brand has five products, not one, so the subquery in ON returns a list of five numbers rather than one, and it is compared with IN instead of =: a sales row matches if its product is any of the five.',
+              'Before filtering, picture what such a LEFT JOIN collects. An outlet that did sell Nettora gets many rows, one per week and product, each with sellout_id filled in. An outlet that never sold it gets exactly one row: name and city on the left, nothing in any fact_sellout column on the right. Those rows are the ones we want.',
+              'Asking "is this empty?" takes a word of its own:\n\nf.sellout_id IS NULL\n\nEquality will not do, because emptiness equals nothing, itself included. Check a column that is never empty on a real sale; the key is the safest choice. The starter already has WHERE, so the condition goes after AND, with no second WHERE.',
             ],
           },
           after: {
