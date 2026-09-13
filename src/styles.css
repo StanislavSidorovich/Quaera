@@ -3517,8 +3517,28 @@ pre.lesson-figure {
 }
 
 .sheet h2 {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 17px;
+}
+
+/*
+ * Заголовок + закрытие липнут к верху прокручиваемой .sheet — список таблиц
+ * длиннее экрана, а до этой правки закрытие было только внизу списка.
+ * top: 0 считается от верхней границы отступа .sheet (она же прокручиваемый
+ * контейнер), поэтому фон обязателен — иначе строки таблиц под шапкой
+ * будут видны сквозь неё при скролле.
+ */
+.sheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  background: var(--bg-raised);
+  margin: 0 0 4px;
 }
 
 details.table-doc {
@@ -3526,6 +3546,13 @@ details.table-doc {
   border-radius: 10px;
   margin-bottom: 8px;
   overflow: hidden;
+  /*
+   * Открытая с чипа задания таблица прокручивается к себе (focusTable,
+   * см. SchemaSheet.tsx) — без отступа липкая шапка закроет собственный
+   * заголовок таблицы. Высота — .sheet-header (40px) плюс его нижний
+   * отступ (4px) плюс небольшой зазор, чтобы заголовок не упирался в шапку.
+   */
+  scroll-margin-top: 52px;
 }
 
 details.table-doc > summary {

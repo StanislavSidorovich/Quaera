@@ -94,7 +94,17 @@ export function SchemaSheet({ doc, onClose, focusTable }: Props) {
           <p className="muted">{t.schema.loading}</p>
         ) : (
           <>
-            <h2>{t.schema.title}</h2>
+            {/*
+             * Липкая шапка — список таблиц длиннее экрана, а без неё
+             * закрытие есть только внизу: взгляд на десктопе ищет крестик
+             * справа сверху и находит крестик окна браузера вместо шторки.
+             */}
+            <div className="sheet-header">
+              <h2>{t.schema.title}</h2>
+              <button className="icon-btn" onClick={onClose} aria-label={t.schema.closeBtn}>
+                ✕
+              </button>
+            </div>
             <p className="muted" style={{ marginTop: 0 }}>
               {doc.company[locale]}. {t.schema.periodLabel(doc.period.from, doc.period.to)}.
             </p>
