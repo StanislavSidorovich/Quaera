@@ -612,6 +612,7 @@ export const en = {
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
     toTask: 'Take on the task',
+    backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */
     caseLabel: 'Case',
     stepOf: (n: number, total: number) => `Task ${n} of ${total}`,

@@ -395,7 +395,12 @@ type Screen =
    * экран. `missionId` рядом потому, что в кампании дней несколько и «назад»
    * обязано попадать в свой день, а не в первый.
    */
-  | { name: 'storymode'; missionId: string; phase: StoryPhase }
+  /*
+   * `lesson` — карточка приёма, открытая с плашки задания дня. Живёт в самом
+   * экране миссии, а не отдельным экраном: фаза и полоса дня остаются на месте,
+   * и «назад» закрывает карточку, а не уводит в справочник.
+   */
+  | { name: 'storymode'; missionId: string; phase: StoryPhase; lesson?: string }
   | { name: 'reference' }
   | { name: 'sandbox' }
   | { name: 'data' }
@@ -443,6 +448,9 @@ function backTarget(current: Screen, locale: Locale): Screen {
    * всей миссии целиком (её ход нигде не сохраняется).
    */
   if (current.name === 'storymode') {
+    // Карточка приёма, открытая с задания, закрывается первой: «назад»
+    // с неё ведёт в то же задание, а не на подводку перед ним.
+    if (current.lesson) return { name: 'storymode', missionId: current.missionId, phase: current.phase };
     /*
      * Порядок экранов дня считается по самой миссии: в дне может быть одно
      * задание, а может три, и подводка есть не у каждого. Поэтому миссию
@@ -2357,6 +2365,33 @@ export default function App() {
                 window.scrollTo({ top: 0 });
               }}
               onExit={() => setScreen({ name: 'home' })}
+              lesson={(() => {
+                const skill = screen.lesson;
+                const card = skill ? lessonBySkill.get(skill) : undefined;
+                if (!skill || !card) return null;
+                // Исполнитель и «запускается ли» — как у карточки из справочника ниже.
+                const skillTrack = trackBySkill.get(skill);
+                return (
+                  <LessonCard
+                    lesson={card}
+                    executor={(skillTrack ? getExecutor(skillTrack) : null) ?? executor}
+                    runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
+                  />
+                );
+              })()}
+              onOpenLesson={(() => {
+                const phase = screen.phase;
+                const skill = phase.kind === 'task' ? storyMission.steps[phase.step]?.task.skill : undefined;
+                if (!skill || !lessonBySkill.has(skill)) return undefined;
+                return () => {
+                  setScreen({ name: 'storymode', missionId: storyMission.mission.id, phase, lesson: skill });
+                  window.scrollTo({ top: 0 });
+                };
+              })()}
+              onCloseLesson={() => {
+                setScreen({ name: 'storymode', missionId: storyMission.mission.id, phase: screen.phase });
+                window.scrollTo({ top: 0 });
+              }}
             />
           )}
 

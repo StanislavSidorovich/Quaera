@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
@@ -126,6 +126,9 @@ export function StoryMode({
   onConfirmDownload,
   onDeferConsent,
   onResumeConsent,
+  lesson,
+  onOpenLesson,
+  onCloseLesson,
 }: {
   /** Вся кампания — полосе дела нужны вопрос расследования и все дни разом. */
   campaign: StoryCampaign;
@@ -169,6 +172,16 @@ export function StoryMode({
   onResumeConsent: () => void;
   /** Выйти из миссии (на главную). */
   onExit: () => void;
+  /**
+   * Карточка приёма текущего задания, если её открыли с плашки, — уже
+   * собранная в App: исполнитель и признак «запускается ли пример» считаются
+   * там по треку навыка, тем же кодом, что у карточки из справочника.
+   */
+  lesson: ReactNode | null;
+  /** Открыть карточку приёма задания; нет — если у навыка карточки нет. */
+  onOpenLesson?: () => void;
+  /** Закрыть карточку и вернуться в то же задание. */
+  onCloseLesson: () => void;
 }) {
   const { t } = useI18n();
 
@@ -197,6 +210,29 @@ export function StoryMode({
   if (phase.kind === 'task') {
     const step = steps[phase.step];
     if (!step) return null;
+    /*
+     * Карточка приёма поверх задания, а не отдельным экраном: полоса дня
+     * остаётся, фаза не меняется, и возврат попадает ровно в то задание,
+     * откуда ушли. До этого плашка приёма в кампании была мёртвой, а уйти
+     * к карточке через справочник значило потерять ход дня целиком.
+     */
+    if (lesson) {
+      return (
+        <>
+          <StoryProgress
+            campaign={campaign}
+            mission={mission}
+            phase={phase}
+            openDayIds={openDayIds}
+            onOpenDay={onOpenDay}
+          />
+          {lesson}
+          <button type="button" className="btn" onClick={onCloseLesson}>
+            {t.storyMode.backToTask}
+          </button>
+        </>
+      );
+    }
     return (
       <>
         <StoryProgress
@@ -222,6 +258,7 @@ export function StoryMode({
           schema={schema}
           drafts={drafts}
           skillTitle={step.skillTitle}
+          onOpenLesson={onOpenLesson}
           onOpenSchema={onOpenSchema}
           afterNote={mission.steps[phase.step]?.after}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
