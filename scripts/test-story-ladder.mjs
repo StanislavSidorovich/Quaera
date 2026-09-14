@@ -42,7 +42,15 @@
  * есть, — но это место, где ступень держится на том, что человек прочитал
  * код целиком, а не на объяснении.
  *
+ * **Вторая мера — плотность** (с 2026-09-14, п. 14 ROADMAP): сколько
+ * незакреплённого человек печатает в одном шаге и что суббота просит писать
+ * с чистого листа. Порядок показа sql-015 проходило, прося напечатать
+ * тринадцать конструкций, пять из них впервые, — ступень по букве, стена
+ * по сути. Правила и счёт — у reportDensity ниже. Пока недели не перекроены,
+ * это отчёт, а не падение.
+ *
  * Запуск: npm run test:story-ladder (входит в npm run verify).
+ * Таблица плотности по каждому шагу: node scripts/test-story-ladder.mjs --density
  */
 import { execSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -106,7 +114,8 @@ const VOCAB_SQL = [
   ['IS NULL', /\bIS\s+NULL\b/],
   ['IS NOT NULL', /\bIS\s+NOT\s+NULL\b/],
   ['COALESCE', /\bCOALESCE\s*\(/],
-  ['подзапрос', /\(\s*SELECT\b/],
+  // Тело CTE «name AS (SELECT …» — не подзапрос: иначе первая же CTE засчитывала показ подзапроса.
+  ['подзапрос', /(?<!\bAS\s{0,4})\(\s*SELECT\b/],
   ['CASE', /\bCASE\s+WHEN\b/],
   ['ELSE', /\bELSE\b/],
   ['WITH', /\bWITH\b/],
@@ -296,6 +305,142 @@ const shownByTask = (task, track) =>
  */
 const givenByTask = (task, track) => constructs(join([task.starter, task.template, task.predictSql]), track);
 
+/**
+ * Единица плотности — не слово словаря, а то, что приходится вспоминать.
+ *
+ * Отсюда три отступления от словаря выше. **Мелочь не считается:** SELECT,
+ * FROM, AS, AND, литерал, сравнение и псевдоним стоят в каждой заготовке
+ * с первого дня; учёт FROM потребовал бы печатать его в будни, то есть писать
+ * с чистого листа не в субботу, а учёт AND ронял бы sql-086 на связке внутри ON.
+ * **Под-формы сворачиваются в свою конструкцию:** COUNT(*) — это COUNT,
+ * GROUP BY 1 — это GROUP BY, ON — часть соединения, а JOIN внутри LEFT JOIN —
+ * часть LEFT JOIN. Без этого одна строка «LEFT JOIN … ON …» стоила бы трёх единиц.
+ *
+ * **Счёт по вхождениям, а не по множеству.** Во втором соединении sql-014
+ * человек печатает LEFT JOIN рукой, но множество этого не видит — первое уже
+ * стоит в заготовке. Для порядка показа разница неважна, для нагрузки — важна.
+ */
+const DENSITY_SKIP = new Set([
+  'SELECT', 'FROM', 'AS', 'AND', 'ON', 'JOIN', 'COUNT(*)', 'GROUP BY по номеру',
+  'строковый литерал', 'равенство', 'сравнение', 'псевдоним таблицы',
+]);
+/**
+ * Словарь плотности — словарь трека без мелочи и без дублей по регистру.
+ * Общий список приёмов несёт `round`, `coalesce`, `case` строчными рядом
+ * с ROUND, COALESCE, CASE из словаря выше; для показа это безвредно, а здесь
+ * одна конструкция считалась бы двумя и роняла sql-086 на пустом месте.
+ * Первым идёт написанное руками, поэтому остаётся каноническое имя.
+ */
+const DENSITY_VOCAB = Object.fromEntries(
+  Object.entries(VOCAB_BY_TRACK).map(([track, vocab]) => {
+    const seen = new Set();
+    return [
+      track,
+      vocab.filter(([name]) => {
+        if (DENSITY_SKIP.has(name)) return false;
+        const canon = name.toUpperCase().replace(/\s*\($/, '');
+        if (seen.has(canon)) return false;
+        seen.add(canon);
+        return true;
+      }),
+    ];
+  })
+);
+const occurrences = (text, re) =>
+  text ? (String(text).match(new RegExp(re.source, re.flags.replace('g', '') + 'g')) ?? []).length : 0;
+
+function densityUnits(text, track) {
+  const found = new Map();
+  if (!text) return found;
+  for (const [name, re] of DENSITY_VOCAB[track] ?? []) {
+    const n = occurrences(text, re);
+    if (n) found.set(name, n);
+  }
+  if (track === 'sql') {
+    const plain = occurrences(text, /\bJOIN\b/) - occurrences(text, /\bLEFT\s+JOIN\b/);
+    if (plain > 0) found.set('JOIN', plain);
+  }
+  return found;
+}
+
+/** Что напечатано рукой — тем же способом, что typedByHand, но по вхождениям. */
+function typedUnits(task, track) {
+  const out = new Set();
+  const given = task.mode === 'write' ? task.starter : String(task.template ?? '').replace(/_{2,}/g, '');
+  if (task.mode !== 'write' && task.mode !== 'fill') return out;
+  const before = densityUnits(given, track);
+  for (const [name, n] of densityUnits(task.solution, track)) if (n > (before.get(name) ?? 0)) out.add(name);
+  if (task.mode === 'fill') for (const name of densityUnits(join(task.blanks ?? []), track).keys()) out.add(name);
+  return out;
+}
+
+/**
+ * Три правила недели «Пн–Чт достраиваешь, в субботу пишешь сам» (решение
+ * пользователя 2026-09-14):
+ *   1. в шаге не больше двух незакреплённых — напечатанных до этого меньше
+ *      двух раз за кампанию; второй раз тоже ещё незакреплён;
+ *   2. с чистого листа (пустая заготовка) пишут только в последний день недели;
+ *   3. чистый лист просит только закреплённое.
+ * Счётчик сквозной по кампании и свой у каждого трека.
+ *
+ * **Пока DENSITY_ENFORCED = false, нарушения печатаются, но гейт не роняют.**
+ * Правило введено раньше, чем недели перекроены: недели 1–2 — по
+ * docs/analysis/p14-weeks-1-2.mjs, 3–5 — после них. Включить, когда отчёт пуст.
+ * Код у двух локалей общий, поэтому считается один раз, по русской кампании.
+ */
+const DENSITY_ENFORCED = false;
+const SHOW_DENSITY_TABLE = process.argv.includes('--density');
+
+function reportDensity(campaign, taskOf) {
+  const times = new Map();
+  const crowded = [];
+  const blankOffDay = [];
+  const blankLoose = [];
+  const table = [];
+  const weeksClosedBlank = new Set();
+
+  campaign.missions.forEach((mission, day) => {
+    const week = campaign.missions.filter((m) => m.week === mission.week);
+    const closesWeek = week[week.length - 1] === mission;
+    const key = (c) => `${mission.track}:${c}`;
+    mission.steps.forEach((step) => {
+      const task = taskOf(step.taskId, mission.track);
+      if (!task) return;
+      const typed = [...typedUnits(task, mission.track)];
+      const loose = typed.filter((c) => (times.get(key(c)) ?? 0) < 2);
+      const blank = task.mode === 'write' && !String(task.starter ?? '').trim();
+      const where = `д${day + 1} ${mission.week} ${mission.short} · ${task.id}`;
+      if (loose.length > 2) crowded.push(`${where}: ${loose.join(', ')}`);
+      if (blank && !closesWeek) blankOffDay.push(where);
+      if (blank && loose.length) blankLoose.push(`${where}: ${loose.join(', ')}`);
+      if (blank && closesWeek) weeksClosedBlank.add(mission.week);
+      table.push(
+        `${where.padEnd(24)} ${(task.mode + (blank ? '*' : '')).padEnd(8)} ` +
+          typed.map((c) => c + (['¹', '²'][times.get(key(c)) ?? 0] ?? '')).join(', ')
+      );
+      for (const c of typed) times.set(key(c), (times.get(key(c)) ?? 0) + 1);
+    });
+  });
+
+  if (SHOW_DENSITY_TABLE) {
+    console.log('       плотность по шагам (¹ впервые, ² второй раз, * чистый лист):');
+    for (const line of table) console.log(`         ${line}`);
+  }
+  const rules = [
+    ['в шаге не больше двух незакреплённых конструкций', crowded],
+    ['с чистого листа пишут только в последний день недели', blankOffDay],
+    ['чистый лист просит только закреплённое', blankLoose],
+  ];
+  for (const [name, list] of rules) {
+    if (DENSITY_ENFORCED) check(`плотность: ${name}`, list.length === 0, `${list.length} шт.:\n        ${list.join('\n        ')}`);
+    else console.log(`       плотность (отчёт): ${name} — ${list.length ? `${list.length} шт.:\n         · ${list.join('\n         · ')}` : 'ok'}`);
+  }
+  const open = campaign.weeks.map((w) => w.id).filter((id) => !weeksClosedBlank.has(id));
+  if (open.length) console.log(`       плотность (отчёт): недели без чистого листа в последний день — ${open.join(', ')}`);
+  const once = [...times].filter(([, n]) => n === 1).map(([c]) => c);
+  if (once.length) console.log(`       напечатано за кампанию один раз: ${once.join(', ')}`);
+}
+
 try {
   execSync(
     `npx tsc "${path.join(root, 'src/content/storymode.ts')}" ` +
@@ -472,6 +617,8 @@ try {
      */
     const thin = campaign.missions.filter((m) => m.steps.length === 0);
     check(`${label}в каждом дне есть задания`, thin.length === 0, `пустые дни: ${thin.map((m) => m.id).join(', ')}`);
+
+    if (locale === 'ru') reportDensity(campaign, taskOf);
   }
 
   /*
