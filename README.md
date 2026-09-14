@@ -41,11 +41,11 @@ and translated to English: interface, tasks, technique cards.
 | Data model and BI | 77 | 19 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) |
 | pandas for analysts | 57 | 14 | The code runs in Python (Pyodide) |
 
-**Story mode — an analyst's work week.** Four five-day weeks, twenty days:
-a client brings a question in the morning, you bring back a finding by
+**Story mode — an analyst's work week.** Five five-day weeks, twenty-five
+days: a client brings a question in the morning, you bring back a finding by
 evening. Techniques are introduced exactly where the work needs them, not
 in a syllabus order, and a week can cross tracks — the third one moves
-between the profession track and SQL, the fourth runs on pandas. Marked
+between the profession track and SQL, the fourth and fifth run on pandas. Marked
 in the app as an early prototype. Alongside it runs a standalone story
 line through each track, written out for all four.
 

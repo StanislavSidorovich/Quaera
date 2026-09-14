@@ -302,9 +302,26 @@ const SHOW_STORY_LINE = false;
  */
 const STORY_MISSION_STORAGE_KEY = 'quaera.story.mission';
 
+/**
+ * Дни, которые переехали под другим id. Позиция хранится id дня, а день,
+ * которого больше нет, возвращает человека в понедельник первой недели
+ * (см. storyEntryMission) — это наказание за то, что переписали мы.
+ *
+ * 2026-09-14, перебалансировка недель 4–5: ряды во времени уехали
+ * из четверга недели 4 в понедельник недели 5, пятница с остатками —
+ * в пятницу недели 5. Стоявший на старом четверге продолжает с нового:
+ * новые четверг и пятница недели 4 ему ещё не встречались, пропускать
+ * нечего. Стоявший на старой пятнице — на новой: её он и проходил.
+ */
+const STORY_MISSION_RENAMED: Record<string, string> = {
+  'day-19-series': 'day-19-measures',
+  'day-20-flow-and-level': 'day-25-flow-and-level',
+};
+
 function readStoryMissionId(): string | null {
   try {
-    return localStorage.getItem(STORY_MISSION_STORAGE_KEY);
+    const saved = localStorage.getItem(STORY_MISSION_STORAGE_KEY);
+    return saved ? STORY_MISSION_RENAMED[saved] ?? saved : null;
   } catch {
     return null;
   }

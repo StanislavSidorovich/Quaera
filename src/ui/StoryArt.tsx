@@ -118,6 +118,16 @@ const DESK_SCENES: Partial<Record<StoryScene, DeskSetup>> = {
   'desk-raw-row': { screen: ScreenRawRow, papers: true },
   // Пт w3: письмо — первая строка длиннее и жирнее остальных. Срок жёсткий, отмечен на стикере.
   'desk-lede': { screen: ScreenLede, note: true },
+
+  /*
+   * Перебалансировка недель 4–5 (2026-09-14): утра новых дней.
+   */
+  // Чт w4: пары столбцов «год назад / сейчас», одна пара вдвое выше. На столе — прошлогодние распечатки.
+  'desk-yoy': { screen: ScreenYoy, papers: true },
+  // Вт w5: два ряда рядом — отгрузки с горбом и ровные продажи точек, которые кладут рядом сегодня.
+  'desk-pair': { screen: ScreenPair },
+  // Чт w5: две свёрнутые колонки и третья — их отношение. Стикер — срок Аоки-сан «до пятницы».
+  'desk-ratio': { screen: ScreenRatio, note: true },
 };
 
 /*
@@ -141,6 +151,9 @@ const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
   'boardroom-dashboard': { bars: [37, 42], accent: [1] },
   // Пт w4: ряд отгрузок Setouchi — всплеск на три месяца (пилот, перенесено из прежней константы).
   'boardroom-setouchi': { bars: [14, 16, 12, 15, 32, 27, 31, 15, 13], accent: [4, 5, 6] },
+  // Пт w5: отношение Setouchi по кварталам — горб и снова единица. У Мори-сан и Аоки-сан на руках
+  // последние два столбца; остатков на доске нет — это ответ дня, бриф его не знает.
+  'boardroom-ratio': { bars: [14, 14, 14, 14, 14, 14, 14, 32, 15, 14], accent: [8, 9] },
 };
 
 export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryMoment }) {
@@ -187,6 +200,9 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'channels' && <Channels />}
         {scene === 'definitions' && <Definitions />}
         {scene === 'absent' && <Absent />}
+        {scene === 'yoy' && <Yoy />}
+        {scene === 'versions' && <Versions />}
+        {scene === 'flow' && <Level withLevel={false} />}
       </svg>
     </div>
   );
@@ -598,6 +614,61 @@ function ScreenLede() {
       <path className="art-line" d="M127 41h80" strokeWidth="2.6" />
       <g className="art-far" strokeWidth="1.2">
         <path d="M127 51h70M127 58h74M127 65h50" />
+      </g>
+    </g>
+  );
+}
+
+/** Чт w4: пары «год назад / сейчас» — у одной сейчас вдвое выше, остальные чуть ниже себя прошлых. */
+function ScreenYoy() {
+  const pairs = [
+    { was: 18, now: 17 },
+    { was: 20, now: 40, hot: true },
+    { was: 15, now: 13 },
+    { was: 17, now: 15 },
+  ];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <path className="art-far" d="M127 76h82" strokeWidth="0.9" />
+      {pairs.map((p, i) => {
+        const x = 132 + i * 20;
+        return (
+          <g key={i}>
+            <rect className="art-far" x={x} y={76 - p.was} width="6" height={p.was} strokeWidth="1.2" />
+            <rect className={p.hot ? 'art-line' : 'art-mid'} x={x + 8} y={76 - p.now} width="6" height={p.now} strokeWidth="1.6" />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/** Вт w5: отгрузки с горбом и ровные продажи точек — акцент на продажах, их кладут рядом сегодня. */
+function ScreenPair() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M127 76h82" strokeWidth="0.9" />
+      <path className="art-mid" d="M129 60 141 58 153 61 165 57 176 40 184 46 192 41 200 59 209 58" strokeWidth="1.4" />
+      <path className="art-line" d="M129 63 141 61 153 64 165 60 176 65 184 66 192 64 200 61 209 62" strokeWidth="2" />
+    </g>
+  );
+}
+
+/** Чт w5: две свёрнутые колонки рядом и третья — их отношение, она и акцент. */
+function ScreenRatio() {
+  const rows = [40, 48, 56, 64, 72];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="butt">
+      <g className="art-mid" strokeWidth="1.6">
+        {rows.map((y) => (
+          <path key={y} d={`M127 ${y}h22M155 ${y}h20`} />
+        ))}
+      </g>
+      <path className="art-far" d="M181 36v40" strokeWidth="0.9" />
+      <g className="art-line" strokeWidth="2">
+        {rows.map((y) => (
+          <path key={`r-${y}`} d={`M186 ${y}h${y === 48 ? 20 : 9}`} />
+        ))}
       </g>
     </g>
   );
@@ -1744,9 +1815,18 @@ function Smooth() {
  * и дальше идёт полкой: уровень не вернулся. Вся пятница держится на том,
  * что это два разных факта об одном партнёре, и здесь они видны сразу,
  * потому что нарисованы в одних осях.
+ *
+ * **`flow` — та же сцена без линии уровня** (2026-09-14). Понедельник
+ * и четверг недели 5 честно говорят «поток вернулся», и ровно это
+ * и рисуется: три высоких столбца, дальше снова обычные. Линии нет, потому
+ * что про уровень эти дни ещё не знают, — пятница дорисовывает её в тех же
+ * осях, и пара работает как пара: картинка, которую человек видел всю
+ * неделю, оказывается половиной картинки. Акцент без линии уходит
+ * на три осенних столбца — единственное, о чём говорят эти дни.
  */
-function Level() {
+function Level({ withLevel = true }: { withLevel?: boolean }) {
   const bars = [78, 82, 76, 80, 44, 52, 46, 80, 84, 78, 82, 76];
+  const spike = new Set([4, 5, 6]);
   const level = 'M22 96 46 94 70 92 94 90 118 62 142 40 166 30 190 29 214 28 238 28 262 27 286 26';
   return (
     <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -1755,16 +1835,87 @@ function Level() {
         <path d="M22 20v80" strokeWidth="1.5" />
       </g>
 
-      <g className="art-near">
-        {bars.map((y, i) => (
-          <path key={i} d={`M${34 + i * 22} 100V${y}`} strokeWidth="6" />
-        ))}
-      </g>
+      {bars.map((y, i) => (
+        <path
+          key={i}
+          className={!withLevel && spike.has(i) ? 'art-line' : 'art-near'}
+          d={`M${34 + i * 22} 100V${y}`}
+          strokeWidth="6"
+        />
+      ))}
 
-      <path className="art-line" d={level} strokeWidth="2.6" />
-      <g className="art-near">
-        <circle cx="286" cy="26" r="3.2" strokeWidth="2" />
-      </g>
+      {withLevel && (
+        <>
+          <path className="art-line" d={level} strokeWidth="2.6" />
+          <g className="art-near">
+            <circle cx="286" cy="26" r="3.2" strokeWidth="2" />
+          </g>
+        </>
+      )}
+    </g>
+  );
+}
+
+/*
+ * Сравнение с собой год назад: пары столбцов, в каждой прошлый год контуром
+ * и нынешний плотнее. У всех, кроме одной, нынешний столбец чуть ниже
+ * прошлого — ровно как у одиннадцати дистрибьюторов осенью 2025 года; у одной
+ * он вдвое выше, и акцент у него. Смысл сцены — точка отсчёта: число само
+ * по себе не «много», много оно против себя же год назад.
+ */
+function Yoy() {
+  const pairs = [
+    { was: 40, now: 37 },
+    { was: 34, now: 31 },
+    { was: 42, now: 80, hot: true },
+    { was: 30, now: 27 },
+    { was: 38, now: 35 },
+    { was: 26, now: 24 },
+  ];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M18 100h288" strokeWidth="1.5" />
+      {pairs.map((p, i) => {
+        const x = 30 + i * 46;
+        return (
+          <g key={i}>
+            <rect className="art-far" x={x} y={100 - p.was} width="14" height={p.was} rx="1.5" strokeWidth="1.6" />
+            <rect
+              className={p.hot ? 'art-line' : 'art-near'}
+              x={x + 18}
+              y={100 - p.now}
+              width="14"
+              height={p.now}
+              rx="1.5"
+              strokeWidth={p.hot ? 2.4 : 1.8}
+            />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/*
+ * Версии, закрытые числами: четыре карточки, три из них — пустой пунктир
+ * и перечёркнуты (тот же язык `art-dropped`, что у отсечённого в `threshold`),
+ * четвёртая стоит. У неё хвостик реплики: она держится не на данных,
+ * а на словах человека, — ровно то, что говорит пятница недели 4 про
+ * переписку Мори-сан. Акцент один и отдан ей: вопрос дня — про неё.
+ */
+function Versions() {
+  const closed = [18, 92, 166];
+  return (
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {closed.map((x) => (
+        <g key={x}>
+          <rect className="art-dropped" x={x} y="22" width="60" height="66" rx="4" strokeWidth="1.5" strokeDasharray="3 3" />
+          <path className="art-far" d={`M${x + 12} 40h36M${x + 12} 50h28M${x + 12} 60h32`} stroke="currentColor" strokeWidth="1.6" fill="none" />
+          <path className="art-mid" d={`M${x + 6} 82 ${x + 54} 28`} stroke="currentColor" strokeWidth="1.8" fill="none" />
+        </g>
+      ))}
+      <path className="art-line" d="M244 22h56a4 4 0 0 1 4 4v58a4 4 0 0 1-4 4h-40l-10 10v-10h-6a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z" strokeWidth="2" fill="none" />
+      <path className="art-mid" d="M254 40h36M254 50h28M254 60h32" stroke="currentColor" strokeWidth="1.6" fill="none" />
     </g>
   );
 }
