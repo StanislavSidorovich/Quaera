@@ -150,7 +150,15 @@ export type StoryScene =
   | 'boardroom-ratio'
   | 'yoy'
   | 'versions'
-  | 'flow';
+  | 'flow'
+  // п. 8 очереди (2026-09-14): семь мест, где сцена несла чужой смысл, —
+  // у каждого теперь своя: версии, вычеркнутые наполовину (день 7),
+  // строка, размноженная соединением (дни 9 и 23), блокнот, в котором
+  // каждый шаг остаётся таблицей, и одна скобка против двух (день 16)
+  | 'versions-half'
+  | 'fanout'
+  | 'notebook'
+  | 'brackets';
 
 export interface StoryMessage {
   /** Кто пишет: имя и роль. Живой заказчик — дешёвый и уместный источник эмоции. */
@@ -836,7 +844,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Вторник, 9:20',
       short: 'Вт',
       found: 'Бренд жил не на скидке: за 2025 год 5.4 млн базовых продаж против 1.4 млн в акциях.',
-      scenes: { brief: 'desk-split-bar', reflection: 'factors', hook: 'trend' },
+      scenes: { brief: 'desk-split-bar', reflection: 'versions-half', hook: 'fold' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1015,7 +1023,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-013',
           intro: {
-            scene: 'stray',
+            scene: 'fanout',
             title: 'Соединение по неуникальному полю',
             paras: [
               'Соединять таблицы можно по любому общему полю, но осмысленно — только по такому, где значение в правой таблице встречается один раз. Бренд в справочнике акций так не устроен: у одного бренда акций много, и каждая строка продаж совпадёт с каждой из них.',
@@ -1071,7 +1079,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Цепочка сбалансирована: отгрузили примерно столько же, сколько продали. Дефицита не было.',
-      scenes: { brief: 'boardroom-supply', reflection: 'rival', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'absent', hook: 'toolkit' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1320,7 +1328,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Среда, 9:30',
       short: 'Ср',
       found: 'Сравнение с прошлым периодом делает LAG. Без PARTITION BY он не видит границы разреза и берёт хвост соседнего.',
-      scenes: { brief: 'desk-lookback', reflection: 'trend', hook: 'dropped' },
+      scenes: { brief: 'desk-lookback', reflection: 'shift', hook: 'dropped' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1606,7 +1614,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Понедельник, 9:05',
       short: 'Пн',
       found: 'Таблица в pandas лежит в переменной: одна скобка даёт колонку, две — таблицу.',
-      scenes: { brief: 'desk-frames', reflection: 'catalog', hook: 'stray' },
+      scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1621,7 +1629,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'py-006',
           intro: {
-            scene: 'toolkit',
+            scene: 'brackets',
             title: 'Таблица остаётся в руках',
             paras: [
               'pandas — библиотека, в которой таблица живёт в переменной. Запрос отдаёт результат и забывает о нём; здесь все тринадцать таблиц уже лежат готовыми объектами, и к следующему шагу вы обращаетесь по имени, а не пишете всё сначала.',
@@ -2106,6 +2114,7 @@ const ru: StoryCampaign = {
         {
           taskId: 'py-023',
           intro: {
+            scene: 'fanout',
             title: 'Соединение по ключу',
             paras: [
               'merge — соединение таблиц по ключу, то же, что JOIN: left.merge(right, on=\'ключ\'). Строки слева и справа, у которых значение ключа совпало, склеиваются в одну.',
@@ -2717,7 +2726,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Tuesday, 9:20',
       short: 'Tue',
       found: 'The brand was not living on discounts: 5.4 million of base sales in 2025 against 1.4 million on promotion.',
-      scenes: { brief: 'desk-split-bar', reflection: 'factors', hook: 'trend' },
+      scenes: { brief: 'desk-split-bar', reflection: 'versions-half', hook: 'fold' },
       messages: [
         {
           from: 'Your manager',
@@ -2884,7 +2893,7 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-013',
           intro: {
-            scene: 'stray',
+            scene: 'fanout',
             title: 'A join on a field that is not unique',
             paras: [
               'Tables can be joined on any shared field, but it only makes sense on one where the value occurs once on the right hand side. A brand in the promotions directory is not like that: one brand has many promotions, and every sales row will match every one of them.',
@@ -2934,7 +2943,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Friday, 9:00',
       short: 'Fri',
       found: 'The chain is balanced: roughly as much was shipped as was sold. There was no shortage.',
-      scenes: { brief: 'boardroom-supply', reflection: 'rival', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'absent', hook: 'toolkit' },
       messages: [
         {
           from: 'Your manager',
@@ -3132,7 +3141,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Wednesday, 9:30',
       short: 'Wed',
       found: 'Comparison with a previous period is what LAG does. Without PARTITION BY it sees no boundary between cuts and picks up the tail of the neighbouring one.',
-      scenes: { brief: 'desk-lookback', reflection: 'trend', hook: 'dropped' },
+      scenes: { brief: 'desk-lookback', reflection: 'shift', hook: 'dropped' },
       messages: [
         {
           from: 'Your manager',
@@ -3349,7 +3358,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Monday, 9:05',
       short: 'Mon',
       found: 'A pandas table stays in a variable: one bracket gives a column, two give a table.',
-      scenes: { brief: 'desk-frames', reflection: 'catalog', hook: 'stray' },
+      scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
       messages: [
         {
           from: 'Your manager',
@@ -3364,7 +3373,7 @@ const en: StoryCampaign = {
         {
           taskId: 'py-006',
           intro: {
-            scene: 'toolkit',
+            scene: 'brackets',
             title: 'The table stays in your hands',
             paras: [
               'pandas is a library where a table lives in a variable. A query returns a result and forgets it; here all thirteen tables are already sitting there as ready objects, and the next step addresses them by name instead of writing everything again.',
@@ -3836,6 +3845,7 @@ const en: StoryCampaign = {
         {
           taskId: 'py-023',
           intro: {
+            scene: 'fanout',
             title: 'A join on a key',
             paras: [
               'merge joins tables on a key, just like JOIN: left.merge(right, on=\'key\'). Rows on the left and on the right whose key values match are glued into one.',

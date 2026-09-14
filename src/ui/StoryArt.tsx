@@ -201,7 +201,11 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'definitions' && <Definitions />}
         {scene === 'absent' && <Absent />}
         {scene === 'yoy' && <Yoy />}
-        {scene === 'versions' && <Versions />}
+        {scene === 'versions' && <Versions closed={3} spoken />}
+        {scene === 'versions-half' && <Versions closed={2} spoken={false} />}
+        {scene === 'fanout' && <Fanout />}
+        {scene === 'notebook' && <Notebook />}
+        {scene === 'brackets' && <Brackets />}
         {scene === 'flow' && <Level withLevel={false} />}
       </svg>
     </div>
@@ -1125,8 +1129,13 @@ function Catalog() {
  * Две таблицы, между которыми связи ещё нет: понедельник кончается на том,
  * что прайс человек читать умеет, а продажи лежат отдельно. Акцентом названа
  * не таблица, а разрыв — две встречные стрелки, которые не сходятся.
- * В четверг тот же кадр закрывается сценой `join`, и это единственная пара
- * сцен в кампании, которая работает именно как пара.
+ * В четверг тот же кадр закрывается сценой `join`.
+ *
+ * Смысл у сцены один везде, где она стоит: два факта лежат порознь, и
+ * соединить их — завтрашняя работа (крючки дней 1, 8 и 22). До 2026-09-14
+ * здесь было написано, что `tables` → `join` — единственная пара в кампании;
+ * пар теперь больше (`flow` → `level` в неделе 5), и слово «единственная»
+ * было бы неправдой.
  */
 function Tables() {
   return (
@@ -1897,25 +1906,136 @@ function Yoy() {
 }
 
 /*
- * Версии, закрытые числами: четыре карточки, три из них — пустой пунктир
- * и перечёркнуты (тот же язык `art-dropped`, что у отсечённого в `threshold`),
- * четвёртая стоит. У неё хвостик реплики: она держится не на данных,
- * а на словах человека, — ровно то, что говорит пятница недели 4 про
- * переписку Мори-сан. Акцент один и отдан ей: вопрос дня — про неё.
+ * Версии, закрытые числами: четыре карточки, закрытые — пустой пунктир
+ * и перечёркнуты (тот же язык `art-dropped`, что у отсечённого в `threshold`).
+ *
+ * Два случая, и акцент в них разный, потому что текст рядом говорит
+ * о разном. `versions` (пятница недели 4): три закрыты, четвёртая стоит,
+ * и у неё хвостик реплики — она держится не на данных, а на словах
+ * человека, на переписке Мори-сан; акцент отдан ей. `versions-half`
+ * (итог дня 7): закрыты две из четырёх, две ещё открыты, и день говорит
+ * именно о вычёркивании — «числами, а не мнением», — поэтому акцент
+ * у штрихов, а открытые карточки нейтральны: про них день ещё не знает.
  */
-function Versions() {
-  const closed = [18, 92, 166];
+function Versions({ closed, spoken }: { closed: number; spoken: boolean }) {
+  const xs = [18, 92, 166, 240];
+  const text = (x: number) => `M${x + 12} 40h36M${x + 12} 50h28M${x + 12} 60h32`;
   return (
     <g strokeLinecap="round" strokeLinejoin="round">
-      {closed.map((x) => (
-        <g key={x}>
-          <rect className="art-dropped" x={x} y="22" width="60" height="66" rx="4" strokeWidth="1.5" strokeDasharray="3 3" />
-          <path className="art-far" d={`M${x + 12} 40h36M${x + 12} 50h28M${x + 12} 60h32`} stroke="currentColor" strokeWidth="1.6" fill="none" />
-          <path className="art-mid" d={`M${x + 6} 82 ${x + 54} 28`} stroke="currentColor" strokeWidth="1.8" fill="none" />
+      {xs.map((x, i) => {
+        if (i < closed) {
+          return (
+            <g key={x}>
+              <rect className="art-dropped" x={x} y="22" width="60" height="66" rx="4" strokeWidth="1.5" strokeDasharray="3 3" />
+              <path className="art-far" d={text(x)} stroke="currentColor" strokeWidth="1.6" fill="none" />
+              <path className={spoken ? 'art-mid' : 'art-line'} d={`M${x + 6} 82 ${x + 54} 28`} stroke="currentColor" strokeWidth={spoken ? 1.8 : 2.2} fill="none" />
+            </g>
+          );
+        }
+        if (spoken && i === xs.length - 1) {
+          return (
+            <g key={x}>
+              <path className="art-line" d={`M${x + 4} 22h52a4 4 0 0 1 4 4v58a4 4 0 0 1-4 4h-36l-10 10v-10h-6a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z`} strokeWidth="2" fill="none" />
+              <path className="art-mid" d={text(x)} stroke="currentColor" strokeWidth="1.6" fill="none" />
+            </g>
+          );
+        }
+        return (
+          <g key={x}>
+            <rect className="art-mid" x={x} y="22" width="60" height="66" rx="4" stroke="currentColor" strokeWidth="1.6" fill="none" />
+            <path className="art-mid" d={text(x)} stroke="currentColor" strokeWidth="1.6" fill="none" />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/*
+ * Соединение по неуникальному ключу: одна строка слева совпала с каждой
+ * из нескольких строк справа, и в результат ушла столько раз, сколько
+ * совпадений. Акцент — эта строка и её веер: день говорит ровно о том,
+ * что строк стало больше, чем было, без единой ошибки. Стоит там, где
+ * это случается: JOIN по бренду в дне 9 и тот же merge по бренду в дне 23.
+ * До 2026-09-14 день 9 стоял на `stray` — колонке мимо группировки, другой
+ * ошибке с другим симптомом (значение из случайной строки, а не лишние строки).
+ */
+function Fanout() {
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <g className="art-mid">
+        <rect x="20" y="22" width="92" height="72" rx="4" strokeWidth="1.7" />
+        <path d="M34 40h64M34 76h64" strokeWidth="2.2" strokeLinecap="butt" />
+        <rect x="208" y="14" width="92" height="90" rx="4" strokeWidth="1.7" />
+      </g>
+      <path className="art-line" d="M34 58h64" strokeWidth="3" strokeLinecap="butt" />
+      <g className="art-line" strokeWidth="1.8">
+        <path d="M112 58 208 26M112 58 208 48M112 58 208 70M112 58 208 92" />
+      </g>
+      <g className="art-near" strokeWidth="2.2" strokeLinecap="butt">
+        <path d="M222 26h64M222 48h64M222 70h64M222 92h64" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Блокнот: три шага подряд, у каждого слева строка кода, справа таблица,
+ * которая после него осталась. Акцент — дуги от таблицы шага к следующему
+ * шагу: находка понедельника недели 4 не в том, что таблиц три, а в том,
+ * что следующий шаг берёт готовую по имени, а не пишет всё сначала, как
+ * запрос. Тот же блокнот, что на мониторе утра (`desk-frames`), только
+ * здесь видно, куда таблица идёт дальше.
+ */
+function Notebook() {
+  const ys = [14, 48, 82];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {ys.map((y) => (
+        <g key={y}>
+          <path className="art-far" d={`M20 ${y}v20`} strokeWidth="1.6" />
+          <path className="art-mid" d={`M30 ${y + 10}h70`} strokeWidth="2.4" strokeLinecap="butt" />
+          <path className="art-far" d={`M108 ${y + 10}h50m-6-4 6 4-6 4`} strokeWidth="1.4" />
+          <g className="art-near">
+            <rect x="170" y={y} width="72" height="20" rx="2" strokeWidth="1.6" />
+            <path d={`M170 ${y + 7}h72M194 ${y}v20M218 ${y}v20`} strokeWidth="1" />
+          </g>
         </g>
       ))}
-      <path className="art-line" d="M244 22h56a4 4 0 0 1 4 4v58a4 4 0 0 1-4 4h-40l-10 10v-10h-6a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z" strokeWidth="2" fill="none" />
-      <path className="art-mid" d="M254 40h36M254 50h28M254 60h32" stroke="currentColor" strokeWidth="1.6" fill="none" />
+      <g className="art-line" strokeWidth="2">
+        <path d="M206 34C206 44 116 40 104 58" />
+        <path d="M206 68C206 78 116 74 104 92" />
+      </g>
+    </g>
+  );
+}
+
+/*
+ * Одна скобка или две: слева колонка сама по себе — Series, в одних
+ * скобках; справа та же колонка, но с заголовком и в рамке таблицы —
+ * DataFrame из одной колонки, во вторых скобках. Значения одинаковые,
+ * тип разный, и акцент отдан ровно второй паре скобок: это всё, чем
+ * записи различаются, и всё, о чём спрашивает py-006.
+ */
+function Brackets() {
+  const cells = [34, 50, 66, 82];
+  return (
+    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path className="art-far" d="M72 22h-8v80h8M124 22h8v80h-8" strokeWidth="2" />
+      <g className="art-mid">
+        {cells.map((y) => (
+          <rect key={y} x="82" y={y} width="32" height="12" rx="1.5" strokeWidth="1.5" />
+        ))}
+      </g>
+
+      <path className="art-far" d="M212 22h-8v80h8M264 22h8v80h-8" strokeWidth="2" />
+      <path className="art-line" d="M200 14h-12v96h12M276 14h12v96h-12" strokeWidth="2.2" />
+      <g className="art-near">
+        <rect x="222" y="22" width="32" height="8" rx="1.5" strokeWidth="1.8" />
+        {cells.map((y) => (
+          <rect key={y} x="222" y={y} width="32" height="12" rx="1.5" strokeWidth="1.5" />
+        ))}
+      </g>
     </g>
   );
 }
