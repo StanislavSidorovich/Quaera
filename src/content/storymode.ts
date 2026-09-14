@@ -232,9 +232,10 @@ export interface StoryMission {
   /**
    * Неделя кампании, которой принадлежит день.
    *
-   * Полоса дела показывает пять делений и вопрос расследования — то есть
-   * ровно одну неделю. Сложить все дни в один список значило бы получить
-   * десять делений на 320 пикселях и один вопрос на две разные истории.
+   * Полоса дела показывает деления одной недели (пять, а с субботой шесть)
+   * и её вопрос расследования. Сложить все дни в один список значило бы
+   * получить тридцать делений на 320 пикселях и один вопрос на пять разных
+   * историй.
    * Сквозным при этом остаётся порядок: пятница первой недели ведёт
    * в понедельник второй тем же «следующим днём», и лестница конструкций
    * копится через границу недель, а не начинается заново.
@@ -242,7 +243,7 @@ export interface StoryMission {
   week: string;
   /**
    * Короткая метка дня для полосы дела («Пн»). Полоса должна помещаться
-   * на 320 пикселях в пять делений, поэтому метка именно короткая, а не
+   * на 320 пикселях в шесть делений, поэтому метка именно короткая, а не
    * название дня целиком.
    */
   short: string;
@@ -388,11 +389,12 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-004',
+          taskId: 'sql-093',
           intro: {
             scene: 'sort',
             paras: [
               'И последнее на сегодня — порядок. ORDER BY list_price сортирует по возрастанию, ORDER BY list_price DESC — от большего к меньшему; LIMIT 10 обрезает результат до десяти строк. Вдвоём они отвечают на любой вопрос вида «покажи верхние десять».',
+              'LIMIT в задании уже стоит. Допиши над ним, по чему и в какую сторону сортировать.',
             ],
           },
           after: {
@@ -421,6 +423,13 @@ const ru: StoryCampaign = {
      * разбирает три формы COUNT чтением, sql-008 требует две из них рукой.
      * В обратном порядке (как было сначала) день просил напечатать
      * COUNT(DISTINCT) за экран до того, как о нём заходила речь.
+     *
+     * С 2026-09-14 (п. 14 ROADMAP) день достраивается, а не пишется: сводка
+     * и группировка — пропусками (sql-094, sql-095) вместо двух write с чистым
+     * листом, где рукой печаталось по четыре незакреплённых конструкции разом.
+     * Четвёртый шаг sql-096 — сортировка поверх готовой группировки, и реплика
+     * про Nettora переехала к нему с группировки: сортировка её и показывает
+     * первой строкой.
      */
     {
       id: 'day-2-counting',
@@ -458,13 +467,14 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-008',
+          taskId: 'sql-094',
           intro: {
             scene: 'counts',
             title: 'Одна строка вместо всей таблицы',
             paras: [
               'Без GROUP BY агрегат сворачивает всю таблицу в одну-единственную строку — ровно то, что просит Аоки-сан: не список товаров, а его размер.',
               'Дробное округляют: ROUND(AVG(list_price), 2) — среднее до двух знаков. И имя колонке в такой сводке обязательно, тем же AS, что вчера: COUNT(*) AS products читается, голый COUNT(*) в заголовке отчёта — нет.',
+              'Среднее с округлением в задании уже написано. Два счёта — строк и разных брендов — за тобой.',
             ],
           },
           after: {
@@ -473,13 +483,22 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-009',
+          taskId: 'sql-095',
           intro: {
             scene: 'groups',
             title: 'Одно число на группу',
             paras: [
               'Агрегат считает по всей таблице сразу. GROUP BY разрезает её на группы и заставляет агрегат посчитать внутри каждой отдельно: одна строка результата на одну группу.',
-              'Разрез стоит в GROUP BY, а в SELECT рядом с ним — только он сам и агрегаты. Колонка мимо этого правила ошибка, и завтра ты своими глазами увидишь, что с ней делает движок.',
+              'Пишется это одной строкой в конце запроса: GROUP BY brand. Разрез стоит в GROUP BY, а в SELECT рядом с ним — только он сам и агрегаты. Колонка мимо этого правила ошибка, и завтра ты своими глазами увидишь, что с ней делает движок.',
+              'В задании не хватает двух вещей: функции, которая усредняет цену, и самой группировки.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-096',
+          intro: {
+            paras: [
+              'Тот же вопрос, но с порядком: какой бренд FMCG дороже всех в среднем. Сортировать можно по имени, которое колонке дал AS: ORDER BY avg_price DESC поставит самый дорогой бренд первым. Отбор, группировка и среднее уже в заготовке — не хватает последней строки.',
             ],
           },
           after: {
@@ -504,6 +523,12 @@ const ru: StoryCampaign = {
      * на вчерашнее задание человека, а не на абстрактный dim_product, —
      * первая ступень лесов, которую однажды срезали и получили новичка,
      * вписывающего колонку на место функции.
+     *
+     * С 2026-09-14 день кончается sql-097: штуки и точки по месяцам. Он стоит
+     * сразу за разговором с Ито-сан и примеряет его две версии к рознице
+     * целиком — точек 132 в каждом месяце при волне 26–50 тысяч штук, то есть
+     * волну рынка делает спрос, а не полка. Это готовит пятничное разложение:
+     * там та же пара множителей, только у Nettora поедет другой.
      */
     {
       id: 'day-3-shape-of-the-year',
@@ -511,7 +536,7 @@ const ru: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:05',
       short: 'Ср',
-      found: 'Форма года найдена: зимний спад и летний пик. Но волна посчитана по всей рознице разом, а не по одной Nettora.',
+      found: 'Форма года найдена: зимний спад и летний пик при тех же 132 точках. Но посчитана она по всей рознице разом, а не по одной Nettora.',
       scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -533,7 +558,7 @@ const ru: StoryCampaign = {
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7), то есть «с первого символа взять семь», даёт 2025-03.',
               'Группировать можно не только по колонке, но и по выражению. Чтобы не повторять его дважды, пишут GROUP BY 1 — «по первой колонке в SELECT».',
               'Год в шаблоне уже отобран: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
-              'Как это выглядело вчера, на ассортименте по брендам:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании два места оставлены пустыми — чем считаем штуки и по чему группируем.',
+              'Как это выглядело вчера, на ассортименте по брендам:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании три пропуска: чем вырезать месяц из даты, чем считать штуки и по чему группировать.',
             ],
           },
           after: {
@@ -575,9 +600,22 @@ const ru: StoryCampaign = {
             text: '«Вот за это отчёты и переделывают: запрос не упал, число выглядит настоящим, а взято из случайной строки группы. Движок промолчал — значит, смотреть придётся тебе.»',
           },
         },
+        {
+          taskId: 'sql-097',
+          intro: {
+            paras: [
+              'Две версии из коридора стоит сначала примерить к рознице целиком. Может, волна года — это просто точки: летом работают все, а зимой часть закрывается? Тогда вместе со штуками упало бы и число точек.',
+              'Рядом со штуками посчитай, в скольких разных точках в этом месяце вообще были продажи. Это вторничная функция, только по другой колонке: COUNT(DISTINCT customer_id).',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Сто тридцать две точки в каждом месяце — и в июньский пик, и в ноябрьский провал. Волну делает не число точек, а то, сколько уходит через каждую. Запомни эту пару — точки и штуки на точку, — в пятницу она понадобится.»',
+          },
+        },
       ],
       reflection: [
-        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И это одна кривая на все бренды разом: внутри неё ни один бренд не различить.',
+        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И это одна кривая на все бренды разом: внутри неё ни один бренд не различить. Точек при этом в каждом месяце одинаково, сто тридцать две: зимой их не становится меньше, меньше берут в каждой.',
         'Обрати внимание на то, что легко проскочить: ты нашёл где просело, а не почему. И нашёл по всей рознице разом, а Аоки-сан спрашивает про один бренд.',
       ],
       hook: [
@@ -611,13 +649,15 @@ const ru: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-012',
+          taskId: 'sql-098',
           intro: {
             scene: 'join',
             title: 'Две таблицы и общий ключ',
             paras: [
               'Таблицы связаны ключами. В fact_sellout у каждой строки стоит product_id, и ровно такой же product_id есть в dim_product. JOIN подставляет к каждой строке продаж её товар — а вместе с ним бренд, название и цену.',
               'Пишется это так:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nУсловие после ON и есть «по какому ключу совпадать». Короткие имена f и p — псевдонимы таблиц: без них пришлось бы писать полное имя перед каждой колонкой.',
+              'И период — с начала года по последнюю неделю в данных. Это одно условие, а не диапазон: WHERE f.week_start >= \'2026-01-01\'. Дата здесь текст вида 2026-03-16, и такой текст сравнивается ровно как дата: всё, что не меньше начала года, и есть «с начала года». Верхняя граница не нужна — данные сами кончаются на последней неделе.',
+              'В задании два пропуска: строка соединения и строка отбора.',
             ],
           },
           after: {
@@ -639,7 +679,7 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-049',
+          taskId: 'sql-099',
           intro: {
             scene: 'threshold',
             title: 'Фильтр, который считает после группировки',
@@ -647,6 +687,7 @@ const ru: StoryCampaign = {
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — это число разных точек, COUNT(DISTINCT customer_id): вторничная функция на новой таблице.',
               'Фильтровать по агрегату WHERE не умеет — он отбирает строки до группировки, а выручка бренда появляется только после неё. Для этого есть HAVING: тот же фильтр, но после GROUP BY.',
               'Пишется это так:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через AND, — ровно как в WHERE.',
+              'HAVING в задании уже написан. Соединение и группировку по бренду допиши сам — первое ты печатал утром, второе со вторника.',
             ],
           },
           after: {
@@ -679,7 +720,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:40',
       short: 'Пт',
       found: 'Причина названа: бренд потерял полку, а не спрос. Владелец проблемы — полевая команда.',
-      scenes: { brief: 'boardroom-nettora', reflection: 'outlets', hook: 'rival' },
+      scenes: { brief: 'boardroom-nettora', reflection: 'outlets' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -710,11 +751,72 @@ const ru: StoryCampaign = {
       ],
       hook: [
         'Аоки-сан уходит на встречу в 11:00 с одним предложением и четырьмя числами за ним. Это и есть работа аналитика: не отчёт, а решение, которое кто-то может принять.',
-        'Остался вопрос, которого в этих числах нет: почему сорок две точки перестали брать Nettora. Полка не пустует — если бренд с неё ушёл, значит место занял кто-то другой. Кто именно, ты пока не знаешь.',
+        'Только держится этот вывод на сравнении Nettora с самой собой: семьдесят девять точек против тридцати семи. Завтра суббота, и в субботу вывод проверяют тем, чего он не видел, — соседями по полке. Запрос завтра напишешь сам, с чистого листа.',
+      ],
+    },
+
+    /*
+     * Суббота (п. 14 ROADMAP, 2026-09-14). Неделя устроена «Пн–Чт достраиваешь,
+     * в субботу пишешь сам»: день из одного задания с пустой заготовкой, и в нём
+     * нет ни одной конструкции, которую человек до этого не напечатал рукой
+     * дважды (правило плотности в test:story-ladder). Пятница остаётся
+     * кульминацией дела, суббота — проверка вывода и итог недели самого
+     * человека. Итог переехал сюда без единой строки кода: storyClosesWeek
+     * считает последний день недели, а не метку «Пт».
+     *
+     * Сюжетно суббота — контроль, которого в пятничном выводе не было: пятница
+     * сравнила Nettora с самой собой, суббота — с соседями по полке. Просит
+     * руководитель, а не Аоки-сан: встречу с брендом пересказывает понедельник
+     * второй недели, и суббота не должна его опережать.
+     *
+     * id без номера дня (`w1-sat-…`): номера в id остальных дней не
+     * перенумерованы — позиция в кампании хранится id, и сдвиг двадцати id
+     * отправил бы всех в понедельник первой недели (см. storyEntryMission
+     * в App.tsx). Кто уже прошёл пятницу по старой раскладке, стоит на
+     * понедельнике второй недели: субботу он видит пройденной и может открыть
+     * с полосы дела, но догонять её не обязан.
+     */
+    {
+      id: 'w1-sat-everyone-or-us',
+      week: 'w1',
+      track: 'sql',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Суббота, 10:00',
+      short: 'Сб',
+      found: 'Полку потеряла одна Nettora: у соседей по FMCG с января столько же точек, сколько за весь 2025-й.',
+      scenes: { brief: 'office', hook: 'rival' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«По субботам у нас тихо, и это лучший день, чтобы проверить свой же вывод, пока его не проверил кто-то другой. Вчера ты сравнил Nettora с ней самой. Первое, что спросит любой скептик: а может, с января полки теряют все, и дело не в бренде, а в рынке? Сегодня без заготовки: всё, что понадобится, ты за неделю уже печатал своими руками.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-100',
+          intro: {
+            title: 'Свой запрос с чистого листа',
+            paras: [
+              'Вопрос субботы: в скольких разных точках продавался каждый бренд с начала 2026 года. Части все знакомые: соединение продаж со справочником товаров и период без верхней границы — из четверга, счёт разных точек — из вторника, группировка и сортировка по убыванию — оттуда же.',
+              'Порядок частей в запросе тоже знакомый: что показать, откуда, какие строки, по чему свернуть, как упорядочить. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Aqualis 88, Fruvia 86, Milvara 84, Krosti 81 — у соседей по полке ровно столько точек, сколько было за весь прошлый год. С полок не ушёл никто, кроме Nettora: семьдесят девять стало тридцать семь. Это не рынок.»',
+          },
+        },
+      ],
+      reflection: [
+        'Пятничный вывод выдержал проверку, которой в нём не было. Если бы полки теряли все, у Aqualis, Fruvia, Milvara и Krosti точек тоже стало бы меньше, а у них ровно столько же, сколько в 2025-м. Потеря одна, и она у Nettora.',
+        'И второе — уже не про бренд, а про тебя. Этот запрос собран с пустого листа, и каждую его часть ты за неделю напечатал рукой хотя бы дважды. Так и выглядит «умею», в отличие от «видел».',
+      ],
+      hook: [
+        'Первая неделя закрыта, и её вопрос тоже: Nettora потеряла полку, а не спрос, и потеряла одна.',
+        'Остался вопрос, которого в этих числах нет: почему сорок две точки перестали брать Nettora. Полка не пустует — если бренд с неё ушёл, значит, место занял кто-то другой. Кто именно, ты пока не знаешь.',
       ],
     },
     /*
-     * ВТОРАЯ НЕДЕЛЯ. Вопрос принесён из крючка пятницы: кто занял 42 точки.
+     * ВТОРАЯ НЕДЕЛЯ. Вопрос принесён из крючка субботы: кто занял 42 точки.
      * Ответ на него в наших данных не лежит — чужих продаж у дистрибьютора
      * нет ни строки, — и это не дефект сюжета, а его содержание: неделя
      * учит отличать вопрос, на который данные отвечают, от вопроса,
@@ -817,7 +919,7 @@ const ru: StoryCampaign = {
         'Но заметь, чего в нём нет. Там нет ни одной строки про то, что стоит на этой полке вместо нас. Вопрос Аоки-сан «кто занял» остался ровно там, где был.',
       ],
       hook: [
-        'Прежде чем искать виноватого снаружи, стоит закрыть версии внутри. Ито-сан в среду называла две: ушли торговые и подняли цены. Про цены мы ещё не смотрели вовсе.',
+        'Прежде чем искать виноватого снаружи, стоит закрыть версии внутри. Ито-сан в среду называл две: ушли торговые и подняли цены. Про цены мы ещё не смотрели вовсе.',
         'Завтра — цена и скидка. Если бренд держался на промо, а промо кончилось, никакой конкурент не нужен, чтобы объяснить падение.',
       ],
     },
@@ -836,6 +938,14 @@ const ru: StoryCampaign = {
      * вдвойне: до правки бриф называл цены «204.7 → 207», которых не даёт
      * ни одно окно данных, а теперь их считает сам человек (202.6 → 204.8 →
      * 206.5 за полугодие 2026).
+     *
+     * С 2026-09-14 (п. 14) CASE внутри SUM здесь больше не пишется с чистого
+     * листа: sql-015 (write, семь незакреплённых конструкций разом) остался
+     * в треке, а в кампании его место занял sql-101 — те же числа, но рукой
+     * только пара IS NOT NULL / IS NULL, в которой и весь урок. Вторая встреча
+     * с приёмом — sql-102, доля акций Nettora по годам: 6.7% в 2024-м, когда
+     * бренд был вторым, 20.3% в 2025-м, 16.7% в полугодии 2026. Версия «жил
+     * на акциях, их отменили» переворачивается: акций стало больше, а не меньше.
      */
     {
       id: 'day-7-promo-or-price',
@@ -898,10 +1008,10 @@ const ru: StoryCampaign = {
               },
             ],
           },
-          taskId: 'sql-015',
+          taskId: 'sql-101',
           intro: {
             paras: [
-              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
+              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Вне акции он пуст, и это понедельничное IS NULL. Две суммы в задании различаются ровно этим словом — его и допиши. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
             ],
           },
           after: {
@@ -909,9 +1019,22 @@ const ru: StoryCampaign = {
             text: '«1.4 миллиона в акциях против 5.4 базовых. Значит, моя цифра из головы была неверна: бренд стоял на полке за свои деньги, а не за скидку.»',
           },
         },
+        {
+          taskId: 'sql-102',
+          intro: {
+            paras: [
+              'Цифра Аоки-сан про прошлый год опровергнута, но версия звучала иначе: «бренд жил на акциях, акции кончились — вот и упал». Одним годом её не проверить, нужно по годам: большой ли была доля акций тогда, когда большим был сам бренд.',
+              'Год — те же четыре знака, что в разминке, только от недели продаж: substr(f.week_start, 1, 4). Условие акции — то же, что в прошлом задании.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Семь процентов в 2024-м, когда бренд был вторым в рознице. В 2025-м в акциях шло почти втрое больше, а выручка всё равно упала. Акций стало больше, а не меньше, — от их отмены бренд не падал.»',
+          },
+        },
       ],
       reflection: [
-        'Версия про цену закрыта, и закрыта отрицательным результатом: прайс почти не двигался, а на промо у бренда приходится каждая пятая иена — меньше, чем у Vitanor или Rhinolar.',
+        'Версия про цену закрыта, и закрыта отрицательным результатом: прайс почти не двигался, а на промо у бренда приходится каждая пятая иена — меньше, чем у Vitanor или Rhinolar. А в 2024-м, пока бренд был вторым, и вовсе каждая пятнадцатая.',
         'Отрицательный результат не пустая работа. Из четырёх версий, которые Аоки-сан понесёт бренду, две теперь вычеркнуты числами, а не мнением.',
       ],
       hook: [
@@ -925,6 +1048,14 @@ const ru: StoryCampaign = {
      * к пятничному запросу, где два свёрнутых факта соединяются между собой;
      * сюжетно — первый раз, когда человек считает нормированную метрику,
      * а не сумму.
+     *
+     * С 2026-09-14 (п. 14) день открывает sql-103 — понедельничный LEFT JOIN
+     * второй раз, на каналах, с пропусками COALESCE и IN. Это не разминка
+     * ради разминки: суббота пишет тот же приём с чистого листа, а правило
+     * плотности требует, чтобы до субботы он был напечатан рукой дважды.
+     * Числа проверены на двух периодах, прежде чем писать реплику: e-com
+     * 15 258 → 8 016, сети 4 432 → 1 539, традиционная 560 → 303 — упало везде,
+     * и сказать «e-com держит бренд» было бы неправдой.
      */
     {
       id: 'day-8-two-steps',
@@ -945,6 +1076,19 @@ const ru: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-103',
+          intro: {
+            paras: [
+              'Прежде чем считать на точку — просьба, которая пришла с утра. Команда e-com уверена, что Nettora держится на них, пока остальные каналы проседают. Проверь по каналам с начала года понедельничным LEFT JOIN от справочника точек: канал, где Nettora не продали ни разу, — тоже ответ, и в таблице он обязан остаться нулём.',
+              'Запрос почти собран: подзапрос с товарами бренда на месте, условие на период стоит в ON рядом с ним. Не хватает двух слов — чем превратить пустоту в ноль и чем сравнить товар со списком.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Восемь тысяч в e-com — больше, чем во всех остальных каналах вместе. Но за первое полугодие прошлого года там было пятнадцать: e-com просел почти вдвое, сети — втрое. Бренд не держит никто, в e-com он просто падает медленнее.»',
+          },
+        },
         {
           taskId: 'sql-045',
           intro: {
@@ -1079,7 +1223,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Вторая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Цепочка сбалансирована: отгрузили примерно столько же, сколько продали. Дефицита не было.',
-      scenes: { brief: 'boardroom-supply', reflection: 'absent', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'absent' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -1114,7 +1258,67 @@ const ru: StoryCampaign = {
         'И последнее число, ради которого стоило считать на точку: там, где бренд остался, за то же полугодие продают даже чуть больше прежнего — 52.9 тысячи иен на точку против 48.3 год назад. Спрос никуда не делся. Мы ушли с полки, а не нас с неё вытеснили спросом.',
       ],
       hook: [
-        'Две недели назад ты не мог достать список товаров. Сегодня ты закрыл четыре версии числами, назвал границу того, что данные знают, и не выдал догадку за вывод — это и есть работа, за которую платят.',
+        'У ответа две части, и судьба у них разная. Первая останется вопросом, на который у данных нет строк. Вторая — работа: сорок две точки живы и покупают у нас другое, а значит, у полевой команды есть двери, в которые можно постучать.',
+        'Завтра суббота, и список этих дверей попросят у тебя. Написать его придётся самому.',
+      ],
+    },
+
+    /*
+     * Суббота второй недели. Тот же приём, что в понедельник (LEFT JOIN,
+     * подзапрос через IN, IS NULL), в третий раз и без заготовки — между ними
+     * среда (sql-103) повторила его на каналах. Посильность держится на цели
+     * задания: она прямо говорит, что период ставится туда же, где товар, —
+     * ловушка sql-039, и перенесённое в WHERE даёт 0 строк, то есть видимый
+     * сигнал, а не тихую ошибку.
+     *
+     * Сюжетно — первый результат кампании, который уходит не на слайд,
+     * а в поле: пятница сказала «точки живы», суббота выдаёт их адреса.
+     * Просит Ито-сан, и это закрывает его линию двух недель: в среду первой
+     * он принёс версии, во вторник второй — слух, в субботу получает работу.
+     * Числа реплики сняты с данных: 27 сетевых точек без Nettora с января,
+     * 24 из них в 2025-м её брали, Nagisa 8 и Minori 7. Сетевых точек
+     * в справочнике ровно 42 — столько же, сколько точек потеряла Nettora;
+     * это совпадение, и проза его обходит, иначе два числа прочтут как одно.
+     */
+    {
+      id: 'w2-sat-list-for-ito',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Вторая неделя · Суббота, 10:00',
+      short: 'Сб',
+      found: 'Список для поля готов: 27 сетевых точек без Nettora с января, и 24 из них в 2025-м её брали.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Ито-сан, руководитель полевой команды',
+          text: '«Мне переслали ваш вывод: полку потеряли, а не спрос. Тогда дальше это моя работа, и мне нужны адреса. Дай список сетевых точек, где Nettora с января не продалась ни разу, — с городами, чтобы разложить визиты на неделю. Сети — это переговоры, с них и начнём.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Такой запрос ты уже писал в понедельник, только теперь период с января и одни сети. Заготовки не будет. Одно напоминание, и больше подсказывать не стану: условие на период — тоже условие на правую таблицу.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-104',
+          intro: {
+            title: 'Свой запрос с чистого листа',
+            paras: [
+              'Части знакомы все: LEFT JOIN от справочника точек и IS NULL — из понедельника, подзапрос с товарами бренда через IN и период в ON рядом с ним — из среды. Отбор сетей — обычный WHERE: он про левую таблицу, и ему место там.',
+            ],
+          },
+          after: {
+            from: 'Ито-сан, руководитель полевой команды',
+            text: '«Двадцать семь адресов, и двадцать четыре из них в прошлом году Nettora брали — значит, это не „не взяли", а „перестали брать". Nagisa — восемь точек, Minori — семь: с этих двух сетей и начну.»',
+          },
+        },
+      ],
+      reflection: [
+        'Список ушёл в поле, и это первый результат за две недели, который превращается не в слайд, а в маршрут: двадцать семь адресов, у каждого город.',
+        'И заметь, как он получен. Приём понедельника в третий раз и в третий раз без подсказки в коде: условие на период стоит в ON не потому, что его туда поставили заранее, — на этот раз место выбирал ты.',
+      ],
+      hook: [
+        'Две недели назад ты не мог достать список товаров. Сегодня ты закрыл четыре версии числами, назвал границу того, что данные знают, не выдал догадку за вывод — и отдал в поле список, по которому можно работать. Это и есть работа, за которую платят.',
         'Осталось число, которое мы записали и отложили: Setouchi Trading, 2.44. Кто-то отгрузил себе вдвое больше, чем продал, и это отдельное дело. Оно подождёт: разбирать его в SQL неудобно, там нужны ряды по неделям и скользящие средние, а для этого нужен другой инструмент.',
         'Сначала будет другое. В понедельник Аоки-сан вернётся со встречи, и главным на неделе станет не запрос, а вопрос: что именно у тебя просят, когда просят «дашборд».',
       ],
@@ -2343,11 +2547,12 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-004',
+          taskId: 'sql-093',
           intro: {
             scene: 'sort',
             paras: [
               'One more thing today: order. ORDER BY list_price sorts upward, ORDER BY list_price DESC runs from larger to smaller, and LIMIT 10 cuts the result to ten rows. Together they answer any question shaped like "show me the top ten".',
+              'LIMIT is already in the task. Above it, add what to sort by and in which direction.',
             ],
           },
           after: {
@@ -2402,13 +2607,14 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-008',
+          taskId: 'sql-094',
           intro: {
             scene: 'counts',
             title: 'One row instead of the whole table',
             paras: [
               'Without GROUP BY an aggregate folds the whole table into a single row, which is exactly what Aoki asked for: not the list of items but its size.',
               'Fractions get rounded: ROUND(AVG(list_price), 2) is an average to two decimal places. And a column in a summary like this needs a name, by the same AS as yesterday: COUNT(*) AS products reads, a bare COUNT(*) in a report heading does not.',
+              'The rounded average is already written in the task. The two counts, of rows and of distinct brands, are yours.',
             ],
           },
           after: {
@@ -2417,13 +2623,22 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-009',
+          taskId: 'sql-095',
           intro: {
             scene: 'groups',
             title: 'One number per group',
             paras: [
               'An aggregate counts across the whole table at once. GROUP BY cuts the table into groups and makes the aggregate count inside each one separately: one result row per group.',
-              'The dimension sits in GROUP BY, and next to it in SELECT there are only the dimension itself and aggregates. A column outside that rule is an error, and tomorrow you will see for yourself what the engine does with it.',
+              'It takes one line at the end of the query: GROUP BY brand. The dimension sits in GROUP BY, and next to it in SELECT there are only the dimension itself and aggregates. A column outside that rule is an error, and tomorrow you will see for yourself what the engine does with it.',
+              'The task is missing two things: the function that averages the price, and the grouping itself.',
+            ],
+          },
+        },
+        {
+          taskId: 'sql-096',
+          intro: {
+            paras: [
+              'The same question, now with an order: which FMCG brand is the most expensive on average. You can sort by the name AS gave a column: ORDER BY avg_price DESC puts the priciest brand first. The filter, the grouping and the average are already in the starter; only the last line is missing.',
             ],
           },
           after: {
@@ -2448,7 +2663,7 @@ const en: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:05',
       short: 'Wed',
-      found: 'The shape of the year is found: a winter trough and a summer peak. But the wave was counted across all retail at once, not for Nettora alone.',
+      found: 'The shape of the year is found: a winter trough and a summer peak across the same 132 outlets. But it was counted across all retail at once, not for Nettora alone.',
       scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'split' },
       messages: [
         {
@@ -2470,7 +2685,7 @@ const en: StoryCampaign = {
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7), meaning "from the first character take seven", gives 2025-03.',
               'You can group not only by a column but by an expression. To avoid writing it twice, people write GROUP BY 1, meaning "by the first column in SELECT".',
               'The year is already picked in the template: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
-              'Here is how it looked yesterday, on the assortment by brand:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves two spots blank: what to compute the units with, and what to group by.',
+              'Here is how it looked yesterday, on the assortment by brand:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves three blanks: what cuts the month out of the date, what computes the units, and what to group by.',
             ],
           },
           after: {
@@ -2505,9 +2720,22 @@ const en: StoryCampaign = {
             text: '"This is what reports get rebuilt over: the query did not fail, the number looks real, and it was taken from an arbitrary row of the group. The engine kept quiet, so the looking is on you."',
           },
         },
+        {
+          taskId: 'sql-097',
+          intro: {
+            paras: [
+              'The two versions from the corridor are worth trying on retail as a whole first. Maybe the wave of the year is just outlets: in summer they all trade, in winter some of them close? Then the outlet count would fall along with the units.',
+              'Next to the units, count how many distinct outlets had any sales that month. It is Tuesday\'s function on a different column: COUNT(DISTINCT customer_id).',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"A hundred and thirty-two outlets in every month, at the June peak and in the November trough alike. The wave is not made by the number of outlets but by how much moves through each one. Hold on to that pair, outlets and units per outlet: on Friday you will need it."',
+          },
+        },
       ],
       reflection: [
-        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And it is one curve for every brand at once: no single brand can be told apart inside it.',
+        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And it is one curve for every brand at once: no single brand can be told apart inside it. The outlet count meanwhile is the same every month, 132: in winter there are not fewer outlets, each one simply sells less.',
         'Notice what is easy to skip: you found where it dropped, not why. And you found it across all of retail at once, while Aoki is asking about one brand.',
       ],
       hook: [
@@ -2536,13 +2764,15 @@ const en: StoryCampaign = {
       ],
       steps: [
         {
-          taskId: 'sql-012',
+          taskId: 'sql-098',
           intro: {
             scene: 'join',
             title: 'Two tables and a shared key',
             paras: [
               'Tables are linked by keys. Every row in fact_sellout carries a product_id, and the very same product_id exists in dim_product. JOIN attaches its product to each sales row, and with it the brand, the name and the price.',
               'It is written like this:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nThe condition after ON is the "match on which key" part. The short names f and p are table aliases: without them you would spell the full table name in front of every column.',
+              'And the period, from the start of the year to the last week in the data. That is one condition rather than a range: WHERE f.week_start >= \'2026-01-01\'. The date here is text shaped like 2026-03-16, and such text compares exactly like a date: everything no earlier than the start of the year is "since the start of the year". No upper bound is needed, because the data itself ends at the last week.',
+              'The task has two blanks: the join line and the filter line.',
             ],
           },
           after: {
@@ -2564,7 +2794,7 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-049',
+          taskId: 'sql-099',
           intro: {
             scene: 'threshold',
             title: 'A filter that runs after grouping',
@@ -2572,6 +2802,7 @@ const en: StoryCampaign = {
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id), Tuesday function on a new table.',
               'WHERE cannot filter by an aggregate. It picks rows before grouping, and a brand revenue only exists after it. That is what HAVING is for: the same filter, but after GROUP BY.',
               'It is written like this:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by AND, exactly as in WHERE.',
+              'HAVING is already written in the task. The join and the grouping by brand are yours: the first you typed this morning, the second since Tuesday.',
             ],
           },
           after: {
@@ -2597,7 +2828,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:40',
       short: 'Fri',
       found: 'The cause is named: the brand lost shelf, not demand. The problem belongs to the field team.',
-      scenes: { brief: 'boardroom-nettora', reflection: 'outlets', hook: 'rival' },
+      scenes: { brief: 'boardroom-nettora', reflection: 'outlets' },
       messages: [
         {
           from: 'Aoki, Sales Director',
@@ -2628,6 +2859,46 @@ const en: StoryCampaign = {
       ],
       hook: [
         'Aoki walks into her 11:00 with one sentence and four numbers behind it. That is the job: not a report, but a decision somebody can act on.',
+        'Yet that conclusion rests on comparing Nettora with itself: seventy-nine outlets against thirty-seven. Tomorrow is Saturday, and on Saturday a conclusion gets checked against what it never looked at, its neighbours on the shelf. Tomorrow you write the query yourself, from a blank page.',
+      ],
+    },
+
+    {
+      id: 'w1-sat-everyone-or-us',
+      week: 'w1',
+      track: 'sql',
+      place: 'Kaiyo Trading · Commercial Analytics · Saturday, 10:00',
+      short: 'Sat',
+      found: 'Only Nettora lost its shelf: since January its FMCG neighbours hold as many outlets as in all of 2025.',
+      scenes: { brief: 'office', hook: 'rival' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Saturdays are quiet here, and that makes them the best day to check your own conclusion before somebody else does. Yesterday you compared Nettora with itself. The first thing any sceptic asks: what if since January everyone has been losing shelves, and the problem is the market rather than the brand? No starter today. Everything you need, you have already typed with your own hands this week."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-100',
+          intro: {
+            title: 'Your own query from a blank page',
+            paras: [
+              'Saturday\'s question: in how many distinct outlets did each brand sell since the start of 2026. Every part is familiar: joining sales to the product directory and a period with no upper bound come from Thursday, counting distinct outlets from Tuesday, grouping and sorting in descending order from there as well.',
+              'The order of the parts is familiar too: what to show, where from, which rows, what to fold by, how to sort. The hints are in place, but try without them first; that is what Saturday is for.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Aqualis 88, Fruvia 86, Milvara 84, Krosti 81: the neighbours on the shelf hold exactly as many outlets as in the whole of last year. Nobody left their shelves except Nettora, where seventy-nine became thirty-seven. That is not the market."',
+          },
+        },
+      ],
+      reflection: [
+        'Friday\'s conclusion survived a check it never contained. If everyone were losing shelves, Aqualis, Fruvia, Milvara and Krosti would hold fewer outlets too, and they hold exactly as many as in 2025. There is one loss, and it is Nettora\'s.',
+        'And a second thing, this one not about the brand but about you. This query was built from a blank page, and you typed every part of it by hand at least twice this week. That is what "I can" looks like, as opposed to "I have seen it".',
+      ],
+      hook: [
+        'Week one is closed, and so is its question: Nettora lost its shelf, not its demand, and it lost it alone.',
         'One question is not in those numbers: why forty two outlets stopped carrying Nettora. A shelf does not stay empty, so if the brand left it, somebody else took the space. Who exactly, you do not know yet.',
       ],
     },
@@ -2780,10 +3051,10 @@ const en: StoryCampaign = {
               },
             ],
           },
-          taskId: 'sql-015',
+          taskId: 'sql-101',
           intro: {
             paras: [
-              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
+              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. Outside a promotion it is empty, which is Monday\'s IS NULL. The two sums in the task differ by exactly that word, so that is what you fill in. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
             ],
           },
           after: {
@@ -2791,9 +3062,22 @@ const en: StoryCampaign = {
             text: '"1.4 million on promotion against 5.4 outside it. So the number in my head was wrong: the brand held its shelf on its own money, not on a discount."',
           },
         },
+        {
+          taskId: 'sql-102',
+          intro: {
+            paras: [
+              'Aoki\'s number about last year is refuted, but the version itself went differently: "the brand lived on promotions, the promotions ended, so it fell". One year cannot test that; it takes the years side by side: was the promotion share large back when the brand itself was large.',
+              'The year is the same four characters as in the warm-up, only from the sales week: substr(f.week_start, 1, 4). The promotion condition is the same as in the previous task.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Seven percent in 2024, when the brand was second in retail. In 2025 nearly three times as much went through promotions, and revenue fell anyway. Promotions grew rather than shrank, so their end is not what brought the brand down."',
+          },
+        },
       ],
       reflection: [
-        'The price version is closed, and closed by a negative result: the list price barely moved, and one yen in five came from promotion, less than for Vitanor or Rhinolar.',
+        'The price version is closed, and closed by a negative result: the list price barely moved, and one yen in five came from promotion, less than for Vitanor or Rhinolar. And in 2024, while the brand was second, only one yen in fifteen.',
         'A negative result is not wasted work. Of the four versions Aoki can carry to the brand, two are now crossed out by numbers rather than by opinion.',
       ],
       hook: [
@@ -2821,6 +3105,19 @@ const en: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-103',
+          intro: {
+            paras: [
+              'Before counting per outlet, a request that came in this morning. The ecom team is sure Nettora is holding up thanks to them while the other channels sag. Check it by channel since the start of the year with Monday\'s LEFT JOIN from the outlet directory: a channel where Nettora never sold is an answer too, and it has to stay in the table as a zero.',
+              'The query is nearly complete: the subquery with the brand\'s products is in place, and the period condition sits in ON next to it. Two words are missing: what turns emptiness into a zero, and what compares a product with a list.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"Eight thousand in ecom, more than all the other channels together. But in the first half of last year it was fifteen thousand: ecom sank by almost half, the chains to a third. Nobody is holding the brand up; in ecom it simply falls more slowly."',
+          },
+        },
         {
           taskId: 'sql-045',
           intro: {
@@ -2943,7 +3240,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week two · Friday, 9:00',
       short: 'Fri',
       found: 'The chain is balanced: roughly as much was shipped as was sold. There was no shortage.',
-      scenes: { brief: 'boardroom-supply', reflection: 'absent', hook: 'toolkit' },
+      scenes: { brief: 'boardroom-supply', reflection: 'absent' },
       messages: [
         {
           from: 'Your manager',
@@ -2978,7 +3275,50 @@ const en: StoryCampaign = {
         'And the last number, the one that made counting per outlet worth it: where the brand stayed, the same half year sells slightly more than before, 52.9 thousand yen per outlet against 48.3 a year earlier. Demand did not go anywhere. We left the shelf, and demand did not push us off it.',
       ],
       hook: [
-        'Two weeks ago you could not pull a list of products. Today you closed four versions with numbers, named the boundary of what the data knows, and did not pass a guess off as a conclusion. That is the work people are paid for.',
+        'The answer has two parts, and they go different ways. The first stays a question the data holds no rows for. The second is work: forty two outlets are alive and buy other things from us, which means the field team has doors to knock on.',
+        'Tomorrow is Saturday, and the list of those doors will be asked of you. You will have to write it yourself.',
+      ],
+    },
+
+    {
+      id: 'w2-sat-list-for-ito',
+      week: 'w2',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week two · Saturday, 10:00',
+      short: 'Sat',
+      found: 'The list for the field is ready: 27 chain outlets without Nettora since January, and 24 of them carried it in 2025.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Ito-san, field team lead',
+          text: '"Your conclusion was forwarded to me: we lost the shelf, not the demand. Then the rest is my job, and I need addresses. Give me the chain outlets where Nettora has not sold once since January, with cities, so I can lay out the visits for the week. Chains are negotiations, so we start there."',
+        },
+        {
+          from: 'Your manager',
+          text: '"You already wrote this query on Monday, only now the period starts in January and it is chains only. There is no starter. One reminder, and no more hints after it: a condition on the period is also a condition on the right table."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-104',
+          intro: {
+            title: 'Your own query from a blank page',
+            paras: [
+              'Every part is familiar: LEFT JOIN from the outlet directory and IS NULL come from Monday, the subquery with the brand\'s products through IN and the period in ON next to it from Wednesday. Picking the chains is an ordinary WHERE: it is about the left table, and that is where it belongs.',
+            ],
+          },
+          after: {
+            from: 'Ito-san, field team lead',
+            text: '"Twenty-seven addresses, and twenty-four of them carried Nettora last year, so this is not \'never took it\' but \'stopped taking it\'. Nagisa has eight, Minori seven: I start with those two chains."',
+          },
+        },
+      ],
+      reflection: [
+        'The list has gone to the field, and it is the first result in two weeks that turns into a route rather than a slide: twenty-seven addresses, each with its city.',
+        'And notice how it was built. Monday\'s technique for the third time, and for the third time with nothing in the code to lean on: the period condition sits in ON not because somebody put it there in advance. This time the place was your choice.',
+      ],
+      hook: [
+        'Two weeks ago you could not pull a list of products. Today you closed four versions with numbers, named the boundary of what the data knows, did not pass a guess off as a conclusion, and handed the field a list it can work from. That is the work people are paid for.',
         'One number stays written down and set aside: Setouchi Trading, 2.44. Somebody shipped themselves twice what they sold, and that is a case of its own. It waits: taking it apart in SQL is awkward, it needs series by week and rolling averages, and that calls for a different tool.',
         'Something else comes first. On Monday Aoki san is back from the meeting, and the week turns on a question rather than a query: what exactly are you being asked for when you are asked for a dashboard.',
       ],

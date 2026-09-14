@@ -578,37 +578,54 @@ try {
      * там суждение, а не код; значит проверять нечего — но молчать об этом
      * гейт не должен, иначе «ok» на экране означает две разные вещи.
      */
+    /*
+     * **Суббота с чистого листа (п. 14, 2026-09-14) финалом дела не стала.**
+     * Она закрывает неделю — после неё идёт итог, — но кульминация дела
+     * по-прежнему в пятнице, и именно пятницу правка контента могла бы тихо
+     * нагрузить новым. Поэтому, если неделю закрывает день, где все задания
+     * пишутся с пустой заготовки, обещание проверяется на двух днях: на нём
+     * и на дне перед ним. Иначе с появлением субботы пятница выпала бы
+     * из проверки молча — ровно так, как проверки здесь и протухают.
+     */
+    const blankDay = (m) =>
+      m.steps.length > 0 &&
+      m.steps.every((s) => {
+        const task = taskOf(s.taskId, m.track);
+        return task && task.mode === 'write' && !String(task.starter ?? '').trim();
+      });
     for (const week of campaign.weeks) {
       const days = campaign.missions.filter((m) => m.week === week.id);
-      const last = days[days.length - 1];
-      if (!last) continue;
-      const hasCode = last.steps.some((s) => {
-        const task = taskOf(s.taskId, last.track);
-        return task && [task.starter, task.template, task.predictSql, task.solution].some(Boolean);
-      });
-      if (!hasCode) {
-        console.log(`       ${label}${week.id}: финал — день-суждение (${last.id}), конструкций в нём нет, проверять нечего`);
-        continue;
+      if (!days.length) continue;
+      const finals = days.length > 1 && blankDay(days[days.length - 1]) ? days.slice(-2) : days.slice(-1);
+      for (const last of finals) {
+        const hasCode = last.steps.some((s) => {
+          const task = taskOf(s.taskId, last.track);
+          return task && [task.starter, task.template, task.predictSql, task.solution].some(Boolean);
+        });
+        if (!hasCode) {
+          console.log(`       ${label}${week.id}: финал — день-суждение (${last.id}), конструкций в нём нет, проверять нечего`);
+          continue;
+        }
+        const lastAt = campaign.missions.findIndex((m) => m.id === last.id);
+        const before = new Set();
+        campaign.missions.slice(0, lastAt).forEach((m) =>
+          m.steps.forEach((s) => {
+            for (const c of constructs(introText(s), m.track)) before.add(c);
+            const task = taskOf(s.taskId, m.track);
+            if (task) for (const c of shownByTask(task, m.track)) before.add(c);
+          })
+        );
+        const fresh = new Set();
+        last.steps.forEach((s) => {
+          const task = taskOf(s.taskId, last.track);
+          if (task) for (const c of minus(shownByTask(task, last.track), before)) fresh.add(c);
+        });
+        check(
+          `${label}${week.id} ${last.short}: в финале нет ни одной новой конструкции`,
+          fresh.size === 0,
+          `в дне ${last.id} впервые: ${[...fresh].join(', ')}`
+        );
       }
-      const lastAt = campaign.missions.findIndex((m) => m.id === last.id);
-      const before = new Set();
-      campaign.missions.slice(0, lastAt).forEach((m) =>
-        m.steps.forEach((s) => {
-          for (const c of constructs(introText(s), m.track)) before.add(c);
-          const task = taskOf(s.taskId, m.track);
-          if (task) for (const c of shownByTask(task, m.track)) before.add(c);
-        })
-      );
-      const fresh = new Set();
-      last.steps.forEach((s) => {
-        const task = taskOf(s.taskId, last.track);
-        if (task) for (const c of minus(shownByTask(task, last.track), before)) fresh.add(c);
-      });
-      check(
-        `${label}${week.id}: в финале нет ни одной новой конструкции`,
-        fresh.size === 0,
-        `в дне ${last.id} впервые: ${[...fresh].join(', ')}`
-      );
     }
 
     /*
