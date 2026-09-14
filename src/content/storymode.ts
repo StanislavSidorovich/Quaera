@@ -1612,9 +1612,10 @@ const ru: StoryCampaign = {
      * проверять названную версию пойдёт.
      *
      * Три задания — один и тот же слой с трёх сторон: регистр (sql-027),
-     * дата как текст (sql-047) и одно имя в двух написаниях (sql-046).
-     * Два первых — predict, и они же ступень: LIKE человек сначала читает
-     * в чужом запросе и только потом печатает своей рукой в sql-046.
+     * дата как текст (sql-047) и одно имя в двух написаниях (sql-105, fill —
+     * с 14c-3, каркас SUM(CASE WHEN …) уже в шаблоне). Два первых — predict,
+     * и они же ступень: LIKE человек сначала читает в чужом запросе
+     * и только потом дописывает своей рукой в sql-105.
      */
     {
       id: 'day-14-raw-layer',
@@ -1663,11 +1664,11 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-046',
+          taskId: 'sql-105',
           intro: {
             paras: [
               'И третье — то, ради чего мы сюда пришли. Ито-сан сказал, что сеть записана двумя способами; проверяется это одним запросом, и приём в нём уже знакомый.',
-              'Условная агрегация: SUM(CASE WHEN условие THEN 1 ELSE 0 END) — это «сколько строк подошло». Ты собирал такое на второй неделе, новое здесь только условие: вместо равенства LIKE с процентами по краям, потому что имя сети — часть названия точки, а не всё оно.',
+              'Условная агрегация: SUM(CASE WHEN условие THEN 1 ELSE 0 END) — это «сколько строк подошло». Ты собирал такое на второй неделе, и каркас уже стоит в заготовке. Рукой — условие второй колонки: вместо равенства LIKE с процентами по краям, потому что имя сети — часть названия точки, а не всё оно. И связка третьей: строка идёт в общий счёт, если подходит любое из двух написаний, — два условия через OR.',
             ],
           },
           after: {
@@ -1706,7 +1707,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Третья неделя · Пятница, 8:50',
       short: 'Пт',
       found: 'Вывод стоит первым, глубина меняется под решение адресата, а у столбцов ось начинается от нуля.',
-      scenes: { brief: 'desk-lede', reflection: 'meeting', hook: 'toolkit' },
+      scenes: { brief: 'desk-lede', reflection: 'meeting' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -1764,6 +1765,62 @@ const ru: StoryCampaign = {
         'Письмо ушло. Посмотри, из чего оно собрано: вывод первой строкой, под ним три числа, ниже строка про сети в двух написаниях и одно предложение о том, что делать дальше. Половина недели ушла на то, чтобы эти четыре части имели право там стоять.',
         'И проследи всю дорогу с понедельника. Пришло ощущение — «нужно видеть картину». Стало решение: куда вести полевую команду. Из решения вывелось определение, из определения — механизм сравнения, из механизма — проверка данных, и только из всего вместе — письмо.',
         'Ни один шаг этой цепочки не выводится из данных. Данные отвечают на вопрос «сколько», а вся неделя была про вопрос «что именно спрашиваем и кому это нужно» — и это ровно та часть работы, которую нельзя сдать движку.',
+      ],
+      hook: [
+        'Письмо ушло с одной оговоркой — про Ichiba, и её принёс Ито-сан.',
+        'Завтра суббота: проверим, единственная ли она, — тем, чего никто не приносил, — всей выгрузкой против справочника.',
+      ],
+    },
+
+    /*
+     * Суббота третьей недели (14c-3, 2026-09-14). Тот же жанр, что у w1-sat
+     * и w2-sat: один шаг, бриф — сцена office, суббота тихая, остальные
+     * в неё не приходят. Крючок пятницы (сцена toolkit, «Три недели
+     * позади… В понедельник возьмёшь другой инструмент») переехал сюда
+     * целиком — он вёл к Setouchi, а не к письму про Ichiba, и держать
+     * его на пятнице значило бы опередить закрытие своей же недели.
+     * Итог недели 3 — после субботы, сам (storyClosesWeek).
+     *
+     * Сюжетно — контроль к пятничному выводу, как в неделе 1: письмо ушло
+     * с одной оговоркой, суббота проверяет, не единственная ли она, тем,
+     * чего в письме не было, — сверкой всей сырой выгрузки со справочником,
+     * а не отдельным именем. LIKE, которым нашли Ichiba/Itiba в четверг,
+     * здесь не нужен: сеть сравнивается с собой же, равенством, и ловится
+     * не написание, а пробелы по краям, невидимые глазами.
+     */
+    {
+      id: 'w3-sat-names-nobody-knows',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Третья неделя · Суббота, 10:00',
+      short: 'Сб',
+      found: 'Треть сырой выгрузки справочник не узнаёт: у каждой точки есть двойник с пробелами по краям, у Ichiba — ещё и Itiba.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«По субботам у нас тихо, и это лучший день, чтобы проверить свой же вывод, пока его не проверил кто-то другой. Оговорку про Ichiba в письмо принёс Ито-сан — но единственная ли она? То, о чём не сказал никто, найдётся только одним способом: сверкой всей сырой выгрузки со справочником точек целиком, а не по одному имени. Заготовки не будет.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-106',
+          intro: {
+            title: 'Свой запрос с чистого листа',
+            paras: [
+              'Вопрос субботы: единственная ли оговорка в письме? Проверить, не осталось ли других, можно только одним способом — сверить всю сырую выгрузку со справочником точек целиком, а не по одному имени.',
+              'Части все знакомые: LEFT JOIN от выгрузки к справочнику и IS NULL — из понедельника второй недели, группировка и сортировка по убыванию — из первой. LIKE сегодня не нужен: сравниваешь имя как есть, равенством. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Сверху — точка, которая в справочнике есть: равенство её не нашло из-за пробелов по краям, которых не видно глазами. Такой двойник — у каждой из сорока пяти точек, а у Ichiba ещё и Itiba. Оговорка в письме была верной, но неполной: Аоки-сан хватит одной строки, а в описание витрины пойдёт абзац.»',
+          },
+        },
+      ],
+      reflection: [
+        'Ichiba нашёлся, потому что о нём сказали; пробелы — потому что проверили всё. Это и есть четверговое «сначала профилируют, потом считают», сделанное приёмом второй недели.',
+        'И про тебя: запрос с пустого листа, и каждую его часть за две недели ты печатал рукой хотя бы дважды.',
       ],
       hook: [
         'Три недели позади. Первая дала инструмент, вторая — расследование, третья — то, что вокруг них: постановку, определение, проверку и подачу. Аналитиком человека делает третья, но без первых двух её не бывает.',
@@ -1921,11 +1978,11 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'py-001',
+          taskId: 'py-058',
           intro: {
             paras: [
-              'Теперь рукой, и с третьим приёмом. Когда значений в условии несколько, вместо цепочки из | пишут .isin([\'Aqualis\', \'Fruvia\']) — это точный аналог IN из SQL.',
-              'Отдел промо просит прайс-лист по двум брендам, и только по позициям дороже 100.',
+              'Теперь снова рукой, но третий сегодняшний приём уже стоит в шаблоне готовым: .isin([\'Aqualis\', \'Fruvia\']) — точный аналог IN из SQL.',
+              'Рукой — вторая половина маски: цена дороже 100, в своих скобках, и знак между половинами. Отдел промо просит прайс-лист по двум брендам, и только по позициям дороже 100.',
             ],
           },
         },
@@ -1995,10 +2052,10 @@ const ru: StoryCampaign = {
           },
         },
         {
-          taskId: 'py-049',
+          taskId: 'py-059',
           intro: {
             paras: [
-              'Теперь целиком и рукой. Три месяца IV квартала заготовка уже отобрала — .isin со списком месяцев, приём вторника. Ваша часть — вторая строка: сгруппировать по distributor_id, свернуть units суммой и вернуть ключ колонкой.',
+              'Теперь дальше по цепочке, и снова рукой. Три месяца IV квартала заготовка уже отобрала — .isin со списком месяцев, приём вторника; свёртка суммой тоже уже стоит. Рукой — вторая строка: группировка по distributor_id и возврат ключа колонкой.',
             ],
           },
           after: {
@@ -2083,7 +2140,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Четвёртая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Всплеск Setouchi — настоящие заказы, не ошибка и не спрос: строк столько же, штук вдвое больше, точки продали меньше прошлогоднего.',
-      scenes: { brief: 'boardroom-setouchi', reflection: 'versions', hook: 'calendar' },
+      scenes: { brief: 'boardroom-setouchi', reflection: 'versions' },
       messages: [
         {
           from: 'Мори-сан, КАМ по дистрибьюторам',
@@ -2136,6 +2193,59 @@ const ru: StoryCampaign = {
         'Три версии закрыты числами. Ошибка — нет: строк в месяц столько же, сколько всегда, и товары те же, выросли штуки в каждой строке. Норма — нет: год назад тот же квартал дал 13 341, а у одиннадцати остальных осень вышла даже скромнее прошлогодней. Спрос — нет: точки Setouchi продали за квартал 11 574 штуки, на тысячу меньше, чем годом раньше.',
         'Остаётся умысел, и здесь данные замолкают. Кто предложил взять больше и зачем, в таблицах не лежит: это знает Мори-сан, и его переписка — единственное, что у нас есть. Она правдоподобна и со всеми числами согласуется, но подтвердить её нечем, как и «двое уволились» на первой неделе.',
         'Так что ответ на вопрос недели звучит без виноватого: не ошибка, не норма и не спрос, а настоящие заказы, взятые по нашему же предложению. Кто-то отгрузил себе вдвое больше, чем продал, потому что мы его об этом попросили.',
+      ],
+      hook: [
+        'Мори-сан доволен: причина найдена, и с версией «мы сами предложили» вроде бы можно закрывать дело.',
+        'Завтра суббота: вывод держится на его словах — проверим, чем именно предложили.',
+      ],
+    },
+
+    /*
+     * Суббота четвёртой недели (14c-3, 2026-09-14). Тот же жанр, что у w3-sat:
+     * один шаг с чистого листа, бриф — сцена office. Крючок пятницы (сцена
+     * calendar, «Мори-сан доволен… закончился ли он») переехал сюда целиком.
+     *
+     * Сюжетно — контроль к пятничному выводу, как в неделе 1: версия
+     * Мори-сан держится на фразе «мы сами предложили», а обычный способ
+     * уговорить партнёра взять больше — скидка за объём. Ловушка в том,
+     * что сумма скидки в иенах растёт вместе с объёмом и без всякой скидки
+     * за объём — сравнивать нужно на штуку, тем же приёмом, что развернул
+     * вывод в первую неделю.
+     */
+    {
+      id: 'w4-sat-who-paid',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Четвёртая неделя · Суббота, 10:00',
+      short: 'Сб',
+      found: 'Скидки за объём не было: на штуку осенью 7.5 ¥, как всегда. Осень Setouchi оплатил сам — 2.29 млн ¥ против 1.10 годом раньше.',
+      scenes: { brief: 'office', hook: 'calendar' },
+      messages: [
+        {
+          from: 'Ваш руководитель',
+          text: '«По субботам у нас тихо. Пятничный вывод держится на одной фразе Мори-сан — „мы сами предложили". Если предложили, то чем? Обычный способ уговорить партнёра взять больше — скидка за объём; если она была, осень оплатили мы, и разговор с Setouchi выйдет другим. Заготовки не будет.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-060',
+          intro: {
+            title: 'Свой расчёт с чистого листа',
+            paras: [
+              'Части знакомые: маска по distributor_id — из вторника и среды, группировка, сумма и ключ колонкой — из среды и четверга. Посчитай скидку Setouchi помесячно.',
+              'Здесь ловушка. В иенах скидка вырастет вместе с объёмом и без всякой скидки за объём — само по себе число ничего не докажет. Сравнивай не сумму, а то, обогнала ли скидка штуки: штуки за те же месяцы ты уже называл в пятницу. Обгонит — была скидка за объём, пойдёт вровень — нет.',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Скидка выросла там же и настолько же, насколько выросли штуки, — семь с половиной иен на штуку, как в любой другой месяц. Скидки за объём не было: осенью Setouchi купил на обычных условиях и заплатил сам, два и двадцать девять миллиона иен за квартал против одного и десяти годом раньше.»',
+          },
+        },
+      ],
+      reflection: [
+        'У версии Мори-сан нашёлся след, который данные умеют проверить: просьба со скидкой была бы видна в отгрузках. Её нет — «попросили» без денег, и лишний квартал лежит на партнёре, а не на нас.',
+        'Сумма без знаменателя врёт так же, как в первую неделю: иены растут вместе со штуками. Сравнивают на штуку.',
+        'И про тебя: маска, группировка, сумма и ключ колонкой — с пустого листа, и каждую за неделю ты напечатал рукой дважды.',
       ],
       hook: [
         'Мори-сан доволен: причина найдена, и она не про партнёра. Руководитель — нет.',
@@ -2422,7 +2532,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Пятая неделя · Пятница, 9:00',
       short: 'Пт',
       found: 'Отгрузки Setouchi вернулись к норме в январе 2026 года, а остаток с осени стоит на 21–22 тыс. штук — запас на пять месяцев продаж.',
-      scenes: { brief: 'boardroom-ratio', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom-ratio', reflection: 'level' },
       messages: [
         {
           from: 'Мори-сан, КАМ по дистрибьюторам',
@@ -2468,6 +2578,67 @@ const ru: StoryCampaign = {
         'В ряде отгрузок два факта, и оба важны. Всплеск: октябрь–декабрь 2025 года, 10 172, 8 162 и 9 869 штук против обычных трёх с половиной — шести тысяч. Возврат: с января 2026 года отгрузки идут ровно как до осени, отношение — 1.06, и Мори-сан прав, когда говорит, что поток вернулся.',
         'И третий факт, которого в потоках не видно вовсе. Остаток вырос почти впятеро и с тех пор стоит: около 22 тыс. штук лежат на складе партнёра — пять месяцев продаж его точек против месяца с небольшим у остальных одиннадцати. Поток вернулся, уровень остался — ровно та разница, ради которой стоило менять инструмент.',
         'Что предлагать, данные уже не скажут, и это ваша часть работы. Лишние четыре месяца запаса разойдутся одним из двух путей: партнёр однажды пропустит заказы или товар доживёт на складе до срока годности. План по Setouchi на ближайшие кварталы посчитан так, будто этого запаса нет, — значит, его надо пересчитать сейчас, а не объяснять провал заказов потом. Причину назвал человек, и данные её не подтверждают и не опровергают; последствие они показывают точно, и оно ещё идёт.',
+      ],
+      hook: [
+        'Мори-сан идёт в понедельник к Setouchi с пятью месяцами запаса.',
+        'Завтра суббота: пять месяцев — среднее по складу, а план считают по брендам; посмотрим, одинаково ли оно у всех.',
+      ],
+    },
+
+    /*
+     * Суббота пятой недели, финал кампании (14c-3, 2026-09-14). Тот же жанр,
+     * что у w3-sat/w4-sat, но кампания на нём закрывается целиком
+     * (storyClosesCampaign — последний день, без кода). Крючок пятницы —
+     * закрытие кампании («Пять недель позади…») — переехал сюда целиком,
+     * его сцена office совпала бы с брифом субботы, поэтому здесь взята
+     * toolkit: закрывающий текст называет три инструмента кампании
+     * (SQL, работу вокруг чисел, pandas) — ровно те три ящика, что рисует
+     * сцена, и это тот случай, когда сцена выбрана чтением текста крючка,
+     * а не по умолчанию (приём пятнадцатого захода).
+     *
+     * Сюжетно — работа из вывода, как в неделе 2: пятничный вывод («пять
+     * месяцев запаса») читается одним числом на весь склад, а среднее
+     * по складу прячет разное за разными брендами — тот же урок, что дало
+     * среднее по точке в первую неделю.
+     */
+    {
+      id: 'w5-sat-five-months-of-what',
+      week: 'w5',
+      track: 'python',
+      place: 'Kaiyo Trading · Пятая неделя · Суббота, 10:00',
+      short: 'Сб',
+      found: 'Пять месяцев запаса — это восемь брендов по 4–8 месяцев и Nettora, которая у точек Setouchi больше не продаётся: 1 368 штук против 8 проданных за полгода.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Мори-сан, КАМ по дистрибьюторам',
+          text: '«В понедельник я иду к Setouchi с пятью месяцами запаса. Первое, что спросят, — пять месяцев чего? Мне нужен разрез по брендам, а не одно число на весь склад.»',
+        },
+        {
+          from: 'Ваш руководитель',
+          text: '«Разумный вопрос: средним по складу легко спрятать разное. Части все твои: остаток на конец июня — как в пятницу, маска, соединение по ключу и ключ колонкой — с середины недели, месяцы запаса — пятничная мерка. Подсказки не будет.»',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-061',
+          intro: {
+            title: 'Свой расчёт с чистого листа',
+            paras: [
+              'Части все знакомые: остаток на конец июня — как в пятницу, маска, соединение по ключу и ключ колонкой — с середины недели. Собери его по каждому бренду отдельно, а не по складу целиком.',
+              'Порядок тот же, что всегда: свернуть остаток по брендам, свернуть продажи точек Setouchi с начала года по тем же брендам, соединить и разделить остаток на продажи в месяц — полугодовые, делённые на 6.',
+            ],
+          },
+          after: {
+            from: 'Мори-сан, КАМ по дистрибьюторам',
+            text: '«Восемь брендов от 3.8 до 7.7 месяца — с этим можно идти к плану. А Nettora у меня тысяча месяцев: значит, там не запас, а товар, который никто не берёт.»',
+          },
+        },
+      ],
+      reflection: [
+        'Среднее по складу прятало две разные беды: восьми брендам хватит пропустить заказы на несколько месяцев; Nettora не поможет никакой план — запас надо перевозить.',
+        'Два дела кампании сошлись в последний день: полки, которые Nettora потеряла в первую неделю, и есть причина, по которой её запас у Setouchi не разойдётся.',
+        'И в последний раз про тебя: самый длинный чистый лист кампании — обе таблицы, два соединения и пятничная мерка, и каждую его часть за две недели ты напечатал рукой хотя бы дважды.',
       ],
       hook: [
         'Пять недель позади. Первая дала инструмент, вторая — расследование, третья — работу вокруг чисел: постановку, определение, проверку и подачу. Четвёртая дала второй инструмент и ответила, откуда взялся всплеск, пятая — чем он кончился и что с этим делать.',
@@ -3594,11 +3765,11 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'sql-046',
+          taskId: 'sql-105',
           intro: {
             paras: [
               'And the third thing, the one we came down here for. Ito san said the chain is written two ways, and one query settles it, with a technique you already have.',
-              'Conditional aggregation: SUM(CASE WHEN condition THEN 1 ELSE 0 END) means "how many rows matched". You built these in week two. The only new part is the condition: LIKE with percent signs on both sides instead of equality, because the chain name is part of the outlet name rather than all of it.',
+              'Conditional aggregation: SUM(CASE WHEN condition THEN 1 ELSE 0 END) means "how many rows matched." You built these in week two, and the frame is already in the starter. By hand: the condition for the second column, LIKE with percent signs on both sides instead of equality, because the chain name is part of the outlet name rather than all of it. And the connector for the third: a row counts if either spelling matches, two conditions joined with OR.',
             ],
           },
           after: {
@@ -3625,7 +3796,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week three · Friday, 8:50',
       short: 'Fri',
       found: 'The conclusion goes first, the depth changes with the decision the reader makes, and bar charts start their axis at zero.',
-      scenes: { brief: 'desk-lede', reflection: 'meeting', hook: 'toolkit' },
+      scenes: { brief: 'desk-lede', reflection: 'meeting' },
       messages: [
         {
           from: 'Aoki san, sales director',
@@ -3683,6 +3854,46 @@ const en: StoryCampaign = {
         'The mail is sent. Look at what it is built from: a conclusion on the first line, three figures under it, a line about the chain in two spellings, and one sentence about what to do next. Half the week went into earning those four parts the right to be there.',
         'And trace the whole road from Monday. A feeling arrived, "we need to see the picture". It became a decision: where to send the field team. From the decision came the definition, from the definition the comparison mechanism, from the mechanism the check on the data, and only from all of it together, the mail.',
         'Not one step of that chain comes out of the data. Data answers the question "how much", and the whole week was about the question "what exactly are we asking and who needs it", which is the part of the work you cannot hand to an engine.',
+      ],
+      hook: [
+        'The mail went out with one caveat: Ichiba, brought by Ito san.',
+        'Tomorrow is Saturday: we check whether it is the only one, with something nobody brought us, the whole export against the reference table.',
+      ],
+    },
+
+    {
+      id: 'w3-sat-names-nobody-knows',
+      week: 'w3',
+      track: 'sql',
+      place: 'Kaiyo Trading · Week three · Saturday, 10:00',
+      short: 'Sat',
+      found: 'A third of the raw export is not recognised by the reference table: every outlet has a twin with stray spaces, and Ichiba has Itiba on top of that.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Saturdays are quiet around here, and that is the best day to check your own conclusion before somebody else does. Ito san brought the Ichiba caveat to the mail, but is it the only one? What nobody said can only be found one way: reconcile the whole raw export against the outlet reference table, not one name at a time. No starter today."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'sql-106',
+          intro: {
+            title: 'Your own query, from a blank page',
+            paras: [
+              'Saturday\'s question: is that the only caveat in the mail? The only way to check whether more are hiding is to reconcile the whole raw export against the outlet reference table, not one name at a time.',
+              'Every part is familiar: LEFT JOIN from the export to the reference table and IS NULL from Monday of week two, grouping and sorting by descending count from week one. LIKE is not needed today: you are comparing the name as it stands, with equality.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"At the top, an outlet that is in the reference table. Equality missed it because of stray spaces at the edges, invisible to the eye. Every one of the forty-five outlets has that kind of twin, and Ichiba has Itiba on top of it. The caveat in the mail was true, just not complete: Aoki san gets one line, the warehouse description gets a paragraph."',
+          },
+        },
+      ],
+      reflection: [
+        'Ichiba turned up because somebody named it; the spaces turned up because you checked everything. That is Thursday\'s "profile first, count second," done with week two\'s technique.',
+        'And about you: a query from a blank page, and you typed every part of it by hand at least twice across two weeks.',
       ],
       hook: [
         'Three weeks are behind you. The first gave you the tool, the second an investigation, the third everything around them: framing, definition, verification and delivery. The third is what makes someone an analyst, and without the first two it does not happen.',
@@ -3801,11 +4012,11 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'py-001',
+          taskId: 'py-058',
           intro: {
             paras: [
-              'Now by hand, and with a third technique. When a condition has several values, instead of a chain of | you write .isin([\'Aqualis\', \'Fruvia\']), an exact counterpart of SQL IN.',
-              'The promo team wants the price list for two brands, and only for items above 100.',
+              'Now by hand again, but today\'s third technique already sits in the starter: .isin([\'Aqualis\', \'Fruvia\']), an exact counterpart of SQL IN.',
+              'By hand: the second half of the mask, price above 100, in its own brackets, and the sign between the two halves. The promo team wants the price list for two brands, and only for items above 100.',
             ],
           },
         },
@@ -3875,10 +4086,10 @@ const en: StoryCampaign = {
           },
         },
         {
-          taskId: 'py-049',
+          taskId: 'py-059',
           intro: {
             paras: [
-              'Now the whole thing, by hand. The starter has already selected the three months of Q4 with .isin and a list of months, Tuesday\'s technique. Your part is the second line: group by distributor_id, collapse units with a sum and bring the key back as a column.',
+              'Now the next step in the chain, and by hand again. The starter has already selected the three months of Q4 with .isin and a list of months, Tuesday\'s technique, and the sum is already there too. By hand: the second line, group by distributor_id and bring the key back as a column.',
             ],
           },
           after: {
@@ -3963,7 +4174,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week four · Friday, 9:00',
       short: 'Fri',
       found: 'The Setouchi spike is real orders, neither an error nor demand: the same number of rows, twice the units, and the outlets sold less than the year before.',
-      scenes: { brief: 'boardroom-setouchi', reflection: 'versions', hook: 'calendar' },
+      scenes: { brief: 'boardroom-setouchi', reflection: 'versions' },
       messages: [
         {
           from: 'Mori-san, key account manager for distributors',
@@ -4016,6 +4227,47 @@ const en: StoryCampaign = {
         'Three versions are closed with numbers. An error: no, there are as many rows a month as always and the products are the same; what grew is the units in each row. Normal: no, a year earlier the same quarter gave 13,341, while the other eleven had an even quieter autumn than the year before. Demand: no, Setouchi outlets sold 11,574 units in the quarter, a thousand fewer than a year earlier.',
         'What remains is intent, and here the data goes quiet. Who suggested buying more, and why, is not in the tables: Mori-san knows it, and his correspondence is all we have. It is plausible and consistent with every number, but there is nothing to confirm it with, just like "two people quit" in week one.',
         'So the answer to the week\'s question has nobody to blame in it: not an error, not normal and not demand, but real orders placed at our own suggestion. Somebody shipped themselves twice what they sold because we asked them to.',
+      ],
+      hook: [
+        'Mori-san is pleased: the cause is found, and "we suggested it ourselves" sounds like it could close the case.',
+        'Tomorrow is Saturday: the conclusion rests on his word, and we check what exactly was suggested.',
+      ],
+    },
+
+    {
+      id: 'w4-sat-who-paid',
+      week: 'w4',
+      track: 'python',
+      place: 'Kaiyo Trading · Week four · Saturday, 10:00',
+      short: 'Sat',
+      found: 'There was no volume discount: 7.5 yen per unit that autumn, same as always. Setouchi paid its own way that autumn, 2.29 million yen against 1.10 million a year earlier.',
+      scenes: { brief: 'office', hook: 'calendar' },
+      messages: [
+        {
+          from: 'Your manager',
+          text: '"Saturdays are quiet around here. Friday\'s conclusion rests on one line from Mori-san, \'we suggested it ourselves.\' Suggested it how? The usual way to talk a partner into taking more is a volume discount; if there was one, we paid for the autumn, and the conversation with Setouchi goes differently. No starter today."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-060',
+          intro: {
+            title: 'Your own calculation, from a blank page',
+            paras: [
+              'Familiar parts: the mask on distributor_id from Tuesday and Wednesday, grouping, a sum and the key as a column from Wednesday and Thursday. Work out the Setouchi discount by month.',
+              'There is a trap here. In yen the discount grows with volume even with no volume discount at all; the number alone proves nothing. Compare not the sum but whether the discount outran the units: you already named the units for those months on Friday. If it outran them, there was a volume discount; if it kept pace, there was not.',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"The discount grew exactly where and as much as the units did: seven and a half yen per unit, same as any other month. There was no volume discount. Setouchi bought on ordinary terms that autumn and paid its own way: 2.29 million yen for the quarter against 1.10 million a year earlier."',
+          },
+        },
+      ],
+      reflection: [
+        "Mori-san's version had a trail the data could check: a request with a discount attached would show up in the shipments. It is not there, someone \"asked\" with no money behind it, and the extra quarter sits with the partner rather than us.",
+        'A sum with no denominator lies the same way it did in week one: yen grow together with units. You compare per unit.',
+        'And about you: a mask, grouping, a sum and the key as a column, from a blank page, and you typed each of them by hand twice across the week.',
       ],
       hook: [
         'Mori-san is pleased: the cause is found, and it is not about the partner. Your manager is not.',
@@ -4289,7 +4541,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Week five · Friday, 9:00',
       short: 'Fri',
       found: 'Setouchi shipments returned to normal in January 2026, while the stock has stood at 21 to 22 thousand units since the autumn: five months of sales.',
-      scenes: { brief: 'boardroom-ratio', reflection: 'level', hook: 'office' },
+      scenes: { brief: 'boardroom-ratio', reflection: 'level' },
       messages: [
         {
           from: 'Mori-san, key account manager for distributors',
@@ -4335,6 +4587,51 @@ const en: StoryCampaign = {
         'The shipment series holds two facts, and both matter. The spike: October to December 2025, 10,172, 8,162 and 9,869 units against the usual three and a half to six thousand. The return: since January 2026 shipments run exactly as they did before the autumn, the ratio is 1.06, and Mori-san is right that the flow is back.',
         'And a third fact, entirely invisible in the flows. Stock grew almost fivefold and has stood still ever since: some 22 thousand units are lying in the partner\'s warehouse, five months of sales at its outlets against a little over one month for the other eleven. The flow returned, the level stayed, which is precisely the distinction that made changing tools worth it.',
         'What to propose is no longer something the data will tell you, and that part is yours. The extra four months of stock will clear in one of two ways: the partner skips orders at some point, or the goods reach their expiry date in the warehouse. The plan for Setouchi for the coming quarters is calculated as if this stock were not there, so it has to be recalculated now rather than explained away when the orders fail. The cause was named by a person, and the data neither confirms nor denies it; the consequence the data shows precisely, and it is still running.',
+      ],
+      hook: [
+        'Mori-san is heading to Setouchi on Monday with five months of stock.',
+        'Tomorrow is Saturday: five months is a warehouse average, and the plan is worked out by brand; let us see whether it is the same across all of them.',
+      ],
+    },
+
+    {
+      id: 'w5-sat-five-months-of-what',
+      week: 'w5',
+      track: 'python',
+      place: 'Kaiyo Trading · Week five · Saturday, 10:00',
+      short: 'Sat',
+      found: 'Five months of stock breaks down into eight brands at 4 to 8 months each and Nettora, which Setouchi outlets no longer sell at all: 1,368 units against 8 sold in half a year.',
+      scenes: { brief: 'office', hook: 'toolkit' },
+      messages: [
+        {
+          from: 'Mori-san, key account manager for distributors',
+          text: '"On Monday I am going to Setouchi with five months of stock. The first thing they will ask is five months of what. I need it split by brand, not one number for the whole warehouse."',
+        },
+        {
+          from: 'Your manager',
+          text: '"Fair question: a warehouse average hides all sorts of things. Every part is yours already: the stock at the end of June from Friday, a mask, a join on a key and the key as a column from the middle of the week, months of stock from Friday\'s yardstick. No starter today."',
+        },
+      ],
+      steps: [
+        {
+          taskId: 'py-061',
+          intro: {
+            title: 'Your own calculation, from a blank page',
+            paras: [
+              'Every part is familiar: the stock at the end of June as on Friday, a mask, a join on a key and the key as a column from the middle of the week. Build it by brand, not for the warehouse as a whole.',
+              'The order is the usual one: collapse the stock by brand, collapse Setouchi outlet sales since the start of the year by the same brands, join them, and divide stock by sales per month, the half year divided by 6.',
+            ],
+          },
+          after: {
+            from: 'Mori-san, key account manager for distributors',
+            text: '"Eight brands from 3.8 to 7.7 months, that is something I can take to the plan. And Nettora comes out at a thousand months: that is not a duration, that is nobody buying it."',
+          },
+        },
+      ],
+      reflection: [
+        'A warehouse average was hiding two different troubles: eight brands are fine skipping a few months of orders, while no plan helps Nettora, that stock has to be moved out.',
+        "Two threads of the campaign meet on the last day: the outlets Nettora lost in week one are exactly why its stock at Setouchi will not clear.",
+        'And about you, one last time: the longest blank page of the campaign, two tables, two joins and Friday\'s yardstick, and you typed every part of it by hand at least twice across two weeks.',
       ],
       hook: [
         'Five weeks are behind you. The first gave you a tool, the second an investigation, the third the work around the numbers: framing, definition, verification and delivery. The fourth gave a second tool and answered where the spike came from, the fifth how it ended and what to do about it.',
