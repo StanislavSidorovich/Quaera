@@ -2070,6 +2070,28 @@
         "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found."
       ],
       "explain": "27 outlets in chains haven't bought a single unit of Nettora since the start of the year; with this list, Ito-san can go to the chain buyers before building a general win-back plan. The period condition behaves just like the product condition in the task about outlets that never bought Nettora at all: both restrict LEFT JOIN's right-hand table, and both must sit in ON, or the LEFT JOIN silently turns into an INNER one and the very outlets with no sales disappear along with the answer."
+    },
+    {
+      "id": "sql-105",
+      "title": "One chain under two names",
+      "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes spelled «Itiba»: two source systems transliterated the same name differently. Before normalising the directory, it's worth sizing up the problem.",
+      "goal": "Return one row: written_ya (the number of rows where customer_name contains «Ichiba»), written_ia (where it contains «Itiba») and total_chain (their sum, since both groups belong to the same chain).",
+      "hints": [
+        "The second spelling differs from the first only by Ichiba becoming Itiba inside the same LIKE '%…%'; written_ia is counted the same way written_ya was.",
+        "total_chain means \"at least one of the two spellings\": conditions inside one CASE are joined with OR, not AND."
+      ],
+      "explain": "284 rows name the chain «Ichiba», 261 name it «Itiba», and together, 545: OR guarantees each row is counted exactly once, because the two spellings never overlap: a name can't contain both at once. Different transliterations of the same value are a routine raw-data problem: one source system rendered the name one way, the other rendered it differently. Until the name is normalised to one form, any GROUP BY on customer_name will silently split the chain into two rows, and both will look like legitimate names."
+    },
+    {
+      "id": "sql-106",
+      "title": "Names the directory doesn't know",
+      "brief": "Before trusting a raw sales feed, it's worth checking whether the customer directory recognises every outlet name in it. A name the directory doesn't know is an outlet that never makes it into the star-schema report at all.",
+      "goal": "From staging_raw_sellout, return customer_name and rows (the number of rows with that name) only for names missing from the dim_customer directory.",
+      "hints": [
+        "The same trick from the start of week two: LEFT JOIN from what you're checking to the directory, and \"no match\" is WHERE ... IS NULL on the right table's key column.",
+        "Grouping is from week one: GROUP BY the name, COUNT(*) counts rows in each group. No LIKE needed here: the comparison is exact, on the whole name."
+      ],
+      "explain": "59 distinct names from the raw feed (1,102 rows out of 3,110, more than a third) go entirely unrecognised by the outlet directory. LEFT JOIN plus IS NULL on the right table's key is the only way to find what's missing rather than what's there: an INNER JOIN would cut those rows, and the question itself, right away. A name looking ordinary says nothing about whether the directory recognises it: the comparison is on exact text, and a stray space or a different transliteration makes an outlet invisible to the report."
     }
   ]
 }

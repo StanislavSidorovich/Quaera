@@ -1037,6 +1037,50 @@
         "Half a year of sales divided by 6 gives sales per month; divide the stock by that."
       ],
       "explain": "Setouchi holds 22,176 units against outlet sales of about 4,335 a month, which is 5.1 months of stock. The other eleven hold between 1.1 and 1.4 months: as much as it takes to keep the shelf from emptying between deliveries. The difference of four months of sales is what the autumn left behind, and since January it has not shrunk, it has even grown a little: the partner orders exactly as much as it sells. It can clear in one of two ways, the partner skipping orders at some point or the goods reaching their expiry date in the warehouse, and both belong in the plan rather than turning up in it as a surprise."
+    },
+    {
+      "id": "py-058",
+      "title": "Two brands over a hundred",
+      "brief": "The summer catalogue only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥: cheap ones don't go on promo.",
+      "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
+      "hints": [
+        "Between .isin([...]) and the next condition pandas expects & (an ampersand), not and: and doesn't work on a column of thousands of values.",
+        "The second condition, in its own parentheses, is an ordinary price filter: dim_product['list_price'] > 100."
+      ],
+      "explain": ".isin(['Aqualis', 'Fruvia']) is pandas's analogue of SQL's IN, and it's already sitting in the template. What's left by hand is the second condition and the connector between them: & evaluates logic element by element across the whole column at once, the only working option for a pandas filter, since and expects a single True/False but gets a Series of thousands instead. The parentheses around each condition aren't decoration: & binds tighter than >, and without them the expression would group in the wrong order."
+    },
+    {
+      "id": "py-059",
+      "title": "Quarterly rollup by distributor",
+      "brief": "Finance wants total shipments per distributor for October–December 2025. The table will later be compared with others, so the distributor needs to stay a regular column, not the index.",
+      "goal": "From fact_sellin for the three months of Q4 2025, return distributor_id and units (the sum of units per distributor). distributor_id as a regular column.",
+      "hints": [
+        "The sum is already there at the end of the chain; what's missing is the grouping before it: q4.groupby('distributor_id').",
+        "After grouping the key moves into the index; bring it back as a column with .reset_index() as the last link in the chain."
+      ],
+      "explain": "Setouchi ships 28,203 units for the quarter, the next distributor, Hokusei Trading, ships 12,018. The sum alone proves nothing yet: a bigger distributor is supposed to take more. Whether it's a lot or a little is decided by comparison, with the same quarter a year earlier or with that distributor's own outlet sales, and both need distributor_id as a column to join and filter on later. as_index=False inside groupby would give the same result: a second way to keep the key out of the index."
+    },
+    {
+      "id": "py-060",
+      "title": "Setouchi's discount by month",
+      "brief": "Friday's conclusion rests on Mori-san's words, \"we offered it ourselves\": a discount that got Setouchi to take more stock in the autumn. If a discount was offered, it should show up in shipments, not just in words.",
+      "goal": "For distributor Setouchi (distributor_id = 1), return per month: month_start and discount_amount (the sum of discount given).",
+      "hints": [
+        "Selecting one distributor is the same mask you've already used this week: distributor_id == 1.",
+        "From there it's a familiar chain: group by month, sum the discount, bring the key back as a column: .groupby(...)['...'].sum().reset_index()."
+      ],
+      "explain": "The discount rose to 76,568 / 61,273 / 76,233 ¥ in October–December 2025, nearly double the usual 21,967–47,358 ¥. But units for those same months (Friday) also rose, 10,172 / 8,162 / 9,869 against 3,764–5,832 a year earlier, and the discount per unit didn't change: 7.5 ¥, same as any other month. The rise in the total is fully explained by the rise in volume, not by more generous terms: there was no volume discount, and Setouchi paid for the extra quarter itself, 2.29 million ¥ against 1.10 million a year before."
+    },
+    {
+      "id": "py-061",
+      "title": "Five months of what",
+      "brief": "On Monday Mori-san goes to Setouchi with five months of stock: one number for the whole warehouse. The plan gets recalculated by brand, and a warehouse-wide average can hide very different situations.",
+      "goal": "Per brand, return brand, units_on_hand (Setouchi's stock at the end of June 2026), units (sales through its outlets since 2026-01-01), and months (how many months of such sales the stock covers: units_on_hand / (units / 6), rounded to one decimal place).",
+      "hints": [
+        "Stock by brand and sales by brand are two separate calculations, each built the same way as Friday's task: a mask on the distributor, a merge for the brand key, then grouping and summing with .reset_index().",
+        "Once both tables are rolled up by brand, an ordinary merge on brand joins them; months of stock uses Friday's same yardstick: stock divided by sales per month (six-month sales divided by 6)."
+      ],
+      "explain": "Eight brands hold between 3.8 and 7.7 months of stock; that's the Friday number for every other line of the plan. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost back in week one of the campaign. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
     }
   ]
 }

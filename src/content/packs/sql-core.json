@@ -3124,6 +3124,50 @@
         "«Ни одной продажи» после LEFT JOIN выглядит как f.sellout_id IS NULL: совпадения не нашлось."
       ],
       "explain": "Двадцать семь точек в сетях не купили ни одной единицы Nettora с начала года — с этим списком Ито-сан может идти к байерам сетей, прежде чем строить общий план возврата бренда. Условие на период здесь ведёт себя так же, как условие на товар в задании про точки без Nettora вообще: оба ограничивают правую таблицу LEFT JOIN и оба обязаны стоять в ON, иначе LEFT JOIN молча превратится в INNER, а точки без продаж потеряются вместе с самим ответом."
+    },
+    {
+      "id": "sql-105",
+      "track": "sql",
+      "skill": "sql-data-quality",
+      "alsoTrains": [
+        "sql-case"
+      ],
+      "level": 3,
+      "mode": "fill",
+      "title": "Сеть под двумя именами",
+      "brief": "В staging_raw_sellout сеть «Ichiba» иногда записана как «Itiba» — два источника транслитерировали одно название по-разному. Перед тем как нормализовать справочник, нужно оценить масштаб проблемы.",
+      "goal": "Вернуть одну строку: written_ya — число строк, где customer_name содержит «Ichiba», written_ia — где содержит «Itiba», total_chain — их сумму: обе группы относятся к одной и той же сети.",
+      "template": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya,\n  SUM(CASE WHEN customer_name ___ THEN 1 ELSE 0 END) AS written_ia,\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' ___ customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS total_chain\nFROM staging_raw_sellout",
+      "blanks": [
+        "LIKE '%Itiba%'",
+        "OR"
+      ],
+      "solution": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya,\n  SUM(CASE WHEN customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS written_ia,\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' OR customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS total_chain\nFROM staging_raw_sellout",
+      "hints": [
+        "Второе написание отличается от первого только заменой Ichiba на Itiba внутри того же LIKE '%…%' — written_ia считается тем же способом, что и written_ya.",
+        "total_chain — это «хотя бы одно из двух написаний»: условия внутри одного CASE соединяются через OR, а не AND."
+      ],
+      "explain": "284 строки называют сеть «Ichiba», 261 — «Itiba», вместе — 545: OR гарантирует, что каждая строка учитывается ровно один раз, потому что варианты не пересекаются — имя не может содержать оба написания сразу. Разная транслитерация одного и того же значения — рутинная проблема сырых выгрузок: у одного источника обозначение легло иначе, чем у другого. Пока имя не приведено к одному виду, любой GROUP BY по customer_name молча разрежет сеть на две строки, и обе будут выглядеть законными названиями."
+    },
+    {
+      "id": "sql-106",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "alsoTrains": [
+        "sql-data-quality"
+      ],
+      "level": 3,
+      "mode": "write",
+      "title": "Имена, которых нет в справочнике",
+      "brief": "Прежде чем доверять сырой выгрузке продаж, стоит проверить: каждое ли имя точки в ней узнаёт справочник клиентов. Имя, которого справочник не знает, — точка, которая в отчёт по звезде не попадёт вовсе.",
+      "goal": "По таблице staging_raw_sellout вернуть customer_name и rows — число строк с этим именем — только для тех имён, которых нет в справочнике dim_customer.",
+      "starter": "",
+      "solution": "SELECT r.customer_name, COUNT(*) AS rows\nFROM staging_raw_sellout r\nLEFT JOIN dim_customer c ON c.customer_name = r.customer_name\nWHERE c.customer_id IS NULL\nGROUP BY r.customer_name",
+      "hints": [
+        "Тот же приём, что был в начале второй недели: LEFT JOIN от того, что нужно проверить, к справочнику, а «нет соответствия» — это WHERE по ключевой колонке правой таблицы IS NULL.",
+        "Группировка — из первой недели: GROUP BY по имени, COUNT(*) считает строки в каждой группе. Подстрока (LIKE) здесь не нужна: сравнение точное, по всему имени."
+      ],
+      "explain": "59 разных имён из сырой выгрузки — 1 102 строки из 3 110, больше трети — справочник точек не узнаёт вообще. LEFT JOIN плюс IS NULL по ключу правой таблицы — единственный способ найти то, чего нет, а не то, что есть: INNER JOIN эти строки сразу же вырезал бы вместе с самим вопросом. То, что имя выглядит обычным названием, ничего не говорит о том, узнаёт ли его справочник, — сравнение идёт по точному тексту, и лишний пробел или другая транслитерация делают точку невидимой для отчёта."
     }
   ]
 }
