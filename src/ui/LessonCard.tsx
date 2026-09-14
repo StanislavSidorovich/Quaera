@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { isFigureBlock } from '../content/figureBlock';
+import { LESSON_SCENES } from '../content/lessonScenes';
 import type { Lesson } from '../content/types';
 import type { Executor, Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { ResultTable } from './ResultTable';
+import { StoryArt } from './StoryArt';
 
 /**
  * Карточка приёма.
@@ -83,9 +85,12 @@ function ProseBlock({ text }: { text: string }) {
 
 export function LessonCard({ lesson, executor, runnable = true, onContinue, onPractice }: Props) {
   const { t } = useI18n();
+  // Заставка приёма — та же сцена, что над подводкой в кампании; правило в content/lessonScenes.ts.
+  const scene = LESSON_SCENES[lesson.skill];
   return (
     <>
       <div className="card">
+        {scene && <StoryArt scene={scene} />}
         <span className="pill level">{t.lesson.pill}</span>
         <h2 style={{ fontSize: 18, marginTop: 10 }}>{lesson.title}</h2>
         <p className="brief" style={{ marginBottom: 0 }}>{lesson.why}</p>
