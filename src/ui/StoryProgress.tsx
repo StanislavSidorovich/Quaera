@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n/context';
-import { storyClosesCampaign, storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
+import { storyClosesCampaign, storyPastCases, storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
 import type { StoryPhase } from './StoryMode';
 
 /**
@@ -28,6 +28,13 @@ import type { StoryPhase } from './StoryMode';
  * (`openDayIds` считается в App), будущие остаются текстом: обещать вход
  * в пятницу тому, кто не читал понедельник, значит ломать неделю, ради
  * связности которой она и разложена по дням.
+ *
+ * **Прошлые недели — отдельным свёрнутым списком, а не в самой полосе.**
+ * Полоса нарочно показывает только свою неделю (см. довод выше про делений
+ * на 320px); списку прошлых дел ширина не грозит — свёрнутый `<details>`
+ * занимает одну строку и разворачивается по клику, поэтому он живёт на
+ * каждом экране кампании, а не только на брифе понедельника, как было
+ * у прежней однохоповой «двери в прошлое дело».
  */
 export function StoryProgress({
   campaign,
@@ -41,9 +48,11 @@ export function StoryProgress({
   phase: StoryPhase;
   /** Дни, куда разрешён возврат: всё до достигнутого включительно. */
   openDayIds: Set<string>;
-  onOpenDay: (missionId: string) => void;
+  /** Открыть день; необязательная фаза — прошлые дела открываются сразу на итоге недели. */
+  onOpenDay: (missionId: string, phase?: StoryPhase) => void;
 }) {
   const { t } = useI18n();
+  const pastCases = storyPastCases(campaign, mission.id);
 
   /*
    * Полоса показывает свою неделю, а не всю кампанию: пять или шесть делений
@@ -72,6 +81,21 @@ export function StoryProgress({
         <span className="story-progress-label">{t.storyMode.caseLabel}</span>
         <span className="story-progress-question">{week?.week.question ?? ''}</span>
       </p>
+
+      {pastCases.length > 0 && (
+        <details className="story-known story-progress-past">
+          <summary className="story-known-title">{t.storyMode.pastCases}</summary>
+          <ul>
+            {pastCases.map((c) => (
+              <li key={c.week.id}>
+                <button type="button" onClick={() => onOpenDay(c.lastDayId, { kind: 'summary' })}>
+                  <strong>{t.storyMode.weekShort(c.weekNumber)}</strong> — {c.week.question}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div className="story-progress-track">
         <ol className="story-progress-days" aria-label={t.storyMode.dayAria(dayIndex + 1, days.length)}>

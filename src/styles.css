@@ -5120,6 +5120,36 @@ table.sample td.null {
 }
 
 /*
+ * Список прошлых дел (StoryProgress.tsx) переиспользует коробку и раскрытие
+ * .story-known, но его пункты — кнопки-ссылки, а не находки: точка перед
+ * строкой здесь означала бы «известный факт», хотя это переход на неделю.
+ */
+.story-progress-past li {
+  padding-left: 0;
+}
+
+.story-progress-past li::before {
+  display: none;
+}
+
+.story-progress-past li button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.story-progress-past li button:hover,
+.story-progress-past li button:focus-visible {
+  color: var(--accent);
+}
+
+/*
  * Итог недели (StoryWeekSummary.tsx). Заголовки блоков — тем же тихим
  * кеглем заглавными, что и у папки дела: экран читают сверху вниз как одну
  * сводку, и крупные заголовки разбили бы её на четыре отдельные карточки.

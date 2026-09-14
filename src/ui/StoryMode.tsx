@@ -7,7 +7,6 @@ import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
   storyClosesCampaign,
   storyClosesWeek,
-  storyPreviousCase,
   storyWeekOf,
   type StoryCampaign,
   type StoryMission,
@@ -325,16 +324,6 @@ export function StoryMode({
   const nextMission = campaign.missions[campaign.missions.findIndex((m) => m.id === mission.id) + 1] ?? null;
   const nextStartsWeek = !!nextMission && nextMission.week !== mission.week;
   const found = weekDays.slice(0, weekDays.findIndex((m) => m.id === mission.id)).map((m) => m.found);
-  /**
-   * Дверь в прошлое дело — только на первом дне недели, где её и ищут.
-   * На остальных днях та же ссылка была бы шумом: назад по своей неделе
-   * ведёт полоса.
-   *
-   * Ведёт на итог той недели, а не на бриф её пятницы: итог и есть обзор
-   * закрытого дела — все находки разом и что стало с приёмами с тех пор, —
-   * а полоса над ним по-прежнему открывает любой день той недели.
-   */
-  const previousCase = weekDays[0]?.id === mission.id ? storyPreviousCase(campaign, mission.id) : null;
 
   return (
     <>
@@ -433,15 +422,6 @@ export function StoryMode({
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}
             </button>
-            {previousCase && (
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => onOpenDay(previousCase.id, { kind: 'summary' })}
-              >
-                {t.storyMode.previousCase}
-              </button>
-            )}
           </>
         )}
 

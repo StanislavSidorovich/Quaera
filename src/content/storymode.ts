@@ -4642,22 +4642,40 @@ const en: StoryCampaign = {
   ],
 };
 
+/** Одно прошлое дело в списке возврата — см. storyPastCases. */
+export interface StoryPastCase {
+  week: StoryWeek;
+  /** Порядковый номер недели (с единицы) — для подписи вида «Неделя 2». */
+  weekNumber: number;
+  /** Последний день той недели: оттуда полоса снова навигация по всем её дням. */
+  lastDayId: string;
+}
+
 /**
- * Последний день прошлой недели, если эта неделя не первая.
+ * Все недели строго до текущей, каждая — со своим вопросом расследования
+ * и входом в свой итог.
  *
- * Полоса дела показывает только свою неделю, и без этой ссылки закрытое дело
- * становится недостижимым: пять дней прозы, к которым нет ни одной двери.
- * Ведёт именно в последний день, а не в первый: оттуда полоса той недели
- * снова навигация, и любой её день в одном клике.
+ * Раньше здесь была только предыдущая неделя (одна дверь на брифе понедельника),
+ * и вернуться на две недели назад значило дважды дойти до понедельника и дважды
+ * нажать дверь. Список прошлых дел открыт для возврата с любого экрана кампании
+ * (см. StoryProgress), а не только с брифа понедельника, — вспомнить про находку
+ * из третьей недели можно посреди пятой.
+ *
+ * Ведёт именно в последний день недели, а не в первый: оттуда полоса той недели
+ * снова навигация, и любой её день — в одном клике.
  */
-export function storyPreviousCase(campaign: StoryCampaign, missionId: string): StoryMission | null {
+export function storyPastCases(campaign: StoryCampaign, missionId: string): StoryPastCase[] {
   const mission = campaign.missions.find((m) => m.id === missionId);
-  if (!mission) return null;
+  if (!mission) return [];
   const wi = campaign.weeks.findIndex((w) => w.id === mission.week);
-  const prev = wi > 0 ? campaign.weeks[wi - 1] : null;
-  if (!prev) return null;
-  const days = campaign.missions.filter((m) => m.week === prev.id);
-  return days[days.length - 1] ?? null;
+  if (wi <= 0) return [];
+  return campaign.weeks
+    .slice(0, wi)
+    .map((week, i) => {
+      const days = campaign.missions.filter((m) => m.week === week.id);
+      return { week, weekNumber: i + 1, lastDayId: days[days.length - 1]?.id ?? '' };
+    })
+    .filter((c) => c.lastDayId);
 }
 
 /** Неделя, которой принадлежит день, вместе со своими днями и вопросом. */

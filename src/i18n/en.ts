@@ -627,7 +627,8 @@ export const en = {
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',
     nextWeek: 'Next week',
-    previousCase: 'Back to the previous case',
+    /** См. комментарий в ru.ts: заголовок свёрнутого списка прошлых недель. */
+    pastCases: 'Past cases',
     toBeContinued: 'To be continued',
     finish: 'Home',
     /** См. довод в ru.ts: состояния приёма словами, а не процентом. */
