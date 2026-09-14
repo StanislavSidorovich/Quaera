@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n/context';
-import { storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
+import { storyClosesCampaign, storyWeekOf, type StoryCampaign, type StoryMission } from '../content/storymode';
 import type { StoryPhase } from './StoryMode';
 
 /**
@@ -106,7 +106,9 @@ export function StoryProgress({
         <p className="story-progress-step">
           {closing
             ? phase.kind === 'summary'
-              ? t.storyMode.weekDone
+              ? storyClosesCampaign(campaign, mission.id)
+                ? t.storyMode.campaignDone
+                : t.storyMode.weekDone
               : t.storyMode.dayDone
             : stepIndex === null
               ? ''

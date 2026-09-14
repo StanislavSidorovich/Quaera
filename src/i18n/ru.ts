@@ -1332,10 +1332,16 @@ export const ru = {
      * противопоставить, а «вернётся 18 сентября» говорит, что делать.
      */
     weekDone: 'Неделя закрыта',
+    /** Итог после последнего дня кампании (StoryProgress) — тот же экран, что и у недели. */
+    campaignDone: 'Кампания закрыта',
     summaryTitle: 'Итог недели',
+    /** Итог после дня 25 — та же сводка, но по всем неделям сразу. */
+    summaryTitleCampaign: 'Итог кампании',
     summaryFound: 'Что выяснено',
     summarySkills: 'Что теперь умеете',
     skillDue: 'пора повторить',
+    /** Порог втрое строже «держится» — виден только в итоге кампании, см. ANCHORED_DAYS. */
+    skillAnchored: 'закреплён',
     skillHolds: 'держится',
     skillBack: (date: string) => `вернётся ${date}`,
     summarySkillsNote:

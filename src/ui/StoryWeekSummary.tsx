@@ -29,13 +29,22 @@ import type { StoryStepView } from './StoryMode';
 
 /** Интервал, с которого приём «держится»: неделю без повторения. */
 const HOLDS_DAYS = 7;
+/**
+ * Интервал, с которого приём «закреплён»: три недели без повторения.
+ *
+ * Только в итоге кампании: там между первой неделей и последней проходит
+ * достаточно повторений, чтобы «держится» перестало различать приём,
+ * который вернулся вчера, от того, что не падал месяц. В итоге одной
+ * недели порог не достижим ни разу — интервалы такими короткими не бывают.
+ */
+const ANCHORED_DAYS = 21;
 
 export interface WeekDay {
   mission: StoryMission;
   steps: StoryStepView[];
 }
 
-type SkillLine = { id: string; title: string; state: 'due' | 'holds' | 'back'; dueAt: string };
+type SkillLine = { id: string; title: string; state: 'due' | 'anchored' | 'holds' | 'back'; dueAt: string };
 type HardLine = { id: string; title: string; how: 'shown' | 'attempts'; attempt: number };
 
 export interface WeekSummary {
@@ -78,7 +87,13 @@ export function weekSummary(days: WeekDay[], progress: Progress, now: Date): Wee
   for (const [id, title] of titles) {
     const st = progress.skills[id];
     if (!st || st.reps === 0) continue;
-    const state = isDue(st, endOfToday) ? 'due' : st.intervalDays >= HOLDS_DAYS ? 'holds' : 'back';
+    const state = isDue(st, endOfToday)
+      ? 'due'
+      : st.intervalDays >= ANCHORED_DAYS
+        ? 'anchored'
+        : st.intervalDays >= HOLDS_DAYS
+          ? 'holds'
+          : 'back';
     skills.push({ id, title, state, dueAt: st.dueAt });
   }
 
@@ -122,10 +137,18 @@ export function StoryWeekSummary({
   days,
   progress,
   onEnablePush,
+  campaign = false,
 }: {
   days: WeekDay[];
   progress: Progress;
   onEnablePush: () => Promise<PushState>;
+  /**
+   * Итог кампании, а не одной недели: заголовок называет кампанию,
+   * а папка дела на 25 находках сворачивается тем же приёмом, что и на
+   * брифе (StoryMode.tsx, `found.length >= 3`) — без этого список из
+   * четырёх-пяти строк на неделю превращается в стену текста.
+   */
+  campaign?: boolean;
 }) {
   const { t, locale } = useI18n();
   const [now] = useState(() => new Date());
@@ -145,19 +168,33 @@ export function StoryWeekSummary({
     if (result === 'default') setAsked(false);
   }
 
+  const foundList = (
+    <ul>
+      {s.found.map((f, i) => (
+        <li key={i}>{f}</li>
+      ))}
+    </ul>
+  );
+
   return (
     <>
-      <h2>{t.storyMode.summaryTitle}</h2>
+      <h2>{campaign ? t.storyMode.summaryTitleCampaign : t.storyMode.summaryTitle}</h2>
 
       {/* Та же папка дела, что на брифе, — теперь полная. */}
-      <div className="story-known">
-        <p className="story-known-title">{t.storyMode.summaryFound}</p>
-        <ul>
-          {s.found.map((f, i) => (
-            <li key={i}>{f}</li>
-          ))}
-        </ul>
-      </div>
+      {campaign && s.found.length >= 3 ? (
+        <details className="story-known">
+          <summary className="story-known-title">
+            {t.storyMode.summaryFound}
+            <small>{t.storyMode.knownCount(s.found.length)}</small>
+          </summary>
+          {foundList}
+        </details>
+      ) : (
+        <div className="story-known">
+          <p className="story-known-title">{t.storyMode.summaryFound}</p>
+          {foundList}
+        </div>
+      )}
 
       {s.skills.length > 0 && (
         <>
@@ -169,9 +206,11 @@ export function StoryWeekSummary({
                 <span className={`story-summary-note${k.state === 'due' ? ' is-due' : ''}`}>
                   {k.state === 'due'
                     ? t.storyMode.skillDue
-                    : k.state === 'holds'
-                      ? t.storyMode.skillHolds
-                      : t.storyMode.skillBack(shortDate.format(new Date(k.dueAt)))}
+                    : k.state === 'anchored'
+                      ? t.storyMode.skillAnchored
+                      : k.state === 'holds'
+                        ? t.storyMode.skillHolds
+                        : t.storyMode.skillBack(shortDate.format(new Date(k.dueAt)))}
                 </span>
               </li>
             ))}

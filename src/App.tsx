@@ -31,7 +31,7 @@ import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, type StoryPhase, type StoryStepView } from './ui/StoryMode';
-import { storyCampaign, storyWeekOf, type StoryMission } from './content/storymode';
+import { storyCampaign, storyClosesCampaign, storyWeekOf, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -2382,9 +2382,15 @@ export default function App() {
                 setScreen({ name: 'storymode', missionId: id, phase: phase ?? { kind: 'brief' } });
                 window.scrollTo({ top: 0 });
               }}
-              summaryDays={(storyWeekOf(storyCampaign(locale), storyMission.mission.id)?.missions ?? []).flatMap(
-                (m) => storyMissions.get(m.id) ?? []
-              )}
+              /*
+               * Итог кампании после последнего дня берёт все дни разом,
+               * а не только свою неделю: см. storyClosesCampaign в storymode.ts.
+               */
+              summaryDays={(
+                storyClosesCampaign(storyCampaign(locale), storyMission.mission.id)
+                  ? storyCampaign(locale).missions
+                  : (storyWeekOf(storyCampaign(locale), storyMission.mission.id)?.missions ?? [])
+              ).flatMap((m) => storyMissions.get(m.id) ?? [])}
               progress={progress}
               onEnablePush={() => enablePush(progress, allSkillIds, locale)}
               onExit={() => setScreen({ name: 'home' })}

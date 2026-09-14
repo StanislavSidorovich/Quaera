@@ -4046,6 +4046,19 @@ export function storyClosesWeek(campaign: StoryCampaign, missionId: string): boo
   return !!days && days[days.length - 1]?.id === missionId;
 }
 
+/**
+ * Закрывает ли день кампанию целиком, а не только свою неделю.
+ *
+ * День один и тот же (последний в последней неделе), но итогу после него
+ * нужны все дни кампании, а не пять дней своей недели, — и это решение
+ * нужно раньше, в App и StoryProgress, а не только внутри StoryWeekSummary:
+ * иначе граница «неделя vs кампания» жила бы в двух местах и однажды
+ * разошлась бы.
+ */
+export function storyClosesCampaign(campaign: StoryCampaign, missionId: string): boolean {
+  return campaign.missions[campaign.missions.length - 1]?.id === missionId;
+}
+
 /** Кампания режима истории для локали. */
 export function storyCampaign(locale: Locale = 'ru'): StoryCampaign {
   return locale === 'en' ? en : ru;

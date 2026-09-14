@@ -5,6 +5,7 @@ import type { Executor, SchemaDoc } from '../engine/types';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
+  storyClosesCampaign,
   storyClosesWeek,
   storyPreviousCase,
   storyWeekOf,
@@ -495,7 +496,12 @@ export function StoryMode({
 
         {phase.kind === 'summary' && (
           <>
-            <StoryWeekSummary days={summaryDays}progress={progress} onEnablePush={onEnablePush} />
+            <StoryWeekSummary
+              days={summaryDays}
+              progress={progress}
+              onEnablePush={onEnablePush}
+              campaign={storyClosesCampaign(campaign, mission.id)}
+            />
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}
             </button>

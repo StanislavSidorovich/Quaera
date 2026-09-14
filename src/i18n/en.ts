@@ -632,10 +632,16 @@ export const en = {
     finish: 'Home',
     /** См. довод в ru.ts: состояния приёма словами, а не процентом. */
     weekDone: 'Week closed',
+    /** See ru.ts: same screen after the campaign's last day. */
+    campaignDone: 'Campaign closed',
     summaryTitle: 'The week in review',
+    /** See ru.ts: same summary after day 25, scoped to every week at once. */
+    summaryTitleCampaign: 'The campaign in review',
     summaryFound: 'What the case established',
     summarySkills: 'What you can do now',
     skillDue: 'due for review',
+    /** See ru.ts: a stricter bar than "holding", reached only in the campaign summary. */
+    skillAnchored: 'anchored',
     skillHolds: 'holding',
     skillBack: (date: string) => `back on ${date}`,
     summarySkillsNote:
