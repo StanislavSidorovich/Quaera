@@ -1152,7 +1152,7 @@
       "level": 2,
       "mode": "fill",
       "title": "Отгрузки Setouchi по месяцам",
-      "brief": "Отношение 2.44 у «Setouchi Trading» обсуждают вторую неделю, а самого ряда отгрузок никто не показывал: разговор идёт про одно число за один квартал.",
+      "brief": "Помесячные отгрузки «Setouchi Trading» нужны не таблицей, а рядом во времени: дальше над ним пойдут сглаживание и сравнение по календарю, а группировка по текстовой дате календаря не знает.",
       "goal": "Построить месячный ряд units по дистрибьютору 1 — отобрать его строки в fact_sellin и пересобрать таблицу в месячную частоту через resample.",
       "template": "mask = fact_sellin[___] == 1\nsellin = fact_sellin[mask].copy()\nsellin['month_start'] = pd.to_datetime(sellin['month_start'])\nmonthly = sellin.set_index('month_start').sort_index()\nresult = monthly[['units']].___('MS').sum()",
       "blanks": ["'distributor_id'", "resample"],
@@ -1251,6 +1251,208 @@
         "resample раскладывает наблюдения по месяцам календаря. Есть ли календарь у текста?"
       ],
       "explain": "Это удобная ошибка: она падает сразу и на той строке, где сделана. Подготовка ряда поэтому и состоит из двух шагов: pd.to_datetime превращает текст в дату, set_index делает её осью, и только после этого resample знает, где кончается месяц. Порядок важен — set_index без to_datetime тоже даёт индекс, просто текстовый, ровно как здесь. Третий вызов, который часто пишут рядом, sort_index, от этой ошибки не спасает и для resample не нужен: наблюдения по месяцам он раскладывает сам. Сортировка нужна операциям, которые берут соседей по порядку строк, — например, rolling."
+    },
+    {
+      "id": "py-048",
+      "track": "python",
+      "skill": "py-select-filter",
+      "level": 1,
+      "mode": "write",
+      "title": "Октябрь Setouchi построчно",
+      "brief": "Прежде чем что-то считать по «Setouchi Trading», руководитель просит посмотреть на сырые строки одного месяца: как выглядит в таблице отгрузок октябрь 2025 года.",
+      "goal": "Вернуть product_id и units из fact_sellin для дистрибьютора 1 за month_start = '2025-10-01'.",
+      "starter": "result = fact_sellin.loc[\n    ,\n    ['product_id', 'units'],\n]",
+      "solution": "result = fact_sellin.loc[\n    (fact_sellin['distributor_id'] == 1) & (fact_sellin['month_start'] == '2025-10-01'),\n    ['product_id', 'units'],\n]",
+      "hints": [
+        "Условий два — по distributor_id и по month_start, каждое в своих скобках, между ними &.",
+        "month_start хранится текстом, поэтому сравнивается со строкой в кавычках: '2025-10-01'."
+      ],
+      "explain": "44 строки — по одной на товар, который Setouchi заказал в октябре, и в сумме 10 172 штуки. Глазами такой список не читается: строка говорит о товаре, а вопрос — о месяце целиком. Отсюда следующий шаг — свернуть строки группировкой. И заметьте, что month_start здесь не дата, а текст: сравнение с '2025-10-01' работает потому, что запись совпадает посимвольно, а не потому, что pandas понимает месяцы."
+    },
+    {
+      "id": "py-049",
+      "track": "python",
+      "skill": "py-groupby",
+      "level": 2,
+      "mode": "write",
+      "title": "Отгрузки по дистрибьюторам за IV квартал",
+      "brief": "Финансы просят сумму отгрузок по каждому дистрибьютору за октябрь–декабрь 2025 года. Таблицу потом будут сравнивать с другими, поэтому дистрибьютор нужен обычной колонкой, а не в индексе.",
+      "goal": "По строкам fact_sellin за три месяца IV квартала 2025 года вернуть distributor_id и units — сумму штук по каждому дистрибьютору. distributor_id — обычной колонкой.",
+      "starter": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\nresult = ",
+      "solution": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\nresult = q4.groupby('distributor_id')['units'].sum().reset_index()",
+      "hints": [
+        "Три звена одной цепочки: сгруппировать по distributor_id, выбрать units, свернуть суммой.",
+        "После группировки ключ уходит в индекс. Вернуть его колонкой — .reset_index() в конце цепочки."
+      ],
+      "explain": "У Setouchi — 28 203 штуки за квартал, у следующего, Hokusei Trading, — 12 018. Сама по себе сумма ещё ничего не доказывает: крупный дистрибьютор и должен забирать больше. Много это или нет, решает сравнение — с тем же кварталом год назад или с продажами его точек, — и для обоих distributor_id нужен колонкой: по ней таблицу потом соединяют и фильтруют. Тот же результат дал бы и as_index=False внутри groupby — второй способ не уносить ключ в индекс."
+    },
+    {
+      "id": "py-050",
+      "track": "python",
+      "skill": "py-groupby",
+      "level": 1,
+      "mode": "write",
+      "title": "Тот же квартал годом раньше",
+      "brief": "Чтобы понять, много ли 28 203 штуки за осенний квартал, нужна точка отсчёта. Самая честная — тот же квартал годом раньше: сезон тот же, партнёры те же.",
+      "goal": "По строкам fact_sellin за октябрь–декабрь 2024 года вернуть distributor_id и units — сумму штук по каждому дистрибьютору. distributor_id — обычной колонкой.",
+      "starter": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2024-10-01', '2024-11-01', '2024-12-01'])]\nresult = ",
+      "solution": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2024-10-01', '2024-11-01', '2024-12-01'])]\nresult = q4.groupby('distributor_id')['units'].sum().reset_index()",
+      "hints": [
+        "Цепочка та же, что для IV квартала 2025 года: groupby по distributor_id, units, sum.",
+        "Ключ колонкой — .reset_index() в конце цепочки."
+      ],
+      "explain": "Год назад у Setouchi было 13 341 штука — первое место, но с отрывом всего в 475 штук от Hokusei Trading (12 866). В 2025 году у всех одиннадцати остальных осенний квартал вышел на 3–14% меньше прошлогоднего, а у Setouchi — вдвое больше. Сравнение с собой годом раньше — самая дешёвая проверка «норма ли это»: оно убирает и сезон, и размер партнёра, потому что оба у него те же."
+    },
+    {
+      "id": "py-051",
+      "track": "python",
+      "skill": "py-groupby",
+      "level": 2,
+      "mode": "write",
+      "title": "Отгрузки Setouchi помесячно",
+      "brief": "Мори-сан уверен, что осенний всплеск — разовая история. Проверить это можно только на всей длине: какой у партнёра обычный месяц и сколько месяцев из него выбились.",
+      "goal": "По строкам fact_sellin дистрибьютора 1 вернуть month_start и units — сумму штук за каждый месяц. month_start — обычной колонкой.",
+      "starter": "setouchi = fact_sellin[fact_sellin['distributor_id'] == 1]\nresult = ",
+      "solution": "setouchi = fact_sellin[fact_sellin['distributor_id'] == 1]\nresult = setouchi.groupby('month_start', as_index=False)['units'].sum()",
+      "hints": [
+        "Группировать по month_start: одна строка результата — один месяц.",
+        "as_index=False внутри groupby оставит month_start колонкой."
+      ],
+      "explain": "Тридцать месяцев, и обычный месяц у Setouchi — от 3 575 до 6 646 штук. Выбиваются три подряд: октябрь, ноябрь и декабрь 2025 года — 10 172, 8 162 и 9 869. Это не один странный месяц, а квартал, и с января отгрузки снова в прежних пределах. Группировка здесь идёт по тексту, и это работает, пока у каждого месяца есть хотя бы одна строка: месяц без единой отгрузки в такую таблицу просто не попал бы. У Setouchi таких месяцев нет, но у ряда во времени этой слабости быть не должно."
+    },
+    {
+      "id": "py-052",
+      "track": "python",
+      "skill": "py-groupby",
+      "level": 2,
+      "mode": "fill",
+      "title": "Больше строк или больше штук",
+      "brief": "Про всплеск в отгрузках первым делом спрашивают, не ошибка ли это выгрузки. Задвоенная загрузка выглядит в таблице просто: строк становится вдвое больше, а штук в каждой — столько же.",
+      "goal": "По строкам fact_sellin дистрибьютора 1 вернуть для каждого month_start две меры: orders — число строк (count по sellin_id) и units — сумму штук.",
+      "template": "setouchi = fact_sellin[fact_sellin['distributor_id'] == 1]\nresult = setouchi.groupby('month_start', as_index=False).agg(\n    orders=(___, 'count'),\n    units=('units', ___),\n)",
+      "blanks": [
+        "'sellin_id'",
+        "'sum'"
+      ],
+      "solution": "setouchi = fact_sellin[fact_sellin['distributor_id'] == 1]\nresult = setouchi.groupby('month_start', as_index=False).agg(\n    orders=('sellin_id', 'count'),\n    units=('units', 'sum'),\n)",
+      "hints": [
+        "Именованная агрегация: имя=('колонка', 'функция'). Строки считает count по колонке без пропусков — например, по sellin_id.",
+        "Штуки складываются: функция 'sum'."
+      ],
+      "explain": "Строк в месяц у Setouchi всегда от 38 до 44 — по одной на заказанный товар, — и в октябре–декабре 2025 года их 44, 44 и 42, как в любом другом месяце. Товары те же 44, что за всю историю, и ни один не встречается в месяце дважды. Выросло не число строк, а штуки в каждой: 10 172 в октябре против 6 019 в сентябре при тех же 44 строках. Задвоенная выгрузка дала бы обратную картину. Значит, это настоящие заказы: те же позиции, что всегда, взятые с запасом."
+    },
+    {
+      "id": "py-053",
+      "track": "python",
+      "skill": "py-select-filter",
+      "level": 3,
+      "mode": "predict",
+      "title": "Продали ли точки больше",
+      "brief": "Если осенью у Setouchi вырос спрос, отгрузки просто шли за ним, и всплеск объясняется продажами. Проверяют это по точкам, которые он обслуживает: их продажи лежат в fact_sellout, а связь с дистрибьютором — в dim_customer.",
+      "goal": "Понять, что делали продажи точек Setouchi в квартал всплеска.",
+      "predictSql": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)]\nq4_2024 = sold[(sold['week_start'] >= '2024-10-01') & (sold['week_start'] < '2025-01-01')]['units'].sum()\nq4_2025 = sold[(sold['week_start'] >= '2025-10-01') & (sold['week_start'] < '2026-01-01')]['units'].sum()",
+      "predictQuestion": "Отгрузки Setouchi в IV квартале 2025 года — 28 203 штуки против 13 341 годом раньше. Что покажут q4_2024 и q4_2025 — продажи его точек за те же кварталы?",
+      "options": [
+        {
+          "label": "Продажи выросли вдвое вслед за отгрузками: точки продали столько же, сколько получили",
+          "why": "Тогда отношение отгрузок к продажам осталось бы около единицы, как у остальных одиннадцати. У Setouchi оно 2.44 — значит, продажи за отгрузками не пошли."
+        },
+        {
+          "label": "Продажи не выросли, а немного упали: 12 673 штуки в IV квартале 2024 года и 11 574 в IV квартале 2025-го",
+          "correct": true,
+          "why": "Спрос за всплеском не стоял: точки продали даже на тысячу штук меньше, чем годом раньше. Товар уехал к партнёру и остался у него — отсюда и 2.44: 28 203 отгружено на 11 574 продано."
+        },
+        {
+          "label": "Продажи выросли, но меньше отгрузок — примерно на треть",
+          "why": "Рост продаж хотя бы на треть был бы заметен у самих точек. В данных его нет: продажи квартала ниже прошлогодних, а не выше."
+        },
+        {
+          "label": "Сравнить нельзя: продажи и дистрибьюторы лежат в разных таблицах",
+          "why": "Таблицы связаны через точку: served_by_distributor_id в dim_customer говорит, кто её обслуживает. Первая строка кода собирает список таких точек, вторая оставляет только их продажи, а дальше это обычная маска по датам."
+        }
+      ],
+      "hints": [
+        "Первая строка собирает точки дистрибьютора из справочника, вторая оставляет только их продажи.",
+        "Сравните с отгрузками: если бы продажи выросли вдвое, отношение осталось бы около единицы."
+      ],
+      "explain": "Точки Setouchi продали в IV квартале 2025 года 11 574 штуки — на 1 099 меньше, чем годом раньше. Отгрузка не шла за спросом, она шла мимо него. Обратите внимание, как собран отбор: сначала список точек из справочника, потом маска .isin по этому списку. Продажи не знают своего дистрибьютора — его знает точка, и путь от одного к другому лежит через справочник."
+    },
+    {
+      "id": "py-054",
+      "track": "python",
+      "skill": "py-timeseries",
+      "level": 2,
+      "mode": "fill",
+      "title": "Продажи точек Setouchi по месяцам",
+      "brief": "Отгрузки «Setouchi Trading» уже собраны рядом по месяцам. Чтобы положить рядом продажи его точек, их надо собрать в ту же частоту, а лежат они понедельно.",
+      "goal": "Собрать продажи точек дистрибьютора 1 в месячный ряд units через resample.",
+      "template": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)].copy()\nsold['week_start'] = pd.to_datetime(sold['week_start'])\nsold = sold.set_index('week_start').sort_index()\nresult = sold[['units']].___(___).sum()",
+      "blanks": [
+        "resample",
+        "'MS'"
+      ],
+      "solution": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)].copy()\nsold['week_start'] = pd.to_datetime(sold['week_start'])\nsold = sold.set_index('week_start').sort_index()\nresult = sold[['units']].resample('MS').sum()",
+      "hints": [
+        "Частоту меняет resample, начало месяца обозначается 'MS'.",
+        "Индекс уже подготовлен: дата переведена из текста и поставлена осью."
+      ],
+      "explain": "Продажи точек Setouchi в октябре, ноябре и декабре 2025 года — 4 064, 3 379 и 4 131 штука, за квартал 11 574 против 12 673 годом раньше. Отгрузки в те же месяцы — 10 172, 8 162 и 9 869. Два ряда одной частоты теперь можно класть рядом. resample по понедельным датам относит неделю к месяцу, в котором она начинается: неделя с 29 сентября попадёт в сентябрь, хотя почти вся лежит в октябре. Менять это правило незачем, важно другое — чтобы оба ряда, которые потом сравнивают, были посчитаны одним и тем же."
+    },
+    {
+      "id": "py-055",
+      "track": "python",
+      "skill": "py-merge",
+      "level": 3,
+      "mode": "fill",
+      "title": "2.44 в pandas",
+      "brief": "Отношение отгрузок к продажам за IV квартал 2025 года однажды уже считали запросом. Теперь его собирают в pandas тем же способом — два факта, каждый свёрнут до строки на дистрибьютора, — чтобы пересчитывать за любой период одной правкой.",
+      "goal": "По каждому дистрибьютору за IV квартал 2025 года вернуть distributor_id, shipped — отгружено штук, sold — продано в его точках за недели, начинающиеся в октябре–декабре, и ratio — shipped / sold, округлённое до двух знаков.",
+      "template": "shipped = (\n    fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\n    .groupby('distributor_id', as_index=False)\n    .agg(shipped=('units', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2025-10-01') & (fact_sellout['week_start'] < '2026-01-01')]\nsold = (\n    weeks.merge(outlets, on=___, how='left', validate=___)\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = shipped.merge(sold, on=___)\nresult['ratio'] = (result['shipped'] / result['sold']).round(2)",
+      "blanks": [
+        "'customer_id'",
+        "'many_to_one'",
+        "'distributor_id'"
+      ],
+      "solution": "shipped = (\n    fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\n    .groupby('distributor_id', as_index=False)\n    .agg(shipped=('units', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2025-10-01') & (fact_sellout['week_start'] < '2026-01-01')]\nsold = (\n    weeks.merge(outlets, on='customer_id', how='left', validate='many_to_one')\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = shipped.merge(sold, on='distributor_id')\nresult['ratio'] = (result['shipped'] / result['sold']).round(2)",
+      "hints": [
+        "Первое соединение приклеивает к каждой продаже дистрибьютора её точки: ключ — customer_id, и справа он уникален.",
+        "Второе соединяет две свёрнутые таблицы по общей колонке — той, ради которой outlets переименовывали."
+      ],
+      "explain": "Та же таблица, что в запросе: у Setouchi 28 203 на 11 574, то есть 2.44, у остальных одиннадцати 1.04–1.05. Устроено так же, как запрос с двумя WITH: каждый факт сначала свёрнут до строки на дистрибьютора, и только потом свёрнутые соединены. Первый merge приклеивает к продаже её точку — справа customer_id уникален, отсюда validate='many_to_one'. Второй соединяет две свёрнутые таблицы по distributor_id, где ключ уникален с обеих сторон. Переименование колонки в outlets нужно ровно для второго соединения: merge с on= ищет колонку с одним и тем же именем в обеих таблицах."
+    },
+    {
+      "id": "py-056",
+      "track": "python",
+      "skill": "py-merge",
+      "level": 3,
+      "mode": "write",
+      "title": "Тот же расчёт за I квартал 2026",
+      "brief": "Мори-сан говорит, что с января Setouchi берёт как обычно. Раз отношение уже собрано кодом, проверка стоит одной правки периода, и мерить надо той же меркой, которой всплеск нашли.",
+      "goal": "За I квартал 2026 года вернуть по каждому дистрибьютору distributor_id, shipped, sold и ratio — shipped / sold, округлённое до двух знаков. Свёрнутые shipped и sold уже собраны в заготовке: соедините их и добавьте ratio.",
+      "starter": "shipped = (\n    fact_sellin[fact_sellin['month_start'].isin(['2026-01-01', '2026-02-01', '2026-03-01'])]\n    .groupby('distributor_id', as_index=False)\n    .agg(shipped=('units', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2026-01-01') & (fact_sellout['week_start'] < '2026-04-01')]\nsold = (\n    weeks.merge(outlets, on='customer_id', how='left', validate='many_to_one')\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = ",
+      "solution": "shipped = (\n    fact_sellin[fact_sellin['month_start'].isin(['2026-01-01', '2026-02-01', '2026-03-01'])]\n    .groupby('distributor_id', as_index=False)\n    .agg(shipped=('units', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2026-01-01') & (fact_sellout['week_start'] < '2026-04-01')]\nsold = (\n    weeks.merge(outlets, on='customer_id', how='left', validate='many_to_one')\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = shipped.merge(sold, on='distributor_id')\nresult['ratio'] = (result['shipped'] / result['sold']).round(2)",
+      "hints": [
+        "Две свёрнутые таблицы соединяются по distributor_id — он есть в обеих и уникален в каждой.",
+        "ratio — новая колонка: result['ratio'] = (...).round(2)."
+      ],
+      "explain": "В I квартале 2026 года Setouchi снова в общем ряду: 13 432 отгружено на 12 717 продано, 1.06, у остальных — от 1.02 до 1.05. По той мерке, которой всплеск нашли, он кончился. Мерка при этом честная, но узкая: отношение сравнивает, сколько пришло к партнёру и сколько ушло от него за один и тот же период, — два потока. О том, что успело скопиться между ними раньше, оно не говорит ничего."
+    },
+    {
+      "id": "py-057",
+      "track": "python",
+      "skill": "py-merge",
+      "level": 3,
+      "mode": "write",
+      "title": "На сколько месяцев хватит запаса",
+      "brief": "Отношение вернулось к единице, а на складе «Setouchi Trading» лежит больше двадцати тысяч штук. Отделу продаж нужно число, которое переводится в план: на сколько месяцев продаж хватит того, что уже лежит у партнёра.",
+      "goal": "По каждому дистрибьютору вернуть distributor_id, stock — остаток на складе на конец июня 2026 года, sold — продажи его точек за недели января–июня 2026 года, и months — на сколько месяцев таких продаж хватит остатка: stock / (sold / 6), округлённое до одного знака. stock и sold уже собраны в заготовке.",
+      "starter": "stock = (\n    fact_stock[fact_stock['month_start'] == '2026-06-01']\n    .groupby('distributor_id', as_index=False)\n    .agg(stock=('units_on_hand', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2026-01-01') & (fact_sellout['week_start'] < '2026-07-01')]\nsold = (\n    weeks.merge(outlets, on='customer_id', how='left', validate='many_to_one')\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = ",
+      "solution": "stock = (\n    fact_stock[fact_stock['month_start'] == '2026-06-01']\n    .groupby('distributor_id', as_index=False)\n    .agg(stock=('units_on_hand', 'sum'))\n)\noutlets = dim_customer[['customer_id', 'served_by_distributor_id']].rename(\n    columns={'served_by_distributor_id': 'distributor_id'}\n)\nweeks = fact_sellout[(fact_sellout['week_start'] >= '2026-01-01') & (fact_sellout['week_start'] < '2026-07-01')]\nsold = (\n    weeks.merge(outlets, on='customer_id', how='left', validate='many_to_one')\n    .groupby('distributor_id', as_index=False)\n    .agg(sold=('units', 'sum'))\n)\nresult = stock.merge(sold, on='distributor_id')\nresult['months'] = (result['stock'] / (result['sold'] / 6)).round(1)",
+      "hints": [
+        "Остаток и продажи соединяются по distributor_id, как отгрузки и продажи в отношении.",
+        "Продажи за полугодие делятся на 6 — получаются продажи в месяц; остаток делится на них."
+      ],
+      "explain": "У Setouchi на складе 22 176 штук при продажах его точек около 4 335 в месяц — запас на 5.1 месяца. У остальных одиннадцати — от 1.1 до 1.4 месяца: столько, сколько нужно, чтобы полка не пустела между поставками. Разница в четыре месяца продаж — то, что осень оставила после себя, и с января она не уменьшилась, а даже подросла: партнёр заказывает ровно столько, сколько продаёт. Разойтись ей два пути — партнёр однажды пропустит заказы или товар доживёт на складе до срока годности, — и оба должны стоять в плане, а не всплыть в нём сюрпризом."
     }
   ]
 }

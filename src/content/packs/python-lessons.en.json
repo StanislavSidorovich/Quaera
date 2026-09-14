@@ -67,7 +67,7 @@
       "skill": "py-merge",
       "title": "merge and row multiplication",
       "why": "merge doesn't check that the join key is unique on at least one side: if the right side has several rows with the same key value, every row on the left gets glued to all of them at once; the result multiplies rather than getting flagged \"a match was found\". It's the same fan-out as a SQL JOIN (see sql-fanout), just under a different name.",
-      "form": "left.merge(right, on='key', how='left', validate='many_to_one')",
+      "form": "left.merge(right, on='key', how='left', validate='many_to_one')\n\n# after the join, columns of both tables share a row,\n# so one can be divided by the other row by row\nresult['ratio'] = result['col_a'] / result['col_b']",
       "reads": "The city and channel of the outlet that made it, glued onto every sale. customer_id is dim_customer's primary key, so the result has exactly as many rows as there were sales: 118,449 before the join and 118,449 after. validate='many_to_one' doesn't change the result; it pins that expectation into the code: the key repeats on the left and must be unique on the right.",
       "wrongWhy": "The second merge joins on brand, not promo_id, and the «Nettora» brand, say, has 10 different promos. Each of that brand's 11,048 sales gets glued to all ten, and the result balloons to 110,480 rows: revenue comes out tenfold, even though merge doesn't raise a single error; it honestly did exactly what it was asked to do.",
       "selfCheck": "After any merge, compare len(result) with len(left) from before the join. If it grew, the key on the right isn't unique. validate='many_to_one' catches this automatically, before the discrepancy ever reaches a report."

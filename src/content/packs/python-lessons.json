@@ -81,7 +81,7 @@
       "skill": "py-merge",
       "title": "merge и размножение строк",
       "why": "merge не проверяет, что ключ соединения уникален хотя бы с одной стороны: если справа несколько строк с одинаковым значением ключа, каждая строка слева приклеится ко всем ним сразу — результат разрастается в разы, а не помечается «есть совпадение». Это тот же фан-аут, что и в SQL JOIN (см. sql-fanout), только под другим именем.",
-      "form": "left.merge(right, on='ключ', how='left', validate='many_to_one')",
+      "form": "left.merge(right, on='ключ', how='left', validate='many_to_one')\n\n# после соединения колонки обеих таблиц стоят в одной строке —\n# их можно делить друг на друга построчно\nresult['отношение'] = result['колонка_а'] / result['колонка_б']",
       "example": "result = fact_sellout.merge(\n    dim_customer[['customer_id', 'city', 'channel']], on='customer_id', how='left', validate='many_to_one',\n)",
       "reads": "К каждой продаже приклеены город и канал точки, которая её сделала. customer_id — первичный ключ dim_customer, поэтому строк в результате ровно столько же, сколько было продаж: 118 449 до соединения и 118 449 после. validate='many_to_one' не меняет результат, а фиксирует это ожидание в коде — слева ключ повторяется, справа обязан быть уникален.",
       "wrong": "result = fact_sellout.merge(\n    dim_product[['product_id', 'brand']], on='product_id'\n).merge(\n    dim_promo[['promo_id', 'brand', 'discount_pct']], on='brand'\n)",

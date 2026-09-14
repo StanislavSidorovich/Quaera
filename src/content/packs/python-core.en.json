@@ -830,7 +830,7 @@
     {
       "id": "py-044",
       "title": "Setouchi shipments by month",
-      "brief": "The 2.44 ratio for «Setouchi Trading» has been discussed for two weeks now, and nobody has shown the shipment series itself: the whole conversation rests on one number for one quarter.",
+      "brief": "Monthly «Setouchi Trading» shipments are needed as a series in time rather than as a table: smoothing and calendar comparisons come next, and a grouping on a text date knows nothing about the calendar.",
       "goal": "Build a monthly series of units for distributor 1: select its rows in fact_sellin and re-bucket the table to monthly frequency with resample.",
       "hints": [
         "The partner is recorded in the distributor_id column, and a mask on it keeps the rows of a single distributor.",
@@ -908,6 +908,135 @@
         "resample sorts observations into calendar months. Does text have a calendar?"
       ],
       "explain": "This is a convenient error: it fails immediately, on the line where the mistake is. That's why preparing a series takes two steps: pd.to_datetime turns text into a date, set_index makes it the axis, and only then does resample know where a month ends. The order matters: set_index without to_datetime still gives you an index, just a text one, exactly as here. The third call often written next to them, sort_index, doesn't prevent this error and isn't needed by resample, which sorts observations into months itself. Sorting matters for operations that take neighbors in row order, rolling for example."
+    },
+    {
+      "id": "py-048",
+      "title": "Setouchi's October, row by row",
+      "brief": "Before computing anything about «Setouchi Trading», your manager wants a look at the raw rows for one month: what October 2025 looks like in the shipment table.",
+      "goal": "Return product_id and units from fact_sellin for distributor 1 with month_start = '2025-10-01'.",
+      "hints": [
+        "There are two conditions, one on distributor_id and one on month_start, each in its own brackets with & between them.",
+        "month_start is stored as text, so it is compared with a quoted string: '2025-10-01'."
+      ],
+      "explain": "44 rows, one per product Setouchi ordered in October, 10,172 units in total. A list like that cannot be read by eye: a row talks about a product, while the question is about the month as a whole. Hence the next step, collapsing the rows by grouping. Notice also that month_start is text here, not a date: comparing it with '2025-10-01' works because the characters match, not because pandas understands months."
+    },
+    {
+      "id": "py-049",
+      "title": "Shipments by distributor for Q4",
+      "brief": "Finance wants total shipments per distributor for October to December 2025. The table will be compared with others later, so the distributor has to be an ordinary column rather than sit in the index.",
+      "goal": "From the fact_sellin rows for the three months of Q4 2025, return distributor_id and units, the total number of units for each distributor, with distributor_id as an ordinary column.",
+      "hints": [
+        "Three links in one chain: group by distributor_id, pick units, collapse with a sum.",
+        "After grouping the key moves into the index. To bring it back as a column, end the chain with .reset_index()."
+      ],
+      "explain": "Setouchi has 28,203 units for the quarter; the next one, Hokusei Trading, has 12,018. The total on its own proves nothing yet: a large distributor is supposed to take more. Whether this is a lot is decided by a comparison, with the same quarter a year earlier or with sales at its outlets, and both need distributor_id as a column, because that is what the table is later joined and filtered on. as_index=False inside groupby would give the same result: it is the other way to keep the key out of the index."
+    },
+    {
+      "id": "py-050",
+      "title": "The same quarter a year earlier",
+      "brief": "To tell whether 28,203 units in an autumn quarter is a lot, you need a reference point. The fairest one is the same quarter a year earlier: the same season, the same partners.",
+      "goal": "From the fact_sellin rows for October to December 2024, return distributor_id and units, the total number of units for each distributor, with distributor_id as an ordinary column.",
+      "hints": [
+        "The chain is the same as for Q4 2025: groupby on distributor_id, units, sum.",
+        "For the key as a column, end the chain with .reset_index()."
+      ],
+      "explain": "A year earlier Setouchi took 13,341 units: first place, but only 475 units ahead of Hokusei Trading (12,866). In 2025 every one of the other eleven came in 3 to 14% below its previous autumn quarter, while Setouchi doubled. Comparing a partner with itself a year earlier is the cheapest test of whether something is normal: it removes both the season and the size of the partner, because both are the same."
+    },
+    {
+      "id": "py-051",
+      "title": "Setouchi shipments month by month",
+      "brief": "Mori-san is sure the autumn spike was a one-off. The only way to check is across the full length: what an ordinary month looks like for this partner and how many months broke out of it.",
+      "goal": "From the fact_sellin rows for distributor 1, return month_start and units, the total units for each month, with month_start as an ordinary column.",
+      "hints": [
+        "Group by month_start: one row of the result is one month.",
+        "as_index=False inside groupby keeps month_start a column."
+      ],
+      "explain": "Thirty months, and an ordinary Setouchi month runs from 3,575 to 6,646 units. Three in a row break out: October, November and December 2025, at 10,172, 8,162 and 9,869. That is not one odd month but a quarter, and from January shipments are back within the usual range. The grouping here runs on text, which works as long as every month has at least one row: a month with no shipments at all would simply not appear in such a table. Setouchi has no such months, but a time series should not carry that weakness."
+    },
+    {
+      "id": "py-052",
+      "title": "More rows or more units",
+      "brief": "The first question about a spike in shipments is whether it is an export error. A duplicated load is easy to spot in the table: twice as many rows, with the same quantity in each.",
+      "goal": "From the fact_sellin rows for distributor 1, return two measures for each month_start: orders, the number of rows (count over sellin_id), and units, the total number of units.",
+      "hints": [
+        "Named aggregation: name=('column', 'function'). Rows are counted with count over a column that has no gaps, sellin_id for example.",
+        "Units are added up: the function is 'sum'."
+      ],
+      "explain": "Setouchi always has between 38 and 44 rows a month, one per product ordered, and October to December 2025 have 44, 44 and 42, like any other month. They are the same 44 products as across the whole history, and none appears twice in a month. What grew is not the number of rows but the units in each: 10,172 in October against 6,019 in September on the same 44 rows. A duplicated load would show the opposite picture. So these are real orders: the usual products, taken with a margin."
+    },
+    {
+      "id": "py-053",
+      "title": "Did the outlets sell more",
+      "brief": "If demand at Setouchi grew in the autumn, shipments simply followed it and the spike is explained by sales. The check runs through the outlets it serves: their sales sit in fact_sellout, and the link to the distributor is in dim_customer.",
+      "goal": "Work out what sales at Setouchi outlets did in the quarter of the spike.",
+      "predictQuestion": "Setouchi shipments in Q4 2025 were 28,203 units against 13,341 a year earlier. What will q4_2024 and q4_2025, sales at its outlets for the same quarters, show?",
+      "options": [
+        {
+          "label": "Sales doubled along with shipments: the outlets sold as much as they received",
+          "why": "Then the ratio of shipments to sales would have stayed around one, as it did for the other eleven. For Setouchi it is 2.44, so sales did not follow shipments."
+        },
+        {
+          "label": "Sales did not grow, they dipped slightly: 12,673 units in Q4 2024 and 11,574 in Q4 2025",
+          "why": "No demand stood behind the spike: the outlets sold about a thousand units fewer than a year earlier. The goods went to the partner and stayed there, which is where 2.44 comes from: 28,203 shipped against 11,574 sold."
+        },
+        {
+          "label": "Sales grew, but less than shipments, by about a third",
+          "why": "Sales growth of even a third would have been visible at the outlets themselves. The data shows none: sales for the quarter are below the previous year, not above it."
+        },
+        {
+          "label": "They cannot be compared: sales and distributors live in different tables",
+          "why": "The tables are linked through the outlet: served_by_distributor_id in dim_customer says who serves it. The first line of the code collects those outlets, the second keeps only their sales, and after that it is an ordinary mask on dates."
+        }
+      ],
+      "hints": [
+        "The first line collects the outlets of the distributor from the reference table, the second keeps only their sales.",
+        "Compare with shipments: if sales had doubled, the ratio would have stayed around one."
+      ],
+      "explain": "Setouchi outlets sold 11,574 units in Q4 2025, 1,099 fewer than a year earlier. Shipments did not follow demand, they went past it. Notice how the selection is built: first the list of outlets from the reference table, then an .isin mask on that list. Sales do not know their distributor; the outlet does, and the road from one to the other runs through the reference table."
+    },
+    {
+      "id": "py-054",
+      "title": "Setouchi outlet sales by month",
+      "brief": "«Setouchi Trading» shipments are already collected into a monthly series. To put sales at its outlets next to them, those have to be brought to the same frequency, and they are stored by week.",
+      "goal": "Collect sales at the outlets of distributor 1 into a monthly series of units with resample.",
+      "hints": [
+        "resample changes the frequency; month start is written 'MS'.",
+        "The index is already prepared: the date has been converted from text and set as the axis."
+      ],
+      "explain": "Sales at Setouchi outlets in October, November and December 2025 were 4,064, 3,379 and 4,131 units, 11,574 for the quarter against 12,673 a year earlier. Shipments in the same months were 10,172, 8,162 and 9,869. Two series at the same frequency can now be laid side by side. resample over weekly dates assigns a week to the month it starts in: the week of 29 September lands in September, although almost all of it lies in October. There is no need to change that rule; what matters is that both series you are going to compare are counted by the same one."
+    },
+    {
+      "id": "py-055",
+      "title": "2.44 in pandas",
+      "brief": "The ratio of shipments to sales for Q4 2025 has already been computed once with a query. Now it is assembled in pandas the same way, two facts each collapsed to one row per distributor, so that it can be recomputed for any period with a single edit.",
+      "goal": "For each distributor in Q4 2025, return distributor_id, shipped (units shipped), sold (units sold at its outlets in the weeks starting in October to December) and ratio (shipped / sold, rounded to two decimal places).",
+      "hints": [
+        "The first join attaches each sale to the distributor of its outlet: the key is customer_id, and it is unique on the right.",
+        "The second joins the two collapsed tables on a shared column, the one outlets was renamed for."
+      ],
+      "explain": "The same table as the query gave: Setouchi at 28,203 against 11,574, which is 2.44, the other eleven at 1.04 to 1.05. It is built the same way as the query with two WITH blocks: each fact is first collapsed to one row per distributor, and only then are the collapsed tables joined. The first merge attaches its outlet to each sale; customer_id is unique on the right, hence validate='many_to_one'. The second joins the two collapsed tables on distributor_id, where the key is unique on both sides. The column in outlets is renamed exactly for that second join: merge with on= looks for a column with the same name in both tables."
+    },
+    {
+      "id": "py-056",
+      "title": "The same calculation for Q1 2026",
+      "brief": "Mori-san says that since January Setouchi has been buying as usual. With the ratio already assembled in code, checking takes one change of period, and it should be measured with the same yardstick the spike was found with.",
+      "goal": "For Q1 2026, return distributor_id, shipped, sold and ratio (shipped / sold, rounded to two decimal places) for each distributor. The collapsed shipped and sold tables are already built in the starter: join them and add ratio.",
+      "hints": [
+        "The two collapsed tables join on distributor_id, which is present in both and unique in each.",
+        "ratio is a new column: result['ratio'] = (...).round(2)."
+      ],
+      "explain": "In Q1 2026 Setouchi is back in line: 13,432 shipped against 12,717 sold, 1.06, with the others between 1.02 and 1.05. By the yardstick the spike was found with, it is over. The yardstick is fair but narrow: the ratio compares how much came to the partner and how much left it within the same period, two flows. About what piled up between them earlier it says nothing at all."
+    },
+    {
+      "id": "py-057",
+      "title": "How many months the stock will last",
+      "brief": "The ratio is back to one, while more than twenty thousand units sit in the «Setouchi Trading» warehouse. Sales need a number that translates into a plan: how many months of sales the stock already lying at the partner will cover.",
+      "goal": "For each distributor, return distributor_id, stock (units on hand at the end of June 2026), sold (sales at its outlets for the weeks of January to June 2026) and months (how many months of such sales the stock covers: stock / (sold / 6), rounded to one decimal place). stock and sold are already built in the starter.",
+      "hints": [
+        "Stock and sales join on distributor_id, just like shipments and sales in the ratio.",
+        "Half a year of sales divided by 6 gives sales per month; divide the stock by that."
+      ],
+      "explain": "Setouchi holds 22,176 units against outlet sales of about 4,335 a month, which is 5.1 months of stock. The other eleven hold between 1.1 and 1.4 months: as much as it takes to keep the shelf from emptying between deliveries. The difference of four months of sales is what the autumn left behind, and since January it has not shrunk, it has even grown a little: the partner orders exactly as much as it sells. It can clear in one of two ways, the partner skipping orders at some point or the goods reaching their expiry date in the warehouse, and both belong in the plan rather than turning up in it as a surprise."
     }
   ]
 }
