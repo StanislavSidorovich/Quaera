@@ -29,6 +29,7 @@ import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
+import { storyFingerprint } from './content/story';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, type StoryPhase, type StoryStepView } from './ui/StoryMode';
 import { storyCampaign, storyClosesCampaign, storyWeekOf, type StoryMission } from './content/storymode';
@@ -812,13 +813,17 @@ export default function App() {
   const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
   const executor = useMemo(() => getExecutor(activeTrack), [activeTrack]);
   /**
-   * Сюжетная линия трека — чистая функция от пака (см. story/line.ts), поэтому
-   * зависит только от него: прогресс сюда не входит намеренно. Линия — это
-   * дорога, а не положение на ней; положение считает уже сам экран, из решённых
-   * заданий. Пересобирать её на каждую решённую задачу было бы и лишней работой,
-   * и приглашением однажды сделать состав миссий зависящим от успехов.
+   * Сюжетная линия трека — чистая функция от пака и нарезки прозы (см.
+   * story/line.ts), поэтому зависит только от них: прогресс сюда не входит
+   * намеренно. Линия — это дорога, а не положение на ней; положение считает
+   * уже сам экран, из решённых заданий. Пересобирать её на каждую решённую
+   * задачу было бы и лишней работой, и приглашением однажды сделать состав
+   * миссий зависящим от успехов.
    */
-  const line = useMemo(() => buildLine(activePack), [activePack]);
+  const line = useMemo(
+    () => buildLine(activePack, storyFingerprint(activeTrack)),
+    [activePack, activeTrack]
+  );
   /**
    * Положение на линии — только ради подписи ссылки на главной.
    *
