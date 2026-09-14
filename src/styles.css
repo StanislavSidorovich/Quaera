@@ -3499,7 +3499,12 @@ pre.lesson-figure {
   right: 0;
   bottom: 0;
   z-index: 41;
-  max-height: 86vh;
+  /*
+   * Делится на --zoom: шторка рендерится внутри .app, и при A++ голые 86vh
+   * становились 112% окна — верх шторки вместе с липкой шапкой и ✕ уходил
+   * за край (замер 768px: top −91), закрыть оставалось только снизу.
+   */
+  max-height: calc(86vh / var(--zoom));
   overflow-y: auto;
   background: var(--bg-raised);
   border-radius: 18px 18px 0 0;
