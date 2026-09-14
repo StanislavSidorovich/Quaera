@@ -1938,6 +1938,138 @@
         "Filter the brand with WHERE p.brand = 'Nettora' and group by the first column: GROUP BY 1."
       ],
       "explain": "Average price does not care whether the year is complete: 2026 runs only to June in the data, and 206.5 for the half year compares fairly with 204.8 for the whole of 2025. A sum cannot do that: half a year of revenue is half the annual figure simply because the period is half as long. So before comparing years, ask whether the measure is a level or a flow. Price is a level; revenue and units are flows."
+    },
+    {
+      "id": "sql-093",
+      "title": "Premium top ten",
+      "brief": "A category manager is prepping a premium-segment display for the new season and asks for the top 10 most expensive items in the price list.",
+      "goal": "Return the 10 most expensive products: product_name, brand, list_price. Sort by price from high to low.",
+      "hints": [
+        "Sorting comes before limiting the count: ORDER BY first, then LIMIT.",
+        "Descending order is the DESC keyword after the column name."
+      ],
+      "explain": "LIMIT without ORDER BY is \"some n rows,\" not \"the first n\": without an explicit sort, the engine promises nothing about row order. Here the sort runs first, over the whole set, and LIMIT only cuts off the requested count from the already-ordered rows."
+    },
+    {
+      "id": "sql-094",
+      "title": "One slide of key numbers",
+      "brief": "Before the board meeting you need a single slide with the key price-list numbers: how many items, how many brands, and the average price.",
+      "goal": "Return one row: products (the number of SKUs), brands (the number of distinct brands), avg_price (the average price, rounded to two decimal places).",
+      "hints": [
+        "products is just a row count: COUNT(*).",
+        "brands is the number of distinct values in one column: COUNT(DISTINCT brand)."
+      ],
+      "explain": "A query without GROUP BY but with aggregates always returns exactly one row; the whole table counts as a single group. It's a quick way to get summary numbers before building anything more complex on top of them."
+    },
+    {
+      "id": "sql-095",
+      "title": "FMCG assortment by brand",
+      "brief": "The category manager wants the same FMCG assortment numbers as before, but this time broken out by brand: how many items and what average price.",
+      "goal": "For the FMCG division only, return per brand: brand, sku_count (number of SKUs), avg_price (average price rounded to two decimal places).",
+      "hints": [
+        "The average is AVG(list_price); rounding around it doesn't change that: ROUND(AVG(...), 2).",
+        "Group by the same column that appears in SELECT without an aggregate: brand."
+      ],
+      "explain": "The GROUP BY list sets the granularity of the result: one row per value of brand. The division filter applies before grouping, so it belongs in WHERE, not in HAVING."
+    },
+    {
+      "id": "sql-096",
+      "title": "Who's priciest on average",
+      "brief": "The same category manager asks for the same thing as before, but sorted this time: which FMCG brand is the most expensive on average?",
+      "goal": "For the FMCG division, return brand and avg_price (average price rounded to two decimal places), ordered by average price descending.",
+      "hints": [
+        "The query is almost the same as the previous task; it's only missing a sort by the avg_price alias.",
+        "Descending order is ORDER BY avg_price DESC, using the alias already declared in this query's SELECT."
+      ],
+      "explain": "SQLite allows sorting by an alias declared in the same query's SELECT, even though that alias isn't visible anywhere else in the query. The result is itself the discovery: Nettora is the most expensive FMCG brand on average, 201.6 ¥, even though it's unremarkable by item count. Average price and assortment size are different metrics, and a high value in one doesn't guarantee a high value in the other."
+    },
+    {
+      "id": "sql-097",
+      "title": "Units and outlets by month",
+      "brief": "Before digging into Nettora's decline, the analyst checks the broader market picture first: do sales swing by month because the number of active outlets changes?",
+      "goal": "For 2025, return month in YYYY-MM format, units (the sum of units) and outlets (the number of distinct outlets with sales that month), ordered ascending by month.",
+      "hints": [
+        "Distinct outlets is COUNT(DISTINCT customer_id), the same function that already counted distinct brands.",
+        "Grouping and sorting are the same here: both run on month."
+      ],
+      "explain": "The outlet count barely moves: 132 in every month of 2025. Units, meanwhile, swing from 26,000 to 50,000. So the seasonal wave isn't about stores opening and closing; the market buys differently month to month at the same coverage. Demand versus distribution is the first question worth asking before any decline analysis."
+    },
+    {
+      "id": "sql-098",
+      "title": "Revenue by brand since the start of the year",
+      "brief": "The commercial director again wants revenue by brand from the start of 2026, but this time without an upper bound on the period: data updates every week, and they want fresh numbers without editing the range each time.",
+      "goal": "Return brand and revenue (the sum of revenue from 2026-01-01 through today, rounded to whole numbers), ordered by revenue descending.",
+      "hints": [
+        "No upper bound needed here; a \"not earlier than the start of the year\" condition works: WHERE f.week_start >= '2026-01-01'.",
+        "The brand lives in dim_product, the fact in fact_sellout; product_id links them."
+      ],
+      "explain": "BETWEEN is convenient when a period is closed on both ends, but a \"start of the year through today\" report has no such end; the data simply stops where it stops. The condition f.week_start >= '2026-01-01' says exactly that, and it doesn't need fixing every week as new data arrives."
+    },
+    {
+      "id": "sql-099",
+      "title": "Wide shelf for the leaders",
+      "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
+      "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
+      "hints": [
+        "The brand lives in dim_product, the fact in fact_sellout; the same key links them in every brand report, product_id.",
+        "Group by the same column the aggregates in SELECT and HAVING are computed for: brand."
+      ],
+      "explain": "One HAVING condition checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each."
+    },
+    {
+      "id": "sql-100",
+      "title": "Is everyone losing shelf space",
+      "brief": "As of Wednesday, Nettora's revenue is down by half year over year. Before drawing conclusions about a single brand, it's worth checking whether everyone is losing shelf space, and the problem isn't Nettora at all but the whole market.",
+      "goal": "From 2026-01-01 through today, return per brand: brand and outlets (the number of distinct outlets with sales), ordered by coverage descending.",
+      "hints": [
+        "This is similar to the revenue-by-brand-since-the-start-of-the-year query; the difference is counting coverage instead of revenue: COUNT(DISTINCT customer_id).",
+        "The date again has no upper bound: WHERE f.week_start >= '2026-01-01'."
+      ],
+      "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago. Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it."
+    },
+    {
+      "id": "sql-101",
+      "title": "Promo vs. base sales",
+      "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
+      "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue (revenue during promotions and outside them, both rounded to whole numbers).",
+      "hints": [
+        "A promo means a non-empty promo_id: checked with IS NOT NULL, not with a comparison to a value.",
+        "The base case is the opposite, where promo_id is empty: IS NULL."
+      ],
+      "explain": "IS NOT NULL and IS NULL aren't just another pair of \"equals\" and \"not equals\": NULL can't be compared with =, it only has a dedicated emptiness check. CASE WHEN uses it like any other condition, and that's the whole trick that splits promo revenue from base revenue in a single pass over the data."
+    },
+    {
+      "id": "sql-102",
+      "title": "Did the brand live on promotions",
+      "brief": "The finance director floats a theory: maybe Nettora used to rely on promotions and simply stopped getting them, which would explain the decline. Worth checking the history by year.",
+      "goal": "For the Nettora brand, by year, return year (YYYY), promo_revenue (revenue during promotions, rounded to whole numbers) and revenue (total revenue, rounded to whole numbers), ordered ascending by year.",
+      "hints": [
+        "The year is the first four characters of the week: substr(f.week_start, 1, 4), the same trick as for month, just shorter.",
+        "The promo condition inside CASE is the same as in the previous task: f.promo_id IS NOT NULL."
+      ],
+      "explain": "The theory doesn't hold up in any year: Nettora's promo share was 6.7% in 2024, 20.3% in 2025 and 16.7% in 2026, topping out at exactly one fifth of revenue. The brand never lived on promotions in the way the theory assumed, so the cause of the decline has to be found somewhere other than a pullback in promo spend."
+    },
+    {
+      "id": "sql-103",
+      "title": "Who's really holding the brand up",
+      "brief": "The e-com team is convinced they're the only thing keeping Nettora afloat while every other channel sinks. Before agreeing, check the numbers by channel since the start of the year, including channels with zero sales.",
+      "goal": "From 2026-01-01, return per channel: channel and units (the sum of Nettora units), including channels with zero sales (0, not a missing row).",
+      "hints": [
+        "SUM over an empty set returns NULL, not 0; turn the emptiness into a zero with COALESCE(..., 0).",
+        "The list of Nettora's product_id values is checked with IN; the subquery is already sitting right there in parentheses."
+      ],
+      "explain": "The numbers settle the theory by channel: 8,016 units in e-com since the start of the year, 1,539 in chains, 303 in traditional retail, and zero in pharmacies and at distributors. But over the same half of 2025 it was 15,258, 4,432 and 560; it really did fall everywhere, and three times as hard in chains as in e-com. E-com isn't holding the brand up; it's just falling more slowly than the rest, and that gap in pace reads as stability only if you don't compare both periods in full."
+    },
+    {
+      "id": "sql-104",
+      "title": "A list for Ito-san",
+      "brief": "Ito-san from modern trade asks for a list of outlets that don't carry Nettora at all, to start the conversation about winning the brand back onto the shelf before building a general visit plan.",
+      "goal": "Return customer_name and city for outlets in chains (channel = 'modern_trade') with zero Nettora sales since 2026-01-01.",
+      "hints": [
+        "The period condition is also a condition on LEFT JOIN's right-hand table: like the brand condition, it belongs in ON, not WHERE, or outlets with no sales get filtered out before you can find them (compare with the task about a filter that landed in the wrong place).",
+        "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found."
+      ],
+      "explain": "27 outlets in chains haven't bought a single unit of Nettora since the start of the year; with this list, Ito-san can go to the chain buyers before building a general win-back plan. The period condition behaves just like the product condition in the task about outlets that never bought Nettora at all: both restrict LEFT JOIN's right-hand table, and both must sit in ON, or the LEFT JOIN silently turns into an INNER one and the very outlets with no sales disappear along with the answer."
     }
   ]
 }

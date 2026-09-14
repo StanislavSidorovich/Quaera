@@ -41,7 +41,9 @@
       "title": "Фильтрация строк",
       "tier": 1,
       "summary": "Перевожу условие из постановки задачи в WHERE и помню, что сравнение текста регистрозависимо.",
-      "prereqs": ["sql-select"]
+      "prereqs": [
+        "sql-select"
+      ]
     },
     {
       "id": "sql-order-limit",
@@ -49,7 +51,9 @@
       "title": "Сортировка и топ-N",
       "tier": 1,
       "summary": "Строю рейтинг и понимаю, что без ORDER BY порядок строк не гарантирован вообще ничем.",
-      "prereqs": ["sql-select"]
+      "prereqs": [
+        "sql-select"
+      ]
     },
     {
       "id": "sql-null",
@@ -57,7 +61,10 @@
       "title": "NULL и трёхзначная логика",
       "tier": 2,
       "summary": "Вижу, где NULL молча съедает строки, и знаю разницу между «пусто» и «ноль».",
-      "prereqs": ["sql-where", "sql-order-limit"]
+      "prereqs": [
+        "sql-where",
+        "sql-order-limit"
+      ]
     },
     {
       "id": "sql-aggregate",
@@ -65,7 +72,9 @@
       "title": "Агрегатные функции",
       "tier": 2,
       "summary": "Различаю COUNT(*), COUNT(колонка) и COUNT(DISTINCT колонка) и выбираю то, что отвечает на вопрос.",
-      "prereqs": ["sql-where"]
+      "prereqs": [
+        "sql-where"
+      ]
     },
     {
       "id": "sql-group-by",
@@ -73,7 +82,10 @@
       "title": "Группировка и гранулярность",
       "tier": 2,
       "summary": "Осознанно выбираю уровень детализации отчёта и проверяю, что группировка ему соответствует.",
-      "prereqs": ["sql-aggregate", "sql-order-limit"]
+      "prereqs": [
+        "sql-aggregate",
+        "sql-order-limit"
+      ]
     },
     {
       "id": "sql-having",
@@ -81,7 +93,9 @@
       "title": "HAVING против WHERE",
       "tier": 2,
       "summary": "Понимаю порядок выполнения запроса и знаю, почему агрегат нельзя положить в WHERE.",
-      "prereqs": ["sql-group-by"]
+      "prereqs": [
+        "sql-group-by"
+      ]
     },
     {
       "id": "sql-join-inner",
@@ -89,7 +103,9 @@
       "title": "Соединение факта со справочником",
       "tier": 2,
       "summary": "Собираю отчёт из звезды: факт плюс измерения, соединённые по ключам.",
-      "prereqs": ["sql-group-by"]
+      "prereqs": [
+        "sql-group-by"
+      ]
     },
     {
       "id": "sql-join-left",
@@ -97,7 +113,10 @@
       "title": "LEFT JOIN и отсутствующие данные",
       "tier": 3,
       "summary": "Сохраняю в отчёте строки без продаж и знаю, почему фильтр правой таблицы должен стоять в ON, а не в WHERE.",
-      "prereqs": ["sql-join-inner", "sql-null"]
+      "prereqs": [
+        "sql-join-inner",
+        "sql-null"
+      ]
     },
     {
       "id": "sql-fanout",
@@ -105,7 +124,9 @@
       "title": "Размножение строк соединением",
       "tier": 3,
       "summary": "Замечаю, когда JOIN задвоил факты, и проверяю гранулярность до того, как отдать цифры.",
-      "prereqs": ["sql-join-inner"]
+      "prereqs": [
+        "sql-join-inner"
+      ]
     },
     {
       "id": "sql-case",
@@ -113,7 +134,9 @@
       "title": "CASE и условная агрегация",
       "tier": 3,
       "summary": "Разворачиваю показатель в колонки одним проходом вместо нескольких запросов.",
-      "prereqs": ["sql-group-by"]
+      "prereqs": [
+        "sql-group-by"
+      ]
     },
     {
       "id": "sql-cte",
@@ -121,7 +144,9 @@
       "title": "CTE и декомпозиция",
       "tier": 3,
       "summary": "Разбиваю сложный расчёт на читаемые шаги через WITH вместо вложенных подзапросов.",
-      "prereqs": ["sql-join-inner"]
+      "prereqs": [
+        "sql-join-inner"
+      ]
     },
     {
       "id": "sql-promo-lift",
@@ -129,7 +154,10 @@
       "title": "Промо: лифт и база сравнения",
       "tier": 4,
       "summary": "Считаю прирост от акции против явно выбранной базы и называю базу рядом с числом — от неё зависит даже знак ответа.",
-      "prereqs": ["sql-case", "sql-cte"]
+      "prereqs": [
+        "sql-case",
+        "sql-cte"
+      ]
     },
     {
       "id": "sql-window-rank",
@@ -137,7 +165,9 @@
       "title": "Оконные функции: рейтинги",
       "tier": 4,
       "summary": "Строю топ-N внутри каждой группы и различаю ROW_NUMBER, RANK и DENSE_RANK.",
-      "prereqs": ["sql-cte"]
+      "prereqs": [
+        "sql-cte"
+      ]
     },
     {
       "id": "sql-window-frame",
@@ -145,7 +175,9 @@
       "title": "Оконные функции: рамки и сдвиги",
       "tier": 4,
       "summary": "Считаю скользящее среднее, накопительный итог и динамику к прошлому периоду через LAG.",
-      "prereqs": ["sql-window-rank"]
+      "prereqs": [
+        "sql-window-rank"
+      ]
     },
     {
       "id": "sql-data-quality",
@@ -153,7 +185,10 @@
       "title": "Качество сырых данных",
       "tier": 3,
       "summary": "Нахожу дубли, привожу типы и нормализую справочники до того, как построю на них отчёт.",
-      "prereqs": ["sql-aggregate", "sql-null"]
+      "prereqs": [
+        "sql-aggregate",
+        "sql-null"
+      ]
     },
     {
       "id": "sql-price-realization",
@@ -161,7 +196,9 @@
       "title": "Цена: реализация, скидка, микс",
       "tier": 4,
       "summary": "Считаю, сколько процентов прайса дошло до кассы, и различаю три причины разрыва: глубину скидки, долю промо и микс проданного.",
-      "prereqs": ["sql-promo-lift"]
+      "prereqs": [
+        "sql-promo-lift"
+      ]
     },
     {
       "id": "sql-forecast-accuracy",
@@ -169,7 +206,12 @@
       "title": "Точность прогноза: ошибка и смещение",
       "tier": 4,
       "summary": "Меряю ошибку прогноза так, чтобы промахи не гасили друг друга, и отделяю её от смещения — постоянного перекоса в одну сторону.",
-      "prereqs": ["sql-case", "sql-cte", "sql-window-frame", "sql-join-left"]
+      "prereqs": [
+        "sql-case",
+        "sql-cte",
+        "sql-window-frame",
+        "sql-join-left"
+      ]
     },
     {
       "id": "sql-business-case",
@@ -177,7 +219,11 @@
       "title": "Разбор бизнес-ситуации",
       "tier": 4,
       "summary": "Раскладываю изменение показателя на факторы и отвечаю на вопрос «почему», а не только «сколько».",
-      "prereqs": ["sql-window-frame", "sql-case", "sql-join-left"]
+      "prereqs": [
+        "sql-window-frame",
+        "sql-case",
+        "sql-join-left"
+      ]
     }
   ],
   "tasks": [
@@ -238,13 +284,15 @@
       "id": "sql-003",
       "track": "sql",
       "skill": "sql-where",
-      "alsoTrains": ["sql-select"],
+      "alsoTrains": [
+        "sql-select"
+      ],
       "level": 1,
       "mode": "write",
       "title": "Отбор для промо-каталога",
       "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ¥ — дешёвые в промо не идут.",
       "goal": "Вернуть sku_code, product_name, brand, list_price для товаров этих двух брендов с ценой строго больше 100.",
-      "starter": "SELECT sku_code, product_name, brand, list_price\nFROM dim_product\nWHERE ",
+      "starter": "SELECT sku_code, product_name, brand, list_price\nFROM dim_product\n",
       "solution": "SELECT sku_code, product_name, brand, list_price FROM dim_product WHERE brand IN ('Aqualis', 'Fruvia') AND list_price > 100",
       "hints": [
         "Перечисление значений одной колонки короче писать через IN, чем через OR.",
@@ -310,7 +358,9 @@
       "id": "sql-006",
       "track": "sql",
       "skill": "sql-null",
-      "alsoTrains": ["sql-aggregate"],
+      "alsoTrains": [
+        "sql-aggregate"
+      ],
       "level": 2,
       "mode": "write",
       "title": "Сколько точек вне сетей",
@@ -403,8 +453,12 @@
       "title": "Помесячная динамика продаж",
       "brief": "Руководитель отдела просит помесячные продажи в штуках за 2025 год, чтобы увидеть сезонный профиль.",
       "goal": "Вернуть month в формате YYYY-MM и units — сумму штук, по возрастанию месяца.",
-      "template": "SELECT substr(week_start, 1, 7) AS month,\n       ___(units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY ___\nORDER BY month",
-      "blanks": ["SUM", "1"],
+      "template": "SELECT ___(week_start, 1, 7) AS month,\n       ___(units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY ___\nORDER BY month",
+      "blanks": [
+        "substr",
+        "SUM",
+        "1"
+      ],
       "solution": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY 1\nORDER BY month",
       "orderMatters": true,
       "hints": [
@@ -434,7 +488,10 @@
       "id": "sql-012",
       "track": "sql",
       "skill": "sql-join-inner",
-      "alsoTrains": ["sql-group-by", "sql-order-limit"],
+      "alsoTrains": [
+        "sql-group-by",
+        "sql-order-limit"
+      ],
       "level": 2,
       "mode": "write",
       "title": "Выручка по брендам",
@@ -559,7 +616,9 @@
       "id": "sql-028",
       "track": "sql",
       "skill": "sql-null",
-      "alsoTrains": ["sql-order-limit"],
+      "alsoTrains": [
+        "sql-order-limit"
+      ],
       "level": 2,
       "mode": "predict",
       "title": "Куда сортируются пустые значения",
@@ -631,7 +690,9 @@
       "id": "sql-031",
       "track": "sql",
       "skill": "sql-null",
-      "alsoTrains": ["sql-aggregate"],
+      "alsoTrains": [
+        "sql-aggregate"
+      ],
       "level": 2,
       "mode": "predict",
       "title": "Посчитать продажи вне акций",
@@ -889,7 +950,9 @@
       "id": "sql-014",
       "track": "sql",
       "skill": "sql-join-left",
-      "alsoTrains": ["sql-null"],
+      "alsoTrains": [
+        "sql-null"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Куда доехала новинка",
@@ -908,7 +971,9 @@
       "id": "sql-015",
       "track": "sql",
       "skill": "sql-case",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Промо против базовых продаж",
@@ -926,7 +991,9 @@
       "id": "sql-016",
       "track": "sql",
       "skill": "sql-cte",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Доля бренда в своём дивизионе",
@@ -980,7 +1047,9 @@
       "id": "sql-018",
       "track": "sql",
       "skill": "sql-window-rank",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Топ-3 позиции внутри каждого бренда",
@@ -998,7 +1067,9 @@
       "id": "sql-019",
       "track": "sql",
       "skill": "sql-window-frame",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Сглаживание недельного ряда",
@@ -1017,7 +1088,9 @@
       "id": "sql-020",
       "track": "sql",
       "skill": "sql-window-frame",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Динамика месяц к месяцу",
@@ -1089,7 +1162,9 @@
       "id": "sql-039",
       "track": "sql",
       "skill": "sql-join-left",
-      "alsoTrains": ["sql-null"],
+      "alsoTrains": [
+        "sql-null"
+      ],
       "level": 3,
       "mode": "predict",
       "title": "Фильтр товара, случайно попавший не туда",
@@ -1126,7 +1201,9 @@
       "id": "sql-040",
       "track": "sql",
       "skill": "sql-join-left",
-      "alsoTrains": ["sql-null"],
+      "alsoTrains": [
+        "sql-null"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Точки, которые ни разу не брали «Nettora»",
@@ -1144,7 +1221,9 @@
       "id": "sql-041",
       "track": "sql",
       "skill": "sql-fanout",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Доказать размножение цифрами",
@@ -1215,7 +1294,9 @@
       "id": "sql-044",
       "track": "sql",
       "skill": "sql-cte",
-      "alsoTrains": ["sql-fanout"],
+      "alsoTrains": [
+        "sql-fanout"
+      ],
       "level": 3,
       "mode": "predict",
       "title": "Забытое соединение между двумя CTE",
@@ -1252,7 +1333,9 @@
       "id": "sql-045",
       "track": "sql",
       "skill": "sql-cte",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Выручка на активную точку по каналам",
@@ -1270,7 +1353,9 @@
       "id": "sql-046",
       "track": "sql",
       "skill": "sql-data-quality",
-      "alsoTrains": ["sql-case"],
+      "alsoTrains": [
+        "sql-case"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Сеть в двух написаниях",
@@ -1288,7 +1373,9 @@
       "id": "sql-047",
       "track": "sql",
       "skill": "sql-data-quality",
-      "alsoTrains": ["sql-where"],
+      "alsoTrains": [
+        "sql-where"
+      ],
       "level": 3,
       "mode": "predict",
       "title": "Диапазон дат на сыром тексте",
@@ -1325,7 +1412,10 @@
       "id": "sql-022",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-cte", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-cte",
+        "sql-join-inner"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Кто затарил склад",
@@ -1417,14 +1507,19 @@
       "id": "sql-049",
       "track": "sql",
       "skill": "sql-having",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "fill",
       "title": "Бренды с высокой выручкой и широким покрытием",
       "brief": "Категорийный менеджер расширяет полку под бренды-локомотивы: нужны те, что одновременно дают большую выручку и стоят в большом числе точек — только один из двух признаков ничего не доказывает.",
       "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ¥ и не менее чем в 80 точках. По убыванию выручки.",
       "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT ___) >= 80\nORDER BY revenue ___",
-      "blanks": ["f.customer_id", "DESC"],
+      "blanks": [
+        "f.customer_id",
+        "DESC"
+      ],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
@@ -1437,7 +1532,9 @@
       "id": "sql-050",
       "track": "sql",
       "skill": "sql-fanout",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "write",
       "title": "Промо-выручка «Nettora» без задвоения",
@@ -1456,14 +1553,19 @@
       "id": "sql-051",
       "track": "sql",
       "skill": "sql-window-rank",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "fill",
       "title": "Ведущий канал сбыта в каждом дивизионе",
       "brief": "Коммерческий директор готовит защиту бюджета и хочет не полную разбивку по каналам, а только канал-лидер внутри каждого дивизиона — именно с ним будут сравнивать остальные.",
       "goal": "За 2025 год вернуть по каждому дивизиону division, channel и revenue (округлить до целых) — канал с наибольшей выручкой внутри дивизиона.",
       "template": "WITH div_channel AS (\n  SELECT p.division, c.channel, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.division, c.channel\n),\nranked AS (\n  SELECT division, channel, rev,\n         ROW_NUMBER() OVER (___ division ORDER BY rev DESC) AS rnk\n  FROM div_channel\n)\nSELECT division, channel, ROUND(rev) AS revenue\nFROM ranked\nWHERE rnk ___",
-      "blanks": ["PARTITION BY", "= 1"],
+      "blanks": [
+        "PARTITION BY",
+        "= 1"
+      ],
       "solution": "WITH div_channel AS (\n  SELECT p.division, c.channel, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.division, c.channel\n),\nranked AS (\n  SELECT division, channel, rev,\n         ROW_NUMBER() OVER (PARTITION BY division ORDER BY rev DESC) AS rnk\n  FROM div_channel\n)\nSELECT division, channel, ROUND(rev) AS revenue\nFROM ranked\nWHERE rnk = 1",
       "hints": [
         "ROW_NUMBER здесь партиционируется по дивизиону — вставьте PARTITION BY перед division.",
@@ -1475,7 +1577,9 @@
       "id": "sql-052",
       "track": "sql",
       "skill": "sql-window-rank",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Рейтинг представителей внутри команды",
@@ -1530,14 +1634,18 @@
       "id": "sql-054",
       "track": "sql",
       "skill": "sql-window-frame",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "fill",
       "title": "Накопительные отгрузки дистрибьютора за квартал",
       "brief": "Финансы хотят видеть не только отгрузки за каждый месяц, но и нарастающий итог за квартал — сколько уже отгружено дистрибьютору «Setouchi Trading» на конец каждого месяца.",
       "goal": "За октябрь–декабрь 2025 вернуть month_start, units — отгружено за месяц, и running_units — нарастающий итог с начала квартала. По возрастанию месяца.",
       "template": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ___ UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
-      "blanks": ["ROWS BETWEEN"],
+      "blanks": [
+        "ROWS BETWEEN"
+      ],
       "solution": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
       "orderMatters": true,
       "hints": [
@@ -1550,7 +1658,9 @@
       "id": "sql-055",
       "track": "sql",
       "skill": "sql-window-frame",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Рост цены к началу года",
@@ -1605,7 +1715,10 @@
       "id": "sql-057",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-cte", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-cte",
+        "sql-join-inner"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Запас в неделях у дистрибьютора",
@@ -1623,7 +1736,10 @@
       "id": "sql-058",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-join-left", "sql-cte"],
+      "alsoTrains": [
+        "sql-join-left",
+        "sql-cte"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Кто не дотянул до плана в декабре",
@@ -1678,7 +1794,10 @@
       "id": "sql-060",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-window-frame", "sql-cte"],
+      "alsoTrains": [
+        "sql-window-frame",
+        "sql-cte"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Сколько товаров дают половину выручки",
@@ -1697,7 +1816,10 @@
       "id": "sql-061",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-group-by", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-group-by",
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Восемь клиентов на половину выручки",
@@ -1749,7 +1871,10 @@
       "id": "sql-062",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-group-by", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-group-by",
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Какой регион сильнее на самом деле",
@@ -1801,7 +1926,10 @@
       "id": "sql-063",
       "track": "sql",
       "skill": "sql-business-case",
-      "alsoTrains": ["sql-aggregate", "sql-group-by"],
+      "alsoTrains": [
+        "sql-aggregate",
+        "sql-group-by"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Простое среднее цены против взвешенного",
@@ -1852,7 +1980,10 @@
       "id": "sql-064",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-case", "sql-cte"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-cte"
+      ],
       "level": 3,
       "mode": "fill",
       "title": "Неделя с акцией и неделя без неё",
@@ -1875,7 +2006,10 @@
       "id": "sql-065",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-case", "sql-cte"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Лифт по каждому бренду",
@@ -1894,7 +2028,9 @@
       "id": "sql-066",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-case"],
+      "alsoTrains": [
+        "sql-case"
+      ],
       "level": 4,
       "mode": "predict",
       "title": "Одна акция, две базы",
@@ -1931,7 +2067,10 @@
       "id": "sql-067",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-case", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Акция шла только в одном канале",
@@ -1949,7 +2088,9 @@
       "id": "sql-068",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Сколько скидки отдали",
@@ -2003,7 +2144,10 @@
       "id": "sql-070",
       "track": "sql",
       "skill": "sql-promo-lift",
-      "alsoTrains": ["sql-case", "sql-cte"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-cte"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Стоила ли акция отданной скидки",
@@ -2055,7 +2199,9 @@
       "id": "sql-071",
       "track": "sql",
       "skill": "sql-price-realization",
-      "alsoTrains": ["sql-join-inner"],
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
       "level": 3,
       "mode": "fill",
       "title": "Что доехало до кассы",
@@ -2077,7 +2223,10 @@
       "id": "sql-072",
       "track": "sql",
       "skill": "sql-price-realization",
-      "alsoTrains": ["sql-case", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Кто отдаёт больше всех",
@@ -2096,7 +2245,9 @@
       "id": "sql-073",
       "track": "sql",
       "skill": "sql-price-realization",
-      "alsoTrains": ["sql-case"],
+      "alsoTrains": [
+        "sql-case"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Две доли одной акции",
@@ -2151,7 +2302,10 @@
       "id": "sql-075",
       "track": "sql",
       "skill": "sql-price-realization",
-      "alsoTrains": ["sql-case", "sql-group-by"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-group-by"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Месяц, где цена просела сильнее всего",
@@ -2170,7 +2324,10 @@
       "id": "sql-076",
       "track": "sql",
       "skill": "sql-price-realization",
-      "alsoTrains": ["sql-case", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-join-inner"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Прайс подняли, а получаем меньше",
@@ -2223,7 +2380,9 @@
       "id": "sql-077",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 3,
       "mode": "fill",
       "title": "На сколько мы промахиваемся",
@@ -2246,7 +2405,9 @@
       "id": "sql-078",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-cte"],
+      "alsoTrains": [
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Чем дальше горизонт, тем хуже",
@@ -2265,7 +2426,10 @@
       "id": "sql-079",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-case", "sql-cte"],
+      "alsoTrains": [
+        "sql-case",
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Хвост, который портит среднее",
@@ -2319,7 +2483,10 @@
       "id": "sql-081",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-cte", "sql-join-inner"],
+      "alsoTrains": [
+        "sql-cte",
+        "sql-join-inner"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Кого мы всегда переоцениваем",
@@ -2374,7 +2541,10 @@
       "id": "sql-083",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-window-frame", "sql-cte"],
+      "alsoTrains": [
+        "sql-window-frame",
+        "sql-cte"
+      ],
       "level": 5,
       "mode": "write",
       "title": "Прогноз, который отнимает",
@@ -2427,7 +2597,10 @@
       "id": "sql-084",
       "track": "sql",
       "skill": "sql-forecast-accuracy",
-      "alsoTrains": ["sql-join-left", "sql-cte"],
+      "alsoTrains": [
+        "sql-join-left",
+        "sql-cte"
+      ],
       "level": 4,
       "mode": "write",
       "title": "Акция, которую прогноз не видит",
@@ -2668,7 +2841,7 @@
       "title": "Прайс Nettora по годам",
       "brief": "Перед разговором о скидках руководитель просит проверить, двигался ли прайс бренда Nettora: какой была средняя прайсовая цена его товаров в каждом году.",
       "goal": "Вернуть year — год в формате YYYY — и avg_price — среднюю прайсовую цену товаров Nettora за год, округлённую до одного знака, по возрастанию года.",
-      "starter": "SELECT \nFROM fact_price fp\nJOIN dim_product p ON p.product_id = fp.product_id\n",
+      "starter": "SELECT substr(fp.month_start, 1, 4) AS year,\n       \nFROM fact_price fp\nJOIN dim_product p ON p.product_id = fp.product_id\n",
       "solution": "SELECT substr(fp.month_start, 1, 4) AS year, ROUND(AVG(fp.list_price), 1) AS avg_price FROM fact_price fp JOIN dim_product p ON p.product_id = fp.product_id WHERE p.brand = 'Nettora' GROUP BY 1 ORDER BY year",
       "orderMatters": true,
       "hints": [
@@ -2676,6 +2849,281 @@
         "Бренд отбирается условием WHERE p.brand = 'Nettora', группировка — по первой колонке: GROUP BY 1."
       ],
       "explain": "Средней цене всё равно, полный ли год: 2026-й в данных только до июня, и 206.5 за полугодие честно сравнивается с 204.8 за весь 2025-й. С суммой так нельзя: выручка за полгода вдвое меньше годовой просто потому, что период вдвое короче. Поэтому, прежде чем сравнивать годы, стоит спросить, мера это уровня или потока: цена — уровень, выручка и штуки — поток."
+    },
+    {
+      "id": "sql-093",
+      "track": "sql",
+      "skill": "sql-order-limit",
+      "level": 1,
+      "mode": "fill",
+      "title": "Премиальная десятка",
+      "brief": "Категорийный менеджер готовит витрину премиального сегмента к открытию сезона и просит топ-10 самых дорогих товаров прайса.",
+      "goal": "Вернуть 10 самых дорогих товаров: product_name, brand, list_price. Отсортировать по цене от большей к меньшей.",
+      "template": "SELECT product_name, brand, list_price\nFROM dim_product\n___ list_price ___\nLIMIT 10",
+      "blanks": [
+        "ORDER BY",
+        "DESC"
+      ],
+      "solution": "SELECT product_name, brand, list_price\nFROM dim_product\nORDER BY list_price DESC\nLIMIT 10",
+      "orderMatters": true,
+      "hints": [
+        "Сортировка идёт перед ограничением количества: сначала ORDER BY, потом LIMIT.",
+        "По убыванию цены — ключевое слово DESC после имени колонки."
+      ],
+      "explain": "LIMIT без ORDER BY — это «какие-то n строк», а не «первые n»: без явной сортировки СУБД ничего не обещает о порядке результата. Здесь сортировка идёт первой и отрабатывает по всему набору целиком, а LIMIT лишь отрезает нужное количество сверху уже упорядоченных строк."
+    },
+    {
+      "id": "sql-094",
+      "track": "sql",
+      "skill": "sql-aggregate",
+      "level": 2,
+      "mode": "fill",
+      "title": "Слайд с ключевыми цифрами",
+      "brief": "Перед советом директоров нужен один слайд с ключевыми цифрами прайса: сколько позиций, сколько брендов и какая средняя цена.",
+      "goal": "Вернуть одну строку: products — количество SKU, brands — количество разных брендов, avg_price — средняя цена, округлённая до двух знаков.",
+      "template": "SELECT ___ AS products,\n       ___ AS brands,\n       ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product",
+      "blanks": [
+        "COUNT(*)",
+        "COUNT(DISTINCT brand)"
+      ],
+      "solution": "SELECT COUNT(*) AS products,\n       COUNT(DISTINCT brand) AS brands,\n       ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product",
+      "hints": [
+        "products — это просто число строк: COUNT(*).",
+        "brands — число различных значений одной колонки: COUNT(DISTINCT brand)."
+      ],
+      "explain": "Запрос без GROUP BY, но с агрегатами всегда возвращает ровно одну строку — вся таблица считается одной группой. Такой запрос — быстрый способ получить сводные цифры, прежде чем строить на них что-то более сложное."
+    },
+    {
+      "id": "sql-095",
+      "track": "sql",
+      "skill": "sql-group-by",
+      "level": 2,
+      "mode": "fill",
+      "title": "Ассортимент FMCG по брендам",
+      "brief": "Категорийный менеджер уточняет то же самое об ассортименте FMCG, что и раньше, но теперь по каждому бренду отдельно: сколько позиций и какая средняя цена.",
+      "goal": "Только для дивизиона FMCG вернуть по каждому бренду: brand, sku_count — число позиций, avg_price — среднюю цену с округлением до двух знаков.",
+      "template": "SELECT brand, COUNT(*) AS sku_count, ROUND(___(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\n___",
+      "blanks": [
+        "AVG",
+        "GROUP BY brand"
+      ],
+      "solution": "SELECT brand, COUNT(*) AS sku_count, ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\nGROUP BY brand",
+      "hints": [
+        "Среднее — это AVG(list_price), округление вокруг него не меняется: ROUND(AVG(...), 2).",
+        "Группировать нужно по той же колонке, что стоит в SELECT без агрегата, — по brand."
+      ],
+      "explain": "Гранулярность результата задаёт список в GROUP BY: одна строка на каждое значение brand. Фильтр по дивизиону работает раньше группировки, и поэтому его место в WHERE, а не в HAVING."
+    },
+    {
+      "id": "sql-096",
+      "track": "sql",
+      "skill": "sql-group-by",
+      "alsoTrains": [
+        "sql-order-limit"
+      ],
+      "level": 2,
+      "mode": "write",
+      "title": "Кто дороже всех в среднем",
+      "brief": "Тот же категорийный менеджер просит то же самое, что и в прошлый раз, но отсортированное: интересно, какой бренд FMCG дороже всех в среднем.",
+      "goal": "Для дивизиона FMCG вернуть brand и avg_price — среднюю цену, округлённую до двух знаков, по убыванию средней цены.",
+      "starter": "SELECT brand, ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\nGROUP BY brand\n",
+      "solution": "SELECT brand, ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\nGROUP BY brand\nORDER BY avg_price DESC",
+      "orderMatters": true,
+      "hints": [
+        "Запрос почти тот же, что и в предыдущем задании, — не хватает только сортировки по алиасу avg_price.",
+        "По убыванию — ORDER BY avg_price DESC, этот алиас уже объявлен в SELECT того же запроса."
+      ],
+      "explain": "SQLite разрешает сортировать по алиасу, объявленному в SELECT того же запроса, хотя в других его частях этот алиас ещё не виден. Ответ и есть открытие: Nettora — самый дорогой бренд FMCG в среднем, 201.6 ¥, хотя по числу позиций он ничем не выделяется. Средняя цена и размер ассортимента — разные метрики, и высокое значение одной не гарантирует высокого значения другой."
+    },
+    {
+      "id": "sql-097",
+      "track": "sql",
+      "skill": "sql-group-by",
+      "alsoTrains": [
+        "sql-aggregate"
+      ],
+      "level": 2,
+      "mode": "fill",
+      "title": "Штуки и точки по месяцам",
+      "brief": "Перед разбором падения Nettora аналитик сверяет общую картину рынка: не потому ли продажи скачут по месяцам, что меняется число работающих точек.",
+      "goal": "За 2025 год вернуть month в формате YYYY-MM, units — сумму штук и outlets — число разных точек с продажами в этом месяце, по возрастанию месяца.",
+      "template": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       ___ AS outlets\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY 1\nORDER BY month",
+      "blanks": [
+        "COUNT(DISTINCT customer_id)"
+      ],
+      "solution": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       COUNT(DISTINCT customer_id) AS outlets\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY 1\nORDER BY month",
+      "orderMatters": true,
+      "hints": [
+        "Разных точек — это COUNT(DISTINCT customer_id), та же функция, что уже считала разные бренды.",
+        "Группировка и сортировка здесь совпадают: обе идут по month."
+      ],
+      "explain": "Число точек почти не двигается: 132 в любой месяц 2025 года. А штуки при этом гуляют от 26 до 50 тысяч. Значит, сезонная волна — не в том, что магазины то торгуют, то нет: рынок закупает по-разному при одном и том же охвате. Разделение «спрос против дистрибуции» — первый вопрос, который стоит задать перед любым разбором падения продаж."
+    },
+    {
+      "id": "sql-098",
+      "track": "sql",
+      "skill": "sql-join-inner",
+      "alsoTrains": [
+        "sql-group-by",
+        "sql-order-limit"
+      ],
+      "level": 2,
+      "mode": "fill",
+      "title": "Выручка по брендам с начала года",
+      "brief": "Коммерческий директор снова просит выручку по брендам с начала 2026 года, но в этот раз без верхней границы периода: данные обновляются каждую неделю, и хочется видеть свежие цифры без правки диапазона.",
+      "goal": "Вернуть brand и revenue — сумму выручки с 2026-01-01 по сегодня, округлённую до целых, по убыванию выручки.",
+      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\n___\n___\nGROUP BY p.brand\nORDER BY revenue DESC",
+      "blanks": [
+        "JOIN dim_product p ON p.product_id = f.product_id",
+        "WHERE f.week_start >= '2026-01-01'"
+      ],
+      "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2026-01-01'\nGROUP BY p.brand\nORDER BY revenue DESC",
+      "orderMatters": true,
+      "hints": [
+        "Верхняя граница периода здесь не нужна: подойдёт условие «дата не раньше начала года» — WHERE f.week_start >= '2026-01-01'.",
+        "Бренд лежит в dim_product, факт — в fact_sellout; связывает их product_id."
+      ],
+      "explain": "BETWEEN удобен, когда период закрыт с обеих сторон, но у отчёта «с начала года по сегодня» такого конца нет — данные просто кончаются там, где кончаются. Условие f.week_start >= '2026-01-01' говорит именно это и не требует поправки каждую неделю, когда приходят новые данные."
+    },
+    {
+      "id": "sql-099",
+      "track": "sql",
+      "skill": "sql-having",
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
+      "level": 3,
+      "mode": "fill",
+      "title": "Широкая полка для лидеров",
+      "brief": "Категорийный менеджер расширяет полку под бренды-локомотивы: нужны те, что одновременно дают большую выручку и стоят в большом числе точек, — только один из двух признаков ничего не доказывает.",
+      "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ¥ и не менее чем в 80 точках. По убыванию выручки.",
+      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\n___\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n___\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
+      "blanks": [
+        "JOIN dim_product p ON p.product_id = f.product_id",
+        "GROUP BY p.brand"
+      ],
+      "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
+      "orderMatters": true,
+      "hints": [
+        "Бренд лежит в dim_product, а факт — в fact_sellout; связь между ними, как и в других отчётах по бренду, — product_id.",
+        "Группировка идёт по той же колонке, для которой считаются агрегаты в SELECT и HAVING, — по brand."
+      ],
+      "explain": "Одно условие в HAVING проверяет выручку, второе — охват, и оба должны выполниться одновременно, поэтому связаны через AND: бренд с огромной выручкой в трёх крупных сетях эту фильтрацию не пройдёт, как и бренд с сотней точек и копеечными продажами в каждой."
+    },
+    {
+      "id": "sql-100",
+      "track": "sql",
+      "skill": "sql-join-inner",
+      "alsoTrains": [
+        "sql-group-by",
+        "sql-order-limit"
+      ],
+      "level": 3,
+      "mode": "write",
+      "title": "Теряют ли полку все",
+      "brief": "Со среды известно, что выручка Nettora упала вдвое год к году. Прежде чем делать выводы про один бренд, стоит проверить: может, полки теряют вообще все — и дело не в Nettora, а в рынке целиком?",
+      "goal": "С 2026-01-01 по сегодня вернуть по каждому бренду brand и outlets — число разных точек с продажами, по убыванию охвата.",
+      "starter": "",
+      "solution": "SELECT p.brand, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2026-01-01'\nGROUP BY p.brand\nORDER BY outlets DESC",
+      "orderMatters": true,
+      "hints": [
+        "Задача похожа на запрос про выручку по брендам с начала года — разница в том, что считаем не выручку, а охват: COUNT(DISTINCT customer_id).",
+        "Дата снова без верхней границы: WHERE f.week_start >= '2026-01-01'."
+      ],
+      "explain": "У Aqualis, Fruvia, Milvara и Krosti охват держится на уровне 2025 года — 88, 86, 84 и 81 точка, ровно как год назад. И только у Nettora число точек обрушилось с 79 до 37. Полку теряет не рынок — полку теряет конкретно этот бренд, и следующий вопрос не «что случилось с розницей», а «что случилось с Nettora» в тех точках, где он раньше стоял."
+    },
+    {
+      "id": "sql-101",
+      "track": "sql",
+      "skill": "sql-case",
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
+      "level": 3,
+      "mode": "fill",
+      "title": "Промо против базовых продаж",
+      "brief": "Трейд-маркетинг защищает бюджет и должен показать, какая доля выручки каждого бренда сделана в акциях. Признак акции в факте — заполненный promo_id.",
+      "goal": "За 2025 год вернуть по каждому бренду: brand, promo_revenue и base_revenue — выручку в акциях и вне акций, обе округлённые до целых.",
+      "template": "SELECT p.brand,\n       ROUND(SUM(CASE WHEN f.promo_id ___ THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(CASE WHEN f.promo_id ___ THEN f.revenue ELSE 0 END)) AS base_revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand",
+      "blanks": [
+        "IS NOT NULL",
+        "IS NULL"
+      ],
+      "solution": "SELECT p.brand,\n       ROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(CASE WHEN f.promo_id IS NULL THEN f.revenue ELSE 0 END)) AS base_revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand",
+      "hints": [
+        "Акция — это непустой promo_id: проверяется через IS NOT NULL, а не через сравнение со значением.",
+        "База — обратный случай, где promo_id пуст: IS NULL."
+      ],
+      "explain": "IS NOT NULL и IS NULL — не пара случайных синонимов «равно» и «не равно»: NULL нельзя сравнить оператором =, для него есть только отдельная проверка на пустоту. CASE WHEN использует её как обычное условие — и это весь приём, который разводит промо-выручку и базовую в один проход по данным."
+    },
+    {
+      "id": "sql-102",
+      "track": "sql",
+      "skill": "sql-case",
+      "alsoTrains": [
+        "sql-join-inner"
+      ],
+      "level": 3,
+      "mode": "fill",
+      "title": "Жил ли бренд на акциях",
+      "brief": "Финансовый директор выдвигает версию: может, Nettora и раньше держался на акциях, а теперь просто перестал их получать, — тогда падение объяснимо. Стоит проверить историю по годам.",
+      "goal": "Для бренда Nettora по годам вернуть year (YYYY), promo_revenue — выручку в акциях, округлённую до целых, и revenue — выручку целиком, округлённую до целых, по возрастанию года.",
+      "template": "SELECT ___ AS year,\n       ROUND(SUM(CASE WHEN ___ THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora'\nGROUP BY 1\nORDER BY year",
+      "blanks": [
+        "substr(f.week_start, 1, 4)",
+        "f.promo_id IS NOT NULL"
+      ],
+      "solution": "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora'\nGROUP BY 1\nORDER BY year",
+      "orderMatters": true,
+      "hints": [
+        "Год — первые четыре знака недели: substr(f.week_start, 1, 4), тот же приём, что и для месяца, только короче.",
+        "Условие акции внутри CASE — то же, что и в предыдущем задании: f.promo_id IS NOT NULL."
+      ],
+      "explain": "Версия не подтверждается ни в одном году: доля акций у Nettora — 6.7% в 2024-м, 20.3% в 2025-м и 16.7% в 2026-м, и максимум — ровно пятая часть выручки. Бренд никогда не жил на акциях в том смысле, который предполагала версия, а значит, причину падения нужно искать не в отказе от промо."
+    },
+    {
+      "id": "sql-103",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "alsoTrains": [
+        "sql-null"
+      ],
+      "level": 3,
+      "mode": "fill",
+      "title": "Кто на самом деле держит бренд",
+      "brief": "Команда e-com уверена, что именно она держит Nettora на плаву, пока остальные каналы проседают. Прежде чем соглашаться, нужно посмотреть цифры по каждому каналу с начала года — включая каналы, где продаж не было вовсе.",
+      "goal": "С 2026-01-01 вернуть по каждому каналу channel и units — сумму штук Nettora, включая каналы без единой продажи (0, а не пропущенная строка).",
+      "template": "SELECT c.channel, ___(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id ___ (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
+      "blanks": [
+        "COALESCE",
+        "IN"
+      ],
+      "solution": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
+      "hints": [
+        "SUM по пустому набору вернёт NULL, а не 0: сделать из пустоты ноль поможет COALESCE(..., 0).",
+        "Список product_id бренда Nettora проверяется через IN — подзапрос в скобках уже стоит рядом."
+      ],
+      "explain": "Ответ разводит версию по каналам: 8016 штук в e-com с начала года, 1539 в сетях, 303 в традиционной рознице и по нулю в аптеках и у дистрибьюторов. Но за то же полугодие 2025-го было 15258, 4432 и 560 — упало действительно везде, и в сетях втрое сильнее, чем в e-com. e-com не держит бренд — он просто падает медленнее остальных, и разница в темпе легко читается как стабильность, если не сравнить оба периода целиком."
+    },
+    {
+      "id": "sql-104",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "alsoTrains": [
+        "sql-null"
+      ],
+      "level": 4,
+      "mode": "write",
+      "title": "Список для Ито-сан",
+      "brief": "Ито-сан из сетевой розницы просит список точек, которые вообще не берут Nettora, — чтобы начать разговор о возврате бренда на полку, прежде чем строить общий план визитов.",
+      "goal": "Вернуть customer_name и city для точек в сетях (channel = 'modern_trade'), у которых нет ни одной продажи Nettora с 2026-01-01.",
+      "starter": "",
+      "solution": "SELECT c.customer_name, c.city\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nWHERE c.channel = 'modern_trade' AND f.sellout_id IS NULL",
+      "hints": [
+        "Условие на период — тоже условие на правую таблицу LEFT JOIN: как и условие на бренд, ему место в ON, а не в WHERE — иначе точки без продаж отсеются раньше, чем вы успеете их найти (сравните с заданием про фильтр, случайно попавший не туда).",
+        "«Ни одной продажи» после LEFT JOIN выглядит как f.sellout_id IS NULL: совпадения не нашлось."
+      ],
+      "explain": "Двадцать семь точек в сетях не купили ни одной единицы Nettora с начала года — с этим списком Ито-сан может идти к байерам сетей, прежде чем строить общий план возврата бренда. Условие на период здесь ведёт себя так же, как условие на товар в задании про точки без Nettora вообще: оба ограничивают правую таблицу LEFT JOIN и оба обязаны стоять в ON, иначе LEFT JOIN молча превратится в INNER, а точки без продаж потеряются вместе с самим ответом."
     }
   ]
 }
