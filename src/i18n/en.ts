@@ -753,8 +753,11 @@ export const en = {
       rows === undefined ? `One row = ${grain}` : `One row = ${grain} · ${rowCount(rows)}`,
     closeBtn: 'Close',
     ariaLabel: 'Data schema',
-    copyAria: (name: string) => `Copy "${name}"`,
+    /* See ru.ts: the same tap either copies or inserts into the active query field (insertTarget.ts), so the label stays neutral either way. */
+    copyAria: (name: string) => `"${name}": copy or insert into the query`,
     copied: 'Copied',
+    inserted: 'Inserted',
+    keyTitle: 'Join key: tables connect through this column',
     periodLabel: (from: string, to: string) => `Data period: ${periodRange(from, to)}`,
     /** См. комментарий в ru.ts: те же границы без подписи — для паспорта датасета. */
     periodRange,

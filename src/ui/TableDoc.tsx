@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { insertViaTarget } from './insertTarget';
 
 /**
  * Одна таблица схемы: заголовок с гранулярностью, список колонок со связями
@@ -37,27 +38,44 @@ interface Props {
    * fact_sellout. Внутри summary принадлежность однозначна.
    */
   links?: React.ReactNode;
+  /**
+   * Колонки, участвующие в связи между таблицами (см. keyColumns
+   * в engine/schemaGroups.ts) — ключ вида `table.column`, посчитан один раз
+   * хостом на весь документ схемы, а не здесь на каждую таблицу отдельно.
+   */
+  keyColumns?: Set<string>;
 }
 
-export function TableDoc({ table, open, detailsRef, highlightColumns, links }: Props) {
+export function TableDoc({ table, open, detailsRef, highlightColumns, links, keyColumns }: Props) {
   const { t, locale } = useI18n();
 
   /**
-   * Копирование имени колонки по клику — набирать `commercial_category_id`
-   * руками с телефона долго и с опечатками. Ключ вида `table.column`,
-   * а не просто имя: одинаковые имена (`revenue`, `product_id`) встречаются
-   * в нескольких таблицах, и без таблицы в ключе клик по одной подсветил бы
-   * «Скопировано» сразу у всех тёзок на экране.
+   * Клик по имени колонки — набирать `commercial_category_id` руками
+   * с телефона долго и с опечатками. Если есть активное поле запроса
+   * (задание или песочница открыты и в них есть фокус — см. insertTarget.ts),
+   * имя вставляется прямо туда, тем же способом, что и токен-панель.
+   * Если цели нет (экран «Данные», где рядом нет редактора вовсе) —
+   * имя уходит в буфер обмена, как было изначально.
+   *
+   * Ключ подписи вида `table.column`, а не просто имя: одинаковые имена
+   * (`revenue`, `product_id`) встречаются в нескольких таблицах, и без
+   * таблицы в ключе клик по одной подсветил бы «Скопировано» сразу
+   * у всех тёзок на экране.
    */
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+  const [flash, setFlash] = useState<{ key: string; kind: 'copied' | 'inserted' } | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
-  function copyColumn(name: string) {
-    navigator.clipboard?.writeText(name).catch(() => undefined);
-    setCopiedKey(`${table.table}.${name}`);
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopiedKey(null), 1200);
+  function pickColumn(name: string) {
+    const key = `${table.table}.${name}`;
+    if (insertViaTarget(name)) {
+      setFlash({ key, kind: 'inserted' });
+    } else {
+      navigator.clipboard?.writeText(name).catch(() => undefined);
+      setFlash({ key, kind: 'copied' });
+    }
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 1200);
   }
 
   return (
@@ -68,16 +86,19 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
         {links}
       </summary>
       {table.columns.map((c) => {
-        const copied = copiedKey === `${table.table}.${c.name}`;
+        const key = `${table.table}.${c.name}`;
+        const isKey = keyColumns?.has(key) ?? false;
         return (
           <div className={`col-doc${highlightColumns?.has(c.name) ? ' hit' : ''}`} key={c.name}>
             <button
               type="button"
               className="col-name"
-              onClick={() => copyColumn(c.name)}
+              onClick={() => pickColumn(c.name)}
               aria-label={t.schema.copyAria(c.name)}
             >
               <code>{c.name}</code>
+              {/* Колонка, по которой соединяют таблицы — и внешний ключ, и то, на что он ссылается (см. keyColumns). */}
+              {isKey && <span className="col-key" title={t.schema.keyTitle} aria-hidden="true">🔑</span>}
               {/*
                * Опциональный доступ, не лишняя осторожность: schema.json
                * отдаётся по некешируемому по хешу пути `/data/schema.json`,
@@ -90,8 +111,8 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links }: P
               {c.type && <small className="col-type">{c.type.toLowerCase()}</small>}
             </button>
             <span>
-              {copied ? (
-                t.schema.copied
+              {flash?.key === key ? (
+                t.schema[flash.kind]
               ) : (
                 <>
                   {/*

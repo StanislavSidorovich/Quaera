@@ -6,6 +6,7 @@ import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
+import { clearInsertTarget, setInsertTarget } from './insertTarget';
 import { ResultTable } from './ResultTable';
 
 /**
@@ -1155,6 +1156,58 @@ function FillTemplate({
 }) {
   const { t } = useI18n();
   const parts = template.split('___');
+  const blankCount = parts.length - 1;
+
+  /*
+   * Вставка из шторки схемы (см. insertTarget.ts) целится в активный
+   * пропуск — тот, где сейчас курсор, — той же логикой умного пробела,
+   * что и insert() в CodeEditor (в write это уже единственная textarea,
+   * здесь пропусков несколько, и у каждого своя позиция курсора).
+   *
+   * `blanksRef`/`onChangeRef` читаются внутри `insertBlank` в момент вызова,
+   * а не захватываются на момент создания обёртки: обёртки на пропуск
+   * заводятся один раз (см. wrappersRef ниже) и должны переживать любое
+   * число последующих рендеров с новыми `blanks`/`onChange`.
+   */
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const blanksRef = useRef(blanks);
+  blanksRef.current = blanks;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  function insertBlank(i: number, text: string) {
+    const el = inputRefs.current[i];
+    const current = blanksRef.current;
+    const value = current[i] ?? '';
+    const start = el?.selectionStart ?? value.length;
+    const end = el?.selectionEnd ?? value.length;
+    const before = value.slice(0, start);
+    // Тот же приём, что в CodeEditor.insert: пробел между «словами», но не
+    // между цифрами и не внутри строкового литерала.
+    const insideString = (before.match(/'/g) ?? []).length % 2 === 1;
+    const digitRun = /\d$/.test(before) && /^\d/.test(text);
+    const needsSpace = !insideString && !digitRun && /[\w)'"\]]$/.test(before) && /^[\w([]/.test(text);
+    const chunk = (needsSpace ? ' ' : '') + text;
+    const next = [...current];
+    next[i] = before + chunk + value.slice(end);
+    onChangeRef.current(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      const pos = start + chunk.length;
+      el?.setSelectionRange(pos, pos);
+    });
+  }
+
+  /** Одна стабильная обёртка на пропуск — см. довод у insertBlank про то, зачем не пересоздавать её каждый рендер. */
+  const wrappersRef = useRef<((text: string) => void)[]>([]);
+  if (wrappersRef.current.length !== blankCount) {
+    wrappersRef.current = Array.from({ length: blankCount }, (_, i) => (text: string) => insertBlank(i, text));
+  }
+  useEffect(() => {
+    const wrappers = wrappersRef.current;
+    return () => wrappers.forEach(clearInsertTarget);
+  }, []);
+
   // pre-wrap здесь больше не нужен точечно — он теперь у самого .sql-block.
   return (
     <pre className="sql-block">
@@ -1163,6 +1216,9 @@ function FillTemplate({
           {part}
           {i < parts.length - 1 && (
             <input
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
               value={blanks[i] ?? ''}
               disabled={disabled}
               onChange={(e) => {
@@ -1170,6 +1226,7 @@ function FillTemplate({
                 next[i] = e.target.value;
                 onChange(next);
               }}
+              onFocus={() => setInsertTarget(wrappersRef.current[i])}
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"

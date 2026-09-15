@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GROUP_ORDER, groupTables, type GroupedTables } from '../engine/schemaGroups';
+import { GROUP_ORDER, groupTables, keyColumns, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { SchemaMap } from './SchemaMap';
@@ -52,6 +52,7 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
         : { group: new Map(), incoming: new Map(), outgoing: new Map() },
     [doc]
   );
+  const keys = useMemo(() => (doc ? keyColumns(doc) : new Set<string>()), [doc]);
 
   /**
    * Поиск идёт и по колонкам, а не только по именам таблиц: человек помнит,
@@ -269,6 +270,7 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
                   else focusRefs.current.delete(table.table);
                 }}
                 highlightColumns={matches.get(table.table)}
+                keyColumns={keys}
                 /*
                  * Место таблицы в звезде — единственное, что видно, пока она
                  * свёрнута. У факта показываем, куда он ссылается; у справочника —

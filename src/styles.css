@@ -3658,6 +3658,14 @@ details.table-doc > summary small {
   word-break: break-all;
 }
 
+/* Колонка, по которой соединяют таблицы — и внешний ключ, и то, на что он ссылается (см. keyColumns). */
+.col-key {
+  display: inline-block;
+  margin-left: 2px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
 /* Тип колонки — из той же DDL, что создаёт таблицу, не отдельный список. */
 .col-type {
   display: inline-block;

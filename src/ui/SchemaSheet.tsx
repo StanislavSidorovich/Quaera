@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { keyColumns } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { TableDoc } from './TableDoc';
@@ -85,6 +86,8 @@ export function SchemaSheet({ doc, onClose, focusTable }: Props) {
     if (doc && focusTable) focusRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, [doc, focusTable]);
 
+  const keys = useMemo(() => (doc ? keyColumns(doc) : new Set<string>()), [doc]);
+
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
@@ -114,6 +117,7 @@ export function SchemaSheet({ doc, onClose, focusTable }: Props) {
                 table={table}
                 open={table.table === focusTable}
                 detailsRef={table.table === focusTable ? focusRef : undefined}
+                keyColumns={keys}
               />
             ))}
           </>

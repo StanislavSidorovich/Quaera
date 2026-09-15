@@ -70,3 +70,27 @@ export function groupTables(doc: SchemaDoc): GroupedTables {
 
   return { group, incoming, outgoing };
 }
+
+/**
+ * Колонки, по которым таблицы соединяются: сама внешний ключ (`references`
+ * стоит у неё) либо то, на что этот внешний ключ ссылается — колонка
+ * справочника, у которой `references` никогда не бывает, потому что
+ * ссылается не она, а на неё. Без второго направления 🔑 не досталось бы
+ * ни одной колонке dim_region, dim_product и прочих измерений — то есть
+ * ровно тем колонкам, которые и пишут в ON.
+ *
+ * Ключ множества — `table.column`, тем же способом, что и в TableDoc
+ * (copyColumn/pickColumn): одинаковые имена (`region_id`, `product_id`)
+ * встречаются в нескольких таблицах, и без таблицы в ключе они слились бы.
+ */
+export function keyColumns(doc: SchemaDoc): Set<string> {
+  const keys = new Set<string>();
+  for (const table of doc.tables) {
+    for (const column of table.columns) {
+      if (!column.references) continue;
+      keys.add(`${table.table}.${column.name}`);
+      keys.add(`${column.references.table}.${column.references.column}`);
+    }
+  }
+  return keys;
+}

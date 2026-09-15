@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Track } from '../content/types';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { clearInsertTarget, setInsertTarget } from './insertTarget';
 
 /**
  * Редактор кода для телефона — общий для SQL и Python.
@@ -201,6 +202,22 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
     });
   };
 
+  /*
+   * Цель для вставки из шторки схемы (см. insertTarget.ts). `insert` выше
+   * замыкает `value`/`onChange` текущего рендера и стал бы протухшим
+   * колбэком, если бы регистрировался сам, — поэтому регистрируется
+   * стабильная обёртка (одна на всё время жизни поля), которая на каждый
+   * вызов читает `insertRef.current`, обновляемый на каждом рендере.
+   * Регистрация — по фокусу, а не при монтировании: полей редактора
+   * на экране может быть несколько (задание и песочница не одновременно,
+   * но потенциально не только textarea), активно ровно то, на котором
+   * стоит курсор.
+   */
+  const insertRef = useRef(insert);
+  insertRef.current = insert;
+  const stableInsertRef = useRef((text: string) => insertRef.current(text));
+  useEffect(() => () => clearInsertTarget(stableInsertRef.current), []);
+
   const toggleKeyboard = () => {
     const next = !keyboardOn;
     setKeyboardOn(next);
@@ -261,6 +278,7 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         disabled={disabled}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setInsertTarget(stableInsertRef.current)}
         // Без включённого тумблера клавиатура не должна всплывать сама —
         // фокус и выделение при этом продолжают работать как обычно.
         inputMode={keyboardOn ? undefined : 'none'}
