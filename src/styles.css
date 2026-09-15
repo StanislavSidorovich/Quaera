@@ -3377,6 +3377,47 @@ tbody tr:last-child td {
  * (постановка шага) — обе вещи стоит прочитать до того, как писать код,
  * а не после.
  */
+/*
+ * Термин глоссария (см. GlossaryText.tsx) — подчёркнут пунктиром прямо
+ * в строке прозы, без рамки и фона: это слово в предложении, а не кнопка
+ * рядом с ним, и обычная кнопочная обводка читалась бы чужеродно посреди
+ * текста.
+ */
+.glossary-term {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Разворачивается на своей строке под словом — довод у GlossaryTermSpan про то, почему не всплывающая подсказка. */
+.glossary-note {
+  display: block;
+  margin: 4px 0 2px;
+  padding: 7px 11px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  border: 1px dashed var(--line);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.glossary-note-line {
+  display: block;
+}
+
+.glossary-note-pointer {
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .reflexive {
   padding: 11px 13px;
   border-radius: 10px;

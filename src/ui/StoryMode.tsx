@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
+import { annotateSequence } from './GlossaryText';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
@@ -123,6 +124,25 @@ export interface StoryStepView {
   skillTitle: string;
 }
 
+/**
+ * Строки прозы текущей фазы, в порядке показа, — вход для глоссария
+ * (см. annotateSequence в GlossaryText.tsx). Заголовок подводки (intro.title)
+ * в список не входит: он короткая шапка, а не проза, и включать его значило
+ * бы городить смещение индекса на единицу между этим списком и intro.paras
+ * ради термина, которому в заголовке взяться неоткуда.
+ */
+function phaseGlossaryTexts(phase: StoryPhase, mission: StoryMission): string[] {
+  if (phase.kind === 'brief') return mission.messages.map((m) => m.text);
+  if (phase.kind === 'interlude') {
+    const interlude = mission.steps[phase.step]?.interlude;
+    return interlude ? interlude.messages.map((m) => m.text) : [];
+  }
+  if (phase.kind === 'intro') return mission.steps[phase.step]?.intro?.paras ?? [];
+  if (phase.kind === 'reflection') return mission.reflection;
+  if (phase.kind === 'hook') return mission.hook;
+  return [];
+}
+
 export function StoryMode({
   campaign,
   mission,
@@ -209,7 +229,47 @@ export function StoryMode({
   /** Включить напоминания — кнопка в итоге недели, рядом с датой повторения. */
   onEnablePush: () => Promise<PushState>;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  /*
+   * Термины глоссария, уже показанные сегодня, — состояние на весь день
+   * (см. GlossaryText.tsx), а не на фазу: StoryMode перемонтируется целиком
+   * на смену дня (key={mission.id} в App.tsx), значит пустое множество здесь
+   * и есть «новый день», без отдельного сброса.
+   *
+   * Умышленно НЕ React state с коммитом эффектом — на этом ровно один раз
+   * уже ловилась самосхлопывающаяся петля: эффект дописывает термины фазы
+   * в состояние сразу после первого рендера, вызывает повторный рендер той
+   * же фазы, и та же самая разметка на этом повторном рендере видит свои
+   * же только что показанные термины уже «показанными» — подчёркивание
+   * гасло в момент коммита, раньше, чем человек успевал его увидеть.
+   *
+   * Вместо этого — две ref: `committedRef` держит термины, показанные
+   * строго ДО текущей фазы (не мутируется, пока фаза не сменится, поэтому
+   * разметка текущей фазы стабильна на любом числе повторных рендеров,
+   * включая двойной вызов под React StrictMode), `pendingRef` — то, что
+   * показала САМА текущая фаза, и коммитится в `committedRef` только
+   * в момент смены фазы на другую — то есть уже после того, как человек
+   * фазу прочитал.
+   */
+  const committedRef = useRef<Set<string>>(new Set());
+  const phaseKeyRef = useRef<string | null>(null);
+  const pendingRef = useRef<string[]>([]);
+  const phaseKey =
+    phase.kind === 'intro' || phase.kind === 'task' || phase.kind === 'interlude'
+      ? `${phase.kind}:${phase.step}`
+      : phase.kind;
+  if (phaseKeyRef.current !== phaseKey) {
+    pendingRef.current.forEach((id) => committedRef.current.add(id));
+    pendingRef.current = [];
+    phaseKeyRef.current = phaseKey;
+  }
+  const { rendered: glossaryRendered, newlyShown: glossaryNewlyShown } = annotateSequence(
+    phaseGlossaryTexts(phase, mission),
+    committedRef.current,
+    locale
+  );
+  pendingRef.current = glossaryNewlyShown;
 
   /*
    * Записанные попытки — множеством, а не флагом: в дне несколько заданий,
@@ -415,7 +475,7 @@ export function StoryMode({
               {mission.messages.map((m, i) => (
                 <div className="story-mode-msg" key={i}>
                   <p className="story-mode-from">{m.from}</p>
-                  <p className="story-mode-text">{m.text}</p>
+                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                 </div>
               ))}
             </div>
@@ -436,7 +496,7 @@ export function StoryMode({
               {interlude.messages.map((m, i) => (
                 <div className="story-mode-msg" key={i}>
                   <p className="story-mode-from">{m.from}</p>
-                  <p className="story-mode-text">{m.text}</p>
+                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                 </div>
               ))}
             </div>
@@ -451,7 +511,7 @@ export function StoryMode({
             {intro.title && <h2>{intro.title}</h2>}
             {intro.paras.map((p, i) => (
               <p className="story-mode-para" key={i}>
-                {p}
+                {glossaryRendered[i] ?? p}
               </p>
             ))}
             <button type="button" className="btn" onClick={goNext}>
@@ -465,7 +525,7 @@ export function StoryMode({
             <h2>{t.storyMode.reflectionTitle}</h2>
             {mission.reflection.map((p, i) => (
               <p className="story-mode-para" key={i}>
-                {p}
+                {glossaryRendered[i] ?? p}
               </p>
             ))}
             <button type="button" className="btn" onClick={goNext}>
@@ -492,7 +552,7 @@ export function StoryMode({
           <>
             {mission.hook.map((p, i) => (
               <p className="story-mode-para" key={i}>
-                {p}
+                {glossaryRendered[i] ?? p}
               </p>
             ))}
             {onNext ? (
