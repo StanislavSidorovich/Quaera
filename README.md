@@ -1,5 +1,7 @@
 English | [Русский](README.ru.md)
 
+Code: [Apache-2.0](LICENSE) · Learning content: [CC BY-NC-SA 4.0](LICENSE-CONTENT)
+
 # Quaera — a data analyst trainer
 
 **Open the link and within a minute you're writing a real query against
@@ -12,11 +14,6 @@ install, no sign-up, works on a phone and offline.
 If "data analytics" doesn't mean much to you yet, start here:
 **[What is data analytics](https://quaera.app/?intro)** — a three-minute
 walkthrough written without a single professional term.
-
-Technically it's a mobile web app (PWA) for practicing SQL, pandas, data
-modeling and analyst judgment on data built to resemble the real thing.
-The code actually executes: SQLite and Python (Pyodide) run entirely
-in the browser, no server involved.
 
 ## Three minutes, depending on who you are
 
@@ -31,17 +28,17 @@ in the browser, no server involved.
 
 ## What's inside
 
-**Four tracks — 305 tasks and 73 skills.** Fully populated, reviewed
+**Four tracks — 323 tasks and 73 skills.** Fully populated, reviewed
 and translated to English: interface, tasks, technique cards.
 
 | Track | Tasks | Skills | How the answer is checked |
 | --- | --- | --- | --- |
-| SQL for analysts | 92 | 20 | The query runs against SQLite (sql.js) |
+| SQL for analysts | 106 | 20 | The query runs against SQLite (sql.js) |
 | Analytics as a profession | 79 | 20 | Multiple choice with a full explanation (`predict`) plus arranging the steps of an argument (`order`) |
 | Data model and BI | 77 | 19 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) |
-| pandas for analysts | 57 | 14 | The code runs in Python (Pyodide) |
+| pandas for analysts | 61 | 14 | The code runs in Python (Pyodide) |
 
-**Story mode — an analyst's work week.** Five five-day weeks, twenty-five
+**Story mode — an analyst's work week.** Five six-day weeks, thirty
 days: a client brings a question in the morning, you bring back a finding by
 evening. Techniques are introduced exactly where the work needs them, not
 in a syllabus order, and a week can cross tracks — the third one moves
@@ -79,6 +76,19 @@ tools, and where this kind of work happens. You can send the link to someone
 you know without explaining anything out loud first.
 
 ![Walkthrough "What is data analytics": the area map and the first block](docs/screenshots/08-intro.png)
+
+## Where it gets you
+
+What the five-week campaign gets you to, in five verbs:
+
+- **Ask** — turning "build me a dashboard" into a question with a defined
+  metric (profession track).
+- **Explore** — reading tables, grain, keys, and what's missing before you
+  trust a number (SQL track, data screen).
+- **Analyse** — testing a hypothesis through SQL, pandas or DAX.
+- **Explain** — what the data actually shows versus what you assumed.
+- **Recommend** — choosing between actions and saying why the others
+  don't hold.
 
 ## What sets it apart from other trainers
 
@@ -234,6 +244,11 @@ through the Supabase dashboard editor instead. Everything else works
 without it; account deletion doesn't.
 
 ## How it's built
+
+Technically it's a mobile web app (PWA) for practicing SQL, pandas, data
+modeling and analyst judgment on data built to resemble the real thing.
+The code actually executes: SQLite and Python (Pyodide) run entirely
+in the browser, no server involved.
 
 ```
 scripts/build-dataset.mjs   dataset generator (deterministic seed)

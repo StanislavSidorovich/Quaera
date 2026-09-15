@@ -29,11 +29,11 @@ export const en = {
   welcome: {
     headline: 'An analytics trainer: the query runs, the answer is checked against the data',
     body:
-      "Four tracks on one continuous dataset of a fictional FMCG and OTC-pharma distributor: analytics as a profession, SQL, pandas, the data model. The tasks are the ones an analyst actually gets: find where a brand's distribution went, work out a warehouse overstock, explain a seasonal sales dip.",
+      "An FMCG and OTC-pharma trainer built on a realistic business dataset: a fictional distributor. Four tracks work through it: analytics as a profession, SQL, pandas, the data model. The tasks are the ones an analyst actually gets: find where a brand's distribution went, work out a warehouse overstock, explain a seasonal sales dip.",
     proofPoints: [
       {
-        title: 'The code runs in the browser',
-        body: 'SQLite and pandas (via Pyodide) execute right on the page: the query goes against real data, and what gets compared is what it returned, not how it was written.',
+        title: 'Your code actually runs',
+        body: 'On your phone and offline: the query goes against real data, and what gets compared is what it returned, not how it was written.',
       },
       {
         /** См. комментарий в ru.ts: «build conditions» — слово автора, не читателя. */
@@ -186,6 +186,9 @@ export const en = {
     audienceCeilingLabel: 'Where it gets you',
     audienceCeilingBody:
       'To a confident mid-level: window functions with frames, CTEs and query decomposition, filter context and time intelligence in DAX, reshaping data in pandas. That is the level at which an analyst closes most business requests without handing them onward.',
+    audienceVerbsLabel: 'In five verbs',
+    audienceVerbsBody:
+      'Ask: turning "build me a dashboard" into a question with a defined metric. Explore: reading tables, grain, keys, and what is missing before trusting a number. Analyse: testing a hypothesis through SQL, pandas or DAX. Explain: what the data actually shows versus what you assumed. Recommend: choosing between actions and saying why the others do not hold. That is what the five-week campaign gets you to.',
     audienceNotLabel: 'What is not here',
     audienceNotBody:
       'Database administration, query plan tuning, data engineering, and machine learning. Those are adjacent professions: they begin where this trainer ends, and promising them in passing would be a lie.',

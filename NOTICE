@@ -1,0 +1,12 @@
+Quaera
+Copyright Stanislav Sidorovich
+
+This product includes software developed for the Quaera project
+(https://quaera.app), licensed under the Apache License, Version 2.0.
+See LICENSE for the full license text.
+
+The learning content — task packs and technique cards in
+src/content/packs/ (business framing, task text, answer explanations) —
+is licensed separately, under Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
+See LICENSE-CONTENT for the full license text.

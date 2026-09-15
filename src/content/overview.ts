@@ -297,8 +297,23 @@ const EN: OverviewPageContent = {
       ],
     },
     {
-      id: 'task',
+      id: 'outcome',
       kicker: '02',
+      title: 'What it trains, in five verbs',
+      body: [
+        'What the five week campaign gets you to, in the words a manager would actually use:',
+      ],
+      list: [
+        { label: 'Ask', text: 'turning "build me a dashboard" into a question with a defined metric.' },
+        { label: 'Explore', text: 'reading tables, grain, keys, and what is missing before trusting a number.' },
+        { label: 'Analyse', text: 'testing a hypothesis through SQL, pandas or DAX.' },
+        { label: 'Explain', text: 'what the data actually shows versus what you assumed.' },
+        { label: 'Recommend', text: 'choosing between actions and saying why the others do not hold.' },
+      ],
+    },
+    {
+      id: 'task',
+      kicker: '03',
       title: 'Checked by running it, not by matching text',
       body: [
         'A task is a question against the distributor database. You write the query in an editor, with no multiple choice underneath.',
@@ -312,7 +327,7 @@ const EN: OverviewPageContent = {
     },
     {
       id: 'limits',
-      kicker: '03',
+      kicker: '04',
       title: 'What is here, and what is not',
       body: ['Covered, with tasks that run and are checked:'],
       list: [
@@ -355,7 +370,7 @@ const EN: OverviewPageContent = {
     },
     {
       id: 'closing',
-      kicker: '04',
+      kicker: '05',
       title: 'One link is the whole handover',
       body: [
         'For yourself: open the app and take the SQL track. The first task arrives inside a minute, and the technique card comes with it.',
@@ -365,7 +380,7 @@ const EN: OverviewPageContent = {
     },
     {
       id: 'data',
-      kicker: '05',
+      kicker: '06',
       title: 'One company, thirteen tables, all of it connected',
       body: [
         'Every task runs on one dataset: Kaiyo Trading, a fictional distributor of FMCG and over the counter pharma in Japan. Thirteen tables, 159,740 rows, two and a half years of daily records, 144 outlets and 47 products.',
@@ -379,7 +394,7 @@ const EN: OverviewPageContent = {
     },
     {
       id: 'gap',
-      kicker: '06',
+      kicker: '07',
       title: 'The lesson ends. The need comes later.',
       body: [
         'A course does its job in the room. Someone explains a topic, every step follows from the last one, and by the final exercise it all makes sense. None of that is wrong.',

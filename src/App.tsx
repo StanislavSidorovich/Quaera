@@ -4062,6 +4062,7 @@ function About({
             [t.about.audienceWhoLabel, t.about.audienceWhoBody],
             [t.about.audienceStartLabel, t.about.audienceStartBody],
             [t.about.audienceCeilingLabel, t.about.audienceCeilingBody],
+            [t.about.audienceVerbsLabel, t.about.audienceVerbsBody],
             [t.about.audienceNotLabel, t.about.audienceNotBody],
           ].map(([label, body]) => (
             <div key={label}>

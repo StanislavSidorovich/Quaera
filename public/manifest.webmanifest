@@ -1,7 +1,7 @@
 {
   "name": "Quaera: a data analyst trainer",
   "short_name": "Quaera",
-  "description": "SQL, the data model and FMCG/pharma metrics. Practice with queries that really run, offline.",
+  "description": "An FMCG analyst trainer on a realistic business dataset: a fictional distributor. Practice with queries that really run, offline.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
