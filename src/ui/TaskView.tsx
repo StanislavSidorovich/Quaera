@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Task, TaskStep } from '../content/types';
 import { taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
@@ -229,6 +229,15 @@ interface Props {
   afterNote?: { from: string; text: string };
   /** Это задание — передышка занятия (см. isRest в App.tsx), не обычный шаг. */
   isRest?: boolean;
+  /**
+   * `task.brief`/`task.goal`, уже размеченные глоссарием (см. GlossaryText.tsx),
+   * — приходят только из StoryMode, где есть понятие «дня» и состояние
+   * «показано сегодня». В обычном занятии (App.tsx зовёт TaskView без этих
+   * пропсов) текст остаётся обычной строкой — дня без кампании не бывает,
+   * подчёркивать там нечего.
+   */
+  glossaryBrief?: ReactNode;
+  glossaryGoal?: ReactNode;
 }
 
 export function TaskView({
@@ -242,6 +251,8 @@ export function TaskView({
   onOpenLesson,
   afterNote,
   isRest,
+  glossaryBrief,
+  glossaryGoal,
 }: Props) {
   const { t } = useI18n();
   const steps = useMemo(() => resolveSteps(task), [task]);
@@ -457,8 +468,8 @@ export function TaskView({
           </div>
         )}
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
-        <p className="brief">{task.brief}</p>
-        <div className="goal">{task.goal}</div>
+        <p className="brief">{glossaryBrief ?? task.brief}</p>
+        <div className="goal">{glossaryGoal ?? task.goal}</div>
       </div>
 
       <StepView

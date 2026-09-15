@@ -130,14 +130,23 @@ export interface StoryStepView {
  * в список не входит: он короткая шапка, а не проза, и включать его значило
  * бы городить смещение индекса на единицу между этим списком и intro.paras
  * ради термина, которому в заголовке взяться неоткуда.
+ *
+ * Фаза `task` даёт ровно два элемента — `task.brief`, `task.goal`,
+ * в этом порядке — их и подставляет вызывающий код обратно в TaskView
+ * (glossaryBrief/glossaryGoal). Порядок жёстко завязан на этот вызов —
+ * менять его здесь и не поменять там значит подменить одну прозу другой.
  */
-function phaseGlossaryTexts(phase: StoryPhase, mission: StoryMission): string[] {
+function phaseGlossaryTexts(phase: StoryPhase, mission: StoryMission, steps: StoryStepView[]): string[] {
   if (phase.kind === 'brief') return mission.messages.map((m) => m.text);
   if (phase.kind === 'interlude') {
     const interlude = mission.steps[phase.step]?.interlude;
     return interlude ? interlude.messages.map((m) => m.text) : [];
   }
   if (phase.kind === 'intro') return mission.steps[phase.step]?.intro?.paras ?? [];
+  if (phase.kind === 'task') {
+    const task = steps[phase.step]?.task;
+    return task ? [task.brief, task.goal] : [];
+  }
   if (phase.kind === 'reflection') return mission.reflection;
   if (phase.kind === 'hook') return mission.hook;
   return [];
@@ -265,7 +274,7 @@ export function StoryMode({
     phaseKeyRef.current = phaseKey;
   }
   const { rendered: glossaryRendered, newlyShown: glossaryNewlyShown } = annotateSequence(
-    phaseGlossaryTexts(phase, mission),
+    phaseGlossaryTexts(phase, mission, steps),
     committedRef.current,
     locale
   );
@@ -348,6 +357,8 @@ export function StoryMode({
           onOpenSchema={onOpenSchema}
           afterNote={mission.steps[phase.step]?.after}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
+          glossaryBrief={glossaryRendered[0]}
+          glossaryGoal={glossaryRendered[1]}
         />
       </>
     );
