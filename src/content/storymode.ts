@@ -798,6 +798,7 @@ const ru: StoryCampaign = {
             paras: [
               'Вопрос субботы: в скольких разных точках продавался каждый бренд с начала 2026 года. Части все знакомые: соединение продаж со справочником товаров и период без верхней границы — из четверга, счёт разных точек — из вторника, группировка и сортировка по убыванию — оттуда же.',
               'Порядок частей в запросе тоже знакомый: что показать, откуда, какие строки, по чему свернуть, как упорядочить. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
+              'Когда ответ за 2026 год пройдёт проверку, «Выполнить» никуда не денется — поменяй f.week_start >= \'2026-01-01\' на f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\' и нажми его ещё раз. Числа за прошлый год в следующем сообщении будут посчитаны тобой, а не выданы готовыми.',
             ],
           },
           after: {
@@ -1081,7 +1082,7 @@ const ru: StoryCampaign = {
           intro: {
             paras: [
               'Прежде чем считать на точку — просьба, которая пришла с утра. Команда e-com уверена, что Nettora держится на них, пока остальные каналы проседают. Проверь по каналам с начала года понедельничным LEFT JOIN от справочника точек: канал, где Nettora не продали ни разу, — тоже ответ, и в таблице он обязан остаться нулём.',
-              'Запрос почти собран: подзапрос с товарами бренда на месте, условие на период стоит в ON рядом с ним. Не хватает двух слов — чем превратить пустоту в ноль и чем сравнить товар со списком.',
+              'Запрос почти собран: подзапрос с товарами бренда на месте, условие на период стоит в ON рядом с ним. Не хватает двух слов — чем превратить пустоту в ноль и чем сравнить товар со списком. Как в понедельнике: подзапрос вернёт пять товаров, а не один.',
             ],
           },
           after: {
@@ -3056,6 +3057,7 @@ const en: StoryCampaign = {
             paras: [
               'Saturday\'s question: in how many distinct outlets did each brand sell since the start of 2026. Every part is familiar: joining sales to the product directory and a period with no upper bound come from Thursday, counting distinct outlets from Tuesday, grouping and sorting in descending order from there as well.',
               'The order of the parts is familiar too: what to show, where from, which rows, what to fold by, how to sort. The hints are in place, but try without them first; that is what Saturday is for.',
+              'Once your 2026 answer passes the check, Execute is still there: swap f.week_start >= \'2026-01-01\' for f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\' and run it again. The numbers for last year in the next message will be ones you counted yourself, not numbers just handed to you.',
             ],
           },
           after: {
@@ -3281,7 +3283,7 @@ const en: StoryCampaign = {
           intro: {
             paras: [
               'Before counting per outlet, a request that came in this morning. The ecom team is sure Nettora is holding up thanks to them while the other channels sag. Check it by channel since the start of the year with Monday\'s LEFT JOIN from the outlet directory: a channel where Nettora never sold is an answer too, and it has to stay in the table as a zero.',
-              'The query is nearly complete: the subquery with the brand\'s products is in place, and the period condition sits in ON next to it. Two words are missing: what turns emptiness into a zero, and what compares a product with a list.',
+              'The query is nearly complete: the subquery with the brand\'s products is in place, and the period condition sits in ON next to it. Two words are missing: what turns emptiness into a zero, and what compares a product with a list. Same as Monday: the subquery returns five products, not one.',
             ],
           },
           after: {

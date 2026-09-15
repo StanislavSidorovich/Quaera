@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n } from '../i18n/context';
 import type { StoryMission } from '../content/storymode';
 import type { Progress } from '../srs/store';
 import { isDue } from '../srs/scheduler';
 import { pushState, type PushState } from '../push/client';
 import type { StoryStepView } from './StoryMode';
+import { lessonBySkillFor } from '../content';
 
 /**
  * Итог недели — экран между суждением пятницы и крючком в следующее дело.
@@ -151,6 +152,7 @@ export function StoryWeekSummary({
   campaign?: boolean;
 }) {
   const { t, locale } = useI18n();
+  const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
   const [now] = useState(() => new Date());
   const [push, setPush] = useState<PushState>(() => pushState());
   const [asked, setAsked] = useState(false);
@@ -200,20 +202,26 @@ export function StoryWeekSummary({
         <>
           <h3 className="story-summary-h">{t.storyMode.summarySkills}</h3>
           <ul className="story-summary-list">
-            {s.skills.map((k) => (
-              <li key={k.id}>
-                <span>{k.title}</span>
-                <span className={`story-summary-note${k.state === 'due' ? ' is-due' : ''}`}>
-                  {k.state === 'due'
-                    ? t.storyMode.skillDue
-                    : k.state === 'anchored'
-                      ? t.storyMode.skillAnchored
-                      : k.state === 'holds'
-                        ? t.storyMode.skillHolds
-                        : t.storyMode.skillBack(shortDate.format(new Date(k.dueAt)))}
-                </span>
-              </li>
-            ))}
+            {s.skills.map((k) => {
+              const construct = lessonBySkill.get(k.id)?.form?.split('\n')[0].trim();
+              return (
+                <li key={k.id}>
+                  <span>
+                    {k.title}
+                    {construct && <code className="story-summary-construct">{construct}</code>}
+                  </span>
+                  <span className={`story-summary-note${k.state === 'due' ? ' is-due' : ''}`}>
+                    {k.state === 'due'
+                      ? t.storyMode.skillDue
+                      : k.state === 'anchored'
+                        ? t.storyMode.skillAnchored
+                        : k.state === 'holds'
+                          ? t.storyMode.skillHolds
+                          : t.storyMode.skillBack(shortDate.format(new Date(k.dueAt)))}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <p className="story-mode-para">{t.storyMode.summarySkillsNote}</p>
         </>
