@@ -23,6 +23,23 @@ const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.
 const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'quaera.sqlite'))));
 
 /**
+ * Уровни панели вставки (src/content/panelKeywords.ts) — вырезкой текста,
+ * а не импортом: файл держат TS-типом ради CodeEditor/TokenPanel.tsx,
+ * а здесь голый node без TS-раннера. Массивы внутри — чистые литералы без
+ * TS-синтаксиса, поэтому вырезанный текст — валидный JS, и eval для него
+ * безопасен (свой файл, не внешний ввод). Один источник вместо двух: копия
+ * списка уже рассинхронизировалась однажды — см. track-constructs.mjs.
+ */
+function loadKeywordLevels(name) {
+  const src = readFileSync(path.join(root, 'src', 'content', 'panelKeywords.ts'), 'utf8');
+  const re = new RegExp(`export const ${name}[^=]*=\\s*(\\[[\\s\\S]*?\\n\\]);`);
+  const m = re.exec(src);
+  if (!m) throw new Error(`panelKeywords.ts: не нашёл ${name}`);
+  return new Function(`return ${m[1]}`)();
+}
+const SQL_KEYWORDS_BY_LEVEL = loadKeywordLevels('SQL_KEYWORDS_BY_LEVEL');
+
+/**
  * Pyodide поднимается лениво и один раз: инициализация занимает секунды,
  * и её не нужно платить, пока в python-core нет ни одного задания в режиме
  * write/fill. Источник обвязки — public/python-bootstrap.py, тот же файл,
@@ -739,6 +756,62 @@ for (const packId of packs) {
               fail(t.id, `пропуск №${i + 1} («${b}») слишком мелкий, чтобы быть решением`);
             }
           }
+        }
+
+        /*
+         * Пропуск не должен склеивать ключевое слово с аргументом — дефект
+         * sql-098 до 2026-09-16: «JOIN dim_product p ON p.product_id =
+         * f.product_id» и «WHERE f.week_start >= ...» стояли в двух
+         * пропусках подряд одним куском, без единого слова шаблона между
+         * ними, и форма ответа стала неоднозначной (см. querium-next-steps,
+         * тридцатый заход). Ключевое слово-одиночка в пропуске (ORDER BY,
+         * DESC в sql-093) не запрещена — она атомарна и без аргумента внутри
+         * себя же читается однозначно. Только SQL: у python/model другой
+         * синтаксис, и этот список к нему не относится.
+         */
+        if (pack.track === 'sql') {
+          const CLAUSE_KEYWORDS = [
+            'SELECT', 'FROM', 'LEFT JOIN', 'INNER JOIN', 'RIGHT JOIN', 'JOIN',
+            'ON', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'WITH', 'UNION', 'LIMIT',
+          ];
+          for (const [i, b] of t.blanks.entries()) {
+            const trimmed = String(b).trim();
+            const glued = CLAUSE_KEYWORDS.find(
+              (kw) => trimmed.toUpperCase().startsWith(kw) && trimmed.length > kw.length
+            );
+            if (glued) {
+              fail(
+                t.id,
+                `пропуск №${i + 1} («${b}») склеивает ключевое слово «${glued}» с аргументом — ключевое слово остаётся в шаблоне, в пропуск идёт только аргумент`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    /*
+     * Токен эталона обязан быть доступен в панели вставки уровня задания —
+     * иначе человек видит в подсказке/эталоне конструкцию, набрать которую
+     * с телефона можно только вручную, хотя панель для того и существует
+     * (см. querium-next-steps, тридцатый заход, находка sql-086: LEFT JOIN
+     * требовался на уровне 2, панель открывала его только с уровня 3).
+     * Проверка по словам эталона, не подстрокой: без \b «END» ложно
+     * находится внутри «INDEPENDENT». Длинные ключевые слова проверяются
+     * раньше коротких, чтобы «LEFT JOIN» не спрятался за отдельным «JOIN».
+     */
+    if (pack.track === 'sql' && t.solution && t.level) {
+      const solutionUpper = t.solution.toUpperCase();
+      const levelEntries = SQL_KEYWORDS_BY_LEVEL.flatMap((g) => g.words.map((w) => [w, g.upTo])).sort(
+        (a, b) => b[0].length - a[0].length
+      );
+      const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      for (const [kw, minLevel] of levelEntries) {
+        if (minLevel <= t.level) continue;
+        const pattern = /^[A-Z]/.test(kw) ? new RegExp(`\\b${escapeRe(kw)}`) : new RegExp(escapeRe(kw));
+        if (pattern.test(solutionUpper)) {
+          fail(t.id, `эталон уровня ${t.level} использует «${kw}» — в панели вставки он открывается только с уровня ${minLevel}`);
+          break;
         }
       }
     }

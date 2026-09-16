@@ -1989,8 +1989,7 @@
       "brief": "Before digging into Nettora's decline, the analyst checks the broader market picture first: do sales swing by month because the number of active outlets changes?",
       "goal": "For 2025, return month in YYYY-MM format, units (the sum of units) and outlets (the number of distinct outlets with sales that month), ordered ascending by month.",
       "hints": [
-        "Distinct outlets is COUNT(DISTINCT customer_id), the same function that already counted distinct brands.",
-        "Grouping and sorting are the same here: both run on month."
+        "Distinct outlets is COUNT(DISTINCT customer_id), the same function that already counted distinct brands."
       ],
       "explain": "The outlet count barely moves: 132 in every month of 2025. Units, meanwhile, swing from 26,000 to 50,000. So the seasonal wave isn't about stores opening and closing; the market buys differently month to month at the same coverage. Demand versus distribution is the first question worth asking before any decline analysis."
     },
@@ -2000,8 +1999,8 @@
       "brief": "The commercial director again wants revenue by brand from the start of 2026, but this time without an upper bound on the period: data updates every week, and they want fresh numbers without editing the range each time.",
       "goal": "Return brand and revenue (the sum of revenue from 2026-01-01 through today, rounded to whole numbers), ordered by revenue descending.",
       "hints": [
-        "No upper bound needed here; a \"not earlier than the start of the year\" condition works: WHERE f.week_start >= '2026-01-01'.",
-        "The brand lives in dim_product, the fact in fact_sellout; product_id links them."
+        "The join is JOIN dim_product p ON p.product_id = f.product_id: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
+        "No upper bound needed here; a \"not earlier than the start of the year\" condition works: WHERE f.week_start >= '2026-01-01'."
       ],
       "explain": "BETWEEN is convenient when a period is closed on both ends, but a \"start of the year through today\" report has no such end; the data simply stops where it stops. The condition f.week_start >= '2026-01-01' says exactly that, and it doesn't need fixing every week as new data arrives."
     },
@@ -2011,8 +2010,8 @@
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
       "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
-        "The brand lives in dim_product, the fact in fact_sellout; the same key links them in every brand report, product_id.",
-        "Group by the same column the aggregates in SELECT and HAVING are computed for: brand."
+        "The join is JOIN dim_product p ON p.product_id = f.product_id: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
+        "Group by the same column the aggregates in SELECT and HAVING are computed for: GROUP BY p.brand."
       ],
       "explain": "One HAVING condition checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each."
     },
@@ -2025,7 +2024,7 @@
         "This is similar to the revenue-by-brand-since-the-start-of-the-year query; the difference is counting coverage instead of revenue: COUNT(DISTINCT customer_id).",
         "The date again has no upper bound: WHERE f.week_start >= '2026-01-01'."
       ],
-      "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago. Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it."
+      "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago (the same numbers from Thursday's query, run over the full 2025 year). Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it.\n\nThe two periods aren't the same length, though: 2026 here is still incomplete (a bit over two months), while 2025 is a full year, and coverage over part of a year can't strictly exceed coverage over the whole year. It doesn't change the conclusion here: all four brands land within a couple of outlets of their 2025 number, so the difference in period length isn't what's driving the comparison."
     },
     {
       "id": "sql-101",

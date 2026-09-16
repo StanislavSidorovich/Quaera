@@ -2902,10 +2902,11 @@
       "title": "Ассортимент FMCG по брендам",
       "brief": "Категорийный менеджер уточняет то же самое об ассортименте FMCG, что и раньше, но теперь по каждому бренду отдельно: сколько позиций и какая средняя цена.",
       "goal": "Только для дивизиона FMCG вернуть по каждому бренду: brand, sku_count — число позиций, avg_price — среднюю цену с округлением до двух знаков.",
-      "template": "SELECT brand, COUNT(*) AS sku_count, ROUND(___(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\n___",
+      "template": "SELECT brand, COUNT(*) AS sku_count, ROUND(___(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\n___ ___",
       "blanks": [
         "AVG",
-        "GROUP BY brand"
+        "GROUP BY",
+        "brand"
       ],
       "solution": "SELECT brand, COUNT(*) AS sku_count, ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\nGROUP BY brand",
       "hints": [
@@ -2954,8 +2955,7 @@
       "solution": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       COUNT(DISTINCT customer_id) AS outlets\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY 1\nORDER BY month",
       "orderMatters": true,
       "hints": [
-        "Разных точек — это COUNT(DISTINCT customer_id), та же функция, что уже считала разные бренды.",
-        "Группировка и сортировка здесь совпадают: обе идут по month."
+        "Разных точек — это COUNT(DISTINCT customer_id), та же функция, что уже считала разные бренды."
       ],
       "explain": "Число точек почти не двигается: 132 в любой месяц 2025 года. А штуки при этом гуляют от 26 до 50 тысяч. Значит, сезонная волна — не в том, что магазины то торгуют, то нет: рынок закупает по-разному при одном и том же охвате. Разделение «спрос против дистрибуции» — первый вопрос, который стоит задать перед любым разбором падения продаж."
     },
@@ -2972,16 +2972,18 @@
       "title": "Выручка по брендам с начала года",
       "brief": "Коммерческий директор снова просит выручку по брендам с начала 2026 года, но в этот раз без верхней границы периода: данные обновляются каждую неделю, и хочется видеть свежие цифры без правки диапазона.",
       "goal": "Вернуть brand и revenue — сумму выручки с 2026-01-01 по сегодня, округлённую до целых, по убыванию выручки.",
-      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\n___\n___\nGROUP BY p.brand\nORDER BY revenue DESC",
+      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\n___ dim_product p ON ___\n___ ___\nGROUP BY p.brand\nORDER BY revenue DESC",
       "blanks": [
-        "JOIN dim_product p ON p.product_id = f.product_id",
-        "WHERE f.week_start >= '2026-01-01'"
+        "JOIN",
+        "p.product_id = f.product_id",
+        "WHERE",
+        "f.week_start >= '2026-01-01'"
       ],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2026-01-01'\nGROUP BY p.brand\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
-        "Верхняя граница периода здесь не нужна: подойдёт условие «дата не раньше начала года» — WHERE f.week_start >= '2026-01-01'.",
-        "Бренд лежит в dim_product, факт — в fact_sellout; связывает их product_id."
+        "Соединение — JOIN dim_product p ON p.product_id = f.product_id: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
+        "Верхняя граница периода здесь не нужна: подойдёт условие «дата не раньше начала года» — WHERE f.week_start >= '2026-01-01'."
       ],
       "explain": "BETWEEN удобен, когда период закрыт с обеих сторон, но у отчёта «с начала года по сегодня» такого конца нет — данные просто кончаются там, где кончаются. Условие f.week_start >= '2026-01-01' говорит именно это и не требует поправки каждую неделю, когда приходят новые данные."
     },
@@ -2997,16 +2999,18 @@
       "title": "Широкая полка для лидеров",
       "brief": "Категорийный менеджер расширяет полку под бренды-локомотивы: нужны те, что одновременно дают большую выручку и стоят в большом числе точек, — только один из двух признаков ничего не доказывает.",
       "goal": "За 2025 год вернуть brand, revenue (сумма выручки, округлить до целых) и outlets — число разных точек с продажами, для брендов с выручкой выше 5 000 000 ¥ и не менее чем в 80 точках. По убыванию выручки.",
-      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\n___\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n___\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
+      "template": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\n___ dim_product p ON ___\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n___ ___\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
       "blanks": [
-        "JOIN dim_product p ON p.product_id = f.product_id",
-        "GROUP BY p.brand"
+        "JOIN",
+        "p.product_id = f.product_id",
+        "GROUP BY",
+        "p.brand"
       ],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
-        "Бренд лежит в dim_product, а факт — в fact_sellout; связь между ними, как и в других отчётах по бренду, — product_id.",
-        "Группировка идёт по той же колонке, для которой считаются агрегаты в SELECT и HAVING, — по brand."
+        "Соединение — JOIN dim_product p ON p.product_id = f.product_id: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
+        "Группировка — GROUP BY p.brand, по той же колонке, для которой считаются агрегаты в SELECT и HAVING."
       ],
       "explain": "Одно условие в HAVING проверяет выручку, второе — охват, и оба должны выполниться одновременно, поэтому связаны через AND: бренд с огромной выручкой в трёх крупных сетях эту фильтрацию не пройдёт, как и бренд с сотней точек и копеечными продажами в каждой."
     },
@@ -3030,7 +3034,7 @@
         "Задача похожа на запрос про выручку по брендам с начала года — разница в том, что считаем не выручку, а охват: COUNT(DISTINCT customer_id).",
         "Дата снова без верхней границы: WHERE f.week_start >= '2026-01-01'."
       ],
-      "explain": "У Aqualis, Fruvia, Milvara и Krosti охват держится на уровне 2025 года — 88, 86, 84 и 81 точка, ровно как год назад. И только у Nettora число точек обрушилось с 79 до 37. Полку теряет не рынок — полку теряет конкретно этот бренд, и следующий вопрос не «что случилось с розницей», а «что случилось с Nettora» в тех точках, где он раньше стоял."
+      "explain": "У Aqualis, Fruvia, Milvara и Krosti охват держится на уровне 2025 года — 88, 86, 84 и 81 точка, ровно как год назад (те же числа считали в четверг, только за весь 2025 год). И только у Nettora число точек обрушилось с 79 до 37. Полку теряет не рынок — полку теряет конкретно этот бренд, и следующий вопрос не «что случилось с розницей», а «что случилось с Nettora» в тех точках, где он раньше стоял.\n\nПериоды при этом разной длины: 2026 год здесь неполный (чуть больше двух месяцев), а 2025-й — целый, и охват за часть года строго не может быть больше охвата за весь год. Здесь это не меняет вывод: у всех четырёх брендов числа совпали с точностью до пары точек, значит разная длина периода — не то, что решает исход сравнения."
     },
     {
       "id": "sql-101",
