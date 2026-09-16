@@ -172,7 +172,7 @@ export function Sandbox({ schema, onOpenSchema }: Props) {
     } catch (e) {
       setResult(null);
       const err = e as Error & { traceback?: string };
-      setFailure({ kind: 'execError', message: err.message, traceback: err.traceback });
+      setFailure({ kind: 'execError', message: err.message, traceback: err.traceback, code });
     } finally {
       setRunning(false);
     }

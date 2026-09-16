@@ -3,6 +3,7 @@ import type { Track } from '../content/types';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { clearInsertTarget, setInsertTarget } from './insertTarget';
+import { TokenPanel, useTokensOpen } from './TokenPanel';
 
 /**
  * Редактор кода для телефона — общий для SQL и Python.
@@ -32,38 +33,6 @@ import { clearInsertTarget, setInsertTarget } from './insertTarget';
  * и дату в 20 из 38, то есть самую частую смену слоя из оставшихся.
  */
 
-const SQL_SYMBOLS = ['(', ')', ',', "'", '.', '*', '-', '=', '>', '<', '>=', '<=', '<>', '||', '_'];
-const PYTHON_SYMBOLS = ['(', ')', '[', ']', ',', "'", '.', '-', '==', '!=', '>', '<', '&', '|', '~', '_'];
-
-/**
- * Порядок как на слое `?123` экранной клавиатуры, а не 0…9: ряд заменяет
- * именно его, и мышечная память должна совпасть — отсюда же требование
- * уложиться в одну строку (см. .accessory.digits в styles.css).
- * Ровно десять, без дефиса: он тоже живёт за `?123` и тоже нужен (даты
- * в 20 решениях из 38), но он оператор, и его место в ряду символов —
- * тот переносится свободно, а этот обязан остаться одной строкой.
- * Набор общий для обоих языков: числа от языка не зависят.
- */
-const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-
-/** Ключевые слова открываются по мере роста сложности заданий. */
-const SQL_KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
-  { upTo: 1, words: ['SELECT', 'FROM', 'WHERE', 'ORDER BY', 'AS', 'AND', 'OR', 'DISTINCT', 'LIMIT', 'DESC'] },
-  {
-    upTo: 2,
-    words: ['GROUP BY', 'JOIN', 'ON', 'SUM(', 'COUNT(', 'AVG(', 'ROUND(', 'COALESCE(', 'IS NULL', 'IS NOT NULL', 'BETWEEN', 'IN ('],
-  },
-  { upTo: 3, words: ['LEFT JOIN', 'HAVING', 'WITH', 'CASE WHEN', 'THEN', 'ELSE', 'END'] },
-  { upTo: 4, words: ['OVER (', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING', 'CURRENT ROW'] },
-];
-
-const PYTHON_KEYWORDS_BY_LEVEL: { upTo: number; words: string[] }[] = [
-  { upTo: 1, words: ['result =', '.loc[', '.isin([', '.str.contains(', '& ', '| '] },
-  { upTo: 2, words: ['.groupby(', '.agg(', '.merge(', 'as_index=False', '.sum()', '.transform('] },
-  { upTo: 3, words: ['.pivot_table(', '.melt(', '.sort_values(', 'pd.to_datetime(', '.resample(', '.rolling('] },
-  { upTo: 4, words: ['.assign(', '.reset_index()', 'np.'] },
-];
-
 interface Props {
   value: string;
   onChange: (v: string) => void;
@@ -74,10 +43,11 @@ interface Props {
   track: Track;
   disabled?: boolean;
   placeholder?: string;
+  /** Таблицы задания (см. taskTables) — засевают колонки в панели до того, как текст сам их назовёт. Пусто в песочнице, где своего задания нет. */
+  knownTables?: string[];
 }
 
 const KEYBOARD_STORAGE_KEY = 'quaera-keyboard';
-const TOKENS_STORAGE_KEY = 'quaera-tokens';
 
 /**
  * Экранная клавиатура открывается по касанию в textarea всегда, даже когда
@@ -96,58 +66,34 @@ function initialKeyboardOn(): boolean {
   }
 }
 
-/**
- * Показывать ли панель токенов. Читается **только на десктопе** — правило,
- * которое прячет панель, живёт в `@media (min-width: 1024px)`, поэтому
- * на телефоне состояние ни на что не влияет и панель остаётся на месте
- * при любом значении.
- *
- * Разделение по ширине сделано CSS, а не условием в JS, — по той же причине,
- * что и у боковой навигации: иначе пришлось бы слушать resize и решать
- * за браузер то, что он и так знает, а на границе брейкпоинта панель бы
- * размонтировалась вместе с прокруткой.
- *
- * По умолчанию скрыта: на десктопе набирают с настоящей клавиатуры, и три
- * ряда чипов (символы, ключевые слова, до тридцати имён колонок) отодвигают
- * кнопку «Выполнить» на пол-экрана вниз, ничего не давая взамен. Кому нужны
- * имена колонок — включает один раз, выбор помнится между заданиями.
- */
-function initialTokensOn(): boolean {
-  try {
-    return localStorage.getItem(TOKENS_STORAGE_KEY) === 'on';
-  } catch {
-    return false;
-  }
-}
-
-export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder }: Props) {
+export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder, knownTables = [] }: Props) {
   const { t } = useI18n();
   const ref = useRef<HTMLTextAreaElement>(null);
   const [keyboardOn, setKeyboardOn] = useState(initialKeyboardOn);
-  const [tokensOn, setTokensOn] = useState(initialTokensOn);
-  const isSql = track === 'sql';
-
-  const symbols = isSql ? SQL_SYMBOLS : PYTHON_SYMBOLS;
-  const keywordGroups = isSql ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL;
-  const keywords = useMemo(
-    () => keywordGroups.filter((g) => g.upTo <= level).flatMap((g) => g.words),
-    [keywordGroups, level]
-  );
+  const [tokensOn, toggleTokens] = useTokensOpen();
 
   /**
    * Колонки упомянутых таблиц идут первыми, следом — имена таблиц,
-   * чтобы соединение оставалось в одно касание. Пока таблица не выбрана,
-   * показываются только таблицы: колонки без контекста бесполезны.
+   * чтобы соединение оставалось в одно касание. Пока ни одна таблица
+   * не упомянута и не входит в knownTables, показываются только таблицы:
+   * колонки без контекста бесполезны.
+   *
+   * knownTables (таблицы самого задания, см. TaskView.tsx) досрочно
+   * причисляет свои таблицы к «упомянутым», даже пока текст их не назвал:
+   * SQL пишут SELECT → колонки → FROM, и ждать FROM означало бы показывать
+   * колонки только тогда, когда они уже почти не нужны.
    */
   const chips = useMemo(() => {
     if (!schema) return [];
     const tables = schema.tables.map((t) => t.table);
-    const mentioned = schema.tables.filter((t) => new RegExp(`\\b${t.table}\\b`).test(value));
+    const mentioned = schema.tables.filter(
+      (t) => knownTables.includes(t.table) || new RegExp(`\\b${t.table}\\b`).test(value)
+    );
     if (!mentioned.length) return tables;
     const columns = [...new Set(mentioned.flatMap((t) => t.columns.map((c) => c.name)))];
     const rest = tables.filter((t) => !mentioned.some((m) => m.table === t));
     return [...columns, ...rest];
-  }, [schema, value]);
+  }, [schema, value, knownTables]);
 
   /**
    * Стирает выделение, если оно есть, иначе один символ перед курсором —
@@ -234,16 +180,6 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
     else el.blur();
   };
 
-  const toggleTokens = () => {
-    const next = !tokensOn;
-    setTokensOn(next);
-    try {
-      localStorage.setItem(TOKENS_STORAGE_KEY, next ? 'on' : 'off');
-    } catch {
-      // localStorage недоступен — просто не запоминаем выбор между заданиями
-    }
-  };
-
   return (
     <div>
       {/*
@@ -289,52 +225,17 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
         autoComplete="off"
         data-gramm="false"
       />
+      <TokenPanel level={level} track={track} open={tokensOn} onInsert={insert} disabled={disabled} onBackspace={backspace} />
       {/*
-       * Обёртка нужна затем, чтобы тумблер прятал все три ряда одним
-       * правилом. Прячется display:none, а не условием в JSX: панель тогда
-       * не пересобирается при каждом переключении, и на узком экране,
-       * где правило не действует, дерево вообще то же самое, что было.
+       * Чипы таблиц/колонок остаются здесь, не в TokenPanel: они строятся
+       * из текста самого редактора (см. chips выше), а не из статичного
+       * набора по track/level — источник другой, и делить его с fill
+       * незачем (там свой механизм, плашки таблиц под заданием).
+       * Тумблер тот же (tokensOn/data-open), поэтому ряд прячется вместе
+       * с остальной панелью одним правилом.
        */}
-      <div className="accessory-stack" data-open={tokensOn}>
-        <div className="accessory symbols" role="toolbar" aria-label={t.editor.symbolsAria(track)}>
-          {symbols.map((s) => (
-            <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
-              {s}
-            </button>
-          ))}
-          {/* Действие, не токен вставки — отдельный вид (.erase), чтобы не читаться как ещё один символ. */}
-          <button
-            type="button"
-            className="erase"
-            aria-label={t.editor.backspaceAria}
-            onClick={backspace}
-            disabled={disabled}
-          >
-            ⌫
-          </button>
-        </div>
-        {/*
-         * Отдельный ряд, а не хвост ряда символов: чипы в конец того ряда
-         * встали бы в произвольные места переноса, тогда как этот ряд обязан
-         * быть одной строкой и сделан непереносимым (см. .accessory.digits).
-         * И стоит он сразу за символами — оба ряда про то, чего нет
-         * на буквенном слое, а ключевые слова и имена ниже про другое.
-         */}
-        <div className="accessory digits" role="toolbar" aria-label={t.editor.digitsAria}>
-          {DIGITS.map((d) => (
-            <button key={d} type="button" className="dim" onClick={() => insert(d)} disabled={disabled}>
-              {d}
-            </button>
-          ))}
-        </div>
-        <div className="accessory" role="toolbar" aria-label={t.editor.keywordsAria(track)}>
-          {keywords.map((k) => (
-            <button key={k} type="button" onClick={() => insert(k)} disabled={disabled}>
-              {k}
-            </button>
-          ))}
-        </div>
-        {chips.length > 0 && (
+      {chips.length > 0 && (
+        <div className="accessory-stack" data-open={tokensOn}>
           <div className="accessory" role="toolbar" aria-label={t.editor.chipsAria}>
             {chips.map((s) => (
               <button key={s} type="button" className="dim" onClick={() => insert(s)} disabled={disabled}>
@@ -342,8 +243,8 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
               </button>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

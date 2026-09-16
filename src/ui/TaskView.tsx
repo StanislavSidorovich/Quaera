@@ -6,8 +6,9 @@ import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
-import { clearInsertTarget, setInsertTarget } from './insertTarget';
+import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
 import { ResultTable } from './ResultTable';
+import { TokenPanel, useTokensOpen } from './TokenPanel';
 
 /**
  * Экран задания.
@@ -582,6 +583,15 @@ function StepView({
     return [...tables, ...columns];
   }, [schema]);
 
+  /**
+   * Таблицы этого задания — тот же источник, что у чипов над условием
+   * (см. taskTables). Передаём в CodeEditor как засев панели колонок:
+   * без него колонки появлялись только после того, как таблица уже
+   * попала в текст, а SQL пишут SELECT → колонки → FROM, то есть колонки
+   * нужны раньше, чем текст успевает назвать таблицу.
+   */
+  const knownTables = useMemo(() => taskTables(task, schema), [task, schema]);
+
   /** Финальный текст кода: для fill собирается из шаблона и введённых фрагментов. */
   const composedCode = useMemo(() => {
     if (step.kind !== 'compute') return '';
@@ -670,6 +680,7 @@ function StepView({
               kind: 'execError',
               message: res.message,
               traceback: res.status === 'code_error' ? res.traceback : undefined,
+              code: composedCode,
             },
           });
         } else if (res.status === 'correct') {
@@ -700,7 +711,10 @@ function StepView({
       }
     } catch (e) {
       const err = e as Error & { traceback?: string };
-      patch({ preview: null, feedback: { kind: 'execError', message: err.message, traceback: err.traceback } });
+      patch({
+        preview: null,
+        feedback: { kind: 'execError', message: err.message, traceback: err.traceback, code: composedCode },
+      });
     } finally {
       setRunning(false);
       // На узком экране Run/Check и есть момент, когда естественно
@@ -787,6 +801,7 @@ function StepView({
             kind: 'execError',
             message: res.message,
             traceback: res.status === 'code_error' ? res.traceback : undefined,
+            code: composedCode,
           },
         }));
         return;
@@ -812,7 +827,7 @@ function StepView({
       }
     } catch (e) {
       const err = e as Error & { traceback?: string };
-      patch({ feedback: { kind: 'execError', message: err.message, traceback: err.traceback } });
+      patch({ feedback: { kind: 'execError', message: err.message, traceback: err.traceback, code: composedCode } });
     } finally {
       setRunning(false);
       patch({ mobilePanel: 'results' });
@@ -1059,6 +1074,8 @@ function StepView({
                   }}
                   disabled={draft.solved}
                   wrongIndexes={wrongBlanks}
+                  level={task.level}
+                  track={task.track}
                 />
               ) : (
                 <CodeEditor
@@ -1068,6 +1085,7 @@ function StepView({
                   level={task.level}
                   track={task.track}
                   placeholder={t.task.placeholder(task.track)}
+                  knownTables={knownTables}
                 />
               )}
               <div className="row" style={{ marginTop: 12 }}>
@@ -1157,6 +1175,8 @@ function FillTemplate({
   onChange,
   disabled,
   wrongIndexes = [],
+  level,
+  track,
 }: {
   template: string;
   blanks: string[];
@@ -1164,8 +1184,11 @@ function FillTemplate({
   disabled?: boolean;
   /** Пропуски, разошедшиеся с эталоном: обводка ведёт глаз к месту ошибки, а не к формуле целиком. */
   wrongIndexes?: number[];
+  level: Task['level'];
+  track: Task['track'];
 }) {
   const { t } = useI18n();
+  const [tokensOn, toggleTokens] = useTokensOpen();
   const parts = template.split('___');
   const blankCount = parts.length - 1;
 
@@ -1221,6 +1244,7 @@ function FillTemplate({
 
   // pre-wrap здесь больше не нужен точечно — он теперь у самого .sql-block.
   return (
+    <>
     <pre className="sql-block">
       {parts.map((part, i) => (
         <span key={i}>
@@ -1260,5 +1284,20 @@ function FillTemplate({
         </span>
       ))}
     </pre>
+    {/*
+     * Тумблер и панель — те же, что у CodeEditor (общий класс .tokens-toggle
+     * прячет кнопку на телефоне и показывает на десктопе, общий ключ
+     * localStorage в useTokensOpen хранит один выбор между write и fill).
+     * Вставка идёт через insertViaTarget: активная цель — уже сфокусированный
+     * пропуск (см. onFocus у input выше и insertTarget.ts про то, почему
+     * blur её не снимает), тот же механизм, что у шторки схемы.
+     */}
+    <div className="editor-tools">
+      <button type="button" className="pill tokens-toggle" aria-pressed={tokensOn} onClick={toggleTokens}>
+        {tokensOn ? t.editor.tokensHide : t.editor.tokensShow}
+      </button>
+    </div>
+    <TokenPanel level={level} track={track} open={tokensOn} onInsert={(text) => insertViaTarget(text)} disabled={disabled} />
+    </>
   );
 }

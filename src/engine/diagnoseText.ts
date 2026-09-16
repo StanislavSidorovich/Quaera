@@ -46,6 +46,14 @@ export interface DiagnoseText {
   ambiguousColumn: (name: string) => Feedback;
   misuseOfAggregate: () => Feedback;
   orderByMismatch: () => Feedback;
+  /**
+   * COUNT/SUM/AVG/ROUND без скобок вокруг аргумента — частая ошибка первой
+   * недели (`count sku_code` вместо `COUNT(sku_code)`). Движок сообщает
+   * об ошибке на следующем токене (см. syntaxNear), а не на функции, где
+   * настоящая причина, — отдельная проверка в diagnose.ts ищет её в тексте
+   * запроса и подменяет общий разбор этим, более точным.
+   */
+  aggregateWithoutParen: (name: string) => Feedback;
   syntaxNear: (token: string) => Feedback;
   sqlFallback: (message: string) => Feedback;
   /** Воркер отвалился, не сказав почему (WORKER_FAILURE) — прозы от него не пришло. */
@@ -158,6 +166,13 @@ const ru: DiagnoseText = {
     title: 'ORDER BY ссылается в пустоту',
     body: 'Сортировка идёт по выражению, которого нет в результате.',
     nudges: ['Сортируйте по алиасу колонки или по её номеру: ORDER BY 2 DESC.'],
+  }),
+
+  aggregateWithoutParen: (name) => ({
+    tone: 'error',
+    title: `«${name}» без скобок`,
+    body: `${name} — агрегатная функция, и аргумент к ней всегда идёт в скобках: ${name}(колонка). Без них SQLite читает «${name}» и следующее слово как два разных выражения подряд, и синтаксис ломается уже на этом следующем слове — там, где движок и сообщил об ошибке, хотя причина на слово раньше.`,
+    nudges: [`Допишите скобки: ${name}(...).`],
   }),
 
   syntaxNear: (token) => ({
@@ -424,6 +439,13 @@ const en: DiagnoseText = {
     title: 'ORDER BY points at nothing',
     body: 'The sort is on an expression that is not in the result.',
     nudges: ['Sort by the column alias or by its position: ORDER BY 2 DESC.'],
+  }),
+
+  aggregateWithoutParen: (name) => ({
+    tone: 'error',
+    title: `"${name}" without parentheses`,
+    body: `${name} is an aggregate function, and its argument always goes in parentheses: ${name}(column). Without them, SQLite reads "${name}" and the next word as two separate expressions in a row, and the syntax breaks right on that next word — where the engine reported the error, even though the real cause is one word earlier.`,
+    nudges: [`Add the parentheses: ${name}(...).`],
   }),
 
   syntaxNear: (token) => ({

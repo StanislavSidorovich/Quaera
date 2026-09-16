@@ -33,8 +33,13 @@ export type FeedbackSource =
   | { kind: 'wrongOption' }
   | { kind: 'blanksWrong'; wrongIndexes: number[] }
   | { kind: 'giveUp' }
-  /** Отказ исполнителя: сообщение движка и, у Python, относящийся к заданию traceback. */
-  | { kind: 'execError'; message: string; traceback?: string }
+  /**
+   * Отказ исполнителя: сообщение движка и, у Python, относящийся к заданию
+   * traceback. `code` — текст запроса на момент отказа, только для эвристики
+   * «агрегат без скобки» (diagnoseSqlError); сам разбор сообщения движка
+   * code не трогает, тот же довод, что у code в comparison.
+   */
+  | { kind: 'execError'; message: string; traceback?: string; code?: string }
   /**
    * Расхождение с эталоном — вход diagnoseComparison, чистые данные без прозы.
    * `code` — текст запроса на момент проверки, только для эвристики
@@ -93,7 +98,7 @@ export function renderFeedback(src: FeedbackSource, ctx: FeedbackContext): Feedb
     case 'execError':
       return ctx.runtime === 'python'
         ? diagnosePythonError(src.message, ctx.suggestions, src.traceback ?? '', locale)
-        : diagnoseSqlError(src.message, ctx.suggestions, locale);
+        : diagnoseSqlError(src.message, ctx.suggestions, locale, src.code);
     case 'comparison': {
       const diag = diagnoseComparison(src.comparison, locale);
       const idHint = src.code ? idComparedToTextHint(src.code, locale) : null;

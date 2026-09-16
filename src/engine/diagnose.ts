@@ -84,7 +84,7 @@ export function workerCodeText(message: string, locale: Locale): string | null {
   return render ? render(args) : null;
 }
 
-export function diagnoseSqlError(message: string, knownNames: string[], locale: Locale): Feedback {
+export function diagnoseSqlError(message: string, knownNames: string[], locale: Locale, code?: string): Feedback {
   const T = diagnoseText[locale];
   if (message === WORKER_FAILURE) return T.workerFailure();
   // До регулярок ниже: это отказы, не дошедшие до SQLite вовсе, и его
@@ -119,7 +119,19 @@ export function diagnoseSqlError(message: string, knownNames: string[], locale: 
   if (/order by term does not match/i.test(message)) return T.orderByMismatch();
 
   const syntax = /near "([^"]+)":\s*syntax error/i.exec(message);
-  if (syntax) return T.syntaxNear(syntax[1]);
+  if (syntax) {
+    /*
+     * COUNT/SUM/AVG/ROUND без скобок («count sku_code») парсится как два
+     * отдельных выражения подряд, и SQLite ломается не на самой функции,
+     * а на следующем токене (см. sql-094, находка живого прохода 30-го
+     * захода — разбор указывал «рядом с AS», формально верно и мимо сути).
+     * Проверяем код задания, а не сообщение движка: причина в тексте
+     * запроса, а не в конкретном имени, на которое движок пожаловался.
+     */
+    const aggNoParen = code ? /\b(SUM|COUNT|AVG|ROUND|MIN|MAX)\b(?!\s*\()/i.exec(code) : null;
+    if (aggNoParen) return T.aggregateWithoutParen(aggNoParen[1].toUpperCase());
+    return T.syntaxNear(syntax[1]);
+  }
 
   return T.sqlFallback(message);
 }
