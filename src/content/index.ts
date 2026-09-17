@@ -381,6 +381,7 @@ export const lessonBySkillFor = (locale: Locale): Map<string, Lesson> => {
       title: tr.title,
       why: tr.why,
       form: tr.form,
+      signature: tr.signature ?? lesson.signature,
       example: tr.example ?? lesson.example,
       reads: tr.reads,
       wrong: tr.wrong ?? lesson.wrong,

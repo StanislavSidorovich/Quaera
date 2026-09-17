@@ -203,7 +203,8 @@ export function StoryWeekSummary({
           <h3 className="story-summary-h">{t.storyMode.summarySkills}</h3>
           <ul className="story-summary-list">
             {s.skills.map((k) => {
-              const construct = lessonBySkill.get(k.id)?.form?.split('\n')[0].trim();
+              const lesson = lessonBySkill.get(k.id);
+              const construct = lesson?.signature ?? lesson?.form?.split('\n')[0].trim();
               return (
                 <li key={k.id}>
                   <span>

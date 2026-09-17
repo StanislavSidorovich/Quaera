@@ -216,6 +216,14 @@ export interface Lesson {
   why: string;
   /** Минимальная форма записи — скелет, а не исчерпывающий синтаксис. */
   form: string;
+  /**
+   * Короткая сигнатура приёма для экрана итога недели — там показывается
+   * не вся карточка, а одна строка кода рядом с названием. По умолчанию
+   * это первая строка `form`, но у части карточек она — не сигнатура,
+   * а разгон («SELECT ...», «FROM fact_таблица f» без самого JOIN):
+   * там `signature` задаёт нужную строку явно.
+   */
+  signature?: string;
   /** Рабочий запрос на нашем датасете. */
   example: string;
   /** Что этот запрос отвечает, человеческими словами. */
@@ -245,6 +253,7 @@ export interface LessonTranslation {
   title: string;
   why: string;
   form: string;
+  signature?: string;
   example?: string;
   reads: string;
   wrong?: string;
