@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Track } from '../content/types';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { clearInsertTarget, setInsertTarget } from './insertTarget';
-import { TokenPanel, useTokensOpen } from './TokenPanel';
+import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 
 /**
  * Редактор кода для телефона — общий для SQL и Python.
@@ -47,29 +47,20 @@ interface Props {
   knownTables?: string[];
 }
 
-const KEYBOARD_STORAGE_KEY = 'quaera-keyboard';
-
-/**
- * Экранная клавиатура открывается по касанию в textarea всегда, даже когда
- * человек весь запрос собирает из панели токенов и колонок ниже. На телефоне
- * это лишняя половина экрана, которую приходится закрывать вручную. Тумблер
- * переключает textarea в inputMode="none": фокус и позиция курсора работают
- * как раньше (вставка из панели по-прежнему целится в них), а клавиатура
- * просто не всплывает, пока её явно не попросили — состояние общее для всех
- * заданий, а не переустанавливается на каждой задаче.
- */
-function initialKeyboardOn(): boolean {
-  try {
-    return localStorage.getItem(KEYBOARD_STORAGE_KEY) === 'on';
-  } catch {
-    return false;
-  }
-}
-
 export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder, knownTables = [] }: Props) {
   const { t } = useI18n();
   const ref = useRef<HTMLTextAreaElement>(null);
-  const [keyboardOn, setKeyboardOn] = useState(initialKeyboardOn);
+  /*
+   * Экранная клавиатура открывается по касанию в textarea всегда, даже когда
+   * человек весь запрос собирает из панели токенов и колонок ниже. На телефоне
+   * это лишняя половина экрана, которую приходится закрывать вручную. Тумблер
+   * переключает textarea в inputMode="none": фокус и позиция курсора работают
+   * как раньше (вставка из панели по-прежнему целится в них), а клавиатура
+   * просто не всплывает, пока её явно не попросили. useKeyboardOpen (см.
+   * TokenPanel.tsx) — тот же выбор, что и у пропусков (FillTemplate
+   * в TaskView.tsx): состояние общее для write и fill, а не своё на каждый.
+   */
+  const [keyboardOn, toggleKeyboardOn] = useKeyboardOpen();
   const [tokensOn, toggleTokens] = useTokensOpen();
 
   /**
@@ -166,12 +157,7 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
 
   const toggleKeyboard = () => {
     const next = !keyboardOn;
-    setKeyboardOn(next);
-    try {
-      localStorage.setItem(KEYBOARD_STORAGE_KEY, next ? 'on' : 'off');
-    } catch {
-      // localStorage недоступен — просто не запоминаем выбор между заданиями
-    }
+    toggleKeyboardOn();
     const el = ref.current;
     if (!el) return;
     // Blur закрывает уже открытую клавиатуру; при включении, наоборот,

@@ -81,7 +81,15 @@ export function storyPhases(campaign: StoryCampaign, mission: StoryMission): Sto
   return phases;
 }
 
-function samePhase(a: StoryPhase, b: StoryPhase): boolean {
+/**
+ * Совпадают ли два экрана дня — та же фаза и тот же шаг у фаз с шагом.
+ *
+ * Экспортирована ради восстановления сохранённого экрана (см. StoredScreen
+ * и initialBoot в App.tsx): там нужно проверить, что фаза, лежащая
+ * в хранилище, всё ещё существует в текущем ходе дня, а не завести
+ * второе определение того же сравнения.
+ */
+export function samePhase(a: StoryPhase, b: StoryPhase): boolean {
   if (a.kind !== b.kind) return false;
   if (a.kind === 'intro' || a.kind === 'task' || a.kind === 'interlude') {
     return a.step === (b as { step: number }).step;

@@ -31,7 +31,7 @@ import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
-import { StoryMode, storyPhaseBefore, type StoryPhase, type StoryStepView } from './ui/StoryMode';
+import { StoryMode, storyPhaseBefore, storyPhases, samePhase, type StoryPhase, type StoryStepView } from './ui/StoryMode';
 import { storyCampaign, storyClosesCampaign, storyWeekOf, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
@@ -372,6 +372,23 @@ function storyMissionAfter(locale: Locale, id: string): StoryMission | null {
 }
 
 /**
+ * Миссия дня по восстановленному экрану, либо null, если её нельзя открыть.
+ *
+ * Проверка та же, что у storyMissions в компоненте (по каждому шагу миссии
+ * ищется задача в паке её трека): без неё восстановление указывало бы
+ * на миссию, чьи задания правка контента унесла, и storyMission в компоненте
+ * молча получил бы null — пустой экран вместо честного отката на главную.
+ */
+function restorableStoryMission(locale: Locale, missionId: string): StoryMission | null {
+  const mission = storyCampaign(locale).missions.find((m) => m.id === missionId);
+  if (!mission) return null;
+  const pack = packForTrack(mission.track, locale);
+  if (!pack) return null;
+  const hasAllTasks = mission.steps.every((step) => pack.tasks.some((tk) => tk.id === step.taskId));
+  return hasAllTasks ? mission : null;
+}
+
+/**
  * Шаг занятия — либо карточка приёма, либо задача. Карточка вставляется перед
  * первой задачей на незнакомый навык: иначе человек с нуля утыкается в задачу,
  * не зная приёма, и уходит. Дальше навык считается введённым, и карточка
@@ -512,7 +529,13 @@ const SCREEN_STORAGE_KEY = 'quaera-screen';
  * закрыли внутри занятия, а не рядом с ним. Двух источников правды это не
  * заводит: содержимое занятия по-прежнему в одном месте, здесь только адрес.
  */
-type StoredScreen = { name: Screen['name']; skill?: string; track?: Track };
+type StoredScreen = {
+  name: Screen['name'];
+  skill?: string;
+  track?: Track;
+  missionId?: string;
+  phase?: StoryPhase;
+};
 
 function screenToStored(screen: Screen): StoredScreen {
   switch (screen.name) {
@@ -526,6 +549,17 @@ function screenToStored(screen: Screen): StoredScreen {
       return { name: 'lesson', skill: screen.skill };
     case 'trackIntro':
       return { name: 'trackIntro', track: screen.track };
+    /*
+     * Миссия и фаза внутри дня — та же причина, что у 'session' выше:
+     * без них закрытие вкладки посреди дня (не только F5, полное закрытие
+     * PWA на телефоне) роняло в default → home, а открыть «Режим истории»
+     * заново значило начать день с брифа, даже если человек дошёл
+     * до третьего задания. Карточка приёма поверх дня (screen.lesson)
+     * не сохраняется — при восстановлении просто закрыта, читатель
+     * оказывается на том же экране дня, с которого её открыл.
+     */
+    case 'storymode':
+      return { name: 'storymode', missionId: screen.missionId, phase: screen.phase };
     default:
       return { name: screen.name };
   }
@@ -650,6 +684,20 @@ function initialBoot(locale: Locale): Boot {
         drafts: new Map(Object.entries(session.drafts).map(([id, d]) => [id, fromStoredDraft(d)])),
         recorded: new Set(session.recorded),
       };
+    }
+    /*
+     * Восстановление дня и фазы внутри него — см. довод у screenToStored.
+     * Фаза из хранилища принимается только если она ещё существует в ходе
+     * миссии (storyPhases меняется вместе с контентом): иначе, например,
+     * ссылка на третье задание дня, из которого одно убрали, указывала бы
+     * в никуда. Промах — не потеря дня целиком, а честный откат на бриф.
+     */
+    case 'storymode': {
+      const mission = stored.missionId ? restorableStoryMission(locale, stored.missionId) : null;
+      if (!mission) return { screen: { name: 'home' }, ...empty };
+      const phases = storyPhases(storyCampaign(locale), mission);
+      const phase = stored.phase && phases.some((p) => samePhase(p, stored.phase!)) ? stored.phase : { kind: 'brief' as const };
+      return { screen: { name: 'storymode', missionId: mission.id, phase }, ...empty, track: mission.track };
     }
     case 'lesson':
       // Ключи карточек одинаковы на обеих локалях — меняется только проза

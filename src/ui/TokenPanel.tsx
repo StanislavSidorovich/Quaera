@@ -66,6 +66,44 @@ export function useTokensOpen(): [boolean, () => void] {
   return [open, toggle];
 }
 
+const KEYBOARD_STORAGE_KEY = 'quaera-keyboard';
+
+function initialKeyboardOpen(): boolean {
+  try {
+    return localStorage.getItem(KEYBOARD_STORAGE_KEY) === 'on';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Показ системной клавиатуры — тот же общий приём, что и у useTokensOpen
+ * выше, и по той же причине: `CodeEditor` (write) и `FillTemplate` (fill,
+ * см. TaskView.tsx) вставки — свои экземпляры полей ввода, и без общего
+ * ключа localStorage тумблер, выключенный в write, снова включался бы
+ * у пропусков той же задачи.
+ *
+ * Вынесен из CodeEditor.tsx 2026-09-17: до этого клавиатуру мог скрыть
+ * только write, а у пропусков системная клавиатура всплывала при касании
+ * любого поля и не убиралась ничем, кроме кнопки «Назад» на самой
+ * клавиатуре, — тогда как ровно это же самое уже было решено для write.
+ */
+export function useKeyboardOpen(): [boolean, () => void] {
+  const [open, setOpen] = useState(initialKeyboardOpen);
+  const toggle = () => {
+    setOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(KEYBOARD_STORAGE_KEY, next ? 'on' : 'off');
+      } catch {
+        // localStorage недоступен — просто не запоминаем выбор между заданиями
+      }
+      return next;
+    });
+  };
+  return [open, toggle];
+}
+
 interface Props {
   level: number;
   track: Track;

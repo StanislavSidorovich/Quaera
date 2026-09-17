@@ -8,7 +8,7 @@ import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
 import { ResultTable } from './ResultTable';
-import { TokenPanel, useTokensOpen } from './TokenPanel';
+import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 
 /**
  * Экран задания.
@@ -367,6 +367,24 @@ export function TaskView({
   const mobilePanel = stepDraft.mobilePanel;
 
   /**
+   * Постановка задачи над редактором — то же, что стоит в шапке на вкладке
+   * «Условие», но её видно, не переключаясь туда. У многошагового задания
+   * это `step.goal` — он самодостаточен по конструкции («Задание 2 из 3:
+   * посчитай X»). У одношагового `task.goal` часто ссылается назад на
+   * `task.brief` местоимением («эти два бренда», «эта точка») и без него
+   * не читается: сами имена и пороги стоят в brief, а goal лишь говорит,
+   * что с ними сделать. Поэтому у одношагового берём обе строки, у
+   * многошагового — только step.goal, он и так всё называет сам.
+   *
+   * `||`, не `??`: у автособранного одношагового `step.goal` — пустая
+   * строка (см. resolveSteps), а не undefined, и `??` через неё
+   * не провалился бы к task.goal вовсе.
+   */
+  const singleStep = steps.length === 1;
+  const workBrief = !step.goal && singleStep ? glossaryBrief ?? task.brief : null;
+  const workGoal = step.goal || (singleStep ? glossaryGoal ?? task.goal : null);
+
+  /**
    * Итог задания — сумма по шагам. Верно только тогда, когда верны все шаги:
    * посчитал и не понял, что посчитал, — это не решённое задание, и интервал
    * повторения обязан это отражать.
@@ -477,6 +495,8 @@ export function TaskView({
         key={index}
         task={task}
         step={step}
+        workBrief={workBrief}
+        workGoal={workGoal}
         draft={stepDraft}
         patch={(p) => patchStep(index, p)}
         executor={executor}
@@ -540,6 +560,8 @@ export function TaskView({
 function StepView({
   task,
   step,
+  workBrief,
+  workGoal,
   draft,
   patch,
   executor,
@@ -549,6 +571,10 @@ function StepView({
 }: {
   task: Task;
   step: TaskStep;
+  /** Сценарий над редактором — см. довод у workBrief/workGoal в TaskView. */
+  workBrief: ReactNode;
+  /** Постановка задачи над редактором — см. довод у workGoal в TaskView. */
+  workGoal: ReactNode;
   draft: StepDraft;
   patch: (p: Partial<StepDraft> | ((d: StepDraft) => Partial<StepDraft>)) => void;
   executor: Executor;
@@ -1053,13 +1079,14 @@ function StepView({
         <div className="task-work">
           <div className="task-editor" data-mobile-hidden={draft.mobilePanel !== 'work'}>
             <div className="card">
-              {/*
-               * Постановка шага — только у многошагового задания: у одношагового
-               * она одна на всё задание и уже стоит в шапке.
-               */}
-              {step.goal && (
+              {workBrief && (
+                <p className="brief" style={{ marginBottom: 8 }}>
+                  {workBrief}
+                </p>
+              )}
+              {workGoal && (
                 <div className="goal" style={{ marginBottom: 12 }}>
-                  {step.goal}
+                  {workGoal}
                 </div>
               )}
               {step.mode === 'fill' && step.template ? (
@@ -1076,6 +1103,8 @@ function StepView({
                   wrongIndexes={wrongBlanks}
                   level={task.level}
                   track={task.track}
+                  schema={schema}
+                  knownTables={knownTables}
                 />
               ) : (
                 <CodeEditor
@@ -1177,6 +1206,8 @@ function FillTemplate({
   wrongIndexes = [],
   level,
   track,
+  schema,
+  knownTables = [],
 }: {
   template: string;
   blanks: string[];
@@ -1186,11 +1217,56 @@ function FillTemplate({
   wrongIndexes?: number[];
   level: Task['level'];
   track: Task['track'];
+  schema: SchemaDoc | null;
+  /** Таблицы задания (см. taskTables) — тот же засев, что у CodeEditor, см. довод у chips ниже. */
+  knownTables?: string[];
 }) {
   const { t } = useI18n();
   const [tokensOn, toggleTokens] = useTokensOpen();
+  /*
+   * Клавиатура и чипы колонок — то, чего у пропусков не было вовсе, хотя
+   * у write (CodeEditor) оба решены. Пропуски — обычные <input>, системная
+   * клавиатура всплывает по касанию любого из них и без тумблера не
+   * убиралась ничем; а вставить имя колонки можно было только символами
+   * и ключевыми словами из TokenPanel, вручную набирая «brand» или
+   * «list_price» буква за буквой. Оба — тот же приём, что у CodeEditor,
+   * перенесённый на несколько полей вместо одного.
+   */
+  const [keyboardOn, toggleKeyboardOn] = useKeyboardOpen();
   const parts = template.split('___');
   const blankCount = parts.length - 1;
+
+  /** Пропуск, куда целится тумблер клавиатуры, — последний, где стоял фокус. */
+  const lastFocusedIndex = useRef<number | null>(null);
+
+  const toggleKeyboard = () => {
+    const next = !keyboardOn;
+    toggleKeyboardOn();
+    const el = inputRefs.current[lastFocusedIndex.current ?? 0];
+    if (!el) return;
+    if (next) requestAnimationFrame(() => el.focus());
+    else el.blur();
+  };
+
+  /**
+   * Чипы таблиц/колонок — тот же расчёт, что и у CodeEditor (см. chips
+   * там): пока ни одна таблица не упомянута, показываются имена таблиц,
+   * как только появилась — её колонки первыми. «Упомянутой» текст пропуска
+   * считается наравне с текстом шаблона — SELECT sku_code, ___ FROM ___
+   * называет колонку в шаблоне, а таблицу человек допишет в пропуск.
+   */
+  const filledText = useMemo(() => template + ' ' + blanks.join(' '), [template, blanks]);
+  const chips = useMemo(() => {
+    if (!schema) return [];
+    const tables = schema.tables.map((tb) => tb.table);
+    const mentioned = schema.tables.filter(
+      (tb) => knownTables.includes(tb.table) || new RegExp(`\\b${tb.table}\\b`).test(filledText)
+    );
+    if (!mentioned.length) return tables;
+    const columns = [...new Set(mentioned.flatMap((tb) => tb.columns.map((c) => c.name)))];
+    const rest = tables.filter((tb) => !mentioned.some((m) => m.table === tb));
+    return [...columns, ...rest];
+  }, [schema, filledText, knownTables]);
 
   /*
    * Вставка из шторки схемы (см. insertTarget.ts) целится в активный
@@ -1261,7 +1337,14 @@ function FillTemplate({
                 next[i] = e.target.value;
                 onChange(next);
               }}
-              onFocus={() => setInsertTarget(wrappersRef.current[i])}
+              onFocus={() => {
+                lastFocusedIndex.current = i;
+                setInsertTarget(wrappersRef.current[i]);
+              }}
+              // Без включённого тумблера клавиатура не должна всплывать сама —
+              // фокус и вставка из панели при этом работают как обычно
+              // (тот же приём, что у textarea в CodeEditor).
+              inputMode={keyboardOn ? undefined : 'none'}
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"
@@ -1285,19 +1368,39 @@ function FillTemplate({
       ))}
     </pre>
     {/*
-     * Тумблер и панель — те же, что у CodeEditor (общий класс .tokens-toggle
-     * прячет кнопку на телефоне и показывает на десктопе, общий ключ
-     * localStorage в useTokensOpen хранит один выбор между write и fill).
-     * Вставка идёт через insertViaTarget: активная цель — уже сфокусированный
-     * пропуск (см. onFocus у input выше и insertTarget.ts про то, почему
-     * blur её не снимает), тот же механизм, что у шторки схемы.
+     * Тумблеры и панель — те же, что у CodeEditor (общие классы .keyboard-toggle
+     * /.tokens-toggle прячут/показывают кнопку по ширине экрана, общие ключи
+     * localStorage в useKeyboardOpen/useTokensOpen хранят один выбор между
+     * write и fill). Вставка идёт через insertViaTarget: активная цель — уже
+     * сфокусированный пропуск (см. onFocus у input выше и insertTarget.ts
+     * про то, почему blur её не снимает), тот же механизм, что у шторки схемы.
      */}
     <div className="editor-tools">
+      <button type="button" className="pill keyboard-toggle" aria-pressed={keyboardOn} onClick={toggleKeyboard}>
+        ⌨ {keyboardOn ? t.editor.keyboardHide : t.editor.keyboardShow}
+      </button>
       <button type="button" className="pill tokens-toggle" aria-pressed={tokensOn} onClick={toggleTokens}>
         {tokensOn ? t.editor.tokensHide : t.editor.tokensShow}
       </button>
     </div>
     <TokenPanel level={level} track={track} open={tokensOn} onInsert={(text) => insertViaTarget(text)} disabled={disabled} />
+    {/*
+     * Чипы таблиц/колонок пропусков — см. довод у chips выше. Тот же
+     * класс .accessory-stack и тот же тумблер tokensOn, что у символов/
+     * цифр/ключевых слов: один вопрос «показать ли панель», один ответ
+     * на оба ряда, как и у CodeEditor.
+     */}
+    {chips.length > 0 && (
+      <div className="accessory-stack" data-open={tokensOn}>
+        <div className="accessory" role="toolbar" aria-label={t.editor.chipsAria}>
+          {chips.map((s) => (
+            <button key={s} type="button" className="dim" onClick={() => insertViaTarget(s)} disabled={disabled}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
     </>
   );
 }
