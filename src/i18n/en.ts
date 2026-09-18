@@ -704,6 +704,8 @@ export const en = {
     mobileTabBrief: 'Brief',
     mobileTabWork: 'Code',
     mobileTabResults: 'Result',
+    /** См. комментарий в ru.ts: кнопка перехода к вкладке «Код» на узком экране. */
+    continueToQuery: 'To the query →',
     schemaBtn: 'Data schema',
     checkBtn: 'Check',
     runBtn: 'Run',

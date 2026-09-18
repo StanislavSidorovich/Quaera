@@ -490,6 +490,28 @@ export function TaskView({
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
         <p className="brief">{glossaryBrief ?? task.brief}</p>
         <div className="goal">{glossaryGoal ?? task.goal}</div>
+        {/*
+         * Переход к вкладке «Код» — только для `tabbed` (см. выше), то есть
+         * только на узком экране и только на шаге `compute`: interpret/order
+         * своей вкладки не имеют, переключать там нечего. Живой проход
+         * (замечание недели 1, суббота) показал, что дочитавший условие до
+         * конца не понимает, куда нажимать дальше — вкладки уже ушли выше
+         * экрана. Кнопка стоит там, где человек в этот момент смотрит,
+         * а не наверху, куда он уже не глядит; `.continue-to-work` в
+         * styles.css скрывает её на ноутбуке тем же приёмом, что
+         * `.tabs.task-mobile-tabs`, — там все три части и так рядом.
+         */}
+        {tabbed && (
+          <button
+            className="btn continue-to-work"
+            onClick={() => {
+              patchStep(index, { mobilePanel: 'work' });
+              window.scrollTo({ top: 0 });
+            }}
+          >
+            {t.task.continueToQuery}
+          </button>
+        )}
       </div>
 
       <StepView

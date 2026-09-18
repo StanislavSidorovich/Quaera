@@ -1926,6 +1926,17 @@ a.btn {
   display: none;
 }
 
+/*
+ * Кнопка «К запросу →» в конце карточки «Условие» (см. TaskView.tsx,
+ * `continue-to-work`) — тот же приём, что у .tabs.task-mobile-tabs выше:
+ * свой блок под max-width: 1023px, а не переопределение десктопного
+ * `.task-work`. На ноутбуке все три части уже стоят рядом одним гридом,
+ * кнопка туда прыгнуть предлагала бы то, что и так на виду.
+ */
+.continue-to-work {
+  display: none;
+}
+
 @media (max-width: 1023px) {
   .tabs.task-mobile-tabs {
     display: flex;
@@ -1935,6 +1946,12 @@ a.btn {
 
   [data-mobile-hidden='true'] {
     display: none;
+  }
+
+  .continue-to-work {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
   }
 }
 
