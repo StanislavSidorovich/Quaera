@@ -436,3 +436,35 @@ export function taskTables(task: Task, schema: SchemaDoc | null): string[] {
   if (!code) return [];
   return schema.tables.map((t) => t.table).filter((name) => new RegExp(`\\b${name}\\b`).test(code));
 }
+
+/**
+ * Строковые значения (бренды, категории), которые задание сверяет с данными —
+ * выведены из его же кода, тем же приёмом, что и taskTables выше, и по той же
+ * причине: второй источник правды (переписанный руками список брендов)
+ * разошёлся бы с solution при первой же правке задания.
+ *
+ * Нужны отдельно от чипов таблиц/колонок: вкладка «Код» с 2026-09-18 больше
+ * не повторяет task.brief целиком (см. довод у workBrief в TaskView) —
+ * а именно в brief, не в goal, обычно названы собственные имена вроде
+ * «Aqualis» и «Fruvia», на которые goal потом ссылается местоимением
+ * («эти два бренда»). Не печатать длинное имя без ошибки в регистре —
+ * тот же мотив, что у чипов таблиц/колонок, только для значений, а не схемы.
+ *
+ * Фильтр по букве (`[a-zA-Zа-яА-Я]`) отсекает даты и голые числа — им уже
+ * служит ряд цифр и дефиса в TokenPanel, а знать их отдельным литералом
+ * незачем. Фильтр по именам колонок/таблиц схемы отсекает шум пандаса:
+ * `dim_product['brand']` квотирует имя колонки как ключ словаря, и без
+ * фильтра «brand»/«city» дублировались бы чипом дважды — тем и этим.
+ */
+export function taskLiterals(task: Task, schema: SchemaDoc | null): string[] {
+  const stepCode = (task.steps ?? []).flatMap((s) =>
+    s.kind === 'compute' ? [s.starter, s.template, s.solution] : s.kind === 'interpret' ? [s.predictSql] : []
+  );
+  const code = [task.starter, task.template, task.solution, task.predictSql, ...stepCode]
+    .filter(Boolean)
+    .join('\n');
+  if (!code) return [];
+  const known = new Set((schema?.tables ?? []).flatMap((t) => [t.table, ...t.columns.map((c) => c.name)]));
+  const values = [...new Set((code.match(/'[^']*'/g) ?? []).map((m) => m.slice(1, -1)))];
+  return values.filter((v) => /[a-zA-Zа-яА-Я]/.test(v) && !known.has(v)).map((v) => `'${v}'`);
+}

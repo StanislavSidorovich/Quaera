@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Task, TaskStep } from '../content/types';
-import { taskTables } from '../content';
+import { taskLiterals, taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
@@ -368,20 +368,21 @@ export function TaskView({
 
   /**
    * Постановка задачи над редактором — то же, что стоит в шапке на вкладке
-   * «Условие», но её видно, не переключаясь туда. У многошагового задания
-   * это `step.goal` — он самодостаточен по конструкции («Задание 2 из 3:
-   * посчитай X»). У одношагового `task.goal` часто ссылается назад на
-   * `task.brief` местоимением («эти два бренда», «эта точка») и без него
-   * не читается: сами имена и пороги стоят в brief, а goal лишь говорит,
-   * что с ними сделать. Поэтому у одношагового берём обе строки, у
-   * многошагового — только step.goal, он и так всё называет сам.
+   * «Условие», но её видно, не переключаясь туда.
+   *
+   * До 2026-09-18 сюда же попадал task.brief (у одношагового задания):
+   * `task.goal` часто ссылается на него местоимением («эти два бренда»),
+   * и без brief не читается. На практике это давало полный дубль вкладки
+   * «Условие» на вкладке «Код» — она читалась написанной впустую (замечание
+   * с живого прохода недели 1). Теперь над редактором только goal, а имена,
+   * на которые он ссылается местоимением, доступны чипом рядом с полем ввода
+   * (см. knownLiterals ниже) — вставляются касанием, не печатаются заново.
    *
    * `||`, не `??`: у автособранного одношагового `step.goal` — пустая
    * строка (см. resolveSteps), а не undefined, и `??` через неё
    * не провалился бы к task.goal вовсе.
    */
   const singleStep = steps.length === 1;
-  const workBrief = !step.goal && singleStep ? glossaryBrief ?? task.brief : null;
   const workGoal = step.goal || (singleStep ? glossaryGoal ?? task.goal : null);
 
   /**
@@ -495,7 +496,6 @@ export function TaskView({
         key={index}
         task={task}
         step={step}
-        workBrief={workBrief}
         workGoal={workGoal}
         draft={stepDraft}
         patch={(p) => patchStep(index, p)}
@@ -560,7 +560,6 @@ export function TaskView({
 function StepView({
   task,
   step,
-  workBrief,
   workGoal,
   draft,
   patch,
@@ -571,8 +570,6 @@ function StepView({
 }: {
   task: Task;
   step: TaskStep;
-  /** Сценарий над редактором — см. довод у workBrief/workGoal в TaskView. */
-  workBrief: ReactNode;
   /** Постановка задачи над редактором — см. довод у workGoal в TaskView. */
   workGoal: ReactNode;
   draft: StepDraft;
@@ -617,6 +614,15 @@ function StepView({
    * нужны раньше, чем текст успевает назвать таблицу.
    */
   const knownTables = useMemo(() => taskTables(task, schema), [task, schema]);
+
+  /**
+   * Собственные имена задания (бренды, категории) — см. taskLiterals.
+   * Тот же засев, что у knownTables, только чипом вставляется значение,
+   * а не имя колонки: без brief над редактором (см. довод у workGoal
+   * в TaskView) это единственный способ не печатать «Aqualis»/«Fruvia»
+   * руками на экранной клавиатуре.
+   */
+  const knownLiterals = useMemo(() => taskLiterals(task, schema), [task, schema]);
 
   /** Финальный текст кода: для fill собирается из шаблона и введённых фрагментов. */
   const composedCode = useMemo(() => {
@@ -1076,14 +1082,10 @@ function StepView({
           </div>
         </div>
       ) : (
+        <>
         <div className="task-work">
           <div className="task-editor" data-mobile-hidden={draft.mobilePanel !== 'work'}>
             <div className="card">
-              {workBrief && (
-                <p className="brief" style={{ marginBottom: 8 }}>
-                  {workBrief}
-                </p>
-              )}
               {workGoal && (
                 <div className="goal" style={{ marginBottom: 12 }}>
                   {workGoal}
@@ -1105,6 +1107,7 @@ function StepView({
                   track={task.track}
                   schema={schema}
                   knownTables={knownTables}
+                  knownLiterals={knownLiterals}
                 />
               ) : (
                 <CodeEditor
@@ -1115,31 +1118,9 @@ function StepView({
                   track={task.track}
                   placeholder={t.task.placeholder(task.track)}
                   knownTables={knownTables}
+                  knownLiterals={knownLiterals}
                 />
               )}
-              <div className="row" style={{ marginTop: 12 }}>
-                {/* Без исполнителя запускать нечего — кнопки нет, а не «есть и падает». */}
-                {/*
-                  * После зачёта «Выполнить» остаётся, «Проверить» — нет.
-                  * Запуск ничего не записывает (см. handleRun), а проверка
-                  * выставляет вердикт и двигает интервал повторения; второй
-                  * раз за один ответ его двигать нельзя — этот дефект уже
-                  * чинили через recordedTasksRef.
-                  */}
-                {runsCode && (
-                  <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit}>
-                    {t.task.runBtn}
-                  </button>
-                )}
-                {!draft.solved && (
-                  <button className="btn" onClick={handleCheck} disabled={running || !canSubmit}>
-                    {running ? '…' : t.task.checkBtn}
-                  </button>
-                )}
-              </div>
-              <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                {draft.solved && runsCode ? t.task.solvedRunNote : runsCode ? t.task.runNote : t.task.checkTextNote}
-              </p>
             </div>
           </div>
           <div className="task-results" data-mobile-hidden={draft.mobilePanel !== 'results'}>
@@ -1148,6 +1129,46 @@ function StepView({
             {expectedBlock}
           </div>
         </div>
+        {/*
+         * Кнопки запуска/проверки и заметка под ними — вне .task-editor
+         * и .task-results нарочно: до 2026-09-18 они стояли внутри
+         * .task-editor и пропадали вместе с ним на вкладке «Результат»
+         * (см. [data-mobile-hidden='true']). «Выполнить» сам переключает
+         * на «Результат» (конец handleRun), и человек упирался в то, что
+         * кнопки «Проверить» там нет — приходилось листать обратно на
+         * «Код» только ради одного касания. Сюда же, а не внутрь
+         * .task-results: кнопки одни для обеих вкладок, а не второй
+         * экземпляр специально для «Результата». На ноутбуке .task-work —
+         * это грид из двух колонок (см. styles.css); блок вне него
+         * ложится под обе, что здесь и нужно — раньше он был частью левой
+         * колонки, теперь общий для решения целиком.
+         */}
+        <div className="card">
+          <div className="row">
+            {/* Без исполнителя запускать нечего — кнопки нет, а не «есть и падает». */}
+            {/*
+              * После зачёта «Выполнить» остаётся, «Проверить» — нет.
+              * Запуск ничего не записывает (см. handleRun), а проверка
+              * выставляет вердикт и двигает интервал повторения; второй
+              * раз за один ответ его двигать нельзя — этот дефект уже
+              * чинили через recordedTasksRef.
+              */}
+            {runsCode && (
+              <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit}>
+                {t.task.runBtn}
+              </button>
+            )}
+            {!draft.solved && (
+              <button className="btn" onClick={handleCheck} disabled={running || !canSubmit}>
+                {running ? '…' : t.task.checkBtn}
+              </button>
+            )}
+          </div>
+          <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+            {draft.solved && runsCode ? t.task.solvedRunNote : runsCode ? t.task.runNote : t.task.checkTextNote}
+          </p>
+        </div>
+        </>
       )}
 
       {/*
@@ -1208,6 +1229,7 @@ function FillTemplate({
   track,
   schema,
   knownTables = [],
+  knownLiterals = [],
 }: {
   template: string;
   blanks: string[];
@@ -1220,6 +1242,8 @@ function FillTemplate({
   schema: SchemaDoc | null;
   /** Таблицы задания (см. taskTables) — тот же засев, что у CodeEditor, см. довод у chips ниже. */
   knownTables?: string[];
+  /** Собственные имена задания (см. taskLiterals) — тот же засев, см. довод у chips ниже. */
+  knownLiterals?: string[];
 }) {
   const { t } = useI18n();
   const [tokensOn, toggleTokens] = useTokensOpen();
@@ -1257,16 +1281,16 @@ function FillTemplate({
    */
   const filledText = useMemo(() => template + ' ' + blanks.join(' '), [template, blanks]);
   const chips = useMemo(() => {
-    if (!schema) return [];
+    if (!schema) return knownLiterals;
     const tables = schema.tables.map((tb) => tb.table);
     const mentioned = schema.tables.filter(
       (tb) => knownTables.includes(tb.table) || new RegExp(`\\b${tb.table}\\b`).test(filledText)
     );
-    if (!mentioned.length) return tables;
+    if (!mentioned.length) return [...knownLiterals, ...tables];
     const columns = [...new Set(mentioned.flatMap((tb) => tb.columns.map((c) => c.name)))];
     const rest = tables.filter((tb) => !mentioned.some((m) => m.table === tb));
-    return [...columns, ...rest];
-  }, [schema, filledText, knownTables]);
+    return [...knownLiterals, ...columns, ...rest];
+  }, [schema, filledText, knownTables, knownLiterals]);
 
   /*
    * Вставка из шторки схемы (см. insertTarget.ts) целится в активный

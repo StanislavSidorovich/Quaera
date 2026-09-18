@@ -45,9 +45,21 @@ interface Props {
   placeholder?: string;
   /** Таблицы задания (см. taskTables) — засевают колонки в панели до того, как текст сам их назовёт. Пусто в песочнице, где своего задания нет. */
   knownTables?: string[];
+  /** Собственные имена задания (см. taskLiterals) — бренды и категории из его же кода, чипом вместо ручного набора. */
+  knownLiterals?: string[];
 }
 
-export function CodeEditor({ value, onChange, schema, level, track, disabled, placeholder, knownTables = [] }: Props) {
+export function CodeEditor({
+  value,
+  onChange,
+  schema,
+  level,
+  track,
+  disabled,
+  placeholder,
+  knownTables = [],
+  knownLiterals = [],
+}: Props) {
   const { t } = useI18n();
   const ref = useRef<HTMLTextAreaElement>(null);
   /*
@@ -75,16 +87,16 @@ export function CodeEditor({ value, onChange, schema, level, track, disabled, pl
    * колонки только тогда, когда они уже почти не нужны.
    */
   const chips = useMemo(() => {
-    if (!schema) return [];
+    if (!schema) return knownLiterals;
     const tables = schema.tables.map((t) => t.table);
     const mentioned = schema.tables.filter(
       (t) => knownTables.includes(t.table) || new RegExp(`\\b${t.table}\\b`).test(value)
     );
-    if (!mentioned.length) return tables;
+    if (!mentioned.length) return [...knownLiterals, ...tables];
     const columns = [...new Set(mentioned.flatMap((t) => t.columns.map((c) => c.name)))];
     const rest = tables.filter((t) => !mentioned.some((m) => m.table === t));
-    return [...columns, ...rest];
-  }, [schema, value, knownTables]);
+    return [...knownLiterals, ...columns, ...rest];
+  }, [schema, value, knownTables, knownLiterals]);
 
   /**
    * Стирает выделение, если оно есть, иначе один символ перед курсором —
