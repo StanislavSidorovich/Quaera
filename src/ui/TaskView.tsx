@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Task, TaskStep } from '../content/types';
 import { taskLiterals, taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
-import { CodeBlock } from './CodeBlock';
+import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 
@@ -1368,54 +1368,76 @@ function FillTemplate({
     return () => wrappers.forEach(clearInsertTarget);
   }, []);
 
-  // pre-wrap здесь больше не нужен точечно — он теперь у самого .sql-block.
+  /** Поле пропуска i — отдельно от строк, чтобы одну и ту же разметку вставлял разрез по \n. */
+  const renderBlank = (i: number) => (
+      <input
+        ref={(el) => {
+          inputRefs.current[i] = el;
+        }}
+        value={blanks[i] ?? ''}
+        disabled={disabled}
+        onChange={(e) => {
+          const next = [...blanks];
+          next[i] = e.target.value;
+          onChange(next);
+        }}
+        onFocus={() => {
+          lastFocusedIndex.current = i;
+          setInsertTarget(wrappersRef.current[i]);
+        }}
+        // Без включённого тумблера клавиатура не должна всплывать сама —
+        // фокус и вставка из панели при этом работают как обычно
+        // (тот же приём, что у textarea в CodeEditor).
+        inputMode={keyboardOn ? undefined : 'none'}
+        className="fill-blank"
+        placeholder={blankHints?.[i] || undefined}
+        spellCheck={false}
+        autoCapitalize="none"
+        autoCorrect="off"
+        aria-label={blankHints?.[i] ? `${t.task.blankAriaLabel(i + 1)}: ${blankHints[i]}` : t.task.blankAriaLabel(i + 1)}
+        // Ошибка помечается не только цветом: цвет один не доходит
+        // до тех, кто его не различает, и до чтения с экрана.
+        aria-invalid={wrongIndexes.includes(i) || undefined}
+        style={{
+          width: `${Math.max(4, (blanks[i] ?? '').length + 2, (blankHints?.[i] ?? '').length + 2)}ch`,
+          font: 'inherit',
+          color: 'var(--text)',
+          background: 'var(--bg-raised)',
+          border: `1px solid ${wrongIndexes.includes(i) ? 'var(--err)' : 'var(--accent)'}`,
+          borderRadius: 6,
+          padding: '2px 6px',
+          textAlign: 'center',
+          // строка блока держит отрицательный text-indent висячего отступа
+          textIndent: 0,
+        }}
+      />
+  );
+
+  // Строки шаблона режем по \n сами: пропуски разрывают текст на куски, а висячий
+  // отступ (см. CodeBlock) держится на блочном span-е на каждую строку кода.
+  const codeLines: ReactNode[][] = [[]];
+  const leads: number[] = [0];
+  parts.forEach((part, i) => {
+    part.split('\n').forEach((seg, k) => {
+      if (k > 0) {
+        codeLines.push([]);
+        leads.push(0);
+      }
+      const row = codeLines[codeLines.length - 1];
+      if (row.length === 0) leads[leads.length - 1] = hangLead(seg);
+      if (seg) row.push(seg);
+    });
+    if (i < parts.length - 1) {
+      codeLines[codeLines.length - 1].push(<Fragment key={`b${i}`}>{renderBlank(i)}</Fragment>);
+    }
+  });
+
   return (
     <>
     <pre className="sql-block">
-      {parts.map((part, i) => (
-        <span key={i}>
-          {part}
-          {i < parts.length - 1 && (
-            <input
-              ref={(el) => {
-                inputRefs.current[i] = el;
-              }}
-              value={blanks[i] ?? ''}
-              disabled={disabled}
-              onChange={(e) => {
-                const next = [...blanks];
-                next[i] = e.target.value;
-                onChange(next);
-              }}
-              onFocus={() => {
-                lastFocusedIndex.current = i;
-                setInsertTarget(wrappersRef.current[i]);
-              }}
-              // Без включённого тумблера клавиатура не должна всплывать сама —
-              // фокус и вставка из панели при этом работают как обычно
-              // (тот же приём, что у textarea в CodeEditor).
-              inputMode={keyboardOn ? undefined : 'none'}
-              className="fill-blank"
-              placeholder={blankHints?.[i] || undefined}
-              spellCheck={false}
-              autoCapitalize="none"
-              autoCorrect="off"
-              aria-label={blankHints?.[i] ? `${t.task.blankAriaLabel(i + 1)}: ${blankHints[i]}` : t.task.blankAriaLabel(i + 1)}
-              // Ошибка помечается не только цветом: цвет один не доходит
-              // до тех, кто его не различает, и до чтения с экрана.
-              aria-invalid={wrongIndexes.includes(i) || undefined}
-              style={{
-                width: `${Math.max(4, (blanks[i] ?? '').length + 2, (blankHints?.[i] ?? '').length + 2)}ch`,
-                font: 'inherit',
-                color: 'var(--text)',
-                background: 'var(--bg-raised)',
-                border: `1px solid ${wrongIndexes.includes(i) ? 'var(--err)' : 'var(--accent)'}`,
-                borderRadius: 6,
-                padding: '2px 6px',
-                textAlign: 'center',
-              }}
-            />
-          )}
+      {codeLines.map((row, n) => (
+        <span key={n} className="code-line" style={hangStyle(leads[n])}>
+          {row.length ? row : ' '}
         </span>
       ))}
     </pre>

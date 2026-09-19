@@ -3,6 +3,17 @@ import type { CSSProperties } from 'react';
 /** На сколько знаков продолжение перенесённой строки уходит правее её начала. */
 const HANG = 3;
 
+/** Ведущие пробелы строки: собственный отступ кода, от которого считается висячий. */
+export function hangLead(line: string): number {
+  return line.length - line.trimStart().length;
+}
+
+/** Стиль строки блочным span-ом: первая строка на своём месте, продолжение на HANG правее. */
+export function hangStyle(lead: number): CSSProperties {
+  const ind = `${lead + HANG}ch`;
+  return { paddingLeft: ind, textIndent: `-${ind}` };
+}
+
 /**
  * Блок кода с висячим отступом. text-indent на <pre> действует только на
  * первую строку всего блока, поэтому каждая строка кода — свой блочный span:
@@ -26,10 +37,8 @@ export function CodeBlock({
   return (
     <pre className={className ? `sql-block ${className}` : 'sql-block'} style={style}>
       {code.split('\n').map((line, i) => {
-        const lead = line.length - line.trimStart().length;
-        const ind = `${lead + HANG}ch`;
         return (
-          <span key={i} className="code-line" style={{ paddingLeft: ind, textIndent: `-${ind}` }}>
+          <span key={i} className="code-line" style={hangStyle(hangLead(line))}>
             {line || ' '}
           </span>
         );
