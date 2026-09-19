@@ -59,6 +59,33 @@ export interface WeekSummary {
   next: { at: Date; count: number } | null;
 }
 
+/**
+ * Строка синтаксиса рядом с названием приёма — одна и та же на брифе
+ * понедельника («К субботе вы сможете») и на итоге недели, поэтому живёт
+ * здесь, а не в двух компонентах: начало и конец недели обещают и подводят
+ * итог ровно теми же словами, и разъехаться им негде.
+ */
+export function skillConstruct(lesson: { signature?: string; form?: string } | undefined): string | undefined {
+  return lesson?.signature ?? lesson?.form?.split('\n')[0].trim();
+}
+
+/** Приёмы недели в порядке первого появления: id, название и синтаксис. */
+export function weekSkillLines(
+  days: WeekDay[],
+  lessonBySkill: Map<string, { signature?: string; form?: string }>
+): { id: string; title: string; construct?: string }[] {
+  const out: { id: string; title: string; construct?: string }[] = [];
+  const seen = new Set<string>();
+  for (const day of days) {
+    for (const step of day.steps) {
+      if (seen.has(step.task.skill)) continue;
+      seen.add(step.task.skill);
+      out.push({ id: step.task.skill, title: step.skillTitle, construct: skillConstruct(lessonBySkill.get(step.task.skill)) });
+    }
+  }
+  return out;
+}
+
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
 /**
@@ -204,7 +231,7 @@ export function StoryWeekSummary({
           <ul className="story-summary-list">
             {s.skills.map((k) => {
               const lesson = lessonBySkill.get(k.id);
-              const construct = lesson?.signature ?? lesson?.form?.split('\n')[0].trim();
+              const construct = skillConstruct(lesson);
               return (
                 <li key={k.id}>
                   <span>

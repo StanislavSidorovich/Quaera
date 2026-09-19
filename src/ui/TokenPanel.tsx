@@ -42,12 +42,20 @@ export function symbolsFor(track: Track): string[] {
  * Постоянный порядок заодно держит каждое слово на своём месте от задания
  * к заданию — рука запоминает, где `GROUP BY`. Уровень по-прежнему только
  * фильтрует (keywordsFor); слово вне списка встаёт в конец, не теряется.
+ *
+ * **Порядок теперь по замеру, а не по ощущению:** до 2026-09-19 он назывался
+ * «по частоте», но OR (2 эталона из 67) и LIMIT (3) стояли на виду, а ROUND(
+ * (42) и BETWEEN (30) уходили за прокрутку. Гейт `panel-order` в
+ * verify-content.mjs держит правило: слово за видимой частью не просят чаще,
+ * чем слово внутри неё. Добавил слово или задание — гейт скажет, если порядок
+ * разошёлся с содержимым.
  */
 const SQL_PANEL_ORDER = [
-  'SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'GROUP BY', 'ORDER BY', 'AS', 'DESC', 'AND', 'OR',
-  'COUNT(', 'SUM(', 'DISTINCT', 'LIMIT', 'IN (', 'ROUND(', 'AVG(', 'HAVING', 'LEFT JOIN', 'BETWEEN',
-  'IS NULL', 'IS NOT NULL', 'CASE WHEN', 'THEN', 'ELSE', 'END', 'WITH', 'COALESCE(',
-  'OVER (', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING', 'CURRENT ROW',
+  'SELECT', 'FROM', 'WHERE', 'AS', 'GROUP BY', 'AND', 'ROUND(', 'JOIN', 'ON', 'SUM(',
+  'ORDER BY', 'DESC', 'BETWEEN', 'COUNT(', 'WITH',
+  'AVG(', 'CASE WHEN', 'THEN', 'ELSE', 'END', 'DISTINCT', 'IS NOT NULL', 'LEFT JOIN', 'OVER (',
+  'IS NULL', 'COALESCE(', 'IN (', 'LIMIT', 'HAVING', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING',
+  'CURRENT ROW', 'OR',
 ];
 
 export function keywordsFor(track: Track, level: number): string[] {

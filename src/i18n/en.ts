@@ -626,6 +626,10 @@ export const en = {
     known: 'What we know so far',
     /** См. комментарий в ru.ts: счётчик для свёрнутой папки дела. */
     knownCount: (n: number) => `${n} finding${n === 1 ? '' : 's'}`,
+    weekPreview: 'By Saturday you will be able to',
+    weekPreviewCount: (n: number) => `${n} technique${n === 1 ? '' : 's'}`,
+    weekAhead: (n: number, last: string) => `${n} more week${n === 1 ? '' : 's'} after this one, the last one is ${last}.`,
+    trackName: { sql: 'SQL', python: 'pandas', model: 'data modelling', domain: 'the business domain' } as Record<string, string>,
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */
     nextMission: 'Next day',

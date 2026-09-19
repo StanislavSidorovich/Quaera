@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
@@ -16,7 +16,8 @@ import {
 import type { Progress } from '../srs/store';
 import type { PushState } from '../push/client';
 import { StoryProgress } from './StoryProgress';
-import { StoryWeekSummary, type WeekDay } from './StoryWeekSummary';
+import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
+import { lessonBySkillFor } from '../content';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -298,6 +299,7 @@ export function StoryMode({
   onEnablePush: () => Promise<PushState>;
 }) {
   const { t, locale } = useI18n();
+  const lessonBySkill = useMemo(() => lessonBySkillFor(locale), [locale]);
 
   /*
    * Термины глоссария, уже показанные сегодня, — состояние на весь день
@@ -454,6 +456,16 @@ export function StoryMode({
   const nextMission = campaign.missions[campaign.missions.findIndex((m) => m.id === mission.id) + 1] ?? null;
   const nextStartsWeek = !!nextMission && nextMission.week !== mission.week;
   const found = weekDays.slice(0, weekDays.findIndex((m) => m.id === mission.id)).map((m) => m.found);
+  /*
+   * Обзор недели — только на брифе её первого дня: человек видит, к чему
+   * идёт, до того как начал. Берётся из тех же дней и той же функции, что
+   * итог недели (weekSkillLines), поэтому обещание в понедельник и отчёт
+   * в субботу называют приёмы одинаково.
+   */
+  const firstDayOfWeek = weekDays[0]?.id === mission.id;
+  const previewSkills = firstDayOfWeek ? weekSkillLines(summaryDays, lessonBySkill) : [];
+  const weeksAhead = campaign.weeks.length - 1 - campaign.weeks.findIndex((w) => w.id === mission.week);
+  const lastTrack = campaign.missions[campaign.missions.length - 1]?.track;
 
   return (
     <>
@@ -540,6 +552,27 @@ export function StoryMode({
                   </ul>
                 </div>
               )
+            )}
+            {previewSkills.length > 0 && (
+              <details className="story-known story-preview">
+                <summary className="story-known-title">
+                  {t.storyMode.weekPreview}
+                  <small>{t.storyMode.weekPreviewCount(previewSkills.length)}</small>
+                </summary>
+                <ul>
+                  {previewSkills.map((k) => (
+                    <li key={k.id}>
+                      {k.title}
+                      {k.construct && <code className="story-summary-construct">{k.construct}</code>}
+                    </li>
+                  ))}
+                </ul>
+                {weeksAhead > 0 && lastTrack && (
+                  <p className="story-mode-para">
+                    {t.storyMode.weekAhead(weeksAhead, t.storyMode.trackName[lastTrack] ?? lastTrack)}
+                  </p>
+                )}
+              </details>
             )}
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (

@@ -40,6 +40,34 @@ function loadKeywordLevels(name) {
 const SQL_KEYWORDS_BY_LEVEL = loadKeywordLevels('SQL_KEYWORDS_BY_LEVEL');
 
 /**
+ * Постоянный порядок SQL-слов панели вставки (SQL_PANEL_ORDER в TokenPanel.tsx)
+ * — той же вырезкой текста, что и уровни выше.
+ */
+const SQL_PANEL_ORDER = (() => {
+  const src = readFileSync(path.join(root, 'src', 'ui', 'TokenPanel.tsx'), 'utf8');
+  const m = /const SQL_PANEL_ORDER = (\[[\s\S]*?\n\]);/.exec(src);
+  if (!m) throw new Error('TokenPanel.tsx: не нашёл SQL_PANEL_ORDER');
+  return new Function(`return ${m[1]}`)();
+})();
+
+/**
+ * Сколько слов панели видно без прокрутки на 375px. Замерено в браузере
+ * (2026-09-19) с порядком SQL_PANEL_ORDER: на уровнях 2-4 ровно 14 (три ряда,
+ * в них 5, 5 и 4 кнопки; число зависит от ширины слов, а не от их количества
+ * в ряду), на уровне 1 весь список из 12. Четвёртый ряд режется пополам как
+ * знак прокрутки (.accessory, max-height 152px). Сменится порядок или вёрстка
+ * кнопок — замерить заново, иначе гейт сверяет не с тем числом.
+ */
+const PANEL_VISIBLE_WORDS = 14;
+
+/**
+ * Разница до трёх заданий частотой не считается: DESC (18) держится у ORDER BY,
+ * COUNT( (19) стоит перед WITH (21), потому что капстоун недели 1 (sql-100) просит
+ * COUNT(DISTINCT, а WITH нужен только со второй недели.
+ */
+const PANEL_ORDER_NOISE = 3;
+
+/**
  * Pyodide поднимается лениво и один раз: инициализация занимает секунды,
  * и её не нужно платить, пока в python-core нет ни одного задания в режиме
  * write/fill. Источник обвязки — public/python-bootstrap.py, тот же файл,
@@ -3639,6 +3667,76 @@ function translationPairs(orig, tr) {
     else checkPackTranslation(id);
   }
   console.log(`  ok   файлов перевода на диске: ${enFiles.length}, все проверены`);
+}
+
+// --- Обзор недели на брифе и итог недели называют приёмы одинаково.
+/**
+ * «К субботе вы сможете» в понедельник и «Что теперь умеете» в субботу
+ * обещают и подводят итог одним и тем же списком, и совпадать им должно
+ * дословно: название приёма и строка синтаксиса рядом. Проверять совпадение
+ * готовых строк нечем без браузера, поэтому проверяется причина: обе стороны
+ * берут строки из одного места (weekSkillLines и skillConstruct в
+ * StoryWeekSummary.tsx), и ни одна не собирает строку синтаксиса у себя.
+ */
+{
+  const ui = (name) => readFileSync(path.join(root, 'src', 'ui', name), 'utf8');
+  const brief = ui('StoryMode.tsx');
+  const summary = ui('StoryWeekSummary.tsx');
+  const inlineForm = /\.form\?*\.split\(/;
+  const shared =
+    /weekSkillLines\(/.test(brief) &&
+    /skillConstruct\(/.test(summary) &&
+    !inlineForm.test(brief) &&
+    (summary.match(new RegExp(inlineForm.source, 'g')) ?? []).length === 1; // единственное место — сам skillConstruct
+  if (shared) console.log('  ok   обзор недели и итог недели берут приёмы и синтаксис из одного места');
+  else {
+    fail(
+      'week-preview',
+      'обзор недели (StoryMode.tsx) и итог недели (StoryWeekSummary.tsx) обязаны брать название приёма и строку синтаксиса из weekSkillLines/skillConstruct, а не собирать их у себя: иначе понедельник обещает одно, а суббота подводит итог другими словами'
+    );
+  }
+}
+
+// --- Порядок слов панели вставки отражает, что задания просят чаще.
+/**
+ * Панель показывает без прокрутки первые PANEL_VISIBLE_WORDS слов, остальные —
+ * за прокруткой. Порядок постоянный (SQL_PANEL_ORDER), уровень только
+ * фильтрует, поэтому «стоит на виду» решает одно: место в списке. Правило:
+ * слово за пределами видимой части не может встречаться в эталонах write и fill
+ * чаще, чем любое слово внутри неё. Так JOIN и ON лежали в четвёртом ряду
+ * (sql-098), пока на виду стояли OR (2 эталона из 67) и LIMIT (3).
+ *
+ * Не «каждое слово эталона среди первых N»: эталонов с ROUND, BETWEEN, CASE,
+ * WITH, OVER много, и в три ряда они все не влезут. Прокрутка законна для
+ * редких слов, а не для частых. Частота считается по всем заданиям разом:
+ * уровень задания слово уже не двигает.
+ */
+{
+  const sqlPack = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'sql-core.json'), 'utf8'));
+  const solutions = sqlPack.tasks
+    .filter((t) => (t.mode === 'write' || t.mode === 'fill') && t.solution)
+    .map((t) => t.solution.toUpperCase().replace(/'[^']*'/g, "''"));
+  const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const usage = (kw) => {
+    const re = new RegExp(`${/^[A-Z]/.test(kw) ? '\\b' : ''}${escapeRe(kw)}${/[A-Z]$/.test(kw) ? '\\b' : ''}`);
+    return solutions.filter((sol) => re.test(sol)).length;
+  };
+  const counted = SQL_PANEL_ORDER.map((kw, i) => ({ kw, i, n: usage(kw) }));
+  const inside = counted.slice(0, PANEL_VISIBLE_WORDS);
+  const floor = inside.reduce((m, x) => (x.n < m.n ? x : m));
+  const above = counted.slice(PANEL_VISIBLE_WORDS).filter((x) => x.n > floor.n + PANEL_ORDER_NOISE);
+  if (above.length) {
+    fail(
+      'panel-order',
+      `за прокруткой стоят слова, которые просят чаще, чем «${floor.kw}» на виду (${floor.n}): ${above
+        .map((x) => `«${x.kw}» (место ${x.i + 1}, ${x.n})`)
+        .join(', ')}`
+    );
+  } else {
+    console.log(
+      `  ok   порядок панели: на виду ${PANEL_VISIBLE_WORDS} слов, самое редкое из них «${floor.kw}» (${floor.n} из ${solutions.length}), за прокруткой чаще не просят`
+    );
+  }
 }
 
 // --- Ссылки на задания по внутреннему id в тексте, который читает человек.
