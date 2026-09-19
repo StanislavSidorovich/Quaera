@@ -58,7 +58,7 @@ export const WEEKS = [
 // ---------------------------------------------------------------------------
 // 2. Новые задания
 // ---------------------------------------------------------------------------
-// id — следующие свободные в sql-core (последний занятый — sql-105).
+// id — следующие свободные в sql-core (последний занятый — sql-106; в спецификации до 2026-09-19 стояли sql-106…114 — коллизия с субботой w3, сдвинуто на единицу).
 // level — трудность вне кампании (правило четырнадцатого захода).
 // Nettora в w1 отбирается по product_id IN (19, 20, 21, 22, 23): JOIN ещё не пройден,
 // а IN — вторник. Это и есть приём аналитика «сначала достань ключи из справочника,
@@ -70,13 +70,13 @@ const NETTORA_IDS = '(19, 20, 21, 22, 23)';
 export const NEW_TASKS = {
   // Вт w1 — последний шаг дня. Результат: 19..23, пять позиций Home care.
   // Порядок по product_id — не украшение: id понадобятся завтра, их выписывают подряд.
-  'sql-106': { skill: 'sql-where', level: 1, mode: 'write',
+  'sql-107': { skill: 'sql-order-limit', level: 1, mode: 'write',
     starter: 'SELECT product_id, product_name, list_price\nFROM dim_product\n',
     solution: "SELECT product_id, product_name, list_price\nFROM dim_product\nWHERE brand = 'Nettora'\nORDER BY product_id" },
 
   // Ср w1 — первый факт из продаж. Январь 2026: 1 216 штук.
   // BETWEEN впервые — в шаблоне; подводка среды обязана показать его в рабочей форме.
-  'sql-107': { skill: 'sql-aggregate', level: 2, mode: 'fill',
+  'sql-108': { skill: 'sql-aggregate', level: 2, mode: 'fill',
     template: `SELECT ___(units) AS units\nFROM fact_sellout\nWHERE product_id ___ ${NETTORA_IDS}\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'`,
     blanks: ['SUM', 'IN'],
     solution: `SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'` },
@@ -84,7 +84,7 @@ export const NEW_TASKS = {
   // Ср w1 — то же за июнь 2025: 4 702. «Вчетверо!» — число из брифа среды (так считает
   // отчёт продаж: пик прошлого лета против этого января). Суждение среды: зиму сравнили
   // с летом, вывода пока нет.
-  'sql-108': { skill: 'sql-aggregate', level: 2, mode: 'write',
+  'sql-109': { skill: 'sql-aggregate', level: 2, mode: 'write',
     starter: 'SELECT SUM(units) AS units\nFROM fact_sellout\n',
     solution: `SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start BETWEEN '2025-06-01' AND '2025-06-30'` },
 
@@ -94,7 +94,7 @@ export const NEW_TASKS = {
   // substr(week_start, 6, 2) — месяц, '06' и меньше — январь…июнь. Новой конструкции нет
   // (substr и сравнение уже пройдены), новая только мысль: сравнивать одинаковые месяцы.
   // Рукой: год через substr, GROUP BY, ORDER BY — ровно два незакреплённых.
-  'sql-109': { skill: 'sql-group-by', level: 2, mode: 'write',
+  'sql-110': { skill: 'sql-group-by', level: 2, mode: 'write',
     starter: `SELECT \n       SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND substr(week_start, 6, 2) <= '06'\n`,
     solution: `SELECT substr(week_start, 1, 4) AS year,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND substr(week_start, 6, 2) <= '06'\nGROUP BY 1\nORDER BY year` },
 
@@ -102,20 +102,20 @@ export const NEW_TASKS = {
   //   2024 | 198270   2025 | 225261   2026 | 213447  → −5% к 2025-му; у Nettora −51%.
   // Всё закреплено (см. отчёт плотности ниже). goal называет условие на месяцы словами
   // «те же месяцы, что в пятницу» — приём виден в пятничной заготовке, не в голове.
-  'sql-110': { skill: 'sql-group-by', level: 2, mode: 'write', starter: '',
+  'sql-111': { skill: 'sql-group-by', level: 2, mode: 'write', starter: '',
     solution: "SELECT substr(week_start, 1, 4) AS year,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE substr(week_start, 6, 2) <= '06'\nGROUP BY 1\nORDER BY year" },
 
   // Пн w1b — полка по месяцам (пятничный запрос w1 + колонка точек, с 2025):
   //   точек 74 в январе 2025 → 64 в июне → 40 в декабре → 31 с февраля 2026.
   // Сползание началось летом 2025-го — это пригодится части 2 («кто занял»).
-  'sql-111': { skill: 'sql-aggregate', level: 2, mode: 'fill',
+  'sql-112': { skill: 'sql-group-by', level: 2, mode: 'fill',
     template: `SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       ___ AS outlets\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month`,
     blanks: ['COUNT(DISTINCT customer_id)'],
     solution: `SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       COUNT(DISTINCT customer_id) AS outlets\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month` },
 
   // Пн w1b — те же точки по годам: 79 | 79 | 37. Разница 42 — число из вопроса части 2
   // («Кто занял 42 точки Nettora»), здесь оно рождается.
-  'sql-112': { skill: 'sql-aggregate', level: 2, mode: 'write',
+  'sql-113': { skill: 'sql-group-by', level: 2, mode: 'write',
     starter: `SELECT substr(week_start, 1, 4) AS year,\n       \nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\nGROUP BY 1\nORDER BY year`,
     solution: `SELECT substr(week_start, 1, 4) AS year,\n       COUNT(DISTINCT customer_id) AS outlets\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\nGROUP BY 1\nORDER BY year` },
 
@@ -123,7 +123,7 @@ export const NEW_TASKS = {
   // 1.0 * — в шаблоне, подводка объясняет целочисленное деление одной фразой).
   //   2025: 29.7 31.5 50.4 43.9 63.2 73.5 … ; 2026: 34.7 42.2 57.5 65.5 64.2 47.3.
   // Те же месяцы: 2026 выше в пяти из шести (ниже только июнь). Спрос в оставшихся точках жив.
-  'sql-113': { skill: 'sql-aggregate', level: 2, mode: 'fill',
+  'sql-114': { skill: 'sql-group-by', level: 2, mode: 'fill',
     template: `SELECT substr(week_start, 1, 7) AS month,\n       ROUND(1.0 * SUM(units) / ___, 1) AS per_outlet\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month`,
     blanks: ['COUNT(DISTINCT customer_id)'],
     solution: `SELECT substr(week_start, 1, 7) AS month,\n       ROUND(1.0 * SUM(units) / COUNT(DISTINCT customer_id), 1) AS per_outlet\nFROM fact_sellout\nWHERE product_id IN ${NETTORA_IDS}\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month` },
@@ -131,7 +131,7 @@ export const NEW_TASKS = {
   // Чт w1b — реальная цена штуки по годам: 193.9 | 194.0 | 198.5 (+2%). Не цена.
   // После sql-096 (по прайсу Nettora дороже всех в FMCG — 201.6) — «может, дорогая
   // и отпугнула?»: дорогой она была и в 2024-м, когда стояла в 79 точках.
-  'sql-114': { skill: 'sql-join-inner', level: 2, mode: 'fill',
+  'sql-115': { skill: 'sql-join-inner', level: 2, mode: 'fill',
     template: "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(___ / ___, 1) AS price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora'\nGROUP BY 1\nORDER BY year",
     blanks: ['SUM(f.revenue)', 'SUM(f.units)'],
     solution: "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora'\nGROUP BY 1\nORDER BY year" },
@@ -158,25 +158,25 @@ export const LAYOUT = {
     // Прайс насквозь: колонки, имя колонки, порядок строк. Новые: ORDER BY, DESC.
     ['Пн', 'day-1-first-day', ['sql-085', 'sql-001', 'sql-093']],
     // Отбор. Новые: WHERE, IN. В конце — id Nettora, которые понадобятся в среду.
-    ['Вт', 'p1-day-filter', ['sql-002', 'sql-003', 'sql-025', 'sql-106']],
+    ['Вт', 'p1-day-filter', ['sql-002', 'sql-003', 'sql-025', 'sql-107']],
     // Считаем, без группировки; впервые fact_sellout. Новые: COUNT, DISTINCT, SUM, BETWEEN.
-    ['Ср', 'day-2-counting', ['sql-007', 'sql-094', 'sql-107', 'sql-108']],
+    ['Ср', 'day-2-counting', ['sql-007', 'sql-094', 'sql-108', 'sql-109']],
     // Группировка: форма года рынка. Новые: GROUP BY, AVG, substr.
     ['Чт', 'day-3-shape-of-the-year', ['sql-095', 'sql-010', 'sql-035', 'sql-097']],
     // Ответ недели: те же месяцы трёх лет.
-    ['Пт', 'p1-day-same-months', ['sql-109']],
+    ['Пт', 'p1-day-same-months', ['sql-110']],
     // Контроль: рынок за те же месяцы.
-    ['Сб', 'p1-w1-sat-market', ['sql-110']],
+    ['Сб', 'p1-w1-sat-market', ['sql-111']],
   ],
   w1b: [
     // Полка измеряется точками. Нового синтаксиса нет — новая мера.
-    ['Пн', 'p1-day-outlets', ['sql-111', 'sql-112']],
+    ['Пн', 'p1-day-outlets', ['sql-112', 'sql-113']],
     // Соединение: бренд по имени, а не по списку id. Новое: JOIN.
     ['Вт', 'day-4-join', ['sql-098', 'sql-037']],
     // Соединение в работе и фильтр после группировки. Новое: HAVING (в шаблоне).
     ['Ср', 'p1-day-wide-shelf', ['sql-036', 'sql-099']],
     // Может, спрос или цена? Деление агрегатов: на точку и за штуку.
-    ['Чт', 'p1-day-per-outlet', ['sql-113', 'sql-096', 'sql-114']],
+    ['Чт', 'p1-day-per-outlet', ['sql-114', 'sql-096', 'sql-115']],
     // Разложение: точки, на точку, цена — вердикт.
     ['Пт', 'day-5-shelf-or-demand', ['sql-023']],
     // Контроль по соседям с чистого листа.

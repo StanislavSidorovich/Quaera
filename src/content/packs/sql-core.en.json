@@ -2035,13 +2035,13 @@
     {
       "id": "sql-100",
       "title": "Is everyone losing shelf space",
-      "brief": "As of Wednesday, Nettora's revenue is down by half year over year. Before drawing conclusions about a single brand, it's worth checking whether everyone is losing shelf space, and the problem isn't Nettora at all but the whole market.",
+      "brief": "Nettora's revenue is known to be down by half year over year. Before drawing conclusions about a single brand, it's worth checking whether everyone is losing shelf space, and the problem isn't Nettora at all but the whole market.",
       "goal": "From 2026-01-01 through today, return per brand: brand and outlets (the number of distinct outlets with sales), ordered by coverage descending.",
       "hints": [
         "This is similar to the revenue-by-brand-since-the-start-of-the-year query; the difference is counting coverage instead of revenue: COUNT(DISTINCT customer_id).",
         "The date again has no upper bound: WHERE f.week_start >= '2026-01-01'."
       ],
-      "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago (the same numbers from Thursday's query, run over the full 2025 year). Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it.\n\nThe two periods aren't the same length, though: 2026 here is still incomplete (a bit over two months), while 2025 is a full year, and coverage over part of a year can't strictly exceed coverage over the whole year. It doesn't change the conclusion here: all four brands land within a couple of outlets of their 2025 number, so the difference in period length isn't what's driving the comparison."
+      "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago (the same numbers from Wednesday's query, run over the full 2025 year). Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it.\n\nThe two periods aren't the same length, though: 2026 here is still incomplete (a bit over two months), while 2025 is a full year, and coverage over part of a year can't strictly exceed coverage over the whole year. It doesn't change the conclusion here: all four brands land within a couple of outlets of their 2025 number, so the difference in period length isn't what's driving the comparison."
     },
     {
       "id": "sql-101",
@@ -2108,6 +2108,104 @@
         "Grouping is from week one: GROUP BY the name, COUNT(*) counts rows in each group. No LIKE needed here: the comparison is exact, on the whole name."
       ],
       "explain": "59 distinct names from the raw feed (1,102 rows out of 3,110, more than a third) go entirely unrecognised by the outlet directory. LEFT JOIN plus IS NULL on the right table's key is the only way to find what's missing rather than what's there: an INNER JOIN would cut those rows, and the question itself, right away. A name looking ordinary says nothing about whether the directory recognises it: the comparison is on exact text, and a stray space or a different transliteration makes an outlet invisible to the report."
+    },
+    {
+      "id": "sql-107",
+      "title": "Nettora product numbers",
+      "brief": "The sales report knows a product by its number, product_id, not by its name. Before counting the brand's sales you need to pull its numbers out of the price list.",
+      "goal": "Return product_id, product_name and list_price for every Nettora product, ordered by product_id.",
+      "hints": [
+        "Filtering is WHERE brand = 'Nettora': text goes in single quotes, and the condition comes after FROM.",
+        "You will need these numbers tomorrow, and they are easier to use in sequence: ORDER BY product_id at the very end."
+      ],
+      "explain": "Nettora has five products, all in Home care, numbered 19 to 23. The sales table knows a product only by that number, so the brand's sales are picked out with product_id IN (19, 20, 21, 22, 23): you fetch the keys from the directory yourself. It is an ordinary analyst step, keys from the directory first and facts second, and in a few days a join will do the same thing for you."
+    },
+    {
+      "id": "sql-108",
+      "title": "Nettora in January",
+      "brief": "The sales report says January 2026 was Nettora's worst month. Let's check for ourselves: how many units of the brand were sold in January.",
+      "goal": "Return one row: units, the total units sold across the Nettora products (numbers 19 to 23) in January 2026.",
+      "hints": [
+        "The total of units is SUM(units): an aggregate that adds up a column across all selected rows.",
+        "Several values of one column go in IN with a list: product_id IN (19, 20, 21, 22, 23), as in yesterday's filter."
+      ],
+      "explain": "In January 2026 Nettora sold 1,216 units. BETWEEN takes a range including both ends; dates here are text like 2026-01-12, and they compare as dates. The rows are summed across all five of the brand's products at once: in fact_sellout one row is one product in one outlet for one week."
+    },
+    {
+      "id": "sql-109",
+      "title": "Nettora last June",
+      "brief": "To see where \"fourfold\" comes from you need the other end of the comparison: how much Nettora sold in June 2025.",
+      "goal": "Return one row: units, the total units sold across the Nettora products (numbers 19 to 23) in June 2025.",
+      "hints": [
+        "There are two conditions, both after WHERE: the products, product_id IN (19, 20, 21, 22, 23), and the period, week_start BETWEEN '2025-06-01' AND '2025-06-30'; AND goes between them.",
+        "The aggregate is already in the starter: only the WHERE line is missing."
+      ],
+      "explain": "4,702 units in June 2025 against 1,216 in January 2026: nearly fourfold, just as the report said. But that compares summer with winter, and the market has a yearly wave in any year. Nothing can be concluded about the brand from this gap yet: first you need to see what an ordinary winter looks like."
+    },
+    {
+      "id": "sql-110",
+      "title": "The same months across three years",
+      "brief": "The director wants an answer: did Nettora really fall, or was winter compared with summer? The fair comparison is the same months of different years: January to June of 2024, 2025 and 2026.",
+      "goal": "Return year (taken from week_start) and units, the total units of Nettora (numbers 19 to 23) for January to June of each of the three years, ordered by year.",
+      "hints": [
+        "The year comes from substr(week_start, 1, 4): \"from the first character take four\". Put it first and name it AS year.",
+        "What remains is what you have done since Tuesday: GROUP BY 1 collapses by year and ORDER BY year sorts."
+      ],
+      "explain": "January to June: 20,740 units in 2024, 20,250 in 2025 and 9,858 in 2026. The same months, the same brand, and half as much: the season is ruled out, the fall is real. The month condition, substr(week_start, 6, 2) <= '06', is in the starter: characters six and seven of the date are the month number, and strings compare character by character."
+    },
+    {
+      "id": "sql-111",
+      "title": "The market over the same months",
+      "brief": "The first thing a sceptic will ask: maybe the whole market slipped, not one brand? The check is the same query without the brand filter.",
+      "goal": "Return year and units, the total units across all products for January to June of each of the three years, ordered by year.",
+      "hints": [
+        "Friday's query without the product condition: keep only the month condition.",
+        "The year is substr(week_start, 1, 4), the month is substr(week_start, 6, 2); January to June means a month no greater than '06'."
+      ],
+      "explain": "The market for January to June: 198,270 units in 2024, 225,261 in 2025 and 213,447 in 2026, 5% below a year earlier. Nettora over the same months is down 51%. The brand is falling, not the market."
+    },
+    {
+      "id": "sql-112",
+      "title": "Nettora: units and outlets by month",
+      "brief": "Ito-san says Nettora sells in her outlets as it always did. Let's check without relying on memory: next to units, count the outlets where the brand sold in each month.",
+      "goal": "Return, by month from January 2025: month, units (the total units of Nettora) and outlets (the number of distinct outlets with sales).",
+      "hints": [
+        "An outlet is a customer_id, and the number of distinct values is COUNT(DISTINCT ...) over that column."
+      ],
+      "explain": "Units and outlets fall together: 74 outlets in January 2025, 64 in June, 40 in December and 31 from February 2026. The slide began not in January but in the summer of 2025: by December only 40 of the 74 outlets were left, and the brand entered the new year with about half its former shelf."
+    },
+    {
+      "id": "sql-113",
+      "title": "Outlets by year",
+      "brief": "The monthly picture showed the slide. Now one number per year to size the loss: how many outlets the brand had in 2024, in 2025 and in 2026.",
+      "goal": "Return year and outlets, the number of distinct outlets with Nettora sales in each year, ordered by year.",
+      "hints": [
+        "The blank line takes the counter of distinct outlets: COUNT(DISTINCT customer_id) AS outlets.",
+        "The grouping by year and the sorting are already in the starter."
+      ],
+      "explain": "79 outlets in 2024, 79 in 2025, 37 in 2026. The gap is 42 outlets, more than half the shelf. Who took them is not visible in this data: the distributor has not a single row of anyone else's sales. For now what matters is that the loss is measured."
+    },
+    {
+      "id": "sql-114",
+      "title": "Sales per outlet",
+      "brief": "If the shelf shrank, the second version remains: the outlets that are left buy less. The check is units per outlet by month.",
+      "goal": "Return, by month from January 2025: month and per_outlet, the units of Nettora per outlet, rounded to one decimal place.",
+      "hints": [
+        "Units per outlet is units divided by the number of distinct outlets: SUM(units) is already there, fill in the denominator.",
+        "The leading 1.0 * is not decoration: without it, dividing integers would drop the fraction."
+      ],
+      "explain": "For the same January to June months, 2026 is above 2025 in five of six, for instance 34.7 against 29.7 in January and 65.5 against 43.9 in April. Only June is lower: 47.3 against 73.5. Demand in the outlets that are left is alive: the shelf got smaller, and on what remains the brand sells no worse than before."
+    },
+    {
+      "id": "sql-115",
+      "title": "Price per unit by year",
+      "brief": "The third version from the corridor remains: the price went up and shoppers left for the neighbours. The real price per unit is revenue divided by units, by year.",
+      "goal": "Return year and price, the average price per unit of Nettora (revenue per unit, rounded to one decimal place) by year.",
+      "hints": [
+        "The price per unit is revenue divided by units: SUM over the revenue column on top, SUM over the units column below; both columns are in fact_sellout, alias f.",
+        "The join to the price list and the brand filter are already written: the same two lines as in revenue by brand."
+      ],
+      "explain": "193.9, 194.0, 198.5: over three years the price per unit rose 2%. By the price list Nettora is the most expensive in FMCG, but it was just as expensive in 2024, when it stood in 79 outlets. The price version does not hold."
     }
   ]
 }
