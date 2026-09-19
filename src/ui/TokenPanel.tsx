@@ -29,18 +29,36 @@ export function symbolsFor(track: Track): string[] {
 }
 
 /**
- * Слова текущего уровня идут первыми, прежние — за ними.
+ * Порядок SQL-слов в панели — по частоте в запросах, один на все уровни.
  *
- * Ряд ограничен по высоте (.accessory в styles.css), и при порядке «от
- * уровня 1» новые слова всегда оказывались в скрытом четвёртом ряду.
- * Тема задания — ровно они: в `sql-098` (соединение) `JOIN` и `ON`
- * лежали за прокруткой, которой на телефоне не видно, а на экране стояли
- * `SELECT` и `LIMIT`. Прежние слова знакомы и ищутся быстро, новые — нет.
+ * Ряд ограничен по высоте (.accessory в styles.css), и при порядке «по
+ * уровням» тема задания уезжала за край: в `sql-098` (соединение) `JOIN`
+ * и `ON` лежали в скрытом четвёртом ряду, а на виду стояли `LIMIT`
+ * и `DISTINCT`. «Слова текущего уровня первыми» чинило четверг и ломало
+ * субботу: капстоун недели 1 — уровень 3, и первым рядом вставали `HAVING`
+ * и `CASE WHEN`, которые ему не нужны, а `SELECT` уходил вниз. Уровень
+ * слова говорит, когда его учат, а не как часто оно нужно.
+ *
+ * Постоянный порядок заодно держит каждое слово на своём месте от задания
+ * к заданию — рука запоминает, где `GROUP BY`. Уровень по-прежнему только
+ * фильтрует (keywordsFor); слово вне списка встаёт в конец, не теряется.
  */
+const SQL_PANEL_ORDER = [
+  'SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'GROUP BY', 'ORDER BY', 'AS', 'DESC', 'AND', 'OR',
+  'COUNT(', 'SUM(', 'DISTINCT', 'LIMIT', 'IN (', 'ROUND(', 'AVG(', 'HAVING', 'LEFT JOIN', 'BETWEEN',
+  'IS NULL', 'IS NOT NULL', 'CASE WHEN', 'THEN', 'ELSE', 'END', 'WITH', 'COALESCE(',
+  'OVER (', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING', 'CURRENT ROW',
+];
+
 export function keywordsFor(track: Track, level: number): string[] {
-  const groups = (track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL).filter((g) => g.upTo <= level);
-  const current = groups[groups.length - 1];
-  return current ? [...current.words, ...groups.slice(0, -1).flatMap((g) => g.words)] : [];
+  const groups = track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL;
+  const words = groups.filter((g) => g.upTo <= level).flatMap((g) => g.words);
+  if (track !== 'sql') return words;
+  const rank = (w: string) => {
+    const i = SQL_PANEL_ORDER.indexOf(w);
+    return i < 0 ? SQL_PANEL_ORDER.length : i;
+  };
+  return [...words].sort((a, b) => rank(a) - rank(b));
 }
 
 const TOKENS_STORAGE_KEY = 'quaera-tokens';
