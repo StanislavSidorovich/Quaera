@@ -2261,6 +2261,21 @@
         "June is picked by substr(s.month_start, 6, 2) = '06': two characters starting from the sixth. Group by the month itself and sort by it too."
       ],
       "explain": "1,046, 2,363, 4,224 units: Nettora stock at distributors in June grows year after year, fourfold in two years. The goods did not vanish on the way. They sit and pile up because the outlets do not take them."
+    },
+    {
+      "id": "sql-121",
+      "title": "Nettora month by month",
+      "blankHints": [
+        "function",
+        "keyword"
+      ],
+      "brief": "Aoki-san wants the report to show not only the month’s number but the previous month next to it, so a fall reads at a glance, without a calculator. Start with one brand: Nettora from July 2025.",
+      "goal": "For Nettora from July 2025, return by month: month (format YYYY-MM), units (the sum of units) and prev_units (units of the previous month). The first month has an empty prev_units. Ascending by month.",
+      "hints": [
+        "The first blank is the function that takes the value from the previous row; the second is the word followed by the window order in brackets.",
+        "There is only one slice here, since the brand is already selected in the template, so PARTITION BY is not needed: the window runs over all months in a row."
+      ],
+      "explain": "November 2025: 1,825 units after 2,656 in October, down 31%; January: 1,216, the very number from the report. But the neighbouring month carries the season too: the whole market fell 19% from October to November. A one-month shift shows where the number changed, not why, which is why the Nettora case compared the same months of different years."
     }
   ]
 }

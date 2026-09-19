@@ -1469,6 +1469,26 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   else console.log('  ok   sql-056: выручка ecom за март и modern_trade за январь совпадают с текстом');
 }
 
+// sql-121: разбор называет октябрь, ноябрь и январь Nettora, падение на 31% и 19%
+// у всего рынка с октября на ноябрь. На сравнении двух процентов держится вывод
+// «соседний месяц несёт и сезон», поэтому сверяются оба.
+{
+  const n = runSql(`
+    SELECT substr(week_start, 1, 7) AS month, SUM(units) FROM fact_sellout
+    WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')
+      AND substr(week_start, 1, 7) IN ('2025-10', '2025-11', '2026-01')
+    GROUP BY 1 ORDER BY 1`).rows;
+  const m = runSql(`
+    SELECT substr(week_start, 1, 7) AS month, SUM(units) FROM fact_sellout
+    WHERE substr(week_start, 1, 7) IN ('2025-10', '2025-11') GROUP BY 1 ORDER BY 1`).rows;
+  const units = n.map((r) => r[1]);
+  const pctN = Math.round(100 * (1 - units[1] / units[0]));
+  const pctM = Math.round(100 * (1 - m[1][1] / m[0][1]));
+  const ok = JSON.stringify(units) === JSON.stringify([2656, 1825, 1216]) && pctN === 31 && pctM === 19;
+  if (!ok) fail('sql-121', `числа разбора разошлись с данными: Nettora ${JSON.stringify(units)}, −${pctN}%, рынок −${pctM}%`);
+  else console.log('  ok   sql-121: октябрь/ноябрь/январь Nettora и −31% против −19% рынка совпадают с разбором');
+}
+
 // sql-057: разбор называет остаток в штуках и запас в неделях. Числа связаны
 // делением, поэтому сверяются оба — иначе «почти 22 недели» может уехать молча.
 {

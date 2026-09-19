@@ -660,11 +660,10 @@ const ru: StoryCampaign = {
      * первая ступень лесов, которую однажды срезали и получили новичка,
      * вписывающего колонку на место функции.
      *
-     * С 2026-09-14 день кончается sql-097: штуки и точки по месяцам. Он стоит
-     * сразу за разговором с Ито-сан и примеряет его две версии к рознице
-     * целиком — точек 132 в каждом месяце при волне 26–50 тысяч штук, то есть
-     * волну рынка делает спрос, а не полка. Это готовит пятничное разложение:
-     * там та же пара множителей, только у Nettora поедет другой.
+     * sql-097 (штуки и точки по месяцам, примерка версий Ито-сан к рознице)
+     * стоял здесь четвёртым с 2026-09-14; 2026-09-19 переехал первым шагом
+     * в пятницу — четверг был самым тяжёлым днём части 1 (четыре задания
+     * и ~700 слов на четвёртый день курса), а пятница несла одно задание.
      */
     {
       id: 'day-3-shape-of-the-year',
@@ -672,7 +671,7 @@ const ru: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:05',
       short: 'Чт',
-      found: 'У рынка есть форма года: зимний спад и летний пик при тех же 132 точках. Январь с июнем не сравнивают.',
+      found: 'У рынка есть форма года: зимний спад и летний пик. Январь с июнем не сравнивают.',
       scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'yoy' },
       messages: [
         {
@@ -748,22 +747,9 @@ const ru: StoryCampaign = {
             text: '«Вот за это отчёты и переделывают: запрос не упал, число выглядит настоящим, а взято из случайной строки группы. Движок промолчал — значит, смотреть придётся тебе.»',
           },
         },
-        {
-          taskId: 'sql-097',
-          intro: {
-            paras: [
-              'Две версии из коридора стоит сначала примерить к рознице целиком. Может, волна года — это просто точки: летом работают все, а зимой часть закрывается? Тогда вместе со штуками упало бы и число точек.',
-              'Рядом со штуками посчитай, в скольких разных точках в этом месяце вообще были продажи. Это вчерашняя функция, только по другой колонке: COUNT(DISTINCT customer_id).',
-            ],
-          },
-          after: {
-            from: 'Ваш руководитель',
-            text: '«Сто тридцать две точки в каждом месяце — и в июньский пик, и в ноябрьский провал. Волну делает не число точек, а то, сколько уходит через каждую. Запомни эту пару — точки и штуки на точку, — на следующей неделе она понадобится.»',
-          },
-        },
       ],
       reflection: [
-        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И это одна кривая на все бренды разом: внутри неё ни один бренд не различить. Точек при этом в каждом месяце одинаково, сто тридцать две: зимой их не становится меньше, меньше берут в каждой.',
+        'Ты видишь форму: это волна. В июне почти пятьдесят тысяч штук, в ноябре и январе — около двадцати семи, вдвое меньше. И это одна кривая на все бренды разом: внутри неё ни один бренд не различить.',
         'Обрати внимание на то, что легко проскочить: ты нашёл где просело, а не почему. И нашёл по всей рознице разом, а Аоки-сан спрашивает про один бренд.',
       ],
       hook: [
@@ -783,7 +769,7 @@ const ru: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:40',
       short: 'Пт',
-      found: 'Упали по-настоящему: январь–июнь 2026 — 9 858 штук против 20 250 и 20 740 в те же месяцы двух прошлых лет. Сезон отпал.',
+      found: 'Волну года делает спрос, а не точки: их 132 в каждом месяце. А Nettora упала по-настоящему: январь–июнь 2026 — 9 858 штук против 20 250 и 20 740 в те же месяцы двух прошлых лет. Сезон отпал.',
       scenes: { brief: 'desk-yoy', reflection: 'yoy', hook: 'rival' },
       messages: [
         {
@@ -796,6 +782,19 @@ const ru: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-097',
+          intro: {
+            paras: [
+              'Сначала — две вчерашние версии из коридора: их стоит примерить к рознице целиком. Может, волна года — это просто точки: летом работают все, а зимой часть закрывается? Тогда вместе со штуками упало бы и число точек.',
+              'Рядом со штуками посчитай, в скольких разных точках в этом месяце вообще были продажи. Это функция из среды, только по другой колонке: COUNT(DISTINCT customer_id).',
+            ],
+          },
+          after: {
+            from: 'Ваш руководитель',
+            text: '«Сто тридцать две точки в каждом месяце — и в июньский пик, и в ноябрьский провал. Волну делает не число точек, а то, сколько уходит через каждую. Запомни эту пару — точки и штуки на точку, — на следующей неделе она понадобится.»',
+          },
+        },
         {
           taskId: 'sql-110',
           intro: {
@@ -812,7 +811,7 @@ const ru: StoryCampaign = {
         },
       ],
       reflection: [
-        'Сезон отпал: те же месяцы, тот же бренд, и в 2026-м вдвое меньше — 9 858 штук против 20 250 и 20 740. Это уже ответ на вопрос недели.',
+        'Сезон отпал: те же месяцы, тот же бренд, и в 2026-м вдвое меньше — 9 858 штук против 20 250 и 20 740. Это уже ответ на вопрос недели. А волна года — не про точки: их сто тридцать две в каждом месяце, зимой меньше берут в каждой.',
         'Но у ответа есть слабое место, и его найдёт первый же скептик: мы смотрели один бренд. Может, просел весь рынок, а Nettora лишь потянуло за ним?',
       ],
       hook: [
@@ -2179,7 +2178,9 @@ const ru: StoryCampaign = {
      * во вторник договорились сравнивать период с периодом, а сравнение
      * требует, чтобы прошлое значение оказалось в той же строке, что и
      * текущее. Порядок заданий — ступень: predict показывает LAG в готовом
-     * запросе и сразу на ловушке, write требует его напечатать.
+     * запросе и сразу на ловушке, fill (sql-121, с 2026-09-19) — два слова
+     * в окне на одном бренде, write требует напечатать окно целиком. До fill между
+     * ними был самый крутой скачок кампании: от чтения сразу к письму LAG с нуля.
      *
      * Беседа недели стоит здесь, у второго задания. Ито-сан приносит факт,
      * который числами ещё не подтверждён (сеть под двумя именами), и весь
@@ -2222,6 +2223,19 @@ const ru: StoryCampaign = {
           },
         },
         {
+          taskId: 'sql-121',
+          intro: {
+            paras: [
+              'Прежде чем писать окно целиком, впиши в него два слова. Запрос уже сворачивает Nettora в месяцы с прошлого лета; пропуски — имя функции и слово, после которого в скобках идёт порядок окна.',
+              'Разрез здесь один, бренд, поэтому PARTITION BY не нужен: окно идёт по всем месяцам подряд, и первый месяц честно остаётся без прошлого.',
+            ],
+          },
+          after: {
+            from: 'Аоки-сан, директор по продажам',
+            text: '«Ноябрь — минус треть к октябрю, и дальше вниз до самого января. Вот откуда началось. Хотя ноябрь у нас слабый всегда, это я тоже помню.»',
+          },
+        },
+        {
           taskId: 'sql-020',
           /*
            * Единственный разговор третьей недели. Ито-сан приносит то же,
@@ -2245,7 +2259,7 @@ const ru: StoryCampaign = {
           },
           intro: {
             paras: [
-              'Теперь то же самое рукой и на своих данных. Заготовка сворачивает год в месяцы — она вчерашняя, ничего нового в ней нет.',
+              'Теперь окно целиком рукой и по всему рынку. Заготовка сворачивает год в месяцы — ничего нового в ней нет.',
               'Твоя часть — три колонки поверх: сами штуки, штуки прошлого месяца и изменение в процентах. Процент считается от прошлого: (текущий − прошлый) / прошлый × 100, и множитель пишется как 100.0, иначе целочисленное деление съест дробную часть. У первого месяца прошлого нет, и пусто там — правильный ответ, а не дефект.',
             ],
           },
@@ -3588,7 +3602,7 @@ const en: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:05',
       short: 'Thu',
-      found: 'The market has a shape to its year: a winter trough and a summer peak across the same 132 outlets. January and June are not compared.',
+      found: 'The market has a shape to its year: a winter trough and a summer peak. January and June are not compared.',
       scenes: { brief: 'desk-wave', reflection: 'trend', hook: 'yoy' },
       messages: [
         {
@@ -3657,22 +3671,9 @@ const en: StoryCampaign = {
             text: '"This is what reports get rebuilt over: the query did not fail, the number looks real, and it was taken from an arbitrary row of the group. The engine kept quiet, so the looking is on you."',
           },
         },
-        {
-          taskId: 'sql-097',
-          intro: {
-            paras: [
-              'The two versions from the corridor are worth trying on retail as a whole first. Maybe the wave of the year is just outlets: in summer they all trade, in winter some of them close? Then the outlet count would fall along with the units.',
-              'Next to the units, count how many distinct outlets had any sales that month. It is yesterday\'s function on a different column: COUNT(DISTINCT customer_id).',
-            ],
-          },
-          after: {
-            from: 'Your manager',
-            text: '"A hundred and thirty-two outlets in every month, at the June peak and in the November trough alike. The wave is not made by the number of outlets but by how much moves through each one. Hold on to that pair, outlets and units per outlet: next week you will need it."',
-          },
-        },
       ],
       reflection: [
-        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And it is one curve for every brand at once: no single brand can be told apart inside it. The outlet count meanwhile is the same every month, 132: in winter there are not fewer outlets, each one simply sells less.',
+        'You can see the shape: it is a wave. Almost fifty thousand units in June, around twenty-seven in November and January, half as much. And it is one curve for every brand at once: no single brand can be told apart inside it.',
         'Notice what is easy to skip: you found where it dropped, not why. And you found it across all of retail at once, while Aoki is asking about one brand.',
       ],
       hook: [
@@ -3687,7 +3688,7 @@ const en: StoryCampaign = {
       track: 'sql',
       place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:40',
       short: 'Fri',
-      found: 'It really fell: January to June 2026 is 9,858 units against 20,250 and 20,740 in the same months of the two years before. The season is ruled out.',
+      found: 'The wave of the year is made by demand, not outlets: there are 132 in every month. And Nettora really fell: January to June 2026 is 9,858 units against 20,250 and 20,740 in the same months of the two years before. The season is ruled out.',
       scenes: { brief: 'desk-yoy', reflection: 'yoy', hook: 'rival' },
       messages: [
         {
@@ -3700,6 +3701,19 @@ const en: StoryCampaign = {
         },
       ],
       steps: [
+        {
+          taskId: 'sql-097',
+          intro: {
+            paras: [
+              'First, yesterday\'s two versions from the corridor: they are worth trying on retail as a whole. Maybe the wave of the year is just outlets: in summer they all trade, in winter some of them close? Then the outlet count would fall along with the units.',
+              'Next to the units, count how many distinct outlets had any sales that month. It is Wednesday\'s function on a different column: COUNT(DISTINCT customer_id).',
+            ],
+          },
+          after: {
+            from: 'Your manager',
+            text: '"A hundred and thirty-two outlets in every month, at the June peak and in the November trough alike. The wave is not made by the number of outlets but by how much moves through each one. Hold on to that pair, outlets and units per outlet: next week you will need it."',
+          },
+        },
         {
           taskId: 'sql-110',
           intro: {
@@ -3716,7 +3730,7 @@ const en: StoryCampaign = {
         },
       ],
       reflection: [
-        'The season is ruled out: the same months, the same brand, and in 2026 half as much, 9,858 units against 20,250 and 20,740. That is already an answer to the question of the week.',
+        'The season is ruled out: the same months, the same brand, and in 2026 half as much, 9,858 units against 20,250 and 20,740. That is already an answer to the question of the week. And the wave of the year is not about outlets: there are 132 in every month, and in winter each one simply sells less.',
         'But the answer has a weak spot, and the first sceptic will find it: we looked at one brand. Maybe the whole market slipped and Nettora was just pulled down with it?',
       ],
       hook: [
@@ -4974,6 +4988,19 @@ const en: StoryCampaign = {
           },
         },
         {
+          taskId: 'sql-121',
+          intro: {
+            paras: [
+              'Before writing a window in full, type two words into one. The query already folds Nettora into months since last summer; the blanks are the name of the function and the word followed by the window order in brackets.',
+              'There is one slice here, the brand, so PARTITION BY is not needed: the window runs over all months in a row, and the first month honestly stays without a previous one.',
+            ],
+          },
+          after: {
+            from: 'Aoki san, sales director',
+            text: '"November is down a third on October, and it keeps sliding all the way to January. So that is where it started. Then again, November is always weak for us, I remember that too."',
+          },
+        },
+        {
           taskId: 'sql-020',
           interlude: {
             scene: 'corridor',
@@ -4990,7 +5017,7 @@ const en: StoryCampaign = {
           },
           intro: {
             paras: [
-              'Now the same thing by hand and on your own data. The starter folds the year into months, and it is yesterday\'s work with nothing new in it.',
+              'Now the whole window by hand, for the entire market. The starter folds the year into months, with nothing new in it.',
               'Your part is three columns on top: the units themselves, the units of the previous month, and the change in percent. The percent is taken from the previous one, (current minus previous) divided by previous times 100, and the multiplier is written as 100.0 or integer division eats the fractional part. The first month has no previous, and an empty cell there is the right answer rather than a defect.',
             ],
           },

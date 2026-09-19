@@ -447,7 +447,8 @@ function reportDensity(campaign, taskOf) {
    * провал: либо ей нужен второй раз в кампании, либо её честно вносят сюда.
    */
   const DEMO = new Set([
-    'sql:over (', 'sql:lag(', 'sql:OR', 'sql:like', 'python:as_index=False',
+    // over ( и lag( ушли 2026-09-19: sql-121 впечатывает их до sql-020
+    'sql:OR', 'sql:like', 'python:as_index=False',
     // AVG: набирается в среде первой недели; дальше в кампании только в заготовках
     'sql:AVG',
     // WITH: рукой только пропуск sql-118 («WITH» и имя таблицы); sql-045 и остальные держат его в заготовке

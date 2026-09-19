@@ -3464,6 +3464,35 @@
         "Июнь отбирает substr(s.month_start, 6, 2) = '06': два знака, начиная с шестого. Группировать надо по самому месяцу, сортировать по нему же."
       ],
       "explain": "1 046, 2 363, 4 224 штуки: запас Nettora у дистрибьюторов на июнь растёт год от года, за два года вчетверо. Товар не пропадал по дороге. Он лежит и копится, потому что точки его не берут."
+    },
+    {
+      "id": "sql-121",
+      "track": "sql",
+      "skill": "sql-window-frame",
+      "alsoTrains": [
+        "sql-cte"
+      ],
+      "level": 4,
+      "mode": "fill",
+      "title": "Nettora месяц за месяцем",
+      "brief": "Аоки-сан хочет видеть в отчёте не только число месяца, но и прошлый месяц рядом — чтобы падение читалось с одного взгляда, без калькулятора. Начать с одного бренда: Nettora с июля 2025-го.",
+      "goal": "Для Nettora с июля 2025 года вернуть по месяцам month (формат YYYY-MM), units — сумму штук и prev_units — штуки предыдущего месяца. У первого месяца prev_units пустой. По возрастанию месяца.",
+      "template": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start >= '2025-07-01'\n  GROUP BY 1\n)\nSELECT month, units,\n       ___(units) ___ (ORDER BY month) AS prev_units\nFROM monthly\nORDER BY month",
+      "blanks": [
+        "LAG",
+        "OVER"
+      ],
+      "blankHints": [
+        "функция",
+        "ключевое слово"
+      ],
+      "solution": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start >= '2025-07-01'\n  GROUP BY 1\n)\nSELECT month, units,\n       LAG(units) OVER (ORDER BY month) AS prev_units\nFROM monthly\nORDER BY month",
+      "orderMatters": true,
+      "hints": [
+        "Первый пропуск — функция, которая берёт значение предыдущей строки, второй — слово, после которого в скобках идёт порядок окна.",
+        "Разрез тут один, бренд уже отобран в заготовке, поэтому PARTITION BY не нужен: окно идёт по всем месяцам подряд."
+      ],
+      "explain": "Ноябрь 2025-го — 1 825 штук после 2 656 в октябре, минус 31%; январь — 1 216, то самое число из отчёта. Но соседний месяц несёт и сезон: весь рынок с октября на ноябрь просел на 19%. Сдвиг на месяц показывает, где число изменилось, а не почему, — поэтому в деле Nettora сравнивали одинаковые месяцы разных лет."
     }
   ]
 }
