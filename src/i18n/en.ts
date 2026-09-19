@@ -600,7 +600,7 @@ export const en = {
   },
   storyMode: {
     headerTitle: 'Story mode',
-    badge: 'Early prototype',
+    badge: 'Beta',
     /** См. довод в ru.ts: на главной обещают неделю работы, а не «режим». */
     homeTitle: 'An analyst work week',
     homeBody:
