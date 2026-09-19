@@ -291,7 +291,7 @@
       "mode": "write",
       "title": "Отбор для промо-каталога",
       "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ¥ — дешёвые в промо не идут.",
-      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров этих двух брендов с ценой строго больше 100.",
+      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров брендов «Aqualis» и «Fruvia» с ценой строго больше 100.",
       "starter": "SELECT sku_code, product_name, brand, list_price\nFROM dim_product\n",
       "solution": "SELECT sku_code, product_name, brand, list_price FROM dim_product WHERE brand IN ('Aqualis', 'Fruvia') AND list_price > 100",
       "hints": [

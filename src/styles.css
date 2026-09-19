@@ -4,6 +4,7 @@
   --bg: #0b1020;
   --bg-raised: #141a2e;
   --bg-sunken: #080c18;
+  --field-bg: #080c18;
   --line: #232b45;
   --text: #e8ecf7;
   --text-dim: #96a0be;
@@ -35,6 +36,7 @@
     --bg: #f6f7fb;
     --bg-raised: #ffffff;
     --bg-sunken: #eceff7;
+    --field-bg: #ffffff;
     --line: #d9deeb;
     --text: #131a2c;
     --text-dim: #5a6580;
@@ -59,6 +61,7 @@
   --bg: #f6f7fb;
   --bg-raised: #ffffff;
   --bg-sunken: #eceff7;
+  --field-bg: #ffffff;
   --line: #d9deeb;
   --text: #131a2c;
   --text-dim: #5a6580;
@@ -75,6 +78,7 @@
   --bg: #0b1020;
   --bg-raised: #141a2e;
   --bg-sunken: #080c18;
+  --field-bg: #080c18;
   --line: #232b45;
   --text: #e8ecf7;
   --text-dim: #96a0be;
@@ -2223,8 +2227,8 @@ textarea.sql {
   min-height: 150px;
   padding: 12px;
   border-radius: 10px;
-  background: var(--bg-sunken);
-  border: 1px solid var(--line);
+  background: var(--field-bg);
+  border: 1px solid color-mix(in srgb, var(--text-dim) 45%, var(--line));
   color: var(--code);
   resize: vertical;
   line-height: 1.6;
@@ -3556,8 +3560,8 @@ pre.lesson-figure {
   margin: 0;
   padding: 12px;
   border-radius: 10px;
-  background: var(--bg-sunken);
-  border: 1px solid var(--line);
+  background: var(--field-bg);
+  border: 1px solid color-mix(in srgb, var(--text-dim) 45%, var(--line));
   color: var(--code);
   font-size: 13px;
   line-height: 1.55;

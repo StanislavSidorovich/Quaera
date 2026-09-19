@@ -163,7 +163,7 @@
       "id": "sql-003",
       "title": "Selection for the promo catalog",
       "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ¥; cheap ones don't work for promo.",
-      "goal": "Return sku_code, product_name, brand, list_price for items of these two brands priced strictly above 100.",
+      "goal": "Return sku_code, product_name, brand, list_price for items of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
         "Listing several values of one column is shorter with IN than with OR.",
         "\"Strictly above\" is >, not >=."

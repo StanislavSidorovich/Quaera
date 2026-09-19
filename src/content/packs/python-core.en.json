@@ -92,7 +92,7 @@
       "id": "py-001",
       "title": "Price list for a promo",
       "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥; cheap ones don't go into a promo.",
-      "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
+      "goal": "Return sku_code, product_name, brand, list_price for products of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
         "A list of values for one column is conveniently checked with .isin([...]), the pandas equivalent of SQL IN.",
         "\"Strictly above\" is >, not >=. Conditions are combined with & (ampersand), not and — and doesn't work on a pandas column."
@@ -1042,7 +1042,7 @@
       "id": "py-058",
       "title": "Two brands over a hundred",
       "brief": "The summer catalogue only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥: cheap ones don't go on promo.",
-      "goal": "Return sku_code, product_name, brand, list_price for products of these two brands priced strictly above 100.",
+      "goal": "Return sku_code, product_name, brand, list_price for products of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
         "Between .isin([...]) and the next condition pandas expects & (an ampersand), not and: and doesn't work on a column of thousands of values.",
         "The second condition, in its own parentheses, is an ordinary price filter: dim_product['list_price'] > 100."

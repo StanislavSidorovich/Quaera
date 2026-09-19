@@ -141,7 +141,7 @@
       "mode": "write",
       "title": "Прайс-лист для промо",
       "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ¥ — дешёвые в промо не идут.",
-      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров этих двух брендов с ценой строго больше 100.",
+      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров брендов «Aqualis» и «Fruvia» с ценой строго больше 100.",
       "starter": "result = dim_product.loc[\n    ,\n    ['sku_code', 'product_name', 'brand', 'list_price'],\n]",
       "solution": "result = dim_product.loc[\n    dim_product['brand'].isin(['Aqualis', 'Fruvia']) & (dim_product['list_price'] > 100),\n    ['sku_code', 'product_name', 'brand', 'list_price'],\n]",
       "hints": [
@@ -1462,7 +1462,7 @@
       "mode": "fill",
       "title": "Каталог двух брендов дороже ста",
       "brief": "В летний каталог берут только напитки брендов «Aqualis» и «Fruvia», и только позиции дороже 100 ¥ — дешёвые в промо не идут.",
-      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров этих двух брендов с ценой строго больше 100.",
+      "goal": "Вернуть sku_code, product_name, brand, list_price для товаров брендов «Aqualis» и «Fruvia» с ценой строго больше 100.",
       "template": "result = dim_product.loc[\n    dim_product['brand'].isin(['Aqualis', 'Fruvia']) ___ (___),\n    ['sku_code', 'product_name', 'brand', 'list_price'],\n]",
       "blanks": [
         "&",
