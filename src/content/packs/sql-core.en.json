@@ -2206,6 +2206,61 @@
         "The join to the price list and the brand filter are already written: the same two lines as in revenue by brand."
       ],
       "explain": "193.9, 194.0, 198.5: over three years the price per unit rose 2%. By the price list Nettora is the most expensive in FMCG, but it was just as expensive in 2024, when it stood in 79 outlets. The price version does not hold."
+    },
+    {
+      "id": "sql-116",
+      "title": "The same channels for the first half of 2025",
+      "brief": "The e-com team is sure the brand rests on them. To judge whether that is a lot, we need the same channels for the same months a year ago: the first half of 2025, before the brand began losing shelves.",
+      "goal": "Return channel and units, the Nettora units from January 1 to June 30, 2025 in each of the five channels; a channel with no sales of the brand must stay in the result with a zero.",
+      "hints": [
+        "Build from the outlet directory, as in the task about channels since the start of the year: LEFT JOIN, and the conditions on sales (the brand's products and the period) go in ON, not in WHERE.",
+        "The brand's products come from a subquery on dim_product and are compared with IN: there are five of them, not one. COALESCE turns an empty sum into zero."
+      ],
+      "explain": "In 2025 e-com took 15,258 units, modern trade 4,432, traditional trade 560, pharmacies and distributors zero. Since January of this year the same channels give 8,016, 1,539 and 303. It fell everywhere, and \"the brand rests on e-com\" is not confirmed: it simply falls more slowly there than elsewhere."
+    },
+    {
+      "id": "sql-117",
+      "title": "Are the lost outlets still alive",
+      "brief": "Who took the shelf is not in our data, and Aoki-san no longer asks for the name. She needs something else: what we know for certain about the lost outlets. Did they close, or did they just stop taking Nettora?",
+      "goal": "Return outlets and units: how many outlets that sold Nettora in 2025 and have not since January 1, 2026 bought anything from us since the start of 2026, and how many units.",
+      "hints": [
+        "Read the query from the inside out. The inner query is a ready table of lost outlets: LEFT JOIN from the directory with the brand's products and the 2026 period in ON, keep the rows where the right side is empty. The outer query only counts what those outlets bought.",
+        "The first blank ties the outer query to the list of outlets in the parentheses: it is a list, not a single value. The second is the sign that no pair was found; emptiness is tested with its own word, not an equals sign."
+      ],
+      "explain": "42 outlets out of 42: none of the lost ones closed, and since January all of them bought 76,571 units of other brands from us. They stopped taking Nettora, not buying altogether. Who took its shelf is not visible here: we have no data on anyone else's sales."
+    },
+    {
+      "id": "sql-118",
+      "title": "Did we leave small outlets",
+      "brief": "Before taking the analysis to the brand, Aoki-san wants to rule out the version about ourselves: maybe we left small outlets, and that was a normal cleanup. Compare 2024, before the loss: how many Nettora units a lost outlet took, and how many one that stayed.",
+      "goal": "For 2024 return stayed (1 for an outlet that sells Nettora in 2026 too, 0 for a lost one), outlets (the number of outlets), avg_units (Nettora units per outlet, rounded to whole numbers) and units (the total), lost outlets first.",
+      "hints": [
+        "The average outlet is the average of per-outlet sums, and SQL does not write AVG(SUM(...)). So the units are first folded to one row per outlet in a WITH, and the average is taken over the folded table.",
+        "The name you give the intermediate table after WITH must match the one in the FROM of the outer query."
+      ],
+      "explain": "The lost outlets are smaller: 388 units a year per outlet against 598 for those that stayed. But they were not small change: together they gave 16,292 units out of 38,413, which is 42% of the brand. The version \"we left small outlets\" does not hold: we lost the shelf in a noticeable part of the brand."
+    },
+    {
+      "id": "sql-119",
+      "title": "Shipments and sales of the brand by year",
+      "brief": "It remains to check that the goods arrived at all: shipments to distributors against sales in outlets. The facts sit at different granularity, so each is first folded to one row per year and only then joined.",
+      "goal": "Return, by year, for Nettora: year, sell_in (units shipped to distributors), sell_out (units sold in outlets) and ratio, their ratio to two decimal places.",
+      "hints": [
+        "The folded tables are joined on the year: both have a year column, and it is one per row.",
+        "Without a join condition every row pairs with every row, and three rows become nine: the trap from the task about two WITH clauses."
+      ],
+      "explain": "1.04, 1.06, 1.04: distributors receive 4 to 6% more than they sell, every year. The goods reached the outlets, and there was no shortage."
+    },
+    {
+      "id": "sql-120",
+      "title": "Nettora stock at distributors",
+      "brief": "Ito-san says the outlets tell him \"they are not delivering\". Shipments match sales, so the goods must be lying somewhere on the way. Distributor stock is recorded monthly.",
+      "goal": "Return month_start and units, the Nettora stock at distributors (the sum of units_on_hand) for June of each year, in ascending date order.",
+      "hints": [
+        "Stock lives in fact_stock, column units_on_hand; the brand is named in dim_product, so join on product_id.",
+        "June is picked by substr(s.month_start, 6, 2) = '06': two characters starting from the sixth. Group by the month itself and sort by it too."
+      ],
+      "explain": "1,046, 2,363, 4,224 units: Nettora stock at distributors in June grows year after year, fourfold in two years. The goods did not vanish on the way. They sit and pile up because the outlets do not take them."
     }
   ]
 }

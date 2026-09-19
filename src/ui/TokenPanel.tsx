@@ -52,7 +52,7 @@ export function symbolsFor(track: Track): string[] {
  */
 const SQL_PANEL_ORDER = [
   'SELECT', 'FROM', 'WHERE', 'AS', 'GROUP BY', 'AND', 'ROUND(', 'JOIN', 'ON', 'SUM(',
-  'ORDER BY', 'DESC', 'BETWEEN', 'COUNT(', 'WITH',
+  'ORDER BY', 'BETWEEN', 'COUNT(', 'WITH', 'DESC',
   'AVG(', 'CASE WHEN', 'THEN', 'ELSE', 'END', 'DISTINCT', 'IS NOT NULL', 'LEFT JOIN', 'OVER (',
   'IS NULL', 'COALESCE(', 'IN (', 'LIMIT', 'HAVING', 'PARTITION BY', 'ROWS BETWEEN', 'PRECEDING',
   'CURRENT ROW', 'OR',

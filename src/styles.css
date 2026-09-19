@@ -4946,6 +4946,10 @@ table.sample td.null {
   cursor: pointer;
 }
 
+.story-invite-skip-row {
+  margin: 8px 12px 0;
+}
+
 .story-invite-row-head {
   display: flex;
   align-items: center;
@@ -5606,7 +5610,8 @@ details.story-known > summary small {
    * это не касается: у него наверху и должна стоять кампания, а кнопка
    * занятия — не то, ради чего он пришёл.
    */
-  .story-invite-row {
+  .story-invite-row,
+  .story-invite-skip-row {
     display: none;
   }
 

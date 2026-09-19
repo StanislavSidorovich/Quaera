@@ -433,6 +433,7 @@ export function StoryMode({
           onOpenLesson={onOpenLesson}
           onOpenSchema={onOpenSchema}
           afterNote={mission.steps[phase.step]?.after}
+          hideLevel
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
           glossaryBrief={glossaryRendered[0]}
           glossaryGoal={glossaryRendered[1]}

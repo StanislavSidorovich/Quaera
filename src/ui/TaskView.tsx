@@ -230,6 +230,12 @@ interface Props {
    * из семи экранов восьмой ради одной фразы читался бы как заминка.
    */
   afterNote?: { from: string; text: string };
+  /**
+   * Не показывать метку уровня. В кампании ступень задаёт день, а не уровень
+   * трека: L5 на пятнице новичка пугает, L2 на субботе после него читается
+   * откатом. В обычном занятии метка остаётся — там она и есть ступень.
+   */
+  hideLevel?: boolean;
   /** Это задание — передышка занятия (см. isRest в App.tsx), не обычный шаг. */
   isRest?: boolean;
   /**
@@ -253,6 +259,7 @@ export function TaskView({
   onOpenSchema,
   onOpenLesson,
   afterNote,
+  hideLevel,
   isRest,
   glossaryBrief,
   glossaryGoal,
@@ -429,7 +436,7 @@ export function TaskView({
 
       <div className="card" data-mobile-hidden={tabbed && mobilePanel !== 'brief'}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-          <span className="pill level">{t.task.levelLabel(task.level)}</span>
+          {!hideLevel && <span className="pill level">{t.task.levelLabel(task.level)}</span>}
           {isRest && (
             <span className="pill" title={t.task.restLabelTitle}>
               {t.task.restLabel}

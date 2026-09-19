@@ -3365,6 +3365,105 @@
         "Соединение с прайсом и отбор бренда уже написаны: это те же две строки, что при выручке по брендам."
       ],
       "explain": "193.9, 194.0, 198.5: за три года цена штуки выросла на 2%. По прайсу Nettora самая дорогая в FMCG, но такой она была и в 2024-м, когда стояла в 79 точках. Версия про цену не держится."
+    },
+    {
+      "id": "sql-116",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "level": 3,
+      "mode": "write",
+      "title": "Те же каналы за первое полугодие 2025-го",
+      "brief": "Команда e-com уверена, что бренд держится на ней. Чтобы понять, много это или мало, нужны те же каналы за те же месяцы год назад: первое полугодие 2025-го, до того как бренд начал терять полки.",
+      "goal": "Вернуть channel и units — штуки Nettora с 1 января по 30 июня 2025 года по каждому из пяти каналов; канал без продаж бренда должен остаться в ответе с нулём.",
+      "starter": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\n",
+      "solution": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start BETWEEN '2025-01-01' AND '2025-06-30'\nGROUP BY c.channel",
+      "hints": [
+        "Строим от справочника точек, как в задании про каналы с начала года: LEFT JOIN, а условия на продажи — товар бренда и период — стоят в ON, не в WHERE.",
+        "Товары бренда достают подзапросом по dim_product и сравнивают через IN: их пять, а не один. Пустую сумму превращает в ноль COALESCE."
+      ],
+      "explain": "В 2025-м e-com взял 15 258 штук, сети 4 432, традиционная розница 560, аптеки и дистрибьюторы — ноль. С января этого года те же каналы: 8 016, 1 539 и 303. Упало везде, и «бренд держится на e-com» не подтверждается: там он просто падает медленнее остальных."
+    },
+    {
+      "id": "sql-117",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "level": 3,
+      "mode": "fill",
+      "title": "Живы ли потерянные точки",
+      "brief": "Имени того, кто занял полку, в наших данных нет, и Аоки-сан больше его не просит. Ей нужно другое: что про потерянные точки известно наверняка. Закрылись они или просто перестали брать Nettora?",
+      "goal": "Вернуть outlets и units: сколько точек, где Nettora продавалась в 2025 году и не продавалась с 1 января 2026-го, что-то купили у нас с начала 2026 года — и сколько штук.",
+      "template": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id ___ (\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id ___\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
+      "blanks": [
+        "IN",
+        "IS NULL"
+      ],
+      "solution": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id IN (\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id IS NULL\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
+      "hints": [
+        "Читай запрос изнутри наружу. Внутренний запрос — готовая таблица потерянных точек: LEFT JOIN от справочника с товарами бренда и периодом 2026 года в ON, оставляем те строки, где справа пусто. Внешний только считает, что эти точки купили.",
+        "Первый пропуск связывает внешний запрос со списком точек из скобок: это список, а не одно значение. Второй — признак того, что пары не нашлось; пустоту проверяют отдельным словом, а не знаком равенства."
+      ],
+      "explain": "42 точки из 42: ни одна из потерянных не закрылась, и все они с января купили у нас 76 571 штуку других брендов. Nettora они перестали брать, а не покупать вовсе. Кто занял её полку, здесь не видно: данных о чужих продажах у нас нет."
+    },
+    {
+      "id": "sql-118",
+      "track": "sql",
+      "skill": "sql-cte",
+      "level": 3,
+      "mode": "fill",
+      "title": "Из мелких ли точек мы ушли",
+      "brief": "Прежде чем нести разбор бренду, Аоки-сан хочет закрыть версию про нас самих: может, мы ушли из мелких точек, и это нормальная чистка. Сравнить нужно 2024 год, до потери: сколько штук Nettora брала точка, которую мы потеряли, и сколько — та, что осталась.",
+      "goal": "За 2024 год вернуть stayed (1 — точка продаёт Nettora и в 2026 году, 0 — потерянная), outlets (число точек), avg_units (штуки Nettora на точку, округлить до целых) и units (сумма штук), сначала потерянные.",
+      "template": "___ per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT customer_id IN (SELECT customer_id FROM fact_sellout\n                       WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                         AND week_start >= '2026-01-01') AS stayed,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM ___\nGROUP BY stayed\nORDER BY stayed",
+      "blanks": [
+        "WITH",
+        "per_outlet"
+      ],
+      "solution": "WITH per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT customer_id IN (SELECT customer_id FROM fact_sellout\n                       WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                         AND week_start >= '2026-01-01') AS stayed,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM per_outlet\nGROUP BY stayed\nORDER BY stayed",
+      "orderMatters": true,
+      "hints": [
+        "Средняя точка — это среднее от сумм по точкам, а AVG(SUM(...)) SQL не пишет. Поэтому штуки сначала сворачивают до строки на точку в WITH, а среднее берут уже по свёрнутому.",
+        "Имя, которое ты даёшь промежуточной таблице после WITH, должно совпасть с тем, что стоит в FROM внешнего запроса."
+      ],
+      "explain": "Потерянные точки поменьше: 388 штук в год на точку против 598 у оставшихся. Но мелочью они не были: вместе они дали 16 292 штуки из 38 413, то есть 42% бренда. Версия «мы ушли из мелких точек» не держится: полку мы потеряли в заметной части бренда."
+    },
+    {
+      "id": "sql-119",
+      "track": "sql",
+      "skill": "sql-cte",
+      "level": 3,
+      "mode": "fill",
+      "title": "Отгрузки и продажи бренда по годам",
+      "brief": "Осталось проверить, что товар вообще доезжал: отгрузки дистрибьюторам против продаж в точках. Факты лежат в разной гранулярности, поэтому каждый сначала сворачивают до одной строки на год, и только потом соединяют.",
+      "goal": "Вернуть по годам для Nettora: year, sell_in (штуки, отгруженные дистрибьюторам), sell_out (штуки, проданные в точках) и ratio — их отношение с двумя знаками.",
+      "template": "WITH si AS (\n  SELECT substr(month_start, 1, 4) AS year, SUM(units) AS units\n  FROM fact_sellin\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n  GROUP BY 1\n),\nso AS (\n  SELECT substr(week_start, 1, 4) AS year, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n  GROUP BY 1\n)\nSELECT si.year, si.units AS sell_in, so.units AS sell_out,\n       ROUND(1.0 * si.units / so.units, 2) AS ratio\nFROM si\nJOIN so ON ___\nORDER BY si.year",
+      "blanks": [
+        "so.year = si.year"
+      ],
+      "solution": "WITH si AS (\n  SELECT substr(month_start, 1, 4) AS year, SUM(units) AS units\n  FROM fact_sellin\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n  GROUP BY 1\n),\nso AS (\n  SELECT substr(week_start, 1, 4) AS year, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n  GROUP BY 1\n)\nSELECT si.year, si.units AS sell_in, so.units AS sell_out,\n       ROUND(1.0 * si.units / so.units, 2) AS ratio\nFROM si\nJOIN so ON so.year = si.year\nORDER BY si.year",
+      "orderMatters": true,
+      "hints": [
+        "Соединять свёрнутые таблицы надо по году: в обеих есть колонка year, и она одна на строку.",
+        "Без условия соединения каждая строка встанет с каждой, и вместо трёх строк получится девять: ловушка из задания про два WITH."
+      ],
+      "explain": "1.04, 1.06, 1.04: дистрибьюторам отгружают на 4–6% больше, чем они продают, и так каждый год. Товар до точек доезжал, дефицита не было."
+    },
+    {
+      "id": "sql-120",
+      "track": "sql",
+      "skill": "sql-join-inner",
+      "level": 2,
+      "mode": "write",
+      "title": "Запас Nettora у дистрибьюторов",
+      "brief": "Ито-сан говорит, что в точках ему отвечают: «не привозят». Отгрузки к продажам сходятся, значит, товар должен лежать где-то по дороге. Остатки у дистрибьюторов хранятся помесячно.",
+      "goal": "Вернуть month_start и units — запас Nettora у дистрибьюторов (сумма units_on_hand) на июнь каждого года, по возрастанию даты.",
+      "starter": "",
+      "solution": "SELECT s.month_start, SUM(s.units_on_hand) AS units\nFROM fact_stock s\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE p.brand = 'Nettora'\n  AND substr(s.month_start, 6, 2) = '06'\nGROUP BY s.month_start\nORDER BY s.month_start",
+      "orderMatters": true,
+      "hints": [
+        "Остатки лежат в fact_stock, колонка units_on_hand; бренд назван в dim_product, поэтому соединение по product_id.",
+        "Июнь отбирает substr(s.month_start, 6, 2) = '06': два знака, начиная с шестого. Группировать надо по самому месяцу, сортировать по нему же."
+      ],
+      "explain": "1 046, 2 363, 4 224 штуки: запас Nettora у дистрибьюторов на июнь растёт год от года, за два года вчетверо. Товар не пропадал по дороге. Он лежит и копится, потому что точки его не берут."
     }
   ]
 }

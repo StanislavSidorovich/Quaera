@@ -96,12 +96,42 @@ export const NEW_TASKS = {
   // Вопрос дня: может, ушли из мелких точек, и это нормальная чистка? 2024 год (до сползания):
   //   lost   | 42 | 388 | 16292
   //   stayed | 37 | 598 | 22121
-  // Потерянные поменьше, но не мелочь: 16 292 из 38 413 штук бренда — 42%. CASE — вторая встреча
-  // (первая — четверг w2), в заготовке; пропуски — имя и само слово.
+  // Потерянные поменьше, но не мелочь: 16 292 из 38 413 штук бренда — 42%. Статус — выражение IN без CASE: у навыка sql-cte CASE в теории нет (гейт verify-content),
+  // поэтому 0/1 вместо подписей; пропуски — имя и само слово.
   'sql-118': { skill: 'sql-cte', level: 3, mode: 'fill',
-    template: `___ per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN ${NETTORA}\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT CASE WHEN customer_id IN (SELECT customer_id FROM fact_sellout\n                                 WHERE product_id IN ${NETTORA}\n                                   AND week_start >= '2026-01-01')\n            THEN 'stayed' ELSE 'lost' END AS status,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM ___\nGROUP BY status`,
+    template: `___ per_outlet AS (
+  SELECT customer_id, SUM(units) AS units
+  FROM fact_sellout
+  WHERE product_id IN ${NETTORA}
+    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'
+  GROUP BY customer_id
+)
+SELECT customer_id IN (SELECT customer_id FROM fact_sellout
+                       WHERE product_id IN ${NETTORA}
+                         AND week_start >= '2026-01-01') AS stayed,
+       COUNT(*) AS outlets,
+       ROUND(AVG(units)) AS avg_units,
+       SUM(units) AS units
+FROM ___
+GROUP BY stayed
+ORDER BY stayed`,
     blanks: ['WITH', 'per_outlet'],
-    solution: `WITH per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN ${NETTORA}\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT CASE WHEN customer_id IN (SELECT customer_id FROM fact_sellout\n                                 WHERE product_id IN ${NETTORA}\n                                   AND week_start >= '2026-01-01')\n            THEN 'stayed' ELSE 'lost' END AS status,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM per_outlet\nGROUP BY status` },
+    solution: `WITH per_outlet AS (
+  SELECT customer_id, SUM(units) AS units
+  FROM fact_sellout
+  WHERE product_id IN ${NETTORA}
+    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'
+  GROUP BY customer_id
+)
+SELECT customer_id IN (SELECT customer_id FROM fact_sellout
+                       WHERE product_id IN ${NETTORA}
+                         AND week_start >= '2026-01-01') AS stayed,
+       COUNT(*) AS outlets,
+       ROUND(AVG(units)) AS avg_units,
+       SUM(units) AS units
+FROM per_outlet
+GROUP BY stayed
+ORDER BY stayed` },
 
   // Чт w2b — второе лекарство от размножения: сначала свернуть каждый факт до строки на год, потом
   // соединять (первое — ключ, sql-050, тем же днём). Отгрузки Nettora к продажам:
@@ -316,7 +346,7 @@ if (isMain) {
   console.log('== эталоны новых заданий ==');
   for (const [id, t] of Object.entries(NEW_TASKS)) {
     const taken = packTasks.find((x) => x.id === id);
-    if (taken && taken.title) { console.log(` FAIL ${id}: id уже занят в паке («${taken.title}»)`); failed++; }
+    if (taken && taken.solution !== t.solution) { console.log(` FAIL ${id}: id занят в паке другим заданием («${taken.title}»)`); failed++; }
     if (t.mode === 'fill') {
       let i = 0;
       const built = t.template.replace(/_{3}/g, () => t.blanks[i++]);

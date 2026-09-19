@@ -3548,15 +3548,23 @@ function Home({
             </div>
           </div>
         ) : (
-          <button type="button" className="story-invite-row" onClick={onOpenStoryMode}>
-            <span className="story-invite-row-head">
-              <span className="story-invite-row-title">{t.storyMode.homeTitle}</span>
-              <span className="pill">{t.storyMode.badge}</span>
-            </span>
-            <span className="story-invite-row-action">
-              {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn} →
-            </span>
-          </button>
+          <>
+            <button type="button" className="story-invite-row" onClick={onOpenStoryMode}>
+              <span className="story-invite-row-head">
+                <span className="story-invite-row-title">{t.storyMode.homeTitle}</span>
+                <span className="pill">{t.storyMode.badge}</span>
+              </span>
+              <span className="story-invite-row-action">
+                {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn} →
+              </span>
+            </button>
+            {/* Условие входа в часть 2 — «в кампании нет сохранённого шага», а не «новичок»: знающий SQL, решивший одно задание в треке, нуждается в нём так же. */}
+            {!storyStarted && onOpenStoryPart && (
+              <button type="button" className="story-invite-skip story-invite-skip-row" onClick={() => onOpenStoryPart('p2')}>
+                {t.storyMode.skipToPart(2)}
+              </button>
+            )}
+          </>
         ))}
 
       {/*
