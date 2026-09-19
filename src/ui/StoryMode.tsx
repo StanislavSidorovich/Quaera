@@ -143,6 +143,8 @@ export function storyPhaseAfter(campaign: StoryCampaign, mission: StoryMission, 
 export interface StoryStepView {
   task: Task;
   skillTitle: string;
+  /** Слова панели вставки, встреченные в кампании к этому шагу включительно (см. storyMissions в App.tsx). */
+  panelWords?: string[];
 }
 
 /**
@@ -434,6 +436,7 @@ export function StoryMode({
           onOpenSchema={onOpenSchema}
           afterNote={mission.steps[phase.step]?.after}
           hideLevel
+          panelWords={step.panelWords}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
           glossaryBrief={glossaryRendered[0]}
           glossaryGoal={glossaryRendered[1]}

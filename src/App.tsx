@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
 import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
+import { panelWordsIn } from './content/panelKeywords';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { getExecutor } from './engine/executors';
 import { workerCodeText } from './engine/diagnose';
@@ -932,6 +933,15 @@ export default function App() {
    */
   const storyMissions = useMemo(() => {
     const byId = new Map<string, { mission: StoryMission; steps: StoryStepView[] }>();
+    /*
+     * Словарь панели вставки копится по кампании, по треку отдельно: шаг видит
+     * слова, встреченные в коде всех шагов до него и в своём. Уровень задания
+     * для этого не годится — он мерит сложность, и суббота первой части
+     * (уровень 3 как итог недели) получала по нему `WITH` и `CASE WHEN`
+     * второй и третьей частей. Свой код шага входит в словарь: без него панель
+     * не дала бы набрать эталон, для которого и существует.
+     */
+    const seen: Record<'sql' | 'python', Set<string>> = { sql: new Set(), python: new Set() };
     for (const mission of storyCampaign(locale).missions) {
       const pack = packForTrack(mission.track, locale);
       if (!pack) continue;
@@ -939,7 +949,13 @@ export default function App() {
       for (const step of mission.steps) {
         const task = pack.tasks.find((tk) => tk.id === step.taskId);
         if (!task) break;
-        steps.push({ task, skillTitle: pack.skills.find((sk) => sk.id === task.skill)?.title ?? '' });
+        let panelWords: string[] | undefined;
+        if (task.track === 'sql' || task.track === 'python') {
+          const code = [task.solution, task.predictSql, ...(task.steps ?? []).map((s) => (s.kind === 'compute' ? s.solution : ''))].join('\n');
+          for (const w of panelWordsIn(code, task.track)) seen[task.track].add(w);
+          panelWords = [...seen[task.track]];
+        }
+        steps.push({ task, skillTitle: pack.skills.find((sk) => sk.id === task.skill)?.title ?? '', panelWords });
       }
       if (steps.length !== mission.steps.length) continue;
       byId.set(mission.id, { mission, steps });

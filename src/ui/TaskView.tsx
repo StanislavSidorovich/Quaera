@@ -236,6 +236,12 @@ interface Props {
    * откатом. В обычном занятии метка остаётся — там она и есть ступень.
    */
   hideLevel?: boolean;
+  /**
+   * Слова панели вставки, встреченные в кампании к этому шагу (storyPanelWords
+   * в App.tsx). Только из StoryMode: в кампании ступень задаёт день, и панель
+   * по уровню задания показывала бы слова следующих частей.
+   */
+  panelWords?: string[];
   /** Это задание — передышка занятия (см. isRest в App.tsx), не обычный шаг. */
   isRest?: boolean;
   /**
@@ -260,6 +266,7 @@ export function TaskView({
   onOpenLesson,
   afterNote,
   hideLevel,
+  panelWords,
   isRest,
   glossaryBrief,
   glossaryGoal,
@@ -534,6 +541,7 @@ export function TaskView({
         schema={schema}
         carried={carried}
         carriedIsReference={carriedIsReference}
+        panelWords={panelWords}
       />
 
       {stepDraft.solved && (
@@ -596,6 +604,7 @@ function StepView({
   schema,
   carried,
   carriedIsReference,
+  panelWords,
 }: {
   task: Task;
   step: TaskStep;
@@ -609,6 +618,8 @@ function StepView({
   carried: Preview | null;
   /** Показанная таблица — эталон, а не результат человека (расчёт не сошёлся). */
   carriedIsReference: boolean;
+  /** См. panelWords у TaskView. */
+  panelWords?: string[];
 }) {
   const { t, locale } = useI18n();
   const [running, setRunning] = useState(false);
@@ -1134,6 +1145,7 @@ function StepView({
                   disabled={draft.solved}
                   wrongIndexes={wrongBlanks}
                   level={task.level}
+                  panelWords={panelWords}
                   track={task.track}
                   schema={schema}
                   knownTables={knownTables}
@@ -1145,6 +1157,7 @@ function StepView({
                   onChange={(v) => patch({ code: v })}
                   schema={schema}
                   level={task.level}
+                  panelWords={panelWords}
                   track={task.track}
                   placeholder={t.task.placeholder(task.track)}
                   knownTables={knownTables}
@@ -1257,6 +1270,7 @@ function FillTemplate({
   disabled,
   wrongIndexes = [],
   level,
+  panelWords,
   track,
   schema,
   knownTables = [],
@@ -1271,6 +1285,8 @@ function FillTemplate({
   /** Пропуски, разошедшиеся с эталоном: обводка ведёт глаз к месту ошибки, а не к формуле целиком. */
   wrongIndexes?: number[];
   level: Task['level'];
+  /** См. panelWords у TaskView. */
+  panelWords?: string[];
   track: Task['track'];
   schema: SchemaDoc | null;
   /** Таблицы задания (см. taskTables) — тот же засев, что у CodeEditor, см. довод у chips ниже. */
@@ -1464,7 +1480,7 @@ function FillTemplate({
         {tokensOn ? t.editor.tokensHide : t.editor.tokensShow}
       </button>
     </div>
-    <TokenPanel level={level} track={track} open={tokensOn} onInsert={(text) => insertViaTarget(text)} disabled={disabled} />
+    <TokenPanel level={level} seen={panelWords} track={track} open={tokensOn} onInsert={(text) => insertViaTarget(text)} disabled={disabled} />
     {/*
      * Чипы таблиц/колонок пропусков — см. довод у chips выше. Тот же
      * класс .accessory-stack и тот же тумблер tokensOn, что у символов/

@@ -39,6 +39,8 @@ interface Props {
   schema: SchemaDoc | null;
   /** Уровень задания — определяет, какие конструкции показывать в панели. */
   level: number;
+  /** Словарь кампании к этому шагу — вместо уровня, см. keywordsFor в TokenPanel.tsx. */
+  panelWords?: string[];
   /** Выбирает набор символов и ключевых слов: SQL и pandas синтаксически не пересекаются. */
   track: Track;
   disabled?: boolean;
@@ -54,6 +56,7 @@ export function CodeEditor({
   onChange,
   schema,
   level,
+  panelWords,
   track,
   disabled,
   placeholder,
@@ -223,7 +226,7 @@ export function CodeEditor({
         autoComplete="off"
         data-gramm="false"
       />
-      <TokenPanel level={level} track={track} open={tokensOn} onInsert={insert} disabled={disabled} onBackspace={backspace} />
+      <TokenPanel level={level} seen={panelWords} track={track} open={tokensOn} onInsert={insert} disabled={disabled} onBackspace={backspace} />
       {/*
        * Чипы таблиц/колонок остаются здесь, не в TokenPanel: они строятся
        * из текста самого редактора (см. chips выше), а не из статичного

@@ -58,9 +58,17 @@ const SQL_PANEL_ORDER = [
   'CURRENT ROW', 'OR',
 ];
 
-export function keywordsFor(track: Track, level: number): string[] {
+/**
+ * `seen` — словарь кампании к этому шагу (см. storyPanelWords в App.tsx).
+ * Когда он есть, уровень не фильтрует вовсе: в кампании ступень задаёт день,
+ * а уровень задания мерит сложность, не пройденные слова (суббота первой
+ * части — уровень 3 и без `seen` показывала бы `WITH` и `CASE WHEN`).
+ */
+export function keywordsFor(track: Track, level: number, seen?: string[]): string[] {
   const groups = track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL;
-  const words = groups.filter((g) => g.upTo <= level).flatMap((g) => g.words);
+  const words = seen
+    ? groups.flatMap((g) => g.words).filter((w) => seen.includes(w))
+    : groups.filter((g) => g.upTo <= level).flatMap((g) => g.words);
   if (track !== 'sql') return words;
   const rank = (w: string) => {
     const i = SQL_PANEL_ORDER.indexOf(w);
@@ -143,6 +151,8 @@ export function useKeyboardOpen(): [boolean, () => void] {
 interface Props {
   level: number;
   track: Track;
+  /** Словарь кампании к этому шагу; нет — фильтр по уровню (см. keywordsFor). */
+  seen?: string[];
   open: boolean;
   onInsert: (text: string) => void;
   disabled?: boolean;
@@ -150,10 +160,10 @@ interface Props {
   onBackspace?: () => void;
 }
 
-export function TokenPanel({ level, track, open, onInsert, disabled, onBackspace }: Props) {
+export function TokenPanel({ level, track, seen, open, onInsert, disabled, onBackspace }: Props) {
   const { t } = useI18n();
   const symbols = symbolsFor(track);
-  const keywords = keywordsFor(track, level);
+  const keywords = keywordsFor(track, level, seen);
 
   return (
     <div className="accessory-stack" data-open={open}>
