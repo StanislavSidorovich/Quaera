@@ -752,7 +752,7 @@ const ru: StoryCampaign = {
           intro: {
             paras: [
               'Две версии из коридора стоит сначала примерить к рознице целиком. Может, волна года — это просто точки: летом работают все, а зимой часть закрывается? Тогда вместе со штуками упало бы и число точек.',
-              'Рядом со штуками посчитай, в скольких разных точках в этом месяце вообще были продажи. Это вторничная функция, только по другой колонке: COUNT(DISTINCT customer_id).',
+              'Рядом со штуками посчитай, в скольких разных точках в этом месяце вообще были продажи. Это вчерашняя функция, только по другой колонке: COUNT(DISTINCT customer_id).',
             ],
           },
           after: {
@@ -3427,7 +3427,7 @@ const en: StoryCampaign = {
           intro: {
             paras: [
               'The two versions from the corridor are worth trying on retail as a whole first. Maybe the wave of the year is just outlets: in summer they all trade, in winter some of them close? Then the outlet count would fall along with the units.',
-              'Next to the units, count how many distinct outlets had any sales that month. It is Tuesday\'s function on a different column: COUNT(DISTINCT customer_id).',
+              'Next to the units, count how many distinct outlets had any sales that month. It is yesterday\'s function on a different column: COUNT(DISTINCT customer_id).',
             ],
           },
           after: {
