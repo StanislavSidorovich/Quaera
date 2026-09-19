@@ -628,7 +628,16 @@ export const en = {
     knownCount: (n: number) => `${n} finding${n === 1 ? '' : 's'}`,
     weekPreview: 'By Saturday you will be able to',
     weekPreviewCount: (n: number) => `${n} technique${n === 1 ? '' : 's'}`,
-    weekAhead: (n: number, last: string) => `${n} more week${n === 1 ? '' : 's'} after this one, the last one is ${last}.`,
+    /** The end of the part, not of the campaign: "7 more weeks" on day one scares a beginner off. */
+    partWeeksLeft: (n: number, part: string) => `The ${part} part has ${n} more week${n === 1 ? '' : 's'} after this one.`,
+    partLastWeek: (part: string) => `This is the last week of the ${part} part.`,
+    partDone: 'Part closed',
+    finishTitle: (n: number, part: string) => `Part ${n} (${part}) complete`,
+    finishStats: (weeks: number, tasks: number) =>
+      `${weeks} week${weeks === 1 ? '' : 's'}, ${tasks} task${tasks === 1 ? '' : 's'}.`,
+    continueBtn: 'Continue',
+    skipToPart: (n: number) => `I know SELECT and JOIN already: start at part ${n}`,
+    recapTitle: 'What came before, in short',
     trackName: { sql: 'SQL', python: 'pandas', model: 'data modelling', domain: 'the business domain' } as Record<string, string>,
     reflectionTitle: 'Before you move on',
     /** См. комментарий в ru.ts: единица кампании — день. */

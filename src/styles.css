@@ -4931,6 +4931,21 @@ table.sample td.null {
   border-left: 3px solid color-mix(in srgb, var(--accent) 60%, var(--line));
 }
 
+.story-invite-skip {
+  display: block;
+  margin: 10px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
 .story-invite-row-head {
   display: flex;
   align-items: center;

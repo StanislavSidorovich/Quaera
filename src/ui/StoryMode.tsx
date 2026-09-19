@@ -9,7 +9,10 @@ import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
   storyClosesCampaign,
+  storyClosesPart,
   storyClosesWeek,
+  storyPartOf,
+  storyWeeksLeftInPart,
   storyWeekOf,
   type StoryCampaign,
   type StoryMission,
@@ -56,6 +59,7 @@ export type StoryPhase =
   | { kind: 'task'; step: number }
   | { kind: 'reflection' }
   | { kind: 'summary' }
+  | { kind: 'finish' }
   | { kind: 'hook' };
 
 /**
@@ -70,6 +74,11 @@ export type StoryPhase =
  * Итог недели стоит после суждения и перед крючком: суждение закрывает дело,
  * итог — неделю самого человека, а крючок уводит в новое дело. Поставь итог
  * после крючка — и он читался бы приложением к уже сказанному «до понедельника».
+ *
+ * Финиш части стоит сразу за итогом недели и тоже перед крючком: итог говорит,
+ * что умеете после недели, финиш закрывает две недели разом и называет, чего
+ * этим инструментом уже не взять, а крючок субботы ведёт в первый день следующей
+ * части (его кнопка называется «Продолжить»).
  */
 export function storyPhases(campaign: StoryCampaign, mission: StoryMission): StoryPhase[] {
   const phases: StoryPhase[] = [{ kind: 'brief' }];
@@ -80,6 +89,7 @@ export function storyPhases(campaign: StoryCampaign, mission: StoryMission): Sto
   });
   phases.push({ kind: 'reflection' });
   if (storyClosesWeek(campaign, mission.id)) phases.push({ kind: 'summary' });
+  if (storyClosesPart(campaign, mission.id)) phases.push({ kind: 'finish' });
   phases.push({ kind: 'hook' });
   return phases;
 }
@@ -235,6 +245,7 @@ export function StoryMode({
   onOpenLesson,
   onCloseLesson,
   summaryDays,
+  entryPart,
   progress,
   onEnablePush,
 }: {
@@ -292,6 +303,12 @@ export function StoryMode({
   onCloseLesson: () => void;
   /** Дни недели этого дня с их заданиями — итогу недели нужна вся неделя. */
   summaryDays: WeekDay[];
+  /**
+   * Часть, с которой человек вошёл в кампанию, если не с первой (App хранит
+   * это, пока он не сбросил прогресс). На брифе первого дня этой части
+   * вместо папки дела, которой у пришедшего сразу нет, стоит её recap.
+   */
+  entryPart: string | null;
   /** Прогресс — итог недели считает состояния приёмов на момент показа. */
   progress: Progress;
   /** Включить напоминания — кнопка в итоге недели, рядом с датой повторения. */
@@ -463,8 +480,12 @@ export function StoryMode({
    */
   const firstDayOfWeek = weekDays[0]?.id === mission.id;
   const previewSkills = firstDayOfWeek ? weekSkillLines(summaryDays, lessonBySkill) : [];
-  const weeksAhead = campaign.weeks.length - 1 - campaign.weeks.findIndex((w) => w.id === mission.week);
-  const lastTrack = campaign.missions[campaign.missions.length - 1]?.track;
+  const inPart = storyPartOf(campaign, mission.id);
+  const partLeft = storyWeeksLeftInPart(campaign, mission.id);
+  const recap =
+    inPart && inPart.part.id === entryPart && inPart.missions[0]?.id === mission.id && inPart.part.recap.length > 0
+      ? inPart.part.recap
+      : null;
 
   return (
     <>
@@ -520,6 +541,16 @@ export function StoryMode({
                 </button>
               </div>
             )}
+            {recap && (
+              <div className="story-known">
+                <p className="story-known-title">{t.storyMode.recapTitle}</p>
+                <ul>
+                  {recap.map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {found.length > 0 && (
               /*
                * От трёх находок и выше папка дела сама начинала уводить
@@ -566,9 +597,11 @@ export function StoryMode({
                     </li>
                   ))}
                 </ul>
-                {weeksAhead > 0 && lastTrack && (
+                {partLeft && (
                   <p className="story-mode-para">
-                    {t.storyMode.weekAhead(weeksAhead, t.storyMode.trackName[lastTrack] ?? lastTrack)}
+                    {partLeft.left > 0
+                      ? t.storyMode.partWeeksLeft(partLeft.left, partLeft.part.title)
+                      : t.storyMode.partLastWeek(partLeft.part.title)}
                   </p>
                 )}
               </details>
@@ -648,6 +681,23 @@ export function StoryMode({
           </>
         )}
 
+        {phase.kind === 'finish' && inPart && (
+          <>
+            <h2>{t.storyMode.finishTitle(campaign.parts.indexOf(inPart.part) + 1, inPart.part.title)}</h2>
+            <p className="story-mode-para">
+              {t.storyMode.finishStats(inPart.weeks.length, inPart.missions.reduce((n, m) => n + m.steps.length, 0))}
+            </p>
+            {inPart.part.finish.map((p, i) => (
+              <p className="story-mode-para" key={i}>
+                {p}
+              </p>
+            ))}
+            <button type="button" className="btn" onClick={goNext}>
+              {nextLabel}
+            </button>
+          </>
+        )}
+
         {phase.kind === 'hook' && (
           <>
             {mission.hook.map((p, i) => (
@@ -664,7 +714,11 @@ export function StoryMode({
                  * соврать в единственном месте, где кампания меняет дело
                  * и вопрос над полосой.
                  */}
-                {nextStartsWeek ? t.storyMode.nextWeek : t.storyMode.nextMission}
+                {storyClosesPart(campaign, mission.id)
+                  ? t.storyMode.continueBtn
+                  : nextStartsWeek
+                    ? t.storyMode.nextWeek
+                    : t.storyMode.nextMission}
               </button>
             ) : (
               <>

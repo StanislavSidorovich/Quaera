@@ -491,6 +491,29 @@ try {
     check(`${label}кампания не пуста`, campaign.missions.length > 0, 'в кампании нет ни одного дня');
 
     /*
+     * Части — договор модели: у недели есть своя часть, недели одной части
+     * идут подряд (порядок задаёт плоский список, перемешать их нечем, но
+     * забыть — можно), у каждой части, кроме последней, есть экран финиша
+     * (последнюю закрывает итог кампании), а у каждой, кроме первой, есть
+     * recap для входящего сразу с неё. Пустой recap показал бы на брифе
+     * пришедшему сразу пустое место вместо папки дела.
+     */
+    const partIds = campaign.parts.map((x) => x.id);
+    const orphan = campaign.weeks.filter((w) => !partIds.includes(w.part));
+    check(`${label}у каждой недели есть своя часть`, orphan.length === 0, `недели без части: ${orphan.map((w) => w.id).join(', ')}`);
+    const order = campaign.weeks.map((w) => w.part);
+    const scattered = partIds.filter((id) => {
+      const first = order.indexOf(id);
+      const last = order.lastIndexOf(id);
+      return first < 0 || order.slice(first, last + 1).some((x) => x !== id);
+    });
+    check(`${label}недели каждой части идут подряд`, scattered.length === 0, `части разорваны или пусты: ${scattered.join(', ')}`);
+    const noFinish = campaign.parts.slice(0, -1).filter((x) => x.finish.length === 0);
+    check(`${label}у каждой части, кроме последней, есть финиш`, noFinish.length === 0, noFinish.map((x) => x.id).join(', '));
+    const noRecap = campaign.parts.slice(1).filter((x) => x.recap.length < 2);
+    check(`${label}у каждой части, кроме первой, есть recap из 2+ строк`, noRecap.length === 0, noRecap.map((x) => x.id).join(', '));
+
+    /*
      * Показанное копится по ходу недели и делится надвое: словами — то,
      * что названо в подводке, и вообще — то, что человек хотя бы видел
      * в коде задания. Первое множество нужно только для предупреждений,
@@ -675,6 +698,16 @@ try {
     'состав недели совпадает в ru и en',
     JSON.stringify(ruShape) === JSON.stringify(enShape),
     `ru: ${ruShape.join(' | ')}\n        en: ${enShape.join(' | ')}`
+  );
+  const partShape = (locale) =>
+    storyCampaign(locale).parts.map((x) => `${x.id}:${x.finish.length}/${x.recap.length}`).concat(
+      storyCampaign(locale).weeks.map((w) => `${w.id}>${w.part}`)
+    );
+  check(
+    'части и их финиши совпадают в ru и en',
+    JSON.stringify(partShape('ru')) === JSON.stringify(partShape('en')),
+    `ru: ${partShape('ru').join(' | ')}
+        en: ${partShape('en').join(' | ')}`
   );
 } finally {
   rmSync(outDir, { recursive: true, force: true });

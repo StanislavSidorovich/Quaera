@@ -1324,7 +1324,22 @@ export const ru = {
      */
     weekPreview: 'К субботе вы сможете',
     weekPreviewCount: (n: number) => `${n} ${plural(n, 'приём', 'приёма', 'приёмов')}`,
-    weekAhead: (n: number, last: string) => `Дальше ещё ${n} ${plural(n, 'неделя', 'недели', 'недель')}, последняя — ${last}.`,
+    /**
+     * Конец части, а не кампании: «ещё 7 недель» на первом дне пугает
+     * новичка, а часть кончается через две (см. StoryPart).
+     */
+    partWeeksLeft: (n: number, part: string) => `В части «${part}» после этой недели ещё ${n} ${plural(n, 'неделя', 'недели', 'недель')}.`,
+    partLastWeek: (part: string) => `Это последняя неделя части «${part}».`,
+    /** Экран финиша части (см. StoryPart.finish): называет сделанное числами, не хвалит. */
+    partDone: 'Часть закрыта',
+    finishTitle: (n: number, part: string) => `Часть ${n} «${part}» пройдена`,
+    finishStats: (weeks: number, tasks: number) =>
+      `${weeks} ${plural(weeks, 'неделя', 'недели', 'недель')}, ${tasks} ${plural(tasks, 'задание', 'задания', 'заданий')}.`,
+    /** Кнопка после финиша: ведёт в начало следующей части. */
+    continueBtn: 'Продолжить',
+    /** Вход сразу в середину кампании, только до первого шага: для тех, кто SELECT и JOIN уже знает. */
+    skipToPart: (n: number) => `Уже знаю SELECT и JOIN: начать с части ${n}`,
+    recapTitle: 'Что было раньше: коротко',
     trackName: { sql: 'SQL', python: 'pandas', model: 'модель данных', domain: 'предметная область' } as Record<string, string>,
     reflectionTitle: 'Секунду — что мы нашли',
     /**

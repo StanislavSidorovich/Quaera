@@ -282,6 +282,13 @@ export interface StoryMission {
 export interface StoryWeek {
   id: string;
   /**
+   * Часть кампании, которой принадлежит неделя (`StoryPart.id`) — тот же
+   * приём, что `StoryMission.week`: принадлежность записана у дочернего,
+   * порядок задаёт плоский список. Части идут подряд, без перемешивания:
+   * это проверяет гейт лестницы.
+   */
+  part: string;
+  /**
    * Вопрос расследования — стоит над каждым экраном своей недели.
    *
    * Он существует ровно затем, чтобы на третьем задании вторника человек
@@ -291,19 +298,80 @@ export interface StoryWeek {
   question: string;
 }
 
+/**
+ * Часть кампании — несколько недель с общим уровнем и своим финишем.
+ *
+ * Зачем. Кампания в 8 недель без промежуточного конца читалась бы как
+ * нескончаемая: на брифе первого дня «ещё 7 недель» — то самое «испугался
+ * и спрыгнул». Часть даёт названную финишную черту через две недели
+ * (quaera-product-ux: «если конца нет, отдачи не будет») и вход сразу
+ * в середину для тех, кто SELECT и JOIN уже знает.
+ */
+export interface StoryPart {
+  id: string;
+  /** Название части — «Стажёр». В подписях стоит в кавычках-ёлочках. */
+  title: string;
+  /**
+   * Абзацы экрана «Часть N пройдена»: что теперь умеете и что не закрыто.
+   * Пусто у последней части — её конец и есть итог кампании (StoryWeekSummary),
+   * второй финиш подряд повторял бы его и крючок дня.
+   */
+  finish: string[];
+  /**
+   * Что нужно знать из прошлых частей, если начал сразу с этой: 3–4 строки
+   * на брифе её первого дня вместо папки дела, которой у пришедшего сразу
+   * нет. У первой части пусто — перед ней ничего не было.
+   */
+  recap: string[];
+}
+
 export interface StoryCampaign {
+  parts: StoryPart[];
   weeks: StoryWeek[];
   missions: StoryMission[];
 }
 
 const ru: StoryCampaign = {
+  parts: [
+    {
+      id: 'p1',
+      title: 'Стажёр',
+      finish: [
+        'Две недели позади. Вы достаёте данные из таблиц, группируете, соединяете таблицы и отсекаете лишнее — и на этом ответили директору на два вопроса: падение настоящее, а причина в потерянной полке, не в спросе.',
+        'Осталось то, что этим инструментом уже не взять. Освободившиеся точки кто-то занял, но обычное соединение не показывает пустоту: нужны пустые значения, условия внутри запроса и запросы из запросов. Это часть «Аналитик».',
+      ],
+      recap: [],
+    },
+    {
+      id: 'p2',
+      title: 'Аналитик',
+      finish: [
+        'Часть «Аналитик» позади. Теперь вы не только считаете, но и задаёте число: определяете, что именно входит в отчёт, проверяете его и подаёте так, чтобы его не пересчитывали заново.',
+        'Дальше — другой инструмент. Те же вопросы, но на pandas: таблицы там лежат в памяти, и приёмы называются иначе, хотя мысль прежняя.',
+      ],
+      recap: [
+        'Продажи Nettora за январь–июнь 2026 — 9 858 штук против 20 250 и 20 740 в те же месяцы двух прошлых лет. Рынок за эти месяцы почти не сдвинулся (минус 5%): падает бренд, а не сезон.',
+        'Точек с Nettora было 79, с января 2026-го — 37. В оставшихся точках спрос жив, цена штуки не менялась: бренд потерял полку, а не покупателя. Владелец проблемы — полевая команда.',
+        'Из инструментов подразумевается SELECT, WHERE, GROUP BY, COUNT/SUM/AVG, JOIN и HAVING: дальше на них опираются без объяснений.',
+      ],
+    },
+    {
+      id: 'p3',
+      title: 'Другой инструмент',
+      finish: [],
+      recap: [
+        'Первые две части прошли на SQL: Nettora потеряла полку, а не спрос, и её отчёт теперь считается по определению, а не «на глаз».',
+        'Дальше то же самое, но на pandas: датафрейм вместо таблицы, маска вместо WHERE, groupby вместо GROUP BY.',
+      ],
+    },
+  ],
   weeks: [
-    { id: 'w1', question: 'Продажи Nettora правда упали — или это сезон?' },
-    { id: 'w1b', question: 'Потеряли спрос или полку — и чья это проблема?' },
-    { id: 'w2', question: 'Кто занял 42 точки Nettora — и можем ли мы это увидеть?' },
-    { id: 'w3', question: 'Разбор приняли и просят каждый месяц — какое число должно стоять в отчёте?' },
-    { id: 'w4', question: 'Кто-то отгрузил себе вдвое больше, чем продал: ошибка, умысел или норма?' },
-    { id: 'w5', question: 'Отгрузки вернулись к норме: всплеск позади — или его последствия ещё идут, и что мы предлагаем?' },
+    { id: 'w1', part: 'p1', question: 'Продажи Nettora правда упали — или это сезон?' },
+    { id: 'w1b', part: 'p1', question: 'Потеряли спрос или полку — и чья это проблема?' },
+    { id: 'w2', part: 'p2', question: 'Кто занял 42 точки Nettora — и можем ли мы это увидеть?' },
+    { id: 'w3', part: 'p2', question: 'Разбор приняли и просят каждый месяц — какое число должно стоять в отчёте?' },
+    { id: 'w4', part: 'p3', question: 'Кто-то отгрузил себе вдвое больше, чем продал: ошибка, умысел или норма?' },
+    { id: 'w5', part: 'p3', question: 'Отгрузки вернулись к норме: всплеск позади — или его последствия ещё идут, и что мы предлагаем?' },
   ],
   missions: [
     /*
@@ -1199,7 +1267,7 @@ const ru: StoryCampaign = {
       id: 'day-6-who-is-missing',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Понедельник, 9:05',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:05',
       short: 'Пн',
       found: 'Точки без Nettora называются поимённо. Обычное соединение их не показывает: в продажах их нет.',
       scenes: { brief: 'desk-gap', reflection: 'absent', hook: 'split' },
@@ -1310,7 +1378,7 @@ const ru: StoryCampaign = {
       id: 'day-7-promo-or-price',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Вторник, 9:20',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
       short: 'Вт',
       found: 'Бренд жил не на скидке: за 2025 год 5.4 млн базовых продаж против 1.4 млн в акциях.',
       scenes: { brief: 'desk-split-bar', reflection: 'versions-half', hook: 'fold' },
@@ -1420,7 +1488,7 @@ const ru: StoryCampaign = {
       id: 'day-8-two-steps',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Среда, 9:10',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:10',
       short: 'Ср',
       found: 'Выручка на точку не зависит от их числа: в e-com 3.2 млн на точку, в традиционной рознице 21.7 тыс.',
       scenes: { brief: 'desk-per-outlet', reflection: 'channels', hook: 'tables' },
@@ -1508,7 +1576,7 @@ const ru: StoryCampaign = {
       id: 'day-9-two-facts',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Четверг, 9:30',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:30',
       short: 'Чт',
       found: 'Соединение не по ключу размножает строки: 4 370 строк продаж Nettora превращаются в 43 700.',
       scenes: { brief: 'desk-fanout', reflection: 'counts', hook: 'meeting' },
@@ -1579,7 +1647,7 @@ const ru: StoryCampaign = {
       id: 'day-10-supply-chain',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Пятница, 9:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:00',
       short: 'Пт',
       found: 'Цепочка сбалансирована: отгрузили примерно столько же, сколько продали. Дефицита не было.',
       scenes: { brief: 'boardroom-supply', reflection: 'absent' },
@@ -1643,7 +1711,7 @@ const ru: StoryCampaign = {
       id: 'w2-sat-list-for-ito',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Вторая неделя · Суббота, 10:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Суббота, 10:00',
       short: 'Сб',
       found: 'Список для поля готов: 27 сетевых точек без Nettora с января, и 24 из них в 2025-м её брали.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -1705,7 +1773,7 @@ const ru: StoryCampaign = {
       id: 'day-11-what-they-decide',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Третья неделя · Понедельник, 9:40',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:40',
       short: 'Пн',
       found: 'За «дашбордом по продажам» стоит решение: куда вести полевую команду. Готово — оговорённый заранее список.',
       /*
@@ -1796,7 +1864,7 @@ const ru: StoryCampaign = {
       id: 'day-12-three-answers',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Третья неделя · Вторник, 10:05',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 10:05',
       short: 'Вт',
       found: 'Активная точка — розничная, без дистрибьюторов. Падение считаем год к году.',
       scenes: { brief: 'desk-dispute', reflection: 'contract', hook: 'counts' },
@@ -1888,7 +1956,7 @@ const ru: StoryCampaign = {
       id: 'day-13-against-what',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Третья неделя · Среда, 9:30',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:30',
       short: 'Ср',
       found: 'Сравнение с прошлым периодом делает LAG. Без PARTITION BY он не видит границы разреза и берёт хвост соседнего.',
       scenes: { brief: 'desk-lookback', reflection: 'shift', hook: 'dropped' },
@@ -1980,7 +2048,7 @@ const ru: StoryCampaign = {
       id: 'day-14-raw-layer',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Третья неделя · Четверг, 9:15',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:15',
       short: 'Чт',
       found: 'Ichiba и Itiba — одна сеть в двух написаниях. Группировать по имени как есть нельзя.',
       scenes: { brief: 'desk-raw-row', reflection: 'twins' },
@@ -2063,7 +2131,7 @@ const ru: StoryCampaign = {
       id: 'day-15-conclusion-first',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Третья неделя · Пятница, 8:50',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 8:50',
       short: 'Пт',
       found: 'Вывод стоит первым, глубина меняется под решение адресата, а у столбцов ось начинается от нуля.',
       scenes: { brief: 'desk-lede', reflection: 'meeting' },
@@ -2151,7 +2219,7 @@ const ru: StoryCampaign = {
       id: 'w3-sat-names-nobody-knows',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Третья неделя · Суббота, 10:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Суббота, 10:00',
       short: 'Сб',
       found: 'Треть сырой выгрузки справочник не узнаёт: у каждой точки есть двойник с пробелами по краям, у Ichiba — ещё и Itiba.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -2182,7 +2250,7 @@ const ru: StoryCampaign = {
         'И про тебя: запрос с пустого листа, и каждую его часть за две недели ты печатал рукой хотя бы дважды.',
       ],
       hook: [
-        'Три недели позади. Первая дала инструмент, вторая — расследование, третья — то, что вокруг них: постановку, определение, проверку и подачу. Аналитиком человека делает третья, но без первых двух её не бывает.',
+        'Четыре недели позади. Первые две дали инструмент и ответили, что упало и почему, третья — расследование, четвёртая — то, что вокруг них: постановку, определение, проверку и подачу. Аналитиком человека делает четвёртая, но без первых трёх её не бывает.',
         'Осталось незакрытое дело: Setouchi Trading, 2.44. Кто-то отгрузил себе вдвое больше, чем продал, и это до сих пор никем не объяснено.',
         'Разбирать его запросами неудобно: нужны ряды по месяцам, сравнение с прошлым годом, скользящие средние и две таблицы рядом — SQL это умеет, но пишется долго и читается плохо. В понедельник возьмёшь другой инструмент.',
       ],
@@ -2231,7 +2299,7 @@ const ru: StoryCampaign = {
       id: 'day-16-another-tool',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Понедельник, 9:05',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:05',
       short: 'Пн',
       found: 'Таблица в pandas лежит в переменной: одна скобка даёт колонку, две — таблицу.',
       scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
@@ -2297,7 +2365,7 @@ const ru: StoryCampaign = {
       id: 'day-17-masks',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Вторник, 9:20',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
       short: 'Вт',
       found: 'Строки отбирает маска. Условия в ней соединяются знаками & и |, а не словами and и or.',
       scenes: { brief: 'desk-mask', reflection: 'threshold', hook: 'groups' },
@@ -2359,7 +2427,7 @@ const ru: StoryCampaign = {
       id: 'day-18-groups',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Среда, 9:15',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:15',
       short: 'Ср',
       found: 'За IV квартал 2025 года Setouchi взял 28 203 штуки — больше вдвое против любого другого дистрибьютора.',
       scenes: { brief: 'desk-index', reflection: 'fold', hook: 'yoy' },
@@ -2436,7 +2504,7 @@ const ru: StoryCampaign = {
       id: 'day-19-measures',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Четверг, 9:10',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:10',
       short: 'Чт',
       found: 'Год назад тот же квартал дал Setouchi 13 341 штуку, а у одиннадцати остальных осень 2025 года вышла даже меньше прошлогодней.',
       scenes: { brief: 'desk-yoy', reflection: 'factors', hook: 'toolkit' },
@@ -2496,7 +2564,7 @@ const ru: StoryCampaign = {
       id: 'day-20-whose-spike',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Пятница, 9:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:00',
       short: 'Пт',
       found: 'Всплеск Setouchi — настоящие заказы, не ошибка и не спрос: строк столько же, штук вдвое больше, точки продали меньше прошлогоднего.',
       scenes: { brief: 'boardroom-setouchi', reflection: 'versions' },
@@ -2575,7 +2643,7 @@ const ru: StoryCampaign = {
       id: 'w4-sat-who-paid',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Четвёртая неделя · Суббота, 10:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Суббота, 10:00',
       short: 'Сб',
       found: 'Скидки за объём не было: на штуку осенью 7.5 ¥, как всегда. Осень Setouchi оплатил сам — 2.29 млн ¥ против 1.10 годом раньше.',
       scenes: { brief: 'office', hook: 'calendar' },
@@ -2623,7 +2691,7 @@ const ru: StoryCampaign = {
       id: 'day-21-series',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Понедельник, 9:10',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:10',
       short: 'Пн',
       found: 'С января 2026 года отгрузки Setouchi снова в обычных пределах: поток вернулся.',
       scenes: { brief: 'desk-series', reflection: 'flow', hook: 'smooth' },
@@ -2697,7 +2765,7 @@ const ru: StoryCampaign = {
       id: 'day-22-background',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Вторник, 9:20',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Вторник, 9:20',
       short: 'Вт',
       found: 'На фоне скользящего среднего осенний горб стоит отдельно от двух лет обычной работы, а продажи точек его не знают вовсе.',
       scenes: { brief: 'desk-pair', reflection: 'smooth', hook: 'tables' },
@@ -2769,7 +2837,7 @@ const ru: StoryCampaign = {
       id: 'day-23-two-tables',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Среда, 9:15',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Среда, 9:15',
       short: 'Ср',
       found: 'merge соединяет таблицы по ключу и, как JOIN, молча размножает строки, если ключ не уникален; validate= превращает это в ошибку.',
       scenes: { brief: 'desk-fanout', reflection: 'join' },
@@ -2831,7 +2899,7 @@ const ru: StoryCampaign = {
       id: 'day-24-ratio',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Четверг, 9:10',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:10',
       short: 'Чт',
       found: 'Отношение Setouchi в I квартале 2026 года — 1.06: по мерке, которой всплеск нашли, он кончился.',
       scenes: { brief: 'desk-ratio', reflection: 'flow', hook: 'meeting' },
@@ -2888,7 +2956,7 @@ const ru: StoryCampaign = {
       id: 'day-25-flow-and-level',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Пятница, 9:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Пятница, 9:00',
       short: 'Пт',
       found: 'Отгрузки Setouchi вернулись к норме в январе 2026 года, а остаток с осени стоит на 21–22 тыс. штук — запас на пять месяцев продаж.',
       scenes: { brief: 'boardroom-ratio', reflection: 'level' },
@@ -2964,7 +3032,7 @@ const ru: StoryCampaign = {
       id: 'w5-sat-five-months-of-what',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Пятая неделя · Суббота, 10:00',
+      place: 'Kaiyo Trading · Коммерческая аналитика · Суббота, 10:00',
       short: 'Сб',
       found: 'Пять месяцев запаса — это восемь брендов по 4–8 месяцев и Nettora, которая у точек Setouchi больше не продаётся: 1 368 штук против 8 проданных за полгода.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -3000,7 +3068,7 @@ const ru: StoryCampaign = {
         'И в последний раз про тебя: самый длинный чистый лист кампании — обе таблицы, два соединения и пятничная мерка, и каждую его часть за две недели ты напечатал рукой хотя бы дважды.',
       ],
       hook: [
-        'Пять недель позади. Первая дала инструмент, вторая — расследование, третья — работу вокруг чисел: постановку, определение, проверку и подачу. Четвёртая дала второй инструмент и ответила, откуда взялся всплеск, пятая — чем он кончился и что с этим делать.',
+        'Шесть недель позади. Первые две дали инструмент и ответили, что упало и почему, третья — расследование, четвёртая — работу вокруг чисел: постановку, определение, проверку и подачу. Пятая дала второй инструмент и ответила, откуда взялся всплеск, шестая — чем он кончился и что с этим делать.',
         'Обратите внимание, чем дело закрылось. Не тем, что нашёлся виноватый, — виноватых здесь нет, есть отменённое промо и никем не пересчитанный план. Аналитик здесь нужен был не чтобы поймать партнёра, а чтобы отличить «поток вернулся» от «последствия исчерпаны».',
         'Дальше — треки. Кампания показала по одному срезу каждого: SQL, работу вокруг чисел, pandas. В треках то же самое разложено по навыкам, с повторениями и в вашем темпе — и там уже вы решаете, что именно вам нужно.',
       ],
@@ -3009,13 +3077,46 @@ const ru: StoryCampaign = {
 };
 
 const en: StoryCampaign = {
+  parts: [
+    {
+      id: 'p1',
+      title: 'Intern',
+      finish: [
+        'Two weeks behind you. You pull data from tables, group it, join tables and cut out what is not needed, and with that you answered the director on two questions: the fall is real, and the cause is a lost shelf, not lost demand.',
+        'What is left is what this toolkit cannot reach. Somebody took the freed outlets, but an ordinary join does not show an absence: you need empty values, conditions inside a query and queries made of queries. That is the Analyst part.',
+      ],
+      recap: [],
+    },
+    {
+      id: 'p2',
+      title: 'Analyst',
+      finish: [
+        'The Analyst part is behind you. Now you do not just calculate, you set the number: you define what goes into a report, check it and present it so nobody recalculates it from scratch.',
+        'Next is another tool. The same questions, but in pandas: tables sit in memory there and the moves have other names, though the thinking is the same.',
+      ],
+      recap: [
+        'Nettora sales for January to June 2026 were 9,858 units against 20,250 and 20,740 in the same months of the two previous years. The market barely moved over those months (down 5%): the brand is falling, not the season.',
+        'Nettora stood in 79 outlets and since January 2026 in 37. Demand in the remaining outlets is alive and the price per unit has not moved: the brand lost the shelf, not the shopper. The owner of the problem is the field team.',
+        'The toolkit taken for granted from here on is SELECT, WHERE, GROUP BY, COUNT/SUM/AVG, JOIN and HAVING.',
+      ],
+    },
+    {
+      id: 'p3',
+      title: 'A different tool',
+      finish: [],
+      recap: [
+        'The first two parts ran on SQL: Nettora lost the shelf, not the demand, and its report is now calculated by definition rather than by eye.',
+        'Next is the same work in pandas: a dataframe instead of a table, a mask instead of WHERE, groupby instead of GROUP BY.',
+      ],
+    },
+  ],
   weeks: [
-    { id: 'w1', question: 'Did Nettora sales really fall, or is it just the season?' },
-    { id: 'w1b', question: 'Lost demand or lost shelf, and whose problem is it?' },
-    { id: 'w2', question: 'Who took the 42 Nettora outlets, and can we even see it?' },
-    { id: 'w3', question: 'The analysis landed and they want it monthly, so what number belongs in the report?' },
-    { id: 'w4', question: 'Somebody shipped themselves twice what they sold: mistake, intent or normal?' },
-    { id: 'w5', question: 'Shipments are back to normal: is the spike behind us, or are its consequences still running, and what do we propose?' },
+    { id: 'w1', part: 'p1', question: 'Did Nettora sales really fall, or is it just the season?' },
+    { id: 'w1b', part: 'p1', question: 'Lost demand or lost shelf, and whose problem is it?' },
+    { id: 'w2', part: 'p2', question: 'Who took the 42 Nettora outlets, and can we even see it?' },
+    { id: 'w3', part: 'p2', question: 'The analysis landed and they want it monthly, so what number belongs in the report?' },
+    { id: 'w4', part: 'p3', question: 'Somebody shipped themselves twice what they sold: mistake, intent or normal?' },
+    { id: 'w5', part: 'p3', question: 'Shipments are back to normal: is the spike behind us, or are its consequences still running, and what do we propose?' },
   ],
   missions: [
     /* Про устройство недели и выбор заданий см. комментарии в русской кампании выше. */
@@ -3761,7 +3862,7 @@ const en: StoryCampaign = {
       id: 'day-6-who-is-missing',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Monday, 9:05',
+      place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:05',
       short: 'Mon',
       found: 'Outlets without Nettora can be named one by one. An ordinary join never shows them: they are absent from sales.',
       scenes: { brief: 'desk-gap', reflection: 'absent', hook: 'split' },
@@ -3849,7 +3950,7 @@ const en: StoryCampaign = {
       id: 'day-7-promo-or-price',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Tuesday, 9:20',
+      place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
       short: 'Tue',
       found: 'The brand was not living on discounts: 5.4 million of base sales in 2025 against 1.4 million on promotion.',
       scenes: { brief: 'desk-split-bar', reflection: 'versions-half', hook: 'fold' },
@@ -3945,7 +4046,7 @@ const en: StoryCampaign = {
       id: 'day-8-two-steps',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Wednesday, 9:10',
+      place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:10',
       short: 'Wed',
       found: 'Revenue per outlet does not depend on their count: 3.2 million per outlet in ecom, 21.7 thousand in traditional retail.',
       scenes: { brief: 'desk-per-outlet', reflection: 'channels', hook: 'tables' },
@@ -4027,7 +4128,7 @@ const en: StoryCampaign = {
       id: 'day-9-two-facts',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Thursday, 9:30',
+      place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:30',
       short: 'Thu',
       found: 'A join on a non key field multiplies rows: 4 370 rows of Nettora sales become 43 700.',
       scenes: { brief: 'desk-fanout', reflection: 'counts', hook: 'meeting' },
@@ -4092,7 +4193,7 @@ const en: StoryCampaign = {
       id: 'day-10-supply-chain',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Friday, 9:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:00',
       short: 'Fri',
       found: 'The chain is balanced: roughly as much was shipped as was sold. There was no shortage.',
       scenes: { brief: 'boardroom-supply', reflection: 'absent' },
@@ -4139,7 +4240,7 @@ const en: StoryCampaign = {
       id: 'w2-sat-list-for-ito',
       week: 'w2',
       track: 'sql',
-      place: 'Kaiyo Trading · Week two · Saturday, 10:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Saturday, 10:00',
       short: 'Sat',
       found: 'The list for the field is ready: 27 chain outlets without Nettora since January, and 24 of them carried it in 2025.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -4183,7 +4284,7 @@ const en: StoryCampaign = {
       id: 'day-11-what-they-decide',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Week three · Monday, 9:40',
+      place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:40',
       short: 'Mon',
       found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means a list agreed in advance.',
       scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'definitions' },
@@ -4256,7 +4357,7 @@ const en: StoryCampaign = {
       id: 'day-12-three-answers',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Week three · Tuesday, 10:05',
+      place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 10:05',
       short: 'Tue',
       found: 'An active outlet is a retail one, distributors excluded. A fall is counted year on year.',
       scenes: { brief: 'desk-dispute', reflection: 'contract', hook: 'counts' },
@@ -4333,7 +4434,7 @@ const en: StoryCampaign = {
       id: 'day-13-against-what',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Week three · Wednesday, 9:30',
+      place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:30',
       short: 'Wed',
       found: 'Comparison with a previous period is what LAG does. Without PARTITION BY it sees no boundary between cuts and picks up the tail of the neighbouring one.',
       scenes: { brief: 'desk-lookback', reflection: 'shift', hook: 'dropped' },
@@ -4406,7 +4507,7 @@ const en: StoryCampaign = {
       id: 'day-14-raw-layer',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Week three · Thursday, 9:15',
+      place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:15',
       short: 'Thu',
       found: 'Ichiba and Itiba are one chain under two spellings. Grouping by the name as it comes is not an option.',
       scenes: { brief: 'desk-raw-row', reflection: 'twins' },
@@ -4477,7 +4578,7 @@ const en: StoryCampaign = {
       id: 'day-15-conclusion-first',
       week: 'w3',
       track: 'domain',
-      place: 'Kaiyo Trading · Week three · Friday, 8:50',
+      place: 'Kaiyo Trading · Commercial Analytics · Friday, 8:50',
       short: 'Fri',
       found: 'The conclusion goes first, the depth changes with the decision the reader makes, and bar charts start their axis at zero.',
       scenes: { brief: 'desk-lede', reflection: 'meeting' },
@@ -4549,7 +4650,7 @@ const en: StoryCampaign = {
       id: 'w3-sat-names-nobody-knows',
       week: 'w3',
       track: 'sql',
-      place: 'Kaiyo Trading · Week three · Saturday, 10:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Saturday, 10:00',
       short: 'Sat',
       found: 'A third of the raw export is not recognised by the reference table: every outlet has a twin with stray spaces, and Ichiba has Itiba on top of that.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -4580,7 +4681,7 @@ const en: StoryCampaign = {
         'And about you: a query from a blank page, and you typed every part of it by hand at least twice across two weeks.',
       ],
       hook: [
-        'Three weeks are behind you. The first gave you the tool, the second an investigation, the third everything around them: framing, definition, verification and delivery. The third is what makes someone an analyst, and without the first two it does not happen.',
+        'Four weeks are behind you. The first two gave you the tool and answered what fell and why, the third an investigation, the fourth everything around them: framing, definition, verification and delivery. The fourth is what makes someone an analyst, and without the first three it does not happen.',
         'One case is still open: Setouchi Trading, 2.44. Somebody shipped themselves twice what they sold, and nobody has explained it yet.',
         'Queries are an awkward way to take it apart: it needs series by month, a comparison with the previous year, rolling averages and two tables side by side. SQL can do all of that, but it writes slowly and reads badly. On Monday you pick up a different tool.',
       ],
@@ -4590,7 +4691,7 @@ const en: StoryCampaign = {
       id: 'day-16-another-tool',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Monday, 9:05',
+      place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:05',
       short: 'Mon',
       found: 'A pandas table stays in a variable: one bracket gives a column, two give a table.',
       scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
@@ -4656,7 +4757,7 @@ const en: StoryCampaign = {
       id: 'day-17-masks',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Tuesday, 9:20',
+      place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
       short: 'Tue',
       found: 'Rows are selected by a mask. Conditions in it are joined with & and |, not with the words "and" and "or".',
       scenes: { brief: 'desk-mask', reflection: 'threshold', hook: 'groups' },
@@ -4718,7 +4819,7 @@ const en: StoryCampaign = {
       id: 'day-18-groups',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Wednesday, 9:15',
+      place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:15',
       short: 'Wed',
       found: 'In Q4 2025 Setouchi took 28,203 units, more than twice as much as any other distributor.',
       scenes: { brief: 'desk-index', reflection: 'fold', hook: 'yoy' },
@@ -4795,7 +4896,7 @@ const en: StoryCampaign = {
       id: 'day-19-measures',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Thursday, 9:10',
+      place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:10',
       short: 'Thu',
       found: 'A year earlier the same quarter gave Setouchi 13,341 units, while for the other eleven autumn 2025 came in even lower than the year before.',
       scenes: { brief: 'desk-yoy', reflection: 'factors', hook: 'toolkit' },
@@ -4855,7 +4956,7 @@ const en: StoryCampaign = {
       id: 'day-20-whose-spike',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Friday, 9:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:00',
       short: 'Fri',
       found: 'The Setouchi spike is real orders, neither an error nor demand: the same number of rows, twice the units, and the outlets sold less than the year before.',
       scenes: { brief: 'boardroom-setouchi', reflection: 'versions' },
@@ -4922,7 +5023,7 @@ const en: StoryCampaign = {
       id: 'w4-sat-who-paid',
       week: 'w4',
       track: 'python',
-      place: 'Kaiyo Trading · Week four · Saturday, 10:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Saturday, 10:00',
       short: 'Sat',
       found: 'There was no volume discount: 7.5 yen per unit that autumn, same as always. Setouchi paid its own way that autumn, 2.29 million yen against 1.10 million a year earlier.',
       scenes: { brief: 'office', hook: 'calendar' },
@@ -4963,7 +5064,7 @@ const en: StoryCampaign = {
       id: 'day-21-series',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Monday, 9:10',
+      place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:10',
       short: 'Mon',
       found: 'Since January 2026 Setouchi shipments are back within the usual range: the flow has returned.',
       scenes: { brief: 'desk-series', reflection: 'flow', hook: 'smooth' },
@@ -5031,7 +5132,7 @@ const en: StoryCampaign = {
       id: 'day-22-background',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Tuesday, 9:20',
+      place: 'Kaiyo Trading · Commercial Analytics · Tuesday, 9:20',
       short: 'Tue',
       found: 'Against a rolling average the autumn hump stands apart from two years of ordinary work, and outlet sales do not show it at all.',
       scenes: { brief: 'desk-pair', reflection: 'smooth', hook: 'tables' },
@@ -5103,7 +5204,7 @@ const en: StoryCampaign = {
       id: 'day-23-two-tables',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Wednesday, 9:15',
+      place: 'Kaiyo Trading · Commercial Analytics · Wednesday, 9:15',
       short: 'Wed',
       found: 'merge joins tables on a key and, like JOIN, silently multiplies rows when the key is not unique; validate= turns that into an error.',
       scenes: { brief: 'desk-fanout', reflection: 'join' },
@@ -5165,7 +5266,7 @@ const en: StoryCampaign = {
       id: 'day-24-ratio',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Thursday, 9:10',
+      place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:10',
       short: 'Thu',
       found: 'The Setouchi ratio for Q1 2026 is 1.06: by the yardstick the spike was found with, it is over.',
       scenes: { brief: 'desk-ratio', reflection: 'flow', hook: 'meeting' },
@@ -5222,7 +5323,7 @@ const en: StoryCampaign = {
       id: 'day-25-flow-and-level',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Friday, 9:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Friday, 9:00',
       short: 'Fri',
       found: 'Setouchi shipments returned to normal in January 2026, while the stock has stood at 21 to 22 thousand units since the autumn: five months of sales.',
       scenes: { brief: 'boardroom-ratio', reflection: 'level' },
@@ -5282,7 +5383,7 @@ const en: StoryCampaign = {
       id: 'w5-sat-five-months-of-what',
       week: 'w5',
       track: 'python',
-      place: 'Kaiyo Trading · Week five · Saturday, 10:00',
+      place: 'Kaiyo Trading · Commercial Analytics · Saturday, 10:00',
       short: 'Sat',
       found: 'Five months of stock breaks down into eight brands at 4 to 8 months each and Nettora, which Setouchi outlets no longer sell at all: 1,368 units against 8 sold in half a year.',
       scenes: { brief: 'office', hook: 'toolkit' },
@@ -5318,7 +5419,7 @@ const en: StoryCampaign = {
         'And about you, one last time: the longest blank page of the campaign, two tables, two joins and Friday\'s yardstick, and you typed every part of it by hand at least twice across two weeks.',
       ],
       hook: [
-        'Five weeks are behind you. The first gave you a tool, the second an investigation, the third the work around the numbers: framing, definition, verification and delivery. The fourth gave a second tool and answered where the spike came from, the fifth how it ended and what to do about it.',
+        'Six weeks are behind you. The first two gave you a tool and answered what fell and why, the third an investigation, the fourth the work around the numbers: framing, definition, verification and delivery. The fifth gave a second tool and answered where the spike came from, the sixth how it ended and what to do about it.',
         'Notice how the case closed. Not by finding somebody to blame, because there is nobody to blame here, there is a cancelled promo and a plan nobody recalculated. The analyst was needed here not to catch a partner out, but to tell "the flow is back" apart from "the consequences are over".',
         'Next are the tracks. The campaign showed one slice of each: SQL, the work around numbers, pandas. In the tracks the same material is laid out skill by skill, with repetition and at your own pace, and there it is you who decides what you actually need.',
       ],
@@ -5360,6 +5461,51 @@ export function storyPastCases(campaign: StoryCampaign, missionId: string): Stor
       return { week, weekNumber: i + 1, lastDayId: days[days.length - 1]?.id ?? '' };
     })
     .filter((c) => c.lastDayId);
+}
+
+/** Часть, которой принадлежит день, вместе с её неделями и днями. */
+export function storyPartOf(
+  campaign: StoryCampaign,
+  missionId: string
+): { part: StoryPart; weeks: StoryWeek[]; missions: StoryMission[] } | null {
+  const mission = campaign.missions.find((m) => m.id === missionId);
+  const week = campaign.weeks.find((w) => w.id === mission?.week);
+  const part = campaign.parts.find((p) => p.id === week?.part);
+  if (!part) return null;
+  const weeks = campaign.weeks.filter((w) => w.part === part.id);
+  return { part, weeks, missions: campaign.missions.filter((m) => weeks.some((w) => w.id === m.week)) };
+}
+
+/**
+ * Закрывает ли день свою часть — после итога недели идёт экран финиша.
+ *
+ * Только у частей, у которых финиш написан: последняя часть кончается итогом
+ * кампании (см. StoryPart.finish), и второй экран-конец подряд был бы лишним.
+ */
+export function storyClosesPart(campaign: StoryCampaign, missionId: string): boolean {
+  const own = storyPartOf(campaign, missionId);
+  return !!own && own.part.finish.length > 0 && own.missions[own.missions.length - 1]?.id === missionId;
+}
+
+/** Первый день части, либо null — если такой части нет. */
+export function storyFirstMissionOf(campaign: StoryCampaign, partId: string): StoryMission | null {
+  const week = campaign.weeks.find((w) => w.part === partId);
+  return campaign.missions.find((m) => m.week === week?.id) ?? null;
+}
+
+/**
+ * Сколько недель после этой остаётся в её части.
+ * Обзор недели на брифе понедельника называет конец части, а не кампании:
+ * «ещё 7 недель» на первом дне — то самое «испугался и спрыгнул».
+ */
+export function storyWeeksLeftInPart(
+  campaign: StoryCampaign,
+  missionId: string
+): { left: number; part: StoryPart } | null {
+  const own = storyPartOf(campaign, missionId);
+  const week = campaign.missions.find((m) => m.id === missionId)?.week;
+  if (!own || !week) return null;
+  return { left: own.weeks.length - 1 - own.weeks.findIndex((w) => w.id === week), part: own.part };
 }
 
 /** Неделя, которой принадлежит день, вместе со своими днями и вопросом. */

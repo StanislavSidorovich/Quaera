@@ -33,7 +33,7 @@ import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
 import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, storyPhases, samePhase, type StoryPhase, type StoryStepView } from './ui/StoryMode';
-import { storyCampaign, storyClosesCampaign, storyWeekOf, type StoryMission } from './content/storymode';
+import { storyCampaign, storyClosesCampaign, storyFirstMissionOf, storyWeekOf, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
 import {
   gradeFromAttempt,
@@ -320,6 +320,23 @@ const STORY_MISSION_RENAMED: Record<string, string> = {
   'day-20-flow-and-level': 'day-25-flow-and-level',
 };
 
+/**
+ * Часть, с которой человек вошёл в кампанию, если не с первой: ссылка
+ * «Уже знаю SELECT и JOIN» на главной. Нужна только затем, чтобы бриф первого
+ * дня этой части показал recap вместо папки дела, которой у пришедшего сразу
+ * нет. Отдельный ключ, а не признак в позиции: позиция двигается вперёд,
+ * а вход остаётся тем, чем был. Гасится сбросом вместе с позицией.
+ */
+const STORY_ENTRY_STORAGE_KEY = 'quaera.story.entry';
+
+function readStoryEntryPart(): string | null {
+  try {
+    return localStorage.getItem(STORY_ENTRY_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function readStoryMissionId(): string | null {
   try {
     const saved = localStorage.getItem(STORY_MISSION_STORAGE_KEY);
@@ -349,6 +366,7 @@ function saveStoryMissionId(id: string) {
 function clearStoryMissionId() {
   try {
     localStorage.removeItem(STORY_MISSION_STORAGE_KEY);
+    localStorage.removeItem(STORY_ENTRY_STORAGE_KEY);
   } catch {
     // нечего чистить — значит и не сохранялось
   }
@@ -942,6 +960,7 @@ export default function App() {
    * заново. Поэтому клик по дню меняет экран и не трогает отметку.
    */
   const [storyReachedId, setStoryReachedId] = useState<string | null>(readStoryMissionId);
+  const [storyEntryPart, setStoryEntryPart] = useState<string | null>(readStoryEntryPart);
 
   /**
    * Дни кампании, открытые для возврата: всё до достигнутого включительно.
@@ -1658,6 +1677,7 @@ export default function App() {
     // историю с середины недели.
     clearStoryMissionId();
     setStoryReachedId(null);
+    setStoryEntryPart(null);
     // clearedProgress, а не emptyProgress: метка сброса нужна будущему
     // слиянию копий, чтобы стёртое не вернулось с другого устройства
     // (см. resetAt в srs/store.ts и sync/merge.ts).
@@ -1739,6 +1759,29 @@ export default function App() {
     } catch {
       // см. initialActiveTrack
     }
+  }
+
+  /**
+   * Вход сразу в часть кампании, минуя предыдущие — только пока кампания
+   * не начата (кнопка на главной показывается ровно до первого шага).
+   * Позиция встаёт на первый день части, и дни прошлых частей остаются
+   * открыты для возврата, как любые пройденные (см. storyOpenDayIds).
+   */
+  function openStoryAtPart(partId: string) {
+    if (!storyMissionTrack || storyReachedId !== null) return;
+    const mission = storyFirstMissionOf(storyCampaign(locale), partId);
+    if (!mission || !storyMissions.has(mission.id)) return;
+    try {
+      localStorage.setItem(STORY_ENTRY_STORAGE_KEY, partId);
+    } catch {
+      // без ключа бриф просто покажет пустую папку дела вместо recap
+    }
+    setStoryEntryPart(partId);
+    saveStoryMissionId(mission.id);
+    setStoryReachedId(mission.id);
+    applyStoryTrack(mission.track);
+    setScreen({ name: 'storymode', missionId: mission.id, phase: { kind: 'brief' } });
+    window.scrollTo({ top: 0 });
   }
 
   function openStoryMode() {
@@ -2253,6 +2296,7 @@ export default function App() {
               /* Вход в кампанию — только когда её миссия разрешается в задания. */
               onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
               storyStarted={storyReachedId !== null}
+              onOpenStoryPart={storyMissionTrack ? openStoryAtPart : null}
               /*
                * Незаконченное занятие показываем только на главной его же
                * трека: главная — экран одного трека (его карта, его прогресс,
@@ -2429,6 +2473,7 @@ export default function App() {
               onDeferConsent={() => setConsentDeferred(true)}
               onResumeConsent={() => setConsentDeferred(false)}
               openDayIds={storyOpenDayIds}
+              entryPart={storyEntryPart}
               onOpenDay={(id, phase) => {
                 const day = storyMissions.get(id);
                 if (!day) return;
@@ -3085,6 +3130,7 @@ function Home({
   storyAt,
   onOpenStoryMode,
   storyStarted,
+  onOpenStoryPart,
   resume,
   onResume,
   scrollToChooser,
@@ -3138,6 +3184,8 @@ function Home({
    * человек не начинал.
    */
   storyStarted: boolean;
+  /** Вход сразу в часть кампании (id части); null — как у onOpenStoryMode. */
+  onOpenStoryPart: ((partId: string) => void) | null;
   /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
   storyAt: { at: number; total: number } | null;
   /** Вход в режим истории (эксперимент за `?story`). undefined — миссия не разрешена, ссылку не показываем. */
@@ -3489,6 +3537,12 @@ function Home({
                 <button className="btn" onClick={onOpenStoryMode}>
                   {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
                 </button>
+                {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
+                {!storyStarted && onOpenStoryPart && (
+                  <button type="button" className="story-invite-skip" onClick={() => onOpenStoryPart('p2')}>
+                    {t.storyMode.skipToPart(2)}
+                  </button>
+                )}
               </div>
               <StoryMap />
             </div>
