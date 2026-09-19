@@ -2908,6 +2908,11 @@
         "GROUP BY",
         "brand"
       ],
+      "blankHints": [
+        "",
+        "ключевое слово",
+        "столбец"
+      ],
       "solution": "SELECT brand, COUNT(*) AS sku_count, ROUND(AVG(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\nGROUP BY brand",
       "hints": [
         "Среднее — это AVG(list_price), округление вокруг него не меняется: ROUND(AVG(...), 2).",
@@ -2979,6 +2984,12 @@
         "WHERE",
         "f.week_start >= '2026-01-01'"
       ],
+      "blankHints": [
+        "",
+        "",
+        "ключевое слово",
+        "условие"
+      ],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2026-01-01'\nGROUP BY p.brand\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
@@ -3005,6 +3016,12 @@
         "p.product_id = f.product_id",
         "GROUP BY",
         "p.brand"
+      ],
+      "blankHints": [
+        "",
+        "",
+        "ключевое слово",
+        "столбец"
       ],
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
       "orderMatters": true,

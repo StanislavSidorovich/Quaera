@@ -738,6 +738,23 @@ for (const packId of packs) {
         } else {
           const built = parts.reduce((acc, part, i) => acc + part + (t.blanks[i] ?? ''), '');
           if (built !== t.solution) fail(t.id, 'шаблон с подставленными значениями не совпадает с эталоном');
+
+          /*
+           * Два пропуска подряд без подписи роли — тупик для читателя: слева
+           * и справа от пустой пары нет слов, по которым видно, что вписывать
+           * (ключевое слово и его аргумент? два варианта одного запроса?).
+           * Замечено вживую на `___ ___` в неделе истории; подпись — серый
+           * placeholder в пустом поле (Task.blankHints). Одиночные пропуски
+           * подписи не требуют: их роль читается из соседних слов шаблона.
+           */
+          for (let i = 0; i + 2 < parts.length; i++) {
+            if (!/^[ 	]+$/.test(parts[i + 1])) continue;
+            for (const j of [i, i + 1]) {
+              if (!String(t.blankHints?.[j] ?? '').trim()) {
+                fail(t.id, `пропуски №${i + 1} и №${i + 2} стоят рядом, а у №${j + 1} нет подписи роли (blankHints)`);
+              }
+            }
+          }
         }
 
         /*
@@ -3552,6 +3569,16 @@ function translationPairs(orig, tr) {
       if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`);
         ok = false;
+      }
+      const ruHints = orig.blankHints ?? [];
+      const enHints = t.blankHints ?? [];
+      if (ruHints.some(Boolean) || enHints.length) {
+        const same =
+          ruHints.length === enHints.length && ruHints.every((h, i) => Boolean(h) === Boolean(enHints[i]));
+        if (!same) {
+          fail(`${packId}.en`, `у задания ${t.id} blankHints перевода не повторяют по позициям русские (какие пропуски подписаны, а какие нет)`);
+          ok = false;
+        }
       }
       for (const [where, ru, en] of translationPairs(orig, t)) {
         const lost = lostAnchors(ru, en);

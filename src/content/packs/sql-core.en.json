@@ -1963,6 +1963,11 @@
     },
     {
       "id": "sql-095",
+      "blankHints": [
+        "",
+        "keyword",
+        "column"
+      ],
       "title": "FMCG assortment by brand",
       "brief": "The category manager wants the same FMCG assortment numbers as before, but this time broken out by brand: how many items and what average price.",
       "goal": "For the FMCG division only, return per brand: brand, sku_count (number of SKUs), avg_price (average price rounded to two decimal places).",
@@ -1995,6 +2000,12 @@
     },
     {
       "id": "sql-098",
+      "blankHints": [
+        "",
+        "",
+        "keyword",
+        "condition"
+      ],
       "title": "Revenue by brand since the start of the year",
       "brief": "The commercial director again wants revenue by brand from the start of 2026, but this time without an upper bound on the period: data updates every week, and they want fresh numbers without editing the range each time.",
       "goal": "Return brand and revenue (the sum of revenue from 2026-01-01 through today, rounded to whole numbers), ordered by revenue descending.",
@@ -2006,6 +2017,12 @@
     },
     {
       "id": "sql-099",
+      "blankHints": [
+        "",
+        "",
+        "keyword",
+        "column"
+      ],
       "title": "Wide shelf for the leaders",
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
       "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",

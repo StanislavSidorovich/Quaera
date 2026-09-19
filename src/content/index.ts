@@ -138,6 +138,7 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         predictQuestion: tt.predictQuestion ?? t.predictQuestion,
         orderQuestion: tt.orderQuestion ?? t.orderQuestion,
         hints: tt.hints ?? t.hints,
+        blankHints: tt.blankHints ?? t.blankHints,
         explain: tt.explain ?? t.explain,
         options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
         items: tt.items && t.items ? t.items.map((o, i) => ({ ...o, ...tt.items![i] })) : t.items,

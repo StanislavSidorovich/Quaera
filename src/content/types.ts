@@ -98,6 +98,8 @@ export type TaskStep =
       starter?: string;
       template?: string;
       blanks?: string[];
+      /** См. Task.blankHints. */
+      blankHints?: string[];
       solution: string;
       orderMatters?: boolean;
       hints: string[];
@@ -161,6 +163,14 @@ export interface Task {
   template?: string;
   /** Значения пропусков по порядку — ими шаблон достраивается до solution. */
   blanks?: string[];
+  /**
+   * Подпись роли пропуска (`keyword`, `condition`…) — серый текст в пустом поле,
+   * позиционно к `blanks`, пустая строка — без подписи. Обязательна там, где два
+   * пропуска стоят рядом: контекст слева и справа тогда ничего не говорит о том,
+   * что вписывать (гейт в verify-content). Живёт в переводе, а не в коде: `blanks`
+   * не переводятся, а подпись — проза.
+   */
+  blankHints?: string[];
   /** Эталонный запрос. Ответ считается верным при совпадении результата, а не текста. */
   solution?: string;
   /** Важен ли порядок строк. По умолчанию нет — сравнение идёт как множеств. */
@@ -355,6 +365,8 @@ export interface TaskTranslation {
   /** Вопрос режима order. */
   orderQuestion?: string;
   hints?: string[];
+  /** Позиционно к Task.blankHints. */
+  blankHints?: string[];
   explain?: string;
   /** Порядок обязан совпадать с Task.options — сопоставление позиционное, не по id. */
   options?: TaskOptionTranslation[];

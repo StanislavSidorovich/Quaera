@@ -139,6 +139,7 @@ export function resolveSteps(task: Task): TaskStep[] {
       starter: task.starter,
       template: task.template,
       blanks: task.blanks,
+      blankHints: task.blankHints,
       solution: task.solution ?? '',
       orderMatters: task.orderMatters,
       hints: task.hints,
@@ -1117,6 +1118,7 @@ function StepView({
                 <FillTemplate
                   template={step.template}
                   blanks={draft.blanks}
+                  blankHints={step.blankHints}
                   onChange={(b) => {
                     patch({ blanks: b });
                     // Подсветка относится к прошлой проверке: как только поле
@@ -1244,6 +1246,7 @@ function StepView({
 function FillTemplate({
   template,
   blanks,
+  blankHints,
   onChange,
   disabled,
   wrongIndexes = [],
@@ -1255,6 +1258,8 @@ function FillTemplate({
 }: {
   template: string;
   blanks: string[];
+  /** Подпись роли пустого пропуска — см. Task.blankHints. */
+  blankHints?: string[];
   onChange: (b: string[]) => void;
   disabled?: boolean;
   /** Пропуски, разошедшиеся с эталоном: обводка ведёт глаз к месту ошибки, а не к формуле целиком. */
@@ -1391,15 +1396,17 @@ function FillTemplate({
               // фокус и вставка из панели при этом работают как обычно
               // (тот же приём, что у textarea в CodeEditor).
               inputMode={keyboardOn ? undefined : 'none'}
+              className="fill-blank"
+              placeholder={blankHints?.[i] || undefined}
               spellCheck={false}
               autoCapitalize="none"
               autoCorrect="off"
-              aria-label={t.task.blankAriaLabel(i + 1)}
+              aria-label={blankHints?.[i] ? `${t.task.blankAriaLabel(i + 1)}: ${blankHints[i]}` : t.task.blankAriaLabel(i + 1)}
               // Ошибка помечается не только цветом: цвет один не доходит
               // до тех, кто его не различает, и до чтения с экрана.
               aria-invalid={wrongIndexes.includes(i) || undefined}
               style={{
-                width: `${Math.max(4, (blanks[i] ?? '').length + 2)}ch`,
+                width: `${Math.max(4, (blanks[i] ?? '').length + 2, (blankHints?.[i] ?? '').length + 2)}ch`,
                 font: 'inherit',
                 color: 'var(--text)',
                 background: 'var(--bg-raised)',
