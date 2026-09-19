@@ -28,9 +28,19 @@ export function symbolsFor(track: Track): string[] {
   return track === 'sql' ? SQL_SYMBOLS : PYTHON_SYMBOLS;
 }
 
+/**
+ * Слова текущего уровня идут первыми, прежние — за ними.
+ *
+ * Ряд ограничен по высоте (.accessory в styles.css), и при порядке «от
+ * уровня 1» новые слова всегда оказывались в скрытом четвёртом ряду.
+ * Тема задания — ровно они: в `sql-098` (соединение) `JOIN` и `ON`
+ * лежали за прокруткой, которой на телефоне не видно, а на экране стояли
+ * `SELECT` и `LIMIT`. Прежние слова знакомы и ищутся быстро, новые — нет.
+ */
 export function keywordsFor(track: Track, level: number): string[] {
-  const groups = track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL;
-  return groups.filter((g) => g.upTo <= level).flatMap((g) => g.words);
+  const groups = (track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL).filter((g) => g.upTo <= level);
+  const current = groups[groups.length - 1];
+  return current ? [...current.words, ...groups.slice(0, -1).flatMap((g) => g.words)] : [];
 }
 
 const TOKENS_STORAGE_KEY = 'quaera-tokens';
