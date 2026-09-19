@@ -468,6 +468,34 @@ try {
       m.steps.flatMap((s, i) => (s.intro?.paras ?? []).flatMap((p) => unfencedCodeBlocks(p).map((x) => `${m.id}/шаг ${i + 1}: ${x}`)))
     );
     check(`${label}код в подводках помечен оградой`, unfenced.length === 0, unfenced.join('\n        '));
+
+    /*
+     * Отсылка к другой неделе — по содержанию («когда искали точки без Nettora»),
+     * а не по номеру («на второй неделе», «две недели назад»). Номер недели считает
+     * код по позиции; проза его не знает, и после вставки w1b таких отсылок
+     * соврало больше тридцати, а разрез w2 сломал бы их второй раз. Финиш части
+     * (StoryPart.finish) не проверяется: он говорит о своей же части и меняется
+     * вместе с ней. Межнедельную ссылку по дню недели («Четверговый JOIN») этот
+     * гейт не видит — только чтением. Разбор — docs/analysis/p16-part-2.mjs, раздел 5.
+     */
+    const ORDINAL_WEEK = locale === 'ru'
+      ? /(перв|втор|трет|четв[её]рт|пят|шест|седьм|восьм)[а-яё]* недел|(две|три|четыре|пять|шесть|семь|восемь) недел[а-яё]* (назад|позади)|прошл[а-яё]+ недел|недел[юи] назад/i
+      : /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|last|previous) week\b|\bweek (one|two|three|four|five|six|seven|eight)\b|\b(two|three|four|five|six|seven|eight) weeks (ago|behind)\b/i;
+    const proseOf = (m) => [
+      m.found, ...m.reflection, ...m.hook,
+      ...m.messages.map((x) => x.text),
+      ...m.steps.flatMap((s) => [
+        s.intro?.title, ...(s.intro?.paras ?? []), s.after?.text,
+        ...(s.interlude?.messages ?? []).map((x) => x.text),
+      ]),
+    ].filter(Boolean);
+    const ordinal = campaign.missions.flatMap((m) =>
+      proseOf(m).flatMap((t) => {
+        const hit = t.match(ORDINAL_WEEK);
+        return hit ? [`${m.id}: «${t.slice(Math.max(0, hit.index - 40), hit.index + hit[0].length + 20)}»`] : [];
+      })
+    );
+    check(`${label}проза: отсылки к другим неделям — по содержанию, не по номеру`, ordinal.length === 0, ordinal.join('\n        '));
     const packs = new Map();
     /**
      * Задание локали. Английский пак — накладка из одной прозы: запросов,

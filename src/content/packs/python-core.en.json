@@ -1080,7 +1080,7 @@
         "Stock by brand and sales by brand are two separate calculations, each built the same way as Friday's task: a mask on the distributor, a merge for the brand key, then grouping and summing with .reset_index().",
         "Once both tables are rolled up by brand, an ordinary merge on brand joins them; months of stock uses Friday's same yardstick: stock divided by sales per month (six-month sales divided by 6)."
       ],
-      "explain": "Eight brands hold between 3.8 and 7.7 months of stock; that's the Friday number for every other line of the plan. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost back in week one of the campaign. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
+      "explain": "Eight brands hold between 3.8 and 7.7 months of stock; that's the Friday number for every other line of the plan. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost from January 2026. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
     }
   ]
 }

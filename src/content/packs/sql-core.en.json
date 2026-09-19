@@ -2104,8 +2104,8 @@
       "brief": "Before trusting a raw sales feed, it's worth checking whether the customer directory recognises every outlet name in it. A name the directory doesn't know is an outlet that never makes it into the star-schema report at all.",
       "goal": "From staging_raw_sellout, return customer_name and rows (the number of rows with that name) only for names missing from the dim_customer directory.",
       "hints": [
-        "The same trick from the start of week two: LEFT JOIN from what you're checking to the directory, and \"no match\" is WHERE ... IS NULL on the right table's key column.",
-        "Grouping is from week one: GROUP BY the name, COUNT(*) counts rows in each group. No LIKE needed here: the comparison is exact, on the whole name."
+        "The usual way to find what is missing: LEFT JOIN from what you're checking to the directory, and \"no match\" is WHERE ... IS NULL on the right table's key column.",
+        "Grouping is the usual kind: GROUP BY the name, COUNT(*) counts rows in each group. No LIKE needed here: the comparison is exact, on the whole name."
       ],
       "explain": "59 distinct names from the raw feed (1,102 rows out of 3,110, more than a third) go entirely unrecognised by the outlet directory. LEFT JOIN plus IS NULL on the right table's key is the only way to find what's missing rather than what's there: an INNER JOIN would cut those rows, and the question itself, right away. A name looking ordinary says nothing about whether the directory recognises it: the comparison is on exact text, and a stray space or a different transliteration makes an outlet invisible to the report."
     },
