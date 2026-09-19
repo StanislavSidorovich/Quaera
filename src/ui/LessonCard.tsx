@@ -5,6 +5,7 @@ import type { Lesson } from '../content/types';
 import type { Executor, Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { ResultTable } from './ResultTable';
+import { CodeBlock } from './CodeBlock';
 import { StoryArt } from './StoryArt';
 
 /**
@@ -39,7 +40,7 @@ function RunnableSql({ sql, tone, executor }: { sql: string; tone?: 'wrong'; exe
 
   return (
     <div>
-      <pre className="sql-block">{sql}</pre>
+      <CodeBlock code={sql} />
       <button className="hint-btn" style={{ marginTop: 8 }} onClick={run} disabled={busy}>
         {busy ? t.lesson.running : tone === 'wrong' ? t.lesson.runWrong : t.lesson.runExample}
       </button>
@@ -104,7 +105,7 @@ export function LessonCard({ lesson, executor, runnable = true, onContinue, onPr
          * блок со скроллом уместен как для кода. У остальных жанр решает
          * содержимое — см. ProseBlock выше.
          */}
-        {runnable ? <pre className="sql-block">{lesson.form}</pre> : <ProseBlock text={lesson.form} />}
+        {runnable ? <CodeBlock code={lesson.form} /> : <ProseBlock text={lesson.form} />}
       </div>
 
       {/*

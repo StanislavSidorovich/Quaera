@@ -5,6 +5,7 @@ import type { SchemaDoc } from '../engine/types';
 import { I18nContext, documentTitleFor, useI18n } from '../i18n/context';
 import { en } from '../i18n/en';
 import { SchemaMap } from './SchemaMap';
+import { CodeBlock } from './CodeBlock';
 
 /**
  * «Quaera at a glance» — брошюра для того, кто решает, отдавать ли ссылку
@@ -361,7 +362,7 @@ function TaskFigure({ task }: { task: OverviewTaskFigure }) {
       <p className="overview-task-prompt">
         <b>{task.promptLabel}:</b> {task.prompt}
       </p>
-      <pre className="sql-block">{task.query.join('\n')}</pre>
+      <CodeBlock code={task.query.join('\n')} />
       <table className="overview-task-table">
         <thead>
           <tr>

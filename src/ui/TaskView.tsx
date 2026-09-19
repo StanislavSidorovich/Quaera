@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/context';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
+import { CodeBlock } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 
@@ -546,9 +547,7 @@ export function TaskView({
           {step.kind === 'compute' && (
             <details className="table-doc">
               <summary>{t.task.solutionSummary}</summary>
-              <pre className="sql-block" style={{ border: 'none', borderRadius: 0 }}>
-                {step.solution}
-              </pre>
+              <CodeBlock code={step.solution} style={{ border: 'none', borderRadius: 0 }} />
             </details>
           )}
           <button className="btn" onClick={last ? finish : () => goStep(index + 1)}>
@@ -969,7 +968,7 @@ function StepView({
               {step.scenario ? (
                 <pre className="scenario">{step.scenario}</pre>
               ) : step.predictSql ? (
-                <pre className="sql-block">{step.predictSql}</pre>
+                <CodeBlock code={step.predictSql} />
               ) : carried ? (
                 <>
                   <ResultTable

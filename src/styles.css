@@ -3507,6 +3507,11 @@ pre.sql-block {
   line-height: 1.55;
 }
 
+/* Строка кода в CodeBlock: висячий отступ задаётся инлайн (src/ui/CodeBlock.tsx). */
+.code-line {
+  display: block;
+}
+
 /*
  * Проза внутри карточки приёма — те form/example/wrong треков без
  * исполнителя, что оказались настоящими предложениями: весь model и добрая

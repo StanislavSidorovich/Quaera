@@ -1,6 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
+import { CodeBlock } from './CodeBlock';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
@@ -199,9 +200,7 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
       {splitParaBlocks(pieces ?? [text]).map((block, j) => {
         const plain = block.every((x) => typeof x === 'string') ? block.join('') : null;
         return plain !== null && isFencedCode(plain) ? (
-          <pre className="sql-block story-mode-code" key={j}>
-            {unfenceCode(plain)}
-          </pre>
+          <CodeBlock className="story-mode-code" code={unfenceCode(plain)} key={j} />
         ) : (
           <p className="story-mode-para" key={j}>
             {block}

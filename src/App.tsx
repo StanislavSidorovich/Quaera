@@ -20,6 +20,7 @@ import {
 import { introPage } from './content/intro';
 import { overviewPage } from './content/overview';
 import { DataScreen } from './ui/DataScreen';
+import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
@@ -4997,7 +4998,7 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
                   {answer.runnable ? t.onboarding.compareRunnable : t.onboarding.compareNotRunnable}
                 </span>
               </div>
-              <pre className="sql-block" style={{ marginTop: 8, fontSize: 12.5 }}>{answer.code}</pre>
+              <CodeBlock code={answer.code} style={{ marginTop: 8, fontSize: 12.5 }} />
               <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55 }}>
                 {answer.note[locale]}
               </p>
