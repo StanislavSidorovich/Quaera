@@ -558,7 +558,7 @@ const ru: StoryCampaign = {
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7), то есть «с первого символа взять семь», даёт 2025-03.',
               'Группировать можно не только по колонке, но и по выражению. Чтобы не повторять его дважды, пишут GROUP BY 1 — «по первой колонке в SELECT».',
               'Год в шаблоне уже отобран: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
-              'Как это выглядело вчера, на ассортименте по брендам:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании три пропуска: чем вырезать месяц из даты, чем считать штуки и по чему группировать.',
+              'Как это выглядело вчера, на ассортименте по брендам:\n\n```\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n```\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании три пропуска: чем вырезать месяц из даты, чем считать штуки и по чему группировать.',
             ],
           },
           after: {
@@ -655,7 +655,7 @@ const ru: StoryCampaign = {
             title: 'Две таблицы и общий ключ',
             paras: [
               'Таблицы связаны ключами. В fact_sellout у каждой строки стоит product_id, и ровно такой же product_id есть в dim_product. JOIN подставляет к каждой строке продаж её товар — а вместе с ним бренд, название и цену.',
-              'Пишется это так:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nУсловие после ON и есть «по какому ключу совпадать». Короткие имена f и p — псевдонимы таблиц: без них пришлось бы писать полное имя перед каждой колонкой.',
+              'Пишется это так:\n\n```\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n```\n\nУсловие после ON и есть «по какому ключу совпадать». Короткие имена f и p — псевдонимы таблиц: без них пришлось бы писать полное имя перед каждой колонкой.',
               'И период — с начала года по последнюю неделю в данных. Это одно условие, а не диапазон: WHERE f.week_start >= \'2026-01-01\'. Дата здесь текст вида 2026-03-16, и такой текст сравнивается ровно как дата: всё, что не меньше начала года, и есть «с начала года». Верхняя граница не нужна — данные сами кончаются на последней неделе.',
               'В задании два пропуска: строка соединения и строка отбора.',
             ],
@@ -686,7 +686,7 @@ const ru: StoryCampaign = {
             paras: [
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — это число разных точек, COUNT(DISTINCT customer_id): вторничная функция на новой таблице.',
               'Фильтровать по агрегату WHERE не умеет — он отбирает строки до группировки, а выручка бренда появляется только после неё. Для этого есть HAVING: тот же фильтр, но после GROUP BY.',
-              'Пишется это так:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через AND, — ровно как в WHERE.',
+              'Пишется это так:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через AND, — ровно как в WHERE.',
               'HAVING в задании уже написан. Соединение и группировку по бренду допиши сам — первое ты печатал утром, второе со вторника.',
             ],
           },
@@ -863,8 +863,8 @@ const ru: StoryCampaign = {
             title: 'Соединение, которое никого не теряет',
             paras: [
               'Четверговый JOIN оставляет только совпавшие пары. Если в каком-то канале новинку не продали ни разу, канала в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
-              'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Пишется он так:\n\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n\nТовар, который не продался ни разу, останется в ответе. COALESCE(SUM(f.units), 0) подменяет его пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
-              'Второе, что понадобится, — условие на товар. В fact_sellout товар записан не названием, а номером, поэтому номер сначала достают запросом внутри запроса. Читать его стоит в два хода. Внутренний запрос сам по себе\n\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n\nвернёт одно число — 43. Внешний подставит это число на место скобок, как если бы вместо (SELECT …) было написано 43. Сравнить с названием напрямую, f.product_id = \'Vitanor Forte x30\', не выйдет: номер с текстом не совпадёт ни в одной строке, и запрос без единой ошибки покажет ноль везде.',
+              'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Пишется он так:\n\n```\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n```\n\nТовар, который не продался ни разу, останется в ответе. COALESCE(SUM(f.units), 0) подменяет его пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
+              'Второе, что понадобится, — условие на товар. В fact_sellout товар записан не названием, а номером, поэтому номер сначала достают запросом внутри запроса. Читать его стоит в два хода. Внутренний запрос сам по себе\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nвернёт одно число — 43. Внешний подставит это число на место скобок, как если бы вместо (SELECT …) было написано 43. Сравнить с названием напрямую, f.product_id = \'Vitanor Forte x30\', не выйдет: номер с текстом не совпадёт ни в одной строке, и запрос без единой ошибки покажет ноль везде.',
               'Стоит это условие в ON, а не в WHERE, — почему, покажет третье задание дня. Здесь запрос почти собран: подзапрос уже написан, не хватает трёх слов.',
             ],
           },
@@ -906,7 +906,7 @@ const ru: StoryCampaign = {
             paras: [
               'Теперь по делу: точки, где Nettora не продавалась ни разу. У бренда пять товаров, а не один, поэтому подзапрос в ON вернёт не одно число, а список из пяти, и сравнивают с ним через IN, а не через =: строка продаж подходит, если её товар — любой из пяти.',
               'Прежде чем фильтровать, представь, что соберёт такой LEFT JOIN. У точки, где Nettora продавалась, строк много — по одной на каждую неделю и товар, и sellout_id в них заполнен. У точки, где её не было ни разу, строка ровно одна: слева имя и город, справа пусто во всех колонках fact_sellout. Нужны ровно такие строки.',
-              'Спросить «здесь пусто?» можно только отдельным словом:\n\nf.sellout_id IS NULL\n\nЧерез = не выйдет: пустота не равна ничему, даже самой себе. Проверяют колонку, которая у настоящей продажи пустой не бывает, — надёжнее всего ключ. WHERE в заготовке уже стоит, поэтому условие дописывается после AND, второй WHERE не нужен.',
+              'Спросить «здесь пусто?» можно только отдельным словом:\n\n```\nf.sellout_id IS NULL\n```\n\nЧерез = не выйдет: пустота не равна ничему, даже самой себе. Проверяют колонку, которая у настоящей продажи пустой не бывает, — надёжнее всего ключ. WHERE в заготовке уже стоит, поэтому условие дописывается после AND, второй WHERE не нужен.',
             ],
           },
           after: {
@@ -987,7 +987,7 @@ const ru: StoryCampaign = {
             title: 'Условие внутри строки результата',
             paras: [
               'До сих пор условие отбирало строки: WHERE решал, попадёт строка в ответ или нет. CASE решает другое — что подставить в колонку для этой строки.',
-              'Пишется так:\n\nCASE WHEN channel = \'ecom\' THEN \'Онлайн\'\n     WHEN channel = \'pharmacy\' THEN \'Аптеки\'\n     ELSE \'Розница\'\nEND AS channel_label\n\nВетки проверяются сверху вниз, срабатывает первая подошедшая. ELSE — то, что подставится, если не подошла ни одна.',
+              'Пишется так:\n\n```\nCASE WHEN channel = \'ecom\' THEN \'Онлайн\'\n     WHEN channel = \'pharmacy\' THEN \'Аптеки\'\n     ELSE \'Розница\'\nEND AS channel_label\n```\n\nВетки проверяются сверху вниз, срабатывает первая подошедшая. ELSE — то, что подставится, если не подошла ни одна.',
             ],
           },
           after: {
@@ -1012,7 +1012,7 @@ const ru: StoryCampaign = {
           taskId: 'sql-101',
           intro: {
             paras: [
-              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Вне акции он пуст, и это понедельничное IS NULL. Две суммы в задании различаются ровно этим словом — его и допиши. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
+              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Вне акции он пуст, и это понедельничное IS NULL. Две суммы в задании различаются ровно этим словом — его и допиши. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
             ],
           },
           after: {
@@ -1096,7 +1096,7 @@ const ru: StoryCampaign = {
             scene: 'fold',
             title: 'Промежуточный результат, у которого есть имя',
             paras: [
-              'WITH заводит временную таблицу на время одного запроса. Она считается один раз, у неё есть имя и колонки, и дальше с ней работают как с настоящей:\n\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats',
+              'WITH заводит временную таблицу на время одного запроса. Она считается один раз, у неё есть имя и колонки, и дальше с ней работают как с настоящей:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',
               'Зачем это нужно ровно сегодня: агрегат нельзя поделить на другой агрегат в том же SELECT так, чтобы это осталось читаемым. Свернули один раз — дальше делите обычные колонки. Умножение на 1.0 в делении обязательно: два целых числа SQLite поделит нацело и отбросит остаток.',
             ],
           },
@@ -2857,7 +2857,7 @@ const en: StoryCampaign = {
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7), meaning "from the first character take seven", gives 2025-03.',
               'You can group not only by a column but by an expression. To avoid writing it twice, people write GROUP BY 1, meaning "by the first column in SELECT".',
               'The year is already picked in the template: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
-              'Here is how it looked yesterday, on the assortment by brand:\n\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves three blanks: what cuts the month out of the date, what computes the units, and what to group by.',
+              'Here is how it looked yesterday, on the assortment by brand:\n\n```\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n```\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves three blanks: what cuts the month out of the date, what computes the units, and what to group by.',
             ],
           },
           after: {
@@ -2942,7 +2942,7 @@ const en: StoryCampaign = {
             title: 'Two tables and a shared key',
             paras: [
               'Tables are linked by keys. Every row in fact_sellout carries a product_id, and the very same product_id exists in dim_product. JOIN attaches its product to each sales row, and with it the brand, the name and the price.',
-              'It is written like this:\n\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n\nThe condition after ON is the "match on which key" part. The short names f and p are table aliases: without them you would spell the full table name in front of every column.',
+              'It is written like this:\n\n```\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n```\n\nThe condition after ON is the "match on which key" part. The short names f and p are table aliases: without them you would spell the full table name in front of every column.',
               'And the period, from the start of the year to the last week in the data. That is one condition rather than a range: WHERE f.week_start >= \'2026-01-01\'. The date here is text shaped like 2026-03-16, and such text compares exactly like a date: everything no earlier than the start of the year is "since the start of the year". No upper bound is needed, because the data itself ends at the last week.',
               'The task has two blanks: the join line and the filter line.',
             ],
@@ -2973,7 +2973,7 @@ const en: StoryCampaign = {
             paras: [
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id), Tuesday function on a new table.',
               'WHERE cannot filter by an aggregate. It picks rows before grouping, and a brand revenue only exists after it. That is what HAVING is for: the same filter, but after GROUP BY.',
-              'It is written like this:\n\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by AND, exactly as in WHERE.',
+              'It is written like this:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by AND, exactly as in WHERE.',
               'HAVING is already written in the task. The join and the grouping by brand are yours: the first you typed this morning, the second since Tuesday.',
             ],
           },
@@ -3101,8 +3101,8 @@ const en: StoryCampaign = {
             title: 'A join that loses nobody',
             paras: [
               'Thursday JOIN keeps matched pairs only. If the new SKU never sold in some channel, that channel is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
-              'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n\nA product that never sold stays in the answer. COALESCE(SUM(f.units), 0) turns its emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
-              'The second thing you will need is a condition on the product. fact_sellout records a product by its number, not its name, so the number is fetched first by a query inside the query. Read it in two moves. On its own, the inner query\n\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n\nreturns a single number: 43. The outer query puts that number where the brackets stand, as if 43 were written instead of (SELECT …). Comparing with the name directly, f.product_id = \'Vitanor Forte x30\', gets you nowhere: a number never matches text, and the query shows zero everywhere without a single error.',
+              'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\n```\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n```\n\nA product that never sold stays in the answer. COALESCE(SUM(f.units), 0) turns its emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
+              'The second thing you will need is a condition on the product. fact_sellout records a product by its number, not its name, so the number is fetched first by a query inside the query. Read it in two moves. On its own, the inner query\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nreturns a single number: 43. The outer query puts that number where the brackets stand, as if 43 were written instead of (SELECT …). Comparing with the name directly, f.product_id = \'Vitanor Forte x30\', gets you nowhere: a number never matches text, and the query shows zero everywhere without a single error.',
               'This condition sits in ON and not in WHERE; the third task of the day shows why. Here the query is almost complete: the subquery is written for you, and three words are missing.',
             ],
           },
@@ -3144,7 +3144,7 @@ const en: StoryCampaign = {
             paras: [
               'Now to the case: outlets where Nettora never sold at all. The brand has five products, not one, so the subquery in ON returns a list of five numbers rather than one, and it is compared with IN instead of =: a sales row matches if its product is any of the five.',
               'Before filtering, picture what such a LEFT JOIN collects. An outlet that did sell Nettora gets many rows, one per week and product, each with sellout_id filled in. An outlet that never sold it gets exactly one row: name and city on the left, nothing in any fact_sellout column on the right. Those rows are the ones we want.',
-              'Asking "is this empty?" takes a word of its own:\n\nf.sellout_id IS NULL\n\nEquality will not do, because emptiness equals nothing, itself included. Check a column that is never empty on a real sale; the key is the safest choice. The starter already has WHERE, so the condition goes after AND, with no second WHERE.',
+              'Asking "is this empty?" takes a word of its own:\n\n```\nf.sellout_id IS NULL\n```\n\nEquality will not do, because emptiness equals nothing, itself included. Check a column that is never empty on a real sale; the key is the safest choice. The starter already has WHERE, so the condition goes after AND, with no second WHERE.',
             ],
           },
           after: {
@@ -3202,7 +3202,7 @@ const en: StoryCampaign = {
             title: 'A condition inside the row',
             paras: [
               'So far a condition picked rows: WHERE decided whether a row reached the answer. CASE decides something else, namely what goes into a column for this row.',
-              'It is written like this:\n\nCASE WHEN channel = \'ecom\' THEN \'Online\'\n     WHEN channel = \'pharmacy\' THEN \'Pharmacy\'\n     ELSE \'Retail\'\nEND AS channel_label\n\nBranches are tried top to bottom and the first match wins. ELSE is what lands there when nothing matched.',
+              'It is written like this:\n\n```\nCASE WHEN channel = \'ecom\' THEN \'Online\'\n     WHEN channel = \'pharmacy\' THEN \'Pharmacy\'\n     ELSE \'Retail\'\nEND AS channel_label\n```\n\nBranches are tried top to bottom and the first match wins. ELSE is what lands there when nothing matched.',
             ],
           },
           after: {
@@ -3227,7 +3227,7 @@ const en: StoryCampaign = {
           taskId: 'sql-101',
           intro: {
             paras: [
-              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. Outside a promotion it is empty, which is Monday\'s IS NULL. The two sums in the task differ by exactly that word, so that is what you fill in. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
+              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. Outside a promotion it is empty, which is Monday\'s IS NULL. The two sums in the task differ by exactly that word, so that is what you fill in. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
             ],
           },
           after: {
@@ -3297,7 +3297,7 @@ const en: StoryCampaign = {
             scene: 'fold',
             title: 'An intermediate result with a name',
             paras: [
-              'WITH creates a temporary table for the duration of one query. It is computed once, it has a name and columns, and from there it is used like a real one:\n\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats',
+              'WITH creates a temporary table for the duration of one query. It is computed once, it has a name and columns, and from there it is used like a real one:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',
               'Why it is needed today: one aggregate cannot be divided by another inside the same SELECT and stay readable. Fold once, then divide plain columns. Multiplying by 1.0 in the division is mandatory, because SQLite divides two integers as integers and throws the remainder away.',
             ],
           },

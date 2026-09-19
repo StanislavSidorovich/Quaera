@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import type { Executor, SchemaDoc } from '../engine/types';
+import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
 import { StoryArt } from './StoryArt';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
@@ -158,6 +159,56 @@ function phaseGlossaryTexts(phase: StoryPhase, mission: StoryMission, steps: Sto
   if (phase.kind === 'reflection') return mission.reflection;
   if (phase.kind === 'hook') return mission.hook;
   return [];
+}
+
+/**
+ * Режет размеченный глоссарием абзац на блоки по пустой строке. Работает
+ * по кускам разметки, а не по исходной строке: индекс абзаца в
+ * glossaryRendered остаётся тем же, что у intro.paras, и «первое за день»
+ * посчитано по абзацу целиком. `\n\n` через границу двух кусков не
+ * проходит — между кусками всегда стоит термин, а в нём переводов строк нет.
+ */
+function splitParaBlocks(pieces: ReactNode[]): ReactNode[][] {
+  const blocks: ReactNode[][] = [[]];
+  for (const piece of pieces) {
+    if (typeof piece !== 'string') {
+      blocks[blocks.length - 1].push(piece);
+      continue;
+    }
+    piece.split('\n\n').forEach((part, j) => {
+      if (j > 0) blocks.push([]);
+      if (part) blocks[blocks.length - 1].push(part);
+    });
+  }
+  return blocks;
+}
+
+/**
+ * Абзац подводки. Без примера кода — один <p>, как был: pre-wrap держит
+ * пустые строки внутри прозы сам. С примером — проза отдельными <p>,
+ * а код моноширинным .sql-block (src/content/proseCode.ts): в
+ * пропорциональном шрифте с переносом по словам пример читался как ещё
+ * одна фраза. Внутри кода глоссарий ничего не размечает, поэтому блок
+ * кода — всегда чистая строка.
+ */
+function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undefined }) {
+  if (!text.includes(CODE_FENCE)) return <p className="story-mode-para">{pieces ?? text}</p>;
+  return (
+    <>
+      {splitParaBlocks(pieces ?? [text]).map((block, j) => {
+        const plain = block.every((x) => typeof x === 'string') ? block.join('') : null;
+        return plain !== null && isFencedCode(plain) ? (
+          <pre className="sql-block story-mode-code" key={j}>
+            {unfenceCode(plain)}
+          </pre>
+        ) : (
+          <p className="story-mode-para" key={j}>
+            {block}
+          </p>
+        );
+      })}
+    </>
+  );
 }
 
 export function StoryMode({
@@ -529,9 +580,7 @@ export function StoryMode({
           <>
             {intro.title && <h2>{intro.title}</h2>}
             {intro.paras.map((p, i) => (
-              <p className="story-mode-para" key={i}>
-                {glossaryRendered[i] ?? p}
-              </p>
+              <StoryPara key={i} text={p} pieces={glossaryRendered[i]} />
             ))}
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}

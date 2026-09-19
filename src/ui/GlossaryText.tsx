@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { GLOSSARY, type GlossaryTerm } from '../content/glossary';
+import { fencedCodeRanges } from '../content/proseCode';
 import { useI18n, type Locale } from '../i18n/context';
 
 /**
@@ -56,6 +57,11 @@ function matcherFor(locale: Locale): Matcher {
  * «первая ли это встреча термина» смотрит и на неё, и на термины, уже
  * встреченные раньше в этой же строке (одна строка может назвать «точку»
  * дважды — подсвечивается только первая).
+ *
+ * Пример кода в ограде (src/content/proseCode.ts) не размечается: английские
+ * термины совпадают с именами колонок (`f.units`, `promo_id`), и кнопка
+ * посреди запроса не только мешала бы читать код — она засчитала бы термин
+ * показанным, и в прозе ниже он остался бы без подчёркивания.
  */
 export function annotateGlossary(
   text: string,
@@ -63,6 +69,7 @@ export function annotateGlossary(
   locale: Locale
 ): { pieces: ReactNode[]; used: string[] } {
   const { byLower, regex } = matcherFor(locale);
+  const code = fencedCodeRanges(text);
   const pieces: ReactNode[] = [];
   const used: string[] = [];
   const usedHere = new Set<string>();
@@ -74,6 +81,8 @@ export function annotateGlossary(
     const matchedText = m[0];
     const term = byLower.get(matchedText.toLowerCase());
     if (!term) continue;
+    const at = m.index;
+    if (code.some(([from, to]) => at >= from && at < to)) continue;
     if (m.index > last) pieces.push(text.slice(last, m.index));
     if (shownAlready.has(term.id) || usedHere.has(term.id)) {
       pieces.push(matchedText);

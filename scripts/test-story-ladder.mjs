@@ -444,17 +444,30 @@ function reportDensity(campaign, taskOf) {
 
 try {
   execSync(
-    `npx tsc "${path.join(root, 'src/content/storymode.ts')}" ` +
+    `npx tsc "${path.join(root, 'src/content/storymode.ts')}" "${path.join(root, 'src/content/proseCode.ts')}" ` +
       `--target ES2020 --module ES2020 --moduleResolution bundler ` +
       `--jsx react-jsx --rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
   );
 
   const { storyCampaign } = await import(pathToFileURL(path.join(outDir, 'content', 'storymode.js')).href);
+  const { unfencedCodeBlocks } = await import(pathToFileURL(path.join(outDir, 'content', 'proseCode.js')).href);
 
   for (const locale of ['ru', 'en']) {
     const campaign = storyCampaign(locale);
     const label = `${locale}: `;
+
+    /*
+     * Пример кода в подводке помечен оградой — иначе экран покажет его
+     * пропорциональным шрифтом с переносом по словам, как ещё одну фразу,
+     * и ничего при этом не упадёт. Правило и почему пометка, а не вывод
+     * из текста, — src/content/proseCode.ts; экран решает по ограде,
+     * здесь только ловится забытая.
+     */
+    const unfenced = campaign.missions.flatMap((m) =>
+      m.steps.flatMap((s, i) => (s.intro?.paras ?? []).flatMap((p) => unfencedCodeBlocks(p).map((x) => `${m.id}/шаг ${i + 1}: ${x}`)))
+    );
+    check(`${label}код в подводках помечен оградой`, unfenced.length === 0, unfenced.join('\n        '));
     const packs = new Map();
     /**
      * Задание локали. Английский пак — накладка из одной прозы: запросов,
