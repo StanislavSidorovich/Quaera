@@ -1941,6 +1941,11 @@ a.btn {
   display: none;
 }
 
+/* Чипы таблиц над кодом (TaskView.tsx): только там, где «Условие» и «Код» — разные вкладки. */
+.work-tables {
+  display: none;
+}
+
 @media (max-width: 1023px) {
   .tabs.task-mobile-tabs {
     display: flex;
@@ -1956,6 +1961,14 @@ a.btn {
     display: block;
     width: 100%;
     margin-top: 16px;
+  }
+
+  .work-tables {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
   }
 }
 

@@ -542,6 +542,8 @@ export function TaskView({
         carried={carried}
         carriedIsReference={carriedIsReference}
         panelWords={panelWords}
+        tables={tables}
+        onOpenSchema={onOpenSchema}
       />
 
       {stepDraft.solved && (
@@ -605,6 +607,8 @@ function StepView({
   carried,
   carriedIsReference,
   panelWords,
+  tables,
+  onOpenSchema,
 }: {
   task: Task;
   step: TaskStep;
@@ -620,6 +624,9 @@ function StepView({
   carriedIsReference: boolean;
   /** См. panelWords у TaskView. */
   panelWords?: string[];
+  /** Таблицы задания (taskTables) — для строки над кодом на узком экране. */
+  tables: string[];
+  onOpenSchema: (table?: string) => void;
 }) {
   const { t, locale } = useI18n();
   const [running, setRunning] = useState(false);
@@ -1129,6 +1136,26 @@ function StepView({
               {workGoal && (
                 <div className="goal" style={{ marginBottom: 12 }}>
                   {workGoal}
+                </div>
+              )}
+              {/*
+               * На узком экране «Условие» и «Код» — разные вкладки, и чипы таблиц
+               * с кнопкой схемы остаются на первой: печатающий не видит, из чего
+               * выбирает, и не знает, что колонки лежат в схеме. Строка повторяет
+               * те же чипы над кодом; на ноутбуке её нет — обе карточки рядом
+               * (.work-tables в styles.css). Имён колонок здесь нет намеренно:
+               * их человек берёт из схемы сам, иначе пропуск выдан готовым.
+               */}
+              {!task.scenario && (
+                <div className="work-tables">
+                  {tables.map((name) => (
+                    <button key={name} className="table-chip" onClick={() => onOpenSchema(name)}>
+                      <code>{name}</code>
+                    </button>
+                  ))}
+                  <button className="pill" onClick={() => onOpenSchema()}>
+                    {t.task.schemaBtn}
+                  </button>
                 </div>
               )}
               {step.mode === 'fill' && step.template ? (
