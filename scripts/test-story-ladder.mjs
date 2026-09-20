@@ -515,6 +515,27 @@ try {
       const unknown = (p1.finishMap ?? []).filter((n) => !names.has(n));
       check(`${label}финиш части 1: подсвеченные таблицы есть в схеме`, !!p1.finishMap?.length && unknown.length === 0,
         `finishMap пуст или назвал несуществующие таблицы: ${unknown.join(', ')}`);
+
+      /*
+       * Письмо на финале кампании. Каждое число в нём цитата: оно обязано
+       * встречаться в уже написанных днях (находки, реплики, разборы, итоги
+       * частей), иначе письмо однажды расходится с делом, о котором говорит.
+       * Число недель сверяется с кампанией, как число таблиц выше.
+       */
+      const letterText = [...campaign.letter.lead, ...campaign.letter.record, ...campaign.letter.closing].join('\n');
+      const rest = JSON.stringify({ missions: campaign.missions, parts: campaign.parts });
+      const nums = [...new Set(letterText.match(/\d[\d\u00a0 ,.]*\d|\d/g) ?? [])].map((x) => x.trim());
+      const orphan = nums.filter((n) => !rest.includes(n));
+      check(`${label}письмо: каждое число процитировано из кампании`, nums.length >= 6 && orphan.length === 0,
+        `нет в кампании: ${orphan.join(', ') || '(чисел меньше шести — регулярка сломалась)'}`);
+      const weekWords = {
+        ru: ['одну', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять', 'десять'],
+        en: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'],
+      }[locale];
+      check(`${label}письмо: «${weekWords[campaign.weeks.length - 1]} недель» совпадает с числом недель кампании (${campaign.weeks.length})`,
+        campaign.letter.lead[0].toLowerCase().includes(weekWords[campaign.weeks.length - 1]),
+        'число недель в первом абзаце письма не совпадает с campaign.weeks');
+
       const i18nSrc = readFileSync(path.join(root, 'src/i18n', locale + '.ts'), 'utf8');
       const btn = [...i18nSrc.matchAll(/schemaBtn: '([^']+)'/g)].pop()?.[1];
       check(`${label}день 1: кнопка справки названа как в интерфейсе`, !!btn && manager.includes(btn),

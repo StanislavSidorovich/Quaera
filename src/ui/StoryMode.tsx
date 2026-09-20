@@ -61,7 +61,9 @@ export type StoryPhase =
   | { kind: 'reflection' }
   | { kind: 'summary' }
   | { kind: 'finish' }
-  | { kind: 'hook' };
+  | { kind: 'hook' }
+  /** Письмо о переводе в штат: только после крючка последнего дня кампании. */
+  | { kind: 'letter' };
 
 /**
  * Порядок экранов дня — единственный источник правды о ходе миссии.
@@ -92,6 +94,7 @@ export function storyPhases(campaign: StoryCampaign, mission: StoryMission): Sto
   if (storyClosesWeek(campaign, mission.id)) phases.push({ kind: 'summary' });
   if (storyClosesPart(campaign, mission.id)) phases.push({ kind: 'finish' });
   phases.push({ kind: 'hook' });
+  if (storyClosesCampaign(campaign, mission.id)) phases.push({ kind: 'letter' });
   return phases;
 }
 
@@ -730,6 +733,10 @@ export function StoryMode({
                     ? t.storyMode.nextWeek
                     : t.storyMode.nextMission}
               </button>
+            ) : after?.kind === 'letter' ? (
+              <button type="button" className="btn" onClick={goNext}>
+                {t.storyMode.next}
+              </button>
             ) : (
               <>
                 <p className="story-mode-tbc">{t.storyMode.toBeContinued}</p>
@@ -738,6 +745,39 @@ export function StoryMode({
                 </button>
               </>
             )}
+          </>
+        )}
+
+        {phase.kind === 'letter' && (
+          <>
+            <h2>{campaign.letter.title}</h2>
+            <div className="story-letter">
+              <p className="story-letter-subject">{campaign.letter.subject}</p>
+              {campaign.letter.lead.map((p, i) => (
+                <p className="story-mode-para" key={`lead-${i}`}>
+                  {p}
+                </p>
+              ))}
+              <p className="story-mode-para">{campaign.letter.recordLead}</p>
+              <ul className="story-letter-record">
+                {campaign.letter.record.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+              {campaign.letter.closing.map((p, i) => (
+                <p className="story-mode-para" key={`closing-${i}`}>
+                  {p}
+                </p>
+              ))}
+              <p className="story-letter-signature">
+                {campaign.letter.signature.map((line, i) => (
+                  <span key={i}>{line}</span>
+                ))}
+              </p>
+            </div>
+            <button type="button" className="btn secondary" onClick={onExit}>
+              {t.storyMode.finish}
+            </button>
           </>
         )}
       </div>

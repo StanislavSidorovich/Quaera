@@ -332,8 +332,28 @@ export interface StoryPart {
   recap: string[];
 }
 
+/**
+ * Письмо на финале кампании: перевод в штат. Другой жанр, чем финиш части:
+ * тот говорит, что вы теперь умеете, письмо об умениях не говорит вовсе —
+ * оно говорит, что дело закрыто. Каждое число цитируется из уже написанных
+ * дней (их сверяет test-story-ladder), не сочиняется заново. Имени человека
+ * в письме нет намеренно: спрашивать его на эмоциональном пике — форма
+ * посреди церемонии.
+ */
+export interface StoryLetter {
+  title: string;
+  subject: string;
+  lead: string[];
+  recordLead: string;
+  /** Пункты списка «что за вами записано»; отдельной строкой каждый. */
+  record: string[];
+  closing: string[];
+  signature: string[];
+}
+
 export interface StoryCampaign {
   parts: StoryPart[];
+  letter: StoryLetter;
   weeks: StoryWeek[];
   missions: StoryMission[];
 }
@@ -374,6 +394,22 @@ const ru: StoryCampaign = {
       ],
     },
   ],
+  letter: {
+    title: 'Стажировка закрыта',
+    subject: 'Тема: перевод в штат',
+    lead: ['Семь недель назад вы пришли на стажировку и первым делом читали прайс. Сегодня вы закрыли второе дело и один месячный отчёт.'],
+    recordLead: 'Что за вами записано:',
+    record: [
+      'падение Nettora настоящее: 9 858 штук за январь–июнь против 20 250 и 20 740 в те же месяцы двух прошлых лет;',
+      'причина — полка, а не спрос: 37 точек вместо 79, в оставшихся берут по-прежнему;',
+      'месячный отчёт по бренду считается по вашему определению, а не на глаз;',
+      'осенний всплеск Setouchi — настоящие заказы, оплаченные им самим: 28 203 штуки против 13 341 годом раньше, 2.29 млн ¥ против 1.10. Поток вернулся в январе, а запас разойдётся не весь.',
+    ],
+    closing: [
+      'С понедельника вы аналитик коммерческого отдела, без приставки «стажёр». Работы по образцу у нас больше нет: дальше вопросы приходят без готового ответа, и это ровно то, чему вы здесь учились.',
+    ],
+    signature: ['Ваш руководитель', 'Коммерческая аналитика, Kaiyo Trading'],
+  },
   weeks: [
     { id: 'w1', part: 'p1', question: 'Продажи Nettora правда упали — или это сезон?' },
     { id: 'w1b', part: 'p1', question: 'Потеряли спрос или полку — и чья это проблема?' },
@@ -3369,6 +3405,22 @@ const en: StoryCampaign = {
       ],
     },
   ],
+  letter: {
+    title: 'The internship is over',
+    subject: 'Subject: moving you onto the team',
+    lead: ['Seven weeks ago you arrived as an intern and the first thing you did was read the price list. Today you closed your second case and a monthly report.'],
+    recordLead: 'What is on your record:',
+    record: [
+      'the Nettora fall is real: 9,858 units from January to June against 20,250 and 20,740 in the same months of the two previous years;',
+      'the cause is the shelf and not demand: 37 outlets instead of 79, and the ones left buy as before;',
+      'the monthly report for the brand is calculated by your definition rather than by eye;',
+      'the autumn spike at Setouchi is real orders that Setouchi paid for itself: 28,203 units against 13,341 a year earlier, 2.29m yen against 1.10. The flow came back in January, and not all of that stock will move.',
+    ],
+    closing: [
+      'From Monday you are an analyst in the commercial team, with no "intern" in front of it. There is no work left here that follows a template: from now on the questions arrive without an answer attached, and that is exactly what you have been learning.',
+    ],
+    signature: ['Your manager', 'Commercial analytics, Kaiyo Trading'],
+  },
   weeks: [
     { id: 'w1', part: 'p1', question: 'Did Nettora sales really fall, or is it just the season?' },
     { id: 'w1b', part: 'p1', question: 'Lost demand or lost shelf, and whose problem is it?' },

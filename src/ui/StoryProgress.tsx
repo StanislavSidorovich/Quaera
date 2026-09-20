@@ -73,7 +73,7 @@ export function StoryProgress({
    */
   const stepIndex =
     phase.kind === 'intro' || phase.kind === 'task' || phase.kind === 'interlude' ? phase.step : null;
-  const closing = phase.kind === 'reflection' || phase.kind === 'summary' || phase.kind === 'finish' || phase.kind === 'hook';
+  const closing = phase.kind === 'reflection' || phase.kind === 'summary' || phase.kind === 'finish' || phase.kind === 'hook' || phase.kind === 'letter';
 
   return (
     <div className="story-progress">
@@ -132,7 +132,7 @@ export function StoryProgress({
           {closing
             ? phase.kind === 'finish'
               ? t.storyMode.partDone
-              : phase.kind === 'summary'
+              : phase.kind === 'summary' || phase.kind === 'letter'
                 ? storyClosesCampaign(campaign, mission.id)
                   ? t.storyMode.campaignDone
                   : t.storyMode.weekDone
