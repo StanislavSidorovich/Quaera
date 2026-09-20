@@ -5603,16 +5603,35 @@ details.story-known > summary small {
  * явная) гасит светлое утро слоем `filter`, светлая оставляет как есть.
  */
 .story-photo {
-  aspect-ratio: 16 / 7;
-  max-height: 220px;
+  /*
+   * Отношение сторон — родное для файла (1024x572), поэтому кадр стоит целиком:
+   * обрезка `cover` в полосу 16/7 съедала потолок и ближний стул, то есть часть
+   * самой сцены. На телефоне ширина колонки как раз даёт эту пропорцию,
+   * и поля по бокам не появляются.
+   */
+  position: relative;
+  aspect-ratio: 1024 / 572;
+}
+
+/*
+ * Поля по бокам на широком экране: тот же кадр, растянутый по ширине и
+ * размытый. Фон продолжает сцену её собственными цветами, поэтому кадр
+ * читается как кадр, а не как картинка в рамке посреди пустого блока.
+ */
+.story-photo::before {
+  content: '';
+  position: absolute;
+  inset: -8%;
+  background: var(--story-photo) center / cover no-repeat;
+  filter: blur(18px) saturate(0.85) brightness(0.72);
 }
 
 .story-photo img {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 62%;
+  object-fit: contain;
   filter: brightness(0.82);
 }
 
@@ -5620,10 +5639,18 @@ details.story-known > summary small {
   :root:not(.theme-dark) .story-photo img {
     filter: none;
   }
+
+  :root:not(.theme-dark) .story-photo::before {
+    filter: blur(18px) saturate(0.85) brightness(1.02);
+  }
 }
 
 :root.theme-light .story-photo img {
   filter: none;
+}
+
+:root.theme-light .story-photo::before {
+  filter: blur(18px) saturate(0.85) brightness(1.02);
 }
 
 .story-art .art-paper { fill: var(--art-paper); }
@@ -5816,10 +5843,15 @@ details.story-known > summary small {
     margin-inline: auto;
   }
 
-  /* Кадр на ширину колонки: 16/7 с потолком в 220px оставлял его узким пятном. */
+  /*
+   * Кадр на ширину колонки. В родной пропорции он занял бы на 920px больше
+   * пятисот пикселей — втрое выше схем остальных дней (у них потолок 170px).
+   * Поэтому высота фиксированная, картинка внутри вписывается целиком,
+   * а разницу до края колонки забирает размытый фон из того же кадра.
+   */
   .story-column .story-photo {
-    aspect-ratio: 3 / 1;
-    max-height: none;
+    aspect-ratio: auto;
+    height: 300px;
   }
 
   /*

@@ -165,9 +165,12 @@ const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
  * читаться и без картинки, поэтому `alt` пустой, а сама картинка `aria-hidden`.
  */
 export function StoryPhoto({ frame }: { frame: 'morning' | 'evening' }) {
+  const src = `/story/desk-${frame}.webp`;
+  // Тот же файл уходит вторым слоем в фон: на широком экране кадр стоит целиком,
+  // а поля по бокам заполняет его же размытое продолжение, а не обрезка.
   return (
-    <div className="story-art story-photo" aria-hidden>
-      <img src={`/story/desk-${frame}.webp`} alt="" width={1024} height={572} loading="lazy" decoding="async" />
+    <div className="story-art story-photo" style={{ ['--story-photo' as string]: `url(${src})` }} aria-hidden>
+      <img src={src} alt="" width={1024} height={572} loading="lazy" decoding="async" />
     </div>
   );
 }
