@@ -1422,7 +1422,12 @@ function FillTemplate({
         // до тех, кто его не различает, и до чтения с экрана.
         aria-invalid={wrongIndexes.includes(i) || undefined}
         style={{
-          width: `${Math.max(4, (blanks[i] ?? '').length + 2, (blankHints?.[i] ?? '').length + 2)}ch`,
+          // Растёт с текстом, но не шире строки кода: длинное значение
+          // прокручивается внутри поля, а не уводит поле за край блока
+          // (там его обрезает overflow-x, и начала уже не видно).
+          boxSizing: 'border-box',
+          maxWidth: '100%',
+          width: `calc(${Math.max(4, (blanks[i] ?? '').length + 2, (blankHints?.[i] ?? '').length + 2)}ch + 14px)`,
           font: 'inherit',
           color: 'var(--text)',
           background: 'var(--bg-raised)',
