@@ -38,13 +38,17 @@ and translated to English: interface, tasks, technique cards.
 | Data model and BI | 77 | 19 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) |
 | pandas for analysts | 61 | 14 | The code runs in Python (Pyodide) |
 
-**Story mode — an analyst's work week.** Five six-day weeks, thirty
-days: a client brings a question in the morning, you bring back a finding by
-evening. Techniques are introduced exactly where the work needs them, not
-in a syllabus order, and a week can cross tracks — the third one moves
-between the profession track and SQL, the fourth and fifth run on pandas. Marked
-in the app as an early prototype. Alongside it runs a standalone story
-line through each track, written out for all four.
+**Story mode — an analyst's work week.** Seven six-day weeks, forty-two
+days, in three parts: an intern's first two weeks (SELECT, filters, joins),
+three weeks as an analyst (LEFT JOIN, missing values, CASE, CTEs, defining
+a metric) and two weeks in pandas. A client brings a question in the
+morning, you bring back a finding by evening. Techniques are introduced
+exactly where the work needs them, not in a syllabus order, and a week can
+cross tracks — one moves between the profession track and SQL, the last two
+run on pandas. Part 1 ends with a named result and a map of the data; if you
+already know SELECT and JOIN you can enter at part 2, and at part 3 if you
+know SQL and want pandas. Marked in the app as Beta. Alongside it runs
+a standalone story line through each track, written out for all four.
 
 ![Story mode: Monday of the first week, a brief from the sales director](docs/screenshots/03-story.png)
 
@@ -79,7 +83,7 @@ you know without explaining anything out loud first.
 
 ## Where it gets you
 
-What the five-week campaign gets you to, in five verbs:
+What the seven-week campaign gets you to, in five verbs:
 
 - **Ask** — turning "build me a dashboard" into a question with a defined
   metric (profession track).
@@ -224,7 +228,7 @@ it to the home screen from there.
 | `npm run dev` | Dev server |
 | `npm run build` | Type check, production build, service worker |
 | `npm run gen:data` | Rebuild the dataset |
-| `npm run verify` | All 15 gates: dataset, content, spaced-repetition scheduler, progress merge, chart rules, schema layout, English prose, text-based diff for DAX, storage migration, cross-check between the two executors, push-notification schedule, CSS column widths, the story line, the story-mode ladder, and the genre of technique-card blocks |
+| `npm run verify` | All 16 gates: dataset, content, spaced-repetition scheduler, progress merge, chart rules, schema layout, English prose, text-based diff for DAX, storage migration, cross-check between the two executors, push-notification schedule, CSS column widths, the story line, the story-mode ladder, the genre of technique-card blocks, and the README's numbers against the content packs |
 
 ### If you fork it: account and sync
 
