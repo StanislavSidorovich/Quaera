@@ -496,7 +496,7 @@ export function StoryMode({
       : null;
 
   return (
-    <>
+    <div className="story-column">
       <StoryProgress
           campaign={campaign}
           mission={mission}
@@ -782,6 +782,6 @@ export function StoryMode({
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
