@@ -25,8 +25,21 @@ import { LAYOUT, buildSchemaLayout } from './schemaLayout';
 export function SchemaMap({
   doc,
   onOpenTable,
+  highlight,
+  legend = true,
 }: {
   doc: SchemaDoc;
+  /**
+   * Подсветить названные таблицы обычным цветом, остальные приглушить
+   * (финиш части: «вот где вы были»). Без пропа все узлы равны.
+   */
+  highlight?: string[];
+  /**
+   * Легенда под картой. На финише части её нет: четыре абзаца про виды
+   * линий выталкивали кнопку «Дальше» на третий экран телефона, а человеку
+   * там нужна форма целиком, не разбор стрелок (он есть на экране «Данные»).
+   */
+  legend?: boolean;
   /**
    * Раскрыть и показать таблицу в списке ниже. Необязателен: в брошюре
    * `?overview` списка таблиц нет вовсе, и раскрывать нечего. Тогда узлы
@@ -39,6 +52,7 @@ export function SchemaMap({
   const { t } = useI18n();
   const map = useMemo(() => buildSchemaLayout(doc), [doc]);
   const open = onOpenTable;
+  const lit = highlight ? new Set(highlight) : null;
 
   return (
     <>
@@ -101,7 +115,7 @@ export function SchemaMap({
           {map.edges.map((e) => (
             <path
               key={`${e.from}->${e.to}`}
-              className={`schema-edge ${e.kind}`}
+              className={`schema-edge ${e.kind}${lit && !(lit.has(e.from) && lit.has(e.to)) ? ' is-dim' : ''}`}
               d={e.path}
               markerEnd={`url(#${e.kind === 'star' ? 'qm-arrow-star' : 'qm-arrow-snow'})`}
             />
@@ -110,7 +124,7 @@ export function SchemaMap({
           {map.nodes.map((n) => (
             <g
               key={n.table}
-              className={`schema-node group-${n.group}${open ? '' : ' is-static'}`}
+              className={`schema-node group-${n.group}${open ? '' : ' is-static'}${lit && !lit.has(n.table) ? ' is-dim' : ''}`}
               {...(open
                 ? {
                     role: 'button',
@@ -152,19 +166,21 @@ export function SchemaMap({
        * стоит уметь прочитать. Не подписи к цветам, а короткие фразы
        * о том, что связь означает.
        */}
-      <dl className="schema-map-legend">
-        {[
-          ['star', t.data.mapLegendStar],
-          ['snowflake', t.data.mapLegendSnowflake],
-          ['self', t.data.mapLegendSelf],
-          ['standalone', t.data.mapLegendStandalone],
-        ].map(([kind, text]) => (
-          <div key={kind}>
-            <dt className={`schema-legend-mark ${kind}`} aria-hidden />
-            <dd>{text}</dd>
-          </div>
-        ))}
-      </dl>
+      {legend && (
+        <dl className="schema-map-legend">
+          {[
+            ['star', t.data.mapLegendStar],
+            ['snowflake', t.data.mapLegendSnowflake],
+            ['self', t.data.mapLegendSelf],
+            ['standalone', t.data.mapLegendStandalone],
+          ].map(([kind, text]) => (
+            <div key={kind}>
+              <dt className={`schema-legend-mark ${kind}`} aria-hidden />
+              <dd>{text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </>
   );
 }

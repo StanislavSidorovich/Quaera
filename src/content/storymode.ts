@@ -318,6 +318,13 @@ export interface StoryPart {
    */
   finish: string[];
   /**
+   * Таблицы, которые подсвечены на карте данных под финишем: те, в которых
+   * человек проработал часть. Какие именно — решение контента, а не экрана.
+   * Схема-звезда осмысленна только после JOIN, поэтому карта живёт здесь,
+   * а не в понедельнике.
+   */
+  finishMap?: string[];
+  /**
    * Что нужно знать из прошлых частей, если начал сразу с этой: 3–4 строки
    * на брифе её первого дня вместо папки дела, которой у пришедшего сразу
    * нет. У первой части пусто — перед ней ничего не было.
@@ -336,9 +343,11 @@ const ru: StoryCampaign = {
     {
       id: 'p1',
       title: 'Стажёр',
+      finishMap: ['dim_product', 'fact_sellout', 'dim_customer', 'dim_date'],
       finish: [
         'Две недели позади. Вы достаёте данные из таблиц, группируете, соединяете таблицы и отсекаете лишнее — и на этом ответили директору на два вопроса: падение настоящее, а причина в потерянной полке, не в спросе.',
         'Осталось то, что этим инструментом уже не взять. Освободившиеся точки кто-то занял, но обычное соединение не показывает пустоту: нужны пустые значения, условия внутри запроса и запросы из запросов. Это часть «Аналитик».',
+        'И посмотрите, где вы были. Вот наши данные целиком, все тринадцать таблиц. Подсвечены четыре, в которых вы работали эти две недели: прайс, продажи, точки и календарь. Остальные устроены так же — справочник или факт, — и каждая подойдёт, когда её спросят.',
       ],
       recap: [],
     },
@@ -3329,9 +3338,11 @@ const en: StoryCampaign = {
     {
       id: 'p1',
       title: 'Intern',
+      finishMap: ['dim_product', 'fact_sellout', 'dim_customer', 'dim_date'],
       finish: [
         'Two weeks behind you. You pull data from tables, group it, join tables and cut out what is not needed, and with that you answered the director on two questions: the fall is real, and the cause is a lost shelf, not lost demand.',
         'What is left is what this toolkit cannot reach. Somebody took the freed outlets, but an ordinary join does not show an absence: you need empty values, conditions inside a query and queries made of queries. That is the Analyst part.',
+        'And look at where you have been. This is all of our data, thirteen tables. The four you worked in these two weeks are highlighted: the price list, sales, outlets and the calendar. The rest are built the same way, a directory or a fact, and each one turns up when it is asked for.',
       ],
       recap: [],
     },

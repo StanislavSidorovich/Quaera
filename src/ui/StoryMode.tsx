@@ -6,6 +6,7 @@ import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
 import { StoryArt } from './StoryArt';
+import { SchemaMap } from './SchemaMap';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
   storyClosesCampaign,
@@ -696,6 +697,11 @@ export function StoryMode({
                 {p}
               </p>
             ))}
+            {inPart.part.finishMap && schema && (
+              <div style={{ marginTop: 20 }}>
+                <SchemaMap doc={schema} highlight={inPart.part.finishMap} legend={false} />
+              </div>
+            )}
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}
             </button>

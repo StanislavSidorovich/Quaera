@@ -4129,6 +4129,12 @@ table.sample td.null {
   stroke-dasharray: 5 4;
 }
 
+/* Приглушены таблицы вне подсветки (финиш части): цвет тот же, вес меньше. */
+.schema-node.is-dim,
+.schema-edge.is-dim {
+  opacity: 0.4;
+}
+
 .schema-node-self {
   font-size: 13px;
   fill: var(--text-dim);

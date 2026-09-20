@@ -507,6 +507,14 @@ try {
       const manager = campaign.missions.find((m) => m.id === 'day-1-first-day').messages[1].text;
       check(`${label}день 1: число таблиц в реплике руководителя — ${nTables}`, !!word && manager.toLowerCase().includes(word),
         `в schema.json ${nTables} таблиц (${word ?? 'вне словаря'}), в реплике этого слова нет`);
+      const schemaTables = JSON.parse(readFileSync(path.join(root, 'public/data/schema.json'), 'utf8')).tables;
+      const names = new Set(schemaTables.map((t) => t.table));
+      const p1 = campaign.parts.find((x) => x.id === 'p1');
+      check(`${label}финиш части 1: число таблиц — ${nTables}`, !!word && p1.finish.some((p) => p.toLowerCase().includes(word)),
+        `в schema.json ${nTables} таблиц (${word ?? 'вне словаря'}), в финише части 1 этого слова нет`);
+      const unknown = (p1.finishMap ?? []).filter((n) => !names.has(n));
+      check(`${label}финиш части 1: подсвеченные таблицы есть в схеме`, !!p1.finishMap?.length && unknown.length === 0,
+        `finishMap пуст или назвал несуществующие таблицы: ${unknown.join(', ')}`);
       const i18nSrc = readFileSync(path.join(root, 'src/i18n', locale + '.ts'), 'utf8');
       const btn = [...i18nSrc.matchAll(/schemaBtn: '([^']+)'/g)].pop()?.[1];
       check(`${label}день 1: кнопка справки названа как в интерфейсе`, !!btn && manager.includes(btn),
