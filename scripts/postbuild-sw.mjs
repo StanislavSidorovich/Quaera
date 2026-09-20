@@ -37,7 +37,7 @@ const all = await walk(dist);
 // запрашивает его при старте. Достаточно, чтобы этот запрос прошёл через
 // service worker — за это отвечает ожидание готовности в main.tsx.
 const assets = all.filter(
-  (p) => (p.startsWith('/assets/') || p.startsWith('/icons/')) && !p.endsWith('.map')
+  (p) => (p.startsWith('/assets/') || p.startsWith('/icons/') || p.startsWith('/story/')) && !p.endsWith('.map')
 );
 
 const buildId = `v${Date.now().toString(36)}`;

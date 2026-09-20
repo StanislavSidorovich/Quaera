@@ -5,7 +5,7 @@ import { CodeBlock } from './CodeBlock';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
-import { StoryArt } from './StoryArt';
+import { StoryArt, StoryPhoto } from './StoryArt';
 import { SchemaMap } from './SchemaMap';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
@@ -750,6 +750,7 @@ export function StoryMode({
 
         {phase.kind === 'letter' && (
           <>
+            <StoryPhoto frame="evening" />
             <h2>{campaign.letter.title}</h2>
             <div className="story-letter">
               <p className="story-letter-subject">{campaign.letter.subject}</p>

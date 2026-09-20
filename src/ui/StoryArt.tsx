@@ -156,7 +156,25 @@ const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
   'boardroom-ratio': { bars: [14, 14, 14, 14, 14, 14, 14, 32, 15, 14], accent: [8, 9] },
 };
 
+/**
+ * Два растровых кадра — единственное исключение из «растра здесь нет» (см. шапку):
+ * первое утро на брифе `day-1-first-day` и письмо о переводе в штат. Один ракурс
+ * на оба, стол утром пустой, вечером обжитой: узнаваемость кадра и есть «прошло
+ * семь недель». Ни текста, ни лиц на кадрах нет, поэтому локали они не мешают;
+ * тёмная тема — `filter` в стилях, второго комплекта файлов нет. Экран обязан
+ * читаться и без картинки, поэтому `alt` пустой, а сама картинка `aria-hidden`.
+ */
+export function StoryPhoto({ frame }: { frame: 'morning' | 'evening' }) {
+  return (
+    <div className="story-art story-photo" aria-hidden>
+      <img src={`/story/desk-${frame}.webp`} alt="" width={1024} height={572} loading="lazy" decoding="async" />
+    </div>
+  );
+}
+
 export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryMoment }) {
+  // Понедельник первой недели показывает кадр вместо схематичного стола `desk-price`.
+  if (scene === 'desk-price') return <StoryPhoto frame="morning" />;
   const desk = DESK_SCENES[scene];
   const board = BOARD_SCENES[scene];
   return (

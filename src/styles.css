@@ -5588,6 +5588,35 @@ details.story-known > summary small {
   --art-floor: color-mix(in srgb, var(--text-dim) 10%, var(--bg-sunken));
 }
 
+/*
+ * Растровые кадры (StoryPhoto). Контейнер держит отношение сторон, поэтому
+ * страница не прыгает, пока картинка грузится. Тёмная тема (по умолчанию и
+ * явная) гасит светлое утро слоем `filter`, светлая оставляет как есть.
+ */
+.story-photo {
+  aspect-ratio: 16 / 7;
+  max-height: 220px;
+}
+
+.story-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 62%;
+  filter: brightness(0.82);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark) .story-photo img {
+    filter: none;
+  }
+}
+
+:root.theme-light .story-photo img {
+  filter: none;
+}
+
 .story-art .art-paper { fill: var(--art-paper); }
 .story-art .art-body { fill: var(--art-body); }
 .story-art .art-screen { fill: var(--art-screen); }
