@@ -1337,8 +1337,18 @@ export const ru = {
       `${weeks} ${plural(weeks, 'неделя', 'недели', 'недель')}, ${tasks} ${plural(tasks, 'задание', 'задания', 'заданий')}.`,
     /** Кнопка после финиша: ведёт в начало следующей части. */
     continueBtn: 'Продолжить',
-    /** Вход сразу в середину кампании, только до первого шага: для тех, кто SELECT и JOIN уже знает. */
-    skipToPart: (n: number) => `Уже знаю SELECT и JOIN: начать с части ${n}`,
+    /**
+     * Вход сразу в середину кампании, только до первого шага. Названия частей
+     * и число недель приходят из кампании, а не набираются здесь: вторая копия
+     * разошлась бы с первой молча.
+     */
+    entryTitle: 'Уже что-то умеете?',
+    entryPart2: (title: string) => `Знаю SELECT, WHERE и JOIN: начать с части 2 «${title}»`,
+    entryPart2Sub: (weeks: number) =>
+      `${weeks} ${plural(weeks, 'неделя', 'недели', 'недель')} · LEFT JOIN, пустые значения, CASE, CTE, определение метрики`,
+    entryPart3: (title: string) => `Знаю SQL, хочу pandas: начать с части 3 «${title}»`,
+    entryPart3Sub: (weeks: number) =>
+      `${weeks} ${plural(weeks, 'неделя', 'недели', 'недель')} · датафрейм, маска, groupby, скользящее среднее`,
     recapTitle: 'Что было раньше: коротко',
     trackName: { sql: 'SQL', python: 'pandas', model: 'модель данных', domain: 'предметная область' } as Record<string, string>,
     reflectionTitle: 'Секунду — что мы нашли',

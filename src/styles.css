@@ -4960,6 +4960,63 @@ table.sample td.null {
   margin: 8px 12px 0;
 }
 
+/*
+ * Вход в части 2 и 3: тихий блок под главной кнопкой, а не три равные
+ * карточки. Главное действие («начать сначала») стоит выше и остаётся
+ * выше сгиба на 375x812.
+ */
+.story-entry {
+  margin: 12px 0 0;
+}
+
+.story-entry-row {
+  margin: 8px 12px 0;
+}
+
+.story-entry-title {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Свёрнутая строка вернувшегося: заголовок — единственное, что видно. */
+.story-entry-summary {
+  margin: 0;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.story-entry-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.story-entry-main {
+  display: block;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.story-entry-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 .story-invite-row-head {
   display: flex;
   align-items: center;
@@ -5621,7 +5678,8 @@ details.story-known > summary small {
    * занятия — не то, ради чего он пришёл.
    */
   .story-invite-row,
-  .story-invite-skip-row {
+  .story-invite-skip-row,
+  .story-entry-row {
     display: none;
   }
 

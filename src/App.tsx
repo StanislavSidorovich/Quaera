@@ -3118,6 +3118,50 @@ function smoothScrollTo(goalAt: () => number): () => void {
   return stop;
 }
 
+/**
+ * Вход сразу в часть 2 или 3, минуя предыдущие. Показывается там же, где
+ * раньше стояла одна ссылка: пока в кампании нет сохранённого шага (условие
+ * — «нет шага», а не «новичок»: знающий SQL, решивший одно задание в треке,
+ * нуждается в этом так же). Названия частей и число недель — из кампании.
+ *
+ * В строке вернувшегося блок свёрнут: открытым он занимает 198px и уводил
+ * кнопку «Начать занятие» с y=631 на 799 при окне 812 — за сгиб, против
+ * правила «у вернувшегося кнопка занятия выше сгиба». В карточке новичка
+ * он раскрыт: главная кнопка стоит выше него и запаса хватает.
+ */
+function StoryEntry({ onOpenPart, row = false }: { onOpenPart: (partId: string) => void; row?: boolean }) {
+  const { t, locale } = useI18n();
+  const campaign = storyCampaign(locale);
+  const entries = [
+    { id: 'p2', main: t.storyMode.entryPart2, sub: t.storyMode.entryPart2Sub },
+    { id: 'p3', main: t.storyMode.entryPart3, sub: t.storyMode.entryPart3Sub },
+  ];
+  const buttons = entries.map((e) => {
+    const part = campaign.parts.find((p) => p.id === e.id);
+    if (!part) return null;
+    return (
+      <button key={e.id} type="button" className="story-entry-btn" onClick={() => onOpenPart(e.id)}>
+        <span className="story-entry-main">{e.main(part.title)}</span>
+        <span className="story-entry-sub">{e.sub(campaign.weeks.filter((w) => w.part === e.id).length)}</span>
+      </button>
+    );
+  });
+  if (row) {
+    return (
+      <details className="story-entry story-entry-row">
+        <summary className="story-entry-title story-entry-summary">{t.storyMode.entryTitle}</summary>
+        {buttons}
+      </details>
+    );
+  }
+  return (
+    <div className="story-entry">
+      <p className="story-entry-title">{t.storyMode.entryTitle}</p>
+      {buttons}
+    </div>
+  );
+}
+
 function Home({
   activeTrack,
   activePack,
@@ -3554,11 +3598,7 @@ function Home({
                   {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
                 </button>
                 {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
-                {!storyStarted && onOpenStoryPart && (
-                  <button type="button" className="story-invite-skip" onClick={() => onOpenStoryPart('p2')}>
-                    {t.storyMode.skipToPart(2)}
-                  </button>
-                )}
+                {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} />}
               </div>
               <StoryMap />
             </div>
@@ -3575,11 +3615,7 @@ function Home({
               </span>
             </button>
             {/* Условие входа в часть 2 — «в кампании нет сохранённого шага», а не «новичок»: знающий SQL, решивший одно задание в треке, нуждается в нём так же. */}
-            {!storyStarted && onOpenStoryPart && (
-              <button type="button" className="story-invite-skip story-invite-skip-row" onClick={() => onOpenStoryPart('p2')}>
-                {t.storyMode.skipToPart(2)}
-              </button>
-            )}
+            {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} row />}
           </>
         ))}
 

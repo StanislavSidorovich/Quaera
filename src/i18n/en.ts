@@ -636,7 +636,11 @@ export const en = {
     finishStats: (weeks: number, tasks: number) =>
       `${weeks} week${weeks === 1 ? '' : 's'}, ${tasks} task${tasks === 1 ? '' : 's'}.`,
     continueBtn: 'Continue',
-    skipToPart: (n: number) => `I know SELECT and JOIN already: start at part ${n}`,
+    entryTitle: 'Already know some of this?',
+    entryPart2: (title: string) => `I know SELECT, WHERE and JOIN: start at part 2, "${title}"`,
+    entryPart2Sub: (weeks: number) => `${weeks} week${weeks === 1 ? '' : 's'} · LEFT JOIN, empty values, CASE, CTE, defining a metric`,
+    entryPart3: (title: string) => `I know SQL and want pandas: start at part 3, "${title}"`,
+    entryPart3Sub: (weeks: number) => `${weeks} week${weeks === 1 ? '' : 's'} · dataframe, mask, groupby, rolling average`,
     recapTitle: 'What came before, in short',
     trackName: { sql: 'SQL', python: 'pandas', model: 'data modelling', domain: 'the business domain' } as Record<string, string>,
     reflectionTitle: 'Before you move on',
