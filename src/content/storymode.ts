@@ -415,7 +415,7 @@ const ru: StoryCampaign = {
         },
         {
           from: 'Ваш руководитель',
-          text: '«Добро пожаловать в команду. В Nettora не бросайся — до встречи дойдём, и по дороге станет понятно почему. Сначала научись доставать данные вообще: половина рабочих вопросов решается тем, что ты умеешь читать таблицы. Начни с прайса, dim_product: это наш ассортимент, одна строка — один товар.»',
+          text: '«Добро пожаловать в команду. В Nettora не бросайся — до встречи дойдём, и по дороге станет понятно почему. Сначала научись доставать данные вообще: половина рабочих вопросов решается тем, что ты умеешь читать таблицы. Их у нас тринадцать, и имя почти каждой говорит, что внутри: dim_ — справочник, что у нас есть; fact_ — что случилось. За эти две недели понадобятся четыре, остальные подойдут, когда дойдёт до них дело; забудешь колонку — в задании есть кнопка «Схема данных». Начни с прайса, dim_product: это наш ассортимент, одна строка — один товар.»',
         },
       ],
       steps: [
@@ -3384,7 +3384,7 @@ const en: StoryCampaign = {
         },
         {
           from: 'Your manager',
-          text: '"Welcome to the team. Do not dive straight into Nettora; we will get there before the meeting and you will see why the detour was worth it. First learn to pull data at all: half the questions in this job are solved by being able to read the tables. Start with the price list, dim_product. That is our assortment, one row per product."',
+          text: '"Welcome to the team. Do not dive straight into Nettora; we will get there before the meeting and you will see why the detour was worth it. First learn to pull data at all: half the questions in this job are solved by being able to read the tables. We hold thirteen of them, and almost every name says what is inside: dim_ is a directory of what we have, fact_ is what happened. Four of them will carry these two weeks, the rest turn up when their turn comes, and if you forget a column there is a "Data schema" button inside the task. Start with the price list, dim_product. That is our assortment, one row per product."',
         },
       ],
       steps: [

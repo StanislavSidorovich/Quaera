@@ -492,6 +492,28 @@ try {
     check(`${label}код в подводках помечен оградой`, unfenced.length === 0, unfenced.join('\n        '));
 
     /*
+     * Понедельник называет число таблиц и кнопку справки. Одинокое число в прозе
+     * не проверяется ничем и протухает с первой новой таблицей, поэтому оно
+     * сверяется со schema.json; подпись кнопки берётся из локали, а не
+     * набирается второй раз.
+     */
+    {
+      const numerals = {
+        ru: ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать', 'двадцать'],
+        en: ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'],
+      }[locale];
+      const nTables = JSON.parse(readFileSync(path.join(root, 'public/data/schema.json'), 'utf8')).tables.length;
+      const word = numerals[nTables - 10];
+      const manager = campaign.missions.find((m) => m.id === 'day-1-first-day').messages[1].text;
+      check(`${label}день 1: число таблиц в реплике руководителя — ${nTables}`, !!word && manager.toLowerCase().includes(word),
+        `в schema.json ${nTables} таблиц (${word ?? 'вне словаря'}), в реплике этого слова нет`);
+      const i18nSrc = readFileSync(path.join(root, 'src/i18n', locale + '.ts'), 'utf8');
+      const btn = [...i18nSrc.matchAll(/schemaBtn: '([^']+)'/g)].pop()?.[1];
+      check(`${label}день 1: кнопка справки названа как в интерфейсе`, !!btn && manager.includes(btn),
+        `в реплике нет подписи «${btn}» (task.schemaBtn)`);
+    }
+
+    /*
      * Отсылка к другой неделе — по содержанию («когда искали точки без Nettora»),
      * а не по номеру («на второй неделе», «две недели назад»). Номер недели считает
      * код по позиции; проза его не знает, и после вставки w1b таких отсылок
