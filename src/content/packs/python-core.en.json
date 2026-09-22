@@ -532,7 +532,7 @@
         "merge doesn't check by default that the join key is unique on at least one side.",
         "10 promos for one brand is the same as if there were 10 promos for one product: a tenfold blow-up is expected when the key doesn't distinguish them from each other."
       ],
-      "explain": "This is the same fan-out as in SQL (see sql-fanout): an INNER JOIN on a key that's non-unique on both sides multiplies rows rather than flagging them. merge() in pandas behaves identically; the library only checks that values match, not that a one-to-one relationship was intended. The right key here is promo_id, which already exists in fact_sellout and points to a specific promo, not the brand as a whole."
+      "explain": "This is the same fan-out as joining tables in SQL: an INNER JOIN on a key that's non-unique on both sides multiplies rows rather than flagging them. merge() in pandas behaves identically; the library only checks that values match, not that a one-to-one relationship was intended. The right key here is promo_id, which already exists in fact_sellout and points to a specific promo, not the brand as a whole."
     },
     {
       "id": "py-024",
@@ -617,7 +617,7 @@
         "pivot_table can aggregate and reshape in one call; aggfunc decides what to do if several rows land on the same brand/quarter intersection (here: many sales of different products and customers).",
         "index becomes the rows, columns becomes the column headers, values ends up in the cells."
       ],
-      "explain": "Unlike .pivot(), which requires exactly one row per (brand, quarter) pair, pivot_table resolves this itself through aggregation: aggfunc='sum' sums up all of the brand's sales for the quarter, no matter how many source rows land in that cell. It's the same thing a conditional aggregation, CASE WHEN quarter = '2025Q1' THEN revenue END (see sql-case), does in SQL, just without spelling out every quarter explicitly in the code."
+      "explain": "Unlike .pivot(), which requires exactly one row per (brand, quarter) pair, pivot_table resolves this itself through aggregation: aggfunc='sum' sums up all of the brand's sales for the quarter, no matter how many source rows land in that cell. It's the same thing a conditional aggregation, CASE WHEN quarter = '2025Q1' THEN revenue END, does in SQL, just without spelling out every quarter explicitly in the code."
     },
     {
       "id": "py-030",
@@ -759,10 +759,10 @@
       "brief": "The weekly sales series for «Aqualis» swings too hard for a meeting chart. It needs 4-week smoothing next to the source data, in one table, so the chart shows both the level and the raw points.",
       "goal": "Add a rolling4 column to weekly with the rolling mean of units over the last 4 weeks.",
       "hints": [
-        "rolling(4) sets a 4-observation rolling-average window, the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL (sql-window-frame).",
+        "rolling(4) sets a 4-observation rolling-average window, the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL.",
         "After .rolling(4) you need .mean(), just as after .groupby(...): rolling() on its own only defines the window, it doesn't compute a statistic."
       ],
-      "explain": "rolling(4).mean() is a direct equivalent of the window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW from sql-window-frame: the window slides over the ordered series, including the current row and the three before it. The difference is in the notation: in SQL the frame is defined inside OVER(...), in pandas it's a separate call, .rolling(window_size), before the aggregating function."
+      "explain": "rolling(4).mean() is a direct equivalent of the window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL: the window slides over the ordered series, including the current row and the three before it. The difference is in the notation: in SQL the frame is defined inside OVER(...), in pandas it's a separate call, .rolling(window_size), before the aggregating function."
     },
     {
       "id": "py-038",

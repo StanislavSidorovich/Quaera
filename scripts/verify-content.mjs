@@ -3788,10 +3788,31 @@ function translationPairs(orig, tr) {
     'label',
     'why',
     'wrongWhy',
+    'reads',
+    'selfCheck',
+    'summary',
   ]);
   const TASK_REF = /\b(?:sql|py|dom|mdl)-\d{3}\b/;
   const packsDir = path.join(root, 'src', 'content', 'packs');
   const files = readdirSync(packsDir).filter((f) => f.endsWith('.json'));
+
+  /*
+   * Id навыков (py-index, sql-fanout…) под шаблон заданий не попадают —
+   * у них нет \d{3} на конце. Строить для них отдельный общий шаблон вида
+   * [a-z]+-[a-z-]+ нельзя: он поймает случайные дефисные слова вроде e-com,
+   * которые id не являются. Вместо этого собираем настоящий список id
+   * из ru-паков (id навыка одинаков в обеих локалях) и ищем целым словом.
+   */
+  const skillIds = new Set();
+  for (const file of files) {
+    if (file.endsWith('.en.json')) continue;
+    const pack = JSON.parse(readFileSync(path.join(packsDir, file), 'utf8'));
+    for (const s of pack.skills ?? []) skillIds.add(s.id);
+  }
+  const SKILL_REF = new RegExp(
+    `\\b(?:${[...skillIds].map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`
+  );
+
   let hits = 0;
   let scanned = 0;
   for (const file of files) {
@@ -3799,7 +3820,7 @@ function translationPairs(orig, tr) {
       if (typeof node === 'string') {
         if (!HUMAN_FIELDS.has(key)) return;
         scanned++;
-        const m = node.match(TASK_REF);
+        const m = node.match(TASK_REF) ?? node.match(SKILL_REF);
         if (m) {
           fail(file, `${where} поле ${key} ссылается на «${m[0]}» — читателю этот id нигде не показан, нужно описание словами`);
           hits++;
