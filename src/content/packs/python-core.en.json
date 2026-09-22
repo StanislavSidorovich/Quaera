@@ -505,6 +505,47 @@
       "explain": "fillna before grouping and dropna=False after grouping solve the same problem in different ways: dropna=False keeps NaN as is (that's NaN in the final table), while fillna(-1) turns the gap into an ordinary value ahead of time, one you can work with further without special parameters, say, if the next step compares rep_id against another table where comparisons with NaN don't work."
     },
     {
+      "id": "py-064",
+      "title": "How many customers after the join",
+      "brief": "An analyst needs the customer list with region names, but dim_customer only holds the number region_id. The name lives in the dim_region lookup, so the analyst joins the tables on region_id.",
+      "goal": "Work out how many rows the join returns when the key on the right is unique.",
+      "predictQuestion": "dim_customer has 144 customers, dim_region has 16 regions, each with its own region_id. How many rows does the join return?",
+      "options": [
+        {
+          "label": "144: every customer got the name of their region, as many rows as customers",
+          "why": "On the right every region_id has exactly one row, so each customer finds one match and no more. merge adds columns; the number of rows comes from the left table. A region with many customers simply repeats its name for each of them."
+        },
+        {
+          "label": "16: one row per region",
+          "why": "Collapsing rows into one per region is what groupby does, not merge. merge pairs up rows whose key matches and never collapses any."
+        },
+        {
+          "label": "2,304: every customer is paired with every region (144 × 16)",
+          "why": "That would happen if everything were paired with everything. merge only glues rows with the same region_id: a customer has one, so it gets one match."
+        },
+        {
+          "label": "160: the lookup rows are stacked under the customer rows (144 + 16)",
+          "why": "merge does not stack rows. The lookup's columns land to the right of the customer's columns, in the same row."
+        }
+      ],
+      "hints": [
+        "Count how many matches one customer finds: how many rows of dim_region carry its region_id?",
+        "merge adds columns. Whether the row count changes depends only on how many matches the key has."
+      ],
+      "explain": "144 before the join and 144 after: the key on the right is unique, so every row on the left found exactly one match. This is the everyday join: adding a name, a city or a brand from a lookup to customers or sales. The check worth doing every time is to compare the row count before and after. If it grew, the right side had more than one match per key and the rows multiplied."
+    },
+    {
+      "id": "py-065",
+      "title": "Customers with their region name",
+      "brief": "The customer report needs region names, not numbers: nobody reading it remembers that region 7 is Kyoto.",
+      "goal": "Add the region_name column from dim_region to dim_customer, keeping all 144 customer rows.",
+      "hints": [
+        "The lookup goes on the right, and the key is the column both tables share: on='region_id'.",
+        "Take two columns from the lookup, the key and what you want to add: dim_region[['region_id', 'region_name']]. Otherwise population and macro region come along too."
+      ],
+      "explain": "144 rows, as many as customers: region_id is unique in dim_region, so every customer found one match. how='left' changes nothing here, since every customer has a region, but it is the habit that protects rows where not everyone finds a match: without it merge would silently drop a customer with no match."
+    },
+    {
       "id": "py-023",
       "title": "110,480 sales instead of 11,048",
       "brief": "An analyst joins fact_sellout to dim_promo by brand, to mark the promo period next to every sale, and afterward revenue is off by multiples from the report.",
@@ -543,7 +584,7 @@
         "how='left' keeps all rows of fact_sellout, even where promo_id is empty, the pandas equivalent of LEFT JOIN.",
         "promo_id is dim_promo's primary key (89 rows, 89 unique values), so joining on it doesn't multiply rows, unlike joining on brand."
       ],
-      "explain": "how='left' is mandatory here, not a stylistic detail: fact_sellout has rows with no promo (promo_id empty), and merge's default (how='inner') would quietly drop them from the result. Plus promo_id is unique in dim_promo, so joining on it is one-to-one and doesn't multiply rows, unlike the previous task, where the key was brand."
+      "explain": "how='left' is mandatory here, not a stylistic detail: fact_sellout has rows with no promo (promo_id empty), and merge's default (how='inner') would quietly drop them from the result. Plus promo_id is unique in dim_promo, so joining on it is one-to-one and doesn't multiply rows, unlike joining on brand, where one brand carries ten promos."
     },
     {
       "id": "py-025",
@@ -554,7 +595,7 @@
         "validate is an optional merge parameter that checks join cardinality and fails with a MergeError if the expectation isn't met.",
         "'many_to_one' means: on the left (fact_sellout) the key can repeat, on the right (dim_promo) it must be unique."
       ],
-      "explain": "validate='many_to_one' is a claim recorded right in the code: if a duplicate promo_id ever shows up in dim_promo, or someone by mistake joins on brand instead of promo_id, merge will fail with a MergeError instead of quietly returning a bloated table, as in the first task in this skill. It's cheap and catches exactly the mistake this walkthrough started with."
+      "explain": "validate='many_to_one' is a claim recorded right in the code: if a duplicate promo_id ever shows up in dim_promo, or someone by mistake joins on brand instead of promo_id, merge will fail with a MergeError instead of quietly returning a bloated table, as when joining sales to promos by brand. It's cheap and catches exactly the mistake this walkthrough started with."
     },
     {
       "id": "py-026",
