@@ -98,6 +98,387 @@
 | Модель данных и BI | `model-core` | 19 | 77 | 19 | закрыт, режим поддержки; пачки `fill` и `order` 2026-08-24 — 57 `predict`, 16 `fill`, 4 `order` |
 | pandas | `python-core` | 14 | 63 | 14 | режим поддержки; индекс без groupby, py-062/063 2026-09-22 |
 
+### Очередь на 2026-09-22, вторая (пятьдесят пятый заход, Opus) — pandas: база merge, transform без SQL, порядок тем; отсылки во всех паках
+
+**Статус: спецификация, кода нет.** Реализация — Sonnet, пять пунктов по порядку,
+отдельными коммитами. После каждого: 16 гейтов по одному, `tsc --noEmit`,
+открыть приложение (новое задание — загрузчик `validate()` гейты не видят)
+и прогон `selectSession` на пустом прогрессе (тот же tsx-скрипт, что в аудите
+2026-09-21: 8 занятий, оценка 3) — порядок карточек и заданий сверить со списком
+в п. 3. Миграцию прогресса не делаем (решение то же, что в прошлой очереди).
+Числа ниже посчитаны локальным pandas по `public/data/quaera.dataset`.
+
+Кампания заданий `py-017…019` и `py-026…034` не использует (проверено поиском
+по `storymode.ts`), их можно двигать свободно. `py-023…025` в кампании стоят
+в дне 23 и открываются фан-аутом намеренно: там человек уже прошёл JOIN в SQL
+и получает вводный абзац про merge. Новые базовые задания в кампанию не входят.
+
+#### 1. Базовое соединение перед фан-аутом: `py-064`, `py-065`
+
+**Дефект.** Тема `py-merge` в свободном режиме открывается `py-023` (уровень 3,
+предсказание про 110 480 строк): первое касание — ловушка, а обычного случая
+«приклеить справочник» нет вовсе. Решение — два задания уровня 2 на уникальный
+ключ справа. Компаратор ставит их первыми: `py-064` predict → `py-065` write →
+`py-023` predict → `py-025` fill → `py-024` write. Предсказание сначала
+закрепляет ожидание «строк столько же», которое `py-023` потом ломает.
+Предпосылки `py-merge` не меняются (`py-groupby`, `py-index`): задания
+`py-055…057`/`py-061` того же навыка сворачивают таблицы до соединения.
+
+Данные: `dim_customer` 144 строки, `region_id` без пропусков; `dim_region`
+16 строк, `region_id` уникален; соединение даёт 144 строки, `region_name`
+без пропусков. Регион 7 — Kyoto.
+
+**`py-064` — `py-merge`, уровень 2, `predict`.**
+- `title` ru «Сколько клиентов после соединения» / en "How many customers after the join"
+- `brief` ru «Аналитику нужен список клиентов с названием региона, а в dim_customer
+  лежит только номер region_id. Название хранит справочник dim_region,
+  и аналитик соединяет таблицы по region_id.» / en "An analyst needs the
+  customer list with region names, but dim_customer only holds the number
+  region_id. The name lives in the dim_region lookup, so the analyst joins the
+  tables on region_id."
+- `goal` ru «Понять, сколько строк даст соединение, если ключ справа уникален.» /
+  en "Work out how many rows the join returns when the key on the right is unique."
+- `predictSql`: `dim_customer.merge(dim_region[['region_id', 'region_name']], on='region_id', how='left')`
+- `predictQuestion` ru «В dim_customer 144 клиента, в dim_region 16 регионов,
+  у каждого свой region_id. Сколько строк вернёт соединение?» / en
+  "dim_customer has 144 customers, dim_region has 16 regions, each with its own
+  region_id. How many rows does the join return?"
+- `options` (верный первый):
+  1. ✓ ru «144: каждый клиент получил название своего региона, строк столько же,
+     сколько клиентов» — why «Справа у каждого region_id ровно одна строка,
+     поэтому каждому клиенту находится одна пара, не больше. merge добавляет
+     колонки, а число строк задаёт левая таблица. Регион, где много клиентов,
+     просто повторит своё название у каждого из них.» / en "144: every customer
+     got the name of their region, as many rows as customers" — "On the right
+     every region_id has exactly one row, so each customer finds one match and no
+     more. merge adds columns; the number of rows comes from the left table.
+     A region with many customers simply repeats its name for each of them."
+  2. ru «16: по одной строке на регион» — why «Сворачивать строки в одну на регион
+     умеет groupby, а не merge. merge соединяет строки, у которых совпал ключ,
+     и ни одну не схлопывает.» / en "16: one row per region" — "Collapsing rows
+     into one per region is what groupby does, not merge. merge pairs up rows
+     whose key matches and never collapses any."
+  3. ru «2 304: каждый клиент соединится с каждым регионом (144 × 16)» — why
+     «Так было бы, если бы соединялось всё со всем. merge склеивает только строки
+     с одинаковым region_id: у клиента он один, и пара у него одна.» / en
+     "2,304: every customer is paired with every region (144 × 16)" — "That would
+     happen if everything were paired with everything. merge only glues rows with
+     the same region_id: a customer has one, so it gets one match."
+  4. ru «160: строки справочника встанут под строками клиентов (144 + 16)» — why
+     «Строки друг под другом merge не ставит: колонки справочника встают справа
+     от колонок клиента, в ту же строку.» / en "160: the lookup rows are stacked
+     under the customer rows (144 + 16)" — "merge does not stack rows. The lookup's
+     columns land to the right of the customer's columns, in the same row."
+- `hints` ru: «Посчитайте, сколько пар находится одному клиенту: сколько строк
+  в dim_region с его region_id?»; «merge добавляет колонки. Меняется ли число
+  строк, зависит только от того, сколько совпадений у ключа.» / en: "Count how
+  many matches one customer finds: how many rows of dim_region carry its
+  region_id?"; "merge adds columns. Whether the row count changes depends only on
+  how many matches the key has."
+- `explain` ru «144 до соединения и 144 после: ключ справа уникален, и каждой
+  строке слева нашлась ровно одна пара. Это обычный случай соединения: к клиентам
+  или продажам добавить название, город, бренд из справочника. Проверка, которую
+  стоит делать каждый раз, — сравнить число строк до и после. Выросло — значит,
+  справа нашлось больше одной пары на ключ, и строки размножились.» / en
+  "144 before the join and 144 after: the key on the right is unique, so every
+  row on the left found exactly one match. This is the everyday join: adding
+  a name, a city or a brand from a lookup to customers or sales. The check worth
+  doing every time is to compare the row count before and after. If it grew, the
+  right side had more than one match per key and the rows multiplied."
+
+**`py-065` — `py-merge`, уровень 2, `write`.**
+- `title` ru «Клиенты с названием региона» / en "Customers with their region name"
+- `brief` ru «Отчёту по клиентам нужны названия регионов, а не номера: читатель
+  не помнит, что регион 7 — это Kyoto.» / en "The customer report needs region
+  names, not numbers: nobody reading it remembers that region 7 is Kyoto."
+- `goal` ru «Добавить к dim_customer колонку region_name из dim_region, сохранив
+  все 144 строки клиентов.» / en "Add the region_name column from dim_region to
+  dim_customer, keeping all 144 customer rows."
+- `starter`: `result = dim_customer.merge(\n    ,\n)` (как у `py-024`)
+- `solution`: `result = dim_customer.merge(\n    dim_region[['region_id', 'region_name']], on='region_id', how='left',\n)`
+- `hints` ru: «Справочник справа, ключ — колонка, которая есть в обеих таблицах:
+  on='region_id'.»; «Из справочника берите две колонки: ключ и то, что нужно
+  добавить, — dim_region[['region_id', 'region_name']]. Иначе к клиентам приедут
+  и население, и макрорегион.» / en: "The lookup goes on the right, and the key is
+  the column both tables share: on='region_id'."; "Take two columns from the
+  lookup, the key and what you want to add: dim_region[['region_id',
+  'region_name']]. Otherwise population and macro region come along too."
+- `explain` ru «Строк 144, как и клиентов: region_id уникален в dim_region,
+  и каждому клиенту нашлась одна пара. how='left' здесь результата не меняет —
+  регион указан у всех, — но это привычка, которая бережёт строки там, где пара
+  находится не у всех: без неё merge молча выбросил бы клиента, которому не
+  нашлось пары.» / en "144 rows, as many as customers: region_id is unique in
+  dim_region, so every customer found one match. how='left' changes nothing here,
+  since every customer has a region, but it is the habit that protects rows where
+  not everyone finds a match: without it merge would silently drop a customer
+  with no match."
+- **Проверить до коммита:** как сверка результата относится к лишним колонкам
+  (человек присоединил `dim_region` целиком). Если такой ответ засчитывается
+  неверным без внятной причины — второй подсказки достаточно, но причину на
+  экране посмотреть глазами.
+
+**Там же — позиционные отсылки в разборах `py-024` и `py-025`**, которые новые
+задания делают ложными:
+- `py-024` `explain`: «…в отличие от предыдущего задания, где ключом был brand»
+  → «…в отличие от соединения по brand, где на один бренд приходится десять
+  акций». en так же.
+- `py-025` `explain`: «…как в первом задании этого навыка» → «…как при
+  соединении продаж с акциями по бренду». en так же.
+
+#### 2. Карточка `py-transform`: pandas объясняет себя сам, SQL — мостик в конце
+
+**Дефект.** Трек pandas официально «написан как продолжение SQL» (онбординг
+и «О тренажёре» это говорят), но здесь SQL не мостик, а само объяснение:
+таблица `method` в `form` расписана только названиями `RANK`/`DENSE_RANK`/
+`ROW_NUMBER`, подсказки и разбор `py-019` — тоже. Кто пришёл без SQL, не узнаёт
+из карточки, чем `min` отличается от `dense`. Решение: объяснение на числах,
+SQL одной фразой в конце для тех, кто его знает. `example`, `reads`, `wrong`,
+`wrongWhy`, `selfCheck` не меняются.
+
+- `why` ru: «agg сворачивает группу в одну строку: для сводки это то, что нужно,
+  а чтобы поставить итог группы рядом с каждой её строкой — нет. Например, доля
+  каждой продажи в годовом объёме её товара: числитель — строка, знаменатель —
+  сумма всей группы. transform считает то же, что agg, но возвращает результат
+  той же длины, что исходная таблица: итог группы повторён в каждой её строке,
+  и делить можно построчно, без отдельного merge. Так же устроен .rank():
+  результат тоже длиной с таблицу, только в каждой строке стоит не итог группы,
+  а место строки внутри неё. Как делить места между равными значениями, решает
+  параметр method. Если вы знаете SQL: transform — это SUM(...) OVER
+  (PARTITION BY ...), а method='min', 'dense' и 'first' — RANK, DENSE_RANK
+  и ROW_NUMBER.»
+- `why` en: "agg collapses a group into one row: right for a summary, wrong when
+  the group total has to stand next to each of its rows. Take each sale's share
+  of its product's yearly volume: the numerator is the row, the denominator is
+  the whole group's sum. transform computes the same thing as agg but returns
+  a result as long as the original table: the group total is repeated on each of
+  its rows, so the division works row by row, with no separate merge. .rank()
+  works the same way: the result is as long as the table too, but each row gets
+  not the group total but the row's place inside the group. The method parameter
+  decides how tied values share places. If you know SQL: transform is SUM(...)
+  OVER (PARTITION BY ...), and method='min', 'dense' and 'first' are RANK,
+  DENSE_RANK and ROW_NUMBER."
+- `form` (обе локали — код тот же, комментарии переведены; en без тире,
+  через двоеточие):
+  ```
+  df.groupby('ключ')['мера'].transform('функция')   # та же длина, что и df
+
+  df.groupby('ключ')['мера'].rank(method='min', ascending=False)
+
+  method='min'    — равным одно место, следующее с пропуском: 1, 1, 3
+  method='dense'  — равным одно место, без пропуска: 1, 1, 2
+  method='first'  — все места разные, по порядку строк: 1, 2, 3
+  ascending=False — место 1 у самого большого значения
+  ```
+  en: `# same length as df`; `method='min'    : ties share a place, the next one is skipped: 1, 1, 3`;
+  `method='dense'  : ties share a place, nothing skipped: 1, 1, 2`;
+  `method='first'  : every place differs, in row order: 1, 2, 3`;
+  `ascending=False : place 1 goes to the largest value`.
+- `py-019` `hints` ru: «.rank() внутри groupby ставит каждой строке её место
+  в своей группе. Результат той же длины, что таблица, поэтому встаёт новой
+  колонкой.»; «method='min' отдаёт равным значениям одно место и пропускает
+  следующее (1, 1, 3); ascending=False ставит на первое место самое большое
+  значение.» / en: ".rank() inside groupby gives each row its place within its
+  group. The result is as long as the table, so it fits as a new column.";
+  "method='min' gives tied values one place and skips the next (1, 1, 3);
+  ascending=False puts the largest value in first place."
+- `py-019` `explain` ru: «groupby задаёт, внутри чего считать места, — здесь
+  внутри каждого товара, — а rank() ставит каждой продаже её место среди продаж
+  того же товара. Место 1 — крупнейшая продажа, потому что ascending=False.
+  method решает только спорный случай: две продажи с одинаковой выручкой.
+  'min' даёт обеим одно место и пропускает следующее, 'dense' не пропускает,
+  'first' разводит их по порядку строк. В SQL то же самое пишут как RANK() OVER
+  (PARTITION BY product_id ORDER BY revenue DESC).» / en: "groupby sets what the
+  places are counted within, here within each product, and rank() gives every
+  sale its place among the sales of the same product. Place 1 is the largest
+  sale, because ascending=False. method only settles the contested case: two
+  sales with the same revenue. 'min' gives both one place and skips the next,
+  'dense' skips nothing, 'first' separates them by row order. In SQL the same
+  thing is written as RANK() OVER (PARTITION BY product_id ORDER BY revenue DESC)."
+
+#### 3. Порядок тем: разведка и опрятность ближе к началу, разворот после дат
+
+**Дефекты.** `py-explore` (value_counts, describe — первое, что делают
+с незнакомой таблицей) стоит последним навыком группы 2. `py-tidy`
+(`.str.strip`/`.str.upper`/`nunique`) — в группе 3 с предпосылкой `py-reshape`,
+к которой отношения не имеет; её пример строит таблицу через `pd.DataFrame`,
+которого нет ни в одной карточке. Пример `py-reshape` тянет `merge`,
+`pd.to_datetime` и `.dt.to_period` мимо своей единственной предпосылки
+`py-groupby`; задания `py-029`/`py-030` — тоже. Причём `.to_period(` в списке
+приёмов (`track-constructs.mjs`) сейчас объяснён **только этим примером**:
+упростить пример, не перенеся приём, — красный гейт.
+
+**Навыки (`python-core.json` + `.en.json`):**
+- `py-explore`: `tier` 2 → **1**, предпосылки те же (`py-dataframe`, `py-dtypes`).
+- `py-028` («describe() по каждому дивизиону отдельно»): `skill` → `py-groupby`,
+  уровень 2 не меняется. Это группировка, а не разведка: вне группировки задание
+  стояло бы в группе 1 раньше `groupby`.
+- `py-groupby`: предпосылки `["py-index", "py-select-filter", "py-explore"]`.
+  Не для порядка (разведка и так раньше), а для гейта: `checkTheoryIntroducesConstructs`
+  ищет приём в `form`/`example`/`wrong` карточки навыка **и его предпосылок
+  по цепочке**, а `.describe(` у `py-028` объяснён только в разведке.
+- `py-tidy`: `tier` 3 → **2**, предпосылки `["py-explore"]` вместо `["py-reshape"]`.
+- `py-reshape`: предпосылки `["py-groupby", "py-merge", "py-timeseries"]`
+  (задания разворота соединяют таблицы и режут даты на кварталы в готовой
+  заготовке — человек должен её читать, а не угадывать).
+- Порядок массива `skills`: `py-dataframe`, `py-select-filter`, `py-dtypes`,
+  `py-explore`, `py-index`, `py-groupby`, `py-tidy`, `py-transform`, `py-nan`,
+  `py-merge`, `py-timeseries`, `py-reshape`, `py-chaining`, `py-performance`.
+  Внутри группы порядок массива — это порядок ввода новых тем в `selectSession`
+  и порядок строк карты.
+
+**Ожидаемый порядок ввода на пустом прогрессе** (сверить прогоном):
+dataframe, select-filter, dtypes → explore, index, groupby → tidy, transform,
+nan, merge → timeseries, reshape → chaining, performance. Если прогон покажет
+иное — остановиться и описать расхождение, а не подгонять порядок.
+
+**Карточка `py-explore`** — убрать из неё группировку (её теперь нет среди
+предпосылок):
+- `form` ru:
+  ```
+  df['колонка'].value_counts()   # частоты категорий, по убыванию
+  df['мера'].describe()          # форма числовой колонки: среднее, разброс, квартили
+  ```
+  en: `# category counts, largest first`; `# shape of a numeric column: mean, spread, quartiles`.
+- `selfCheck` ru: «Если describe() дал разброс, подозрительно широкий
+  относительно среднего, — прежде чем считать метрику дальше, посмотрите её
+  отдельно по каждой группе: маской на категорию, например
+  dim_product[dim_product['division'] == 'Pharma']['list_price'].describe().
+  Группировка потом сделает то же самое для всех групп одним вызовом.» / en:
+  "If describe() shows a spread suspiciously wide for its mean, look at the
+  metric separately for each group before going further: with a mask on the
+  category, for example dim_product[dim_product['division'] ==
+  'Pharma']['list_price'].describe(). Grouping later does the same for every
+  group in one call."
+- `why`, `example`, `reads`, `wrong`, `wrongWhy` — без изменений.
+- `py-028` после переезда: `explain` «…а не только одним числом, как в прошлом
+  задании» → «…а не одним общим числом на весь каталог»; подсказка «Группируем
+  по тому самому полю, которое в прошлом задании скрывало разницу между FMCG
+  и Pharma» → «Группируем по полю, которое смешивает FMCG и Pharma в одну
+  среднюю: division». en так же.
+
+**Карточка `py-tidy`** — пример без `pd.DataFrame`, `nunique` в `form`:
+- `form`:
+  ```
+  df['колонка'].str.upper()   # единый регистр
+  df['колонка'].str.strip()   # без пробелов по краям
+  df['колонка'].nunique()     # сколько разных значений
+  ```
+  en: `# one case`, `# no spaces at the edges`, `# how many distinct values`.
+- `example`: `result = staging_raw_sellout['sku_code'].str.upper().value_counts()`
+- `reads` ru: «29 строк, по одной на товар: сколько раз каждый код встречается
+  в выгрузке, если не различать регистр. Больше всех у AQUA002 — 189 строк.
+  «NETT005» и «nett005» теперь одна строка на 47 продаж, а не две.» / en:
+  "29 rows, one per product: how often each code appears in the export when case
+  is ignored. AQUA002 leads with 189 rows. "NETT005" and "nett005" are now one
+  row of 47 sales, not two."
+- `wrong`: `result = staging_raw_sellout['sku_code'].value_counts()`
+- `wrongWhy` ru: «Без приведения регистра строк 58: «NETT005» (31 продажа)
+  и «nett005» (16) стоят двумя разными товарами, и каждый выглядит вдвое
+  мельче, чем есть. Ошибки нет, таблица правдоподобна — и неверна для любого
+  подсчёта по товарам, который пойдёт дальше.» / en: "Without fixing the case
+  there are 58 rows: "NETT005" (31 sales) and "nett005" (16) stand as two
+  products, each looking half its real size. No error, a plausible table, and
+  wrong for every per product count that follows."
+- `why` — последнюю фразу «…и группировка по такой колонке считает один объект
+  за два» оставить (группировка теперь среди пройденного). `selfCheck` —
+  без изменений.
+- Числа сверены: 58 кодов как есть, 29 после `.str.upper()`, AQUA002 — 189,
+  NETT005 — 31, nett005 — 16.
+
+**Карточка `py-reshape`** — пример без соединения и дат, на отгрузках
+(`month_start` в `fact_sellin` уже текст вида `2026-01-01`, сравнение строк
+работает):
+- `example`:
+  ```
+  sub = fact_sellin[fact_sellin['month_start'] >= '2026-01-01']
+  result = sub.pivot_table(index='distributor_id', columns='month_start', values='net_amount', aggfunc='sum')
+  ```
+- `reads` ru: «Отгрузки каждого из 12 дистрибьюторов по месяцам 2026 года одной
+  таблицей: 12 строк на 6 столбцов вместо 72 строк длинного формата. В каждую
+  ячейку сложились все строки отгрузок дистрибьютора за месяц — по разным
+  товарам, 3 048 строк на всё полугодие.» / en: "Shipments of each of the 12
+  distributors by month of 2026 in one table: 12 rows by 6 columns instead of
+  72 rows in long format. Each cell adds up all of a distributor's shipment rows
+  for the month, across products, 3,048 rows for the half year."
+- `wrong`: тот же `sub`, затем `result = sub.pivot(index='distributor_id', columns='month_start', values='net_amount')`
+- `wrongWhy` ru: «pivot() не складывает: он ждёт, что на пару «дистрибьютор,
+  месяц» приходится одна строка. Здесь их десятки — по строке на каждый
+  отгруженный товар, — и pivot падает с ValueError: Index contains duplicate
+  entries, cannot reshape.» / en: "pivot() does not add up: it expects one row
+  per distributor and month pair. Here there are dozens, a row per shipped
+  product, and pivot fails with ValueError: Index contains duplicate entries,
+  cannot reshape."
+- `why`, `form`, `selfCheck` — без изменений.
+
+**Карточка `py-timeseries`** — принимает `.to_period` (иначе после правки
+примера разворота приём не объяснён нигде). Третья строка `form`:
+`df['дата'].dt.to_period('Q').astype(str)   # метка периода: '2025Q1'` / en
+`# period label: '2025Q1'`. `pd.to_datetime` там уже есть (пример).
+
+**Сверка приёмов по цепочке предпосылок после правок** (то, что проверит гейт,
+расписано заранее, чтобы красный прогон не чинили наугад): `py-029…031` —
+`.merge(` из `py-merge`, `pd.to_datetime(`, `.dt.`, `.to_period(` из
+`py-timeseries`, `.astype(` из `py-dtypes` через `py-timeseries`, `.pivot(` —
+новый `wrong` разворота; задания опрятности — `.str.` и `.nunique(` из своей
+`form`, `.value_counts(` примера — из разведки; `py-064/065` — своя карточка.
+
+#### 4. Задания `sql-107…121`: условия без кампании
+
+**Дефект.** Те же, что закрыл п. 3 прошлой очереди в pandas, только в SQL
+и гуще: пятнадцать заданий, написанных под части 1 и 2 кампании, лежат
+в общем пуле свободного режима, а их условия и подсказки опираются на день
+и на персонажей: «как в отборе накануне» (`sql-108`), «что делали со вторника»
+(`sql-110`), «Пятничный запрос» и «тот же запрос без отбора» (`sql-111`),
+«Номера понадобятся завтра» (`sql-107`), «откуда взялось «вчетверо»» (`sql-109`),
+«Помесячная картина показала сползание» (`sql-113`), «вторая версия»,
+«третья версия из коридора» (`sql-114`, `sql-115`), Ито-сан (`sql-112`,
+`sql-120`), Аоки-сан (`sql-117`, `sql-118`, `sql-121`), «Отгрузки к продажам
+сходятся» как вывод прошлого шага (`sql-120`). Список неполный — прочитать все
+пятнадцать целиком, обе локали, `brief`/`goal`/`hints`/`explain`/`options`.
+
+**Правило (то же, что в pandas):** условие несёт в себе все факты, на которые
+опирается; вместо имени — роль («директор по продажам», «руководитель полевой
+команды»); вместо «вчера/завтра/вторая версия/осталось» — сам факт или сама
+гипотеза. Если задание опирается на вывод другого шага, вывод пишется в условии
+как данность с числом, а число сверяется со `storymode.ts` и с данными.
+Сюжетный голос остаётся в подводках `storymode.ts` — их не трогать.
+Отсылки по содержанию («как в задании про каналы с начала года») — принятый
+в проекте приём, их оставить.
+
+#### 5. Позиционные отсылки во всех паках + гейт
+
+**Дефект.** «В предыдущем задании», «см. следующее задание», «в первом задании
+этого навыка» верны только при одном порядке, а свободный режим задания
+перемешивает (`interleave`), повторяет по SRS и, после п. 1 и п. 3, уже
+по-другому ставит. Отсылки по содержанию («в задании про карту покрытия
+новинки») от порядка не зависят и остаются.
+
+**Найдено сканом (кроме уже названных в пп. 1 и 3):** `dom-049` explain
+(«про это следующее задание»), `mdl-023` explain («как и в предыдущем задании»),
+`py-005` explain («см. следующее задание»), `py-009` explain («в прошлом
+задании»), `py-034` hint («как в предыдущем задании»), `py-039` explain
+(«превращает предыдущее задание из ловушки…»), `py-061` explain и hint
+(«пятничная цифра», «в пятничном задании» — кампания), `sql-083` explain («две
+предыдущие находки»), `sql-096` hint, `sql-102` hint («в предыдущем задании»).
+Чинить заменой на отсылку по содержанию или на сам факт. en так же.
+
+**Гейт** — в `verify-content.mjs`, рядом с гейтом внутренних id, по тем же
+видимым полям (`HUMAN_FIELDS` плюс поля карточек), по всем пакам и обеим
+локалям. `storymode.ts` не проверяется: там персонажи законны.
+- ru: `/(предыдущ|прошл|следующ)\S*\s+задани|задании\s+этого\s+навыка|Аоки|Мори-сан|Ито-сан|Танака-сан|пятничн/i`
+- en: `/\b(previous|next|last|preceding)\s+(task|exercise)\b|\bAoki\b|\bMori\b|\bIto[- ]san\b|\bTanaka\b/i`
+- «накануне», «вчера», «сегодня» в гейт **не** входят: в `domain` они законны
+  («закупка накануне акции»), их ловит только чтение в п. 4.
+- Первый прогон: каждое попадание открыть глазами (правило со времён ловушки
+  `np.where` под `\bWHERE\b`); ложное — сузить регулярку, а не добавлять
+  исключение по id.
+
+**Мелочи того же захода:** README и таблица паков в §1 — pandas 63 → 65 заданий
+(гейт `test:readme-numbers` напомнит).
+
+**Осталось вне очереди, решения не требует:** живой проход кампании на проде
+и замер панели вставки на 375px (Sonnet, замер) — хвост очереди 2026-09-20.
+
 ### Очередь на 2026-09-22 (пятьдесят третий заход, Opus) — pandas вне кампании: индекс с базы и порядок заданий
 
 **Статус (2026-09-22, пятьдесят четвёртый заход, Sonnet): пункты 1–4 закрыты, отдельными коммитами.**
@@ -128,7 +509,7 @@ Opus, в очереди не было.
 касается. Миграцию прогресса не делаем (живых прохождений, кроме авторского,
 нет — то же решение, что при нарезке кампании на части).
 
-**Отложено, нужно решение Opus:** базовое задание на `merge` (сейчас тема
+**Отложено, нужно решение Opus** (решено — вторая очередь на 2026-09-22 выше): базовое задание на `merge` (сейчас тема
 открывается фан-аутом `py-023`, простого «присоединить справочник» нет);
 карточка `transform` без опоры на SQL (`OVER`, таблица `RANK`/`DENSE_RANK`/
 `ROW_NUMBER`); перенос `py-explore` и `py-tidy` ближе к началу (это база,
