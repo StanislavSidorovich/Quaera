@@ -498,7 +498,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Аоки-сан, директор по продажам',
-            text: '«Вся верхушка прайса аптечная — Vitanor, Gastrivo, Pyrexan. Ни одного напитка в первой десятке. Это не перекос выборки, это наша структура цен, и Nettora живёт в совсем другой её части.»',
+            text: '«Вся верхушка прайса аптечная — Vitanor, Gastrivo, Pyrexan. Ни одного напитка в первой десятке. Это не перекос выборки, это наша структура цен: мы возим два разных товара двум разным покупателям, аптеке и полке, — и Nettora живёт в совсем другой части прайса. Что стоит за именем каждого бренда, написано в «Схеме данных», у dim_product.»',
           },
         },
       ],
@@ -3485,7 +3485,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
-            text: '"The whole top of the price list is pharma: Vitanor, Gastrivo, Pyrexan. Not one drink in the top ten. That is not a quirk of the sample, that is our price structure, and Nettora lives in a very different part of it."',
+            text: '"The whole top of the price list is pharma: Vitanor, Gastrivo, Pyrexan. Not one drink in the top ten. That is not a quirk of the sample, that is our price structure: we carry two different kinds of goods for two different buyers, the pharmacy and the shelf, and Nettora lives in a very different part of the list. What stands behind each brand name is in the Data schema, under dim_product."',
           },
         },
       ],
