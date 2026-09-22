@@ -98,6 +98,321 @@
 | Модель данных и BI | `model-core` | 19 | 77 | 19 | закрыт, режим поддержки; пачки `fill` и `order` 2026-08-24 — 57 `predict`, 16 `fill`, 4 `order` |
 | pandas | `python-core` | 14 | 46 | 14 | режим поддержки; три задания про Setouchi 2026-08-23 |
 
+### Очередь на 2026-09-22 (пятьдесят третий заход, Opus) — pandas вне кампании: индекс с базы и порядок заданий
+
+**Откуда.** Вопрос пользователя: пройдёт ли pandas комфортно тот, кто просто
+учится по карте навыков, после кампании или вместо неё. Аудит 2026-09-21
+(Opus, без кода) с прогоном `selectSession` на пустом прогрессе показал:
+почти все методы решений объяснены в теории, но **порядок** нарушает правила,
+выработанные в сюжетке. Тема часто начинается с ловушки или с чужой темы.
+
+**Что здесь задано.** Пункт 1 — решения и проза целиком (ru + en), Sonnet
+только переносит. Пункты 2–4 — правила готовы, работа механическая. Отдельные
+коммиты, в этом порядке: пункт 1 правит карточку `groupby`, а пункт 4 её тоже
+касается. Миграцию прогресса не делаем (живых прохождений, кроме авторского,
+нет — то же решение, что при нарезке кампании на части).
+
+**Отложено, нужно решение Opus:** базовое задание на `merge` (сейчас тема
+открывается фан-аутом `py-023`, простого «присоединить справочник» нет);
+карточка `transform` без опоры на SQL (`OVER`, таблица `RANK`/`DENSE_RANK`/
+`ROW_NUMBER`); перенос `py-explore` и `py-tidy` ближе к началу (это база,
+а стоят в группах 2 и 3, у `py-tidy` лишняя предпосылка `py-reshape`);
+пример карточки `py-reshape` тянет `to_datetime`/`to_period`/`merge` мимо своих
+предпосылок; бриф-анафоры в паках `sql`, `domain`, `model` (там их немного,
+и регулярка даёт много ложных: «прошлый год» — это период данных).
+
+---
+
+#### 1. Индекс: база без группировки
+
+**Дефект.** `py-index` стоит в группе 1, но карточка объясняет индекс через
+`groupby` + `reset_index` + `merge` (группа 2), и два задания из трёх
+(`py-011`, `py-013`) построены на выводе `groupby`. Планировщик ставит эту
+карточку третьей в первом же занятии. На карте тема стоит второй (порядок
+массива), хотя подписана «обычно берут после: Выбор и фильтрация».
+
+**Решение: индекс учит сам перенос колонки на простом случае — `set_index`,
+поиск по метке через `.loc`, `reset_index` обратно. «Куда ушёл ключ после
+группировки» переезжает в `groupby`.** Кампания уже устроена так: день 18
+(среда w4, «Куда уходит ключ группировки») учит `py-011` и `py-013` внутри дня
+про группировку, а не отдельным днём про индекс. Свободный режим догоняет
+кампанию, а не наоборот.
+
+Почему не перенести индекс целиком после `groupby`: признак «колонка пропала,
+а слева подпись с её именем» дешевле выучить там, где его вызвал сам человек
+(`set_index`), чем там, где pandas делает перенос без спроса. Тогда
+в `groupby` это узнавание, а не вторая новость в одной строке.
+
+**Правки пака `python-core.json` (+ `.en.json`, один коммит):**
+
+- `py-011` и `py-013`: `skill` → `py-groupby`. Текст не меняется.
+- `py-015` («В каком порядке встанут бренды»): `level` 1 → 2. Сортировка
+  ключей — деталь, а не вход в тему. Иначе у `groupby` три задания уровня 1
+  и два из них предсказания подряд. В кампании `py-015` не используется
+  (проверено поиском по `storymode.ts`).
+- Порядок массива `skills`: `py-dataframe`, `py-select-filter`, `py-dtypes`,
+  `py-index`, дальше как есть. Порядок массива — это и порядок строк карты
+  (вторая строка больше не тусклая), и порядок, в котором `selectSession`
+  берёт темы одной группы. Индекс теперь входит в занятие вместе
+  с `groupby`, а не третьей карточкой первого дня.
+- Предпосылки не меняются: `py-index` ← `py-dataframe`, `py-select-filter`
+  (`.loc` вводится там); `py-groupby` ← `py-index`, `py-select-filter`.
+- Навык `py-index`:
+  - `title` ru «Индекс: подпись строки», en «The index: a row's label»;
+  - `summary` ru «Назначаю колонку индексом через set_index, нахожу строку
+    по её метке через .loc и возвращаю колонку на место через reset_index.»;
+    en «I make a column the index with set_index, find a row by its label
+    with .loc, and put the column back with reset_index.»
+- Два новых задания в `py-index`, `py-062` и `py-063` (ниже). Вместе с `py-012`
+  выходит та же тройка «предсказать → достроить → написать», что у соседей.
+
+**Карточка `py-index` (`python-lessons.json`), ru:**
+
+- `why`: «У каждой строки DataFrame есть подпись — индекс. Пока его никто
+  не назначал, это номера 0, 1, 2…, они стоят слева от данных. Подписью можно
+  сделать любую колонку: df.set_index('колонка') переносит её из колонок
+  в индекс. После этого .loc находит строку прямо по метке — по артикулу,
+  по названию региона, — без маски на колонке. У переноса есть цена: колонка
+  перестаёт быть колонкой, и df['колонка'] её больше не найдёт. Вернуть её
+  на место умеет .reset_index(). Этот признак стоит выучить на простом случае,
+  потому что дальше pandas сделает такой же перенос сам: группировка уводит
+  ключ в индекс без спроса.»
+- `form`:
+  ```
+  df.set_index('колонка')                              # колонка становится подписью строк
+  df.set_index('колонка').loc[[метка], ['колонка_б']]  # строка по метке
+  df.reset_index()                                     # подпись обратно в колонки
+  ```
+- `example`: `result = dim_product.set_index('sku_code').loc[['FRUV003'], ['product_name', 'list_price']]`
+- `reads`: «Название и цена товара с артикулом FRUV003: Fruvia Multifruit 1 L
+  за 141 ¥. Строку нашла метка в индексе, маска не понадобилась. sku_code стоит
+  слева как подпись, а среди колонок его больше нет.»
+- `wrong`: `result = dim_product.set_index('sku_code')['sku_code']`
+- `wrongWhy`: «После set_index колонки sku_code в таблице нет: она стала
+  индексом. Квадратные скобки ищут имя только среди колонок и падают
+  с KeyError: 'sku_code'. Сообщение читается как «такой колонки не бывало»,
+  хотя она просто переехала на одну позицию левее.»
+- `selfCheck`: «Назначили индекс — помните, что колонки с этим именем больше
+  нет. Нужна она снова как обычная (для маски, для merge, для выгрузки) —
+  сначала .reset_index(). Тот же вопрос задавайте себе после любой
+  группировки.»
+
+**Та же карточка, en** (без тире):
+
+- `why`: "Every row of a DataFrame has a label, the index. Until someone sets
+  it, the labels are just 0, 1, 2… on the left of the data. Any column can
+  become the label: df.set_index('column') moves it out of the columns and
+  into the index. After that .loc finds a row straight by its label, by SKU
+  code or by region name, with no mask on a column. The move has a price:
+  the column stops being a column, and df['column'] no longer finds it.
+  .reset_index() puts it back. This tell is worth learning on a simple case,
+  because later pandas makes the same move on its own: grouping sends the key
+  into the index without asking."
+- `form` — тот же код, комментарии: `# the column becomes the row label`,
+  `# a row by its label`, `# the label goes back into the columns`;
+  плейсхолдеры `'column'`, `[label]`, `['column_b']`.
+- `reads`: "Name and price of the product with SKU code FRUV003: Fruvia
+  Multifruit 1 L at 141 ¥. The label in the index found the row, no mask
+  needed. sku_code sits on the left as the label and is no longer among the
+  columns."
+- `wrongWhy`: "After set_index there is no sku_code column: it became the
+  index. Square brackets look for the name among the columns only and fail
+  with KeyError: 'sku_code'. The message reads as if the column never existed,
+  when it has only moved one position to the left."
+- `selfCheck`: "Set an index? Remember that the column with that name is gone.
+  If you need it back as an ordinary column (for a mask, a merge, an export),
+  call .reset_index() first. Ask yourself the same question after any
+  grouping."
+
+**Новое `py-062` — `py-index`, уровень 1, `predict`.**
+
+- `title` ru «Колонка, которой больше нет» / en "The column that is gone"
+- `brief` ru «Аналитик сделал product_id индексом справочника товаров, чтобы
+  искать позиции по коду, а следующей строкой обратился к product_id
+  по-старому, как к колонке, — и код упал.» / en "An analyst made product_id
+  the index of the product table to look items up by code, then on the next
+  line reached for product_id the old way, as a column, and the code failed."
+- `goal` ru «Понять, что стало с колонкой product_id после set_index.» /
+  en "Work out what happened to the product_id column after set_index."
+- `predictSql`: `dim_product.set_index('product_id')['product_id']`
+- `predictQuestion` ru «Что вернёт эта строка?» / en "What does this line
+  return?"
+- `options` (верный первый; порядок показа пусть задаёт то же, что у соседей):
+  1. ✓ ru «Упадёт с KeyError: 'product_id' — колонка стала индексом, и среди
+     колонок её больше нет» — why «set_index не копирует колонку в индекс,
+     а переносит её туда. Квадратные скобки ищут имя среди колонок, а там
+     product_id больше нет, отсюда KeyError. Значения никуда не делись: они
+     подписывают строки слева.» / en "It fails with KeyError: 'product_id',
+     because the column became the index and is no longer among the columns"
+     — "set_index does not copy the column into the index, it moves it there.
+     Square brackets look for the name among the columns, and product_id is
+     not there any more, hence the KeyError. The values are still around: they
+     label the rows on the left."
+  2. ru «Вернёт колонку product_id, как и до set_index» — why «Так было бы,
+     если бы set_index оставлял колонку на месте. По умолчанию он её
+     переносит, и из одиннадцати полей справочника в колонках остаются
+     десять.» / en "It returns the product_id column, same as before
+     set_index" — "That would happen if set_index left the column in place.
+     By default it moves it, and ten of the table's eleven fields stay in the
+     columns."
+  3. ru «Вернёт пустую колонку: имя осталось, а значения ушли в индекс» — why
+     «Колонку переносят целиком, вместе с именем. Пустой колонки product_id
+     после set_index нет, есть индекс с этим именем.» / en "It returns an
+     empty column: the name stayed, the values went into the index" — "The
+     column moves as a whole, name included. There is no empty product_id
+     column after set_index, there is an index with that name."
+  4. ru «Вернёт индекс: pandas сам поймёт, что имелся в виду он» — why
+     «Квадратные скобки смотрят только в колонки. До индекса добираются иначе:
+     через .loc по метке или df.index, а в колонки его возвращает
+     .reset_index().» / en "It returns the index, pandas works out that this
+     is what was meant" — "Square brackets look only at the columns. The index
+     is reached differently, through .loc by label or df.index, and
+     .reset_index() puts it back into the columns."
+- `hints` ru [«set_index переносит колонку, а не копирует её.», «Квадратные
+  скобки df['имя'] ищут имя только среди колонок.»] / en ["set_index moves the
+  column, it does not copy it.", "Square brackets df['name'] look for the name
+  among the columns only."]
+- `explain` ru «Тот же перенос позже сделает группировка: groupby('product_id')
+  уведёт ключ в индекс, и df['product_id'] точно так же перестанет его
+  находить. Признак в обоих случаях один: колонка «пропала», а слева от данных
+  появилась подпись с её именем.» / en "Grouping makes the same move later:
+  groupby('product_id') sends the key into the index, and df['product_id']
+  stops finding it in exactly the same way. The tell is the same in both
+  cases: the column has vanished, and a label with its name has appeared on
+  the left of the data."
+- Прецедент предсказания с ошибкой — `py-002` (and вместо &). Проверено
+  локально: `KeyError: 'product_id'`, у `dim_product` 11 колонок.
+
+**Новое `py-063` — `py-index`, уровень 1, `fill`.**
+
+- `title` ru «Регионы обратно в колонки» / en "Regions back into columns"
+- `brief` ru «Для слайда нужно население Токио и Осаки. Регион удобно найти
+  по названию через индекс, но таблица уйдёт в выгрузку, где название должно
+  стоять обычной колонкой.» / en "A slide needs the population of Tokyo and
+  Osaka. Finding a region by name through the index is convenient, but the
+  table goes into an export where the name has to be an ordinary column."
+- `goal` ru «Найти Tokyo и Osaka по индексу region_name и вернуть region_name
+  и population, где region_name — обычная колонка.» / en "Find Tokyo and
+  Osaka through the region_name index and return region_name and population,
+  with region_name as an ordinary column."
+- `template`: `result = dim_region.set_index('region_name').loc[['Tokyo', 'Osaka'], ['population']].___()`
+- `blanks`: `["reset_index"]`; `solution` — то же с `reset_index`.
+- `hints` ru [«Нужен метод, обратный set_index.», «Название говорит само
+  за себя: он «сбрасывает» индекс обратно в колонки.»] / en ["You need the
+  method that reverses set_index.", "Its name says it plainly: it \"resets\"
+  the index back into the columns."]
+- `explain` ru «set_index и reset_index — пара: первый переносит колонку
+  в подпись строк, второй возвращает её обратно. Индекс удобен для поиска
+  по метке, а для выгрузки, merge и маски нужна обычная колонка. Тот же
+  .reset_index() понадобится после группировки, где ключ уходит в индекс
+  без вашей команды.» / en "set_index and reset_index are a pair: the first
+  moves a column into the row labels, the second brings it back. The index is
+  handy for lookup by label, while an export, a merge or a mask needs an
+  ordinary column. The same .reset_index() comes in after grouping, where the
+  key goes into the index without you asking."
+- Данные: Tokyo 14 100 000, Osaka 8 800 000. `.loc` возвращает строки в порядке
+  списка, так что Tokyo первым.
+
+**Карточка `py-groupby`, правка в обеих локалях.** В `why` убрать «(см.
+py-index)» — это видимый внутренний id (п. 4). Вместо него: «…и по умолчанию
+уходит в индекс, а не остаётся обычной колонкой, — тот же перенос, что делает
+set_index; вернуть ключ колонкой можно через as_index=False или .reset_index().»
+В `form` добавить вторую строку перед именованной агрегацией:
+`df.groupby('ключ')['мера'].sum().reset_index()   # ключ из индекса обратно в колонки`
+(en: `# the key back from the index into the columns`). Без неё карточка
+`groupby` не показывает приём, на котором стоят `py-013`, `py-049`, `py-059`,
+`py-060`: раньше его показывала карточка индекса.
+
+**`src/content/lessonScenes.ts`:** ключ `'py-index': 'groups'` → `'py-groupby':
+'groups'`, комментарий: «день 18, подводка к py-011 „Куда уходит ключ
+группировки“ — совпадает с why карточки py-groupby». У новой карточки индекса
+сцены нет — правило 3 того же файла: сцена показывает приём, а не находку.
+
+**Что проверить после правки:** весь `npm run verify` по шагам. Особенно
+`test:story-ladder` (в сводке w4 пропадёт строка приёма `py-index`: `py-011`
+и `py-013` теперь `groupby`), `test:story-line` (миссия 2 линии —
+`py-index`, `py-explore`, `py-groupby`, отпечаток прозы), `test:scheduler`,
+`verify-content` (числа в `reads` карточки, приём `.set_index(` уже в
+`track-constructs.mjs`). В браузере: карта pandas — индекс четвёртой строкой
+группы 1 и не тусклый после первых трёх тем; карточка индекса ru и en; день 18
+кампании — по кнопке теории на шаге `py-011` открывается карточка `groupby`.
+Повторный прогон `selectSession` на пустом прогрессе (приём — tsx-скрипт во
+временном каталоге внутри репозитория, импорт `src/srs/scheduler` и пака):
+в занятии 1 — dataframe, select-filter, dtypes; индекс вместе с `groupby`.
+
+---
+
+#### 2. Порядок заданий внутри темы: образец → достраивание → с нуля
+
+**Дефект.** `pickFor` в `src/srs/scheduler.ts` и `startSkillSession`
+в `App.tsx` сортируют нерешённые задания только по `level`, а при равенстве
+берут порядок массива. Первое задание фильтрации поэтому `py-001` (`isin`
+и `&` сразу), а задание на одно условие `==` (`py-003`) идёт третьим.
+В сюжетной линии правило уже есть: `src/story/line.ts:165`, `level`, затем
+`MODE_RANK` (predict 0, order 1, fill 2, write 3), затем id.
+
+**Правка.** Вынести компаратор из `line.ts` в общее место (экспорт `MODE_RANK`
+и функции сравнения) и применить в трёх местах: `pickFor`, `startSkillSession`
+и последний ключ добора `topUp` (сейчас `a.level - b.level`). Кампания
+не затронута: у неё порядок задан шагами дня. Если `test-scheduler.mjs`
+закрепил старый порядок — обновить ожидание и написать в коммите, почему.
+
+---
+
+#### 3. Условия заданий pandas читаются без соседнего задания и без кампании
+
+**Дефект.** В свободном режиме задания приходят по одному и вперемешку,
+а 14 условий опираются на сюжет кампании (`py-044…061`: «Мори-сан уверен…»,
+«Пятничный вывод держится…», «однажды уже считали запросом», «28 203 штуки»
+без периода), ещё несколько — на соседнее задание («Тот же поквартальный
+отчёт…» у `py-031`, который выдаётся раньше своей пары `py-029`). Кампания
+показывает `task.brief` тоже, так что правка общая для обоих режимов.
+
+**Правила (прецедент — «цель называет значения сама», 45-й заход):**
+1. Условие понятно без предыдущего задания: нет «тот же отчёт», «прошлая
+   ошибка», «после истории с…», «уже собраны».
+2. Персонажи кампании (Мори-сан, Аоки-сан) живут в подводках и репликах
+   `storymode.ts`, а не в `brief`. В условии — роль: «КАМ по дистрибьюторам».
+3. Число из прошлого шага, нужное как повод, называется фактом с периодом:
+   «За IV квартал 2025 года Setouchi Trading взял 28 203 штуки».
+4. Setouchi Trading — имя из данных, его оставлять.
+5. «Тот же» о данных («тот же квартал годом раньше») — не анафора, оставлять.
+6. После правки перечитать подводку каждого затронутого шага кампании:
+   в дне бриф идёт после подводки, и смысл не должен потеряться.
+
+**Объём:** все 61 условие pandas глазами, ru + en одним коммитом. Регулярка
+находит 18 кандидатов, но часть из них ложные (правило 5), а анафора без
+ключевого слова ею не ловится. Гейт не ставим по той же причине.
+Пары с одинаковым условием (`py-001`/`py-058`, `py-049`/`py-059`) оставить:
+после п. 2 они идут подряд как «достроить → написать», и повтор ситуации
+читается как задуманный.
+
+---
+
+#### 4. Внутренние id навыков в видимом тексте
+
+**Дефект.** В карточках обеих локалей видны «см. py-index» (`py-groupby`),
+«см. sql-fanout» (`py-merge`), «в py-select-filter» (`py-performance`). Гейт
+«ссылки по внутреннему id» (`verify-content.mjs`, раздел со словами «Ссылки
+на задания по внутреннему id») ловит только `(sql|py|dom|mdl)-\d{3}`, а id
+навыков под шаблон не попадают.
+
+**Правка.**
+- Текст: `py-groupby` — в п. 1; `py-merge` — «Это тот же фан-аут, что при
+  соединении таблиц в SQL, только под другим именем.»; `py-performance` —
+  «…той же ошибкой, что при and вместо & в фильтре.» Английский — так же.
+- Гейт: собрать настоящие id навыков из всех паков и искать их целым словом
+  в видимых полях. К `HUMAN_FIELDS` добавить поля карточек и навыков: `reads`,
+  `selfCheck`, `summary`. Регулярку строить из списка id, а не из шаблона
+  вида `[a-z]+-[a-z-]+`: иначе поймает `e-com` и подобное. Находки в других
+  паках чинить в том же коммите описанием словами.
+
+---
+
+**Мелочь для того же Sonnet-захода:** строка pandas в таблице паков выше
+говорит «46» заданий, на деле 61 (после п. 1 будет 63), и «три задания про
+Setouchi 2026-08-23» тоже устарело.
+
 ### Очередь на 2026-09-20 (сорок седьмой заход, Opus) — знакомство с данными, выбор части, финал кампании
 
 **Статус (2026-09-20, сорок восьмой заход, Sonnet): пункты 1–5 закрыты.**
