@@ -76,34 +76,34 @@
       "skill": "py-explore",
       "title": "Exploring the data",
       "why": "Before computing a metric, it's worth looking at the data itself: value_counts() shows how categories are distributed, describe() shows the shape of a numeric column. Skipping exploration means the first sign of a problem won't be describe(), it'll be a wrong report a week later.",
-      "form": "df['column'].value_counts()             # category frequencies\ndf.groupby('slice')['measure'].describe()  # statistics by group",
+      "form": "df['column'].value_counts()   # category frequencies, largest first\ndf['measure'].describe()          # shape of a numeric column: mean, spread, quartiles",
       "reads": "Customer count by sales channel: 44 in traditional trade, 42 in modern trade, 38 in pharmacies, 12 with distributors, 8 in e-com. Already you can see that e-com is a small channel by outlet count, though it may well be the largest by average ticket.",
       "wrongWhy": "Not a mistake on its own, but not thorough exploration either: describe() over the whole catalog at once gives an average price of 230 ¥, one no real product has, because the column quietly mixes FMCG (averaging 111 ¥) and Pharma (averaging 423 ¥). Exploration without a slice by the key category can look complete while actually hiding the main thing.",
-      "selfCheck": "If describe() gave a spread that's suspiciously wide relative to the mean, check it by group through groupby(...).describe() before computing the metric any further."
+      "selfCheck": "If describe() shows a spread suspiciously wide for its mean, look at the metric separately for each group before going further: with a mask on the category, for example dim_product[dim_product['division'] == 'Pharma']['list_price'].describe(). Grouping later does the same for every group in one call."
     },
     {
       "skill": "py-reshape",
       "title": "pivot, pivot_table and melt",
       "why": "A report for a manager is almost always requested in wide format (brands as rows, periods as columns) while the raw data sits in long format: one row per sales fact. pivot_table reshapes long into wide with the aggregation built into one call; melt does the reverse, when the receiving side (a BI tool, the next groupby) expects long format again.",
       "form": "df.pivot_table(index='rows', columns='columns', values='values', aggfunc='function')\ndf.melt(id_vars='unchanged_column', var_name='name', value_name='value')",
-      "reads": "Every sales channel's revenue by month of 2026 in one table: 4 rows (the channels that had sales) by 6 columns (months) instead of 24 rows in long format. aggfunc='sum' sums up all of a channel's sales for the month, no matter how many source rows land there.",
-      "wrongWhy": "pivot() doesn't aggregate; it expects exactly one source row per (channel, month) pair. In sub there are thousands of rows per pair (sales of different products and customers in one month), and pivot honestly fails with a ValueError instead of guessing what to do with them.",
+      "reads": "Shipments of each of the 12 distributors by month of 2026 in one table: 12 rows by 6 columns instead of 72 rows in long format. Each cell adds up all of a distributor's shipment rows for the month, across products, 3,048 rows for the half year.",
+      "wrongWhy": "pivot() does not add up: it expects one row per distributor and month pair. Here there are dozens, a row per shipped product, and pivot fails with ValueError: Index contains duplicate entries, cannot reshape.",
       "selfCheck": "Is the data not yet aggregated before the reshape (could several rows land in one cell)? You need pivot_table with an aggfunc. Already aggregated (one row per combination)? The simpler pivot() will work too."
     },
     {
       "skill": "py-tidy",
       "title": "Tidy data",
       "why": "\"Tidy\" data means one row per observation and one column per variable, with no variation hiding inside a value: the same entity shouldn't hide behind two different spellings. The raw extract staging_raw_sellout breaks this at every turn: a product code in two cases, a customer name with spaces at the edges, and grouping by a column like that counts one object as two.",
-      "form": "df['column'].str.upper()   # a single case\ndf['column'].str.strip()   # no leading/trailing spaces",
-      "reads": "A two-row audit of the raw extract: 58 product codes as-is and 29 once cast to a single case; 104 customers and 52 once the edge spaces are trimmed. Both times there are half as many real objects as the naive count shows, and each column has its own defect, case in one, whitespace in the other.",
-      "wrongWhy": "The same report without normalization: 58 products and 104 customers. The numbers don't look suspicious; they're simply twice the truth, and the error rides on into everything computed from them: average basket per customer, assortment coverage, an SKU's share of sales. Tidying data means casting the column to a single form before counting, not counting whatever arrived.",
+      "form": "df['column'].str.upper()   # one case\ndf['column'].str.strip()   # no spaces at the edges\ndf['column'].nunique()     # how many distinct values",
+      "reads": "29 rows, one per product: how often each code appears in the export when case is ignored. AQUA002 leads with 189 rows. \"NETT005\" and \"nett005\" are now one row of 47 sales, not two.",
+      "wrongWhy": "Without fixing the case there are 58 rows: \"NETT005\" (31 sales) and \"nett005\" (16) stand as two products, each looking half its real size. No error, a plausible table, and wrong for every per product count that follows.",
       "selfCheck": "Is the number of unique values in a column noticeably higher than it should be by meaning (58 codes instead of a few dozen products)? Check the case and the leading/trailing spaces before looking for missing rows anywhere else. The rule is cheaper than the habit: nunique() on a raw column doesn't answer \"how many are there\", it answers \"how many spellings are there\"."
     },
     {
       "skill": "py-timeseries",
       "title": "Dates and time series",
       "why": "resample changes a series' frequency (from weeks to months or quarters), and rolling computes a sliding window (smoothing, a trend); both operations need the date to be a real datetime index, not an ordinary column. Without pd.to_datetime and set_index both will either fail or compute something other than what seemed obvious.",
-      "form": "df.set_index('date').resample('MS').sum()      # change frequency\ndf['measure'].rolling(window).mean()            # rolling average",
+      "form": "df.set_index('date').resample('MS').sum()      # change frequency\ndf['measure'].rolling(window).mean()            # rolling average\ndf['date'].dt.to_period('Q').astype(str)   # period label: '2025Q1'",
       "reads": "The company's weekly revenue folded into quarterly totals in one call: 10 quarters from the start of 2024 to mid-2026. resample('QS') finds the quarter boundaries from the dates in the index itself; neither the year nor the quarter number has to be dug out of a string.",
       "wrongWhy": "The string slice gives 30 months, not 10 quarters, and that's not a typo: the first seven characters of a date can yield a month or a year, but never a quarter, a week or a rolling window; those simply aren't in the text form of a date. The trick works right up to the first question that doesn't line up with a character boundary, and wherever the format is mixed (as in staging_raw_sellout) it breaks even sooner. resample with a datetime index makes no assumptions about how the date is written.",
       "selfCheck": "Before resample/rolling, check the dtype of the date column (or the index, if it's already set). It should be datetime64, not object/string."

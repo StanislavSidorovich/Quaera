@@ -598,6 +598,36 @@
       "explain": "validate='many_to_one' is a claim recorded right in the code: if a duplicate promo_id ever shows up in dim_promo, or someone by mistake joins on brand instead of promo_id, merge will fail with a MergeError instead of quietly returning a bloated table, as when joining sales to promos by brand. It's cheap and catches exactly the mistake this walkthrough started with."
     },
     {
+      "id": "py-066",
+      "title": "What the gap between mean and median says",
+      "brief": "A logistics analyst looks at the size of individual shipments (units in fact_sellout) through describe() for the first time, before computing anything else from them.",
+      "goal": "Read a describe() output for a numeric column without mistaking the mean for the typical value.",
+      "predictQuestion": "describe() on units gives: count 118,449, mean 9.09, std 11.52, min 1, 25% 3, 50% (median) 5, 75% 11, max 232. What does this say about the typical shipment size?",
+      "options": [
+        {
+          "label": "Half of shipments are 5 units or fewer (the median), and the mean of 9.09 is pulled up by rare large orders up to 232 units",
+          "why": "When the mean is noticeably above the median, the distribution is right-skewed: most values are small, and a few large ones drag the mean up. The median describes the typical case better than the mean here."
+        },
+        {
+          "label": "The typical shipment is about 9 units, since that's the mean",
+          "why": "The mean doesn't describe the typical case here: half of shipments are half its size or smaller (median 5), and the mean is inflated by rare large orders."
+        },
+        {
+          "label": "max 232 is a data error, no shipment is really that large",
+          "why": "describe() can't tell a rare large value from an error, and a single 232-unit shipment to a big customer is entirely plausible. Worth checking the actual rows before calling it a defect, not judging from one max alone."
+        },
+        {
+          "label": "std bigger than the median means there's an error in the column",
+          "why": "std larger than the median is an ordinary sign of a right-skewed, long-tailed distribution, not a broken column: the spread is simply bigger than the typical value because a few orders are much larger than the rest."
+        }
+      ],
+      "hints": [
+        "Compare 50% (the median) to the mean: which one is bigger, and what does that say about where most values sit?",
+        "std bigger than the mean or median is the normal shape for a right-skewed distribution, not a reason to suspect an error."
+      ],
+      "explain": "describe() hands back eight numbers, and the most common mistake is reading only mean as if it were the typical value. The median (50%) doesn't move much when a rare large value shows up: half of shipments sit below it, half above, no matter how big the maximum is. Here the median is 5 and the mean is 9.09, nearly double, and that gap is a sign of a skewed distribution, not an error: most shipments are small, and a tail of rare large orders pulls the mean up. The same habit applies to value_counts() over categories: a single number almost always hides a shape, not one typical value."
+    },
+    {
       "id": "py-026",
       "title": "How many items each brand has",
       "brief": "Ahead of a conversation about assortment rotation, an analyst wants a quick look at how many SKUs fall under each brand in the catalogue, without grouping or counting by hand.",
@@ -645,9 +675,9 @@
       "goal": "Get describe() on list_price separately for each value of division.",
       "hints": [
         "describe() can be called not only on a whole column but on the result of a groupby too; then the statistics are computed separately for each group.",
-        "Group by the very field that hid the difference between FMCG and Pharma in the previous task."
+        "Group by the field that mixes FMCG and Pharma into one average: division."
       ],
-      "explain": "groupby(...).describe() is a way to run its own summary statistics over every group in one call, with no loop and no manually splitting the table into parts. Since the column for describe() is already chosen (['list_price']), the result stays an ordinary table: one row per division, eight statistic columns, you can compare them at a glance, not just as a single number, unlike in the previous task."
+      "explain": "groupby(...).describe() is a way to run its own summary statistics over every group in one call, with no loop and no manually splitting the table into parts. Since the column for describe() is already chosen (['list_price']), the result stays an ordinary table: one row per division, eight statistic columns, you can compare them at a glance, not just one number for the whole catalog."
     },
     {
       "id": "py-029",
