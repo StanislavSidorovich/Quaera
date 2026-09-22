@@ -238,6 +238,20 @@ export type LoadState =
   | { phase: 'ready'; info: DatasetInfo }
   | { phase: 'error'; message: string };
 
+/**
+ * Словарь значений одной колонки — что значат сами значения, а не что лежит
+ * в колонке (это отвечает description). Привязан к column, а не к таблице:
+ * второе такое поле у другой колонки встанет без переделки формы.
+ */
+export interface ValueGuide {
+  /** Колонка, значения которой объясняются. Не локализуется: то же имя, что человек набирает в запросе. */
+  column: string;
+  title: LocalizedText;
+  lead: LocalizedText;
+  rows: { value: string; text: LocalizedText }[];
+  caveat: LocalizedText;
+}
+
 /** Описание схемы для шторки «Схема данных» — генерируется вместе с датасетом. */
 export interface SchemaDoc {
   dataset: string;
@@ -255,6 +269,7 @@ export interface SchemaDoc {
     title: LocalizedText;
     grain: LocalizedText;
     note: LocalizedText | null;
+    value_guide: ValueGuide | null;
     row_count: number;
     columns: {
       name: string;

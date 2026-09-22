@@ -899,6 +899,56 @@ const SCHEMA = [
       category: p.category, subcategory: p.subcategory, division: p.division, pack_size: p.pack_size,
       unit: p.unit, list_price: p.list_price, launch_date: p.launch_date,
     })),
+    value_guide: {
+      column: 'brand',
+      title: { ru: 'Что это за бренды', en: 'What these brands actually sell' },
+      lead: {
+        ru: 'Девять брендов, два дивизиона, две разные торговли. FMCG стоит на полке сетей, в мелкой рознице и в интернет-магазине; Pharma идёт только через аптеки — в продажах эти каналы не пересекаются ни разу.',
+        en: 'Nine brands, two divisions, two different trades. FMCG sits on chain shelves, in small retail and online; Pharma goes through pharmacies only, and in the sales data the two never share a channel.',
+      },
+      rows: [
+        { value: 'Aqualis', text: {
+          ru: 'Питьевая вода, от 0,5 до 5 литров. Летний товар: к жаре спрос растёт, к зиме падает.',
+          en: 'Drinking water, 0.5 to 5 litres. A summer line: demand climbs in the heat and falls off by winter.',
+        } },
+        { value: 'Fruvia', text: {
+          ru: 'Соки: литровые пакеты и маленькая бутылка 0,2 л. Тоже летний товар.',
+          en: 'Juice: one litre cartons plus a small 0.2 l bottle. A summer line as well.',
+        } },
+        { value: 'Krosti', text: {
+          ru: 'Чипсы, от 40 до 150 г. Сезона нет: берут одинаково круглый год.',
+          en: 'Crisps, 40 to 150 g. No season: they sell much the same all year.',
+        } },
+        { value: 'Nettora', text: {
+          ru: 'Бытовая химия: универсальное средство, для стекла, для пола, для ванной. Весной берут заметно больше, чем зимой.',
+          en: 'Household cleaning: all purpose, glass, floor and bathroom. Spring runs noticeably above winter.',
+        } },
+        { value: 'Milvara', text: {
+          ru: 'Йогурты: от детских 100 г до питьевых 430 г. Сезона нет.',
+          en: 'Yogurt, from 100 g kids cups to 430 g drinking bottles. No season.',
+        } },
+        { value: 'Pyrexan', text: {
+          ru: 'Жаропонижающее: таблетки, порошок, детский сироп. Аптека. Зимний товар: в холодные месяцы спрос заметно выше летнего.',
+          en: "Fever relief: tablets, powder sachets and a children's syrup. Pharmacy. A winter line: the cold months run well above summer.",
+        } },
+        { value: 'Gastrivo', text: {
+          ru: 'Для пищеварения: таблетки и суспензия. Аптека. Единственный аптечный бренд без сезона.',
+          en: 'Digestive health: tablets and a suspension. Pharmacy. The one pharmacy brand with no season.',
+        } },
+        { value: 'Vitanor', text: {
+          ru: 'Витамины и добавки: мультивитамины, D3, омега-3, магний. Аптека. Зимой берут заметно больше, чем летом.',
+          en: 'Vitamins and supplements: multivitamins, D3, omega 3, magnesium. Pharmacy. Winter runs well above summer.',
+        } },
+        { value: 'Rhinolar', text: {
+          ru: 'От насморка: спреи и капли, в том числе детские. Аптека. Зимний товар, как и жаропонижающее.',
+          en: 'Cold and flu: nasal sprays and drops, children\'s included. Pharmacy. A winter line, like the fever relief.',
+        } },
+      ],
+      caveat: {
+        ru: 'Сезон здесь снят по неделям без акций и усреднён по двум годам. В отдельном месяце акция часто перебивает сезон: если один месяц покажет обратное, это не ошибка в данных, это промо.',
+        en: 'The season here is measured on weeks without promotions and averaged over two years. In a single month a promotion often overrides it, so one month showing the opposite is not an error in the data, it is the promo.',
+      },
+    },
   },
   {
     table: 'dim_region',
@@ -1174,6 +1224,14 @@ for (const t of SCHEMA) {
   checkLocalized(`${t.table}.title`, t.title);
   checkLocalized(`${t.table}.grain`, t.grain);
   if (t.note) checkLocalized(`${t.table}.note`, t.note);
+  if (t.value_guide) {
+    checkLocalized(`${t.table}.value_guide.title`, t.value_guide.title);
+    checkLocalized(`${t.table}.value_guide.lead`, t.value_guide.lead);
+    checkLocalized(`${t.table}.value_guide.caveat`, t.value_guide.caveat);
+    for (const row of t.value_guide.rows) {
+      checkLocalized(`${t.table}.value_guide.rows[${row.value}]`, row.text);
+    }
+  }
   for (const [name, description] of Object.entries(t.cols)) {
     checkLocalized(`${t.table}.${name}`, description);
     const ru = parseReference(name, description.ru);
@@ -1302,6 +1360,7 @@ const schemaJson = {
       title: t.title,
       grain: t.grain,
       note: t.note ?? null,
+      value_guide: t.value_guide ?? null,
       row_count: t.rows.length,
       columns: Object.entries(t.cols).map(([name, description]) => {
         // Связь берётся из русского описания — оно здесь канон, а совпадение

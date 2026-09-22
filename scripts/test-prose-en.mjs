@@ -102,6 +102,11 @@ const targets = () => {
     // пока нет; русские здесь только комментарии, и их отбрасывает englishOnly.
     'src/content/overview.ts',
     'src/content/tools-compare.json',
+    // Схема данных — карточка value_guide и описания колонок в обеих локалях.
+    // Генерируется build-dataset.mjs, но гейты и так требуют собранных
+    // данных (verify:content читает тот же файл), так что новой зависимости
+    // это не создаёт.
+    'public/data/schema.json',
   ];
 };
 

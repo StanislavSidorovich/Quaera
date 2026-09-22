@@ -15,6 +15,7 @@
     "src/content/story.en.json": 0,
     "src/content/storymode.ts": 0,
     "src/content/intro.ts": 0,
-    "src/content/overview.ts": 0
+    "src/content/overview.ts": 0,
+    "public/data/schema.json": 6
   }
 }

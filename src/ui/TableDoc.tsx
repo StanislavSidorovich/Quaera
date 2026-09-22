@@ -134,6 +134,25 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links, key
           </div>
         );
       })}
+      {/*
+       * Словарь значений одной колонки — что значат сами значения, а не что
+       * в ней лежит (это уже сказано выше, в col-doc). Порядок блоков
+       * намеренный: колонки → value-guide → note → sample — что есть,
+       * что значит, чего опасаться, как выглядит.
+       */}
+      {table.value_guide && (
+        <div className="value-guide">
+          <div className="value-guide-title">{table.value_guide.title[locale]}</div>
+          <p className="value-guide-lead">{table.value_guide.lead[locale]}</p>
+          {table.value_guide.rows.map((r) => (
+            <div className="value-row" key={r.value}>
+              <span className="value-name">{r.value}</span>
+              <span>{r.text[locale]}</span>
+            </div>
+          ))}
+          <p className="value-guide-caveat">{table.value_guide.caveat[locale]}</p>
+        </div>
+      )}
       {table.note && <div className="note">{table.note[locale]}</div>}
       {/*
        * Несколько настоящих строк под описанием колонок.

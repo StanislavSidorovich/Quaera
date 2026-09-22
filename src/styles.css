@@ -3841,6 +3841,55 @@ table.sample td.null {
   color: var(--text-dim);
 }
 
+/*
+ * Словарь значений одной колонки (сейчас — dim_product.brand): что значат
+ * сами девять слов бренда, а не что в колонке лежит (это уже col-doc выше).
+ * Свои классы, не col-doc и не .note: .note покрашен в --warn под
+ * предупреждение, а справочник — не предупреждение; .col-doc трогать нельзя,
+ * это общий класс для всех колонок всех таблиц.
+ */
+.value-guide {
+  padding: 10px 14px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.value-guide-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.value-guide-lead {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.value-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+/* Не кнопка и не --code: значение не вставляется в запрос по клику (см. TableDoc). */
+.value-name {
+  flex: none;
+  width: 92px;
+  font-weight: 600;
+}
+
+.value-row span:last-child {
+  color: var(--text-dim);
+}
+
+.value-guide-caveat {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .note {
   padding: 10px 14px;
   font-size: 13px;
