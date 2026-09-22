@@ -3,6 +3,7 @@ import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs
 import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import { panelWordsIn } from './content/panelKeywords';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
+import { compareTaskOrder } from './content/taskOrder';
 import { getExecutor } from './engine/executors';
 import { workerCodeText } from './engine/diagnose';
 import { WORKER_FAILURE } from './engine/types';
@@ -1539,7 +1540,7 @@ export default function App() {
     );
     // Нерешённые вперёд — как и в обычном подборе; если решено всё, берём
     // пачку для повторения, а не отказываем в практике.
-    const unsolved = pool.filter((t) => !solvedTaskIds.has(t.id)).sort((a, b) => a.level - b.level);
+    const unsolved = pool.filter((t) => !solvedTaskIds.has(t.id)).sort(compareTaskOrder);
     const picked = (unsolved.length ? unsolved : pool).slice(0, 3);
 
     const lesson = lessonBySkill.get(skillId);

@@ -1,4 +1,8 @@
 import type { Skill, Task } from '../content/types';
+// Расширение .js обязательно: test-scheduler.mjs компилирует этот файл
+// отдельно и запускает вывод через нативный загрузчик Node, а он не
+// достраивает расширение у путей, как это делает Vite.
+import { compareTaskOrder } from '../content/taskOrder.js';
 
 /**
  * Планировщик повторений.
@@ -212,8 +216,9 @@ export function selectSession({
   const pickFor = (skillId: string): Task | null => {
     const pool = tasks.filter((t) => t.skill === skillId);
     if (!pool.length) return null;
-    // Нерешённые вперёд, дальше — по возрастанию сложности.
-    const unsolved = pool.filter((t) => !solvedTaskIds.has(t.id)).sort((a, b) => a.level - b.level);
+    // Нерешённые вперёд, дальше — по возрастанию сложности, затем по режиму
+    // ввода: образец → достраивание → с нуля (compareTaskOrder).
+    const unsolved = pool.filter((t) => !solvedTaskIds.has(t.id)).sort(compareTaskOrder);
     if (unsolved.length) return unsolved[0];
     // Всё решено — берём для повторения то, что даёт другой угол на тот же навык.
     return pool[Math.floor(Math.random() * pool.length)];
@@ -325,7 +330,7 @@ export function selectSession({
         (a, b) =>
           Number(isDue(states[a.skill], now)) - Number(isDue(states[b.skill], now)) ||
           Number(solvedTaskIds.has(a.id)) - Number(solvedTaskIds.has(b.id)) ||
-          a.level - b.level
+          compareTaskOrder(a, b)
       );
     for (const t of rest) {
       if (chosen.length >= limit) break;

@@ -1,4 +1,8 @@
 import type { Pack, Skill, Task, Track } from '../content/types';
+// Расширение .js обязательно: test-story-line.mjs компилирует этот файл
+// отдельно и запускает вывод через нативный загрузчик Node, а он не
+// достраивает расширение у путей, как это делает Vite.
+import { MODE_RANK, compareTaskOrder } from '../content/taskOrder.js';
 
 /**
  * Сюжетная линия трека — порядок, в котором собирают базу.
@@ -80,17 +84,6 @@ const MISSION_MAX_MINUTES = 18;
 const MISSION_MIN_MINUTES = 6;
 
 /**
- * predict → order → fill → write: сначала разобранный образец, потом сборка
- * из готовых кусков, потом достраивание, потом с нуля.
- *
- * `order` встаёт вторым не по длительности, а по тому, что человек делает:
- * узнавание позади (ответ он производит сам), но материал ещё дан целиком —
- * ровно та ступень строительных лесов, между которой и `fill` разницы почти
- * нет по усилию и есть по тому, что проверяется: порядок против фрагмента.
- */
-const MODE_RANK: Record<Task['mode'], number> = { predict: 0, order: 1, fill: 2, write: 3 };
-
-/**
  * Глубина навыка в графе — длина самой длинной цепочки предпосылок до него.
  *
  * Именно глубина, а не `tier`: tier проставлен руками и говорит о сложности
@@ -162,7 +155,7 @@ function taskMinutes(task: Task): number {
 function lineTasksFor(skillId: string, tasks: Task[]): Task[] {
   return tasks
     .filter((t) => t.skill === skillId)
-    .sort((a, b) => a.level - b.level || MODE_RANK[a.mode] - MODE_RANK[b.mode] || (a.id < b.id ? -1 : 1))
+    .sort(compareTaskOrder)
     .slice(0, TASKS_PER_SKILL)
     .sort((a, b) => MODE_RANK[a.mode] - MODE_RANK[b.mode] || a.level - b.level);
 }
