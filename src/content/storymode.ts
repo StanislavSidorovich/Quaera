@@ -755,7 +755,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Аоки-сан, директор по продажам',
-            text: '«Июнь против ноября — почти вдвое. Эта волна мне знакома двадцать лет, и на встрече её слушать никто не станет: она про розницу вообще, а не про один бренд.»',
+            text: '«Июнь против ноября — почти вдвое. Эта волна мне знакома двадцать лет, и на встрече её слушать никто не станет: она про розницу вообще, а не про один бренд. И заметь: это волна воды и снеков — аптечная половина зимой, наоборот, на подъёме, просто в штуках её почти не видно.»',
           },
         },
         {
@@ -798,7 +798,7 @@ const ru: StoryCampaign = {
         'Обрати внимание на то, что легко проскочить: ты нашёл где просело, а не почему. И нашёл по всей рознице разом, а Аоки-сан спрашивает про один бренд.',
       ],
       hook: [
-        'Зимний спад виден по всей рознице — это сезон, и нести его директору бессмысленно: он объясняет форму года у всех сразу и ни одного бренда в отдельности.',
+        'Зимний спад в штуках виден по всей рознице — это сезон, и нести его директору бессмысленно: он объясняет форму года у всех сразу и ни одного бренда в отдельности.',
         'Значит, сравнивать надо одинаковые месяцы одного и того же бренда, а не январь с июнем. Завтра — январь–июнь Nettora за три года: сезон это или нет, ответят данные.',
       ],
     },
@@ -2277,7 +2277,7 @@ const ru: StoryCampaign = {
           },
           after: {
             from: 'Аоки-сан, директор по продажам',
-            text: '«Ноябрь — минус треть к октябрю, и дальше вниз до самого января. Вот откуда началось. Хотя ноябрь у нас слабый всегда, это я тоже помню.»',
+            text: '«Ноябрь — минус треть к октябрю, и дальше вниз до самого января. Вот откуда началось. Хотя у этой химии ноябрь всегда слабее октября, это я тоже помню.»',
           },
         },
         {
@@ -3704,7 +3704,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
-            text: '"June against November, nearly double. I have known that wave for twenty years, and nobody in the meeting will sit through it: it is about retail in general, not about one brand."',
+            text: '"June against November, nearly double. I have known that wave for twenty years, and nobody in the meeting will sit through it: it is about retail in general, not about one brand. And notice: that wave is water and snacks. The pharmacy half climbs in winter instead, it is just almost invisible in units."',
           },
         },
         {
@@ -3740,7 +3740,7 @@ const en: StoryCampaign = {
         'Notice what is easy to skip: you found where it dropped, not why. And you found it across all of retail at once, while Aoki is asking about one brand.',
       ],
       hook: [
-        'The winter trough shows across all retail, which makes it seasonality, and carrying seasonality to the director is pointless: it explains the shape of the year for everyone at once and no single brand in particular.',
+        'The winter trough in units shows across all retail, which makes it seasonality, and carrying seasonality to the director is pointless: it explains the shape of the year for everyone at once and no single brand in particular.',
         'So the comparison has to be between the same months of the same brand, not January against June. Tomorrow is January to June of Nettora across three years: whether it is a season or not, the data will say.',
       ],
     },
@@ -5060,7 +5060,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki san, sales director',
-            text: '"November is down a third on October, and it keeps sliding all the way to January. So that is where it started. Then again, November is always weak for us, I remember that too."',
+            text: '"November is down a third on October, and it keeps sliding all the way to January. So that is where it started. Then again, November is always weaker than October for this cleaning line, I remember that too."',
           },
         },
         {
