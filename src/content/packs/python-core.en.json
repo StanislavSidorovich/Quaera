@@ -447,10 +447,10 @@
       "brief": "A logistics analyst is looking, for each product, for its single largest delivery: a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
       "goal": "Add a revenue_rank column with this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
       "hints": [
-        ".rank() is the pandas equivalent of the RANK/DENSE_RANK/ROW_NUMBER window functions: it also needs a group and an order, just through the method's parameters instead of an OVER clause.",
-        "method='min' gives RANK (tied values get the same rank, the next one jumps over the skipped places); method='dense' would give DENSE_RANK, 'first' would give ROW_NUMBER."
+        ".rank() inside groupby gives each row its place within its group. The result is as long as the table, so it fits as a new column.",
+        "method='min' gives tied values one place and skips the next (1, 1, 3); ascending=False puts the largest value in first place."
       ],
-      "explain": "rank() inside groupby is a direct equivalent of RANK() OVER (PARTITION BY ... ORDER BY ...): the partition is set by groupby, the order and direction are parameters of rank() rather than a separate ORDER BY. Choosing method changes the same thing that choosing between RANK, DENSE_RANK and ROW_NUMBER changes in SQL: they each decide differently what to do with a spot that looks \"claimed twice\" when values tie."
+      "explain": "groupby sets what the places are counted within, here within each product, and rank() gives every sale its place among the sales of the same product. Place 1 is the largest sale, because ascending=False. method only settles the contested case: two sales with the same revenue. 'min' gives both one place and skips the next, 'dense' skips nothing, 'first' separates them by row order. In SQL the same thing is written as RANK() OVER (PARTITION BY product_id ORDER BY revenue DESC)."
     },
     {
       "id": "py-020",
