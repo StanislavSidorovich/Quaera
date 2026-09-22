@@ -485,7 +485,7 @@
     {
       "id": "py-021",
       "title": "Customers by rep: with nothing lost",
-      "brief": "The same report, but done right: the sum has to match the reference table's total customer count, including the 12 who have no rep at all.",
+      "brief": "The customers-by-rep report needs to lose nobody: the sum across every rep_id has to match the reference table's total customer count, including the 12 customers with no rep at all.",
       "goal": "Count the number of customers per rep_id, including a separate group for customers with no rep, and return columns rep_id, n_customers.",
       "hints": [
         "dropna=False is a groupby parameter that keeps the NaN key as its own group instead of dropping its rows.",
@@ -537,7 +537,7 @@
     {
       "id": "py-024",
       "title": "The promo discount next to every sale",
-      "brief": "The same question, but asked correctly: the commercial director wants to see the discount (discount_pct) next to every sale if it went through a promo, and an empty value if it didn't.",
+      "brief": "The commercial director wants to see the discount (discount_pct) next to every sale: the discount figure if it went through a promo, an empty value if it didn't, and no sale dropped or duplicated.",
       "goal": "Join fact_sellout to dim_promo on promo_id so that all rows of fact_sellout are kept (including sales outside any promo), adding only discount_pct.",
       "hints": [
         "how='left' keeps all rows of fact_sellout, even where promo_id is empty, the pandas equivalent of LEFT JOIN.",
@@ -548,7 +548,7 @@
     {
       "id": "py-025",
       "title": "Guarding against another fan-out",
-      "brief": "After the story about joining on brand, a colleague asks for a safeguard going forward: the code should fail with a clear error if someone mixes up the key again, instead of silently bloating the table.",
+      "brief": "The join key is easy to get wrong, say brand instead of promo_id, and then rows multiply silently instead of the code failing. It needs a safeguard: the code should fail with a clear error if the join key is picked wrong.",
       "goal": "Repeat the join of fact_sellout to dim_promo on promo_id with how='left', adding a cardinality check: the key may repeat on the left, but must be unique on the right.",
       "hints": [
         "validate is an optional merge parameter that checks join cardinality and fails with a MergeError if the expectation isn't met.",
@@ -600,7 +600,7 @@
     {
       "id": "py-028",
       "title": "describe() for each division separately",
-      "brief": "To avoid repeating the past mistake, the same manager wants to see describe() for each division separately right away, not one overall summary for the whole catalog.",
+      "brief": "A single describe() over list_price mixes FMCG and Pharma and gives an average price that describes neither group. The category manager wants describe() for each division separately, right away.",
       "goal": "Get describe() on list_price separately for each value of division.",
       "hints": [
         "describe() can be called not only on a whole column but on the result of a groupby too; then the statistics are computed separately for each group.",
@@ -622,7 +622,7 @@
     {
       "id": "py-030",
       "title": "pivot() instead of pivot_table()",
-      "brief": "A colleague tries reshaping the same dataset with .pivot() (a shorter name, quicker to type) and gets an error instead of a table.",
+      "brief": "A colleague tries getting a brand by quarter summary with .pivot() (a shorter name, quicker to type than pivot_table) directly on raw sales, where a brand and quarter pair matches many rows, not one, and gets an error instead of a table.",
       "goal": "Understand why pivot() doesn't work on raw, not-yet-aggregated data.",
       "predictQuestion": "sub is the raw fact_sellout rows (customer × product × week), joined with brand and quarter, with no aggregation done beforehand. What happens when .pivot() is called?",
       "options": [
@@ -652,7 +652,7 @@
     {
       "id": "py-031",
       "title": "Reshaping the report back to long format",
-      "brief": "The same quarterly-by-brand report needs to go to a BI system that only accepts long format: one brand and one quarter per row, not a wide table.",
+      "brief": "A summary table of brand by quarter, brands as rows and quarters as columns, needs to go to a BI system that only accepts long format: one brand and one quarter per row, not a wide table.",
       "goal": "Reshape the wide table piv (brand, 2025Q1, 2025Q2) back to long format: columns brand, quarter, revenue.",
       "hints": [
         "id_vars is the column that stays as is and doesn't get reshaped; everything else turns into pairs of \"column name → value\".",
@@ -674,7 +674,7 @@
     {
       "id": "py-033",
       "title": "Case and spaces aren't normalization yet",
-      "brief": "After the product codes, a colleague moves on to customer names and applies the same trick: strip the edges, raise the case. Before counting anything over that column, it's worth checking whether it merged every duplicate.",
+      "brief": "Customer names carry both stray edge spaces and mixed case. Both get stripped at once, .str.strip() and .str.upper(), and before counting anything over that column, it's worth checking whether it actually merged every duplicate.",
       "goal": "Understand whether string normalization is enough to make one outlet into one row.",
       "predictQuestion": "The export holds 104 different spellings of customer names, while the real number of outlets in it is 45. What does this code return?",
       "options": [
@@ -704,7 +704,7 @@
     {
       "id": "py-034",
       "title": "One customer, two spellings",
-      "brief": "customer_name in this same extract stores trailing/leading spaces on some rows: \"Minori #1013 \" and \"Minori #1013\"; these are two different values here, even though it's the same outlet.",
+      "brief": "The customer export stores trailing or leading spaces around the name on some rows: \"Minori #1013 \" and \"Minori #1013\" are two different text values here, even though both rows are the same outlet.",
       "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
       "hints": [
         ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",
@@ -756,7 +756,7 @@
     {
       "id": "py-037",
       "title": "A smoothed series next to the source",
-      "brief": "The same «Aqualis» weekly series is needed with 4-week smoothing next to the source data, so the chart doesn't show a weekly sawtooth.",
+      "brief": "The weekly sales series for «Aqualis» swings too hard for a meeting chart. It needs 4-week smoothing next to the source data, in one table, so the chart shows both the level and the raw points.",
       "goal": "Add a rolling4 column to weekly with the rolling mean of units over the last 4 weeks.",
       "hints": [
         "rolling(4) sets a 4-observation rolling-average window, the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL (sql-window-frame).",
@@ -807,8 +807,8 @@
     },
     {
       "id": "py-040",
-      "title": "The same flag, but done right",
-      "brief": "The same \"large sale\" flag, but done right, through .loc, with no intermediate object that can be lost by accident.",
+      "title": "A flag through .loc, no intermediate object",
+      "brief": "Large sales (revenue > 3000) need a flag right inside fact_sellout, set in one call through .loc, with no intermediate object that can get lost along the way.",
       "goal": "Set flag=1 directly in fact_sellout for rows with revenue > 3000, modifying the table in a single lookup through .loc.",
       "hints": [
         ".loc[mask, 'column'] = value is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
@@ -975,7 +975,7 @@
     {
       "id": "py-050",
       "title": "The same quarter a year earlier",
-      "brief": "To tell whether 28,203 units in an autumn quarter is a lot, you need a reference point. The fairest one is the same quarter a year earlier: the same season, the same partners.",
+      "brief": "In Q4 2025, Setouchi Trading took 28,203 units. Whether that's a lot or a little needs a reference point. The fairest one is the same quarter a year earlier: the same season, the same partner.",
       "goal": "From the fact_sellin rows for October to December 2024, return distributor_id and units, the total number of units for each distributor, with distributor_id as an ordinary column.",
       "hints": [
         "The chain is the same as for Q4 2025: groupby on distributor_id, units, sum.",
@@ -986,7 +986,7 @@
     {
       "id": "py-051",
       "title": "Setouchi shipments month by month",
-      "brief": "Mori-san is sure the autumn spike was a one-off. The only way to check is across the full length: what an ordinary month looks like for this partner and how many months broke out of it.",
+      "brief": "The distributor KAM is sure the autumn spike at Setouchi Trading was a one-off. The only way to check is across the full length: what an ordinary month looks like for this partner and how many months broke out of it.",
       "goal": "From the fact_sellin rows for distributor 1, return month_start and units, the total units for each month, with month_start as an ordinary column.",
       "hints": [
         "Group by month_start: one row of the result is one month.",
@@ -1038,7 +1038,7 @@
     {
       "id": "py-054",
       "title": "Setouchi outlet sales by month",
-      "brief": "«Setouchi Trading» shipments are already collected into a monthly series. To put sales at its outlets next to them, those have to be brought to the same frequency, and they are stored by week.",
+      "brief": "A monthly shipment series for «Setouchi Trading» is needed next to sales at its outlets, but those sales are stored by week. To put them side by side, the sales need to be brought to the same monthly frequency.",
       "goal": "Collect sales at the outlets of distributor 1 into a monthly series of units with resample.",
       "hints": [
         "resample changes the frequency; month start is written 'MS'.",
@@ -1049,7 +1049,7 @@
     {
       "id": "py-055",
       "title": "2.44 in pandas",
-      "brief": "The ratio of shipments to sales for Q4 2025 has already been computed once with a query. Now it is assembled in pandas the same way, two facts each collapsed to one row per distributor, so that it can be recomputed for any period with a single edit.",
+      "brief": "The ratio of shipments to sales for each distributor in Q4 2025 needs to be assembled so that recomputing it for any other period is a single edit, not a new query: two facts, each collapsed to one row per distributor, then joined.",
       "goal": "For each distributor in Q4 2025, return distributor_id, shipped (units shipped), sold (units sold at its outlets in the weeks starting in October to December) and ratio (shipped / sold, rounded to two decimal places).",
       "hints": [
         "The first join attaches each sale to the distributor of its outlet: the key is customer_id, and it is unique on the right.",
@@ -1059,8 +1059,8 @@
     },
     {
       "id": "py-056",
-      "title": "The same calculation for Q1 2026",
-      "brief": "Mori-san says that since January Setouchi has been buying as usual. With the ratio already assembled in code, checking takes one change of period, and it should be measured with the same yardstick the spike was found with.",
+      "title": "The ratio for Q1 2026",
+      "brief": "The distributor KAM says that since January Setouchi has been buying as usual. Checking that means recomputing the same shipments-to-sales ratio, but for Q1 2026: the period changes, the method stays the same.",
       "goal": "For Q1 2026, return distributor_id, shipped, sold and ratio (shipped / sold, rounded to two decimal places) for each distributor. The collapsed shipped and sold tables are already built in the starter: join them and add ratio.",
       "hints": [
         "The two collapsed tables join on distributor_id, which is present in both and unique in each.",
@@ -1104,7 +1104,7 @@
     {
       "id": "py-060",
       "title": "Setouchi's discount by month",
-      "brief": "Friday's conclusion rests on Mori-san's words, \"we offered it ourselves\": a discount that got Setouchi to take more stock in the autumn. If a discount was offered, it should show up in shipments, not just in words.",
+      "brief": "The distributor KAM says Setouchi was offered a discount in the autumn to take more stock, \"we offered it ourselves.\" If a discount was offered, it should show up in the shipments, not just in words.",
       "goal": "For distributor Setouchi (distributor_id = 1), return per month: month_start and discount_amount (the sum of discount given).",
       "hints": [
         "Selecting one distributor is the same mask you've already used this week: distributor_id == 1.",
@@ -1115,7 +1115,7 @@
     {
       "id": "py-061",
       "title": "Five months of what",
-      "brief": "On Monday Mori-san goes to Setouchi with five months of stock: one number for the whole warehouse. The plan gets recalculated by brand, and a warehouse-wide average can hide very different situations.",
+      "brief": "On Monday the distributor KAM goes to Setouchi Trading with five months of stock: one number for the whole warehouse. The plan gets recalculated by brand, and a warehouse-wide average can hide very different situations.",
       "goal": "Per brand, return brand, units_on_hand (Setouchi's stock at the end of June 2026), units (sales through its outlets since 2026-01-01), and months (how many months of such sales the stock covers: units_on_hand / (units / 6), rounded to one decimal place).",
       "hints": [
         "Stock by brand and sales by brand are two separate calculations, each built the same way as Friday's task: a mask on the distributor, a merge for the brand key, then grouping and summing with .reset_index().",
