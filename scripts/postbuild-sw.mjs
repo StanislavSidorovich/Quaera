@@ -84,6 +84,18 @@ await writeFile(swPath, sw, 'utf8');
  */
 await copyFile(path.join(dist, 'index.html'), path.join(dist, '404.html'));
 
+// Повтор стилей и бандла (retryAsset в index.html) слушает только то, что
+// загружается после него. Встань теги Vite выше — сбой случится до подписки,
+// и страховка молча перестанет работать; поэтому порядок проверяется здесь.
+const html = await readFile(path.join(dist, 'index.html'), 'utf8');
+const guard = html.indexOf('function retryAsset');
+const firstAsset = Math.min(
+  ...['<script type="module"', '<link rel="stylesheet"'].map((tag) => html.indexOf(tag)).filter((i) => i >= 0)
+);
+if (guard < 0 || !(guard < firstAsset)) {
+  throw new Error('dist/index.html: скрипт retryAsset должен стоять выше тегов стилей и бандла — см. комментарий в index.html');
+}
+
 const { size } = await stat(path.join(dist, 'data', 'quaera.dataset'));
 console.log(`sw: сборка ${buildId}, в предзагрузке ${assets.length} файлов`);
 console.log(`sw: рантайм Python кешируется отдельно от сборки — quaera-pyodide-${vendorId}`);
