@@ -3207,9 +3207,9 @@
       "orderMatters": true,
       "hints": [
         "Отбор — WHERE brand = 'Nettora': текст в одинарных кавычках, условие стоит после FROM.",
-        "Номера понадобятся завтра, и удобнее, когда они идут подряд: ORDER BY product_id в самом конце."
+        "Номера удобнее держать по порядку: ORDER BY product_id в самом конце."
       ],
-      "explain": "У Nettora пять позиций, все из Home care, номера с 19 по 23. Таблица продаж знает товар только по этому номеру, поэтому продажи бренда отбираются условием product_id IN (19, 20, 21, 22, 23): ключи человек достаёт из справочника сам. Это обычный шаг аналитика — сначала ключи из справочника, потом факты — и через несколько дней соединение начнёт делать то же самое за него."
+      "explain": "У Nettora пять позиций, все из Home care, номера с 19 по 23. Таблица продаж знает товар только по этому номеру, поэтому продажи бренда отбираются условием product_id IN (19, 20, 21, 22, 23): ключи человек достаёт из справочника сам. Это обычный шаг аналитика — сначала ключи из справочника, потом факты, — и дальше это возьмёт на себя соединение."
     },
     {
       "id": "sql-108",
@@ -3228,7 +3228,7 @@
       "solution": "SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'",
       "hints": [
         "Сумма штук — SUM(units): агрегат, который складывает колонку по всем отобранным строкам.",
-        "Несколько значений одной колонки — IN со списком: product_id IN (19, 20, 21, 22, 23), как в отборе накануне."
+        "Несколько значений одной колонки — IN со списком: product_id IN (19, 20, 21, 22, 23), тот же список, что и при отборе товаров бренда."
       ],
       "explain": "В январе 2026-го Nettora продала 1 216 штук. BETWEEN берёт диапазон вместе с обеими границами; даты здесь — текст вида 2026-01-12, и сравниваются они как даты. Суммируются строки сразу по всем пяти позициям бренда: в fact_sellout одна строка — один товар в одной точке за неделю."
     },
@@ -3239,7 +3239,7 @@
       "level": 2,
       "mode": "write",
       "title": "Nettora в июне прошлого года",
-      "brief": "Чтобы понять, откуда взялось «вчетверо», нужен второй конец сравнения: сколько Nettora продала в июне 2025-го.",
+      "brief": "Отчёт продаж утверждает, что продажи Nettora упали почти вчетверо: январь 2026-го дал 1 216 штук. Нужен второй конец сравнения — сколько Nettora продала в июне 2025-го.",
       "goal": "Вернуть одну строку: units — сумма проданных штук по товарам Nettora (номера 19–23) за июнь 2025.",
       "starter": "SELECT SUM(units) AS units\nFROM fact_sellout\n",
       "solution": "SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2025-06-01' AND '2025-06-30'",
@@ -3263,7 +3263,7 @@
       "orderMatters": true,
       "hints": [
         "Год вырезает substr(week_start, 1, 4): «с первого символа взять четыре». Впиши его первой колонкой и назови AS year.",
-        "Остаётся то, что делали со вторника: GROUP BY 1 сворачивает по году, а ORDER BY year упорядочивает."
+        "GROUP BY 1 сворачивает строки по году, а ORDER BY year упорядочивает результат — тот же приём, что и в сводке по месяцам."
       ],
       "explain": "Январь–июнь: 20 740 штук в 2024-м, 20 250 в 2025-м и 9 858 в 2026-м. Те же месяцы, тот же бренд — и вдвое меньше: сезон отпал, падение настоящее. Условие на месяц, substr(week_start, 6, 2) <= '06', стоит в заготовке: шестой и седьмой символы даты — номер месяца, а строки сравниваются по порядку символов."
     },
@@ -3274,13 +3274,13 @@
       "level": 2,
       "mode": "write",
       "title": "Рынок за те же месяцы",
-      "brief": "Первое, что спросит скептик: а может, просел весь рынок, а не один бренд? Проверка — тот же запрос без отбора по бренду.",
+      "brief": "Первое, что спросит скептик: а может, просел весь рынок, а не один бренд? Проверка — то же за январь–июнь трёх лет, но без отбора по бренду: штуки по всем товарам сразу.",
       "goal": "Вернуть year и units — сумму штук по всем товарам за январь–июнь каждого из трёх лет, по возрастанию года.",
       "starter": "",
       "solution": "SELECT substr(week_start, 1, 4) AS year,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE substr(week_start, 6, 2) <= '06'\nGROUP BY 1\nORDER BY year",
       "orderMatters": true,
       "hints": [
-        "Пятничный запрос без условия по товарам: оставь только условие на месяц.",
+        "Такой же запрос, как для одного бренда по годам, но без условия на товар — оставь только отбор по месяцу.",
         "Год — substr(week_start, 1, 4), месяц — substr(week_start, 6, 2); январь–июнь — это месяц не больше '06'."
       ],
       "explain": "Рынок за январь–июнь: 198 270 штук в 2024-м, 225 261 в 2025-м и 213 447 в 2026-м, то есть на 5% меньше, чем год назад. У Nettora за те же месяцы минус 51%. Падает бренд, а не рынок."
@@ -3292,7 +3292,7 @@
       "level": 2,
       "mode": "fill",
       "title": "Nettora: штуки и точки по месяцам",
-      "brief": "Ито-сан говорит, что в её точках Nettora берут как раньше. Проверим не по памяти: рядом со штуками посчитаем, в скольких точках бренд продавался в каждом месяце.",
+      "brief": "Крупный клиент уверяет, что Nettora у него берут как раньше. Проверим не по памяти: рядом со штуками посчитаем, в скольких точках бренд продавался в каждом месяце.",
       "goal": "Вернуть по месяцам с января 2025: month, units — сумму штук Nettora и outlets — число разных точек, где были продажи.",
       "template": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units,\n       ___ AS outlets\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month",
       "blanks": [
@@ -3312,7 +3312,7 @@
       "level": 2,
       "mode": "write",
       "title": "Точек по годам",
-      "brief": "Помесячная картина показала сползание. Теперь одно число на год, чтобы назвать размер потери: сколько точек было у бренда в 2024-м, в 2025-м и сколько в 2026-м.",
+      "brief": "По месяцам число точек Nettora сползает: 74 в начале 2025-го, к декабрю — 40. Теперь одно число на год, чтобы назвать размер потери целиком: сколько точек было у бренда в 2024-м, в 2025-м и сколько в 2026-м.",
       "goal": "Вернуть year и outlets — число разных точек с продажами Nettora за каждый год, по возрастанию года.",
       "starter": "SELECT substr(week_start, 1, 4) AS year,\n       \nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\nGROUP BY 1\nORDER BY year",
       "solution": "SELECT substr(week_start, 1, 4) AS year,\n       COUNT(DISTINCT customer_id) AS outlets\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\nGROUP BY 1\nORDER BY year",
@@ -3330,7 +3330,7 @@
       "level": 2,
       "mode": "fill",
       "title": "Продажи на одну точку",
-      "brief": "Если полка сжалась, остаётся вторая версия: в оставшихся точках стали брать меньше. Проверка — штуки на одну точку по месяцам.",
+      "brief": "Число точек упало, но остаётся другой вопрос: в оставшихся точках стали брать меньше, или спрос там не изменился? Проверка — штуки на одну точку по месяцам.",
       "goal": "Вернуть по месяцам с января 2025: month и per_outlet — штуки Nettora на одну точку, округлённые до одного знака.",
       "template": "SELECT substr(week_start, 1, 7) AS month,\n       ROUND(1.0 * SUM(units) / ___, 1) AS per_outlet\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start >= '2025-01-01'\nGROUP BY 1\nORDER BY month",
       "blanks": [
@@ -3351,7 +3351,7 @@
       "level": 2,
       "mode": "fill",
       "title": "Цена штуки по годам",
-      "brief": "Осталась третья версия из коридора: цену подняли, и покупатель ушёл к соседям. Реальная цена штуки — выручка, делённая на штуки, по годам.",
+      "brief": "Ещё одна гипотеза падения: цену подняли, и покупатель ушёл к соседям. Реальная цена штуки — выручка, делённая на штуки, по годам.",
       "goal": "Вернуть year и price — среднюю цену штуки Nettora (выручка на штуку, округлённая до одного знака) по годам.",
       "template": "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(___ / ___, 1) AS price\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora'\nGROUP BY 1\nORDER BY year",
       "blanks": [
@@ -3390,7 +3390,7 @@
       "level": 3,
       "mode": "fill",
       "title": "Живы ли потерянные точки",
-      "brief": "Имени того, кто занял полку, в наших данных нет, и Аоки-сан больше его не просит. Ей нужно другое: что про потерянные точки известно наверняка. Закрылись они или просто перестали брать Nettora?",
+      "brief": "Имени того, кто занял полку, в данных нет. Важнее другое: что про потерянные точки известно наверняка — закрылись они или просто перестали брать Nettora?",
       "goal": "Вернуть outlets и units: сколько точек, где Nettora продавалась в 2025 году и не продавалась с 1 января 2026-го, что-то купили у нас с начала 2026 года — и сколько штук.",
       "template": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id ___ (\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id ___\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
       "blanks": [
@@ -3411,7 +3411,7 @@
       "level": 3,
       "mode": "fill",
       "title": "Из мелких ли точек мы ушли",
-      "brief": "Прежде чем нести разбор бренду, Аоки-сан хочет закрыть версию про нас самих: может, мы ушли из мелких точек, и это нормальная чистка. Сравнить нужно 2024 год, до потери: сколько штук Nettora брала точка, которую мы потеряли, и сколько — та, что осталась.",
+      "brief": "Прежде чем нести разбор бренду, стоит закрыть версию про нас самих: может, мы ушли из мелких точек, и это нормальная чистка. Сравнить нужно 2024 год, до потери: сколько штук Nettora брала точка, которую мы потеряли, и сколько — та, что осталась.",
       "goal": "За 2024 год вернуть stayed (1 — точка продаёт Nettora и в 2026 году, 0 — потерянная), outlets (число точек), avg_units (штуки Nettora на точку, округлить до целых) и units (сумма штук), сначала потерянные.",
       "template": "___ per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT customer_id IN (SELECT customer_id FROM fact_sellout\n                       WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                         AND week_start >= '2026-01-01') AS stayed,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM ___\nGROUP BY stayed\nORDER BY stayed",
       "blanks": [
@@ -3454,7 +3454,7 @@
       "level": 2,
       "mode": "write",
       "title": "Запас Nettora у дистрибьюторов",
-      "brief": "Ито-сан говорит, что в точках ему отвечают: «не привозят». Отгрузки к продажам сходятся, значит, товар должен лежать где-то по дороге. Остатки у дистрибьюторов хранятся помесячно.",
+      "brief": "Клиенты жалуются: «не привозят». Но отгрузки превышают продажи всего на 4–6% каждый год — расхождение небольшое, значит, товар должен лежать где-то по дороге. Остатки у дистрибьюторов хранятся помесячно.",
       "goal": "Вернуть month_start и units — запас Nettora у дистрибьюторов (сумма units_on_hand) на июнь каждого года, по возрастанию даты.",
       "starter": "",
       "solution": "SELECT s.month_start, SUM(s.units_on_hand) AS units\nFROM fact_stock s\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE p.brand = 'Nettora'\n  AND substr(s.month_start, 6, 2) = '06'\nGROUP BY s.month_start\nORDER BY s.month_start",
@@ -3475,7 +3475,7 @@
       "level": 4,
       "mode": "fill",
       "title": "Nettora месяц за месяцем",
-      "brief": "Аоки-сан хочет видеть в отчёте не только число месяца, но и прошлый месяц рядом — чтобы падение читалось с одного взгляда, без калькулятора. Начать с одного бренда: Nettora с июля 2025-го.",
+      "brief": "Категорийному менеджеру нужно видеть в отчёте не только число месяца, но и прошлый месяц рядом — чтобы падение читалось с одного взгляда, без калькулятора. Начать с одного бренда: Nettora с июля 2025-го.",
       "goal": "Для Nettora с июля 2025 года вернуть по месяцам month (формат YYYY-MM), units — сумму штук и prev_units — штуки предыдущего месяца. У первого месяца prev_units пустой. По возрастанию месяца.",
       "template": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start >= '2025-07-01'\n  GROUP BY 1\n)\nSELECT month, units,\n       ___(units) ___ (ORDER BY month) AS prev_units\nFROM monthly\nORDER BY month",
       "blanks": [
