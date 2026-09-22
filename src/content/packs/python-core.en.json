@@ -160,7 +160,7 @@
         "A list of columns is passed as a list inside square brackets: df[['a', 'b']].",
         "No row filtering is needed here, just select columns, all products stay."
       ],
-      "explain": "dim_product[['sku_code', 'product_name', 'list_price']] is df[column_list], and the result is always a DataFrame, even if the list has one column. The outer brackets address the table, the inner ones are the list of names itself. It's easy to confuse this with df['sku_code'] (one column, no nested brackets); that gives a Series, not a table, see the next task."
+      "explain": "dim_product[['sku_code', 'product_name', 'list_price']] is df[column_list], and the result is always a DataFrame, even if the list has one column. The outer brackets address the table, the inner ones are the list of names itself. It's easy to confuse this with df['sku_code'] (one column, no nested brackets); that gives a Series, a one-dimensional object with its own, different set of methods."
     },
     {
       "id": "py-006",
@@ -242,7 +242,7 @@
         "\"Empty\" in pandas is NaN, and checking for it is a separate method: .isna(), not == None and not == NaN.",
         "The result of .isna() is already a boolean mask, and it can be plugged straight into .loc."
       ],
-      "explain": "NaN is the only value in Python that isn't equal to itself, so df['x'] == None or df['x'] == float('nan') don't find gaps at all. .isna() is the only reliable way to check for them, and it's the same gap that turned manager_id into float64 in the previous task, two problems, one cause."
+      "explain": "NaN is the only value in Python that isn't equal to itself, so df['x'] == None or df['x'] == float('nan') don't find gaps at all. .isna() is the only reliable way to check for them, and it's the same gap that prints manager_id as 1.0, 2.0 instead of 1, 2: two problems, one cause."
     },
     {
       "id": "py-010",
@@ -779,7 +779,7 @@
       "goal": "Count how many unique customer names will remain if leading/trailing spaces are removed.",
       "hints": [
         ".str.strip() removes spaces only at the edges of a string, leaving spaces inside it untouched.",
-        "After normalizing, count with nunique(), as in the previous task."
+        "After normalizing, count the number of unique values with nunique()."
       ],
       "explain": "104 unique values turn into 52, exactly half turned out to be the same customer with an extra space at the edge. .strip() is the most common first step when working with any raw extract: spaces aren't visible to the eye in a table, but they make two visually identical strings different for grouping and joining."
     },
@@ -874,7 +874,7 @@
         ".copy() right after the filter says explicitly: from here on you're working with an independent table, not a view onto the source, and the warning stops appearing.",
         ".assign(name=value) adds a column and returns a new table in that same call; the chain can continue without being broken by an intermediate variable."
       ],
-      "explain": ".copy() and .assign() are what turn the previous task from a trap into a working technique: .copy() explicitly fixes independence from the source table, instead of leaving pandas to guess whether this is a view or a copy, and .assign() adds a column while staying inside one chain of calls, rather than going through a separate df['col'] = .... It's precisely the absence of an extra intermediate variable and of direct assignment through [] that guards against the scenario that broke the flag in the previous task."
+      "explain": ".copy() and .assign() are what turn chained assignment from a trap into a working technique: .copy() explicitly fixes independence from the source table, instead of leaving pandas to guess whether this is a view or a copy, and .assign() adds a column while staying inside one chain of calls, rather than going through a separate df['col'] = .... It's precisely the absence of an extra intermediate variable and of direct assignment through [] that guards against the scenario that silently drops the assigned flag with nothing but a SettingWithCopyWarning to show for it."
     },
     {
       "id": "py-040",
@@ -1178,21 +1178,21 @@
       "brief": "The distributor KAM says Setouchi was offered a discount in the autumn to take more stock, \"we offered it ourselves.\" If a discount was offered, it should show up in the shipments, not just in words.",
       "goal": "For distributor Setouchi (distributor_id = 1), return per month: month_start and discount_amount (the sum of discount given).",
       "hints": [
-        "Selecting one distributor is the same mask you've already used this week: distributor_id == 1.",
+        "Selecting one distributor is the same mask as in the quarterly rollup by distributor: distributor_id == 1.",
         "From there it's a familiar chain: group by month, sum the discount, bring the key back as a column: .groupby(...)['...'].sum().reset_index()."
       ],
-      "explain": "The discount rose to 76,568 / 61,273 / 76,233 ¥ in October–December 2025, nearly double the usual 21,967–47,358 ¥. But units for those same months (Friday) also rose, 10,172 / 8,162 / 9,869 against 3,764–5,832 a year earlier, and the discount per unit didn't change: 7.5 ¥, same as any other month. The rise in the total is fully explained by the rise in volume, not by more generous terms: there was no volume discount, and Setouchi paid for the extra quarter itself, 2.29 million ¥ against 1.10 million a year before."
+      "explain": "The discount rose to 76,568 / 61,273 / 76,233 ¥ in October–December 2025, nearly double the usual 21,967–47,358 ¥. But units for those same months (the same quarterly rollup by distributor) also rose, 10,172 / 8,162 / 9,869 against 3,764–5,832 a year earlier, and the discount per unit didn't change: 7.5 ¥, same as any other month. The rise in the total is fully explained by the rise in volume, not by more generous terms: there was no volume discount, and Setouchi paid for the extra quarter itself, 2.29 million ¥ against 1.10 million a year before."
     },
     {
       "id": "py-061",
       "title": "Five months of what",
-      "brief": "On Monday the distributor KAM goes to Setouchi Trading with five months of stock: one number for the whole warehouse. The plan gets recalculated by brand, and a warehouse-wide average can hide very different situations.",
+      "brief": "The distributor KAM goes to Setouchi Trading with five months of stock: one number for the whole warehouse. The plan gets recalculated by brand, and a warehouse-wide average can hide very different situations.",
       "goal": "Per brand, return brand, units_on_hand (Setouchi's stock at the end of June 2026), units (sales through its outlets since 2026-01-01), and months (how many months of such sales the stock covers: units_on_hand / (units / 6), rounded to one decimal place).",
       "hints": [
-        "Stock by brand and sales by brand are two separate calculations, each built the same way as Friday's task: a mask on the distributor, a merge for the brand key, then grouping and summing with .reset_index().",
-        "Once both tables are rolled up by brand, an ordinary merge on brand joins them; months of stock uses Friday's same yardstick: stock divided by sales per month (six-month sales divided by 6)."
+        "Stock by brand and sales by brand are two separate calculations: a mask on the distributor, a merge for the brand key, then grouping and summing with .reset_index(), the same sequence of steps as computing stock for the whole warehouse.",
+        "Once both tables are rolled up by brand, an ordinary merge on brand joins them; months of stock uses the same yardstick as for the whole warehouse: stock divided by sales per month (six-month sales divided by 6)."
       ],
-      "explain": "Eight brands hold between 3.8 and 7.7 months of stock; that's the Friday number for every other line of the plan. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost from January 2026. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
+      "explain": "Eight brands hold between 3.8 and 7.7 months of stock; the warehouse-wide \"five months\" was an average across these eight plus the ninth, Nettora. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost from January 2026. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
     }
   ]
 }

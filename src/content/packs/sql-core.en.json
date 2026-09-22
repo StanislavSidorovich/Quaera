@@ -1449,7 +1449,7 @@
           ]
         },
         {
-          "question": "The three promo weeks delivered 540,472 yen of revenue against a base level of 313,934 yen, an uplift of 226,538 yen. You already worked out the discount given on this promotion in the previous task. What do you tell the sales director?",
+          "question": "The three promo weeks delivered 540,472 yen of revenue against a base level of 313,934 yen, an uplift of 226,538 yen. What do you tell the sales director?",
           "hints": [
             "Compare the two amounts head on: which is larger, the revenue uplift or the discount given?",
             "Remember that revenue is not profit: the cost of the goods sold still has to come out of it."
@@ -1735,7 +1735,7 @@
           ]
         }
       ],
-      "explain": "The task brings two earlier findings together. The bias on «Nettora» was already visible in the task about forecast bias by brand, where it looked like a quirk of one brand; the comparison with a benchmark shows what it costs: on that brand the forecast is 14.4 points worse than freely repeating last month. The opposite pole matters just as much. On «Pyrexan» the same forecast wins 25 points, so «the forecast is bad» is as wrong on this data as «the forecast is good». The right conclusion is addressed to somebody: review the brands with a negative difference rather than the method as a whole. Hence the working rule. Forecast accuracy on its own means nothing; what means something is the distance to a benchmark that costs nothing. And the caveat without which the rule lies: the benchmark here is the simplest one, «same as last month». For a seasonal product the fairer comparison is the same month a year ago, and this data allows that too, but whichever benchmark you pick has to be named out loud, because it sets the bar below which a forecast has no point."
+      "explain": "The task brings together two findings about the forecast: its bias by brand, and what it's even fair to compare it against. The bias on «Nettora» was already visible in the task about forecast bias by brand, where it looked like a quirk of one brand; the comparison with a benchmark shows what it costs: on that brand the forecast is 14.4 points worse than freely repeating last month. The opposite pole matters just as much. On «Pyrexan» the same forecast wins 25 points, so «the forecast is bad» is as wrong on this data as «the forecast is good». The right conclusion is addressed to somebody: review the brands with a negative difference rather than the method as a whole. Hence the working rule. Forecast accuracy on its own means nothing; what means something is the distance to a benchmark that costs nothing. And the caveat without which the rule lies: the benchmark here is the simplest one, «same as last month». For a seasonal product the fairer comparison is the same month a year ago, and this data allows that too, but whichever benchmark you pick has to be named out loud, because it sets the bar below which a forecast has no point."
     },
     {
       "id": "sql-084",
@@ -1980,10 +1980,10 @@
     {
       "id": "sql-096",
       "title": "Who's priciest on average",
-      "brief": "The same category manager asks for the same thing as before, but sorted this time: which FMCG brand is the most expensive on average?",
+      "brief": "The category manager asks for the same average price by FMCG brand, but sorted this time: which brand is the most expensive on average?",
       "goal": "For the FMCG division, return brand and avg_price (average price rounded to two decimal places), ordered by average price descending.",
       "hints": [
-        "The query is almost the same as the previous task; it's only missing a sort by the avg_price alias.",
+        "The query is almost the same as the average price by FMCG brand; it's only missing a sort by the avg_price alias.",
         "Descending order is ORDER BY avg_price DESC, using the alias already declared in this query's SELECT."
       ],
       "explain": "SQLite allows sorting by an alias declared in the same query's SELECT, even though that alias isn't visible anywhere else in the query. The result is itself the discovery: Nettora is the most expensive FMCG brand on average, 201.6 ¥, even though it's unremarkable by item count. Average price and assortment size are different metrics, and a high value in one doesn't guarantee a high value in the other."
@@ -2061,7 +2061,7 @@
       "goal": "For the Nettora brand, by year, return year (YYYY), promo_revenue (revenue during promotions, rounded to whole numbers) and revenue (total revenue, rounded to whole numbers), ordered ascending by year.",
       "hints": [
         "The year is the first four characters of the week: substr(f.week_start, 1, 4), the same trick as for month, just shorter.",
-        "The promo condition inside CASE is the same as in the previous task: f.promo_id IS NOT NULL."
+        "The promo condition inside CASE is the same as when splitting a brand's revenue into promo and base: f.promo_id IS NOT NULL."
       ],
       "explain": "The theory doesn't hold up in any year: Nettora's promo share was 6.7% in 2024, 20.3% in 2025 and 16.7% in 2026, topping out at exactly one fifth of revenue. The brand never lived on promotions in the way the theory assumed, so the cause of the decline has to be found somewhere other than a pullback in promo spend."
     },
@@ -2078,14 +2078,14 @@
     },
     {
       "id": "sql-104",
-      "title": "A list for Ito-san",
-      "brief": "Ito-san from modern trade asks for a list of outlets that don't carry Nettora at all, to start the conversation about winning the brand back onto the shelf before building a general visit plan.",
+      "title": "Outlets with no Nettora in chains",
+      "brief": "The modern trade account manager asks for a list of outlets that don't carry Nettora at all, to start the conversation about winning the brand back onto the shelf before building a general visit plan.",
       "goal": "Return customer_name and city for outlets in chains (channel = 'modern_trade') with zero Nettora sales since 2026-01-01.",
       "hints": [
         "The period condition is also a condition on LEFT JOIN's right-hand table: like the brand condition, it belongs in ON, not WHERE, or outlets with no sales get filtered out before you can find them (compare with the task about a filter that landed in the wrong place).",
         "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found."
       ],
-      "explain": "27 outlets in chains haven't bought a single unit of Nettora since the start of the year; with this list, Ito-san can go to the chain buyers before building a general win-back plan. The period condition behaves just like the product condition in the task about outlets that never bought Nettora at all: both restrict LEFT JOIN's right-hand table, and both must sit in ON, or the LEFT JOIN silently turns into an INNER one and the very outlets with no sales disappear along with the answer."
+      "explain": "27 outlets in chains haven't bought a single unit of Nettora since the start of the year; with this list, the account manager can go to the chain buyers before building a general win-back plan. The period condition behaves just like the product condition in the task about outlets that never bought Nettora at all: both restrict LEFT JOIN's right-hand table, and both must sit in ON, or the LEFT JOIN silently turns into an INNER one and the very outlets with no sales disappear along with the answer."
     },
     {
       "id": "sql-105",

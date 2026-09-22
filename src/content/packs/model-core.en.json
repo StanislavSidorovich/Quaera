@@ -754,7 +754,7 @@
         "Compare the two variants on one point: is there a SUM or a similar aggregating function inside either of them?",
         "Row context works on its own for direct column references; an aggregating function overrides it."
       ],
-      "explain": "The difference between the two variants isn't DIVIDE; it's identical in both formulas and just divides two numbers. The difference is what's inside DIVIDE. In variant A those are direct references to the current row's columns: revenue and units are pulled from that row specifically, and row context works with no extra effort. In variant B there's a SUM inside, and SUM, just as in the previous task, responds not to the row but to the filter context, which is absent here, and aggregates the entire table. The practical takeaway: if a column formula needs to answer \"for this row\", aggregating functions mostly have no place in it; only direct field references do.",
+      "explain": "The difference between the two variants isn't DIVIDE; it's identical in both formulas and just divides two numbers. The difference is what's inside DIVIDE. In variant A those are direct references to the current row's columns: revenue and units are pulled from that row specifically, and row context works with no extra effort. In variant B there's a SUM inside, and SUM responds not to the row but to the filter context, which is absent here, and aggregates the entire table. The practical takeaway: if a column formula needs to answer \"for this row\", aggregating functions mostly have no place in it; only direct field references do.",
       "options": [
         {
           "label": "Variant A: direct references to revenue and units, with no aggregating functions, naturally use row context",

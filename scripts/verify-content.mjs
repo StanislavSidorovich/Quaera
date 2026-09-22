@@ -3839,5 +3839,73 @@ function translationPairs(orig, tr) {
   if (!hits) console.log(`  ok   ссылок на задания по id в видимом тексте нет: ${scanned} полей в ${files.length} паках`);
 }
 
+// --- Позиционные отсылки («в предыдущем задании», «см. следующее») и персонажи
+// кампании в общем пуле свободного режима.
+/**
+ * «Как в отборе накануне», «см. следующее задание», Аоки-сан, «пятничный
+ * запрос» — верны только при одном конкретном порядке или только внутри
+ * кампании. Свободный режим задания перемешивает (interleave), повторяет
+ * по SRS и после правок порядка ставит по-другому — такая отсылка для
+ * читателя не разрешается ни во что.
+ *
+ * Чинится тем же способом, что и ссылки по id: описанием по содержанию
+ * («как при отборе товаров бренда») или самим фактом/выводом с числом.
+ * Отсылки по содержанию от порядка не зависят и гейтом не ловятся.
+ *
+ * storymode.ts не проверяется: там персонажи и день недели — законная
+ * часть кампании, а не текст свободного режима.
+ */
+{
+  const HUMAN_FIELDS = new Set([
+    'brief',
+    'goal',
+    'hints',
+    'explain',
+    'predictQuestion',
+    'orderQuestion',
+    'question',
+    'label',
+    'why',
+    'wrongWhy',
+    'reads',
+    'selfCheck',
+    'summary',
+  ]);
+  const RU_POSITIONAL = /(предыдущ|прошл|следующ)\S*\s+задани|задании\s+этого\s+навыка|Аоки|Мори-сан|Ито-сан|Танака-сан|пятничн/i;
+  // Tanaka сужен до формы «-san»: в domain-core «Sakura Tanaka» — обычный
+  // представитель из датасета, а не персонаж кампании (тот встречается
+  // только как «Tanaka san» в storymode.ts) — первый прогон гейта поймал
+  // это как ложное срабатывание.
+  const EN_POSITIONAL = /\b(previous|next|last|preceding)\s+(task|exercise)\b|\bAoki\b|\bMori\b|\bIto[- ]san\b|\bTanaka[- ]san\b/i;
+  const packsDir = path.join(root, 'src', 'content', 'packs');
+  const files = readdirSync(packsDir).filter((f) => f.endsWith('.json'));
+
+  let hits = 0;
+  let scanned = 0;
+  for (const file of files) {
+    const pattern = file.endsWith('.en.json') ? EN_POSITIONAL : RU_POSITIONAL;
+    const walk = (node, key, where) => {
+      if (typeof node === 'string') {
+        if (!HUMAN_FIELDS.has(key)) return;
+        scanned++;
+        const m = node.match(pattern);
+        if (m) {
+          fail(file, `${where} поле ${key} — позиционная отсылка «${m[0]}»: заменить на отсылку по содержанию или на сам факт`);
+          hits++;
+        }
+        return;
+      }
+      if (Array.isArray(node)) return node.forEach((v, i) => walk(v, key, `${where}[${i}]`));
+      if (node && typeof node === 'object') {
+        const self = node.id ?? node.skill;
+        const next = typeof self === 'string' ? `${self}:` : where;
+        for (const [k, v] of Object.entries(node)) walk(v, k, next);
+      }
+    };
+    walk(JSON.parse(readFileSync(path.join(packsDir, file), 'utf8')), null, `${file}:`);
+  }
+  if (!hits) console.log(`  ok   позиционных отсылок и персонажей кампании в свободном режиме нет: ${scanned} полей в ${files.length} паках`);
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);
