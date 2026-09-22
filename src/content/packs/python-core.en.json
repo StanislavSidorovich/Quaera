@@ -22,11 +22,6 @@
       "summary": "I read data into a DataFrame and distinguish a table from a single column, a Series, which has its own set of methods."
     },
     {
-      "id": "py-index",
-      "title": "The index: a DataFrame's third dimension",
-      "summary": "I remember that a DataFrame has an index, and I'm not surprised when a column \"disappears\" after groupby; it moved into the index."
-    },
-    {
       "id": "py-select-filter",
       "title": "Selecting and filtering",
       "summary": "I select rows with a boolean mask and columns through loc, without confusing lookup by label with lookup by position."
@@ -35,6 +30,11 @@
       "id": "py-dtypes",
       "title": "Column types",
       "summary": "I check dtypes before computing anything, and I understand why \"summing numbers\" glued strings together, and why whole numbers turned fractional on their own."
+    },
+    {
+      "id": "py-index",
+      "title": "The index: a row's label",
+      "summary": "I make a column the index with set_index, find a row by its label with .loc, and put the column back with reset_index."
     },
     {
       "id": "py-groupby",
@@ -306,6 +306,47 @@
         "The method's name says it plainly: it \"resets\" the index back into ordinary columns."
       ],
       "explain": ".reset_index() is the most common next step after groupby if the grouping result is going to be used further: in a merge, in a comparison with another table, when writing to a file. Without it, product_id stays in the index, and an attempt at merge(..., on='product_id') won't find such a column."
+    },
+    {
+      "id": "py-062",
+      "title": "The column that is gone",
+      "brief": "An analyst made product_id the index of the product table to look items up by code, then on the next line reached for product_id the old way, as a column, and the code failed.",
+      "goal": "Work out what happened to the product_id column after set_index.",
+      "predictQuestion": "What does this line return?",
+      "options": [
+        {
+          "label": "It fails with KeyError: 'product_id', because the column became the index and is no longer among the columns",
+          "why": "set_index does not copy the column into the index, it moves it there. Square brackets look for the name among the columns, and product_id is not there any more, hence the KeyError. The values are still around: they label the rows on the left."
+        },
+        {
+          "label": "It returns the product_id column, same as before set_index",
+          "why": "That would happen if set_index left the column in place. By default it moves it, and ten of the table's eleven fields stay in the columns."
+        },
+        {
+          "label": "It returns an empty column: the name stayed, the values went into the index",
+          "why": "The column moves as a whole, name included. There is no empty product_id column after set_index, there is an index with that name."
+        },
+        {
+          "label": "It returns the index, pandas works out that this is what was meant",
+          "why": "Square brackets look only at the columns. The index is reached differently, through .loc by label or df.index, and .reset_index() puts it back into the columns."
+        }
+      ],
+      "hints": [
+        "set_index moves the column, it does not copy it.",
+        "Square brackets df['name'] look for the name among the columns only."
+      ],
+      "explain": "Grouping makes the same move later: groupby('product_id') sends the key into the index, and df['product_id'] stops finding it in exactly the same way. The tell is the same in both cases: the column has vanished, and a label with its name has appeared on the left of the data."
+    },
+    {
+      "id": "py-063",
+      "title": "Regions back into columns",
+      "brief": "A slide needs the population of Tokyo and Osaka. Finding a region by name through the index is convenient, but the table goes into an export where the name has to be an ordinary column.",
+      "goal": "Find Tokyo and Osaka through the region_name index and return region_name and population, with region_name as an ordinary column.",
+      "hints": [
+        "You need the method that reverses set_index.",
+        "Its name says it plainly: it \"resets\" the index back into the columns."
+      ],
+      "explain": "set_index and reset_index are a pair: the first moves a column into the row labels, the second brings it back. The index is handy for lookup by label, while an export, a merge or a mask needs an ordinary column. The same .reset_index() comes in after grouping, where the key goes into the index without you asking."
     },
     {
       "id": "py-014",

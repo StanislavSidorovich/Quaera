@@ -70,8 +70,8 @@ export const LESSON_SCENES: Partial<Record<string, StoryScene>> = {
   // день 16, подводка к py-003 «Маска вместо WHERE»
   'py-select-filter': 'filter',
   // день 18, подводка к py-011 «Куда уходит ключ группировки» — совпадает
-  // с содержимым карточки py-index («в него уходит ключ после groupby»)
-  'py-index': 'groups',
+  // с why карточки py-groupby («уходит в индекс... тот же перенос, что set_index»)
+  'py-groupby': 'groups',
   // день 21, подводка к py-047 «Ряд, а не таблица с датой»
   'py-timeseries': 'calendar',
   // день 23, подводка к py-023 «Соединение по ключу» — та же опасность

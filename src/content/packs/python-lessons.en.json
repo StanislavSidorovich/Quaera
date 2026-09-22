@@ -29,18 +29,18 @@
     },
     {
       "skill": "py-index",
-      "title": "The index: a DataFrame's third dimension",
-      "why": "A DataFrame has a third dimension a SQL table doesn't, the index, a row label to the left of the values. .loc works through it, the key ends up there after groupby, and pandas aligns tables by it when combining them. Without knowing about the index, there's no way to understand where a column \"went\" after a grouping. The index can also be assigned directly: df.set_index('column') makes the chosen column the row label; from there .loc looks it up by that label instead of a mask on a column, the same spirit as a primary key in SQL, only assigned explicitly instead of implied.",
-      "form": "df.groupby('key')['measure'].sum().reset_index()\ndf.set_index('column').loc[[value]]   # index assigned by hand, lookup by label",
-      "reads": "Sales in units for every product, with the brand glued on from the reference table. reset_index() is mandatory here: it returns product_id from the index back into the columns, which is where merge looks for it.",
-      "wrongWhy": "Without reset_index() the grouping returns a Series with product_id sitting in the index, not in the columns. A Series has no .merge() method at all, so the code fails with an AttributeError. Even if the join were possible, on='product_id' wouldn't find such a column; it's in the index.",
-      "selfCheck": "After a groupby, ask yourself what happens to the result next. If a merge, a comparison with another table, or an export is coming, .reset_index() first, or the key stays stuck in the index."
+      "title": "The index: a row's label",
+      "why": "Every row of a DataFrame has a label, the index. Until someone sets it, the labels are just 0, 1, 2… on the left of the data. Any column can become the label: df.set_index('column') moves it out of the columns and into the index. After that .loc finds a row straight by its label, by SKU code or by region name, with no mask on a column. The move has a price: the column stops being a column, and df['column'] no longer finds it. .reset_index() puts it back. This tell is worth learning on a simple case, because later pandas makes the same move on its own: grouping sends the key into the index without asking.",
+      "form": "df.set_index('column')                              # the column becomes the row label\ndf.set_index('column').loc[[label], ['column_b']]  # a row by its label\ndf.reset_index()                                     # the label goes back into the columns",
+      "reads": "Name and price of the product with SKU code FRUV003: Fruvia Multifruit 1 L at 141 ¥. The label in the index found the row, no mask needed. sku_code sits on the left as the label and is no longer among the columns.",
+      "wrongWhy": "After set_index there is no sku_code column: it became the index. Square brackets look for the name among the columns only and fail with KeyError: 'sku_code'. The message reads as if the column never existed, when it has only moved one position to the left.",
+      "selfCheck": "Set an index? Remember that the column with that name is gone. If you need it back as an ordinary column (for a mask, a merge, an export), call .reset_index() first. Ask yourself the same question after any grouping."
     },
     {
       "skill": "py-groupby",
       "title": "groupby and agg",
-      "why": "A \"by slice\" summary is the most common request in the job: revenue by channel, SKU count by division, average ticket by region. groupby does the same thing SQL's GROUP BY does, with two quirks: the key is sorted by default, and it goes into the index by default rather than staying an ordinary column (see py-index).",
-      "form": "df.groupby('key', as_index=False).agg(\n    name=('column', 'function'),\n)",
+      "why": "A \"by slice\" summary is the most common request in the job: revenue by channel, SKU count by division, average ticket by region. groupby does the same thing SQL's GROUP BY does, with two quirks: the key is sorted by default, and it goes into the index by default rather than staying an ordinary column, the same move set_index makes. The key comes back as a column through as_index=False or .reset_index().",
+      "form": "df.groupby('key')['measure'].sum().reset_index()   # the key back from the index into the columns\ndf.groupby('key', as_index=False).agg(\n    name=('column', 'function'),\n)",
       "reads": "For each division, SKU count and the average price list: 29 FMCG products averaging 110.7 ¥, 18 Pharma products at 423.2 ¥. Pharma prices are several times higher, and an overall average across the whole catalog describes neither group.",
       "wrongWhy": "Without named aggregation and without picking a specific column, agg(['count', 'mean']) applies both functions to every numeric column of the table at once, not just list_price, and it creates MultiIndex columns like ('list_price', 'mean'), which are awkward to work with afterward. Named aggregation, agg(name=('column', 'function')), gives flat, predictable names right away.",
       "selfCheck": "After groupby(...).agg(...), the first thing to check is df.columns. Tuples like ('list_price', 'mean') instead of plain strings are a sign agg was called without naming."
