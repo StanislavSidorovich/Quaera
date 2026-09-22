@@ -12,7 +12,7 @@
  *
  * Запускается автоматически из npm run build.
  */
-import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { copyFile, readdir, readFile, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -69,6 +69,20 @@ sw = sw
   .replaceAll('__VENDOR_ID__', vendorId);
 
 await writeFile(swPath, sw, 'utf8');
+
+/**
+ * 404.html — та же страница приложения, но с кодом 404.
+ *
+ * Раньше чужие пути ловило правило `/* /index.html 200` в public/_redirects,
+ * и под него попадали не только адреса страниц, но и файлы: стили прошлой
+ * сборки, запрошенные после деплоя, приходили как HTML с кодом 200
+ * и заголовком `immutable` из _headers — то есть отравляли все кеши на пути
+ * (разбор — servedPage в public/sw.js). Cloudflare Pages отдаёт ближайший
+ * 404.html на любой несуществующий путь: человек, открывший приложение
+ * по пути, по-прежнему видит приложение, а браузер и service worker видят
+ * отказ и ничего не кешируют. Путей, кроме корня, приложение не использует.
+ */
+await copyFile(path.join(dist, 'index.html'), path.join(dist, '404.html'));
 
 const { size } = await stat(path.join(dist, 'data', 'quaera.dataset'));
 console.log(`sw: сборка ${buildId}, в предзагрузке ${assets.length} файлов`);

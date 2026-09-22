@@ -76,12 +76,56 @@ const PRECACHE = [
   ...BUILD_ASSETS,
 ];
 
+/**
+ * Страница приложения, отданная вместо файла.
+ *
+ * Код 200 ещё не значит, что пришёл тот файл. Cloudflare Pages на любой
+ * несуществующий путь отвечал index.html с кодом 200, и `/assets/*` при
+ * этом получал заголовок `immutable` на год. Так и сломалось 2026-09-22:
+ * три деплоя за семь минут, телефон попросил стили сборки, которой на сервере
+ * уже не было, получил HTML — и положил его в кеш как CSS. Браузер с `nosniff`
+ * такие «стили» не применяет, а кеш вперёд отдавал их снова при каждом
+ * запуске: голая разметка до следующей сборки с другим хешем.
+ *
+ * Отказ сервера отвечать HTML на такие пути (404.html в postbuild-sw.mjs)
+ * закрывает причину, но не лечит уже отравленные кеши — браузерный на год,
+ * грань Cloudflare до следующего деплоя и этот. Поэтому проверка здесь.
+ */
+const servedPage = (url, res) =>
+  url.pathname !== '/' &&
+  !url.pathname.endsWith('.html') &&
+  (res.headers.get('content-type') ?? '').startsWith('text/html');
+
+const usable = (url, res) => res.ok && !servedPage(url, res);
+
+/**
+ * Запрос с одной повторной попыткой мимо всех кешей.
+ *
+ * Строка запроса нужна не браузеру, а Cloudflare: грань хранит отравленный
+ * ответ по точному адресу, и `cache: 'reload'` её не обходит — обходит только
+ * другой адрес. Проверено на иконках в августе (см. public/_headers).
+ */
+async function fetchVerified(request) {
+  const url = new URL(request.url);
+  const res = await fetch(request);
+  if (usable(url, res)) return res;
+  const bypass = new URL(url);
+  bypass.searchParams.set('r', Date.now().toString(36));
+  return fetch(bypass.href, { cache: 'reload' });
+}
+
+async function addVerified(cache, path) {
+  const res = await fetchVerified(new Request(path));
+  if (!usable(new URL(path, self.location.origin), res)) throw new Error(`${path}: ${res.status}`);
+  await cache.put(path, res);
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
       // Отдельные запросы: один недоступный ресурс не должен ронять всю установку.
-      .then((cache) => Promise.allSettled(PRECACHE.map((url) => cache.add(url))))
+      .then((cache) => Promise.allSettled(PRECACHE.map((url) => addVerified(cache, url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -101,13 +145,15 @@ async function ensurePrecache() {
   const cache = await caches.open(SHELL);
   const missing = [];
   for (const url of PRECACHE) {
-    if (!(await cache.match(url, { ignoreVary: true }))) missing.push(url);
+    const hit = await cache.match(url, { ignoreVary: true });
+    // Страница вместо файла — то же, что пропажа (см. servedPage).
+    if (!hit || servedPage(new URL(url, self.location.origin), hit)) missing.push(url);
   }
   if (!missing.length) {
     precacheChecked = true;
     return;
   }
-  const results = await Promise.allSettled(missing.map((url) => cache.add(url)));
+  const results = await Promise.allSettled(missing.map((url) => addVerified(cache, url)));
   // Отмечаем проверенным только при полном успехе: если восстановление шло
   // без сети, попытку нужно повторить позже, а не считать выполненной.
   precacheChecked = results.every((r) => r.status === 'fulfilled');
@@ -253,8 +299,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL).then((c) => c.put('/index.html', copy));
+          // Не-200 — это 404.html на чужой путь: в офлайн-запас он не годится.
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL).then((c) => c.put('/index.html', copy));
+          }
           return res;
         })
         .catch(async () => (await fromCache('/index.html')) ?? Response.error())
@@ -294,14 +343,14 @@ self.addEventListener('fetch', (event) => {
       // Иначе предзагруженные файлы в корне — /sql-worker.js, /manifest.webmanifest —
       // офлайн уходили бы в сеть, и приложение открывалось бы, но не работало.
       const hit = await fromCache(request);
-      if (hit) return hit;
+      if (hit && !servedPage(url, hit)) return hit;
       if (!isImmutable(url)) return fetch(request);
       try {
         // Промах кеша воркера у датасета означает «эта сборка хочет свежую
         // копию» — значит и HTTP-кеш обязан спросить сервер, а не ответить
         // сам (см. revalidating выше).
-        const res = await fetch(isData(url) ? revalidating(request) : request);
-        if (res.ok) {
+        const res = await fetchVerified(isData(url) ? revalidating(request) : request);
+        if (usable(url, res)) {
           const copy = res.clone();
           caches.open(isVendor(url) ? VENDOR : ASSETS).then((c) => c.put(request, copy));
         }
@@ -310,7 +359,7 @@ self.addEventListener('fetch', (event) => {
         // Сети нет и точного совпадения не нашлось — пробуем ещё раз,
         // игнорируя строку запроса: она бывает добавлена для обхода кеша.
         const loose = await caches.match(request, { ignoreVary: true, ignoreSearch: true });
-        if (loose) return loose;
+        if (loose && !servedPage(url, loose)) return loose;
         throw err;
       }
     })()

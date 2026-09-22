@@ -78,6 +78,43 @@
     -->
     <meta name="apple-mobile-web-app-title" content="Quaera" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--
+      Вторая попытка для стилей и бандла, если первая принесла не их.
+
+      Страховка на случай, когда service worker'а ещё нет или он старый:
+      тогда отравленный ответ отдаёт браузерный кеш, которому сервер велел
+      верить год (подробно — servedPage в public/sw.js). Строка запроса
+      даёт новый адрес, мимо которого не пройдёт ни один кеш.
+
+      Подписка на `document` с перехватом: события загрузки <link> и <script>
+      не всплывают, а `load` элемента не доходит и до `window` (иначе
+      window.onload срабатывал бы на каждой картинке). Скрипт обязан стоять
+      выше тегов, которые вставляет Vite (он кладёт их сразу после <title>),
+      иначе сбой случится до подписки.
+
+      Слушается и `load`: HTML вместо стилей даёт `error` только при
+      заголовке `nosniff`. Без него браузер молча «загружает» пустую
+      таблицу — а у настоящих стилей правил сотни.
+    -->
+    <script>
+      function retryAsset(e) {
+        var el = e.target;
+        if (!el || !el.dataset || el.dataset.retried) return;
+        var isStyle = el.tagName === 'LINK' && el.rel === 'stylesheet';
+        var url = isStyle ? el.href : el.tagName === 'SCRIPT' ? el.src : '';
+        if (!url || url.indexOf('/assets/') === -1) return;
+        if (e.type === 'load' && !(isStyle && el.sheet && el.sheet.cssRules.length === 0)) return;
+        var copy = document.createElement(el.tagName);
+        if (isStyle) copy.rel = 'stylesheet';
+        else copy.type = el.type;
+        copy.crossOrigin = el.crossOrigin;
+        copy.dataset.retried = '1';
+        copy[isStyle ? 'href' : 'src'] = url + (url.indexOf('?') === -1 ? '?' : '&') + 'r=' + Date.now().toString(36);
+        document.head.appendChild(copy);
+      }
+      document.addEventListener('error', retryAsset, true);
+      document.addEventListener('load', retryAsset, true);
+    </script>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
