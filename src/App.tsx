@@ -60,6 +60,7 @@ import {
 import type { Session } from '@supabase/supabase-js';
 import { signInWithGoogle, signOut, subscribeSession } from './sync/client';
 import { deleteAccount, pushProgress, syncProgress } from './sync/progressSync';
+import { appStorage, isGuestMode, enterGuestPreview, exitGuestPreview } from './guestMode';
 
 /** Состояние сведения прогресса с сервером — для подписи в карточке аккаунта. */
 type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
@@ -106,7 +107,7 @@ const FONT_SIZE_STORAGE_KEY = 'quaera-font-size';
 
 function initialFontSize(): FontSize {
   try {
-    const stored = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    const stored = appStorage().getItem(FONT_SIZE_STORAGE_KEY);
     if (stored === 'md' || stored === 'lg' || stored === 'xl') return stored;
   } catch {
     // localStorage недоступен — просто не запоминаем выбор
@@ -126,7 +127,7 @@ const THEME_STORAGE_KEY = 'quaera-theme';
 
 function initialTheme(): Theme {
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    const stored = appStorage().getItem(THEME_STORAGE_KEY);
     if (stored === 'system' || stored === 'light' || stored === 'dark') return stored;
   } catch {
     // localStorage недоступен — просто не запоминаем выбор
@@ -146,7 +147,7 @@ const ALL_TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
  */
 function initialActiveTrack(): Track {
   try {
-    const stored = localStorage.getItem(ACTIVE_TRACK_STORAGE_KEY);
+    const stored = appStorage().getItem(ACTIVE_TRACK_STORAGE_KEY);
     if (ALL_TRACKS.includes(stored as Track)) return stored as Track;
   } catch {
     // localStorage недоступен — просто не запоминаем выбор
@@ -333,7 +334,7 @@ const STORY_ENTRY_STORAGE_KEY = 'quaera.story.entry';
 
 function readStoryEntryPart(): string | null {
   try {
-    return localStorage.getItem(STORY_ENTRY_STORAGE_KEY);
+    return appStorage().getItem(STORY_ENTRY_STORAGE_KEY);
   } catch {
     return null;
   }
@@ -341,7 +342,7 @@ function readStoryEntryPart(): string | null {
 
 function readStoryMissionId(): string | null {
   try {
-    const saved = localStorage.getItem(STORY_MISSION_STORAGE_KEY);
+    const saved = appStorage().getItem(STORY_MISSION_STORAGE_KEY);
     return saved ? STORY_MISSION_RENAMED[saved] ?? saved : null;
   } catch {
     return null;
@@ -350,7 +351,7 @@ function readStoryMissionId(): string | null {
 
 function saveStoryMissionId(id: string) {
   try {
-    localStorage.setItem(STORY_MISSION_STORAGE_KEY, id);
+    appStorage().setItem(STORY_MISSION_STORAGE_KEY, id);
   } catch {
     // приватный режим или переполнение — кампания просто начнётся сначала
   }
@@ -367,8 +368,8 @@ function saveStoryMissionId(id: string) {
  */
 function clearStoryMissionId() {
   try {
-    localStorage.removeItem(STORY_MISSION_STORAGE_KEY);
-    localStorage.removeItem(STORY_ENTRY_STORAGE_KEY);
+    appStorage().removeItem(STORY_MISSION_STORAGE_KEY);
+    appStorage().removeItem(STORY_ENTRY_STORAGE_KEY);
   } catch {
     // нечего чистить — значит и не сохранялось
   }
@@ -648,7 +649,7 @@ function initialBoot(locale: Locale): Boot {
   const empty = { track: null, drafts: new Map<string, TaskDraft>(), recorded: new Set<string>() };
   let stored: StoredScreen | null = null;
   try {
-    const raw = localStorage.getItem(SCREEN_STORAGE_KEY);
+    const raw = appStorage().getItem(SCREEN_STORAGE_KEY);
     stored = raw ? (JSON.parse(raw) as StoredScreen) : null;
   } catch {
     // localStorage недоступен или запись битая — открываем главную
@@ -852,7 +853,7 @@ export default function App() {
     const next = FONT_SIZE_ORDER[(FONT_SIZE_ORDER.indexOf(fontSize) + 1) % FONT_SIZE_ORDER.length];
     setFontSize(next);
     try {
-      localStorage.setItem(FONT_SIZE_STORAGE_KEY, next);
+      appStorage().setItem(FONT_SIZE_STORAGE_KEY, next);
     } catch {
       // см. initialFontSize
     }
@@ -862,7 +863,7 @@ export default function App() {
     const next = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
     setTheme(next);
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, next);
+      appStorage().setItem(THEME_STORAGE_KEY, next);
     } catch {
       // см. initialTheme
     }
@@ -1064,7 +1065,14 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => subscribeSession(setSession), []);
+  /*
+   * Гостевой просмотр: не подписываться на реальный вход вовсе, а не
+   * подписаться и тут же переписать на null. `session` остаётся null
+   * весь просмотр — экраны читают его как «не вошли», а эффекты синхронизации
+   * ниже (`runSync`/`pushProgress`) не видят userId и не трогают облако,
+   * то есть настоящий прогресс на сервере не может ни прийти, ни уйти.
+   */
+  useEffect(() => (isGuestMode() ? undefined : subscribeSession(setSession)), []);
 
   useEffect(() => {
     const userId = session?.user.id;
@@ -1102,7 +1110,7 @@ export default function App() {
   /** Открытый раздел — на устройство, чтобы пережить перезагрузку (см. initialScreen). */
   useEffect(() => {
     try {
-      localStorage.setItem(SCREEN_STORAGE_KEY, JSON.stringify(screenToStored(screen)));
+      appStorage().setItem(SCREEN_STORAGE_KEY, JSON.stringify(screenToStored(screen)));
     } catch {
       // см. initialScreen
     }
@@ -1738,7 +1746,7 @@ export default function App() {
      */
     setPendingChooserScroll(true);
     try {
-      localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
+      appStorage().setItem(ACTIVE_TRACK_STORAGE_KEY, track);
     } catch {
       // см. initialActiveTrack
     }
@@ -1772,7 +1780,7 @@ export default function App() {
     setActiveTrack(track);
     setConsentDeferred(false);
     try {
-      localStorage.setItem(ACTIVE_TRACK_STORAGE_KEY, track);
+      appStorage().setItem(ACTIVE_TRACK_STORAGE_KEY, track);
     } catch {
       // см. initialActiveTrack
     }
@@ -1789,7 +1797,7 @@ export default function App() {
     const mission = storyFirstMissionOf(storyCampaign(locale), partId);
     if (!mission || !storyMissions.has(mission.id)) return;
     try {
-      localStorage.setItem(STORY_ENTRY_STORAGE_KEY, partId);
+      appStorage().setItem(STORY_ENTRY_STORAGE_KEY, partId);
     } catch {
       // без ключа бриф просто покажет пустую папку дела вместо recap
     }
@@ -2389,6 +2397,9 @@ export default function App() {
               }}
               onEnablePush={() => enablePush(progress, allSkillIds, locale)}
               onDisablePush={disablePush}
+              guestPreviewActive={isGuestMode()}
+              onEnterGuestPreview={enterGuestPreview}
+              onExitGuestPreview={exitGuestPreview}
             />
           )}
 
@@ -4659,6 +4670,9 @@ function AccountScreen({
   onDeleteAccount,
   onEnablePush,
   onDisablePush,
+  guestPreviewActive,
+  onEnterGuestPreview,
+  onExitGuestPreview,
 }: {
   onExportProgress: () => void;
   /** true — файл распознан и прогресс заменён, false — не тот файл. */
@@ -4671,6 +4685,9 @@ function AccountScreen({
   onSignOut: () => Promise<void>;
   /** true — аккаунт удалён и сессия закрыта; false — сервер не ответил. */
   onDeleteAccount: () => Promise<boolean>;
+  guestPreviewActive: boolean;
+  onEnterGuestPreview: () => void;
+  onExitGuestPreview: () => void;
   /**
    * Спросить разрешение и подписаться. Возвращает то, что реально видит
    * браузер после попытки, а не «получилось / не получилось»: состояний
@@ -4854,6 +4871,31 @@ function AccountScreen({
               </p>
             )}
           </>
+        )}
+      </div>
+
+      {/*
+       * Гостевой просмотр — своя карточка сразу после входа, тем же
+       * порядком, что и он: обе про то, чей прогресс сейчас на экране.
+       * Действует только в этой вкладке (см. guestMode.ts) — свой прогресс,
+       * вход и облако не трогает ни на секунду просмотра.
+       */}
+      <div className="card">
+        <h2>{t.account.guestTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.account.guestBody}</p>
+        {guestPreviewActive ? (
+          <>
+            <p role="status" style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-dim)' }}>
+              {t.account.guestActiveNote}
+            </p>
+            <button type="button" className="btn secondary" onClick={onExitGuestPreview}>
+              {t.account.guestExitBtn}
+            </button>
+          </>
+        ) : (
+          <button type="button" className="btn secondary" onClick={onEnterGuestPreview}>
+            {t.account.guestEnableBtn}
+          </button>
         )}
       </div>
 

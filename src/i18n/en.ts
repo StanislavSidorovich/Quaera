@@ -266,6 +266,13 @@ export const en = {
     deleting: 'Deleting the account…',
     deleteDone: 'Account deleted. Your progress on this device is still here',
     deleteError: 'Could not delete the account. Check your connection and try again',
+    /** См. довод в ru.ts: обратное действие, своя карточка. */
+    guestTitle: 'Guest preview',
+    guestBody:
+      'Show the trainer the way a brand new visitor sees it: the campaign from day one, every counter at zero, without opening a separate window and without touching your own progress. It only affects this tab: your sign-in and your progress on this device and in the cloud stay untouched, and anything done during the preview disappears with the tab.',
+    guestEnableBtn: 'Show as a new visitor',
+    guestActiveNote: 'Guest preview is on in this tab. Nothing done right now will be saved.',
+    guestExitBtn: 'Back to my progress',
     backupTitle: 'Backup',
     backupBody:
       'Without signing in, progress lives only in this browser: clearing site data, reinstalling the app, or switching phones wipes it with no way back. The file is a safeguard that works without an account too.',

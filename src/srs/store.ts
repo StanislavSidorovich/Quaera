@@ -1,4 +1,5 @@
 import { initialSkillState, type Grade, type SkillState } from './scheduler';
+import { appStorage } from '../guestMode';
 
 /**
  * Локальное хранилище прогресса.
@@ -61,7 +62,7 @@ export const clearedProgress = (now = new Date()): Progress => ({
 
 export function loadProgress(): Progress {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = appStorage().getItem(KEY);
     if (!raw) return emptyProgress();
     const parsed = JSON.parse(raw) as Progress;
     if (parsed.version !== 1) return emptyProgress();
@@ -74,7 +75,7 @@ export function loadProgress(): Progress {
 
 export function saveProgress(p: Progress): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(p));
+    appStorage().setItem(KEY, JSON.stringify(p));
   } catch {
     /* приватный режим или переполнение — молча продолжаем в памяти */
   }

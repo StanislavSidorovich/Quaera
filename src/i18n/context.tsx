@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ru } from './ru';
 import { en } from './en';
+import { appStorage } from '../guestMode';
 
 export type Locale = 'ru' | 'en';
 export type Strings = typeof ru;
@@ -15,7 +16,7 @@ const dict: Record<Locale, Strings> = { ru, en };
  */
 function initialLocale(): Locale {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = appStorage().getItem(STORAGE_KEY);
     if (stored === 'ru' || stored === 'en') return stored;
   } catch {
     // localStorage недоступен (приватный режим и т.п.) — просто не запоминаем выбор
@@ -41,7 +42,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLocale = (l: Locale) => {
     setLocaleState(l);
     try {
-      localStorage.setItem(STORAGE_KEY, l);
+      appStorage().setItem(STORAGE_KEY, l);
     } catch {
       // см. initialLocale — недоступность localStorage не должна ломать переключение
     }

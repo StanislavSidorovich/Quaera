@@ -8,6 +8,8 @@
  * у него свой ключ и своя версия, которая может меняться независимо.
  */
 
+import { appStorage } from '../guestMode';
+
 const KEY = 'quaera.sandbox.v1';
 
 export interface SavedScript {
@@ -27,7 +29,7 @@ const empty = (): SandboxStore => ({ version: 1, scripts: [] });
 
 export function loadSandboxStore(): SandboxStore {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = appStorage().getItem(KEY);
     if (!raw) return empty();
     const parsed = JSON.parse(raw) as SandboxStore;
     if (parsed.version !== 1) return empty();
@@ -39,7 +41,7 @@ export function loadSandboxStore(): SandboxStore {
 
 function persist(s: SandboxStore): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    appStorage().setItem(KEY, JSON.stringify(s));
   } catch {
     // приватный режим или переполнение — сохранённое остаётся жить только в памяти вкладки
   }

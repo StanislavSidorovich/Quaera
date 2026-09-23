@@ -37,6 +37,13 @@ export function subscribeLoad(listener: (s: LoadState) => void): () => void {
   return () => listeners.delete(listener);
 }
 
+/**
+ * Согласие намеренно читает настоящий `localStorage`, а не `appStorage()`:
+ * гостевой просмотр (см. guestMode.ts) обнуляет прогресс, но не должен
+ * обнулять согласие на 52 МБ рантайма — иначе показ pandas/model кому-то
+ * начинался бы с той же долгой загрузки, что и у первого визита, хотя
+ * рантайм уже скачан и лежит в кеше service worker.
+ */
 function hasStoredConsent(): boolean {
   try {
     return localStorage.getItem(CONSENT_KEY) === 'true';

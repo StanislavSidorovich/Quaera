@@ -20,7 +20,7 @@
  * Запуск: npm run test:storage-migration (входит в npm run verify).
  */
 import { execSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -67,12 +67,29 @@ try {
    * у него есть импорты типов из ui/TaskView, и tsc ради них тянет на проверку
    * весь остальной код вместе с JSX и контент-паками. Типы здесь и не нужны —
    * их уже проверил `npx tsc --noEmit`; нужна одна чистая функция.
+   *
+   * Транслируется в подпапку `session/`, а не прямо в outDir: у store.ts
+   * теперь есть значимый (не только типовой) импорт `../guestMode`
+   * (appStorage — гостевой просмотр, см. guestMode.ts), и transformSync
+   * оставляет этот require как есть, ничего не разрешая. Та же вложенность,
+   * что у настоящего файла (src/session/store.ts рядом с src/guestMode.ts),
+   * даёт require внутри store.cjs найти guestMode.js рядом с outDir сам,
+   * без переписывания пути импорта.
    */
   const { transformSync } = await import('esbuild');
-  const storePath = path.join(outDir, 'session-store.cjs');
+  const storeDir = path.join(outDir, 'session');
+  mkdirSync(storeDir, { recursive: true });
+  const storePath = path.join(storeDir, 'store.cjs');
   writeFileSync(
     storePath,
     transformSync(readFileSync(path.join(root, 'src/session/store.ts'), 'utf8'), {
+      loader: 'ts',
+      format: 'cjs',
+    }).code
+  );
+  writeFileSync(
+    path.join(outDir, 'guestMode.js'),
+    transformSync(readFileSync(path.join(root, 'src/guestMode.ts'), 'utf8'), {
       loader: 'ts',
       format: 'cjs',
     }).code

@@ -1,5 +1,6 @@
 import type { Track } from '../content/types';
 import type { StepDraft, TaskDraft } from '../ui/TaskView';
+import { appStorage } from '../guestMode';
 
 /**
  * Незаконченное занятие на устройстве.
@@ -86,7 +87,7 @@ export interface StoredSession {
 /** null — занятия нет, оно другой версии или хранилище повреждено. */
 export function loadSession(): StoredSession | null {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = appStorage().getItem(KEY);
     if (!raw) return null;
     /*
      * Разбирается как «любая версия», а не как StoredSession: записи первой
@@ -111,7 +112,7 @@ export function loadSession(): StoredSession | null {
 
 export function saveSession(s: StoredSession): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    appStorage().setItem(KEY, JSON.stringify(s));
   } catch {
     // приватный режим или переполнение — занятие остаётся жить только в памяти вкладки
   }
@@ -119,7 +120,7 @@ export function saveSession(s: StoredSession): void {
 
 export function clearSession(): void {
   try {
-    localStorage.removeItem(KEY);
+    appStorage().removeItem(KEY);
   } catch {
     // см. saveSession
   }

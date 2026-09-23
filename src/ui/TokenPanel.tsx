@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SQL_KEYWORDS_BY_LEVEL, PYTHON_KEYWORDS_BY_LEVEL } from '../content/panelKeywords';
 import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
+import { appStorage } from '../guestMode';
 
 /**
  * Ряды символов/цифр/ключевых слов — общая часть панели ввода write
@@ -81,7 +82,7 @@ const TOKENS_STORAGE_KEY = 'quaera-tokens';
 
 function initialTokensOpen(): boolean {
   try {
-    return localStorage.getItem(TOKENS_STORAGE_KEY) === 'on';
+    return appStorage().getItem(TOKENS_STORAGE_KEY) === 'on';
   } catch {
     return false;
   }
@@ -100,7 +101,7 @@ export function useTokensOpen(): [boolean, () => void] {
     setOpen((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem(TOKENS_STORAGE_KEY, next ? 'on' : 'off');
+        appStorage().setItem(TOKENS_STORAGE_KEY, next ? 'on' : 'off');
       } catch {
         // localStorage недоступен — просто не запоминаем выбор между заданиями
       }
@@ -114,7 +115,7 @@ const KEYBOARD_STORAGE_KEY = 'quaera-keyboard';
 
 function initialKeyboardOpen(): boolean {
   try {
-    return localStorage.getItem(KEYBOARD_STORAGE_KEY) === 'on';
+    return appStorage().getItem(KEYBOARD_STORAGE_KEY) === 'on';
   } catch {
     return false;
   }
@@ -138,7 +139,7 @@ export function useKeyboardOpen(): [boolean, () => void] {
     setOpen((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem(KEYBOARD_STORAGE_KEY, next ? 'on' : 'off');
+        appStorage().setItem(KEYBOARD_STORAGE_KEY, next ? 'on' : 'off');
       } catch {
         // localStorage недоступен — просто не запоминаем выбор между заданиями
       }
