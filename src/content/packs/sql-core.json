@@ -453,10 +453,10 @@
       "title": "Помесячная динамика продаж",
       "brief": "Руководитель отдела просит помесячные продажи в штуках за 2025 год, чтобы увидеть сезонный профиль.",
       "goal": "Вернуть month в формате YYYY-MM и units — сумму штук, по возрастанию месяца.",
-      "template": "SELECT ___(week_start, 1, 7) AS month,\n       ___(units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY ___\nORDER BY month",
+      "template": "SELECT ___(week_start, 1, 7) AS month,\n       ___units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY ___\nORDER BY month",
       "blanks": [
         "substr",
-        "SUM",
+        "SUM(",
         "1"
       ],
       "solution": "SELECT substr(week_start, 1, 7) AS month,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY 1\nORDER BY month",
@@ -932,10 +932,10 @@
       "title": "Новинка по каналам сбыта",
       "brief": "Новинка «Vitanor Forte x30» задумана как аптечная. Бренд-менеджер хочет убедиться, что так и вышло: где она продаётся, а где нет ни одной штуки. Канал без продаж — такой же ответ, как канал с продажами, и он не должен пропасть из отчёта.",
       "goal": "Дополнить запрос так, чтобы он вернул все пять каналов сбыта и штуки по новинке в каждом, а там, где продаж не было, показал 0.",
-      "template": "SELECT c.channel,\n       ___(SUM(f.units), 0) AS units\nFROM dim_customer c\n___ JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      ___ f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Vitanor Forte x30')\nGROUP BY c.channel",
+      "template": "SELECT c.channel,\n       ___SUM(f.units), 0) AS units\nFROM dim_customer c\n___ fact_sellout f\n       ON f.customer_id = c.customer_id\n      ___ f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Vitanor Forte x30')\nGROUP BY c.channel",
       "blanks": [
-        "COALESCE",
-        "LEFT",
+        "COALESCE(",
+        "LEFT JOIN",
         "AND"
       ],
       "solution": "SELECT c.channel,\n       COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Vitanor Forte x30')\nGROUP BY c.channel",
@@ -2902,9 +2902,9 @@
       "title": "Ассортимент FMCG по брендам",
       "brief": "Категорийный менеджер уточняет то же самое об ассортименте FMCG, что и раньше, но теперь по каждому бренду отдельно: сколько позиций и какая средняя цена.",
       "goal": "Только для дивизиона FMCG вернуть по каждому бренду: brand, sku_count — число позиций, avg_price — среднюю цену с округлением до двух знаков.",
-      "template": "SELECT brand, COUNT(*) AS sku_count, ROUND(___(list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\n___ ___",
+      "template": "SELECT brand, COUNT(*) AS sku_count, ROUND(___list_price), 2) AS avg_price\nFROM dim_product\nWHERE division = 'FMCG'\n___ ___",
       "blanks": [
-        "AVG",
+        "AVG(",
         "GROUP BY",
         "brand"
       ],
@@ -3114,10 +3114,10 @@
       "title": "Кто на самом деле держит бренд",
       "brief": "Команда e-com уверена, что именно она держит Nettora на плаву, пока остальные каналы проседают. Прежде чем соглашаться, нужно посмотреть цифры по каждому каналу с начала года — включая каналы, где продаж не было вовсе.",
       "goal": "С 2026-01-01 вернуть по каждому каналу channel и units — сумму штук Nettora, включая каналы без единой продажи (0, а не пропущенная строка).",
-      "template": "SELECT c.channel, ___(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id ___ (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
+      "template": "SELECT c.channel, ___SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id ___SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
       "blanks": [
-        "COALESCE",
-        "IN"
+        "COALESCE(",
+        "IN ("
       ],
       "solution": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
       "hints": [
@@ -3220,10 +3220,10 @@
       "title": "Nettora в январе",
       "brief": "Отчёт продаж говорит: январь 2026-го — худший месяц Nettora. Проверим сами: сколько штук бренда продано за январь.",
       "goal": "Вернуть одну строку: units — сумма проданных штук по товарам Nettora (номера 19–23) за январь 2026.",
-      "template": "SELECT ___(units) AS units\nFROM fact_sellout\nWHERE product_id ___ (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'",
+      "template": "SELECT ___units) AS units\nFROM fact_sellout\nWHERE product_id ___19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'",
       "blanks": [
-        "SUM",
-        "IN"
+        "SUM(",
+        "IN ("
       ],
       "solution": "SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'",
       "hints": [
@@ -3392,9 +3392,9 @@
       "title": "Живы ли потерянные точки",
       "brief": "Имени того, кто занял полку, в данных нет. Важнее другое: что про потерянные точки известно наверняка — закрылись они или просто перестали брать Nettora?",
       "goal": "Вернуть outlets и units: сколько точек, где Nettora продавалась в 2025 году и не продавалась с 1 января 2026-го, что-то купили у нас с начала 2026 года — и сколько штук.",
-      "template": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id ___ (\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id ___\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
+      "template": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id ___\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id ___\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
       "blanks": [
-        "IN",
+        "IN (",
         "IS NULL"
       ],
       "solution": "SELECT COUNT(DISTINCT customer_id) AS outlets,\n       SUM(units) AS units\nFROM fact_sellout\nWHERE week_start >= '2026-01-01'\n  AND customer_id IN (\n    SELECT c.customer_id\n    FROM dim_customer c\n    LEFT JOIN fact_sellout f\n           ON f.customer_id = c.customer_id\n          AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n          AND f.week_start >= '2026-01-01'\n    WHERE f.sellout_id IS NULL\n      AND c.customer_id IN (SELECT customer_id FROM fact_sellout\n                            WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                              AND week_start BETWEEN '2025-01-01' AND '2025-12-31')\n  )",
@@ -3477,10 +3477,10 @@
       "title": "Nettora месяц за месяцем",
       "brief": "Категорийному менеджеру нужно видеть в отчёте не только число месяца, но и прошлый месяц рядом — чтобы падение читалось с одного взгляда, без калькулятора. Начать с одного бренда: Nettora с июля 2025-го.",
       "goal": "Для Nettora с июля 2025 года вернуть по месяцам month (формат YYYY-MM), units — сумму штук и prev_units — штуки предыдущего месяца. У первого месяца prev_units пустой. По возрастанию месяца.",
-      "template": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start >= '2025-07-01'\n  GROUP BY 1\n)\nSELECT month, units,\n       ___(units) ___ (ORDER BY month) AS prev_units\nFROM monthly\nORDER BY month",
+      "template": "WITH monthly AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start >= '2025-07-01'\n  GROUP BY 1\n)\nSELECT month, units,\n       ___(units) ___ORDER BY month) AS prev_units\nFROM monthly\nORDER BY month",
       "blanks": [
         "LAG",
-        "OVER"
+        "OVER ("
       ],
       "blankHints": [
         "функция",
