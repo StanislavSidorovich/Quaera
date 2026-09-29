@@ -31,6 +31,8 @@ export interface DiagnoseText {
   rows: (n: number) => string;
   /** Значение из результата в тексте разбора: числа по правилам локали, остальное как есть. */
   fmt: (v: unknown) => string;
+  /** То же, но с дробной частью до шестого знака: там, где спор именно об округлении. */
+  exact: (v: unknown) => string;
 
   // -------------------------------------------------- ошибки движка
   noColumn: (name: string, hint: string | null) => Feedback;
@@ -84,6 +86,7 @@ export interface DiagnoseText {
   inflatedVaried: (min: number, max: number) => Feedback;
   deflatedVaried: (min: number, max: number) => Feedback;
   wrongValues: (key: string, column: string, expected: unknown, got: unknown) => Feedback;
+  roundingOnly: (key: string, column: string, expected: unknown, got: unknown) => Feedback;
   columnsCount: (expectedCols: string[], userColsCount: number) => Feedback;
   columnsOrder: (expectedCols: string[]) => Feedback;
   wrongOrder: () => Feedback;
@@ -114,6 +117,7 @@ const pluralRu = (n: number, one: string, few: string, many: string) => {
 const ru: DiagnoseText = {
   rows: (n) => `${n.toLocaleString('ru-RU')} ${pluralRu(n, 'строка', 'строки', 'строк')}`,
   fmt: (v) => (typeof v === 'number' ? v.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : String(v)),
+  exact: (v) => (typeof v === 'number' ? v.toLocaleString('ru-RU', { maximumFractionDigits: 6 }) : String(v)),
 
   noColumn: (name, hint) => ({
     tone: 'error',
@@ -299,6 +303,16 @@ const ru: DiagnoseText = {
     ],
   }),
 
+  roundingOnly: (key, column, expected, got) => ({
+    tone: 'warn',
+    title: 'Числа верные, но округление другое',
+    body: `Например, для «${key}» в колонке ${column} ожидалось ${ru.exact(expected)}, а получилось ${ru.exact(got)}. Разрез и величина те же, расходится только дробная часть.`,
+    nudges: [
+      'В постановке просят округлить, а ROUND в запросе нет или он стоит не у этого столбца.',
+      'Если столбец пришёл из WITH без округления, округлять его нужно в финальном SELECT: ROUND(x, 0) убирает дробную часть, ROUND(x, 1) оставляет один знак.',
+    ],
+  }),
+
   columnsCount: (expectedCols, userColsCount) => ({
     tone: 'error',
     title: `Ожидается ${expectedCols.length} ${pluralRu(expectedCols.length, 'колонка', 'колонки', 'колонок')}, вернулось ${userColsCount}`,
@@ -387,6 +401,7 @@ const ru: DiagnoseText = {
 const en: DiagnoseText = {
   rows: (n) => `${n.toLocaleString('en-US')} ${n === 1 ? 'row' : 'rows'}`,
   fmt: (v) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 2 }) : String(v)),
+  exact: (v) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 6 }) : String(v)),
 
   noColumn: (name, hint) => ({
     tone: 'error',
@@ -569,6 +584,16 @@ const en: DiagnoseText = {
       'Check which column the measure is built on — units or revenue, before the discount or after.',
       'COUNT(*) counts rows, COUNT(DISTINCT ...) counts distinct values. Those are different answers.',
       'If the brief asks for rounding, it has to happen at the same step as in the reference.',
+    ],
+  }),
+
+  roundingOnly: (key, column, expected, got) => ({
+    tone: 'warn',
+    title: 'The numbers are right, the rounding is not',
+    body: `For "${key}" in column ${column}, for instance, ${en.exact(expected)} was expected and ${en.exact(got)} came back. The breakdown and the quantity are the same; only the decimals differ.`,
+    nudges: [
+      'The brief asks for rounding, and the query has no ROUND, or it sits on a different column.',
+      'If the column comes from a WITH unrounded, round it in the final SELECT: ROUND(x, 0) drops the decimals, ROUND(x, 1) keeps one.',
     ],
   }),
 

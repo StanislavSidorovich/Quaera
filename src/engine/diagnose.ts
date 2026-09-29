@@ -194,6 +194,26 @@ function nearInteger(x: number): number | null {
   return r >= 2 && Math.abs(x - r) / r < 0.03 ? r : null;
 }
 
+/**
+ * Все расхождения — в дробной части: числа в пределах 0,1% друг от друга и
+ * не дальше чем на 0,5 по модулю. Это не «считается не то», а ROUND, который
+ * забыт или стоит не на том шаге; общий разбор по коэффициентам сказал бы
+ * тут «занижено в 1,00 раза».
+ */
+function analyseRounding(mismatches: Mismatch[], locale: Locale): Feedback | null {
+  const only = mismatches.every(
+    (m) =>
+      typeof m.expected === 'number' &&
+      typeof m.got === 'number' &&
+      Math.abs(m.got - m.expected) <= 0.5 &&
+      m.ratio !== null &&
+      Math.abs(m.ratio - 1) < 0.001
+  );
+  if (!only) return null;
+  const s = mismatches[0];
+  return diagnoseText[locale].roundingOnly(s.key, s.column, s.expected, s.got);
+}
+
 function analyseRatios(mismatches: Mismatch[], locale: Locale): Feedback | null {
   const T = diagnoseText[locale];
   const ratios = mismatches.map((m) => m.ratio).filter((r): r is number => r !== null && Number.isFinite(r));
@@ -256,6 +276,8 @@ export function diagnoseComparison(cmp: Comparison, locale: Locale): Feedback {
   if (cmp.reason === 'order') return withReflexive(withStyle(T.wrongOrder()));
 
   if (cmp.reason === 'values' && cmp.sampleMismatch.length) {
+    const rounding = analyseRounding(cmp.sampleMismatch, locale);
+    if (rounding) return withReflexive(withStyle(rounding));
     const f = analyseRatios(cmp.sampleMismatch, locale);
     if (f) return withReflexive(withStyle(f));
   }

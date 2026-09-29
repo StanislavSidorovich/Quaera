@@ -233,8 +233,12 @@ function compare(user, expected, opts) {
     for (const [k, exp] of expByDim) {
       if (result.sampleMismatch.length >= 6) break;
       const got = userByDim.get(k);
-      if (!sameRow(got, exp)) {
-        const col = exp.findIndex((v, i) => !sameValue(v, got[i]));
+      // Образец собираем по тому же строгому канону, что и rowKey. Допуск sameValue
+      // (1e-6 от величины) съедает разницу в копейках на суммах в миллионы:
+      // 25783293.99 против 25783294 набор строк уже развёл, а образец при этом
+      // оставался пустым — и человек видел «не сходится» без единого столбца.
+      const col = exp.findIndex((v, i) => rowKey([v]) !== rowKey([got[i]]));
+      if (col !== -1) {
         result.sampleMismatch.push({
           key: keyIdx.map((i) => exp[i]).join(' / '),
           column: expected.columns[col] ?? '',
