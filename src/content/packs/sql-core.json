@@ -3412,7 +3412,7 @@
       "mode": "fill",
       "title": "Из мелких ли точек мы ушли",
       "brief": "Прежде чем нести разбор бренду, стоит закрыть версию про нас самих: может, мы ушли из мелких точек, и это нормальная чистка. Сравнить нужно 2024 год, до потери: сколько штук Nettora брала точка, которую мы потеряли, и сколько — та, что осталась.",
-      "goal": "За 2024 год вернуть stayed (1 — точка продаёт Nettora и в 2026 году, 0 — потерянная), outlets (число точек), avg_units (штуки Nettora на точку, округлить до целых) и units (сумма штук), сначала потерянные.",
+      "goal": "За 2024 год вернуть stayed (1 — точка продаёт Nettora и в 2026 году, 0 — потерянная), outlets (число точек), avg_units (штуки Nettora на точку, округлить до целых) и units (сумма штук), сначала потерянные. В запросе два пропуска: первым словом впишите WITH, во втором — имя промежуточной таблицы из первой строки.",
       "template": "___ per_outlet AS (\n  SELECT customer_id, SUM(units) AS units\n  FROM fact_sellout\n  WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n    AND week_start BETWEEN '2024-01-01' AND '2024-12-31'\n  GROUP BY customer_id\n)\nSELECT customer_id IN (SELECT customer_id FROM fact_sellout\n                       WHERE product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n                         AND week_start >= '2026-01-01') AS stayed,\n       COUNT(*) AS outlets,\n       ROUND(AVG(units)) AS avg_units,\n       SUM(units) AS units\nFROM ___\nGROUP BY stayed\nORDER BY stayed",
       "blanks": [
         "WITH",

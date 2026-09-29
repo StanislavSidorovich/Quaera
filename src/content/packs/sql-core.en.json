@@ -2233,7 +2233,7 @@
       "id": "sql-118",
       "title": "Did we leave small outlets",
       "brief": "Before taking the analysis to the brand, it's worth ruling out the version about ourselves: maybe we left small outlets, and that was a normal cleanup. Compare 2024, before the loss: how many Nettora units a lost outlet took, and how many one that stayed.",
-      "goal": "For 2024 return stayed (1 for an outlet that sells Nettora in 2026 too, 0 for a lost one), outlets (the number of outlets), avg_units (Nettora units per outlet, rounded to whole numbers) and units (the total), lost outlets first.",
+      "goal": "For 2024 return stayed (1 for an outlet that sells Nettora in 2026 too, 0 for a lost one), outlets (the number of outlets), avg_units (Nettora units per outlet, rounded to whole numbers) and units (the total), lost outlets first. The query has two blanks: the first word is WITH, and the second is the name of the intermediate table from the first line.",
       "hints": [
         "The average outlet is the average of per-outlet sums, and SQL does not write AVG(SUM(...)). So the units are first folded to one row per outlet in a WITH, and the average is taken over the folded table.",
         "The name you give the intermediate table after WITH must match the one in the FROM of the outer query."
