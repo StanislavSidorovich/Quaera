@@ -4264,6 +4264,21 @@ table.sample td.null {
   color: var(--text-dim);
 }
 
+/* Ссылка на модель этой базы в StrataSQL — под легендой, тем же кеглем, что абзацы карточки. */
+.data-map-design {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Цвет — `--accent`, как у ссылки в .domain-notice: голая ссылка брала синий браузера и в тёмной теме терялась. */
+.data-map-design a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 .schema-legend-mark {
   flex: none;
   width: 22px;

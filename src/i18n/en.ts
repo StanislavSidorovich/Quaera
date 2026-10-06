@@ -813,6 +813,8 @@ export const en = {
       'An arrow runs from a fact to a lookup: many event rows for one row of description. That is a star, and there is more than one here: several facts sharing the same lookups, which is exactly why sales, shipments and stock line up on the same names.',
     /** Приглашение нажать — только там, где нажатие действительно работает (см. SchemaMap). */
     mapIntroOpen: 'Click a table to open its description below.',
+    /** См. довод у mapDesign в ru.ts. */
+    mapDesign: 'See how this database was designed, from the conceptual model to the SQL tables, in StrataSQL',
     mapAria: 'Diagram of the links between tables',
     mapFactsLabel: 'Facts',
     mapDimsLabel: 'Lookups',

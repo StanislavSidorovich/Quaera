@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GROUP_ORDER, groupTables, keyColumns, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { STRATASQL_MODEL } from '../links';
 import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 
@@ -198,6 +199,15 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
         <div className="card">
           <h2>{t.data.mapTitle}</h2>
           <SchemaMap doc={doc} onOpenTable={setFocused} />
+          {/*
+           * Здесь, а не в SchemaMap: та же схема стоит в брошюре ?overview,
+           * которую печатают, и ссылка на бумаге никуда не ведёт.
+           */}
+          <p className="data-map-design">
+            <a href={STRATASQL_MODEL} target="_blank" rel="noreferrer">
+              {t.data.mapDesign} ↗
+            </a>
+          </p>
         </div>
       )}
 
