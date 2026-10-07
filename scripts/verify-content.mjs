@@ -117,6 +117,46 @@ const workerCodeText = (message) => {
   return text ? [text, ...args].join(': ') : message;
 };
 
+/**
+ * Сравнитель приложения (`public/grade-lib.js`) — тем же приёмом, что
+ * в test-grade-compare: файл раздаётся воркерам через importScripts и
+ * экспортов не имеет, поэтому подключается как есть с дописанным экспортом.
+ * Нужен ловушкам: «ловушка отличается от эталона» должно значить ровно
+ * то, что решит проверка в приложении, а не побайтное неравенство —
+ * иначе ловушка с переставленными колонками прошла бы гейт, а в приложении
+ * засчиталась бы как верный ответ.
+ */
+const { compare: gradeCompare } = await import(
+  'data:text/javascript;charset=utf-8,' +
+    encodeURIComponent(`${readFileSync(path.join(root, 'public', 'grade-lib.js'), 'utf8')}\nexport { compare };`)
+);
+
+/**
+ * Ловушки задания (Task.traps): код выполняется, и сравнитель приложения
+ * не принимает его результат за эталонный. Ловушка, совпавшая с эталоном,
+ * не показалась бы никогда — верный ответ засчитывается раньше, чем ищется
+ * ловушка, — то есть дефект молчал бы, и поймать его можно только здесь.
+ */
+async function checkTraps(t, expected, run) {
+  for (const [i, tr] of (t.traps ?? []).entries()) {
+    const at = `ловушка ${i + 1}`;
+    if (!tr.code?.trim() || !tr.message || tr.message.trim().length < 20) {
+      fail(t.id, `${at}: нет кода или объяснение короче 20 знаков`);
+      continue;
+    }
+    let got;
+    try {
+      got = await run(tr.code);
+    } catch (e) {
+      fail(t.id, `${at} не выполняется — ${e.message}. Ловушка должна давать неверный результат, а не падать: ошибку исполнения разбирает diagnose`);
+      continue;
+    }
+    if (gradeCompare(got, expected, { orderMatters: !!t.orderMatters }).ok) {
+      fail(t.id, `${at} даёт результат, который проверка засчитает как верный`);
+    }
+  }
+}
+
 /** Запускает код заданий ровно тем же путём, что и public/python-worker.js — контракт result=, чистая ошибка при провале. */
 async function runPython(code) {
   const pyodide = await getPyodide();
@@ -882,6 +922,7 @@ for (const packId of packs) {
       if (!t.orderMatters && /order\s+by/i.test(t.solution) && !/over\s*\(/i.test(t.solution)) {
         fail(t.id, 'в эталоне есть ORDER BY, но orderMatters не выставлен — порядок не будет проверяться');
       }
+      await checkTraps(t, res, runSql);
       console.log(`  ok   ${t.id} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length} — ${t.title}`);
       continue;
     }
@@ -904,6 +945,7 @@ for (const packId of packs) {
     if (t.orderMatters && !/\.sort_values\s*\(/.test(t.solution)) {
       fail(t.id, 'orderMatters, но в эталоне нет .sort_values(...)');
     }
+    await checkTraps(t, res, runPython);
     console.log(`  ok   ${t.id} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length} — ${t.title}`);
   }
 }
@@ -3616,6 +3658,12 @@ function translationPairs(orig, tr) {
       }
       if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`);
+        ok = false;
+      }
+      // Строже, чем у вариантов: непереведённая ловушка не ломает загрузку,
+      // а молча показывает английскому интерфейсу русское объяснение.
+      if ((orig.traps ?? []).length !== (t.traps ?? []).length) {
+        fail(`${packId}.en`, `у задания ${t.id} ${(t.traps ?? []).length} переведённых ловушек вместо ${(orig.traps ?? []).length}`);
         ok = false;
       }
       const ruHints = orig.blankHints ?? [];

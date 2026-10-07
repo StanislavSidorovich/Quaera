@@ -94,6 +94,11 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
         `Перевод ${tr.id}: у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`
       );
     }
+    if (t.traps && (orig.traps ?? []).length !== t.traps.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.traps.length} переведённых ловушек вместо ${(orig.traps ?? []).length}`
+      );
+    }
     if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
       throw new Error(
         `Перевод ${tr.id}: у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`
@@ -142,6 +147,7 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         explain: tt.explain ?? t.explain,
         options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
         items: tt.items && t.items ? t.items.map((o, i) => ({ ...o, ...tt.items![i] })) : t.items,
+        traps: tt.traps && t.traps ? t.traps.map((o, i) => ({ ...o, ...tt.traps![i] })) : t.traps,
         steps:
           tt.steps && t.steps
             ? t.steps.map((s, i) => {

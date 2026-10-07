@@ -46,7 +46,17 @@ export type FeedbackSource =
    * «*_id сравнивается с текстом» (idComparedToTextHint); сам разбор
    * расхождения строится из comparison и code не трогает.
    */
-  | { kind: 'comparison'; comparison: Comparison; code?: string }
+  | {
+      kind: 'comparison';
+      comparison: Comparison;
+      code?: string;
+      /**
+       * Номер совпавшей ловушки задания (Task.traps), если ответ человека
+       * совпал с результатом её кода. Номер, а не текст: тот же довод, что
+       * у всего типа, — текст берётся из задания на текущей локали при показе.
+       */
+      trap?: number;
+    }
   /**
    * Зачёт уже стоит, но запущенный заново запрос дал другой результат —
    * см. handleRun в TaskView. Зачёт и расписание повторения это не меняет,
@@ -62,6 +72,8 @@ export interface FeedbackContext {
   runtime: 'sql' | 'python';
   /** Имена таблиц и колонок — из них diagnose подбирает ближайшее при опечатке. */
   suggestions: string[];
+  /** Объяснения ловушек текущего шага на языке рендера — позиционно к Task.traps. */
+  traps?: string[];
 }
 
 /**
@@ -101,6 +113,14 @@ export function renderFeedback(src: FeedbackSource, ctx: FeedbackContext): Feedb
         : diagnoseSqlError(src.message, ctx.suggestions, locale, src.code);
     case 'comparison': {
       const diag = diagnoseComparison(src.comparison, locale);
+      /*
+       * Совпавшая ловушка заменяет общий разбор целиком, вместе с его
+       * подсказками: на py-032 именно они и врали («ровный коэффициент —
+       * следствие соединения» там, где соединения нет). Стилевая приписка
+       * про имена колонок остаётся — она про ответ, а не про причину.
+       */
+      const trapMessage = src.trap !== undefined ? ctx.traps?.[src.trap] : undefined;
+      if (trapMessage) return { tone: 'warn', title: t.task.trapTitle, body: trapMessage, nudges: [], style: diag.style };
       const idHint = src.code ? idComparedToTextHint(src.code, locale) : null;
       return idHint ? { ...diag, nudges: [idHint, ...diag.nudges] } : diag;
     }

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Task, TaskStep } from '../content/types';
+import type { Task, TaskStep, Trap } from '../content/types';
 import { taskLiterals, taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { gradeBlanks } from '../engine/textGrade';
@@ -144,6 +144,7 @@ export function resolveSteps(task: Task): TaskStep[] {
       solution: task.solution ?? '',
       orderMatters: task.orderMatters,
       hints: task.hints,
+      traps: task.traps,
     },
   ];
 }
@@ -729,7 +730,31 @@ function StepView({
       locale,
       runtime: task.track === 'python' ? 'python' : 'sql',
       suggestions,
+      traps: step.kind === 'compute' ? step.traps?.map((tr) => tr.message) : undefined,
     });
+
+  /**
+   * Номер ловушки задания, с результатом которой совпал ответ человека.
+   *
+   * Сравнение — тот же `executor.grade`, только эталоном выступает код
+   * ловушки: «совпал с ловушкой» значит ровно то же, что «совпал бы
+   * с эталоном», если бы эталоном была эта ошибка. Второго сравнителя
+   * не появляется. Цена — повторный прогон кода человека на каждую
+   * ловушку, и платится она только на неверном ответе; ловушек у задания
+   * одна-две. Сбой прогона ловушки не должен стоить человеку разбора:
+   * тогда просто остаётся общий.
+   */
+  async function matchTrap(traps: Trap[] | undefined, orderMatters: boolean | undefined): Promise<number | undefined> {
+    for (const [i, tr] of (traps ?? []).entries()) {
+      try {
+        const r = await executor.grade(composedCode, tr.code, { orderMatters });
+        if (r.status === 'correct') return i;
+      } catch {
+        // см. шапку: молча к следующей
+      }
+    }
+    return undefined;
+  }
 
   async function handleRun() {
     if (step.kind !== 'compute') return;
@@ -897,11 +922,12 @@ function StepView({
           },
         });
       } else {
+        const trap = await matchTrap(step.traps, step.orderMatters);
         patch((d) => ({
           preview: res.preview,
           wrongAttempts: d.wrongAttempts + 1,
           expected: res.expectedPreview,
-          feedback: { kind: 'comparison', comparison: res.comparison, code: composedCode },
+          feedback: { kind: 'comparison', comparison: res.comparison, code: composedCode, trap },
         }));
       }
     } catch (e) {

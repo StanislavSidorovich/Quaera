@@ -668,6 +668,12 @@
     },
     {
       "id": "py-021",
+      "traps": [
+        {
+          "code": "result = dim_customer.groupby('rep_id')['customer_id'].count().reset_index(name='n_customers')",
+          "message": "Пропала группа клиентов без представителя. По умолчанию groupby выбрасывает строки, где ключ пустой (NaN), — таких клиентов 12, и из ответа они исчезают без ошибки и без предупреждения."
+        }
+      ],
       "track": "python",
       "skill": "py-nan",
       "level": 2,
@@ -792,6 +798,12 @@
     },
     {
       "id": "py-024",
+      "traps": [
+        {
+          "code": "result = fact_sellout.merge(dim_promo[['promo_id', 'discount_pct']], on='promo_id')",
+          "message": "Пропали продажи вне акций. По умолчанию merge соединяет как INNER JOIN и оставляет только строки, нашедшие пару в dim_promo: из 118 449 продаж остаётся 23 849. У продажи без акции promo_id пустой, и пары у неё нет."
+        }
+      ],
       "track": "python",
       "skill": "py-merge",
       "level": 3,
@@ -1005,6 +1017,12 @@
     },
     {
       "id": "py-032",
+      "traps": [
+        {
+          "code": "result = staging_raw_sellout['sku_code'].nunique()",
+          "message": "Коды посчитаны как есть, без приведения к одному регистру. В выгрузке каждый из 29 кодов записан двумя способами, строчными и прописными буквами (kros006 и KROS006), и nunique() считает их разными значениями. Отсюда ровно вдвое больше. Соединения здесь нет — удваивает регистр."
+        }
+      ],
       "track": "python",
       "skill": "py-tidy",
       "level": 2,
@@ -1414,6 +1432,16 @@
     },
     {
       "id": "py-049",
+      "traps": [
+        {
+          "code": "q4 = fact_sellin[fact_sellin['month_start'] >= '2025-10-01']\nresult = q4.groupby('distributor_id')['units'].sum().reset_index()",
+          "message": "В сумму попали месяцы после декабря: условие задаёт только начало периода, а данные идут до июня 2026 года. Поэтому у каждого дистрибьютора штук в разы больше, чем умещается в один квартал."
+        },
+        {
+          "code": "q4 = fact_sellin[(fact_sellin['month_start'] > '2025-10-01') & (fact_sellin['month_start'] <= '2025-12-01')]\nresult = q4.groupby('distributor_id')['units'].sum().reset_index()",
+          "message": "Пропал октябрь: строгое сравнение > '2025-10-01' отбрасывает первый месяц квартала, потому что month_start хранит первое число месяца. Поэтому у каждого дистрибьютора штук примерно на треть меньше."
+        }
+      ],
       "track": "python",
       "skill": "py-groupby",
       "level": 2,
@@ -1465,6 +1493,12 @@
     },
     {
       "id": "py-052",
+      "traps": [
+        {
+          "code": "setouchi = fact_sellin[fact_sellin['distributor_id'] == 1]\nresult = setouchi.groupby('month_start', as_index=False).agg(\n    orders=('sellin_id', 'count'),\n    units=('units', 'count'),\n)",
+          "message": "В колонке units стоят те же числа, что и в orders: штуки посчитаны, а не сложены. count отвечает на вопрос «сколько строк», а не «сколько штук в этих строках»."
+        }
+      ],
       "track": "python",
       "skill": "py-groupby",
       "level": 2,

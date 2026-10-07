@@ -755,6 +755,7 @@ export const en = {
     wrongOptionBody: 'The breakdown of every option is below.',
     giveUpTitle: "Let's break it down",
     giveUpBody: "Below is the breakdown and the reference solution. The skill will come back for review today, on a different task.",
+    trapTitle: "A familiar mistake",
     giveUpBtn: "Stuck? Show the breakdown",
     explainTitle: 'Breakdown',
     solutionSummary: 'Show reference solution',

@@ -484,6 +484,11 @@
     },
     {
       "id": "py-021",
+      "traps": [
+        {
+          "message": "The group of customers without a rep is missing. By default groupby drops rows whose key is empty (NaN). There are 12 such customers, and they vanish from the answer with no error and no warning."
+        }
+      ],
       "title": "Customers by rep: with nothing lost",
       "brief": "The customers-by-rep report needs to lose nobody: the sum across every rep_id has to match the reference table's total customer count, including the 12 customers with no rep at all.",
       "goal": "Count the number of customers per rep_id, including a separate group for customers with no rep, and return columns rep_id, n_customers.",
@@ -577,6 +582,11 @@
     },
     {
       "id": "py-024",
+      "traps": [
+        {
+          "message": "Sales outside promotions are gone. By default merge works like an INNER JOIN and keeps only the rows that found a match in dim_promo: 23,849 of 118,449 sales remain. A sale without a promotion has an empty promo_id, so it has no match."
+        }
+      ],
       "title": "The promo discount next to every sale",
       "brief": "The commercial director wants to see the discount (discount_pct) next to every sale: the discount figure if it went through a promo, an empty value if it didn't, and no sale dropped or duplicated.",
       "goal": "Join fact_sellout to dim_promo on promo_id so that all rows of fact_sellout are kept (including sales outside any promo), adding only discount_pct.",
@@ -733,6 +743,11 @@
     },
     {
       "id": "py-032",
+      "traps": [
+        {
+          "message": "The codes were counted as they are, without bringing them to one case. Each of the 29 codes appears in two spellings, lower case and upper case (kros006 and KROS006), and nunique() treats them as different values. That is why the count is exactly double. There is no join here; the doubling comes from letter case."
+        }
+      ],
       "title": "58 codes instead of 29 products",
       "brief": "An extract from the old system gives 58 different product codes instead of 29 real FMCG SKUs; some of the codes are duplicated in a different case: \"nett005\" and \"NETT005\" are the same product.",
       "goal": "Count how many unique product codes will remain in staging_raw_sellout if sku_code is cast to a single case.",
@@ -1034,6 +1049,14 @@
     },
     {
       "id": "py-049",
+      "traps": [
+        {
+          "message": "Months after December got into the sum: the condition sets only the start of the period, and the data runs to June 2026. That is why every distributor shows several times more units than one quarter holds."
+        },
+        {
+          "message": "October is missing: the strict comparison > '2025-10-01' drops the first month of the quarter, because month_start holds the first day of the month. That is why every distributor shows about a third fewer units."
+        }
+      ],
       "title": "Shipments by distributor for Q4",
       "brief": "Finance wants total shipments per distributor for October to December 2025. The table will be compared with others later, so the distributor has to be an ordinary column rather than sit in the index.",
       "goal": "From the fact_sellin rows for the three months of Q4 2025, return distributor_id and units, the total number of units for each distributor, with distributor_id as an ordinary column.",
@@ -1067,6 +1090,11 @@
     },
     {
       "id": "py-052",
+      "traps": [
+        {
+          "message": "The units column shows the same numbers as orders: the units were counted, not added up. count answers \"how many rows\", not \"how many units are in those rows\"."
+        }
+      ],
       "title": "More rows or more units",
       "brief": "The first question about a spike in shipments is whether it is an export error. A duplicated load is easy to spot in the table: twice as many rows, with the same quantity in each.",
       "goal": "From the fact_sellin rows for distributor 1, return two measures for each month_start: orders, the number of rows (count over sellin_id), and units, the total number of units.",
