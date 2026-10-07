@@ -243,6 +243,7 @@ export function StoryMode({
   onOpenDay,
   onExit,
   runtimeConsent,
+  runtimeNotReadyNote,
   consentDeferred,
   onConfirmDownload,
   onDeferConsent,
@@ -291,6 +292,8 @@ export function StoryMode({
    * к тому моменту, когда они впервые нужны.
    */
   runtimeConsent: number | null;
+  /** Почему код пока не запустить — передаётся в TaskView как есть (см. notReadyNote там). */
+  runtimeNotReadyNote?: string;
   consentDeferred: boolean;
   onConfirmDownload: () => void;
   onDeferConsent: () => void;
@@ -438,6 +441,7 @@ export function StoryMode({
           skillTitle={step.skillTitle}
           onOpenLesson={onOpenLesson}
           onOpenSchema={onOpenSchema}
+          notReadyNote={runtimeNotReadyNote}
           afterNote={mission.steps[phase.step]?.after}
           hideLevel
           panelWords={step.panelWords}

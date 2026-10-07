@@ -254,6 +254,15 @@ interface Props {
    */
   glossaryBrief?: ReactNode;
   glossaryGoal?: ReactNode;
+  /**
+   * Исполнитель ещё не готов запускать код (ждёт согласия на скачивание
+   * или качает рантайм) — строка, почему. Пока она есть, «Выполнить» и
+   * «Проверить» у расчётного шага выключены, а строка стоит под ними
+   * вместо обычной подписи: иначе клик уходит в init(), который ждёт
+   * согласия, и кнопка висит на «…» без объяснения. Шаги interpret и
+   * order рантайм не трогают и остаются рабочими.
+   */
+  notReadyNote?: string;
 }
 
 export function TaskView({
@@ -271,6 +280,7 @@ export function TaskView({
   isRest,
   glossaryBrief,
   glossaryGoal,
+  notReadyNote,
 }: Props) {
   const { t } = useI18n();
   const steps = useMemo(() => resolveSteps(task), [task]);
@@ -545,6 +555,7 @@ export function TaskView({
         panelWords={panelWords}
         tables={tables}
         onOpenSchema={onOpenSchema}
+        notReadyNote={notReadyNote}
       />
 
       {stepDraft.solved && (
@@ -610,6 +621,7 @@ function StepView({
   panelWords,
   tables,
   onOpenSchema,
+  notReadyNote,
 }: {
   task: Task;
   step: TaskStep;
@@ -628,6 +640,8 @@ function StepView({
   /** Таблицы задания (taskTables) — для строки над кодом на узком экране. */
   tables: string[];
   onOpenSchema: (table?: string) => void;
+  /** См. notReadyNote у TaskView. */
+  notReadyNote?: string;
 }) {
   const { t, locale } = useI18n();
   const [running, setRunning] = useState(false);
@@ -698,6 +712,8 @@ function StepView({
         ? shuffledOrder(task.id, step.items.length)
         : [];
   const runsCode = executor.runsCode !== false;
+  /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
+  const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
 
   /*
    * Там, где код исполняется, пустой пропуск оставлен допустимым намеренно:
@@ -1250,18 +1266,24 @@ function StepView({
               * чинили через recordedTasksRef.
               */}
             {runsCode && (
-              <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit}>
+              <button className="btn secondary" onClick={handleRun} disabled={running || !canSubmit || notReady}>
                 {t.task.runBtn}
               </button>
             )}
             {!draft.solved && (
-              <button className="btn" onClick={handleCheck} disabled={running || !canSubmit}>
+              <button className="btn" onClick={handleCheck} disabled={running || !canSubmit || notReady}>
                 {running ? '…' : t.task.checkBtn}
               </button>
             )}
           </div>
           <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-            {draft.solved && runsCode ? t.task.solvedRunNote : runsCode ? t.task.runNote : t.task.checkTextNote}
+            {notReady
+              ? notReadyNote
+              : draft.solved && runsCode
+                ? t.task.solvedRunNote
+                : runsCode
+                  ? t.task.runNote
+                  : t.task.checkTextNote}
           </p>
         </div>
         </>

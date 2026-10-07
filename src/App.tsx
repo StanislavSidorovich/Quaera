@@ -1883,6 +1883,18 @@ export default function App() {
    * исполняется», которая берёт `runsCode` у исполнителя, а не у контента.
    */
   const heavyRuntime = Boolean(executor?.confirmDownload);
+  /**
+   * Почему код задания пока не запустить — для TaskView (см. notReadyNote).
+   * Только у тяжёлого рантайма: sql.js догружается сам, без вопроса, и его
+   * задания ждут базу так же, как раньше. На 'error' кнопки не держим —
+   * причину уже показывает карточка ошибки над экраном.
+   */
+  const runtimeNotReadyNote =
+    !heavyRuntime || load.phase === 'ready' || load.phase === 'error'
+      ? undefined
+      : load.phase === 'consent'
+        ? t.consent.title
+        : t.home.loadingRuntime;
 
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
 
@@ -2415,12 +2427,51 @@ export default function App() {
             />
           )}
 
+          {/*
+           * Согласие на скачивание рантайма внутри занятия. Без карточки здесь
+           * занятие, открытое с карты навыков мимо карточки на главной (или
+           * после «Позже» там), упиралось в init(), ждущий согласия, и
+           * «Проверить» висело на «…» без единого слова. Состояние «Позже» —
+           * общее с главной: отказ там встречает человека свёрнутой строкой,
+           * а не той же карточкой заново. Над шагом, а не внутри задания:
+           * у карточки приёма та же кнопка «Выполнить».
+           */}
+          {step && load.phase === 'consent' && !consentDeferred && (
+            <div className="card">
+              <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
+              <p className="brief">{t.consent.body(Math.round(load.bytes / 1e6))}</p>
+              <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.note}</p>
+              <div className="row">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    requestPersistentStorage();
+                    executor?.confirmDownload?.();
+                  }}
+                >
+                  {t.consent.confirmBtn}
+                </button>
+                <button className="btn secondary" onClick={() => setConsentDeferred(true)}>
+                  {t.consent.laterBtn}
+                </button>
+              </div>
+            </div>
+          )}
+          {step && load.phase === 'consent' && consentDeferred && (
+            <div className="card">
+              <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.deferredNote}</p>
+              <button className="btn secondary" onClick={() => setConsentDeferred(false)}>
+                {t.consent.resumeBtn(Math.round(load.bytes / 1e6))}
+              </button>
+            </div>
+          )}
+
           {step?.kind === 'lesson' && executor && (
             <LessonCard
               key={step.lesson.skill}
               lesson={step.lesson}
               executor={executor}
-              runnable={activeTrack === 'sql' || activeTrack === 'python'}
+              runnable={activeTrack === 'sql' || (activeTrack === 'python' && pythonReady)}
               onContinue={advance}
             />
           )}
@@ -2455,6 +2506,7 @@ export default function App() {
                 }
                 onOpenSchema={openSchema}
                 isRest={step.isRest}
+                notReadyNote={runtimeNotReadyNote}
                 onDone={(o) => handleDone(step.task, o)}
               />
             );
@@ -2493,6 +2545,7 @@ export default function App() {
               onOpenSchema={openSchema}
               onNext={nextStoryMission(storyMission.mission.id)}
               runtimeConsent={load.phase === 'consent' ? load.bytes : null}
+              runtimeNotReadyNote={runtimeNotReadyNote}
               consentDeferred={consentDeferred}
               onConfirmDownload={() => {
                 requestPersistentStorage();
