@@ -3171,6 +3171,43 @@ flag = u > upper
 sig = u > u.mean() + 3 * u.std()
 result = f"{q1}/{q3}/{upper}/{int(flag.sum())}/{round(flag.mean() * 100, 1)}/{round(u[flag].sum() / u.sum() * 100, 1)}/{round(u.mean() + 3 * u.std())}/{int(sig.sum())}/{int(flag.sum() - sig.sum())}"
 `, '13.0/107.0/248.0/669/4.4/20.2/327/292/377', 'заказы дистрибьюторов: граница 248, 669 заказов (4,4%) несут 20,2% штук; правило трёх отклонений даёт границу 327 и теряет 377 заказов');
+
+  // py-099…102 и карточка py-rfm: потерянные точки Nettora и сегменты для возврата.
+  await pyExpect('py-100', `
+ids = dim_product.loc[dim_product['brand'] == 'Nettora', 'product_id']
+n = fact_sellout[fact_sellout['product_id'].isin(ids)]
+last = n.groupby('customer_id')['week_start'].max()
+result = f"{len(last)}/{int((last < '2026-03-01').sum())}/{int((last == fact_sellout['week_start'].max()).sum())}/{fact_sellout['week_start'].max()}"
+`, '79/46/22/2026-06-29', 'у Nettora 79 точек, 46 не покупали с 1 марта 2026, у 22 последняя покупка в последней неделе данных');
+  await pyExpect('py-101', `
+ids = dim_product.loc[dim_product['brand'] == 'Nettora', 'product_id']
+n = fact_sellout[fact_sellout['product_id'].isin(ids)]
+c = n.groupby('customer_id').agg(last=('week_start', 'max'), revenue=('revenue', 'sum'))
+top = pd.qcut(c['revenue'], 4, labels=False) == 3
+lost = c['last'] < '2026-03-01'
+a = c.loc[lost & top, 'revenue'].sum()
+result = f"{round(a)}/{int((lost & top).sum())}/{int(lost.sum())}/{int(top.sum())}/{round(a / c['revenue'].sum() * 100, 1)}/{round(a / c.loc[lost, 'revenue'].sum() * 100)}/{round(c.loc[lost, 'revenue'].sum() / c['revenue'].sum() * 100, 1)}"
+`, '5908899/9/46/20/36.6/81/45.1', 'выручка девяти потерянных из верхней четверти: 5908899, 36,6% бренда и 81% выручки ушедших; ушедшие вместе дают 45,1%');
+  await pyExpect('py-102', `
+ids = dim_product.loc[dim_product['brand'] == 'Nettora', 'product_id']
+n = fact_sellout[fact_sellout['product_id'].isin(ids)]
+c = n.groupby('customer_id').agg(last=('week_start', 'max'), revenue=('revenue', 'sum'))
+top = pd.qcut(c['revenue'], 4, labels=False) == 3
+lost = c['last'] < '2026-03-01'
+a = pd.Series(np.select([lost & top, lost], ['return_first', 'return_later'], default='active'), name='s').value_counts()
+b = pd.Series(np.select([lost, lost & top], ['return_later', 'return_first'], default='active'), name='s').value_counts()
+result = f"{a['active']}/{a['return_later']}/{a['return_first']}/{len(c)}/{b['return_later']}/{b.get('return_first', 0)}"
+`, '33/37/9/79/46/0', 'сегменты Nettora 33/37/9 (всего 79); при обратном порядке return_first пуст, return_later 46');
+  await pyExpect('py-rfm (карточка)', `
+ids = dim_product.loc[dim_product['brand'] == 'Pyrexan', 'product_id']
+p = fact_sellout[fact_sellout['product_id'].isin(ids)]
+c = p.groupby('customer_id').agg(revenue=('revenue', 'sum'))
+c['m'] = pd.qcut(c['revenue'], 4, labels=False)
+good = pd.Series(np.select([c['m'] == 3, c['m'] >= 1], ['core', 'regular'], default='tail')).value_counts()
+m = pd.qcut(p['revenue'], 4, labels=False)
+bad = pd.Series(np.select([m == 3, m >= 1], ['core', 'regular'], default='tail')).value_counts()
+result = f"{len(c)}/{good['core']}/{good['regular']}/{good['tail']}/{int(bad.sum())}"
+`, '38/10/18/10/8357', 'Pyrexan: 38 точек, 10 core, 18 regular, 10 tail; на строках продаж было бы 8357 записей');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

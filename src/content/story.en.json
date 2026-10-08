@@ -83,14 +83,14 @@
           "outcome": "You name the key of a repeat and look for duplicates on it rather than on the whole row; you label rows with np.select knowing the first condition that fires gives the label; you cut a number into groups with cut or qcut and check that the edge and the minimum did not lose any rows."
         },
         {
+          "title": "Outliers and lost customers",
+          "hook": "A manager asks to \"remove the outliers so the average does not lie\", and that is the first reflex. But a rule that finds what is unusually large does not know whether it is an error or a promotion, and the largest rows in this data are exactly promotions. The same approach, a flag instead of deleting, is needed in the customer base too: a brand is losing outlets, they cannot all be won back, and the list of where to start is built from recency, frequency and money.",
+          "outcome": "You calculate an edge by the IQR rule and mark values with a flag rather than deleting them; you collapse sales to the customer, give scores by shares, build the segment with conditions and check that the segments hold exactly as many customers as the collapsed table has rows."
+        },
+        {
           "title": "The chain and the cost of a step",
           "hook": "The last mission is not about a new calculation but about how it is written. A flag set on a slice never reaches the original table, and the code does not complain once. And apply over rows gives the same answer as a vectorised operation: on a table of regions you cannot see the difference, on the sales table it is the difference between a second and a minute.",
           "outcome": "You write transformations as a chain and you know where a copy appears and where a view on the original data does, and you replace a loop over rows with a vectorised operation, because the difference here is an order of magnitude rather than a matter of style."
-        },
-        {
-          "title": "Unusually large values",
-          "hook": "A manager asks to \"remove the outliers so the average does not lie\", and that is the first reflex. But a rule that finds what is unusually large does not know whether it is an error or a promotion, and the largest rows in this data are exactly promotions. Deleting is easy, undoing is not.",
-          "outcome": "You calculate an edge by the IQR rule, mark values with a flag rather than deleting them, calculate the edge inside a group rather than over the whole table, and do not call an error what turned out to be an event."
         }
       ]
     },

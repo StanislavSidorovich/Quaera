@@ -105,6 +105,11 @@
       "id": "py-outliers",
       "title": "Outliers: flag, do not delete",
       "summary": "I mark unusually large values with the IQR rule in a separate flag and decide whether each is an error or an event, with the edge computed inside a group rather than over the whole table."
+    },
+    {
+      "id": "py-rfm",
+      "title": "RFM: recency, frequency, money",
+      "summary": "I place a customer in a segment from recency, frequency and money: first one row per customer, then scores by shares, then the segment by conditions."
     }
   ],
   "tasks": [
@@ -1864,6 +1869,80 @@
       "traps": [
         {
           "message": "The result is 20.1%, the same as promotions in the whole table. The edge was computed over the whole table and marked big products as a whole, not unusual weeks: promotions among them are as common as anywhere, and the link vanished. The edge has to be computed inside a product: groupby(\"product_id\") and transform(\"quantile\", ...)."
+        }
+      ]
+    },
+    {
+      "id": "py-099",
+      "title": "How to build RFM segments",
+      "brief": "A brand is losing outlets, and the win-back team needs a list of where to start: bringing everyone back at once is impossible. The list is built from recency, frequency and money, and every step relies on the previous one.",
+      "goal": "Arrange the steps from choosing the unit of analysis to checking the segments.",
+      "orderQuestion": "In what order do you build RFM segments?",
+      "items": [
+        {
+          "label": "Choose the unit of analysis and the reference date: a customer (outlet) and the last week of data as \"today\"",
+          "why": "First: \"has not bought for a long time\" makes sense only from a reference date. Take the real \"today\" while the data ends earlier, and every customer turns out to be lost."
+        },
+        {
+          "label": "Collapse sales to one row per customer: last purchase, number of weeks with a purchase, revenue",
+          "why": "Second: scores are given to customers, not to sales. If they are calculated on sales rows, a customer with a hundred purchases lands in several segments at once."
+        },
+        {
+          "label": "Split the measures into scores: recency by a named threshold, revenue and frequency by shares (qcut)",
+          "why": "Third, because qcut on the per-customer table, not on raw sales, computes the quartiles of customers. Recency is more often split by a threshold the business names."
+        },
+        {
+          "label": "Build the segment with conditions through np.select, narrowest conditions first",
+          "why": "Fourth: the segment is built from ready scores. The order of the conditions decides which segment a customer fitting two of them lands in."
+        },
+        {
+          "label": "Check: the segments hold as many customers as the collapsed table has rows, and revenue across segments adds up to the total",
+          "why": "Last: the check catches a lost customer (an empty score), overlapping conditions and a wrong unit of analysis, that is, everything above passes without errors."
+        }
+      ],
+      "hints": [
+        "One step defines what \"a long time ago\" is measured from. It comes before all the calculations.",
+        "Scores cannot be calculated before collapsing: raw sales and customers have different quartiles.",
+        "The segment is built from scores, not the other way round, so it comes after them."
+      ],
+      "explain": "RFM comes down to three decisions, and each is made in its own place. The reference date and the unit of analysis decide what is counted at all; collapsing to the customer decides who gets scores; the order of the conditions decides which segment a customer on an overlap lands in. A mistake in any of them gives no error message, so the last step, checking the result against the source numbers, is mandatory."
+    },
+    {
+      "id": "py-100",
+      "title": "Which Nettora outlets stopped buying",
+      "brief": "Customers of the brand Nettora are disappearing, and the category head wants to know how many outlets have not bought the brand since 1 March 2026, that is, in the last four months of data. The data ends on 29 June 2026.",
+      "goal": "Count the outlets whose last purchase of the brand Nettora was before 2026-03-01.",
+      "hints": [
+        "You need each outlet's last purchase, that is, the latest week. The dates are ISO text, and the latest one is also the largest when strings are compared.",
+        "This is a groupby aggregation that takes the largest value in a group."
+      ],
+      "explain": "The result is 46 outlets out of the 79 that bought Nettora and now do not. The last week of data is 2026-06-29, and 22 outlets made their last purchase exactly in it: active outlets buy right up to the end of the export, and the 1 March threshold cuts off the last four months. The reference date comes from the data, not from the calendar: \"a long time ago\" is measured against the end of the export."
+    },
+    {
+      "id": "py-101",
+      "title": "How much revenue the main lost outlets bring",
+      "brief": "Winning back all 46 lost outlets is impossible, so the team takes those who used to bring the most: lost outlets from the brand's top quarter by revenue. Their total revenue over the whole period is needed.",
+      "goal": "Calculate the Nettora revenue of outlets that are lost (last purchase before 2026-03-01) and at the same time in the brand's top quarter by revenue. Round to a whole number.",
+      "hints": [
+        "You need the outlets that meet two conditions at once. Both masks are already calculated above.",
+        "Two boolean columns are combined with &. Parentheses are needed only when comparisons stand inside."
+      ],
+      "explain": "The result is 5,908,899. These are nine outlets: 46 are lost, 20 are in the top quarter by revenue, and nine are in the overlap. They brought 36.6% of the brand's revenue and 81% of the revenue of all the lost outlets. The takeaway: win back these nine, not all 46. qcut(..., labels=False) gives numbers from 0 to 3, and 3 is the top quarter."
+    },
+    {
+      "id": "py-102",
+      "title": "Nettora outlet segments for win-back",
+      "brief": "The win-back team wants to split Nettora outlets into three segments: lost with high revenue (win back first), other lost (win back later) and active. Every outlet must land in exactly one segment.",
+      "goal": "Label Nettora outlets: return_first if the last purchase was before 2026-03-01 and revenue is in the brand's top quarter; return_later for the other lost ones; active for the rest. Count the outlets in each segment.",
+      "hints": [
+        "First you need one row per outlet: groupby(\"customer_id\") with the last week and the sum of revenue.",
+        "The top quarter: qcut(..., 4, labels=False) equals 3. Lost: last is before the threshold. Then np.select.",
+        "The condition \"lost and in the top quarter\" lies entirely inside \"lost\", so it goes first."
+      ],
+      "explain": "The result is active: 33, return_later: 37, return_first: 9. The sum 79 equals the number of the brand's outlets, so nobody is lost or counted twice. The condition \"lost and in the top quarter\" is narrow, so it goes first: swapping them would give those nine to \"return_later\". Nine outlets out of 79 carry 81% of the lost revenue, and the list \"who to win back first\" comes from the overlap of recency and money, not from either alone.",
+      "traps": [
+        {
+          "message": "The result is return_later: 46, active: 33, and the segment return_first is missing altogether. The wide condition \"lost\" comes first and takes all the lost outlets, including the nine most valuable ones, so the narrow condition never fires. The narrow condition has to come before the wide one."
         }
       ]
     }

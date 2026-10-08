@@ -161,6 +161,15 @@
       "reads": "Distributor orders: quartiles 13 and 107 units, edge 248. Above it are 669 orders, that is 4.4% of rows, but they carry 20.2% of all units ordered. A small share of rows with a fifth of the volume: that is why deciding to \"remove\" them would noticeably shift the total, and the marked orders have to be looked at first.",
       "wrongWhy": "The rule \"mean plus three deviations\" assumes a symmetric distribution. Here the tail is long, and the mean and the deviation themselves are inflated by large orders: the edge moved to 327 instead of 248, and 377 unusually large orders stayed unmarked. No error, the flag looks plausible, it just misses part of what it should show.",
       "selfCheck": "Before removing anything, answer two questions: relative to what is this value unusual (the whole table, the product, the customer), and what is it, an error or an event? If there is no answer to the second, the row stays and a flag is set."
+    },
+    {
+      "skill": "py-rfm",
+      "title": "RFM: recency, frequency, money",
+      "why": "There are many customers and no resources to win back or keep all of them, so they are ranked by three measures: how recently they bought (Recency), how often (Frequency), for how much money (Monetary). That is three columns per customer, and the work is built from familiar steps: first collapse sales to one row per customer, then give scores by shares (qcut), then build the segment with conditions (np.select). The list \"who to win back first\" comes from an overlap: has not bought for long and used to bring a lot.",
+      "form": "c = df.groupby('customer').agg(last=('date', 'max'), money=('amount', 'sum'))   # one row per customer\nc['m_score'] = pd.qcut(c['money'], 4, labels=False)                            # 0 to 3, three is the top quarter\nc['segment'] = np.select([c['m_score'] == 3, c['m_score'] >= 1], ['core', 'regular'], default='tail')\n\nR: recency, the date of the last purchase against the end of the data\nF: frequency, the number of weeks with a purchase\nM: money, revenue\nfirst one row per customer, then scores: otherwise scores are given to sales",
+      "reads": "Customers of the brand Pyrexan by revenue: 38 outlets, \"core\" is the top quarter (10), \"tail\" the bottom one (10), 18 in the middle. Sales were first collapsed to one row per outlet, and only then qcut gave the scores, so there is exactly one record per customer in the result.",
+      "wrongWhy": "qcut was applied to sales rows rather than to per-customer totals: the segments are given to purchases, and the result is 8,357 records instead of 38 customers. One customer with a hundred purchases landed in several segments at once. No error, the numbers look confident, and it is caught only by a check: the sum over segments must equal the number of customers.",
+      "selfCheck": "Check two numbers. First, how many rows the per-customer table has: it must match the number of customers. Second, what date \"a long time ago\" is counted from: it is the end of the data, not today, otherwise everyone turns out to be lost."
     }
   ]
 }
