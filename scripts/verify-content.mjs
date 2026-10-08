@@ -2993,6 +2993,51 @@ with warnings.catch_warnings(record=True) as w:
     kinds = sorted({type(x.message).__name__ for x in w})
 result = f"{'flag' in df.columns}/{','.join(kinds)}"
 `, 'False/SettingWithCopyWarning', 'цепочечное присваивание молча теряет колонку и даёт SettingWithCopyWarning');
+
+  // py-068: присваивание без .copy() даёт второе имя, колонка видна в оригинале.
+  await pyExpect('py-068', `
+src = dim_product.copy()
+backup = src
+backup['archived'] = True
+alias = 'archived' in src.columns
+src2 = dim_product.copy()
+real = src2.copy()
+real['archived'] = True
+result = f"{alias}/{'archived' in src2.columns}"
+`, 'True/False', 'backup = df — второе имя, а .copy() оригинал не трогает');
+
+  // py-069, py-072, py-073: числа, процитированные в разборах.
+  await pyExpect('py-069', `
+d = fact_sellin['discount_amount'] / fact_sellin['gross_amount']
+result = f"{len(fact_sellin)}/{round(d.min() * 100)}/{round(d.max() * 100)}"
+`, '15362/3/14', 'строк в fact_sellin и граничные доли скидки 3% и 14%');
+  await pyExpect('py-072', `
+m = dim_product.groupby('category')['list_price'].mean().round(2)
+g = dim_product['list_price'] - dim_product.groupby('category')['list_price'].transform('mean')
+result = f"{m['Beverages']}/{m['OTC']}/{abs(g.groupby(dim_product['category']).sum()).max() < 1e-6}"
+`, '95.33/423.17/True', 'средние Beverages и OTC, отклонения внутри категории суммируются в ноль');
+  await pyExpect('py-073', `
+piv = dim_product.pivot_table(index='category', columns='division', values='product_id', aggfunc='count', fill_value=0)
+nonzero = int((piv > 0).sum().sum())
+result = f"{piv.loc['Beverages','FMCG']}/{piv.loc['Dairy','FMCG']}/{piv.loc['Snacks','FMCG']}/{piv.loc['Home care','FMCG']}/{piv.loc['OTC','Pharma']}/{piv.loc['Beverages','Pharma']}/{piv.values.sum()}/{nonzero}"
+`, '12/6/6/5/18/0/47/5', 'раскладка 47 товаров по категориям и дивизионам, пять непустых пар');
+
+  // py-075, py-076, py-077, py-078: числа про пропуски и форматы в справочнике и выгрузке.
+  await pyExpect('py-075', `result = int(dim_customer['rep_id'].isna().sum())`, '12', 'клиентов без представителя');
+  await pyExpect('py-076', `
+c = dim_customer
+result = f"{int(c['served_by_distributor_id'].notna().sum())}/{int((c['served_by_distributor_id'] != None).sum())}/{int((c['served_by_distributor_id'] == float('nan')).sum())}"
+`, '132/144/0', '«!= None» оставляет все строки, «== NaN» не находит ни одной');
+  await pyExpect('py-077', `
+s = staging_raw_sellout
+bad = int(s['revenue'].str.contains(',', regex=False).sum())
+lost = int((pd.to_numeric(s['revenue'], errors='coerce').isna() & s['revenue'].notna()).sum())
+result = f"{bad}/{lost}/{len(s)}/{int(s['revenue'].isna().sum())}/{round(s['revenue'].str.replace(',', '.').astype(float).sum() / 1e6, 2)}"
+`, '1465/1465/3110/179/1.53', 'запятых в revenue, потери to_numeric, строк, пустых, сумма');
+  await pyExpect('py-078', `
+d = staging_raw_sellout['sale_date']
+result = f"{int(d.str.contains('.', regex=False).sum())}/{int(d.str.contains('-', regex=False).sum())}/{int(d.str.contains('/', regex=False).sum())}/{int(d.str.contains('.').sum())}"
+`, '803/1543/764/3110', 'даты через точку, дефис, слэш и ловушка шаблона «.»');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

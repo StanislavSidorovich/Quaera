@@ -94,7 +94,7 @@
       "skill": "py-tidy",
       "title": "Tidy data",
       "why": "\"Tidy\" data means one row per observation and one column per variable, with no variation hiding inside a value: the same entity shouldn't hide behind two different spellings. The raw extract staging_raw_sellout breaks this at every turn: a product code in two cases, a customer name with spaces at the edges, and grouping by a column like that counts one object as two.",
-      "form": "df['column'].str.upper()   # one case\ndf['column'].str.strip()   # no spaces at the edges\ndf['column'].nunique()     # how many distinct values",
+      "form": "df['column'].str.upper()   # one case\ndf['column'].str.strip()   # no spaces at the edges\ndf['column'].str.replace(',', '.')   # replace a character in every value\ndf['column'].nunique()    # how many distinct values",
       "reads": "29 rows, one per product: how often each code appears in the export when case is ignored. AQUA002 leads with 189 rows. \"NETT005\" and \"nett005\" are now one row of 47 sales, not two.",
       "wrongWhy": "Without fixing the case there are 58 rows: \"NETT005\" (31 sales) and \"nett005\" (16) stand as two products, each looking half its real size. No error, a plausible table, and wrong for every per product count that follows.",
       "selfCheck": "Is the number of unique values in a column noticeably higher than it should be by meaning (58 codes instead of a few dozen products)? Check the case and the leading/trailing spaces before looking for missing rows anywhere else. The rule is cheaper than the habit: nunique() on a raw column doesn't answer \"how many are there\", it answers \"how many spellings are there\"."

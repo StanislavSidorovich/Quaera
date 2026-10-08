@@ -1221,6 +1221,158 @@
         "Once both tables are rolled up by brand, an ordinary merge on brand joins them; months of stock uses the same yardstick as for the whole warehouse: stock divided by sales per month (six-month sales divided by 6)."
       ],
       "explain": "Eight brands hold between 3.8 and 7.7 months of stock; the warehouse-wide \"five months\" was an average across these eight plus the ninth, Nettora. The ninth, Nettora, sits at 1,368 units against 8 sold in six months, which is 1,026 months: not a duration, a \"never.\" Of the five Setouchi outlets that bought Nettora in 2025, four are among the forty-two the brand lost from January 2026. The average \"five months\" was hiding two different problems: eight brands can afford to hold off ordering for a few months, and Nettora's stock won't be resolved by recalculating the plan: it needs moving to where the brand still sells."
+    },
+    {
+      "id": "py-067",
+      "title": "Price with tax in one line",
+      "brief": "The price list needs a table with the price including tax, but the dim_product reference has to stay as it is: other calculations expect it without new columns.",
+      "goal": "Build a result table from dim_product with a new column price_with_tax = list_price * 1.1 (a 10% tax, taken as an example), without changing dim_product itself.",
+      "hints": [
+        "assign(name=value) returns a new table with the column added and leaves the original alone.",
+        "The new column name is passed as a keyword argument, without quotes: price_with_tax=... ."
+      ],
+      "explain": "assign does not change dim_product: it returns a new table that has everything from before plus the price_with_tax column. That is why it can sit in a chain: each next step gets the result of the previous one. Writing dim_product[\"price_with_tax\"] = ... would do the same, but inside the reference itself, and everyone who reads dim_product afterwards would see the column. The difference between \"added to my copy\" and \"added for everyone\" is worked through in the tasks further down the chain."
+    },
+    {
+      "id": "py-068",
+      "title": "A \"backup copy\" of the reference",
+      "brief": "An analyst makes a \"backup copy\" of the product reference by assignment, adds a column to it and is surprised: the column showed up in the original too.",
+      "goal": "Understand what the assignment backup = dim_product does: copies the table or gives it a second name.",
+      "predictQuestion": "After these two lines: will the archived column appear in dim_product itself?",
+      "options": [
+        {
+          "label": "Yes, backup and dim_product are two names for the same table in memory, so the column is visible under both",
+          "correct": true,
+          "why": "Assignment in Python does not copy an object, it binds one more name to it. Adding a column changes the object itself, not the name, so the change is visible through either name."
+        },
+        {
+          "label": "No, backup got its own data at the moment of assignment, and edits to it do not touch the original",
+          "why": "Only an explicit .copy() gives its own data. Assignment creates no copies, which is why a \"backup copy\" without .copy() is not a copy at all."
+        },
+        {
+          "label": "No, pandas raises an error: a column cannot be added to a table that already has a second name",
+          "why": "There will be no error: pandas does not know about the second name and cannot object. It is the silent change to the original that makes this bug dangerous."
+        },
+        {
+          "label": "Yes, but only on big tables; on small ones pandas copies the data itself",
+          "why": "Table size decides nothing. Copying happens only on an explicit .copy(), the same on the 47 rows of dim_product as on the 118 thousand of fact_sellout."
+        }
+      ],
+      "hints": [
+        "In Python, a = b does not create a new object: both names point to the same one.",
+        "How would the same pair of lines end if the first were backup = dim_product.copy()?"
+      ],
+      "explain": "backup = dim_product gives the table a second name, not a copy, so backup[\"archived\"] = True changes the one table that is visible under two names. A real copy is dim_product.copy(): a new object with its own data, and a column added to it leaves the original alone. The same .copy() goes after a filter before writing into a slice, for the same reason: it is needed wherever independence from the source table is needed."
+    },
+    {
+      "id": "py-069",
+      "title": "Discount share without a loop",
+      "brief": "An analyst computes the discount share in every incoming-shipment row with a loop over rows, and in the browser on 15 thousand rows it noticeably hangs. The same share comes out of one line over the whole column.",
+      "goal": "Add a discount_share column to fact_sellin, discount_amount / gross_amount, for all rows at once, with no loop and no apply.",
+      "hints": [
+        "Dividing one column by another works element by element: row by row, with pandas taking care of the loop.",
+        "The denominator is the column with the amount before the discount."
+      ],
+      "explain": "Arithmetic between columns runs for all 15,362 rows of fact_sellin at once in optimized code, instead of a Python call per row. For this task the vectorized form is both shorter and faster, and when a branch on a condition is needed, np.where comes in, as in the neighboring task. The discount share in the dataset lies between 3 and 14 percent; describe() on the new column is enough to see its spread."
+    },
+    {
+      "id": "py-070",
+      "title": "Price per pack unit",
+      "brief": "A buyer compares prices per pack unit: list_price divided by pack_size. An intern writes it with apply(lambda row: ..., axis=1). Prices can only be compared within one unit of measure (grams with grams, milliliters with milliliters), so the unit column has to be looked at separately.",
+      "goal": "Return columns product_id and price_per_unit, where price_per_unit is list_price / pack_size, rounded to 2 places, without apply.",
+      "hints": [
+        "Columns divide by each other element by element, like numbers; the result stays a column of the same length.",
+        "A column has its own .round(2), applied to all values at once."
+      ],
+      "explain": "Dividing list_price by pack_size and rounding are two vectorized operations in a row: neither needs a loop over rows. apply(..., axis=1) would make 47 calls on dim_product and 118,449 on fact_sellout; for a price per unit the difference is harmless, the habit is what hurts: a solution that works on a reference quietly becomes slow on facts. price_per_unit can only be compared within one unit, so the next step of such an analysis is grouping by unit."
+    },
+    {
+      "id": "py-071",
+      "title": "The brand's average price next to each product",
+      "brief": "A category manager needs a product reference where each product's price has its brand's average price beside it, so it is visible at once who costs more than their own. A separate brand summary table is not needed: the row count should stay equal to the number of products.",
+      "goal": "Add a brand_avg_price column to dim_product, the average list_price of this product's brand, on each of the 47 rows.",
+      "hints": [
+        "agg(\"mean\") would collapse 47 rows to one per brand, and one row per product is needed.",
+        "The method that returns a group's value at the original granularity is the same one that computes a row's share of its group total."
+      ],
+      "explain": "transform(\"mean\") computes the mean for each group and spreads it back across the rows of the original table, so the row count does not change (47) and the column sits beside the price without a join. In SQL this is AVG(list_price) OVER (PARTITION BY brand): a window function instead of a collapsing group. On such a column one comparison finds a product pricier than its brand: list_price > brand_avg_price."
+    },
+    {
+      "id": "py-072",
+      "title": "Pricier or cheaper than its category",
+      "brief": "Prices from different categories cannot be compared directly: an average Beverages product costs about 95, an average OTC product about 423. The buyer needs to know how much each product is above or below its own category's average price.",
+      "goal": "Add a price_gap column to dim_product: list_price minus the mean list_price of this product's category, rounded to 2 places.",
+      "hints": [
+        "The category average is needed on each product row: a column as long as the table, which is groupby plus transform, not agg.",
+        "The gap is a plain subtraction of two columns; round at the very end with a single .round(2)."
+      ],
+      "explain": "transform(\"mean\") brings the category average price onto each product row, and subtraction gives the gap: a product at 150 in Beverages is pricey (average 95.33), while a product at 150 in OTC is cheap (average 423.17). Within each category the gaps sum to zero up to rounding, which is how to check the average was computed over the same rows. In SQL: list_price - AVG(list_price) OVER (PARTITION BY category)."
+    },
+    {
+      "id": "py-073",
+      "title": "Assortment: categories by division",
+      "brief": "The assortment director needs a map of \"how many products in each category and in each division\" as one table: categories as rows, divisions as columns. A long list of category-division pairs is not something they will read.",
+      "goal": "Build a pivot table over dim_product: rows are category, columns are division, values are the product count (product_id). Fill empty intersections with zero.",
+      "hints": [
+        "pivot_table collapses several rows into one cell, and what exactly it does is set by aggfunc.",
+        "Products are to be counted, not summed: \"count\" fits (or \"nunique\", which gives the same on unique ids)."
+      ],
+      "explain": "pivot_table turns division into columns and counts the products at each intersection. Some intersections are empty by meaning: Pharma has no Beverages, so without fill_value=0 there would be NaN, and \"no products\" would look like \"no data\". The total is 29 FMCG products (Beverages 12, Dairy 6, Snacks 6, Home care 5) and 18 Pharma, all in the OTC category: 47 together."
+    },
+    {
+      "id": "py-074",
+      "title": "The assortment map back to long format",
+      "brief": "The \"category by division\" map has to be loaded into a BI system that accepts only long format: one category-division pair and one number per row.",
+      "goal": "Reshape the table piv (category, FMCG, Pharma) back to long format: columns category, division, n_products.",
+      "hints": [
+        "id_vars is the column that stays as is; the others turn into pairs of \"column name → value\".",
+        "var_name and value_name name the two new columns: the one with the former column names and the one with their values."
+      ],
+      "explain": "melt is the reverse of pivot_table: 5 categories × 2 divisions give 10 rows, and zeros like Beverages × Pharma land in the result as ordinary values, because melt discards nothing. If the BI does not want zeros, a separate filter removes them: 5 real pairs remain. The pivot_table plus melt pair is the move between wide and long form that all of reshape works on."
+    },
+    {
+      "id": "py-075",
+      "title": "How many customers have no rep",
+      "brief": "Before reconciling the reports, the controller wants to know how many customers in the reference have no rep at all. Counting empty cells by eye in a table of 144 rows is not something they will do.",
+      "goal": "Count the customers in dim_customer whose rep_id is missing.",
+      "hints": [
+        "A method is needed that returns a boolean column: True where the value is missing.",
+        "sum() over a boolean column counts True as ones."
+      ],
+      "explain": "The answer is 12, the very twelve that groupby on rep_id silently drops. isna() is the only reliable way to ask \"is the value empty\": the comparison rep_id == NaN finds nothing, because NaN does not equal anything, not even itself. Before any grouping on a column that may contain gaps it helps to count isna().sum() first, and then the losses are not a surprise."
+    },
+    {
+      "id": "py-076",
+      "title": "Customers served by a distributor",
+      "brief": "A mailing needs a list of customers attached to a distributor. For the rest (the distributors themselves in the reference) served_by_distributor_id is empty, and a comparison with emptiness through == or != will not work.",
+      "goal": "Return columns customer_id and served_by_distributor_id for the customers in dim_customer whose served_by_distributor_id is filled in.",
+      "hints": [
+        "The condition \"a value is present\" is a column method, the opposite of isna(); comparisons with NaN through == or != find nothing.",
+        "Rows and columns can be selected in one .loc[condition, [columns]]."
+      ],
+      "explain": "notna() picks 132 customers, and the 12 distributors with an empty field stay out of the frame. The mistake \"!= None\" or \"== np.nan\" is the classic one here: NaN equals nothing, so the condition drops nothing and the result is the same 144 rows. A side effect of gaps is visible too: the distributor id is stored as float (3.0 instead of 3), because an integer column cannot hold NaN."
+    },
+    {
+      "id": "py-077",
+      "title": "Revenue written with a comma",
+      "brief": "In staging_raw_sellout revenue is stored as text, and in some rows the decimal separator is a comma (\"392,44\"). Converting such text to a number directly fails with an error.",
+      "goal": "Compute the sum of revenue in staging_raw_sellout: replace the comma with a dot, convert to a number and add up.",
+      "hints": [
+        "The .str.replace(what, with) method replaces a substring in every value of the column at once.",
+        "The comma is what has to be replaced, so it goes in as the first argument, as text in quotes."
+      ],
+      "explain": "A comma in the decimal part occurs in 1,465 of the 3,110 revenue values. Without the replacement astype(float) fails on the very first \"392,44\", while pd.to_numeric(errors=\"coerce\") would quietly turn all 1,465 values into gaps, and the sum would come out too low with no warning at all. After the replacement every value goes into the sum except the 179 truly empty ones; the total is about 1.53 million."
+    },
+    {
+      "id": "py-078",
+      "title": "Dates with dots",
+      "brief": "Dates in staging_raw_sellout are written in three formats: \"2024-02-19\", \"11.03.2024\" and \"20/10/2025\". Before converting them to one form the scale has to be clear: how many rows are written with a dot.",
+      "goal": "Count the rows of staging_raw_sellout whose sale_date contains a dot.",
+      "hints": [
+        "A substring in every value of the column is searched with .str.contains(...); sum() over the boolean column counts the matches.",
+        "By default .str.contains reads the pattern as a regular expression, where a dot means \"any character\"; to search for a literal dot, turn that off with regex=False."
+      ],
+      "explain": "A dot is used in 803 of the 3,110 dates; a hyphen in 1,543, a slash in 764. Without regex=False the pattern \".\" would match any character and all 3,110 rows would count as found: the answer would look plausible and mean nothing. It is the same trap as in other string methods: special characters work as a pattern by default, not as letters."
     }
   ]
 }
