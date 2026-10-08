@@ -85,6 +85,11 @@
       "id": "py-performance",
       "title": "Vectorization",
       "summary": "I replace row loops and apply with a vectorized operation, and I understand that the difference here isn't style, it's an order of magnitude."
+    },
+    {
+      "id": "py-duplicates",
+      "title": "Duplicate rows",
+      "summary": "I find repeats by a key, not by the whole row: an export's row number makes every row look unique and hides the duplicates."
     }
   ],
   "tasks": [
@@ -1423,6 +1428,114 @@
         "By default .str.contains reads the pattern as a regular expression, where a dot means \"any character\"; to search for a literal dot, turn that off with regex=False."
       ],
       "explain": "A dot is used in 803 of the 3,110 dates; a hyphen in 1,543, a slash in 764. Without regex=False the pattern \".\" would match any character and all 3,110 rows would count as found: the answer would look plausible and mean nothing. It is the same trap as in other string methods: special characters work as a pattern by default, not as letters."
+    },
+    {
+      "id": "py-079",
+      "title": "Why duplicated() finds nothing",
+      "brief": "The export from the accounting system shows two identical rows in a row, and the manager asks whether sales are doubled. The analyst checked the whole table with one line of code and got zero.",
+      "goal": "Understand why checking the whole row finds none of the repeats that are visible by eye.",
+      "predictQuestion": "staging_raw_sellout has 3,110 rows. Some are pairs that are identical in every column except the service number raw_id. What are a and b?",
+      "options": [
+        {
+          "label": "a = 0, b = 110: raw_id is different on every row, so while it is compared there are no repeats",
+          "why": "duplicated() with no parameters compares the whole row, and raw_id (the export counter) makes every row unique even if a sale is recorded twice. Without that column the pairs become identical, and the method flags 110 repeated copies."
+        },
+        {
+          "label": "a = 110, b = 110: duplicated() ignores service numbers on its own",
+          "why": "The method knows nothing about what the columns mean: it compares all of those it is given. A number that differs on every row makes comparing the whole row pointless, so a is zero."
+        },
+        {
+          "label": "a = 0, b = 0: there are actually no repeats in the export",
+          "why": "There are repeats: 110 rows repeat the previous one in every column except raw_id. The zero in a only says that raw_id tells all rows apart, not that there are no duplicates."
+        },
+        {
+          "label": "a = 110, b = 0: without raw_id the table becomes more unique",
+          "why": "The other way round: dropping a column that tells rows apart makes rows more alike. Pairs that differed only in raw_id become fully identical, and that is exactly when they are found."
+        }
+      ],
+      "hints": [
+        "duplicated() compares rows across all the columns the table has at that moment.",
+        "A column that tells any two rows apart has to be taken out of the comparison, otherwise there is nothing for them to match on."
+      ],
+      "explain": "The answer is a = 0 and b = 110. The raw_id column numbers the export rows one after another, so a copy of a sale has a number one higher than the original, and whole rows do not match. This is the most common cause of a silent \"no repeats\": no error, no warning, and the zero looks like good news. duplicated() flags only the repeated copies, the first one stays False, so 110 is the number of extra rows, not the number of rows in pairs (that is 220). The extra rows are 3.5% of the export."
+    },
+    {
+      "id": "py-080",
+      "title": "How many extra rows are in the export",
+      "brief": "A data manager noticed two identical rows in a row in staging_raw_sellout and asks how many such extra rows the whole export has. Comparing the whole row would say \"zero\", so the key is set explicitly: every column except the service raw_id.",
+      "goal": "Count the rows of staging_raw_sellout that repeat an earlier row on a key of six columns.",
+      "hints": [
+        "You need a method that answers \"is this a repeat?\" for each row and returns a boolean column, like isna().",
+        "sum() over a boolean column counts True as one. The method does not flag the first copy, only the repeated ones."
+      ],
+      "explain": "The answer is 110: that many rows repeat an earlier one on the whole key. duplicated(subset=key) flags only repeated copies as True and leaves the first as False, so the sum is the number of extra rows, not the number of rows in pairs (that is 220). The subset parameter is the point here: without it raw_id would be part of the comparison, and the answer would be 0."
+    },
+    {
+      "id": "py-081",
+      "title": "The order of working with repeats",
+      "brief": "The export is accepted, but sales may be doubled in it. All five steps below are needed, yet deleting cannot be undone without reloading the table, so the order is not free.",
+      "goal": "Arrange the steps so that each one builds on the result of the previous one.",
+      "orderQuestion": "In what order do you work with repeats in an export?",
+      "items": [
+        {
+          "label": "Name the key: which columns make two rows the same sale (all except the service raw_id)",
+          "why": "First, because both finding and deleting work on the key. Without it you are left comparing the whole row, where raw_id tells every pair apart and there are \"no\" repeats."
+        },
+        {
+          "label": "Look at the repeats by eye: select rows with keep=False and sort by the key so pairs sit side by side",
+          "why": "Second: before deleting, make sure what was found really is one sale twice, not two different sales with similar values. A number will not show that, a pair of rows side by side shows it at once."
+        },
+        {
+          "label": "Estimate the scale: how many rows and how much revenue fall on the repeated copies",
+          "why": "Third, and strictly before deleting: afterwards the extra rows cannot be found any more. The scale decides whether to clean the table yourself or send the export back to the source."
+        },
+        {
+          "label": "Remove the repeats: drop_duplicates on the same key, keeping the first copy",
+          "why": "Fourth: this action cannot be undone for the working table. The key is the same as for finding and looking, otherwise something other than what you inspected gets deleted."
+        },
+        {
+          "label": "Check the count: there were 3,110 rows, 110 extra, exactly 3,000 should remain",
+          "why": "Last: the check verifies the deletion itself. If the result is not 3,000, the key was different from the one used for finding, and it is better to catch that at once than in a report."
+        }
+      ],
+      "hints": [
+        "One step defines what counts as a repeat at all. Without it the other four have nothing to work on.",
+        "You can only delete what you have already looked at and sized up. A check of the result is possible once there is something to check.",
+        "The estimate comes before the deletion: afterwards there are no repeated rows left in the table."
+      ],
+      "explain": "The order rests on two rules. Decisions first, actions after: the key defines what a repeat is, and every later step depends on it. Reversible first, irreversible after: looking and estimating change nothing, deleting does. The final check uses the arithmetic from the third step: 3,110 minus 110 is 3,000. If the export arrives from the source with 3.7% of extra revenue, that is a reason to go back to the source, not only to clean a copy."
+    },
+    {
+      "id": "py-082",
+      "title": "The export without repeats",
+      "brief": "It was decided to clean the export rather than reissue it. You need a table in which every sale is recorded once: the first row of each pair stays, and calculations can go on without adjustments.",
+      "goal": "How many rows of staging_raw_sellout remain if repeats on the six-column key are removed and the first copy is kept?",
+      "hints": [
+        "You need a method that does not flag the repeats but removes them and returns the table without them.",
+        "The first copy is kept by default. The key goes in through the same subset parameter as when searching."
+      ],
+      "explain": "3,000 rows remain: 3,110 minus 110 repeated copies. By default drop_duplicates keeps the first copy of each group. Without subset the method compares whole rows, and raw_id makes each one unique: all 3,110 rows would come back with no error and no warning. A simple check \"was, minus extras, equals remains\" catches such a slip in a second.",
+      "traps": [
+        {
+          "message": "3,110 rows remain, none was removed. Without subset drop_duplicates compares whole rows, and raw_id differs on every row, so no row is fully identical to another. The key has to be passed explicitly: subset=key, without raw_id."
+        }
+      ]
+    },
+    {
+      "id": "py-083",
+      "title": "How much revenue sits in the repeats",
+      "brief": "A financial controller reconciles the export with the accounting system and asks how much revenue falls on repeated copies. If it is a lot, the export has to be reissued, not cleaned. Revenue in the table is text, and some values have a decimal comma.",
+      "goal": "Calculate the revenue in the rows of staging_raw_sellout that repeat an earlier row in every column except raw_id. Round the result to 2 places.",
+      "hints": [
+        "The key can be built as a list of all columns except raw_id. The repeated copies are selected by the boolean column duplicated(subset=key).",
+        "Revenue is text: before summing, replace the comma with a point and convert the column to numbers."
+      ],
+      "explain": "The repeated copies carry 56,940.68 of the export's 1,530,784.50 total revenue, that is 3.7%. If they are not removed, the export's revenue is inflated by that amount. Three steps: a key without raw_id, converting text to numbers (the comma replacement is needed, otherwise to_numeric fails on values like \"392,44\"), then selecting with duplicated(subset=key) and summing. to_numeric turns empty revenue values into NaN, and sum() skips them.",
+      "traps": [
+        {
+          "message": "The result is 113,881.36, exactly twice as much. keep=False flags both rows of a pair, so the first one, the real sale, got counted as a \"repeat\". Only the second copy is extra, and by default (keep=\"first\") only it is flagged."
+        }
+      ]
     }
   ]
 }

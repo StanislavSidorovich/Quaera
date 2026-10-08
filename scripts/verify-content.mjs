@@ -3038,6 +3038,26 @@ result = f"{bad}/{lost}/{len(s)}/{int(s['revenue'].isna().sum())}/{round(s['reve
 d = staging_raw_sellout['sale_date']
 result = f"{int(d.str.contains('.', regex=False).sum())}/{int(d.str.contains('-', regex=False).sum())}/{int(d.str.contains('/', regex=False).sum())}/{int(d.str.contains('.').sum())}"
 `, '803/1543/764/3110', 'даты через точку, дефис, слэш и ловушка шаблона «.»');
+
+  // py-079…083: повторы в выгрузке. Все числа процитированы в разборах и ловушках.
+  await pyExpect('py-079', `
+s = staging_raw_sellout
+key = [c for c in s.columns if c != 'raw_id']
+rev = pd.to_numeric(s['revenue'].str.replace(',', '.'))
+dup = s.duplicated(subset=key)
+result = f"{len(s)}/{s.duplicated().sum()}/{s.drop(columns='raw_id').duplicated().sum()}/{dup.sum()}/{s.duplicated(subset=key, keep=False).sum()}/{round(dup.sum() / len(s) * 100, 1)}"
+`, '3110/0/110/110/220/3.5', 'в выгрузке 3110 строк: по всей строке повторов 0, без raw_id 110, строк в парах 220, доля лишних 3,5%');
+  await pyExpect('py-082', `
+s = staging_raw_sellout
+key = [c for c in s.columns if c != 'raw_id']
+result = f"{len(s.drop_duplicates())}/{len(s.drop_duplicates(subset=key))}"
+`, '3110/3000', 'drop_duplicates() без subset не убирает ничего, с ключом остаётся 3000');
+  await pyExpect('py-083', `
+s = staging_raw_sellout
+key = [c for c in s.columns if c != 'raw_id']
+rev = pd.to_numeric(s['revenue'].str.replace(',', '.'))
+result = f"{round(rev[s.duplicated(subset=key)].sum(), 2)}/{round(rev[s.duplicated(subset=key, keep=False)].sum(), 2)}/{round(rev.sum(), 2)}/{round(rev[s.duplicated(subset=key)].sum() / rev.sum() * 100, 1)}"
+`, '56940.68/113881.36/1530784.5/3.7', 'выручка повторных копий, ловушка keep=False вдвое больше, вся выручка выгрузки и доля 3,7%');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

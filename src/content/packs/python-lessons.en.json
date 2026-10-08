@@ -125,6 +125,15 @@
       "reads": "A price segment for every product: 'premium' above 300 ¥, otherwise 'mass', 11 premium and 36 mass items, computed with a single vectorized comparison and not one call to apply.",
       "wrongWhy": "Python's ordinary if expects a single True/False, while result['list_price'] > 300 is a Series of 47 values at once, and Python can't decide what to treat as \"true\" here. The code fails with ValueError 'The truth value of a Series is ambiguous', the same error as and instead of & in a filter. np.where is precisely the vectorized if, built for a condition that arrives as a whole column rather than a single value.",
       "selfCheck": "See apply(lambda row: ..., axis=1)? Ask whether the same thing can be expressed as a comparison or arithmetic directly on the columns (np.where, +, >, &). It almost always can, and it's orders of magnitude faster on a large table."
+    },
+    {
+      "skill": "py-duplicates",
+      "title": "Duplicate rows",
+      "why": "An export from an accounting system often sends one sale twice: the table shows two identical rows in a row, and revenue is counted twice. Checking the whole row can still answer \"no repeats\": the copies have different service numbers (raw_id, the export counter), so whole rows do not match. That is why you first decide which columns make two rows \"the same sale\", which is the key, and look for repeats on it. duplicated flags rows, drop_duplicates removes them; by default the first copy stays and the repeated ones are flagged.",
+      "form": "df.duplicated(subset=['key_a', 'key_b'])               # True on repeated copies, the first copy is False\ndf.duplicated(subset=['key_a', 'key_b'], keep=False)   # True on every row that is part of a repeat\ndf.drop_duplicates(subset=['key_a', 'key_b'])          # one row per key\n\nsubset not set: all columns are compared, service numbers too",
+      "reads": "How many export rows are part of a repeat. The key is built from every column except raw_id: it differs between copies and only gets in the way of the comparison. keep=False flags both rows of a pair, so the result is 220, while the extra copies are half of that, 110.",
+      "wrongWhy": "Without subset the whole row is compared, raw_id included, and it is different on every row. No two rows are fully identical, the answer is 0, and the conclusion \"no repeats\" looks convincing. No error, no warning. The same zero comes from drop_duplicates() with no parameters: all 3,110 rows come back.",
+      "selfCheck": "Before believing a zero, ask yourself: does the table have a column that surely tells rows apart (a row number, a load id)? If so, leave it out of the key, and name the key in words: which columns make two rows the same sale."
     }
   ]
 }
