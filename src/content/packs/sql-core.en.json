@@ -336,6 +336,11 @@
     },
     {
       "id": "sql-006",
+      "traps": [
+        {
+          "message": "The result is 0 instead of 61. The comparison \"= NULL\" is never true: NULL means \"unknown\", and an unknown equals nothing, not even another NULL. Emptiness is tested only with IS NULL."
+        }
+      ],
       "title": "How many outlets are outside chains",
       "brief": "The development department wants to gauge the size of independent retail: how many outlets don't belong to any chain. Distributors don't count here; they aren't points of sale.",
       "goal": "Return a single row with a single column, outlets (the count of customers without a chain, excluding distributors).",
@@ -448,6 +453,11 @@
     },
     {
       "id": "sql-008",
+      "traps": [
+        {
+          "message": "The brand count is 47, the same as the product count, instead of 9. COUNT(brand) counts all non-empty values of the column, and a brand repeats on every product. To count the different ones, use COUNT(DISTINCT brand)."
+        }
+      ],
       "title": "Price-list summary",
       "brief": "Before defending the pricing strategy, you need a single row of numbers about the product catalog.",
       "goal": "Return one row: products (the number of SKUs), brands (the number of distinct brands), avg_price (the average price, rounded to two decimal places).",
@@ -563,6 +573,11 @@
     },
     {
       "id": "sql-011",
+      "traps": [
+        {
+          "message": "One brand is left instead of two: Gastrivo, with four products and an average of 468.25, is missing. WHERE filtered the expensive products before grouping, so both the product count and the average are computed over them alone. Conditions on the group as a whole (the product count, the brand's average price) go in HAVING."
+        }
+      ],
       "title": "Premium brands",
       "brief": "There's talk of launching a premium line. You need to pick out brands with a wide lineup and a high average price.",
       "goal": "Return brand, sku_count, and avg_price (rounded to two decimal places) for brands with at least 4 SKUs and an average price above 300.",
@@ -679,6 +694,11 @@
     },
     {
       "id": "sql-014",
+      "traps": [
+        {
+          "message": "The result has 11 regions instead of 16: Chiba, Fukuoka, Hokkaido, Okinawa and Shizuoka, where the product did not sell, are missing. A condition on the right-hand table placed in WHERE discards rows with NULL in its place and turns the LEFT JOIN into an ordinary JOIN. A condition on the joined table belongs in ON."
+        }
+      ],
       "title": "Where did the new product reach",
       "brief": "«Vitanor Forte x30» launched in September 2025. The development director wants a coverage map: which regions the new product actually sells in, and which it never reached at all. The zero regions are the most valuable part of this report; it's built specifically for them, so they must not disappear.",
       "goal": "Return for all 16 regions: region_name and units (total unit sales of «Vitanor Forte x30» across all time). Where there were no sales, show 0.",
@@ -721,6 +741,11 @@
     },
     {
       "id": "sql-040",
+      "traps": [
+        {
+          "message": "The result has 107,401 rows instead of 53. The condition \"not Nettora\" selects not the outlets without Nettora but the sales rows of other brands: an outlet that bought both Nettora and something else appears as many times as it has sales of other brands. To find an absence, use a LEFT JOIN with the brand condition in ON and an IS NULL check on the right."
+        }
+      ],
       "title": "Outlets that never bought «Nettora»",
       "brief": "Trade marketing is preparing a win-back program for the «Nettora» brand and asks for a list of outlets that have never sold it at all; they need to be approached separately, ahead of the general visit plan.",
       "goal": "Return customer_name and city for outlets (customer_type ≠ 'distributor') with zero sales rows for «Nettora» brand products in fact_sellout.",
@@ -773,6 +798,11 @@
     },
     {
       "id": "sql-050",
+      "traps": [
+        {
+          "message": "There are five mechanics instead of three, and the revenue is overstated several times over: 13,522,414 for Yellow tag instead of 823,039. A join on brand attaches every sale to all of the brand's promos, so its revenue lands in every mechanic, even when there was no promo. A sale is tied to its promo by promo_id, and that is what to join on."
+        }
+      ],
       "title": "«Nettora» promo revenue without duplication",
       "brief": "After the extra-revenue walkthrough, it's clear why joining dim_promo on brand doubled up revenue. Trade marketing still wants the real breakdown of «Nettora» brand sales for 2025 by promo mechanic.",
       "goal": "For 2025, return for the «Nettora» brand: mechanic and revenue (the sum of revenue for that mechanic, rounded to whole numbers). Ordered by revenue descending.",
@@ -825,6 +855,11 @@
     },
     {
       "id": "sql-043",
+      "traps": [
+        {
+          "message": "There is no Budget segment in the result, and Mid has swelled to 36 products. CASE checks conditions from top to bottom and stops at the first true one: any price below 100 is already below 300, so the second branch is never reached. The narrowest condition goes first, then the wider ones."
+        }
+      ],
       "title": "Price-list tiers",
       "brief": "A category manager wants to see the portfolio not by brand but by price tier; this feeds a conversation with procurement about where the lineup is concentrated.",
       "goal": "Return tier ('Budget' for list_price < 100, 'Mid' for 100 ≤ list_price < 300, 'Premium' for list_price ≥ 300) and sku_count (the number of products in each tier).",
@@ -1930,6 +1965,11 @@
     },
     {
       "id": "sql-092",
+      "traps": [
+        {
+          "message": "All three years show one number, 201.6, although the price list changed: the real figures are 202.6, 204.8 and 206.5. The price was taken from the dim_product reference, where there is one per product, while the price history lives in fact_price. The yearly average is computed over the fact_price.list_price column."
+        }
+      ],
       "title": "Nettora list price by year",
       "brief": "Before the discount conversation, your manager asks you to check whether Nettora's list price moved: the average list price of its products in each year.",
       "goal": "Return year (the year as YYYY) and avg_price (the average list price of Nettora products for the year, rounded to one decimal), ordered by year ascending.",
@@ -2187,6 +2227,11 @@
     },
     {
       "id": "sql-114",
+      "traps": [
+        {
+          "message": "January 2025 comes out at 5.4 units per outlet instead of 29.7. COUNT(customer_id) counts sales rows, not outlets: one outlet buys across several weeks and several products, so the denominator is inflated. Different outlets are counted by COUNT(DISTINCT customer_id)."
+        }
+      ],
       "title": "Sales per outlet",
       "brief": "The outlet count fell, but another question remains: do the outlets that are left buy less, or is demand there unchanged? The check is units per outlet by month.",
       "goal": "Return, by month from January 2025: month and per_outlet, the units of Nettora per outlet, rounded to one decimal place.",
@@ -2198,6 +2243,11 @@
     },
     {
       "id": "sql-115",
+      "traps": [
+        {
+          "message": "The price comes out above the real one: 198.3 for 2025 instead of 194.0. The average of the avg_price column treats every sales row as equal, and a one-unit row weighs as much as a row of a hundred. The price of a unit is revenue divided by units: SUM(revenue) / SUM(units)."
+        }
+      ],
       "title": "Price per unit by year",
       "brief": "One more hypothesis for the fall: the price went up and shoppers left for the neighbours. The real price per unit is revenue divided by units, by year.",
       "goal": "Return year and price, the average price per unit of Nettora (revenue per unit, rounded to one decimal place) by year.",
