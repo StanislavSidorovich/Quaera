@@ -134,6 +134,15 @@
       "reads": "How many export rows are part of a repeat. The key is built from every column except raw_id: it differs between copies and only gets in the way of the comparison. keep=False flags both rows of a pair, so the result is 220, while the extra copies are half of that, 110.",
       "wrongWhy": "Without subset the whole row is compared, raw_id included, and it is different on every row. No two rows are fully identical, the answer is 0, and the conclusion \"no repeats\" looks convincing. No error, no warning. The same zero comes from drop_duplicates() with no parameters: all 3,110 rows come back.",
       "selfCheck": "Before believing a zero, ask yourself: does the table have a column that surely tells rows apart (a row number, a load id)? If so, leave it out of the key, and name the key in words: which columns make two rows the same sale."
+    },
+    {
+      "skill": "py-conditions",
+      "title": "Labels by conditions",
+      "why": "Table rows often have to be sorted into groups by a rule: \"under 100 ¥ budget, from 300 ¥ premium\". A loop with if does not fit a table, and np.where only has two outcomes. For three or more there is np.select: a list of conditions, a list of labels and a default for everything else. The conditions are checked in order, and a row gets the label of the first one that fires, so a narrow condition goes before a wide one. It mirrors CASE WHEN in SQL, where the order of branches works the same way.",
+      "form": "np.select(\n    [condition_1, condition_2],   # boolean columns, in order of checking\n    ['label_1', 'label_2'],       # a label for each condition, in the same order\n    default='label_for_rest',     # for rows with no match\n)\n\nthe first condition that fires gives the label\ndefault not set: rows with no match get 0, and in a text column that is the label \"0\"",
+      "reads": "Distributor orders by size: 100 units or more are large, 50 or more medium, the rest small. The condition \"100 or more\" comes first, so a large order never reaches \"50 or more\" and does not become medium. The result: 8,063 small, 4,223 large and 3,076 medium orders.",
+      "wrongWhy": "The wide condition \"50 or more\" comes first and takes every order from 50 units, including those from 100. The label large is missing altogether: 4,223 large orders are recorded as medium, which now has 7,299. There is no error and no warning; the loss shows only to someone who looks at the resulting table.",
+      "selfCheck": "When conditions overlap, write them out from the narrowest to the widest. After the calculation check two things: the counts by label add up to the number of rows, and there is no label \"0\", meaning default is set."
     }
   ]
 }

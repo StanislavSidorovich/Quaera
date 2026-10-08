@@ -3058,6 +3058,36 @@ key = [c for c in s.columns if c != 'raw_id']
 rev = pd.to_numeric(s['revenue'].str.replace(',', '.'))
 result = f"{round(rev[s.duplicated(subset=key)].sum(), 2)}/{round(rev[s.duplicated(subset=key, keep=False)].sum(), 2)}/{round(rev.sum(), 2)}/{round(rev[s.duplicated(subset=key)].sum() / rev.sum() * 100, 1)}"
 `, '56940.68/113881.36/1530784.5/3.7', 'выручка повторных копий, ловушка keep=False вдвое больше, вся выручка выгрузки и доля 3,7%');
+
+  // py-084…088 и карточка py-conditions: np.select берёт первое сработавшее условие.
+  await pyExpect('py-084', `
+price = dim_product['list_price']
+bad = pd.Series(np.select([price >= 100, price >= 300], ['mid', 'premium'], default='budget')).value_counts()
+good = pd.Series(np.select([price >= 300, price >= 100], ['premium', 'mid'], default='budget')).value_counts()
+result = f"{len(price)}/{int((price >= 100).sum())}/{int((price >= 300).sum())}/{bad.get('premium', 0)}/{bad['mid']}/{bad['budget']}/{good['premium']}/{good['mid']}/{good['budget']}"
+`, '47/32/11/0/32/15/11/21/15', 'при порядке «от 100, от 300» premium пуст; при обратном порядке 11/21/15');
+  await pyExpect('py-087', `
+channel = dim_customer['channel']
+cond = [channel == 'modern_trade', channel == 'pharmacy']
+ok = pd.Series(np.select(cond, ['chains', 'pharmacies'], default='other')).value_counts()
+bad = pd.Series(np.select(cond, ['chains', 'pharmacies'])).value_counts()
+rest = channel[~channel.isin(['modern_trade', 'pharmacy'])].value_counts()
+result = f"{ok['other']}/{ok['chains']}/{ok['pharmacies']}/{bad['0']}/{rest['distributor']}/{rest['ecom']}/{rest['traditional_trade']}"
+`, '64/42/38/64/12/8/44', 'сегменты точек и метка «0» без default; состав other: 12 дистрибьюторов, 8 онлайн, 44 розницы');
+  await pyExpect('py-088', `
+f = fact_sellout
+promo = f['promo_id'].notna()
+big = f['units'] >= 20
+a = pd.Series(np.select([promo, big], ['promo', 'big'], default='regular')).value_counts()
+b = pd.Series(np.select([big, promo], ['big', 'promo'], default='regular')).value_counts()
+result = f"{a['regular']}/{a['promo']}/{a['big']}/{b['promo']}/{b['big']}/{int((promo & big).sum())}"
+`, '82647/23849/11953/21084/14718/2765', 'метки promo/big/regular и ловушка с обратным порядком; пересечение 2765 строк');
+  await pyExpect('py-conditions (карточка)', `
+units = fact_sellin['units']
+a = pd.Series(np.select([units >= 100, units >= 50], ['large', 'medium'], default='small')).value_counts()
+b = pd.Series(np.select([units >= 50, units >= 100], ['medium', 'large'], default='small')).value_counts()
+result = f"{a['small']}/{a['large']}/{a['medium']}/{b['medium']}/{b.get('large', 0)}"
+`, '8063/4223/3076/7299/0', 'заказы по размеру: 8063 мелких, 4223 крупных, 3076 средних; в ошибочной записи large пуст, medium 7299');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

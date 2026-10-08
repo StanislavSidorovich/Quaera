@@ -90,6 +90,11 @@
       "id": "py-duplicates",
       "title": "Duplicate rows",
       "summary": "I find repeats by a key, not by the whole row: an export's row number makes every row look unique and hides the duplicates."
+    },
+    {
+      "id": "py-conditions",
+      "title": "Labels by conditions",
+      "summary": "I label rows by several conditions with np.select: the first condition that fires gives the label, and the rest get the default."
     }
   ],
   "tasks": [
@@ -1534,6 +1539,114 @@
       "traps": [
         {
           "message": "The result is 113,881.36, exactly twice as much. keep=False flags both rows of a pair, so the first one, the real sale, got counted as a \"repeat\". Only the second copy is extra, and by default (keep=\"first\") only it is flagged."
+        }
+      ]
+    },
+    {
+      "id": "py-084",
+      "title": "Two overlapping conditions",
+      "brief": "A buyer splits the catalog into price groups: from 100 ¥ mid, from 300 ¥ premium, the rest budget. The analyst wrote the two conditions in that order, and the resulting table had no premium products at all.",
+      "goal": "Understand how np.select picks a label when a row passes several conditions at once.",
+      "predictQuestion": "dim_product has 47 products: 32 of them cost 100 ¥ or more, and 11 of those 32 cost 300 ¥ or more. How many products get the label premium?",
+      "options": [
+        {
+          "label": "0: a product above 300 ¥ already passed the first condition, and that one gives the label",
+          "why": "np.select checks conditions in order and takes the label of the first one that fires. Any product from 300 ¥ also costs from 100 ¥, so it never reaches the second condition: all 32 products get mid and nobody gets premium."
+        },
+        {
+          "label": "11: each condition takes its own products independently of the others",
+          "why": "The conditions are not independent: the function looks at them in turn and stops at the first match. Independent selection would happen if the conditions did not overlap, but here \"from 300\" lies entirely inside \"from 100\"."
+        },
+        {
+          "label": "11, and mid gets 32: a product from 300 ¥ gets both labels",
+          "why": "A row gets exactly one label, not a set. np.select returns a single array as long as the table, and each of its positions holds one value."
+        },
+        {
+          "label": "An error: the conditions overlap and NumPy refuses to compute",
+          "why": "Overlapping conditions are not an error, they are the normal case: that is why the order of checking exists. There will be no warning, so the defect is visible only in the resulting table."
+        }
+      ],
+      "hints": [
+        "np.select goes through the conditions left to right and, for each row, stops at the first one that is true.",
+        "Ask yourself whether any product passes the second condition without passing the first."
+      ],
+      "explain": "The result is premium: 0, mid: 32, budget: 15. The condition \"from 300 ¥\" lies entirely inside \"from 100 ¥\", and placed second it cannot fire on any row. Swap the conditions and the result is premium: 11, mid: 21 (32 minus 11), budget: 15. No error, no warning: the missing label is visible only to someone who looks at the resulting table. In SQL, CASE WHEN does the same thing: branches are checked top to bottom, and the order decides."
+    },
+    {
+      "id": "py-085",
+      "title": "Price groups of the catalog",
+      "brief": "The buyer needs the catalog labeled: from 300 ¥ premium products, from 100 ¥ mid products, the rest budget. For a start it is enough to know how many products landed in each group.",
+      "goal": "Label the products of dim_product into three price groups and count the products in each.",
+      "hints": [
+        "You need a NumPy function that takes a list of conditions, a list of labels and a value for the remaining rows.",
+        "The narrow condition \"from 300\" comes first, the wide \"from 100\" after it."
+      ],
+      "explain": "The result is budget: 15, mid: 21, premium: 11. The narrow condition comes first and takes the 11 most expensive products, the second takes the remaining 21 of those from 100 ¥, and the last 15 get the default. np.select returns an array of labels as long as the table, so it is wrapped in a pd.Series for counting. In SQL this is CASE WHEN list_price >= 300 THEN ... WHEN list_price >= 100 THEN ... ELSE ... END."
+    },
+    {
+      "id": "py-086",
+      "title": "How to build np.select",
+      "brief": "Rows have to be labeled by three rules with adjacent thresholds. All five steps are sensible, but if one is skipped or put in the wrong place, the labels come out wrong while the code runs without a single error.",
+      "goal": "Arrange the steps so that the labels come out right and it is possible to check them.",
+      "orderQuestion": "In what order do you build a labeling with np.select?",
+      "items": [
+        {
+          "label": "Write in words which label each group of rows should get",
+          "why": "First: without the rules in words the conditions have to be invented along the way, and overlaps show up only in finished code. This is also where you see which groups lie inside others."
+        },
+        {
+          "label": "Arrange the conditions from the narrowest to the widest",
+          "why": "Second, because np.select takes the first condition that fires. If a wide one stands before a narrow one, the narrow one never fires, and there is no error."
+        },
+        {
+          "label": "Decide which label rows that pass no condition get, and pass it as default",
+          "why": "Third: this is also a decision about meaning, not a technical detail. Without default such rows get 0, and a label \"0\" appears in a column of text labels."
+        },
+        {
+          "label": "Call np.select and put the result into a column or a Series",
+          "why": "Fourth, when the conditions and the default are settled. The call collects everything said above into an array of labels as long as the table."
+        },
+        {
+          "label": "Check the result: the counts by label add up to the table size and there is no label \"0\"",
+          "why": "Last: the check compares the result with what was intended. A mismatched total or a \"0\" label shows that default was forgotten, and a missing group shows that the conditions are in the wrong order."
+        }
+      ],
+      "hints": [
+        "Two steps decide what the code should do and come before the call itself. One step settles only the order inside the list.",
+        "There is nothing to check until the call has happened."
+      ],
+      "explain": "The order is the same as for any code built on rules: rules first, then writing them down, then checking. Two np.select mistakes are silent: a condition that never fired because of the order, and a label \"0\" because of a missing default. Both are visible only in the resulting table, so the last step is not a formality: the counts by label must add up to the number of rows, and the set of labels must match the intended one."
+    },
+    {
+      "id": "py-087",
+      "title": "Outlet segments by channel",
+      "brief": "For the visit plan the outlets are split into three segments: chains, pharmacies and everything else. \"Everything else\" joins distributors, online and traditional retail, and they need no labels of their own.",
+      "goal": "Label the outlets of dim_customer: modern_trade as chains, pharmacy as pharmacies, the rest as other. Count the outlets in each segment.",
+      "hints": [
+        "The third argument of np.select is passed by name: it sets the label for rows that matched no condition.",
+        "Without it such rows get the number 0, not text."
+      ],
+      "explain": "The result is other: 64, chains: 42, pharmacies: 38. other holds 12 distributors, 8 online stores and 44 traditional retail outlets. If default is not given, np.select puts in 0, and a string \"0\" appears among the text labels for the same 64 outlets: no error, just a strange segment living in the column. That is why default is always named, even when the conditions seem to cover everything.",
+      "traps": [
+        {
+          "message": "The result has a segment \"0\" with 64 outlets instead of other. When default is not set, np.select puts in the number 0, and it becomes the string \"0\" next to the text labels. There is no error, but a segment with that name tells nobody anything. Set default explicitly: default=\"other\"."
+        }
+      ]
+    },
+    {
+      "id": "py-088",
+      "title": "Promo and large sales apart",
+      "brief": "A demand analyst wants to know what share of large sales is made by promotions. For that every row of fact_sellout must get one of three labels: promo, large regular or ordinary. A promo sale of 20 units or more must count as promo, not as large.",
+      "goal": "Label fact_sellout: promo if the week has a promotion (promo_id is not empty); big if there is no promotion and 20 units or more were sold; regular in all other cases. Count the rows of each label.",
+      "hints": [
+        "There are three labels, two conditions are needed, and the third label is given through default.",
+        "A promo sale of 20 units or more passes both conditions. The label promo must win, so its condition goes first.",
+        "A row with a promotion is one where promo_id is not missing, that is notna()."
+      ],
+      "explain": "The result is regular: 82,647, promo: 23,849, big: 11,953. The promo condition comes first, so the 2,765 sales that are both promo and 20 units or more went to promo. Swap the order and they would go to big: promo would shrink to 21,084 and big would grow to 14,718, that is, \"large regular\" sales would be a quarter higher than they really are. A narrow label with a special meaning always goes before a wide one.",
+      "traps": [
+        {
+          "message": "The result is promo: 21,084 and big: 14,718, but it should be 23,849 and 11,953. The condition \"20 units or more\" is first and takes all large sales, including 2,765 promo ones. They are counted as ordinary large ones, and big is inflated. The promo condition has to go first."
         }
       ]
     }

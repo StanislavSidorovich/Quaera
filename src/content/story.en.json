@@ -78,14 +78,14 @@
           "outcome": "You move a table between wide and long, change the frequency of a series with resample, compute a rolling window, and bring the data to a state where one row is one observation."
         },
         {
+          "title": "Repeats and labels",
+          "hook": "Next the table has to be prepared for counting rather than counted. An export arrives with doubled sales that a check of the whole row cannot see: a service number makes every row unique. And once the repeats are gone, rows are sorted into groups, and the order of the conditions quietly decides which label a row gets.",
+          "outcome": "You name the key of a repeat and look for duplicates on it rather than on the whole row; you label rows with np.select knowing the first condition that fires gives the label, and you check that no label \"0\" is among them."
+        },
+        {
           "title": "The chain and the cost of a step",
           "hook": "The last mission is not about a new calculation but about how it is written. A flag set on a slice never reaches the original table, and the code does not complain once. And apply over rows gives the same answer as a vectorised operation: on a table of regions you cannot see the difference, on the sales table it is the difference between a second and a minute.",
           "outcome": "You write transformations as a chain and you know where a copy appears and where a view on the original data does, and you replace a loop over rows with a vectorised operation, because the difference here is an order of magnitude rather than a matter of style."
-        },
-        {
-          "title": "Repeats in an export",
-          "hook": "An export from the accounting system arrived with two identical rows in a row, and the question of how much is extra is trickier than it looks: checking the whole row answers zero, because a service number tells every pair apart. Until the key is named in words, a repeat can be neither found nor removed.",
-          "outcome": "You name the key of a repeat, look for duplicates on it rather than on the whole row, and size up how much money sits in them before you delete anything."
         }
       ]
     },
