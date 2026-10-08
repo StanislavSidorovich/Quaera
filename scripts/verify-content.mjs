@@ -3088,6 +3088,45 @@ a = pd.Series(np.select([units >= 100, units >= 50], ['large', 'medium'], defaul
 b = pd.Series(np.select([units >= 50, units >= 100], ['medium', 'large'], default='small')).value_counts()
 result = f"{a['small']}/{a['large']}/{a['medium']}/{b['medium']}/{b.get('large', 0)}"
 `, '8063/4223/3076/7299/0', 'заказы по размеру: 8063 мелких, 4223 крупных, 3076 средних; в ошибочной записи large пуст, medium 7299');
+
+  // py-089…093 и карточка py-binning: pd.cut, pd.qcut и значение на границе.
+  await pyExpect('py-089', `
+u = fact_sellout['units']
+lab = ['small', 'medium', 'large']
+inf = float('inf')
+a = pd.cut(u, [0, 5, 10, inf], labels=lab).value_counts()
+b = pd.cut(u, [0, 5, 10, inf], labels=lab, right=False).value_counts()
+result = f"{int((u == 5).sum())}/{a['small']}/{a['medium']}/{a['large']}/{b['small']}/{b['medium']}/{b['large']}"
+`, '9249/65074/22830/30545/55825/29122/33502', 'продаж ровно на 5 штук и размеры групп при right=True и right=False');
+  await pyExpect('py-090', `
+rev = fact_sellout.groupby('customer_id')['revenue'].sum()
+s = pd.cut(rev, bins=[0, 100000, 500000, float('inf')], labels=['small', 'medium', 'large']).value_counts()
+t = pd.qcut(rev, 3).value_counts().tolist()
+result = f"{len(rev)}/{s['small']}/{s['medium']}/{s['large']}/{round(rev.min())}/{t}"
+`, '132/41/23/68/13604/[44, 44, 44]', '132 точки: 41 мелких, 23 средних, 68 крупных; минимум выручки 13604; qcut на три даёт по 44');
+  await pyExpect('py-092', `
+r = fact_sellout.groupby('customer_id')['revenue'].sum().reset_index()
+r['q'] = pd.qcut(r['revenue'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+g = r.groupby('q', observed=True)['revenue'].sum().round(0)
+result = f"{int(g['Q1'])}/{int(g['Q2'])}/{int(g['Q3'])}/{int(g['Q4'])}/{round(g['Q4'] / r['revenue'].sum() * 100)}/{round(g['Q4'] / 1e6, 1)}/{round(r['revenue'].sum() / 1e6, 1)}"
+`, '1403142/9356810/23302412/92848828/73/92.8/126.9', 'выручка по квартилям точек и доля верхней четверти 73%');
+  await pyExpect('py-093', `
+u = fact_sellout['units']
+lab = ['small', 'medium', 'large']
+inf = float('inf')
+ok = pd.cut(u, bins=[0, 5, 10, inf], labels=lab).value_counts()
+t1 = pd.cut(u, bins=[0, 5, 10, inf], labels=lab, right=False).value_counts()
+t2 = pd.cut(u, bins=[1, 5, 10, inf], labels=lab)
+result = f"{len(u)}/{int(u.min())}/{ok['small']}/{ok['medium']}/{ok['large']}/{t1['small']}/{t1['medium']}/{t1['large']}/{int(t2.isna().sum())}/{t2.value_counts()['small']}"
+`, '118449/1/65074/22830/30545/55825/29122/33502/14329/50745', 'размеры групп продаж и обе ловушки: right=False и нижняя граница 1 (14329 пропусков)');
+  await pyExpect('py-binning (карточка)', `
+rev = fact_sellout.groupby('customer_id')['revenue'].sum()
+q = pd.qcut(rev, 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+c = pd.cut(rev, 4, labels=['Q1', 'Q2', 'Q3', 'Q4']).value_counts()
+qs = rev.quantile([.25, .5, .75]).round(0).astype(int).tolist()
+share = round(rev[q == 'Q4'].sum() / rev.sum() * 100)
+result = f"{q.value_counts().tolist()}/{qs}/{share}/{c['Q1']}/{c['Q2']}/{c['Q3']}/{c['Q4']}/{round(rev.max() / 1e6, 2)}"
+`, '[33, 33, 33, 33]/[61922, 504794, 875606]/73/124/1/4/3/11.15', 'квартили выручки точек, доля верхней четверти и перекос pd.cut(x, 4): 124/1/4/3');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

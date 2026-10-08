@@ -95,6 +95,11 @@
       "id": "py-conditions",
       "title": "Labels by conditions",
       "summary": "I label rows by several conditions with np.select: the first condition that fires gives the label, and the rest get the default."
+    },
+    {
+      "id": "py-binning",
+      "title": "Bins: cut and qcut",
+      "summary": "I turn a number into a group: the business names the edges (cut) or shares set them (qcut), and I watch the value on an edge and the minimum."
     }
   ],
   "tasks": [
@@ -1647,6 +1652,111 @@
       "traps": [
         {
           "message": "The result is promo: 21,084 and big: 14,718, but it should be 23,849 and 11,953. The condition \"20 units or more\" is first and takes all large sales, including 2,765 promo ones. They are counted as ordinary large ones, and big is inflated. The promo condition has to go first."
+        }
+      ]
+    },
+    {
+      "id": "py-089",
+      "title": "Where a value on an edge lands",
+      "brief": "A sales manager splits weekly sales by size: up to 5 units small, up to 10 medium, the rest large. Two analysts wrote almost identical code, yet their resulting tables differ by thousands of rows.",
+      "goal": "Understand which group a value equal to an edge falls into under different pd.cut settings.",
+      "predictQuestion": "In fact_sellout, 9,249 rows were sold at exactly 5 units. Which group do they land in for a and for b?",
+      "options": [
+        {
+          "label": "a: small, b: medium",
+          "why": "By default intervals are closed on the right: (0, 5], (5, 10], so the value 5 goes to the lower interval. With right=False the intervals are closed on the left: [0, 5), [5, 10), and the same value 5 becomes the first one in the middle interval."
+        },
+        {
+          "label": "a: medium, b: small",
+          "why": "The other way round. If you remember that by default the right edge belongs to the interval, the value 5 stays in the lower one, and it is right=False that moves it up."
+        },
+        {
+          "label": "small in both cases: an edge always belongs to the lower group",
+          "why": "It depends on the right parameter. It exists precisely to choose the side, and with right=False the edge goes to the upper group."
+        },
+        {
+          "label": "Neither: a value exactly on an edge belongs to no interval",
+          "why": "The intervals join up: every edge belongs to one of the neighboring intervals, otherwise values on the edge would be lost. NaN goes to values outside all the edges, not on them."
+        }
+      ],
+      "hints": [
+        "The edge between two intervals belongs to one of them. The question is which one.",
+        "The parameter right=True means the interval is closed on the right, that is, the right number is included."
+      ],
+      "explain": "The result: in a the value 5 goes to small, in b to medium. That is why the tables differ: a has small 65,074, medium 22,830, large 30,545; b has small 55,825, medium 29,122, large 33,502. Both variants run with no error and no warning, so a condition like \"up to 5 inclusive\" or \"from 5\" has to be translated into right when the task is set, not guessed from the result."
+    },
+    {
+      "id": "py-090",
+      "title": "Outlet size by revenue",
+      "brief": "The head of sales splits outlets by total revenue over the whole period, and the thresholds are his own: under 100 thousand small, under 500 thousand medium, beyond that large. He needs to know how many outlets are in each group.",
+      "goal": "Calculate each outlet's revenue in fact_sellout, split outlets by the thresholds 100,000 and 500,000 into small, medium and large, and count the outlets in each group.",
+      "hints": [
+        "The edges are named by a person, not computed from the data. For such thresholds you need the function that takes a list of edges.",
+        "The other function of the same family splits by shares (quartiles) and takes a number of groups, not a list of edges."
+      ],
+      "explain": "The result is large: 68, small: 41, medium: 23 (132 outlets in all). The business names the thresholds, so the groups come out of different sizes: most outlets are large. The lower edge 0 is below the minimum revenue (13,604) and the upper infinity accepts any value, so no outlet is lost. Compare with splitting by shares: pd.qcut(revenue, 3) would give 44 outlets in each group, but the thresholds would be random numbers nobody named."
+    },
+    {
+      "id": "py-091",
+      "title": "How to split a number into groups",
+      "brief": "Outlets have to be split into groups by revenue and the result shown to a manager. Each of the five steps is needed, but the order decides what ends up in the report: edges picked to fit the data, or edges that can be explained.",
+      "goal": "Arrange the steps from getting to know the data to checking the result.",
+      "orderQuestion": "In what order do you split a number into groups?",
+      "items": [
+        {
+          "label": "Look at the distribution: describe() or quantiles, the minimum and the maximum",
+          "why": "First, because everything else depends on the shape of the distribution. One outlier shifts the mean and stretches the range, and without this look the edges are chosen blindly."
+        },
+        {
+          "label": "Decide where the edges come from: the business (cut) or shares (qcut)",
+          "why": "Second: this is a decision about meaning. cut gives clear thresholds and groups of different sizes, qcut gives groups of equal size and unclear thresholds. The choice determines what the next step looks like."
+        },
+        {
+          "label": "Write the edges and group names, decide where a value on an edge goes and what to do about the minimum",
+          "why": "Third: bins, labels and right are set together. A lower edge below the minimum and the side of closing decide whether some rows get lost and which group the boundary values land in."
+        },
+        {
+          "label": "Call pd.cut or pd.qcut and save the result into a column",
+          "why": "Fourth, when the edges and labels are settled. The call only carries out decisions already made."
+        },
+        {
+          "label": "Check the result: the counts by group add up to the table size and there are no missing values (NaN)",
+          "why": "Last: a missing value in the new column means a value outside the edges, that is, a lost row. A sum over the groups equal to the table size catches this in a second."
+        }
+      ],
+      "hints": [
+        "There is a step after which the edges are chosen meaningfully, and before which they are chosen blindly.",
+        "The choice between cut and qcut comes before writing the edges themselves: qcut takes a number of groups instead of a list of edges."
+      ],
+      "explain": "The order is the same as for any decision about data: look first, then decide, then carry out, then check. The choice between cut and qcut answers the question of what you want: clear edges or equal groups. Two mistakes are silent: a value on an edge goes to the wrong group, and the minimum becomes NaN. A sum over the groups checked against the table size catches the second at once, while the first is caught only by reading the condition of the task."
+    },
+    {
+      "id": "py-092",
+      "title": "How much revenue is in each quarter of outlets",
+      "brief": "The finance director wants to know how concentrated revenue is: split outlets into four groups equal in count and see how much each one brings.",
+      "goal": "Split outlets by revenue into four groups Q1 to Q4 by shares (equal in the number of outlets) and calculate the revenue of each group, rounded to a whole number.",
+      "hints": [
+        "The groups must be equal in the number of outlets, not in the width of the range. That is the function that takes a number of groups and finds the edges itself.",
+        "observed=True keeps only the intervals that actually occurred in the grouping and removes a pandas warning."
+      ],
+      "explain": "The result is Q1: 1,403,142, Q2: 9,356,810, Q3: 23,302,412, Q4: 92,848,828. qcut splits 132 outlets into four groups of 33, and revenue is not split evenly between the groups at all: the top quarter brings 73% of all sales (92.8 of 126.9 million). Equal numbers of outlets in the groups do not mean equal revenue: this is what concentration looks like, and the average hides it."
+    },
+    {
+      "id": "py-093",
+      "title": "Sale size: up to 5, up to 10, more",
+      "brief": "A category manager splits weekly sales by units: small means up to 5 inclusive, medium from 6 to 10 inclusive, large more than 10. It matters to him that a sale of exactly 5 or 10 units lands in the right group and that no row goes missing.",
+      "goal": "Split the sales of fact_sellout by the units column into small (up to 5 inclusive), medium (6 to 10) and large (more than 10), and count the rows in each group.",
+      "hints": [
+        "The edges are named by a person, so you need pd.cut with a bins list and labels names.",
+        "The right edge is included in the interval by default, and the lower edge must be below the smallest sale, otherwise it falls into no interval."
+      ],
+      "explain": "The result is small: 65,074, medium: 22,830, large: 30,545, 118,449 rows in all. The intervals are (0, 5], (5, 10], (10, infinity): the value 5 stays in small, the value 10 in medium. The lower edge 0 is below the minimum (1), so sales of one unit are not lost. Two mistakes here are silent: the side of closing moves boundary values into the neighboring group, and a lower edge of 1 turns every sale of one unit into NaN, which value_counts does not show.",
+      "traps": [
+        {
+          "message": "The result is small: 55,825, medium: 29,122, large: 33,502. The intervals are now closed on the left, and sales of exactly 5 units moved from small to medium, and of 10 units from medium to large. The condition \"up to 5 inclusive\" requires intervals closed on the right: that is the default behavior (right=True)."
+        },
+        {
+          "message": "small has 50,745 rows instead of 65,074: 14,329 sales of one unit are lost. The interval (1, 5] does not include its lower edge, so the value 1 became NaN, and value_counts does not show missing values. Take the lower edge below the minimum (here 0) or add include_lowest=True."
         }
       ]
     }

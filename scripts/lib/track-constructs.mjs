@@ -46,7 +46,7 @@ export const PYTHON_CONSTRUCTS = [
   '.dt.', '.isna(', '.reset_index(', '.set_index(', '.sort_index(',
   '.sort_values(', 'validate=', '.describe(', '.duplicated(',
   '.drop_duplicates(', '.shift(', '.diff(', '.cumsum(', '.clip(',
-  '.replace(', '.map(', '.query(', '.to_period(', 'np.select(',
+  '.replace(', '.map(', '.query(', '.to_period(', 'np.select(', 'pd.cut(', 'pd.qcut(',
 ];
 
 /**

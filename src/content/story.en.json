@@ -78,9 +78,9 @@
           "outcome": "You move a table between wide and long, change the frequency of a series with resample, compute a rolling window, and bring the data to a state where one row is one observation."
         },
         {
-          "title": "Repeats and labels",
-          "hook": "Next the table has to be prepared for counting rather than counted. An export arrives with doubled sales that a check of the whole row cannot see: a service number makes every row unique. And once the repeats are gone, rows are sorted into groups, and the order of the conditions quietly decides which label a row gets.",
-          "outcome": "You name the key of a repeat and look for duplicates on it rather than on the whole row; you label rows with np.select knowing the first condition that fires gives the label, and you check that no label \"0\" is among them."
+          "title": "Repeats, labels and bins",
+          "hook": "Next the table has to be prepared for counting rather than counted. An export arrives with doubled sales that a check of the whole row cannot see: a service number makes every row unique. Then rows are sorted into groups, and the order of the conditions quietly decides which label a row gets. And a number becomes a group in two ways: the business names the thresholds or the groups are split equally, and a value exactly on an edge goes one way or the other without a single warning.",
+          "outcome": "You name the key of a repeat and look for duplicates on it rather than on the whole row; you label rows with np.select knowing the first condition that fires gives the label; you cut a number into groups with cut or qcut and check that the edge and the minimum did not lose any rows."
         },
         {
           "title": "The chain and the cost of a step",

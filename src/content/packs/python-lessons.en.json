@@ -143,6 +143,15 @@
       "reads": "Distributor orders by size: 100 units or more are large, 50 or more medium, the rest small. The condition \"100 or more\" comes first, so a large order never reaches \"50 or more\" and does not become medium. The result: 8,063 small, 4,223 large and 3,076 medium orders.",
       "wrongWhy": "The wide condition \"50 or more\" comes first and takes every order from 50 units, including those from 100. The label large is missing altogether: 4,223 large orders are recorded as medium, which now has 7,299. There is no error and no warning; the loss shows only to someone who looks at the resulting table.",
       "selfCheck": "When conditions overlap, write them out from the narrowest to the widest. After the calculation check two things: the counts by label add up to the number of rows, and there is no label \"0\", meaning default is set."
+    },
+    {
+      "skill": "py-binning",
+      "title": "Bins: cut and qcut",
+      "why": "A numeric column often has to become groups: \"small, medium and large outlets\", \"the top quarter by revenue\". pandas has two tools for this, and they answer different questions. pd.cut slices by edges a person names (under 100 thousand, under 500 thousand): the groups come out of different sizes, but the thresholds make sense to the business. pd.qcut slices by shares, for example quartiles: the groups are equal in row count, and the thresholds are whatever they turn out to be. The choice between them is a choice of question, not of syntax.",
+      "form": "pd.cut(column, bins=[0, 100, 500, float('inf')], labels=['small', 'medium', 'large'])\npd.qcut(column, 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])   # equal by row count\n\ncut: intervals are closed on the right, (0, 100]: the value 100 goes to the lower one\nright=False: closed on the left, [0, 100): the value 100 goes to the upper one\na value outside the edges becomes NaN",
+      "reads": "Outlets by quarters of total revenue: equal, 33 in each of the four groups. qcut found the edges itself: 61,922, 504,794 and 875,606 ¥. The difference between the groups is huge: the top quarter brings 73% of all revenue, and the count of outlets does not show it.",
+      "wrongWhy": "pd.cut(x, 4) splits not the rows but the numeric range from the minimum to the maximum into four parts equal in width. One outlet with 11.15 million of revenue stretches the range, so 124 of 132 outlets land in \"Q1\" and just one in \"Q2\". The labels Q1 to Q4 look like quartiles but are not, and there is no error and no warning.",
+      "selfCheck": "Ask yourself: do you need groups that mean something to the business (cut with thresholds) or groups of equal size (qcut)? Then look at the group sizes: if one holds almost everything while the labels promised equal parts, cut with a number of groups was used instead of qcut."
     }
   ]
 }
