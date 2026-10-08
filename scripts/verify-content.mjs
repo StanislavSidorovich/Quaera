@@ -3127,6 +3127,50 @@ qs = rev.quantile([.25, .5, .75]).round(0).astype(int).tolist()
 share = round(rev[q == 'Q4'].sum() / rev.sum() * 100)
 result = f"{q.value_counts().tolist()}/{qs}/{share}/{c['Q1']}/{c['Q2']}/{c['Q3']}/{c['Q4']}/{round(rev.max() / 1e6, 2)}"
 `, '[33, 33, 33, 33]/[61922, 504794, 875606]/73/124/1/4/3/11.15', 'квартили выручки точек, доля верхней четверти и перекос pd.cut(x, 4): 124/1/4/3');
+
+  // py-094…098 и карточка py-outliers: граница Тьюки, граница по товару и доля акций.
+  await pyExpect('py-094', `
+f = fact_sellout
+u = f['units']
+q1, q3 = u.quantile(0.25), u.quantile(0.75)
+upper = q3 + 1.5 * (q3 - q1)
+flag = u > upper
+result = f"{len(f)}/{q1}/{q3}/{upper}/{int(flag.sum())}/{round(flag.mean() * 100, 1)}/{round(u[flag].sum() / u.sum() * 100, 1)}"
+`, '118449/3.0/11.0/23.0/10926/9.2/38.2', 'квартили units 3 и 11, граница 23, выше неё 10926 строк (9,2%), несущих 38,2% штук');
+  await pyExpect('py-096', `
+f = fact_sellout
+top = f.nlargest(3, 'units')
+result = f"{top['units'].tolist()}/{top['promo_id'].notna().tolist()}"
+`, '[232, 194, 185]/[True, True, True]', 'три самые крупные продажи 232, 194 и 185 штук все акционные');
+  await pyExpect('py-097', `
+f = fact_sellout
+g = f.groupby('product_id')['units']
+q1 = g.transform('quantile', 0.25)
+q3 = g.transform('quantile', 0.75)
+flag = f['units'] > q3 + 1.5 * (q3 - q1)
+u = f['units']
+upper = u.quantile(0.75) + 1.5 * (u.quantile(0.75) - u.quantile(0.25))
+top = f.loc[u > upper, 'product_id'].value_counts()
+result = f"{int(flag.sum())}/{int(top.head(4).sum())}/{round(top.head(4).sum() / int((u > upper).sum()) * 100)}/{sorted(top.head(4).index.tolist())}"
+`, '7250/3312/30/[1, 2, 7, 24]', 'граница по товару помечает 7250 строк; четыре товара (1, 2, 7, 24) дают 30% строк общей границы');
+  await pyExpect('py-098', `
+f = fact_sellout
+g = f.groupby('product_id')['units']
+q1 = g.transform('quantile', 0.25)
+q3 = g.transform('quantile', 0.75)
+flag = f['units'] > q3 + 1.5 * (q3 - q1)
+u = f['units']
+upper = u.quantile(0.75) + 1.5 * (u.quantile(0.75) - u.quantile(0.25))
+result = f"{round(f.loc[flag, 'promo_id'].notna().mean() * 100, 1)}/{int(f.loc[flag, 'promo_id'].notna().sum())}/{round(f.loc[u > upper, 'promo_id'].notna().mean() * 100, 1)}/{round(f['promo_id'].notna().mean() * 100, 1)}"
+`, '39.2/2840/20.1/20.1', 'доля акций среди помеченных: по товару 39,2% (2840 строк), по общей границе 20,1%, во всей таблице 20,1%');
+  await pyExpect('py-outliers (карточка)', `
+u = fact_sellin['units']
+q1, q3 = u.quantile(0.25), u.quantile(0.75)
+upper = q3 + 1.5 * (q3 - q1)
+flag = u > upper
+sig = u > u.mean() + 3 * u.std()
+result = f"{q1}/{q3}/{upper}/{int(flag.sum())}/{round(flag.mean() * 100, 1)}/{round(u[flag].sum() / u.sum() * 100, 1)}/{round(u.mean() + 3 * u.std())}/{int(sig.sum())}/{int(flag.sum() - sig.sum())}"
+`, '13.0/107.0/248.0/669/4.4/20.2/327/292/377', 'заказы дистрибьюторов: граница 248, 669 заказов (4,4%) несут 20,2% штук; правило трёх отклонений даёт границу 327 и теряет 377 заказов');
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

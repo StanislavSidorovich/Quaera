@@ -152,6 +152,15 @@
       "reads": "Outlets by quarters of total revenue: equal, 33 in each of the four groups. qcut found the edges itself: 61,922, 504,794 and 875,606 ¥. The difference between the groups is huge: the top quarter brings 73% of all revenue, and the count of outlets does not show it.",
       "wrongWhy": "pd.cut(x, 4) splits not the rows but the numeric range from the minimum to the maximum into four parts equal in width. One outlet with 11.15 million of revenue stretches the range, so 124 of 132 outlets land in \"Q1\" and just one in \"Q2\". The labels Q1 to Q4 look like quartiles but are not, and there is no error and no warning.",
       "selfCheck": "Ask yourself: do you need groups that mean something to the business (cut with thresholds) or groups of equal size (qcut)? Then look at the group sizes: if one holds almost everything while the labels promised equal parts, cut with a number of groups was used instead of qcut."
+    },
+    {
+      "skill": "py-outliers",
+      "title": "Outliers: flag, do not delete",
+      "why": "The mean and the sum flinch at single huge values, and the first reflex is to remove them. But an outlier is a question, not a verdict: a data entry error or a real event, such as a promotion or a stock-up? The IQR rule (the edge q3 + 1.5 × (q3 − q1)) answers only \"is it unusually large\", not \"is it an error\". So the value is marked with a flag in a separate column, you look at what was marked, and then you decide. An edge is computed relative to something: a common one over the table marks big products as a whole, an edge inside a group marks what is unusual for its own group.",
+      "form": "q1 = df['column'].quantile(0.25)\nq3 = df['column'].quantile(0.75)\nupper = q3 + 1.5 * (q3 - q1)          # Tukey edge\ndf['flag'] = df['column'] > upper     # a flag next to the data, rows stay\n\nan edge inside a group:\nq3 = df.groupby('key')['column'].transform('quantile', 0.75)\n\na flag tells where to look; do not delete before explaining",
+      "reads": "Distributor orders: quartiles 13 and 107 units, edge 248. Above it are 669 orders, that is 4.4% of rows, but they carry 20.2% of all units ordered. A small share of rows with a fifth of the volume: that is why deciding to \"remove\" them would noticeably shift the total, and the marked orders have to be looked at first.",
+      "wrongWhy": "The rule \"mean plus three deviations\" assumes a symmetric distribution. Here the tail is long, and the mean and the deviation themselves are inflated by large orders: the edge moved to 327 instead of 248, and 377 unusually large orders stayed unmarked. No error, the flag looks plausible, it just misses part of what it should show.",
+      "selfCheck": "Before removing anything, answer two questions: relative to what is this value unusual (the whole table, the product, the customer), and what is it, an error or an event? If there is no answer to the second, the row stays and a flag is set."
     }
   ]
 }

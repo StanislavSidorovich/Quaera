@@ -54,7 +54,7 @@
       ]
     },
     "python": {
-      "opening": "Same company, same dataset, a different tool. A query hands you a finished answer; in pandas the data stays in your hands as an object you keep working on: reshape it, smooth a series, join it with a file that was never in the database.\n\nSix missions cover what an analyst does in a notebook, from \"I read the table and I know what is in it\" to \"the same calculation, without a loop over rows\". The track is written as a continuation of SQL and explains some of its ideas by comparison, which blocks nothing here.",
+      "opening": "Same company, same dataset, a different tool. A query hands you a finished answer; in pandas the data stays in your hands as an object you keep working on: reshape it, smooth a series, join it with a file that was never in the database.\n\nSeven missions cover what an analyst does in a notebook, from \"I read the table and I know what is in it\" to \"the same calculation, without a loop over rows\". The track is written as a continuation of SQL and explains some of its ideas by comparison, which blocks nothing here.",
       "ending": "The base is covered. You have gone from \"what is in the variable\" to a chain that computes a whole column at once, and you know where pandas stays silent: an index that took the column, a missing value in a grouping key, a join that multiplied rows, a copy standing in for the original data.\n\nThe finale here is not a business case but a habit of writing so that the calculation survives the next question. The other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
       "missions": [
         {
@@ -86,6 +86,11 @@
           "title": "The chain and the cost of a step",
           "hook": "The last mission is not about a new calculation but about how it is written. A flag set on a slice never reaches the original table, and the code does not complain once. And apply over rows gives the same answer as a vectorised operation: on a table of regions you cannot see the difference, on the sales table it is the difference between a second and a minute.",
           "outcome": "You write transformations as a chain and you know where a copy appears and where a view on the original data does, and you replace a loop over rows with a vectorised operation, because the difference here is an order of magnitude rather than a matter of style."
+        },
+        {
+          "title": "Unusually large values",
+          "hook": "A manager asks to \"remove the outliers so the average does not lie\", and that is the first reflex. But a rule that finds what is unusually large does not know whether it is an error or a promotion, and the largest rows in this data are exactly promotions. Deleting is easy, undoing is not.",
+          "outcome": "You calculate an edge by the IQR rule, mark values with a flag rather than deleting them, calculate the edge inside a group rather than over the whole table, and do not call an error what turned out to be an event."
         }
       ]
     },

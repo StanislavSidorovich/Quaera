@@ -100,6 +100,11 @@
       "id": "py-binning",
       "title": "Bins: cut and qcut",
       "summary": "I turn a number into a group: the business names the edges (cut) or shares set them (qcut), and I watch the value on an edge and the minimum."
+    },
+    {
+      "id": "py-outliers",
+      "title": "Outliers: flag, do not delete",
+      "summary": "I mark unusually large values with the IQR rule in a separate flag and decide whether each is an error or an event, with the edge computed inside a group rather than over the whole table."
     }
   ],
   "tasks": [
@@ -1757,6 +1762,108 @@
         },
         {
           "message": "small has 50,745 rows instead of 65,074: 14,329 sales of one unit are lost. The interval (1, 5] does not include its lower edge, so the value 1 became NaN, and value_counts does not show missing values. Take the lower edge below the minimum (here 0) or add include_lowest=True."
+        }
+      ]
+    },
+    {
+      "id": "py-094",
+      "title": "The upper edge by the IQR rule",
+      "brief": "A demand analyst wants to find unusually large rows in weekly sales. He took the Tukey rule: anything above the third quartile by more than one and a half interquartile ranges counts as unusual.",
+      "goal": "Calculate the upper edge by the IQR rule and understand what it marks.",
+      "predictQuestion": "The first quartile of units is 3 and the third is 11. What is upper equal to?",
+      "options": [
+        {
+          "label": "23: 11 + 1.5 × (11 − 3)",
+          "why": "The interquartile range IQR = 11 − 3 = 8. One and a half ranges is 12, and the edge lies 12 above the third quartile: 11 + 12 = 23. Anything sold above 23 units a week counts as unusually large."
+        },
+        {
+          "label": "19: 11 + (11 − 3), the third quartile plus one range",
+          "why": "The factor 1.5 is forgotten. One and a half ranges shift the edge by 12, not by 8. A rule with a factor of 1 would flag noticeably more ordinary values."
+        },
+        {
+          "label": "12: 1.5 × (11 − 3)",
+          "why": "That is only the offset from the third quartile. The edge is measured from the quartile itself: q3 has to be added to the 12."
+        },
+        {
+          "label": "14: 3 + 11, the sum of the quartiles",
+          "why": "The sum of the quartiles is not an edge. The formula takes the distance between them (the range) and lays it off upward from the third quartile."
+        }
+      ],
+      "hints": [
+        "IQR is the difference between the third and the first quartile, that is, the width of the middle half of the data.",
+        "The edge is laid off upward from the third quartile, not from zero and not from the median."
+      ],
+      "explain": "The result is upper = 23. Above this edge lie 10,926 rows out of 118,449, that is 9.2%. It matters that the IQR rule answers only \"is the value unusually large\", not \"is it an error\": the flagged rows have to be looked at, not thrown out. They carry 38.2% of all units sold, so deleting them would noticeably change the totals."
+    },
+    {
+      "id": "py-095",
+      "title": "How many rows are above the edge",
+      "brief": "Before any talk of outliers you need the scale: how many rows of weekly sales are above the Tukey edge. It decides whether to look at them one by one or in groups.",
+      "goal": "Count the rows of fact_sellout whose units are above q3 + 1.5 × IQR.",
+      "hints": [
+        "You need the same method as in the line above: it takes a share from 0 to 1 and returns the value below which that share of the rows lies.",
+        "The third quartile is the share 0.75."
+      ],
+      "explain": "The result is 10,926 rows, 9.2% of the table. quantile(0.25) gives 3, quantile(0.75) gives 11, the edge is 11 + 1.5 × 8 = 23. The comparison u > upper returns a boolean column, and sum() counts the True values. The rows stay in place: so far it is only a flag, not a deletion."
+    },
+    {
+      "id": "py-096",
+      "title": "What to do with unusually large values",
+      "brief": "Weekly sales have rows that stand far out upward. The manager asks to \"remove the outliers so the average does not lie\". Each of the five steps is sensible, but the order separates careful analysis from losing real data.",
+      "goal": "Arrange the steps so that the decision to exclude rests on what you have seen.",
+      "orderQuestion": "In what order do you work with unusually large values?",
+      "items": [
+        {
+          "label": "Calculate the edge by the IQR rule: the quartiles and the upper threshold",
+          "why": "First: without an edge there is no definition of \"unusually large\" and nothing to discuss. This is also where you decide within which group the edge is calculated."
+        },
+        {
+          "label": "Mark values above the edge in a separate flag column, keep the rows",
+          "why": "Second: a flag changes nothing in the data and is undone with one line. Deleting is irreversible, and the decision has not been made yet."
+        },
+        {
+          "label": "Look at what was marked: which products, which weeks, whether there is a promotion",
+          "why": "Third: the rule answers only \"is it unusually large\". Whether it is an error or a real event is visible only from the content of the marked rows."
+        },
+        {
+          "label": "Decide by cause: fix or remove an error, keep and explain an event",
+          "why": "Fourth: the decision rests on what was seen. Promotions and stock-ups are real sales, and deleting them understates the total."
+        },
+        {
+          "label": "Record what was excluded and why, and only then recalculate the metric",
+          "why": "Last: an exclusion without a record cannot be checked or repeated. A metric recalculated before the decision gets fitted to the wanted answer."
+        }
+      ],
+      "hints": [
+        "One step turns the edge into a visible result without changing the data. It comes before all the steps that decide something.",
+        "You can decide whether to keep or remove a value only after finding out what caused it."
+      ],
+      "explain": "The order rests on two rules: reversible first, irreversible after, and understand first, decide after. The IQR rule gives suspects, not culprits. In this data the largest rows (232, 194 and 185 units) are all promotions: they are real sales, and \"removing the outliers\" would understate demand exactly where it is highest."
+    },
+    {
+      "id": "py-097",
+      "title": "An edge per product, not per table",
+      "brief": "A common edge mostly marks rows of big products: their ordinary sales are larger too. To find what is unusual for the product itself, the edge has to be computed inside each product.",
+      "goal": "Count the rows of fact_sellout whose units are above q3 + 1.5 × IQR, computed separately for the product_id of that row.",
+      "hints": [
+        "You need the groupby method that returns a group value for every row, a column as long as the table.",
+        "It is already in the line above, for the first quartile."
+      ],
+      "explain": "The result is 7,250 rows against 10,926 with a common edge. transform(\"quantile\", 0.75) puts the third quartile of its product into every row, so each product has its own edge. The common edge marks whole products: four products (2, 1, 7 and 24) account for 30% of all marked rows because their ordinary sales are larger. An edge per product marks what is unusual for the product itself."
+    },
+    {
+      "id": "py-098",
+      "title": "The share of promotions among unusual sales of a product",
+      "brief": "A demand analyst suspects that unusually large sales of a product are promotions. Easy to check: compare the share of promo weeks among such sales with the share of promotions in the whole table (it is 20.1%).",
+      "goal": "Mark the rows of fact_sellout whose units are above q3 + 1.5 × IQR inside their product_id, and output the share of promo rows (promo_id is not empty) among the marked ones, in percent, rounded to 1 place.",
+      "hints": [
+        "The edge per product comes from groupby(\"product_id\")[\"units\"].transform(\"quantile\", share): you need the first and the third quartile.",
+        "The mean of a boolean column is the share. Promo rows are those where promo_id is not missing."
+      ],
+      "explain": "The result is 39.2%: of the 7,250 marked rows 2,840 are promotions, while promotions make up 20.1% of the whole table. Sales unusually large for their product are twice as often promotions, and that is an event, not an error. An edge over the whole table does not see this link: among its 10,926 rows promotions are exactly 20.1%, same as everywhere, because it marks big products, not unusual weeks. The takeaway for work: a flag tells you where to look, and these rows must not be deleted.",
+      "traps": [
+        {
+          "message": "The result is 20.1%, the same as promotions in the whole table. The edge was computed over the whole table and marked big products as a whole, not unusual weeks: promotions among them are as common as anywhere, and the link vanished. The edge has to be computed inside a product: groupby(\"product_id\") and transform(\"quantile\", ...)."
         }
       ]
     }
