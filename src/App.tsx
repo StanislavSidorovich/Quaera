@@ -5209,7 +5209,16 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
                 </span>
               </div>
               <CodeBlock code={answer.code} style={{ marginTop: 8, fontSize: 12.5 }} />
-              <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.55 }}>
+              {/*
+               * Пояснение под кодом — сам вывод сравнения («шагами и с
+               * именами», «формула отвечает на все однотипные вопросы
+               * сразу»), поэтому набрано текстом, а не .muted. Приглушённым
+               * 13px оно читалось подписью к коду, и глаз, пройдя три
+               * фрагмента, уносил «три способа написать одно», а не то,
+               * чем они различаются. Приглушёнными на экране остаются
+               * вводные строки карточек и примечания.
+               */}
+              <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6 }}>
                 {answer.note[locale]}
               </p>
             </div>
@@ -5320,7 +5329,8 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
             </dl>
           </div>
         </div>
-        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+        {/* Совет, ради которого список и написан, — текстом, а не сноской (довод тот же, что у пояснений в «Один вопрос — три ответа»). */}
+        <p style={{ margin: '14px 0 0', fontSize: 14, lineHeight: 1.6 }}>
           {t.onboarding.extraClosing}
         </p>
       </div>
