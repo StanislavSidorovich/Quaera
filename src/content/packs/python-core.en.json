@@ -402,6 +402,11 @@
     },
     {
       "id": "py-017",
+      "traps": [
+        {
+          "message": "Every row was divided by the total over the whole table, not by its own distributor's total. That is why the shares came out tiny (the maximum is about 0.0009), and the shares of each distributor sum not to 1 but to its portion of the overall volume: for example, 0.133 for the first one. The total has to be computed within the group: groupby(\"distributor_id\") and transform(\"sum\")."
+        }
+      ],
       "title": "How concentrated a distributor's purchases are",
       "brief": "The distributor KAM is preparing annual-terms negotiations and wants to understand concentration: whose purchases are spread across the whole assortment, and whose few positions make up the lion's share of volume; the discount conversation goes differently with the latter.",
       "goal": "Add a line_share column to fact_sellin: this row's share of net_amount in the sum of net_amount for the same distributor_id over the whole period of the table.",
@@ -443,6 +448,11 @@
     },
     {
       "id": "py-019",
+      "traps": [
+        {
+          "message": "The rank was computed in ascending order: place 1 went to the smallest sale of the product, not the largest. By default rank() puts the smallest value first; for place 1 to go to the largest sale, pass ascending=False."
+        }
+      ],
       "title": "Each product's biggest sale",
       "brief": "A logistics analyst is looking, for each product, for its single largest delivery: a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
       "goal": "Add a revenue_rank column with this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
@@ -691,6 +701,11 @@
     },
     {
       "id": "py-029",
+      "traps": [
+        {
+          "message": "The cells hold the average revenue of one sales row, not the brand's revenue for the quarter: for Aqualis in the first quarter it is 582.5 instead of 1,298,947. Without aggfunc, pivot_table averages by default. For a total, pass aggfunc=\"sum\" explicitly."
+        }
+      ],
       "title": "Revenue by brand, by quarter",
       "brief": "The commercial director wants to see 2025 revenue by brand, by quarter, in one table: brands as rows, quarters as columns, not a long list of thirty-six rows.",
       "goal": "Build a pivot table off the already-prepared merged/sub: brand in the rows, quarter in the columns, the sum of revenue in the values.",
@@ -956,6 +971,11 @@
     },
     {
       "id": "py-044",
+      "traps": [
+        {
+          "message": "The totals are right, but the month labels moved to the end of the month: January 31 instead of January 1. The \"M\" frequency labels a period by its last day and \"MS\" by its first, like month_start in the other tables. Joined to another series by date, the pairs will not match."
+        }
+      ],
       "title": "Setouchi shipments by month",
       "brief": "Monthly «Setouchi Trading» shipments are needed as a series in time rather than as a table: smoothing and calendar comparisons come next, and a grouping on a text date knows nothing about the calendar.",
       "goal": "Build a monthly series of units for distributor 1: select its rows in fact_sellin and re-bucket the table to monthly frequency with resample.",
@@ -967,6 +987,11 @@
     },
     {
       "id": "py-045",
+      "traps": [
+        {
+          "message": "The column holds a rolling sum, not a rolling average: the values are three times the level of the series, and a monthly spike is invisible against them. After .rolling(3) the aggregating function is .mean(), not .sum(): the window itself computes nothing."
+        }
+      ],
       "title": "A spike against its level",
       "brief": "Your manager looks at the monthly series and argues with himself: is the autumn of 2025 a spike, or ordinary swings of the kind this series has plenty of?",
       "goal": "Add a rolling3 column to the monthly series of Setouchi shipments: the rolling mean of units over the last three months.",
@@ -1299,6 +1324,11 @@
     },
     {
       "id": "py-072",
+      "traps": [
+        {
+          "message": "One average over the whole table (230.34) was subtracted, not the average of the product's own category. As a result almost every Beverages product looks \"cheap\" and every OTC product \"pricey\": the gap shows the category, not the product's place inside it. The mean has to be computed within groups: groupby(\"category\") and transform(\"mean\")."
+        }
+      ],
       "title": "Pricier or cheaper than its category",
       "brief": "Prices from different categories cannot be compared directly: an average Beverages product costs about 95, an average OTC product about 423. The buyer needs to know how much each product is above or below its own category's average price.",
       "goal": "Add a price_gap column to dim_product: list_price minus the mean list_price of this product's category, rounded to 2 places.",
@@ -1310,6 +1340,11 @@
     },
     {
       "id": "py-073",
+      "traps": [
+        {
+          "message": "The cells hold product numbers added up instead of counted: Beverages in FMCG shows 78 instead of 12, OTC in Pharma 693 instead of 18. A sum of identifiers means nothing, because product_id is a label, not a quantity. To find how many products there are, count them: aggfunc=\"count\"."
+        }
+      ],
       "title": "Assortment: categories by division",
       "brief": "The assortment director needs a map of \"how many products in each category and in each division\" as one table: categories as rows, divisions as columns. A long list of category-division pairs is not something they will read.",
       "goal": "Build a pivot table over dim_product: rows are category, columns are division, values are the product count (product_id). Fill empty intersections with zero.",
@@ -1343,6 +1378,11 @@
     },
     {
       "id": "py-076",
+      "traps": [
+        {
+          "message": "The result has all 144 customers, not 132: the comparison \"!= None\" is True for missing values too, because NaN does not equal anything, None included. The condition \"a value is present\" is written with the .notna() method."
+        }
+      ],
       "title": "Customers served by a distributor",
       "brief": "A mailing needs a list of customers attached to a distributor. For the rest (the distributors themselves in the reference) served_by_distributor_id is empty, and a comparison with emptiness through == or != will not work.",
       "goal": "Return columns customer_id and served_by_distributor_id for the customers in dim_customer whose served_by_distributor_id is filled in.",
@@ -1354,6 +1394,11 @@
     },
     {
       "id": "py-077",
+      "traps": [
+        {
+          "message": "The total came out around 767,537 instead of 1,530,785, about half. With errors=\"coerce\" every value with a comma (\"392,44\") quietly became a gap and dropped out of the sum, and there are 1,465 such values in the extract. Replace the comma with a dot first, then convert to a number."
+        }
+      ],
       "title": "Revenue written with a comma",
       "brief": "In staging_raw_sellout revenue is stored as text, and in some rows the decimal separator is a comma (\"392,44\"). Converting such text to a number directly fails with an error.",
       "goal": "Compute the sum of revenue in staging_raw_sellout: replace the comma with a dot, convert to a number and add up.",
@@ -1365,6 +1410,11 @@
     },
     {
       "id": "py-078",
+      "traps": [
+        {
+          "message": "The answer is 3,110, every row of the extract, not 803. By default .str.contains reads the pattern as a regular expression, where a dot means \"any character\", so every date matched. To search for a literal dot, pass regex=False."
+        }
+      ],
       "title": "Dates with dots",
       "brief": "Dates in staging_raw_sellout are written in three formats: \"2024-02-19\", \"11.03.2024\" and \"20/10/2025\". Before converting them to one form the scale has to be clear: how many rows are written with a dot.",
       "goal": "Count the rows of staging_raw_sellout whose sale_date contains a dot.",
