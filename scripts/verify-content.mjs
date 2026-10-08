@@ -144,6 +144,23 @@ async function checkTraps(t, expected, run) {
       fail(t.id, `${at}: нет кода или объяснение короче 20 знаков`);
       continue;
     }
+    /*
+     * В fill человек вводит только пропуски, остальной код задан шаблоном, а
+     * ловушка опознаётся по результату собранного кода (TaskView.matchTrap).
+     * Ловушка, которая правит то, что в шаблоне зафиксировано (пропущенный
+     * параметр, другая частота, соседняя функция), недостижима: такой ответ
+     * из пропусков не собрать, и объяснение никогда не покажется. Найдено
+     * 2026-10-08: из семи fill-ловушек прошлых заходов четыре были такими.
+     * Проверка необходимая, не достаточная: ловушка обязана выглядеть как
+     * шаблон с чем-то другим в пропусках; сработает ли она, решает результат.
+     */
+    if (t.mode === 'fill' && t.template) {
+      const escapeLiteral = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const shape = new RegExp(`^${t.template.split('___').map(escapeLiteral).join('([\\s\\S]*?)')}$`);
+      if (!shape.test(tr.code)) {
+        fail(t.id, `${at} не собирается из шаблона fill: человек вводит только пропуски, такой ответ у него получиться не может. Перенесите ловушку в write-задание того же навыка`);
+      }
+    }
     let got;
     try {
       got = await run(tr.code);
@@ -3208,6 +3225,55 @@ m = pd.qcut(p['revenue'], 4, labels=False)
 bad = pd.Series(np.select([m == 3, m >= 1], ['core', 'regular'], default='tail')).value_counts()
 result = f"{len(c)}/{good['core']}/{good['regular']}/{good['tail']}/{int(bad.sum())}"
 `, '38/10/18/10/8357', 'Pyrexan: 38 точек, 10 core, 18 regular, 10 tail; на строках продаж было бы 8357 записей');
+
+  // Ловушки второй партии (2026-10-08): числа, названные в их сообщениях.
+  const pyTrapped = async (id) => (await runPython(readPack('python-core').tasks.find((t) => t.id === id).traps[0].code)).rows;
+  const pyGood = async (id) => (await runPython(readPack('python-core').tasks.find((t) => t.id === id).solution)).rows;
+  {
+    const bad56 = (await pyTrapped('py-056')).map((r) => r[3]);
+    const good56 = (await pyGood('py-056')).map((r) => r[3]);
+    if (Math.min(...bad56) !== 0.95 || Math.max(...bad56) !== 0.98 || Math.min(...good56) !== 1.02 || Math.max(...good56) !== 1.06) {
+      fail('py-056', `ловушка: ${Math.min(...bad56)}–${Math.max(...bad56)}, эталон ${Math.min(...good56)}–${Math.max(...good56)}`);
+    } else console.log('  ok   py-056 (ловушка): перевёрнутое отношение 0,95–0,98 против 1,02–1,06');
+    // py-083: три ловушки — keep=False, duplicated() без subset, to_numeric(errors="coerce")
+    const t83 = readPack('python-core').tasks.find((x) => x.id === 'py-083').traps;
+    const r83 = [];
+    for (const tr of t83) r83.push((await runPython(tr.code)).rows[0][0]);
+    if (JSON.stringify(r83) !== JSON.stringify([113881.36, 0, 28765.72])) fail('py-083', `ловушки дали ${JSON.stringify(r83)}, ожидалось [113881.36, 0, 28765.72]`);
+    else console.log('  ok   py-083 (ловушки): keep=False 113881,36; duplicated() без subset 0; coerce 28765,72 вместо 56940,68');
+    await pyExpect('py-083 (запятые)', `
+s = staging_raw_sellout
+key = [c for c in s.columns if c != 'raw_id']
+d = s.duplicated(subset=key)
+result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).sum())}"
+`, '110/53', 'из 110 повторных копий 53 записаны с десятичной запятой');
+    const t88 = readPack('python-core').tasks.find((x) => x.id === 'py-088').traps;
+    const r88 = (await runPython(t88[1].code)).rows;
+    if (JSON.stringify(r88.map((r) => r.join(':')).sort()) !== JSON.stringify(['0:82647', 'big:11953', 'promo:23849'])) fail('py-088', `ловушка без default дала ${JSON.stringify(r88)}`);
+    else console.log('  ok   py-088 (ловушка): без default метка «0» на 82647 строк');
+  }
+  {
+    const sqlPack = readPack('sql-core');
+    const sqlTrap = (id) => runSql(sqlPack.tasks.find((t) => t.id === id).traps[0].code).rows;
+    const sqlGood = (id) => runSql(sqlPack.tasks.find((t) => t.id === id).solution).rows;
+    const same = (id, got, want, note) => {
+      if (JSON.stringify(got) !== JSON.stringify(want)) fail(id, `${note}: ожидалось ${JSON.stringify(want)}, получено ${JSON.stringify(got)}`);
+      else console.log(`  ok   ${id} (ловушка): ${note}`);
+    };
+    const t18 = sqlTrap('sql-018');
+    same('sql-018', [t18.length, t18.map((r) => r[1]), sqlGood('sql-018').length], [3, ['Fruvia Orange 1 L', 'Aqualis Still 5 L', 'Fruvia Apple 1 L'], 27], 'без PARTITION три строки на каталог вместо 27');
+    const pick = (rows, key, col) => rows.find((r) => r[0] === key)[col];
+    same('sql-019', [pick(sqlTrap('sql-019'), '2025-07-07', 2), pick(sqlTrap('sql-019'), '2025-12-29', 2), pick(sqlGood('sql-019'), '2025-07-07', 2), pick(sqlGood('sql-019'), '2025-12-29', 2)], [2781.4, 2586.3, 5581, 1617.5], 'накопительное среднее против скользящего на двух неделях');
+    same('sql-020', [sqlTrap('sql-020').slice(1, 3).map((r) => r[3]), sqlGood('sql-020').slice(1, 3).map((r) => r[3])], [[10.1, 15.5], [11.3, 18.4]], 'деление на текущий месяц вместо предыдущего');
+    const t52 = sqlTrap('sql-052');
+    const g52 = sqlGood('sql-052');
+    same('sql-052', [t52.find((r) => r[1] === 'Nanami Watanabe')[3], Math.max(...t52.map((r) => r[3])), g52.find((r) => r[1] === 'Nanami Watanabe')[3], Math.max(...g52.map((r) => r[3])), t52.length], [5, 25, 2, 6, 25], 'рейтинг без PARTITION BY team: 25 мест вместо 6');
+    same('sql-064', [sqlTrap('sql-064')[0], sqlGood('sql-064')[0]], [[3327, 1384], [2088, 1337]], 'MIN вместо MAX: акционных недель 3 из 11');
+    same('sql-065', [sqlTrap('sql-065').filter((r) => ['Aqualis', 'Milvara'].includes(r[0])).map((r) => [r[0], r[3]]).sort(), sqlGood('sql-065').filter((r) => ['Aqualis', 'Milvara'].includes(r[0])).map((r) => [r[0], r[3]]).sort()], [[['Aqualis', 88.5], ['Milvara', 39.6]], [['Aqualis', 138.8], ['Milvara', 56.2]]], 'база по всем неделям занижает лифт');
+    same('sql-067', [sqlTrap('sql-067')[0], sqlGood('sql-067')[0]], [[56.6, 56.6], [56.6, 207.2]], 'канал не применён: оба лифта по всем каналам');
+    const months = runSql('SELECT COUNT(DISTINCT month_start) FROM fact_price').rows[0][0];
+    same('sql-068', [sqlTrap('sql-068')[0][0], sqlTrap('sql-068')[0][3], sqlGood('sql-068')[0][0], sqlGood('sql-068')[0][3], months], [299430, 6852364, 9981, 231546, 30], 'прайс без условия на месяц размножает продажи в 30 раз');
+  }
 }
 
 // --- Песочница: вопросы к данным (src/content/sandbox.json).

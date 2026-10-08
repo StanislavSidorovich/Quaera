@@ -1012,7 +1012,12 @@
         "\"Within each brand\" is PARTITION BY brand.",
         "A window function can't be used in WHERE at the same query level: compute it in a CTE or subquery first, and filter one level up."
       ],
-      "explain": "A window function is computed after WHERE and GROUP BY, but before ORDER BY and LIMIT, so you can't filter on its result at the same level; you need an extra layer. This is the most common working pattern: compute the window in a CTE, filter outside it. It solves almost any \"top N per group\", \"latest record per customer\", or \"customer's first order\" question."
+      "explain": "A window function is computed after WHERE and GROUP BY, but before ORDER BY and LIMIT, so you can't filter on its result at the same level; you need an extra layer. This is the most common working pattern: compute the window in a CTE, filter outside it. It solves almost any \"top N per group\", \"latest record per customer\", or \"customer's first order\" question.",
+      "traps": [
+        {
+          "message": "Only three rows came back for the whole catalog (Fruvia Orange 1 L, Aqualis Still 5 L and Fruvia Apple 1 L) instead of 27, three in each of the nine brands. Without PARTITION BY brand the place is counted among all products at once, and the filter rnk <= 3 keeps the three best products of the company, not of the brand."
+        }
+      ]
     },
     {
       "id": "sql-051",
@@ -1034,7 +1039,12 @@
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep. Aggregate by rep_id first.",
         "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
       ],
-      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers; there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets."
+      "explain": "RANK is used here, not ROW_NUMBER: if two reps on the same team had exactly equal revenue, they should get the same rank, not arbitrarily split neighboring numbers; there are no exact ties this year, but the bonus rule has to be ready for them. Joining through dim_customer.rep_id is the only way to link revenue to a rep: fact_sellout itself knows nothing about reps, only about outlets.",
+      "traps": [
+        {
+          "message": "The place is counted among all 25 reps at once: Nanami Watanabe gets fifth instead of second in her team FMCG Kansai, and the largest place is 25 instead of 6. Without PARTITION BY r.team the ranking is company-wide, not within the team, and reps of different teams end up compared on someone else's scale."
+        }
+      ]
     },
     {
       "id": "sql-053",
@@ -1075,7 +1085,12 @@
         "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
       ],
-      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row; the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window, such values are usually hidden in a report."
+      "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row; the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window, such values are usually hidden in a report.",
+      "traps": [
+        {
+          "message": "This is a cumulative average, not an average over four weeks. Without a frame a window with ORDER BY takes everything from the start of the year up to the current week. The first four weeks match the correct answer, so the mistake is easy to miss, but from the fifth they diverge: the week of 2025-07-07 shows 2781.4 instead of 5581.0, and the last week shows 2586.3 instead of 1617.5. The frame has to be set explicitly: ROWS BETWEEN 3 PRECEDING AND CURRENT ROW."
+        }
+      ]
     },
     {
       "id": "sql-020",
@@ -1086,7 +1101,12 @@
         "LAG retrieves the previous row's value.",
         "The first month has no previous value; LAG returns NULL, and the percentage becomes NULL too. That's expected."
       ],
-      "explain": "LAG and LEAD remove the need to self-join a table against a shifted period, and that kind of self-join also breaks on missing months. An important caveat about meaning: month-over-month on a seasonal product is almost always misleading, because it mixes seasonality with trend. For seasonal categories you compare year over year (the same month last year) or use a rolling year. The technique gives you a number; the correctness of the comparison is still your responsibility."
+      "explain": "LAG and LEAD remove the need to self-join a table against a shifted period, and that kind of self-join also breaks on missing months. An important caveat about meaning: month-over-month on a seasonal product is almost always misleading, because it mixes seasonality with trend. For seasonal categories you compare year over year (the same month last year) or use a rolling year. The technique gives you a number; the correctness of the comparison is still your responsibility.",
+      "traps": [
+        {
+          "message": "The change is divided by the current month instead of the previous one: February shows 10.1% instead of 11.3%, March 15.5% instead of 18.4%. A growth percentage is counted from the base, that is, from the previous value (LAG), not from the new one. The numbers look plausible and go in the same order, so the mistake does not stand out."
+        }
+      ]
     },
     {
       "id": "sql-054",
@@ -1374,7 +1394,12 @@
         "A week counts as a promo week if it holds at least one row with promo_id filled in. That «at least one» is what MAX over a conditional 1 gives you.",
         "AVG(CASE WHEN condition THEN units END) with no ELSE averages only the matching weeks: where CASE returns NULL, the row stays out of the average."
       ],
-      "explain": "This is the step without which no conversation about promotions can start: sales are rolled up to the week, and every week now carries a flag saying whether a promotion ran in it. In the fact table that flag lives at row level (one outlet, one SKU, one week), but the comparison happens between whole weeks, so CASE is lifted one level up by MAX: the week is a promo week if a promotion ran anywhere in it. Then AVG(CASE ... THEN units END) with no ELSE produces both averages in a single pass: NULL never enters an average, so promo weeks do not dilute the base and the base does not dilute the promo. «Milvara» came out at 2088 units in a promo week against 1337 without one, and that is already a conversation with numbers in it."
+      "explain": "This is the step without which no conversation about promotions can start: sales are rolled up to the week, and every week now carries a flag saying whether a promotion ran in it. In the fact table that flag lives at row level (one outlet, one SKU, one week), but the comparison happens between whole weeks, so CASE is lifted one level up by MAX: the week is a promo week if a promotion ran anywhere in it. Then AVG(CASE ... THEN units END) with no ELSE produces both averages in a single pass: NULL never enters an average, so promo weeks do not dilute the base and the base does not dilute the promo. «Milvara» came out at 2088 units in a promo week against 1337 without one, and that is already a conversation with numbers in it.",
+      "traps": [
+        {
+          "message": "The result is 3327 and 1384 units instead of 2088 and 1337. MIN instead of MAX makes a week a promo week only if the promotion ran in all of its rows at once, in every outlet and for every SKU, and that is rare: only 3 of the 11 promo weeks are left. MAX lifts the flag to the level of the week: the promotion ran in at least one row."
+        }
+      ]
     },
     {
       "id": "sql-065",
@@ -1385,7 +1410,12 @@
         "The first step is already written: every week of every brand has its units and its promo flag. What remains is rolling weeks up into brands with GROUP BY brand.",
         "Percentages: 100.0 * (promo - base) / base. The literal with a decimal point is mandatory, otherwise integer division throws the fraction away."
       ],
-      "explain": "Lift is a ratio, which is why it compares brands that sell in completely different volumes: «Aqualis» does 4875 units in a promo week and «Nettora» does 1041, yet +138.8% against +82.4% is a fair comparison. The analyst's work starts after that. «Nettora» sits second on lift and that says almost nothing about the health of the brand: the lift is measured against a base from the same year, and the base itself has fallen threefold in two years. Lift answers exactly one question, how different a week with a promotion is from a week without one in the same period, and it answers neither «is the brand growing» nor «did the promotion pay for itself». The second question needs money rather than units: that is the tasks about the discount given away and about whether the promotion paid for itself."
+      "explain": "Lift is a ratio, which is why it compares brands that sell in completely different volumes: «Aqualis» does 4875 units in a promo week and «Nettora» does 1041, yet +138.8% against +82.4% is a fair comparison. The analyst's work starts after that. «Nettora» sits second on lift and that says almost nothing about the health of the brand: the lift is measured against a base from the same year, and the base itself has fallen threefold in two years. Lift answers exactly one question, how different a week with a promotion is from a week without one in the same period, and it answers neither «is the brand growing» nor «did the promotion pay for itself». The second question needs money rather than units: that is the tasks about the discount given away and about whether the promotion paid for itself.",
+      "traps": [
+        {
+          "message": "The lift is understated for every brand: Aqualis +88.5% instead of +138.8%, Milvara +39.6% instead of +56.2%. The base was taken over all weeks, promo weeks included, while the base must contain only weeks without a promotion. Promo weeks raise the base and eat the very effect being measured: AVG(CASE WHEN on_promo = 0 THEN units END) picks exactly the weeks without a promotion."
+        }
+      ]
     },
     {
       "id": "sql-066",
@@ -1426,7 +1456,12 @@
         "The periods are split by the start date of the promotion: weeks from 2025-05-05 onwards belong to the promotion, earlier weeks to the base.",
         "Both columns use the same lift formula; only the measure changes, all_units against mt_units."
       ],
-      "explain": "Lift across all channels is 56.6%, lift inside the channel that ran the promotion is 207.2%: a gap of more than three times, and the smaller number here is not a cautious estimate, it is a wrong one. Both the numerator and the denominator of the first figure carry traditional retail, pharmacies and ecom, where no promotion ran at all: their sales dilute the effect the way water dilutes paint. The rule is simple and carries over to any promotion: the slice you measure lift on has to match the reach of the promotion. Channel is the most common mistake but not the only one. If a promotion ran in one chain, in one region, or on three SKUs out of six, the base and the period are cut the same way. The reach is right there in the reference table: every promotion in dim_promo has a channel column, and the value all is far from universal in it."
+      "explain": "Lift across all channels is 56.6%, lift inside the channel that ran the promotion is 207.2%: a gap of more than three times, and the smaller number here is not a cautious estimate, it is a wrong one. Both the numerator and the denominator of the first figure carry traditional retail, pharmacies and ecom, where no promotion ran at all: their sales dilute the effect the way water dilutes paint. The rule is simple and carries over to any promotion: the slice you measure lift on has to match the reach of the promotion. Channel is the most common mistake but not the only one. If a promotion ran in one chain, in one region, or on three SKUs out of six, the base and the period are cut the same way. The reach is right there in the reference table: every promotion in dim_promo has a channel column, and the value all is far from universal in it.",
+      "traps": [
+        {
+          "message": "The lift for the channel came out 56.6%, the same as for all channels, instead of 207.2%. The second expression uses sales of all channels (all_units), not only modern trade (mt_units). The slice was set up in the CTE but not applied where the lift is calculated, so the channel manager got exactly the number he disputes."
+        }
+      ]
     },
     {
       "id": "sql-068",
@@ -1437,7 +1472,12 @@
         "Value at list price is worked out row by row and only then summed: SUM(f.units * pr.list_price), not the product of two sums.",
         "Discount given is the difference between the two amounts you already have; it needs no third source."
       ],
-      "explain": "The promotion cost 231,546 yen of discount against 540,472 yen of revenue, which is 30.0% of the volume valued at list price. Matching the promised 30% is not a tautology but an execution check: retail chains stand between the promo calendar and the shelf, and actual discount depth drifts from plan in both directions. A query like this is the cheapest way to see that, and it is worth running across every promotion rather than only the suspicious ones. The figure then meets the other half of the question: discount given is what the promotion cost, and only a comparison against a base shows what it bought. The answer there is not the obvious one: the task about whether the promotion was worth the discount."
+      "explain": "The promotion cost 231,546 yen of discount against 540,472 yen of revenue, which is 30.0% of the volume valued at list price. Matching the promised 30% is not a tautology but an execution check: retail chains stand between the promo calendar and the shelf, and actual discount depth drifts from plan in both directions. A query like this is the cheapest way to see that, and it is worth running across every promotion rather than only the suspicious ones. The figure then meets the other half of the question: discount given is what the promotion cost, and only a comparison against a base shows what it bought. The answer there is not the obvious one: the task about whether the promotion was worth the discount.",
+      "traps": [
+        {
+          "message": "units came out 299,430 instead of 9,981, and the discount 6.85 million instead of 231,546. fact_price has one row per product for each of 30 months, and the join has no condition on the month: every sale multiplied into 30 rows with the prices of all months. The condition pr.month_start = '2025-08-01' belongs in ON so that one price, the August one, is attached to a sale."
+        }
+      ]
     },
     {
       "id": "sql-069",
@@ -2243,11 +2283,6 @@
     },
     {
       "id": "sql-115",
-      "traps": [
-        {
-          "message": "The price comes out above the real one: 198.3 for 2025 instead of 194.0. The average of the avg_price column treats every sales row as equal, and a one-unit row weighs as much as a row of a hundred. The price of a unit is revenue divided by units: SUM(revenue) / SUM(units)."
-        }
-      ],
       "title": "Price per unit by year",
       "brief": "One more hypothesis for the fall: the price went up and shoppers left for the neighbours. The real price per unit is revenue divided by units, by year.",
       "goal": "Return year and price, the average price per unit of Nettora (revenue per unit, rounded to one decimal place) by year.",

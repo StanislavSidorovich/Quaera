@@ -473,11 +473,6 @@
     },
     {
       "id": "py-019",
-      "traps": [
-        {
-          "message": "The rank was computed in ascending order: place 1 went to the smallest sale of the product, not the largest. By default rank() puts the smallest value first; for place 1 to go to the largest sale, pass ascending=False."
-        }
-      ],
       "title": "Each product's biggest sale",
       "brief": "A logistics analyst is looking, for each product, for its single largest delivery: a suspicion of stockpiling ahead of a promo, visible only at the level of individual sales.",
       "goal": "Add a revenue_rank column with this sale's rank by revenue within its product_id (1 = the product's largest sale), descending.",
@@ -996,11 +991,6 @@
     },
     {
       "id": "py-044",
-      "traps": [
-        {
-          "message": "The totals are right, but the month labels moved to the end of the month: January 31 instead of January 1. The \"M\" frequency labels a period by its last day and \"MS\" by its first, like month_start in the other tables. Joined to another series by date, the pairs will not match."
-        }
-      ],
       "title": "Setouchi shipments by month",
       "brief": "Monthly «Setouchi Trading» shipments are needed as a series in time rather than as a table: smoothing and calendar comparisons come next, and a grouping on a text date knows nothing about the calendar.",
       "goal": "Build a monthly series of units for distributor 1: select its rows in fact_sellin and re-bucket the table to monthly frequency with resample.",
@@ -1215,7 +1205,12 @@
         "The two collapsed tables join on distributor_id, which is present in both and unique in each.",
         "ratio is a new column: result['ratio'] = (...).round(2)."
       ],
-      "explain": "In Q1 2026 Setouchi is back in line: 13,432 shipped against 12,717 sold, 1.06, with the others between 1.02 and 1.05. By the yardstick the spike was found with, it is over. The yardstick is fair but narrow: the ratio compares how much came to the partner and how much left it within the same period, two flows. About what piled up between them earlier it says nothing at all."
+      "explain": "In Q1 2026 Setouchi is back in line: 13,432 shipped against 12,717 sold, 1.06, with the others between 1.02 and 1.05. By the yardstick the spike was found with, it is over. The yardstick is fair but narrow: the ratio compares how much came to the partner and how much left it within the same period, two flows. About what piled up between them earlier it says nothing at all.",
+      "traps": [
+        {
+          "message": "ratio came out 0.95 to 0.98 instead of 1.02 to 1.06: the numerator and the denominator are swapped, giving \"sold per shipped\". The task needs shipped / sold, and a value above one means more was delivered to the partner than the partner sold. An inverted ratio reads the other way round and hides exactly those whose stock is growing."
+        }
+      ]
     },
     {
       "id": "py-057",
@@ -1419,11 +1414,6 @@
     },
     {
       "id": "py-077",
-      "traps": [
-        {
-          "message": "The total came out around 767,537 instead of 1,530,785, about half. With errors=\"coerce\" every value with a comma (\"392,44\") quietly became a gap and dropped out of the sum, and there are 1,465 such values in the extract. Replace the comma with a dot first, then convert to a number."
-        }
-      ],
       "title": "Revenue written with a comma",
       "brief": "In staging_raw_sellout revenue is stored as text, and in some rows the decimal separator is a comma (\"392,44\"). Converting such text to a number directly fails with an error.",
       "goal": "Compute the sum of revenue in staging_raw_sellout: replace the comma with a dot, convert to a number and add up.",
@@ -1534,12 +1524,7 @@
         "You need a method that does not flag the repeats but removes them and returns the table without them.",
         "The first copy is kept by default. The key goes in through the same subset parameter as when searching."
       ],
-      "explain": "3,000 rows remain: 3,110 minus 110 repeated copies. By default drop_duplicates keeps the first copy of each group. Without subset the method compares whole rows, and raw_id makes each one unique: all 3,110 rows would come back with no error and no warning. A simple check \"was, minus extras, equals remains\" catches such a slip in a second.",
-      "traps": [
-        {
-          "message": "3,110 rows remain, none was removed. Without subset drop_duplicates compares whole rows, and raw_id differs on every row, so no row is fully identical to another. The key has to be passed explicitly: subset=key, without raw_id."
-        }
-      ]
+      "explain": "3,000 rows remain: 3,110 minus 110 repeated copies. By default drop_duplicates keeps the first copy of each group. Without subset the method compares whole rows, and raw_id makes each one unique: all 3,110 rows would come back with no error and no warning. A simple check \"was, minus extras, equals remains\" catches such a slip in a second."
     },
     {
       "id": "py-083",
@@ -1554,6 +1539,12 @@
       "traps": [
         {
           "message": "The result is 113,881.36, exactly twice as much. keep=False flags both rows of a pair, so the first one, the real sale, got counted as a \"repeat\". Only the second copy is extra, and by default (keep=\"first\") only it is flagged."
+        },
+        {
+          "message": "The result is 0.0: duplicated() without subset compares whole rows, and raw_id is different on every row, so it finds no repeated copies and the sum of an empty selection is zero. The key has to be passed explicitly: subset with all the columns except raw_id."
+        },
+        {
+          "message": "The result is 28,765.72 instead of 56,940.68: almost half as much. 53 of the 110 repeated copies are written with a decimal comma (\"392,44\"), and to_numeric with errors=\"coerce\" silently turned them into missing values, which sum() skips. The comma has to be replaced with a point first, and only then converted to numbers."
         }
       ]
     },
@@ -1641,12 +1632,7 @@
         "The third argument of np.select is passed by name: it sets the label for rows that matched no condition.",
         "Without it such rows get the number 0, not text."
       ],
-      "explain": "The result is other: 64, chains: 42, pharmacies: 38. other holds 12 distributors, 8 online stores and 44 traditional retail outlets. If default is not given, np.select puts in 0, and a string \"0\" appears among the text labels for the same 64 outlets: no error, just a strange segment living in the column. That is why default is always named, even when the conditions seem to cover everything.",
-      "traps": [
-        {
-          "message": "The result has a segment \"0\" with 64 outlets instead of other. When default is not set, np.select puts in the number 0, and it becomes the string \"0\" next to the text labels. There is no error, but a segment with that name tells nobody anything. Set default explicitly: default=\"other\"."
-        }
-      ]
+      "explain": "The result is other: 64, chains: 42, pharmacies: 38. other holds 12 distributors, 8 online stores and 44 traditional retail outlets. If default is not given, np.select puts in 0, and a string \"0\" appears among the text labels for the same 64 outlets: no error, just a strange segment living in the column. That is why default is always named, even when the conditions seem to cover everything."
     },
     {
       "id": "py-088",
@@ -1662,6 +1648,9 @@
       "traps": [
         {
           "message": "The result is promo: 21,084 and big: 14,718, but it should be 23,849 and 11,953. The condition \"20 units or more\" is first and takes all large sales, including 2,765 promo ones. They are counted as ordinary large ones, and big is inflated. The promo condition has to go first."
+        },
+        {
+          "message": "Instead of regular the result has a label \"0\" on 82,647 rows. default is not set, and np.select puts in the number 0, which becomes the string \"0\" next to the text labels. There is no error, but a category with that name tells nothing. The remaining rows need a label set explicitly: default=\"regular\"."
         }
       ]
     },
