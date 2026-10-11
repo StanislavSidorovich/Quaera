@@ -465,8 +465,8 @@
       "title": "Вернуть product_id обратно колонкой",
       "brief": "Итог группировки нужно объединить (merge) с другой таблицей по product_id — а merge ищет его как обычную колонку, не как индекс.",
       "goal": "После группировки по product_id вернуть product_id обратно обычной колонкой.",
-      "template": "result = fact_sellout.groupby('product_id')['units'].sum().___()",
-      "blanks": ["reset_index"],
+      "template": "result = fact_sellout.groupby('product_id')['units'].sum()___",
+      "blanks": [".reset_index()"],
       "solution": "result = fact_sellout.groupby('product_id')['units'].sum().reset_index()",
       "hints": [
         "Нужен метод, обратный тому, что делает groupby с колонкой группировки по умолчанию.",
@@ -519,8 +519,8 @@
       "title": "Регионы обратно в колонки",
       "brief": "Для слайда нужно население Токио и Осаки. Регион удобно найти по названию через индекс, но таблица уйдёт в выгрузку, где название должно стоять обычной колонкой.",
       "goal": "Найти Tokyo и Osaka по индексу region_name и вернуть region_name и population, где region_name — обычная колонка.",
-      "template": "result = dim_region.set_index('region_name').loc[['Tokyo', 'Osaka'], ['population']].___()",
-      "blanks": ["reset_index"],
+      "template": "result = dim_region.set_index('region_name').loc[['Tokyo', 'Osaka'], ['population']]___",
+      "blanks": [".reset_index()"],
       "solution": "result = dim_region.set_index('region_name').loc[['Tokyo', 'Osaka'], ['population']].reset_index()",
       "hints": [
         "Нужен метод, обратный set_index.",
@@ -1206,8 +1206,8 @@
       "title": "Сглаженный ряд рядом с исходным",
       "brief": "Понедельный ряд продаж «Aqualis» скачет слишком сильно для графика на встрече. Нужно сглаживание за 4 недели рядом с исходными данными, в одной таблице, чтобы по графику было видно и уровень, и сами точки.",
       "goal": "Добавить к weekly колонку rolling4 — скользящее среднее units за 4 последние недели.",
-      "template": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Aqualis', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nweekly['week_start'] = pd.to_datetime(weekly['week_start'])\nweekly = weekly.set_index('week_start').sort_index()\nresult = weekly.copy()\nresult['rolling4'] = result['units'].___(4).mean()",
-      "blanks": ["rolling"],
+      "template": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Aqualis', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nweekly['week_start'] = pd.to_datetime(weekly['week_start'])\nweekly = weekly.set_index('week_start').sort_index()\nresult = weekly.copy()\nresult['rolling4'] = result['units']___4).mean()",
+      "blanks": [".rolling("],
       "solution": "kluch_ids = dim_product.loc[dim_product['brand'] == 'Aqualis', 'product_id']\nweekly = fact_sellout[fact_sellout['product_id'].isin(kluch_ids)].groupby('week_start', as_index=False)['units'].sum()\nweekly['week_start'] = pd.to_datetime(weekly['week_start'])\nweekly = weekly.set_index('week_start').sort_index()\nresult = weekly.copy()\nresult['rolling4'] = result['units'].rolling(4).mean()",
       "hints": [
         "rolling(4) определяет окно скользящего среднего в 4 наблюдения — то же число, что и в SQL ROWS BETWEEN 3 PRECEDING AND CURRENT ROW.",
@@ -1277,8 +1277,8 @@
       "title": "Флаг через .loc, без промежуточного объекта",
       "brief": "Крупные продажи (revenue > 3000) нужно пометить флагом прямо в fact_sellout — одним обращением через .loc, без промежуточного объекта, который легко потерять по дороге.",
       "goal": "Проставить flag=1 прямо в fact_sellout для строк с revenue > 3000, изменив таблицу одним обращением через .loc.",
-      "template": "result = fact_sellout.copy()\nresult.___[result['revenue'] > 3000, 'flag'] = 1",
-      "blanks": ["loc"],
+      "template": "result = fact_sellout.copy()\nresult___result['revenue'] > 3000, 'flag'] = 1",
+      "blanks": [".loc["],
       "solution": "result = fact_sellout.copy()\nresult.loc[result['revenue'] > 3000, 'flag'] = 1",
       "hints": [
         ".loc[маска, 'колонка'] = значение — одно обращение к таблице вместо двух последовательных [][], поэтому pandas точно знает, что вы имеете в виду, и предупреждение не появляется.",
@@ -1367,8 +1367,8 @@
       "title": "Отгрузки Setouchi по месяцам",
       "brief": "Помесячные отгрузки «Setouchi Trading» нужны не таблицей, а рядом во времени: дальше над ним пойдут сглаживание и сравнение по календарю, а группировка по текстовой дате календаря не знает.",
       "goal": "Построить месячный ряд units по дистрибьютору 1 — отобрать его строки в fact_sellin и пересобрать таблицу в месячную частоту через resample.",
-      "template": "mask = fact_sellin[___] == 1\nsellin = fact_sellin[mask].copy()\nsellin['month_start'] = pd.to_datetime(sellin['month_start'])\nmonthly = sellin.set_index('month_start').sort_index()\nresult = monthly[['units']].___('MS').sum()",
-      "blanks": ["'distributor_id'", "resample"],
+      "template": "mask = fact_sellin[___] == 1\nsellin = fact_sellin[mask].copy()\nsellin['month_start'] = pd.to_datetime(sellin['month_start'])\nmonthly = sellin.set_index('month_start').sort_index()\nresult = monthly[['units']]___'MS').sum()",
+      "blanks": ["'distributor_id'", ".resample("],
       "solution": "mask = fact_sellin['distributor_id'] == 1\nsellin = fact_sellin[mask].copy()\nsellin['month_start'] = pd.to_datetime(sellin['month_start'])\nmonthly = sellin.set_index('month_start').sort_index()\nresult = monthly[['units']].resample('MS').sum()",
       "hints": [
         "Партнёр записан в колонке distributor_id — маска по ней оставляет строки одного дистрибьютора.",
@@ -1621,11 +1621,11 @@
       "title": "Продажи точек Setouchi по месяцам",
       "brief": "Помесячный ряд отгрузок «Setouchi Trading» нужен рядом с продажами его точек — но продажи лежат понедельно. Чтобы положить их рядом, нужно собрать продажи в ту же частоту, месяц за месяцем.",
       "goal": "Собрать продажи точек дистрибьютора 1 в месячный ряд units через resample.",
-      "template": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)].copy()\nsold['week_start'] = pd.to_datetime(sold['week_start'])\nsold = sold.set_index('week_start').sort_index()\nresult = sold[['units']].___(___).sum()",
+      "template": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)].copy()\nsold['week_start'] = pd.to_datetime(sold['week_start'])\nsold = sold.set_index('week_start').sort_index()\nresult = sold[['units']]______).sum()",
       "blanks": [
-        "resample",
-        "'MS'"
-      ],
+      ".resample(",
+      "'MS'"
+    ],
       "solution": "outlets = dim_customer.loc[dim_customer['served_by_distributor_id'] == 1, 'customer_id']\nsold = fact_sellout[fact_sellout['customer_id'].isin(outlets)].copy()\nsold['week_start'] = pd.to_datetime(sold['week_start'])\nsold = sold.set_index('week_start').sort_index()\nresult = sold[['units']].resample('MS').sum()",
       "hints": [
         "Частоту меняет resample, начало месяца обозначается 'MS'.",
@@ -1725,11 +1725,11 @@
       "title": "Квартальная свёртка по дистрибьюторам",
       "brief": "Финансы просят сумму отгрузок по каждому дистрибьютору за октябрь–декабрь 2025 года. Таблицу потом будут сравнивать с другими, поэтому дистрибьютор нужен обычной колонкой, а не в индексе.",
       "goal": "По строкам fact_sellin за три месяца IV квартала 2025 года вернуть distributor_id и units — сумму штук по каждому дистрибьютору. distributor_id — обычной колонкой.",
-      "template": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\nresult = q4.___('distributor_id')['units'].sum().___()",
+      "template": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\nresult = q4___'distributor_id')['units'].sum()___",
       "blanks": [
-        "groupby",
-        "reset_index"
-      ],
+      ".groupby(",
+      ".reset_index()"
+    ],
       "solution": "q4 = fact_sellin[fact_sellin['month_start'].isin(['2025-10-01', '2025-11-01', '2025-12-01'])]\nresult = q4.groupby('distributor_id')['units'].sum().reset_index()",
       "hints": [
         "Свёртка суммой уже стоит следом — не хватает только группировки перед ней: q4.groupby('distributor_id').",
@@ -1780,8 +1780,8 @@
       "title": "Цена с налогом одной строкой",
       "brief": "Для прайса нужна таблица с ценой с налогом, но справочник dim_product должен остаться прежним: другие расчёты ждут его без новых колонок.",
       "goal": "Построить таблицу result на основе dim_product с новой колонкой price_with_tax = list_price * 1.1 (налог 10% взят для примера), не меняя самого dim_product.",
-      "template": "result = dim_product.___(price_with_tax=dim_product['list_price'] * 1.1)",
-      "blanks": ["assign"],
+      "template": "result = dim_product___price_with_tax=dim_product['list_price'] * 1.1)",
+      "blanks": [".assign("],
       "solution": "result = dim_product.assign(price_with_tax=dim_product['list_price'] * 1.1)",
       "hints": [
         "assign(имя=значение) возвращает новую таблицу с добавленной колонкой, а исходную не трогает.",
@@ -1869,8 +1869,8 @@
       "title": "Средняя цена бренда рядом с товаром",
       "brief": "Категорийному менеджеру нужен справочник товаров, где рядом с ценой каждого товара стоит средняя цена его бренда: сразу видно, кто дороже «своих». Свод по брендам отдельной таблицей не нужен — строк должно остаться столько же, сколько товаров.",
       "goal": "Добавить к dim_product колонку brand_avg_price — среднюю list_price по бренду этого товара — на каждой из 47 строк.",
-      "template": "result = dim_product.copy()\nresult['brand_avg_price'] = result.groupby('brand')['list_price'].___('mean')",
-      "blanks": ["transform"],
+      "template": "result = dim_product.copy()\nresult['brand_avg_price'] = result.groupby('brand')['list_price']___'mean')",
+      "blanks": [".transform("],
       "solution": "result = dim_product.copy()\nresult['brand_avg_price'] = result.groupby('brand')['list_price'].transform('mean')",
       "hints": [
         "agg(\"mean\") сжал бы 47 строк до одной на бренд, а нужно по строке на товар.",
@@ -2542,8 +2542,8 @@
       "title": "Граница по товару, а не по таблице",
       "brief": "Общая граница помечает в основном строки больших товаров: у них и обычные продажи крупнее. Чтобы найти необычное для самого товара, граница должна считаться внутри каждого товара.",
       "goal": "Посчитать строки fact_sellout, у которых units выше q3 + 1,5 × IQR, посчитанных отдельно для product_id этой строки.",
-      "template": "f = fact_sellout\nq1 = f.groupby('product_id')['units'].transform('quantile', 0.25)\nq3 = f.groupby('product_id')['units'].___('quantile', 0.75)\nflag = f['units'] > q3 + 1.5 * (q3 - q1)\nresult = flag.sum()",
-      "blanks": ["transform"],
+      "template": "f = fact_sellout\nq1 = f.groupby('product_id')['units'].transform('quantile', 0.25)\nq3 = f.groupby('product_id')['units']___'quantile', 0.75)\nflag = f['units'] > q3 + 1.5 * (q3 - q1)\nresult = flag.sum()",
+      "blanks": [".transform("],
       "solution": "f = fact_sellout\nq1 = f.groupby('product_id')['units'].transform('quantile', 0.25)\nq3 = f.groupby('product_id')['units'].transform('quantile', 0.75)\nflag = f['units'] > q3 + 1.5 * (q3 - q1)\nresult = flag.sum()",
       "hints": [
         "Нужен метод groupby, который возвращает значение группы на каждую строку, то есть колонку той же длины, что и таблица.",

@@ -244,7 +244,9 @@ function checkTaskTableNames(pack) {
   for (const t of pack.tasks) {
     const code = [...codeFieldsOf(t)].map(([, value]) => value).join('\n');
     if (!code) continue;
-    const found = new Set(code.match(/\b(?:dim|fact|staging)_[a-z_]+\b/g) ?? []);
+    // Без «__» внутри имени: пропуск `___` в шаблоне — граница, а не продолжение
+    // идентификатора (`dim_product___price` читается как dim_product и пропуск).
+    const found = new Set(code.match(/\b(?:dim|fact|staging)_[a-z]+(?:_[a-z]+)*(?![a-z])/g) ?? []);
     for (const name of found) {
       if (!schemaTableNames.has(name)) fail(t.id, `код ссылается на таблицу «${name}», которой нет в schema.json`);
     }
