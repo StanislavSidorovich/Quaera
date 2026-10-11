@@ -3366,6 +3366,16 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
       const t45 = sqlTrap('sql-045');
       const g45 = sqlGood('sql-045');
       same('sql-045', [t45.find((r) => r[0] === 'ecom').slice(2), g45.find((r) => r[0] === 'ecom').slice(2)], [[10100, 2553], [8, 3222912]], 'COUNT вместо COUNT(DISTINCT): 10 100 «точек» вместо 8, выручка на точку 2 553 вместо 3 222 912');
+      // Третья партия того же дня: уровень 3. Вторая и последующие ловушки берутся по индексу.
+      const trapAt = (id, i) => runSql(sqlPack.tasks.find((t) => t.id === id).traps[i].code).rows;
+      const t16 = sqlTrap('sql-016');
+      const g16 = sqlGood('sql-016');
+      const fmcg = (rows) => rows.filter((r) => r[0] === 'FMCG').reduce((s, r) => s + r[3], 0);
+      same('sql-016', [t16.find((r) => r[1] === 'Aqualis')[3], g16.find((r) => r[1] === 'Aqualis')[3], Math.round(fmcg(t16) * 10) / 10, Math.round(fmcg(g16))], [15.5, 20.9, 74.5, 100], 'знаменатель по всей компании: Aqualis 15,5% вместо 20,9%, FMCG в сумме 74,5% вместо 100');
+      same('sql-021', [trapAt('sql-021', 0)[0], trapAt('sql-021', 1)[0], sqlGood('sql-021')[0]], [[3110, 2747, 363], [3110, 3110, 0], [3110, 3000, 110]], 'склейка с NULL роняет 253 строки в «дубли», DISTINCT * с raw_id не находит ни одного');
+      same('sql-041', [sqlTrap('sql-041')[0], sqlGood('sql-041')[0]], [[4370, 4370], [4370, 43700]], 'DISTINCT по ключу факта прячет размножение: 4 370 против 43 700');
+      same('sql-046', [sqlTrap('sql-046')[0], sqlGood('sql-046')[0]], [[284, 261, 0], [284, 261, 545]], 'AND вместо OR: total_chain 0 вместо 545');
+      same('sql-106', [trapAt('sql-106', 0).length, trapAt('sql-106', 1).length, sqlGood('sql-106').length], [104, 0, 59], 'условие в ON оставляет все 104 имени, внутреннее соединение даёт пусто вместо 59');
     }
   }
 }

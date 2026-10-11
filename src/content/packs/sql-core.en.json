@@ -797,6 +797,11 @@
     },
     {
       "id": "sql-041",
+      "traps": [
+        {
+          "message": "Both columns show 4370, as if nothing multiplied. DISTINCT on the fact key hid the fan-out: the ten copies of each row collapsed back into one. Here it has to be shown, not cured, so rows after the join are counted with COUNT(*), without DISTINCT: the answer is 43700, ten rows for each of the ten promos of the brand."
+        }
+      ],
       "title": "Proving the fan-out with numbers",
       "brief": "Before including the join to dim_promo in a standing report (as in the task about the extra revenue), an analyst wants to formally show that it multiplies facts, rather than rely on intuition.",
       "goal": "For the «Nettora» brand in 2025, return one row: rows_before (the number of fact_sellout rows after an ordinary join to dim_product) and rows_after (the number of rows that would result from also joining dim_promo on brand, JOIN dim_promo m ON m.brand = p.brand).",
@@ -886,6 +891,11 @@
     },
     {
       "id": "sql-016",
+      "traps": [
+        {
+          "message": "The shares came out against the revenue of the whole company: Aqualis shows 15.5% instead of 20.9%, and the five FMCG brands add up to 74.5%, not 100%. The denominator was taken over the whole table, but it has to be per division: sum by division, and divide each brand by the total of its own division."
+        }
+      ],
       "title": "A brand's share within its division",
       "brief": "The annual presentation needs portfolio structure: what share of revenue each brand holds within its own division.",
       "goal": "For 2025, return: division, brand, revenue (rounded to whole numbers) and share_pct (the brand's share of its division's revenue in percent, rounded to one decimal place).",
@@ -943,6 +953,14 @@
     },
     {
       "id": "sql-021",
+      "traps": [
+        {
+          "message": "Duplicates came out as 363 instead of 110, and unique rows as 2747 instead of 3000. Concatenating with || turns the whole key into NULL when units or revenue is empty, and COUNT(DISTINCT) skips NULL: 253 rows with an empty value dropped out of unique_rows and were booked as duplicates. An empty value is replaced before concatenation, for example with COALESCE."
+        },
+        {
+          "message": "Duplicates: 0, all 3110 rows turned out «unique». DISTINCT * compares the technical raw_id as well, and every row has its own, so no row can repeat. Compare only the columns that identify a record: date, customer, SKU, units and revenue."
+        }
+      ],
       "title": "Duplicates in a raw extract",
       "brief": "A sales extract arrives from the accounting system, and it regularly contains fully duplicated rows; the export was run twice. Before loading it into the mart, you need to gauge the scale.",
       "goal": "From the staging_raw_sellout table, return one row: total_rows (total rows), unique_rows (how many unique records remain if a row counts as a duplicate when date, customer, SKU, quantity, and revenue all match) and duplicate_rows (the difference between them). The technical row number raw_id is not part of the comparison.",
@@ -954,6 +972,11 @@
     },
     {
       "id": "sql-046",
+      "traps": [
+        {
+          "message": "The first two numbers are right, 284 and 261, but total_chain is 0. AND demands both spellings in one name, while a row carries only one of them. To merge two groups, use OR: a row belongs to the chain if the name contains Ichiba or Itiba."
+        }
+      ],
       "title": "A chain spelled two ways",
       "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems romanised one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
       "goal": "Return one row: written_ya (the number of rows where customer_name contains «Ichiba»), written_ia (where it contains «Itiba») and total_chain (their sum: both groups belong to the same chain).",
@@ -2215,6 +2238,14 @@
     },
     {
       "id": "sql-106",
+      "traps": [
+        {
+          "message": "It returned 104 names instead of 59, including those the directory knows. The no-match condition sits in ON, and ON does not filter the left rows, it only decides what they are matched with, so LEFT JOIN keeps every row of the extract anyway. Rows without a match are picked in WHERE, after the join: WHERE c.customer_id IS NULL."
+        },
+        {
+          "message": "The answer is empty. A plain JOIN keeps only rows that found a match, so there is nothing left for WHERE to check as «no match»: IS NULL is true for none of them. To let unmatched rows survive until WHERE, join with LEFT JOIN."
+        }
+      ],
       "title": "Names the directory doesn't know",
       "brief": "Before trusting a raw sales feed, it's worth checking whether the customer directory recognises every outlet name in it. A name the directory doesn't know is an outlet that never makes it into the star-schema report at all.",
       "goal": "From staging_raw_sellout, return customer_name and rows (the number of rows with that name) only for names missing from the dim_customer directory.",
