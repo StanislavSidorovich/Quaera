@@ -1164,6 +1164,11 @@
     },
     {
       "id": "sql-055",
+      "traps": [
+        {
+          "message": "Growth is 0.1% in every month, and January is empty. LAG takes the previous month, so this is growth against the last month, not against January. The January price on every row comes from FIRST_VALUE(list_price) OVER (ORDER BY month_start): the window looks at the first row, not at the neighbour."
+        }
+      ],
       "title": "Price growth since the start of the year",
       "brief": "The CFO wants to see not the absolute monthly price of a product, but how much it has grown since the start of the year, and asks for a column with the January price sitting right next to the current one, without a separate query to fetch it.",
       "goal": "For 2025, for the «Aqualis Still 1.5 L» product, return month_start, list_price, jan_price (the price in January of that year) and growth_pct (growth vs. January in percent, rounded to one decimal place). Ordered by month ascending.",
@@ -1607,6 +1612,11 @@
     },
     {
       "id": "sql-072",
+      "traps": [
+        {
+          "message": "The numbers are almost the same, and that is what makes the mistake dangerous: Rhinolar shows 87 instead of 86.7, Vitanor promo share 46.6 instead of 46.4. The price table was joined by product alone, without the month, and every sales row stood against all 30 months of the price list: revenue and units were counted 30 times, with the prices of other months. The price list is joined by product and by the month of the sale."
+        }
+      ],
       "title": "Who gives away the most",
       "brief": "The commercial director wants one page before the budget committee: for every brand, how much of the list price reaches the till and how many units sell on promotion. He wants to see whether the two columns are related.",
       "goal": "For 2025 and every brand, return brand, realization_pct (the percentage of the list price that reached the till) and promo_share_units (the share of promotion in units sold). Round both to one decimal. Sorted by realization_pct ascending.",
@@ -1618,6 +1628,11 @@
     },
     {
       "id": "sql-073",
+      "traps": [
+        {
+          "message": "The promo share in units came out at 33.5% for Rhinolar instead of 55.1%, and it is understated for all nine brands. COUNT(f.promo_id) / COUNT(*) counts sales rows, not units: a promo row carries more units than a regular one. A share in units is computed from units: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) / SUM(units)."
+        }
+      ],
       "title": "Two shares of one promotion",
       "brief": "In the meeting someone says «our promo share is 55%», the finance deck says 48%, and both numbers describe the same brand in the same year. Nobody is wrong: one was measured in units, the other in money. The director asks to see both side by side for every brand.",
       "goal": "For 2025 and every brand, return brand, promo_share_units (the share of promotion in units sold) and promo_share_revenue (the share of promotion in revenue). Round both to one decimal. Sorted by promo_share_units descending.",
@@ -1728,6 +1743,14 @@
     },
     {
       "id": "sql-078",
+      "traps": [
+        {
+          "message": "The error came out almost zero: 0.9% at a one-month horizon, and negative at two and three months, -8.9% and -9.6%. Without ABS overestimates and underestimates cancel each other, and what remains is bias, not error. The real 15.4%, 27% and 30.9% grow with the horizon, and this series hides the growth. Each miss is taken by absolute value before summing: SUM(ABS(forecast_units - units))."
+        },
+        {
+          "message": "The numbers are above the real ones: 17.9%, 31% and 35.6% instead of 15.4%, 27% and 30.9%. AVG averages the percentages row by row, and a tiny SKU with a huge percentage miss weighs as much as the best seller. The weighted error is a ratio of sums: SUM(ABS(...)) / SUM(actual)."
+        }
+      ],
       "title": "The further the horizon, the worse it gets",
       "brief": "Production plans line loading three months ahead and asks whether the far month can be trusted as much as the near one. The snapshots hold all three horizons: the same month forecast one, two and three months before it started.",
       "goal": "Across all months in the table return lag_months, pairs (how many «month and SKU» pairs are compared at each horizon) and wmape_pct, the error as a percentage of actuals, rounded to one decimal. Sorted by lag_months ascending.",
@@ -1739,6 +1762,11 @@
     },
     {
       "id": "sql-079",
+      "traps": [
+        {
+          "message": "mape_pct and wmape_pct are identical: 30.7 and 30.7 for large, 49.2 and 49.2 for small, where they should be 30.4 and 45.4. The second column was computed with the same row-wise AVG, so it is MAPE again. The weighted error is a ratio of sums, SUM(ABS(...)) / SUM(actual), and it is clearly lower than the row average on the small pairs."
+        }
+      ],
       "title": "The tail that spoils the average",
       "brief": "In the planner report the error is worked out for every «month and SKU» pair and then averaged across rows. At the three month horizon that gives 35.6%, and nobody wants to walk into the committee with such a figure. Before arguing about it, work out who creates it.",
       "goal": "At the three month horizon, split the pairs into small (actuals below 200 units) and large ones and return size_group ('small' or 'large'), pairs, mape_pct (the error averaged across rows, in percent), wmape_pct (the same error weighted) and abs_error_units (the sum of misses in units). Round the percentages to one decimal.",
@@ -1780,6 +1808,14 @@
     },
     {
       "id": "sql-081",
+      "traps": [
+        {
+          "message": "The bias_pct and wmape_pct columns match: Gastrivo shows 45.7 in both. ABS removed the sign, and bias without a sign is just error: Nettora, the only brand that is overestimated, can no longer be told from the rest. Bias is computed with its sign: SUM(forecast_units - units) / SUM(units), without ABS."
+        },
+        {
+          "message": "The sign is flipped: Aqualis tops the list with +14.7%, while the brand that is really overestimated is Nettora, +11%. The difference is taken as forecast minus actual: a plus means the forecast is above the actual. Actual minus forecast says the opposite, and the answer to «whom do we overestimate» comes out backwards."
+        }
+      ],
       "title": "The brand we always overshoot",
       "brief": "At the accuracy review the commercial director says the forecast is «always cut low so that people can report overperformance later». The planner answers that nothing is being cut. One table settles it: put bias, the same ratio with the sign kept, next to the error.",
       "goal": "At the three month horizon and for each brand return brand, bias_pct (bias as a signed percentage of actuals) and wmape_pct (the error without its sign). Round both to one decimal. Sorted by bias_pct descending.",
@@ -1862,6 +1898,14 @@
     },
     {
       "id": "sql-084",
+      "traps": [
+        {
+          "message": "Only one group is left, promo, and it holds 12 385 pairs instead of 1252. The promo was joined by brand without the month: every brand has had promos, so every pair got the promo label and was multiplied by the number of the promos of the brand. The start month belongs in the join condition: ps.ym = substr(pr.month_start, 1, 7)."
+        },
+        {
+          "message": "The plain group is gone, only promo with 406 pairs remains. A plain JOIN keeps only pairs with a promo, and the 846 pairs without one were thrown out before labeling. To let them reach CASE, join with LEFT JOIN."
+        }
+      ],
       "title": "The promotion the forecast cannot see",
       "brief": "The planner already knows how error grows with the horizon and how it leans by brand. The promo calendar never enters the model at all: the forecast is built on regular demand and knows nothing about the promo plan ahead. The sales director asks whether that is expensive.",
       "goal": "At the three month horizon, split the «month and SKU» pairs into months where the brand started a promotion and the rest, and return grp ('promo' or 'plain'), pairs (the number of pairs), bias_pct (the signed bias as a percentage of actuals), and wmape_pct (the error without its sign). Round both percentages to one decimal.",
@@ -2216,6 +2260,14 @@
     },
     {
       "id": "sql-104",
+      "traps": [
+        {
+          "message": "It returned 3 outlets instead of 27. The join has no date condition, so everyone who ever bought Nettora dropped out of the list, while the ones needed are those who have not bought it since 2026-01-01. The date goes into ON next to the brand condition: both describe the same thing, what counts as a sale."
+        },
+        {
+          "message": "The answer is empty. The Nettora conditions sit in WHERE, which runs after the join: an outlet without sales has an empty product_id and fails the brand test, and an outlet with a sale never has an empty sellout_id. Together the conditions cannot hold. Conditions on the right table go into ON for a LEFT JOIN, and WHERE keeps only the check for a missing match."
+        }
+      ],
       "title": "Outlets with no Nettora in chains",
       "brief": "The modern trade account manager asks for a list of outlets that don't carry Nettora at all, to start the conversation about winning the brand back onto the shelf before building a general visit plan.",
       "goal": "Return customer_name and city for outlets in chains (channel = 'modern_trade') with zero Nettora sales since 2026-01-01.",

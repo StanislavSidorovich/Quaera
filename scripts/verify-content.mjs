@@ -3376,6 +3376,18 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
       same('sql-041', [sqlTrap('sql-041')[0], sqlGood('sql-041')[0]], [[4370, 4370], [4370, 43700]], 'DISTINCT по ключу факта прячет размножение: 4 370 против 43 700');
       same('sql-046', [sqlTrap('sql-046')[0], sqlGood('sql-046')[0]], [[284, 261, 0], [284, 261, 545]], 'AND вместо OR: total_chain 0 вместо 545');
       same('sql-106', [trapAt('sql-106', 0).length, trapAt('sql-106', 1).length, sqlGood('sql-106').length], [104, 0, 59], 'условие в ON оставляет все 104 имени, внутреннее соединение даёт пусто вместо 59');
+      // Четвёртая партия того же дня: уровень 4.
+      const t55 = sqlTrap('sql-055');
+      same('sql-055', [t55[0][2], t55.slice(1).every((r) => r[3] === 0.1), sqlGood('sql-055')[11][3]], [null, true, 1], 'LAG вместо FIRST_VALUE: рост к прошлому месяцу, 0,1 везде, январь пуст');
+      const brand = (rows, name, col) => rows.find((r) => r[0] === name)[col];
+      same('sql-072', [brand(sqlTrap('sql-072'), 'Rhinolar', 1), brand(sqlGood('sql-072'), 'Rhinolar', 1), brand(sqlTrap('sql-072'), 'Vitanor', 2), brand(sqlGood('sql-072'), 'Vitanor', 2)], [87, 86.7, 46.6, 46.4], 'прайс по товару без месяца: 30 копий каждой строки, числа чуть выше');
+      same('sql-073', [brand(sqlTrap('sql-073'), 'Rhinolar', 1), brand(sqlGood('sql-073'), 'Rhinolar', 1), sqlTrap('sql-073').every((r) => r[1] < sqlGood('sql-073').find((g) => g[0] === r[0])[1])], [33.5, 55.1, true], 'COUNT вместо SUM(units): доля строк занижена у всех девяти брендов');
+      same('sql-078', [trapAt('sql-078', 0).map((r) => r[2]), trapAt('sql-078', 1).map((r) => r[2]), sqlGood('sql-078').map((r) => r[2])], [[0.9, -8.9, -9.6], [17.9, 31, 35.6], [15.4, 27, 30.9]], 'без ABS ошибка схлопывается в смещение, AVG по строкам завышает');
+      same('sql-079', [sqlTrap('sql-079').map((r) => r.slice(2, 4)), sqlGood('sql-079').map((r) => r.slice(2, 4))], [[[30.7, 30.7], [49.2, 49.2]], [[30.7, 30.4], [49.2, 45.4]]], 'wmape посчитан как AVG: колонки совпали, у мелких 49,2 вместо 45,4');
+      const t81 = trapAt('sql-081', 0);
+      same('sql-081', [t81.every((r) => r[1] === r[2]), brand(trapAt('sql-081', 1), 'Aqualis', 1), brand(trapAt('sql-081', 1), 'Nettora', 1), brand(sqlGood('sql-081'), 'Nettora', 1)], [true, 14.7, -11, 11], 'ABS в смещении делает его ошибкой, обратная разность ставит наверх не того');
+      same('sql-084', [trapAt('sql-084', 0), trapAt('sql-084', 1), sqlGood('sql-084')], [[['promo', 12385, -9.4, 30.8]], [['promo', 406, -15.6, 32.1]], [['plain', 846, -6, 30.2], ['promo', 406, -15.6, 32.1]]], 'соединение по бренду без месяца даёт одну группу из 12 385 пар, внутреннее оставляет 406');
+      same('sql-104', [trapAt('sql-104', 0).length, trapAt('sql-104', 1).length, sqlGood('sql-104').length], [3, 0, 27], 'без даты в ON остаётся 3 точки, условия в WHERE дают пусто вместо 27');
     }
   }
 }
