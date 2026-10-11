@@ -100,10 +100,13 @@
  *   display 24 (20 на телефоне) — один заголовок на экран, главная;
  *   h2 18 — заголовок карточки и листа;
  *   h3 16 — раздел внутри карточки, заголовок разбора ответа;
- *   body 15 — текст карточки; small 13 — пояснения; micro 12 — подписи.
+ *   body 15 — текст карточки; text 14 — рабочий текст интерфейса (варианты,
+ *   подсказки, разбор); small 13 — пояснения; micro 12 — подписи;
+ *   label 11 — метки, бейджи, значения на графиках.
  *
- * Новые заголовки берут кегль отсюда, а не числом. Точечные 12.5/13.5/11.5px
- * по файлу под токены ещё не сведены — это отдельная механическая правка.
+ * Новый текст берёт кегль отсюда, а не числом. Дробные 11.5/12.5/13.5px сведены
+ * к ближайшему слоту. Вне шкалы остаются хром и картинка: шапка, обзор, печать,
+ * подписи диаграмм на телефоне (9–10.5px), 16px у кнопок на десктопе.
  * Шапка (.topbar h1) и линейка обзора (.overview-h2) в шкалу не входят:
  * у них своя роль (хром приложения и разделы длинной страницы).
  */
@@ -112,8 +115,10 @@
   --fs-h2: 18px;
   --fs-h3: 16px;
   --fs-body: 15px;
+  --fs-text: 14px;
   --fs-small: 13px;
   --fs-micro: 12px;
+  --fs-label: 11px;
 }
 
 @media (max-width: 599px) {
@@ -170,7 +175,7 @@ code,
 pre,
 textarea.sql {
   font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .app {
@@ -258,7 +263,7 @@ textarea.sql {
   border-radius: 9px;
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 
@@ -272,7 +277,7 @@ textarea.sql {
 .sidebar-brand small {
   display: block;
   margin-top: 1px;
-  font-size: 11.5px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -301,7 +306,7 @@ textarea.sql {
   padding: 8px 10px;
   border-radius: 9px;
   text-align: left;
-  font-size: 13.5px;
+  font-size: var(--fs-text);
   line-height: 1.35;
   color: var(--text);
 }
@@ -356,7 +361,7 @@ textarea.sql {
 
 .side-track-head span:last-child {
   flex: none;
-  font-size: 11px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -408,7 +413,7 @@ textarea.sql {
 .side-item-note {
   display: block;
   margin-top: 1px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 400;
   color: var(--text-dim);
   overflow: hidden;
@@ -436,7 +441,7 @@ textarea.sql {
 .sidebar-legal {
   margin: auto 0 0;
   padding: 16px 10px 0;
-  font-size: 11px;
+  font-size: var(--fs-label);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -600,7 +605,7 @@ textarea.sql {
 
 .topbar .sub {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 400;
   color: var(--text-dim);
 }
@@ -626,7 +631,7 @@ textarea.sql {
   align-items: center;
   gap: 10px;
   margin: 0 -16px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
 }
 
@@ -670,7 +675,7 @@ textarea.sql {
   border-radius: 10px;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -708,7 +713,7 @@ textarea.sql {
   border-radius: 999px;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
@@ -755,7 +760,7 @@ textarea.sql {
 
 .card-subhead {
   margin: 14px 0 8px;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
@@ -778,13 +783,13 @@ textarea.sql {
  */
 .card-subhead-item {
   margin: 18px 0 6px;
-  font-size: 14px;
+  font-size: var(--fs-text);
   font-weight: 600;
 }
 
 .muted {
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .pill {
@@ -793,7 +798,7 @@ textarea.sql {
   border-radius: 999px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-size: 11px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -864,7 +869,7 @@ button.pill {
   border-radius: 8px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 .table-chip code {
@@ -928,7 +933,7 @@ button.pill {
   justify-content: space-between;
   gap: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .btn {
@@ -1041,7 +1046,7 @@ a.btn {
   text-align: left;
   padding: 4px 0;
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 500;
 }
 
@@ -1091,7 +1096,7 @@ a.btn {
   padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
 }
 
@@ -1187,7 +1192,7 @@ a.btn {
 
 .proof-item strong {
   display: block;
-  font-size: 13.5px;
+  font-size: var(--fs-text);
   margin-bottom: 2px;
 }
 
@@ -1276,7 +1281,7 @@ a.btn {
   border: 1px solid var(--line);
   background: var(--bg-sunken);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 500;
 }
 
@@ -1371,7 +1376,7 @@ a.btn {
   align-items: baseline;
   gap: 6px;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: var(--fs-text);
   font-weight: 700;
   /* Своя стрелка вместо системного треугольника: тот везде разной формы
      и в Safari не поддаётся ни цвету, ни размеру. */
@@ -1411,7 +1416,7 @@ a.btn {
 .proof-item span {
   display: block;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
@@ -1431,12 +1436,12 @@ a.btn {
 }
 
 .chain-step {
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 .chain-arrow {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 /*
@@ -1474,7 +1479,7 @@ a.btn {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
 }
 
 .chain-legend-item > span:nth-child(2) {
@@ -1555,7 +1560,7 @@ a.btn {
   flex-wrap: wrap;
   gap: 2px 0;
   margin: 0 0 6px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -1699,13 +1704,13 @@ a.btn {
 .skill-row .name {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .skill-row .name small {
   display: block;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1736,7 +1741,7 @@ a.btn {
 }
 
 .skill-map-group-title {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1746,7 +1751,7 @@ a.btn {
 .skill-map-group-meta {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1756,7 +1761,7 @@ a.btn {
 .skill-map-group-chevron {
   flex: none;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 .bar {
@@ -1805,7 +1810,7 @@ a.btn {
 .overall-progress-tier {
   flex: 0 0 auto;
   width: 40%;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.35;
 }
 
@@ -1813,7 +1818,7 @@ a.btn {
   flex: none;
   width: 34px;
   text-align: right;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -2136,7 +2141,7 @@ a.btn {
 
 .sandbox-recipe-title {
   display: block;
-  font-size: 14px;
+  font-size: var(--fs-text);
   font-weight: 600;
 }
 
@@ -2148,7 +2153,7 @@ a.btn {
 .sandbox-recipe summary small {
   display: block;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.4;
   color: var(--text-dim);
   white-space: normal;
@@ -2156,7 +2161,7 @@ a.btn {
 
 .sandbox-recipe-label {
   margin: 10px 0 2px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2166,13 +2171,13 @@ a.btn {
 .sandbox-recipe-knobs {
   margin: 0;
   padding-left: 18px;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
 .sandbox-recipe-pitfall {
   margin: 0 0 10px;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
@@ -2220,7 +2225,7 @@ a.btn {
 }
 
 .brief {
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.55;
 }
 
@@ -2230,7 +2235,7 @@ a.btn {
   border-radius: 10px;
   background: var(--bg-sunken);
   border-left: 3px solid var(--accent);
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 textarea.sql {
@@ -2347,7 +2352,7 @@ textarea.sql:focus {
   background: var(--bg-sunken);
   border: 1px solid var(--line);
   font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--code);
 }
 
@@ -2465,7 +2470,7 @@ textarea.sql:focus {
   border-radius: 9px;
   border: 1px solid var(--line);
   background: var(--bg-sunken);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -2487,7 +2492,7 @@ textarea.sql:focus {
   border: 1px solid var(--line);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .reference-search:focus {
@@ -2519,7 +2524,7 @@ textarea.sql:focus {
   gap: 4px;
   min-height: 56px;
   padding: 8px 6px;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.25;
   white-space: normal;
   text-align: center;
@@ -2674,7 +2679,7 @@ textarea.sql:focus {
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -2694,13 +2699,13 @@ textarea.sql:focus {
  */
 .track-recommend-note {
   margin: 0 0 -6px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
   max-width: 68ch;
 }
 
 .track-card-name {
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
@@ -2725,7 +2730,7 @@ textarea.sql:focus {
  */
 .track-card-chain {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: color-mix(in srgb, var(--track) 74%, var(--text));
 }
@@ -2733,7 +2738,7 @@ textarea.sql:focus {
 .track-card-desc {
   flex: 1 1 auto;
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
   /* Три строки, а не сколько влезет: в паре описание короткое, в паре — на
      абзац, и без ограничения карточки в одном ряду разъезжались бы по высоте. */
@@ -2758,7 +2763,7 @@ textarea.sql:focus {
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
 }
 
 .track-card-cta {
@@ -2792,7 +2797,7 @@ textarea.sql:focus {
   border-left: 3px solid var(--accent);
   border-radius: 10px;
   background: var(--bg-sunken);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -2828,7 +2833,7 @@ textarea.sql:focus {
 table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 th,
@@ -2844,7 +2849,7 @@ th {
   top: 0;
   background: var(--bg-raised);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -2946,7 +2951,7 @@ tbody tr:last-child td {
   .table-wrap td::before {
     content: attr(data-label);
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--fs-micro);
     text-align: left;
     white-space: normal;
   }
@@ -2982,7 +2987,7 @@ tbody tr:last-child td {
 /* Название колонки для одиночной серии — вместо легенды, которая на одном
    цвете была бы рамкой с одним кружком и повторяла бы то же самое короче. */
 .chart-caption {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: var(--text-dim);
   margin: 0 0 10px;
@@ -2999,7 +3004,7 @@ tbody tr:last-child td {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -3017,7 +3022,7 @@ tbody tr:last-child td {
 }
 
 .chart-views button {
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 /* --------------------------------------------------- столбцы (горизонтальные) */
@@ -3050,7 +3055,7 @@ tbody tr:last-child td {
 }
 
 .chart-bar-label {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3106,7 +3111,7 @@ tbody tr:last-child td {
 .chart-bar-value {
   height: 18px;
   line-height: 18px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-variant-numeric: tabular-nums;
   color: var(--text);
   text-align: right;
@@ -3156,7 +3161,7 @@ tbody tr:last-child td {
 
 .chart-end-label {
   fill: var(--text);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -3185,7 +3190,7 @@ tbody tr:last-child td {
 
 .chart-hover-value {
   fill: var(--text);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3223,14 +3228,14 @@ tbody tr:last-child td {
 
 .feedback p {
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.55;
 }
 
 .feedback ul {
   margin: 0;
   padding-left: 18px;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .feedback li {
@@ -3241,7 +3246,7 @@ tbody tr:last-child td {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -3256,7 +3261,7 @@ tbody tr:last-child td {
   border-radius: 11px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.45;
 }
 
@@ -3273,7 +3278,7 @@ tbody tr:last-child td {
 .option .why {
   display: block;
   margin-top: 7px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -3309,7 +3314,7 @@ tbody tr:last-child td {
   border-radius: 11px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.45;
 }
 
@@ -3339,7 +3344,7 @@ tbody tr:last-child td {
 .order-body .why {
   display: block;
   margin-top: 7px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -3373,7 +3378,7 @@ tbody tr:last-child td {
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1;
 }
 
@@ -3388,7 +3393,7 @@ tbody tr:last-child td {
   border-radius: 10px;
   background: var(--bg-sunken);
   border: 1px dashed var(--line);
-  font-size: 14px;
+  font-size: var(--fs-text);
   margin-bottom: 8px;
 }
 
@@ -3400,7 +3405,7 @@ tbody tr:last-child td {
   border: 1px solid var(--line);
   color: var(--text);
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--fs-text);
   margin-bottom: 8px;
 }
 
@@ -3416,7 +3421,7 @@ tbody tr:last-child td {
   border-radius: 10px;
   border: 1px dashed var(--line);
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 /*
@@ -3454,7 +3459,7 @@ tbody tr:last-child td {
   border-radius: 8px;
   background: var(--bg-sunken);
   border: 1px dashed var(--line);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
@@ -3473,7 +3478,7 @@ tbody tr:last-child td {
   border-radius: 10px;
   background: var(--bg-sunken);
   border-left: 3px solid var(--accent);
-  font-size: 14px;
+  font-size: var(--fs-text);
   font-style: italic;
   margin-bottom: 8px;
 }
@@ -3481,7 +3486,7 @@ tbody tr:last-child td {
 .reflexive-label {
   display: block;
   margin-bottom: 4px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-style: normal;
   font-weight: 600;
   text-transform: uppercase;
@@ -3547,7 +3552,7 @@ pre.lesson-prose {
   background: var(--bg-sunken);
   border: 1px solid var(--line);
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -3574,7 +3579,7 @@ pre.lesson-figure {
   background: var(--field-bg);
   border: 1px solid color-mix(in srgb, var(--text-dim) 45%, var(--line));
   color: var(--code);
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.55;
   white-space: pre;
   overflow-x: auto;
@@ -3662,7 +3667,7 @@ details.table-doc > summary {
   padding: 12px 34px 12px 14px;
   cursor: pointer;
   list-style: none;
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 details.table-doc > summary::-webkit-details-marker {
@@ -3727,7 +3732,7 @@ details.table-doc[open] {
 details.table-doc > summary small {
   display: block;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   margin-top: 2px;
 }
 
@@ -3736,7 +3741,7 @@ details.table-doc > summary small {
   gap: 10px;
   padding: 8px 14px;
   border-top: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .col-doc .col-name {
@@ -3758,7 +3763,7 @@ details.table-doc > summary small {
 .col-key {
   display: inline-block;
   margin-left: 2px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   vertical-align: middle;
 }
 
@@ -3767,7 +3772,7 @@ details.table-doc > summary small {
   display: inline-block;
   margin-left: 6px;
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: var(--fs-label);
 }
 
 /*
@@ -3778,7 +3783,7 @@ details.table-doc > summary small {
 .col-fk {
   display: block;
   color: var(--accent);
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   margin-bottom: 2px;
 }
 
@@ -3802,13 +3807,13 @@ details.table-doc > summary small {
 
 .sample-caption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   margin-bottom: 6px;
 }
 
 table.sample {
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   white-space: nowrap;
 }
 
@@ -3852,13 +3857,13 @@ table.sample td.null {
 }
 
 .value-guide-title {
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 600;
 }
 
 .value-guide-lead {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -3867,7 +3872,7 @@ table.sample td.null {
   gap: 10px;
   padding: 6px 0;
   border-top: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 /* Не кнопка и не --code: значение не вставляется в запрос по клику (см. TableDoc). */
@@ -3883,14 +3888,14 @@ table.sample td.null {
 
 .value-guide-caveat {
   margin: 8px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   font-style: italic;
 }
 
 .note {
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--warn);
   border-top: 1px solid var(--line);
 }
@@ -3964,14 +3969,14 @@ table.sample td.null {
 }
 
 .data-size dt {
-  font-size: 11.5px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   letter-spacing: 0.02em;
 }
 
 .data-size dd {
   margin: 1px 0 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   /* Цифры одной ширины: иначе 155 846 и 96 стоят столбиком с разным шагом. */
   font-variant-numeric: tabular-nums;
@@ -3985,7 +3990,7 @@ table.sample td.null {
   border-radius: 10px;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-text);
   padding: 10px 12px;
 }
 
@@ -4069,7 +4074,7 @@ table.sample td.null {
 }
 
 .data-link {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   background: var(--bg-sunken);
   border: 1px solid var(--line);
@@ -4133,7 +4138,7 @@ table.sample td.null {
 }
 
 .schema-map-caption {
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -4162,7 +4167,7 @@ table.sample td.null {
 
 .schema-node text {
   font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   fill: var(--text);
 }
 
@@ -4196,7 +4201,7 @@ table.sample td.null {
 }
 
 .schema-node-self {
-  font-size: 13px;
+  font-size: var(--fs-small);
   fill: var(--text-dim);
 }
 
@@ -4257,7 +4262,7 @@ table.sample td.null {
 
 .schema-map-legend dd {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -4265,7 +4270,7 @@ table.sample td.null {
 /* Ссылка на модель этой базы в StrataSQL — под легендой, тем же кеглем, что абзацы карточки. */
 .data-map-design {
   margin: 14px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
@@ -4302,7 +4307,7 @@ table.sample td.null {
 
 .schema-legend-mark.self::before {
   content: '↻';
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .schema-legend-mark.standalone {
@@ -4739,7 +4744,7 @@ table.sample td.null {
   justify-content: center;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
 }
@@ -4754,7 +4759,7 @@ table.sample td.null {
    название — для узнавания, и в одну строку они не помещаются на телефоне. */
 .story-mission-label {
   display: block;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -4765,7 +4770,7 @@ table.sample td.null {
 .story-mission-hook,
 .story-mission-outcome {
   margin: 10px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.55;
 }
 
@@ -4773,7 +4778,7 @@ table.sample td.null {
   display: block;
   color: var(--text-dim);
   font-weight: 500;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.02em;
   margin-bottom: 2px;
 }
@@ -4787,7 +4792,7 @@ table.sample td.null {
 
 .story-mission-meta {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
@@ -4873,7 +4878,7 @@ table.sample td.null {
   align-items: baseline;
   gap: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   list-style: none;
   min-height: 24px;
@@ -4903,7 +4908,7 @@ table.sample td.null {
   background: none;
   border: none;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: var(--fs-small);
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -4915,7 +4920,7 @@ table.sample td.null {
 .story-opening,
 .story-ending p {
   margin: 10px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.6;
   white-space: pre-line;
 }
@@ -4955,7 +4960,7 @@ table.sample td.null {
 
 .story-invite-badge {
   margin: 0 0 6px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5031,7 +5036,7 @@ table.sample td.null {
 
 .ts-tab {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5042,13 +5047,13 @@ table.sample td.null {
 
 .ts-title {
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: var(--fs-text);
   font-weight: 600;
 }
 
 .ts-label {
   margin: 10px 0 4px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5057,7 +5062,7 @@ table.sample td.null {
 }
 
 .task-showcase pre.ts-code {
-  font-size: 12.5px;
+  font-size: var(--fs-small);
   padding: 8px 10px;
 }
 
@@ -5082,11 +5087,11 @@ table.sample td.null {
 
 .ts-result {
   margin: 6px 0 10px;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .ts-result code {
-  font-size: 12.5px;
+  font-size: var(--fs-small);
 }
 
 .ts-result-ok {
@@ -5104,17 +5109,17 @@ table.sample td.null {
 }
 
 .ts-feedback h3 {
-  font-size: 14px;
+  font-size: var(--fs-text);
 }
 
 .ts-feedback p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .ts-note {
   margin: 6px 2px 0;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5173,7 +5178,7 @@ table.sample td.null {
   background: none;
   border: 0;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--accent);
   text-align: left;
   text-decoration: underline;
@@ -5200,7 +5205,7 @@ table.sample td.null {
 
 .story-entry-title {
   margin: 0 0 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5208,7 +5213,7 @@ table.sample td.null {
 .story-entry-summary {
   margin: 0;
   padding: 4px 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -5229,7 +5234,7 @@ table.sample td.null {
 
 .story-entry-main {
   display: block;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -5238,7 +5243,7 @@ table.sample td.null {
 .story-entry-sub {
   display: block;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5250,13 +5255,13 @@ table.sample td.null {
 }
 
 .story-invite-row-title {
-  font-size: 14px;
+  font-size: var(--fs-text);
   font-weight: 600;
   color: var(--text);
 }
 
 .story-invite-row-action {
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 500;
   color: var(--accent);
 }
@@ -5272,7 +5277,7 @@ table.sample td.null {
 
 .story-mode-badge {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5281,7 +5286,7 @@ table.sample td.null {
 
 .story-mode-place {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -5301,14 +5306,14 @@ table.sample td.null {
 
 .story-mode-from {
   margin: 0 0 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: var(--text);
 }
 
 .story-mode-text {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.6;
 }
 
@@ -5324,7 +5329,7 @@ table.sample td.null {
 
 .story-mode-para {
   margin: 12px 0 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.65;
   /* Теория может нести разобранный пример запросом: pre-wrap сохраняет и
      переводы строк, и отступы кода, но всё равно переносит длинные строки
@@ -5355,7 +5360,7 @@ pre.story-mode-code {
 
 .story-letter-subject {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 600;
   color: var(--text-dim);
 }
@@ -5363,7 +5368,7 @@ pre.story-mode-code {
 .story-letter-record {
   margin: 8px 0 0;
   padding-left: 20px;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.65;
 }
 
@@ -5373,7 +5378,7 @@ pre.story-mode-code {
 
 .story-letter-signature {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-text);
   color: var(--text-dim);
 }
 
@@ -5384,7 +5389,7 @@ pre.story-mode-code {
 /* «Продолжение следует» — тихая метка перед выходом, не действие. */
 .story-mode-tbc {
   margin: 18px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-style: italic;
   color: var(--text-dim);
 }
@@ -5410,13 +5415,13 @@ pre.story-mode-code {
   gap: 8px;
   align-items: baseline;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.4;
 }
 
 .story-progress-label {
   flex: none;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5455,7 +5460,7 @@ pre.story-mode-code {
   padding: 4px 0 5px;
   border-radius: 6px;
   text-align: center;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   background: var(--bg-sunken);
   color: var(--text-dim);
@@ -5522,7 +5527,7 @@ pre.story-mode-code {
 .story-progress-step {
   flex: none;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -5542,7 +5547,7 @@ pre.story-mode-code {
 
 .story-known-title {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5561,7 +5566,7 @@ pre.story-mode-code {
 .story-known li {
   position: relative;
   padding-left: 16px;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -5614,7 +5619,7 @@ pre.story-mode-code {
  */
 .story-summary-h {
   margin: 24px 0 0;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5642,7 +5647,7 @@ pre.story-mode-code {
   gap: 2px 12px;
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.5;
 }
 
@@ -5651,7 +5656,7 @@ pre.story-mode-code {
 }
 
 .story-summary-note {
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -5664,7 +5669,7 @@ pre.story-mode-code {
 .story-summary-construct {
   margin-left: 8px;
   font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
 }
 
@@ -5722,7 +5727,7 @@ details.story-known[open] > summary::after {
 details.story-known > summary small {
   display: block;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 400;
   text-transform: none;
   letter-spacing: normal;
@@ -6247,7 +6252,7 @@ details.story-known > summary small {
 }
 
 .audience dt {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -6256,7 +6261,7 @@ details.story-known > summary small {
 
 .audience dd {
   margin: 4px 0 14px;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.6;
 }
 
@@ -6375,7 +6380,7 @@ details.story-known > summary small {
  */
 .zone-label {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   color: var(--text);
   text-transform: uppercase;
@@ -6404,7 +6409,7 @@ details.story-known > summary small {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   color: var(--text-dim);
 }
@@ -6547,7 +6552,7 @@ details.story-known > summary small {
 
 .track-intro-sample-label {
   margin: 0 0 8px;
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -6556,7 +6561,7 @@ details.story-known > summary small {
 
 .track-intro-sample-brief {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.55;
 }
 
@@ -6567,7 +6572,7 @@ details.story-known > summary small {
  */
 .track-intro-sample-goal {
   margin: 8px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -6636,7 +6641,7 @@ details.story-known > summary small {
 
 .intro-lead {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: var(--fs-small);
   margin: 0 0 12px;
 }
 
@@ -6670,7 +6675,7 @@ details.story-known > summary small {
   width: 100%;
   border-collapse: collapse;
   margin: 12px 0 14px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   /*
    * `table-layout: fixed` здесь несущий, а не косметика. При обычной
    * раскладке ширина колонки считается по её содержимому, а в дорожке
@@ -6776,7 +6781,7 @@ details.story-known > summary small {
 
 .intro-mini {
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   /*
    * `min-width: 0` на гибком элементе обязателен: без него табличка не может
    * стать у́же своего содержимого и вдвоём они уводят страницу вбок на 320px.
@@ -6788,7 +6793,7 @@ details.story-known > summary small {
 .intro-mini caption {
   text-align: left;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   padding-bottom: 4px;
 }
 
@@ -6819,7 +6824,7 @@ details.story-known > summary small {
 
 .intro-join figcaption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   margin-top: 8px;
   max-width: 68ch;
@@ -6862,13 +6867,13 @@ details.story-known > summary small {
   display: block;
   color: var(--text-dim);
   font-weight: 400;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   margin-top: 2px;
   line-height: 1.4;
 }
 
 .intro-foot {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   margin: 0;
 }
 
@@ -6907,7 +6912,7 @@ details.story-known > summary small {
   border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 600;
   line-height: 1.35;
 }
@@ -6922,7 +6927,7 @@ details.story-known > summary small {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 700;
 }
 
@@ -6969,7 +6974,7 @@ details.story-known > summary small {
 .intro-scale figcaption,
 .intro-pipeline figcaption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   margin-top: 10px;
   max-width: 68ch;
@@ -7022,7 +7027,7 @@ details.story-known > summary small {
 }
 
 .intro-pipeline-label {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -7188,7 +7193,7 @@ details.story-known > summary small {
   grid-area: label;
   /* Подпись читается текстом страницы, а не цветом узла. */
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 600;
   line-height: 1.3;
   /*
@@ -7212,7 +7217,7 @@ details.story-known > summary small {
   display: none;
   grid-area: note;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.35;
   margin-top: 2px;
 }
@@ -7225,7 +7230,7 @@ details.story-known > summary small {
 
 .intro-map figcaption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   margin-top: 12px;
   max-width: 68ch;
@@ -7338,7 +7343,7 @@ details.story-known > summary small {
   justify-content: space-between;
   align-items: center;
   margin: 0 0 6px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
@@ -7400,7 +7405,7 @@ details.story-known > summary small {
 
 .overview-divider p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -7441,7 +7446,7 @@ details.story-known > summary small {
 }
 
 .overview-stat-label {
-  font-size: 11px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   line-height: 1.3;
 }
@@ -7479,7 +7484,7 @@ details.story-known > summary small {
 .overview-gap-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   margin-bottom: 6px;
 }
@@ -7509,14 +7514,14 @@ details.story-known > summary small {
 }
 
 .overview-track-count {
-  font-size: 12px;
+  font-size: var(--fs-micro);
   color: var(--text-dim);
   white-space: nowrap;
 }
 
 .overview-tracks p {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   line-height: 1.5;
 }
@@ -7527,7 +7532,7 @@ details.story-known > summary small {
 }
 
 .overview-task-prompt {
-  font-size: 14px;
+  font-size: var(--fs-text);
   line-height: 1.5;
   margin: 0 0 10px;
 }
@@ -7541,7 +7546,7 @@ details.story-known > summary small {
   width: 100%;
   border-collapse: collapse;
   margin: 10px 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .overview-task-table th,
@@ -7559,14 +7564,14 @@ details.story-known > summary small {
 .overview-task-table th {
   color: var(--text-dim);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 .overview-task-ellipsis td {
   text-align: center;
   color: var(--text-dim);
   font-style: italic;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   border-bottom: none;
 }
 
@@ -7576,7 +7581,7 @@ details.story-known > summary small {
 
 .overview-task figcaption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   margin-top: 6px;
 }
@@ -7584,7 +7589,7 @@ details.story-known > summary small {
 /* -------------------------------------------------------------- схема */
 .overview-schema figcaption {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--fs-micro);
   line-height: 1.5;
   margin-top: 8px;
 }
@@ -7607,14 +7612,14 @@ details.story-known > summary small {
 }
 
 .overview-terms-title {
-  font-size: 13px;
+  font-size: var(--fs-small);
   margin: 16px 0 4px;
   color: var(--text-dim);
 }
 
 .overview-author {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 /* --------------------------------------------------- куда нажать сначала */
@@ -7624,7 +7629,7 @@ details.story-known > summary small {
 
 .overview-quickstart-title {
   margin: 0 0 6px;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
 }
 
@@ -7635,7 +7640,7 @@ details.story-known > summary small {
 
 .overview-quickstart-steps li {
   margin: 6px 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   line-height: 1.5;
 }
 
@@ -7660,12 +7665,12 @@ details.story-known > summary small {
 .overview-callout b {
   display: block;
   margin-bottom: 3px;
-  font-size: 13px;
+  font-size: var(--fs-small);
 }
 
 .overview-callout p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--text-dim);
   line-height: 1.5;
 }
@@ -7769,14 +7774,14 @@ details.story-known > summary small {
   .overview-masthead-tagline {
     display: block;
     margin-top: 2px;
-    font-size: 12px;
+    font-size: var(--fs-micro);
     line-height: 1.45;
     color: #444;
   }
 
   .overview-kicker {
     margin: 0 0 4px;
-    font-size: 12px;
+    font-size: var(--fs-micro);
     color: #2563eb;
   }
 
@@ -7829,7 +7834,7 @@ details.story-known > summary small {
   }
 
   .overview-print-qr span {
-    font-size: 12px;
+    font-size: var(--fs-micro);
     color: #555;
     max-width: 30ch;
   }
@@ -7983,7 +7988,7 @@ details.story-known > summary small {
     color: #000;
     border-color: #ccc;
     padding: 9px 10px;
-    font-size: 11.5px;
+    font-size: var(--fs-micro);
     line-height: 1.35;
   }
 
@@ -8046,7 +8051,7 @@ details.story-known > summary small {
 
   .overview-quickstart-title,
   .overview-quickstart-steps li {
-    font-size: 12px;
+    font-size: var(--fs-micro);
   }
 
   .overview-quickstart-steps li {
