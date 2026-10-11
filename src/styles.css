@@ -1,5 +1,76 @@
 /* Мобильный интерфейс: тёмная тема по умолчанию, светлая — по системной настройке. */
 
+/*
+ * IBM Plex Sans + Mono — тот же шрифт, что у pandas.quaera.app, чтобы семейство
+ * сайтов читалось одним.
+ *
+ * Свой хостинг, а не Google Fonts: приложение офлайновое, а файлы из src/fonts
+ * Vite кладёт в /assets/ с хешем в имени — оттуда их забирает в предзагрузку
+ * scripts/postbuild-sw.mjs вместе с бандлами, и шрифт есть уже при первом
+ * запуске без сети. Чужой домен service worker не перехватывает (см. fetch
+ * в public/sw.js), то есть шрифт с CDN офлайн пропадал бы.
+ *
+ * Состав — ровно то, что предзагружается на каждое устройство, поэтому скупо
+ * (123 КБ на шесть файлов): только латиница и кириллица; Sans — одним
+ * переменным файлом на подмножество (оси веса хватает на 400…700 интерфейса),
+ * Mono — 400 и 600 (700 берёт 600 без синтетического утолщения). Курсива нет:
+ * он стоял бы ещё 82 КБ ради десятка подписей, браузер наклонит прямой.
+ * Подмножества и unicode-range — из @fontsource 5.3.0; лицензия — fonts/OFL.txt.
+ */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-sans-cyrillic-wght-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-sans-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-mono-cyrillic-400-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-mono-cyrillic-600-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --bg: #0b1020;
   --bg-raised: #141a2e;
@@ -111,6 +182,8 @@
  * у них своя роль (хром приложения и разделы длинной страницы).
  */
 :root {
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
   --fs-display: 24px;
   --fs-h2: 18px;
   --fs-h3: 16px;
@@ -142,7 +215,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font: 16px/1.5 var(--font-sans);
   /* Ввод SQL не должен приводить к масштабированию и «прыжкам» страницы. */
   -webkit-text-size-adjust: 100%;
   overscroll-behavior-y: none;
@@ -174,7 +247,7 @@ input:focus-visible,
 code,
 pre,
 textarea.sql {
-  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-text);
 }
 
@@ -2351,7 +2424,7 @@ textarea.sql:focus {
   border-radius: 9px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
-  font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-small);
   color: var(--code);
 }
@@ -3470,7 +3543,7 @@ tbody tr:last-child td {
 .glossary-note-pointer {
   margin-top: 2px;
   color: var(--text-dim);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 .reflexive {
@@ -3831,7 +3904,7 @@ table.sample th {
 }
 
 table.sample td {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 /* NULL — не пустая ячейка: разница между «неизвестно» и «пусто» здесь отдельная тема. */
@@ -4166,7 +4239,7 @@ table.sample td.null {
 }
 
 .schema-node text {
-  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-micro);
   fill: var(--text);
 }
@@ -5041,7 +5114,7 @@ table.sample td.null {
 }
 
 .ts-tab-id {
-  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   color: var(--text);
 }
 
@@ -5668,7 +5741,7 @@ pre.story-mode-code {
  */
 .story-summary-construct {
   margin-left: 8px;
-  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-micro);
   color: var(--text-dim);
 }
