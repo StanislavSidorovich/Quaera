@@ -1,0 +1,8 @@
+{
+  "taskId": "sql-006",
+  "trap": 0,
+  "fixFrom": "chain_name = NULL",
+  "fixTo": "chain_name IS NULL",
+  "wrong": { "columns": ["outlets"], "rows": [[0]] },
+  "right": { "columns": ["outlets"], "rows": [[61]] }
+}

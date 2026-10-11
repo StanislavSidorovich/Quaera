@@ -1506,99 +1506,59 @@ a.btn {
   max-width: 68ch;
 }
 
-.welcome-intro-figure {
-  display: none;
-}
-
-@container (min-width: 860px) {
-  .welcome-intro-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 450px;
-    gap: 28px;
-    align-items: center;
-  }
-
-  .welcome-intro-figure {
-    display: block;
-  }
-}
-
 /*
- * Картинка «запрос → результат → эталон» (QueryLoop.tsx).
- *
- * Ширина фиксирована по viewBox, а не растянута по колонке: подписи набраны
- * 9px, и любое масштабирование вверх или вниз бьёт по ним первым — растянутая
- * до 600px картинка выглядит рыхлой, сжатая до 300px нечитаема. Колонка
- * в сетке выше объявлена ровно этими 448px, поэтому масштабирования и нет.
+ * Строка чисел над заголовком новичка: «379 заданий · 4 трека · …».
+ * Числа — основным цветом и жирным, слова-условия — серым: глаз цепляется
+ * за число, как у Exercism. Разделитель-точка ставится CSS, а не текстом,
+ * чтобы при переносе строки он не повисал в начале следующей.
  */
-.query-loop {
-  display: block;
-  width: 450px;
-  height: auto;
+.home-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
-.query-loop .ql-panel {
-  fill: var(--bg-sunken);
-  stroke: var(--line);
-  stroke-width: 1;
+.home-stats span:not(:last-child)::after {
+  content: '·';
+  margin: 0 8px;
+  font-weight: 400;
+  color: var(--text-dim);
 }
 
-.query-loop .ql-label {
-  fill: var(--text-dim);
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.query-loop .ql-code {
-  fill: var(--code);
-  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 10.5px;
-  white-space: pre;
-}
-
-/* Ключ и значение разными тонами: иначе три пары полосок читаются как один
-   столбец с рваным правым краем, а не как таблица из двух колонок. */
-.query-loop .ql-cell-key {
-  fill: var(--track-sql);
-  opacity: 0.55;
-}
-
-.query-loop .ql-cell {
-  fill: var(--text-dim);
-  opacity: 0.4;
-}
-
-.query-loop .ql-arrow {
-  stroke: var(--text-dim);
-  stroke-width: 1.5;
-}
-
-.query-loop .ql-arrow-head {
-  fill: var(--text-dim);
-}
-
-.query-loop .ql-ok {
-  fill: var(--ok);
-}
-
-/* Галочка нарисована цветом карточки, а не белым: в светлой теме --ok тёмный,
-   и белая галочка на нём читается, а в тёмной — --ok светлый, и белое по
-   светлому пропадает. --bg-raised переворачивается вместе с темой. */
-.query-loop .ql-ok-mark {
-  fill: none;
-  stroke: var(--bg-raised);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.query-loop .ql-ok-label {
-  fill: var(--ok);
-  font-size: 9px;
+.home-stats span:first-child,
+.home-stats span:nth-child(2) {
+  color: var(--text);
   font-weight: 600;
-  text-anchor: middle;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  * Факты и справочники рядом на широком экране (см. DataScreen.tsx).
@@ -4848,153 +4808,182 @@ table.sample td.null {
 }
 
 /*
- * Проза и карта рядом от 900px, в столбик ниже.
+ * Проза и окно задания рядом, когда карточке хватает места, в столбик ниже.
  *
- * `auto` у второй колонки означает «ровно по карте»: она не тянется
- * и не отбирает ширину у абзаца, а занимает пустоту, которая иначе
- * оставалась бы справа от текста, ограниченного 68 символами.
+ * Порог 820px контейнера, а не прежние 640 (так было при карте недель
+ * шириной ~400px, у которой текст ничего не терял): окну задания нужно
+ * не меньше 340px, чтобы строка кода в 36 знаков не переносилась, и при
+ * 640 абзацу оставалось бы ~250px — три слова в строку. Вторая колонка
+ * ограничена сверху 420px: шире окно только растягивает пустоту справа
+ * от коротких строк кода, а ширину отдаёт абзацу, у которого её и так мало.
  */
 .story-invite-body {
   display: grid;
   gap: 20px;
 }
 
-@container (min-width: 640px) {
+@container (min-width: 820px) {
   .story-invite-body {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+    /* start, а не center: окно выше прозы, и по центру абзац отрывался
+       от заголовка карточки над сеткой (проверено на 1440, 2026-10-11). */
+    align-items: start;
     gap: 32px;
   }
 }
 
 /*
- * Хвост абзаца живёт ровно там же, где вторая колонка: рядом с картой
- * место есть, под картой его нет. В столбик карточка целиком не влезала
- * на первый экран при крупном шрифте — замер и выбор «резать текст,
- * а не карту» описаны в i18n/ru.ts у homeBodyMore.
- *
- * display: none, а не визуальное скрытие: то же самое сказано рядом
- * картой, и второй раз читать это скринридеру незачем.
+ * Хвост абзаца живёт ровно там же, где вторая колонка: рядом с окном
+ * место есть, в столбик его нет. В столбик карточка целиком не влезала
+ * на первый экран при крупном шрифте — замер и выбор «резать текст»
+ * описаны в i18n/ru.ts у homeBodyMore. Сам хвост рассказывает про
+ * устройство кампании, а выбор «начать или пролистать» на телефоне
+ * решает первое предложение.
  */
 .story-invite-more {
   display: none;
 }
 
-@container (min-width: 640px) {
+@container (min-width: 820px) {
   .story-invite-more {
     display: inline;
   }
 }
 
 /*
- * Колонки прижаты к правому краю, а не растянуты по ширине карты.
+ * Окно с настоящим заданием (src/ui/TaskShowcase.tsx).
  *
- * Ширину карте задаёт легенда — три полных названия трека в строку, — и без
- * этого метки недель отъезжали от клеток на две сотни пикселей, переставая
- * читаться подписями к ним. Тот же класс, что «одинаково оформленные соседи
- * сливаются», только наоборот: связанные элементы разводит пустота.
+ * Вкладка-подпись над окном — приём Hex из скилла landing-showcase:
+ * моноширинный id задания говорит «это кусок продукта, а не картинка».
+ * Внутри — те же sql-block и .feedback.warn, что на экране задания,
+ * а не их подобия: окно обещает ровно тот экран, который человек увидит.
  */
-.story-map-grid {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  justify-content: start;
-  align-items: center;
-  gap: 8px 12px;
+.task-showcase {
+  margin: 0;
+  min-width: 0;
 }
 
-/* На широком экране карта стоит справа от прозы, и прижимать её надо к тому
-   краю, у которого она живёт; на узком она под прозой, и там левый край
-   общий у всей карточки. */
-@container (min-width: 640px) {
-  .story-map-grid {
-    justify-content: end;
-  }
+.ts-window {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 12px;
 }
 
-/*
- * В столбик карта стоит последней, и её отступы решают, попадает ли низ
- * карточки на первый экран телефона: при крупном шрифте запас там
- * измеряется десятком пикселей. Уменьшены только зазоры — клетка и кегль
- * остались прежними, потому что уменьшать надо пустоту, а не то,
- * что читают.
- */
-@container (max-width: 639px) {
-  .story-map-grid {
-    gap: 6px 10px;
-  }
-
-  .story-map-legend {
-    margin-top: 8px;
-    gap: 3px 10px;
-  }
-}
-
-.story-map-week {
+.ts-tab {
+  margin: 0 0 4px;
   font-size: 12px;
   color: var(--text-dim);
-  white-space: nowrap;
 }
 
-.story-map-days {
-  display: flex;
-  gap: 6px;
+.ts-tab-id {
+  font-family: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  color: var(--text);
 }
 
-/*
- * День — квадрат со скруглением, не круг: пять квадратов в ряд читаются
- * отрезком времени, пять кругов — набором значков. Размер 22px взят от
- * подписи ряда: клетка не должна быть заметно выше строки, рядом с которой
- * стоит, иначе ряд перестаёт читаться одной строкой.
- */
-.story-map-day {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--track, var(--accent)) 45%, transparent);
-  border: 1px solid color-mix(in srgb, var(--track, var(--accent)) 60%, transparent);
+.ts-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.story-map-day.track-domain,
-.story-map-dot.track-domain {
-  --track: var(--track-domain);
-}
-
-.story-map-day.track-sql,
-.story-map-dot.track-sql {
-  --track: var(--track-sql);
-}
-
-.story-map-day.track-python,
-.story-map-dot.track-python {
-  --track: var(--track-python);
-}
-
-.story-map-day.track-model,
-.story-map-dot.track-model {
-  --track: var(--track-model);
-}
-
-.story-map-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 10px 0 0;
-  font-size: 11px;
+.ts-label {
+  margin: 10px 0 4px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
-.story-map-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.ts-label:first-of-type {
+  margin-top: 0;
 }
 
-.story-map-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 3px;
-  background: var(--track, var(--accent));
+.task-showcase pre.ts-code {
+  font-size: 12.5px;
+  padding: 8px 10px;
 }
+
+/*
+ * Строка с ошибкой и исправленная строка подсвечены фоном своего тона, а не
+ * цветом текста: код остаётся цвета кода, читается одинаково в обеих темах,
+ * и подсветка не спорит с синтаксисом. Рецепт смеси — как у .feedback.warn.
+ */
+.ts-bad {
+  --ts-hl: color-mix(in srgb, var(--warn) 18%, transparent);
+  background: var(--ts-hl);
+  box-shadow: -6px 0 0 var(--ts-hl), 6px 0 0 var(--ts-hl);
+  border-radius: 4px;
+}
+
+.ts-good {
+  --ts-hl: color-mix(in srgb, var(--ok) 16%, transparent);
+  background: var(--ts-hl);
+  box-shadow: -6px 0 0 var(--ts-hl), 6px 0 0 var(--ts-hl);
+  border-radius: 4px;
+}
+
+.ts-result {
+  margin: 6px 0 10px;
+  font-size: 13px;
+}
+
+.ts-result code {
+  font-size: 12.5px;
+}
+
+.ts-result-ok {
+  margin-bottom: 0;
+  color: var(--ok);
+}
+
+.ts-result-ok b,
+.ts-result-ok code {
+  color: var(--text);
+}
+
+.ts-feedback {
+  padding: 10px 12px;
+}
+
+.ts-feedback h3 {
+  font-size: 14px;
+}
+
+.ts-feedback p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ts-note {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
  * Вернувшемуся — строка, а не карточка: главное действие на его главной

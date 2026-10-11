@@ -4236,5 +4236,44 @@ function translationPairs(orig, tr) {
   if (!hits) console.log(`  ok   позиционных отсылок и персонажей кампании в свободном режиме нет: ${scanned} полей в ${files.length} паках`);
 }
 
+/*
+ * Окно с настоящим заданием на главной новичка (src/ui/TaskShowcase.tsx).
+ *
+ * Тексты окно берёт из пака, а числа результатов — из showcase.json, и это
+ * единственное место приложения, где вывод запроса показан без запуска
+ * движка. Без этой проверки числа были бы вторым источником правды о
+ * датасете, который молча разойдётся с ним при следующей генерации, — ровно
+ * поэтому прежняя картинка QueryLoop обходилась полосками без значений.
+ * Проверяется вся цепочка, которую окно утверждает: ловушка возвращает
+ * «неверное», исправленная строка превращает её в запрос, возвращающий
+ * «верное», и это совпадает с эталоном задания.
+ */
+{
+  const sc = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'showcase.json'), 'utf8'));
+  const at = `showcase.json (${sc.taskId})`;
+  const task = readPack('sql-core').tasks.find((t) => t.id === sc.taskId);
+  const trap = task?.traps?.[sc.trap];
+  const enTask = readPack('sql-core.en').tasks.find((t) => t.id === sc.taskId);
+  const same = (a, b) => JSON.stringify({ columns: a.columns, rows: a.rows }) === JSON.stringify(b);
+  if (!task || !trap) {
+    fail(at, `в sql-core нет задания или ловушки №${sc.trap}: окно на главной пропадёт молча`);
+  } else if (!enTask?.traps?.[sc.trap]?.message) {
+    fail(at, 'у ловушки нет английского разбора: окно в английской локали останется без объяснения');
+  } else if (trap.code.split(sc.fixFrom).length !== 2) {
+    fail(at, `«${sc.fixFrom}» должно встречаться в коде ловушки ровно один раз: окно подсвечивает эту строку и правит её`);
+  } else {
+    const fixed = trap.code.replace(sc.fixFrom, sc.fixTo);
+    const wrong = runSql(trap.code);
+    const right = runSql(fixed);
+    const reference = runSql(task.solution);
+    if (!same(wrong, sc.wrong)) fail(at, `ловушка вернула ${JSON.stringify(wrong.rows)}, в окне записано ${JSON.stringify(sc.wrong.rows)}`);
+    else if (!same(right, sc.right)) fail(at, `исправленный запрос вернул ${JSON.stringify(right.rows)}, в окне записано ${JSON.stringify(sc.right.rows)}`);
+    else if (!same(reference, sc.right)) fail(at, `исправленный запрос не совпадает с эталоном задания: эталон ${JSON.stringify(reference.rows)}`);
+    else if (Math.max(...trap.code.split('\n').map((l) => l.length), fixed.split('\n').find((l) => l.includes(sc.fixTo)).length) > 37)
+      fail(at, 'строка кода в окне длиннее 37 знаков: на телефоне она перенесётся (ширина .sql-block)');
+    else console.log(`  ok   окно на главной: ловушка ${sc.taskId} даёт ${sc.wrong.rows[0]}, исправленная строка — ${sc.right.rows[0]}, как эталон`);
+  }
+}
+
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
 process.exit(failed ? 1 : 0);

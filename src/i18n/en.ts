@@ -28,6 +28,21 @@ export const en = {
   },
   welcome: {
     headline: 'An analytics trainer: the query runs, the answer is checked against the data',
+    stats: (tasks: number, tracks: number) => [
+      `${tasks} ${tasks === 1 ? 'task' : 'tasks'}`,
+      `${tracks} ${tracks === 1 ? 'track' : 'tracks'}`,
+      'no sign-up',
+      'works offline',
+    ],
+    showcase: {
+      tab: 'a task from the SQL track',
+      query: 'Query',
+      result: 'Returned',
+      fixed: 'Fixed',
+      matches: 'matches the reference',
+      note: 'Real output of the checker: this is how the trainer answers this mistake.',
+      aria: 'Example: a wrong query, the checker explaining the mistake, and the fixed query',
+    },
     body:
       "An FMCG and OTC-pharma trainer built on a realistic business dataset: a fictional distributor. Four tracks work through it: analytics as a profession, SQL, pandas, the data model. The tasks are the ones an analyst actually gets: find where a brand's distribution went, work out a warehouse overstock, explain a seasonal sales dip.",
     proofPoints: [
@@ -48,17 +63,8 @@ export const en = {
     chainTitle: 'From question to decision',
     chainIntro: 'The same path for every business case, and each step has its own track.',
     chainSteps: ['business question', 'requirements', 'metric', 'data', 'analysis', 'model', 'insight', 'decision'],
-    /** См. комментарий в ru.ts: подписи к картинке рядом с заголовком. */
     /** См. комментарий в ru.ts: вход от вопроса пришедшего, а не от названия раздела. */
     sandboxLink: 'Just try a query → Sandbox',
-    loop: {
-      queryLabel: 'your query',
-      resultLabel: 'what came back',
-      expectedLabel: 'expected',
-      matchLabel: 'they agree',
-      aria:
-        'The query runs against the dataset, and the table it returned is checked row by row against the expected table.',
-    },
   },
   /** См. комментарий в ru.ts: боковая навигация существует только на десктопе. */
   nav: {

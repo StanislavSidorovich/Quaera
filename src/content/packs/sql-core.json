@@ -375,7 +375,7 @@
       "explain": "Здесь две ловушки сразу. Первая — IS NULL вместо = NULL. Вторая важнее: в справочнике клиентов смешаны сущности разного смысла, и «все строки таблицы» почти никогда не равно «все объекты, о которых спрашивает заказчик». Прежде чем считать, стоит посмотреть, что вообще лежит в таблице: SELECT customer_type, COUNT(*) FROM dim_customer GROUP BY 1.",
       "traps": [
         {
-          "code": "SELECT COUNT(*) AS outlets\nFROM dim_customer\nWHERE chain_name = NULL AND customer_type <> 'distributor'",
+          "code": "SELECT COUNT(*) AS outlets\nFROM dim_customer\nWHERE chain_name = NULL\n  AND customer_type <> 'distributor'",
           "message": "Результат 0 вместо 61. Сравнение «= NULL» никогда не бывает истинным: NULL означает «неизвестно», а неизвестное не равно ничему, даже другому NULL. Пустоту проверяют только через IS NULL."
         }
       ]

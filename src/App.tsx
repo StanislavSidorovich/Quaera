@@ -26,7 +26,7 @@ import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
-import { QueryLoop } from './ui/QueryLoop';
+import { TaskShowcase } from './ui/TaskShowcase';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
@@ -3031,66 +3031,6 @@ function WelcomeHero({
  * с каждым треком — TrackCards и About берут ту же t.tracks.chainStage,
  * чтобы подпись «на каком я шаге» не расходилась между экранами.
  */
-/**
- * Карта кампании: ряд на неделю, клетка на день — ряды и клетки берутся
- * из самой кампании, а не зашиты. С 2026-09-14 рядов пять: дело Setouchi
- * разложено на две недели (перебалансировка недель 4–5). Фраза абзаца
- * «дел четыре» при этом осталась верной — дел по-прежнему четыре, просто
- * последнее идёт две недели, и карта показывает это двумя рядами одного цвета.
- *
- * Стоит рядом с прозой карточки на главной и заменяет собой её последнюю
- * фразу — «дел четыре, и к последнему в руках уже и SQL, и pandas»
- * абзац сообщает словами то, что карта показывает целиком: сколько это,
- * из чего состоит и чем меняется от недели к неделе. Заодно занимает
- * пустоту справа: абзац ограничен 68 символами, а карточка стоит во всю
- * ширину контента.
- *
- * Клетка окрашена по треку своего дня — иначе неделя 3, где дни идут
- * то по профессии, то по SQL, читалась бы такой же однородной, как
- * остальные, и карта врала бы ровно в том единственном месте, ради
- * которого стоит показывать дни по отдельности, а не числом.
- *
- * Прогресс здесь не показывается: карточка целиком принадлежит человеку,
- * который ещё ничего не решал (см. `isNewUser` у места вызова), и
- * закрашивать ему нечего.
- */
-function StoryMap() {
-  const { t, locale } = useI18n();
-  const campaign = useMemo(() => storyCampaign(locale), [locale]);
-  const tracks = useMemo(() => {
-    const seen: Track[] = [];
-    for (const m of campaign.missions) if (!seen.includes(m.track)) seen.push(m.track);
-    return seen;
-  }, [campaign]);
-
-  return (
-    <div className="story-map">
-      <div className="story-map-grid">
-        {campaign.weeks.map((week, i) => (
-          <Fragment key={week.id}>
-            <span className="story-map-week">{t.storyMode.weekShort(i + 1)}</span>
-            <span className="story-map-days">
-              {campaign.missions
-                .filter((m) => m.week === week.id)
-                .map((m) => (
-                  <span key={m.id} className={`story-map-day track-${m.track}`} title={m.short} />
-                ))}
-            </span>
-          </Fragment>
-        ))}
-      </div>
-      <p className="story-map-legend">
-        {tracks.map((track) => (
-          <span key={track} className="story-map-legend-item">
-            <span className={`story-map-dot track-${track}`} aria-hidden />
-            {t.tracks.names[track]}
-          </span>
-        ))}
-      </p>
-    </div>
-  );
-}
-
 function ChainDiagram() {
   const { t } = useI18n();
   return (
@@ -3586,6 +3526,22 @@ function Home({
        * после выбора — тем же доводом, которым питч разделили надвое
        * в 2026-08-12.
        */}
+      {/*
+       * Строка чисел над заголовком (приём Exercism из скилла landing-showcase):
+       * конкретное число убеждает быстрее абзаца. Числа считаются из паков,
+       * как и счётчики на плитках треков, а не пишутся в текст: задания
+       * добавляются каждым заходом, и строка в прозе протухла бы первой.
+       */}
+      {isNewUser && (
+        <p className="home-stats">
+          {t.welcome.stats(
+            packs.reduce((n, p) => n + (p.status === 'draft' ? 0 : p.tasks.length), 0),
+            packs.length,
+          ).map((part, i) => (
+            <span key={i}>{part}</span>
+          ))}
+        </p>
+      )}
       {isNewUser && <h2 className="home-headline">{t.welcome.headline}</h2>}
 
       {/*
@@ -3665,7 +3621,13 @@ function Home({
                 {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
                 {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} />}
               </div>
-              <StoryMap />
+              {/*
+               * Справа — окно с настоящим заданием, а не карта недель кампании
+               * (была здесь до 2026-10-11): новичку сетка «Неделя 1…7» ничего
+               * не говорит, а разбор ошибки показывает, чем тренажёр отличается.
+               * Довод целиком в ui/TaskShowcase.tsx.
+               */}
+              <TaskShowcase />
             </div>
           </div>
         ) : (
@@ -4174,21 +4136,12 @@ function Home({
        */}
       {isNewUser && (
         <div className="card welcome-intro">
-          <div className="welcome-intro-grid">
-            <div>
-              <WelcomeIntroBody withHeadline={false} />
-            </div>
-            {/*
-             * Картинка только здесь, не в WelcomeHero: на «О тренажёре»
-             * справа от этого же абзаца стоят три доказательства в ряд
-             * и цепочка, там пустоты нет. Прячется на узком экране через
-             * CSS (.welcome-intro-figure), а не развилкой по ширине в JS, —
-             * тот же приём, что у .track-cards и .tabs.tracks.
-             */}
-            <div className="welcome-intro-figure">
-              <QueryLoop />
-            </div>
-          </div>
+          {/*
+           * Картинки QueryLoop (запрос → результат → эталон полосками) здесь
+           * больше нет: то же самое с настоящими числами и разбором ошибки
+           * показывает окно задания в карточке кампании наверху (TaskShowcase).
+           */}
+          <WelcomeIntroBody withHeadline={false} />
           {/*
            * Свёрнутые доводы — в той же карточке, а не отдельной под ней.
            * Отдельная стоила своих 16px зазора и 32px padding сверх высоты
