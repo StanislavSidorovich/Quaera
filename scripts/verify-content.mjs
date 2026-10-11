@@ -3319,6 +3319,11 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
     eq('py-001', await sizes('py-001'), [38, 6], '| вместо &: 38 строк вместо 6');
     eq('py-009', await sizes('py-009'), [0, 5], '== None всегда ложно: 0 строк вместо 5');
     eq('py-004', await sizes('py-004'), [0, 2], '== вместо .str.contains: 0 строк вместо 2');
+    // Вторая партия того же дня: флаг вместо фильтра и перевёрнутое отношение.
+    eq('py-039', await sizes('py-039'), [118449, 37596], 'флаг без фильтра: вся таблица, 118 449 строк вместо 37 596');
+    const t70 = await pyTrapped('py-070');
+    const g70 = await pyGood('py-070');
+    eq('py-070', [t70[0][1], g70[0][1], t70[4][1], g70[4][1]], [0.01, 76, 0.04, 25.6], 'pack_size / list_price даёт сотые доли вместо цены за единицу');
   }
   {
     const sqlPack = readPack('sql-core');
@@ -3354,6 +3359,13 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
       same('sql-003', [t003.length, sqlGood('sql-003').length, t003.filter((r) => r[2] === 'Aqualis' && r[3] <= 100).map((r) => r[3]).sort((a, b) => a - b)], [11, 6, [38, 38, 62, 62, 79]], 'OR без скобок: 11 строк вместо 6, дешёвый Aqualis в ответе');
       same('sql-100', [sqlTrap('sql-100')[0], sqlGood('sql-100')[0]], [['Aqualis', 4835], ['Aqualis', 88]], 'COUNT вместо COUNT(DISTINCT): строки продаж вместо точек');
       same('sql-029', [sqlTrap('sql-029')[0], sqlGood('sql-029')[0]], [['Vitanor Omega-3 x60', 812], ['Vitanor Forte x30', 742]], 'без OFFSET 1 вернулся первый по цене, а не второй');
+      // Вторая партия того же дня.
+      same('sql-096', [sqlTrap('sql-096').map((r) => r[0]), sqlGood('sql-096').map((r) => r[0])], [['Aqualis', 'Milvara', 'Krosti', 'Fruvia', 'Nettora'], ['Nettora', 'Fruvia', 'Krosti', 'Milvara', 'Aqualis']], 'без DESC порядок обратный: сверху Aqualis 67.83, а не Nettora 201.6');
+      const t15 = sqlTrap('sql-015');
+      same('sql-015', [t15.length, t15.every((r) => r[1] === 0 && r[2] === 0), sqlGood('sql-015').every((r) => r[1] > 0 && r[2] > 0)], [9, true, true], '= NULL и != NULL не истинны: нули у всех девяти брендов');
+      const t45 = sqlTrap('sql-045');
+      const g45 = sqlGood('sql-045');
+      same('sql-045', [t45.find((r) => r[0] === 'ecom').slice(2), g45.find((r) => r[0] === 'ecom').slice(2)], [[10100, 2553], [8, 3222912]], 'COUNT вместо COUNT(DISTINCT): 10 100 «точек» вместо 8, выручка на точку 2 553 вместо 3 222 912');
     }
   }
 }

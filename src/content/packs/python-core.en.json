@@ -937,6 +937,11 @@
     },
     {
       "id": "py-039",
+      "traps": [
+        {
+          "message": "The whole table came back, 118 449 rows, and 80 853 of them have False in is_large. A flag column does not select rows: to keep only the large sales, put the condition into the filter fact_sellout[...] and add is_large=True to the rows it selected."
+        }
+      ],
       "title": "Large sales as a separate table",
       "brief": "A logistics analyst wants a separate table of sales above the average revenue across all of fact_sellout, marked with is_large, without touching the source table and without relying on pandas warnings to notice it.",
       "goal": "Return the rows of fact_sellout where revenue is above the average for the whole table, with an extra column is_large=True, as a chain through .copy() and .assign(), with no intermediate assignment into a filtered slice.",
@@ -1342,6 +1347,11 @@
     },
     {
       "id": "py-070",
+      "traps": [
+        {
+          "message": "The values came out as hundredths: 0.01 for the first product instead of 76. The ratio is flipped: pack_size / list_price says how many pack units one currency unit buys. The price per unit is list_price / pack_size."
+        }
+      ],
       "title": "Price per pack unit",
       "brief": "A buyer compares prices per pack unit: list_price divided by pack_size. An intern writes it with apply(lambda row: ..., axis=1). Prices can only be compared within one unit of measure (grams with grams, milliliters with milliliters), so the unit column has to be looked at separately.",
       "goal": "Return columns product_id and price_per_unit, where price_per_unit is list_price / pack_size, rounded to 2 places, without apply.",

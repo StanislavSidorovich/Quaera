@@ -824,6 +824,11 @@
     },
     {
       "id": "sql-015",
+      "traps": [
+        {
+          "message": "Both columns are zero for all nine brands. Comparing with NULL through = or != is never true: the result is «unknown», and no row reaches the THEN branch. A missing value is tested only with IS NULL and IS NOT NULL."
+        }
+      ],
       "title": "Promo vs. base sales",
       "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
       "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue (revenue during promotions and outside them, both rounded to whole numbers).",
@@ -922,6 +927,11 @@
     },
     {
       "id": "sql-045",
+      "traps": [
+        {
+          "message": "The e-com channel shows 10 100 outlets instead of 8, and revenue per outlet 2 553 instead of 3 222 912. COUNT(f.customer_id) counts sales rows: one outlet buys every week and gets recorded again and again. Outlets are counted by COUNT(DISTINCT f.customer_id), and revenue must be divided by that."
+        }
+      ],
       "title": "Revenue per active outlet by channel",
       "brief": "The commercial director compares channels not by absolute revenue but by per-outlet efficiency; otherwise a channel with a hundred outlets always looks stronger than a niche one, even if it performs worse.",
       "goal": "For 2025, return channel, revenue (sum of revenue, rounded to whole numbers), outlets (count of distinct outlets with at least one sale), and revenue_per_outlet (revenue divided by outlet count, rounded to whole numbers).",
@@ -2074,6 +2084,11 @@
     },
     {
       "id": "sql-096",
+      "traps": [
+        {
+          "message": "The list came back upside down: Aqualis at 67.83, the cheapest brand, is on top, and Nettora at 201.6 is at the bottom. ORDER BY without DESC sorts ascending, smallest first. To put the largest value first, write DESC after the column."
+        }
+      ],
       "title": "Who's priciest on average",
       "brief": "The category manager asks for the same average price by FMCG brand, but sorted this time: which brand is the most expensive on average?",
       "goal": "For the FMCG division, return brand and avg_price (average price rounded to two decimal places), ordered by average price descending.",
