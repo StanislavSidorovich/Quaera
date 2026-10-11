@@ -3308,6 +3308,17 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
     const r88 = (await runPython(t88[1].code)).rows;
     if (JSON.stringify(r88.map((r) => r.join(':')).sort()) !== JSON.stringify(['0:82647', 'big:11953', 'promo:23849'])) fail('py-088', `ловушка без default дала ${JSON.stringify(r88)}`);
     else console.log('  ok   py-088 (ловушка): без default метка «0» на 82647 строк');
+
+    // Ловушки write-заданий (2026-10-11): числа, названные в их сообщениях.
+    const sizes = async (id) => [(await pyTrapped(id)).length, (await pyGood(id)).length];
+    const eq = (id, got, want, note) => {
+      if (JSON.stringify(got) !== JSON.stringify(want)) fail(id, `${note}: ожидалось ${JSON.stringify(want)}, получено ${JSON.stringify(got)}`);
+      else console.log(`  ok   ${id} (ловушка): ${note}`);
+    };
+    eq('py-035', [(await pyTrapped('py-035'))[0], (await pyGood('py-035'))[0]], [['2024-01-31T00:00:00.000', 6738], ['2024-01-01T00:00:00.000', 6738]], 'частота M подписывает месяц последним днём, суммы те же');
+    eq('py-001', await sizes('py-001'), [38, 6], '| вместо &: 38 строк вместо 6');
+    eq('py-009', await sizes('py-009'), [0, 5], '== None всегда ложно: 0 строк вместо 5');
+    eq('py-004', await sizes('py-004'), [0, 2], '== вместо .str.contains: 0 строк вместо 2');
   }
   {
     const sqlPack = readPack('sql-core');
@@ -3330,6 +3341,20 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
     same('sql-067', [sqlTrap('sql-067')[0], sqlGood('sql-067')[0]], [[56.6, 56.6], [56.6, 207.2]], 'канал не применён: оба лифта по всем каналам');
     const months = runSql('SELECT COUNT(DISTINCT month_start) FROM fact_price').rows[0][0];
     same('sql-068', [sqlTrap('sql-068')[0][0], sqlTrap('sql-068')[0][3], sqlGood('sql-068')[0][0], sqlGood('sql-068')[0][3], months], [299430, 6852364, 9981, 231546, 30], 'прайс без условия на месяц размножает продажи в 30 раз');
+
+    // Ловушки write-заданий (2026-10-11): числа, названные в их сообщениях.
+    {
+      const t75 = sqlTrap('sql-075');
+      const g75 = sqlGood('sql-075');
+      same('sql-075', [t75[0][1], g75[0][1], t75[4][1], g75[4][1]], [63.8, 61.2, 66.6, 63.4], 'среднее avg_price вместо выручки на штуку: январь 63,8 против 61,2, май 66,6 против 63,4');
+      const t116 = sqlTrap('sql-116');
+      const g116 = sqlGood('sql-116');
+      same('sql-116', [t116.map((r) => r[0]), g116.filter((r) => r[1] === 0).map((r) => r[0])], [['ecom', 'modern_trade', 'traditional_trade'], ['distributor', 'pharmacy']], 'условие в WHERE роняет два канала из пяти');
+      const t003 = sqlTrap('sql-003');
+      same('sql-003', [t003.length, sqlGood('sql-003').length, t003.filter((r) => r[2] === 'Aqualis' && r[3] <= 100).map((r) => r[3]).sort((a, b) => a - b)], [11, 6, [38, 38, 62, 62, 79]], 'OR без скобок: 11 строк вместо 6, дешёвый Aqualis в ответе');
+      same('sql-100', [sqlTrap('sql-100')[0], sqlGood('sql-100')[0]], [['Aqualis', 4835], ['Aqualis', 88]], 'COUNT вместо COUNT(DISTINCT): строки продаж вместо точек');
+      same('sql-029', [sqlTrap('sql-029')[0], sqlGood('sql-029')[0]], [['Vitanor Omega-3 x60', 812], ['Vitanor Forte x30', 742]], 'без OFFSET 1 вернулся первый по цене, а не второй');
+    }
   }
 }
 

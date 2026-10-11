@@ -115,6 +115,11 @@
   "tasks": [
     {
       "id": "py-001",
+      "traps": [
+        {
+          "message": "It returned 38 rows instead of 6: every product of the two brands is there, including the bottles at 38 and 62. The | operator means or, so the result took every product of these brands and every product above 100 of any brand. You need and: both conditions at once, with &."
+        }
+      ],
       "title": "Price list for a promo",
       "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥; cheap ones don't go into a promo.",
       "goal": "Return sku_code, product_name, brand, list_price for products of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
@@ -167,6 +172,11 @@
     },
     {
       "id": "py-004",
+      "traps": [
+        {
+          "message": "Empty: 0 rows instead of 2. The == operator requires the whole name to match the word Forte, while in the names it stands inside: Vitanor Forte x30. A part of a string is searched with .str.contains()."
+        }
+      ],
       "title": "The «Forte» line for the category report",
       "brief": "The category manager is pulling the strengthened «Forte» line into a separate section of the quarterly report; there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
       "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Forte'.",
@@ -260,6 +270,11 @@
     },
     {
       "id": "py-009",
+      "traps": [
+        {
+          "message": "Empty: 0 rows instead of 5. The comparison == None (like == np.nan) is never true: a missing value is not equal to anything, not even to another missing value. Missing values are found with .isna()."
+        }
+      ],
       "title": "Who in the company has no manager",
       "brief": "The org chart needs a list of top-level employees, the ones who have no manager of their own.",
       "goal": "Return rep_id, rep_name, team for employees whose manager_id is empty.",
@@ -835,6 +850,11 @@
     },
     {
       "id": "py-035",
+      "traps": [
+        {
+          "message": "The sums are right, but the month labels moved to the end of the month: 31 January 2024 instead of 1 January. The frequency \"M\" labels a period with its last day and \"MS\" with its first, like month_start in the other tables. When you join with another series by date, the pairs will not be found."
+        }
+      ],
       "title": "Weekly sales into monthly",
       "brief": "The «Aqualis» category manager wants monthly sales dynamics rather than weekly; weekly numbers swing too much to discuss in a meeting.",
       "goal": "From the weekly series weekly (already with a datetime index), return the monthly sum of units via resample('MS').",
