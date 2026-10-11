@@ -38,6 +38,7 @@ function loadKeywordLevels(name) {
   return new Function(`return ${m[1]}`)();
 }
 const SQL_KEYWORDS_BY_LEVEL = loadKeywordLevels('SQL_KEYWORDS_BY_LEVEL');
+const PYTHON_KEYWORDS_BY_LEVEL = loadKeywordLevels('PYTHON_KEYWORDS_BY_LEVEL');
 
 /**
  * Постоянный порядок SQL-слов панели вставки (SQL_PANEL_ORDER в TokenPanel.tsx)
@@ -250,6 +251,59 @@ function checkTaskTableNames(pack) {
     for (const name of found) {
       if (!schemaTableNames.has(name)) fail(t.id, `код ссылается на таблицу «${name}», которой нет в schema.json`);
     }
+  }
+}
+
+/**
+ * Пропуск fill, который не решается тапом по панели ввода.
+ *
+ * Слова панели составные: `SUM(`, `LEFT JOIN`, `.groupby(`, `.reset_index()`.
+ * Если шаблон держит точку, скобку или второе слово статичным текстом рядом
+ * с пропуском, а значение пропуска — голое `groupby`, то тап по единственному
+ * подходящему слову панели даёт `q4..groupby((` и синтаксическую ошибку:
+ * решить можно только клавиатурой, а на телефоне это и есть цена панели.
+ * Дефект уже стоил семи заданий SQL (3dfa4e4) и десяти pandas.
+ *
+ * Проверка: для каждого пропуска берём слова панели с тем же «ядром»
+ * (без pd./np., точки, хвостовых скобок) либо начинающиеся с его значения,
+ * подставляем слово вместо пропуска и сверяем собранное с solution без
+ * учёта пробелов. Расхождение — слово есть, а тап по нему задание ломает.
+ * Слово панели в этом же задании может быть нужно не для этого пропуска
+ * (`AS` в другом месте), поэтому смотрим именно подстановку в пропуск.
+ */
+function checkPanelTapAssembly(pack) {
+  const groups = (track) => (track === 'sql' ? SQL_KEYWORDS_BY_LEVEL : PYTHON_KEYWORDS_BY_LEVEL).flatMap((g) => g.words);
+  const ws = (s) => s.replace(/\s+/g, '').toLowerCase();
+  const core = (s) =>
+    s.trim().replace(/^(pd|np)\./, '').replace(/^\.+/, '').replace(/[\s(\[)\]]+$/, '').toLowerCase();
+  for (const t of pack.tasks) {
+    if (t.mode !== 'fill' || !t.template || !Array.isArray(t.blanks)) continue;
+    const parts = t.template.split('___');
+    const words = groups(t.track);
+    t.blanks.forEach((value, i) => {
+      const v = String(value).trim();
+      const cv = core(v);
+      if (!cv) return;
+      for (const w of words) {
+        const sameCore = core(w) === cv;
+        // Граница слова: `OR` — начало `ORDER BY` буквально, но не по смыслу.
+        const longerFromValue =
+          w.length > v.length &&
+          w.toLowerCase().replace(/\s+/g, ' ').startsWith(v.toLowerCase()) &&
+          !(/\w$/.test(v) && /^\w/.test(w.slice(v.length)));
+        if (!sameCore && !longerFromValue) continue;
+        const filled = [...t.blanks];
+        filled[i] = w;
+        const built = parts.reduce((acc, part, k) => acc + part + (k < filled.length ? filled[k] : ''), '');
+        if (ws(built) !== ws(t.solution)) {
+          fail(
+            t.id,
+            `пропуск ${i + 1}: тап по слову панели «${w}» ломает задание (значение «${v}», рядом в шаблоне остался хвост слова); ` +
+              `перенеси точку/скобку из шаблона в пропуск, чтобы он дословно совпадал со словом панели`
+          );
+        }
+      }
+    });
   }
 }
 
@@ -709,6 +763,7 @@ for (const packId of packs) {
   checkSkillCoverage(pack);
   checkOptionPositions(pack);
   checkTaskTableNames(pack);
+  checkPanelTapAssembly(pack);
   checkCodeLocaleNeutral(pack);
   const skillIds = new Set(pack.skills.map((s) => s.id));
 
