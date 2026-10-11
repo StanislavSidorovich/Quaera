@@ -748,6 +748,9 @@ export default function App() {
    */
   const [boot] = useState<Boot>(() => initialBoot(locale));
   const [screen, setScreen] = useState<Screen>(boot.screen);
+  /** Строка тумблеров в шапке вне главной (см. .topbar-more): закрыта на каждом новом экране. */
+  const [toolsOpen, setToolsOpen] = useState(false);
+  useEffect(() => setToolsOpen(false), [screen.name]);
   const [activeTrack, setActiveTrack] = useState<Track>(boot.track ?? initialActiveTrack);
   const [load, setLoad] = useState<LoadState>({ phase: 'idle' });
   /**
@@ -2009,12 +2012,14 @@ export default function App() {
           className={
             screen.name === 'home'
               ? `topbar topbar-home${streakDays > 0 ? ' topbar-home-streak' : ''}`
-              : 'topbar'
+              : screen.name === 'session'
+                ? 'topbar topbar-session'
+                : 'topbar'
           }
         >
           {screen.name !== 'home' && (
             <button
-              className="icon-btn"
+              className="icon-btn topbar-back"
               onClick={() => {
                 setScreen(backTarget(screen, locale));
                 window.scrollTo({ top: 0 });
@@ -2197,7 +2202,7 @@ export default function App() {
             </p>
           )}
           {screen.name === 'session' && screen.index > 0 && (
-            <button className="icon-btn" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
+            <button className="icon-btn topbar-prev" onClick={() => goToStep(screen.index - 1)} aria-label={t.session.prevAria}>
               ‹
             </button>
           )}
@@ -2232,7 +2237,7 @@ export default function App() {
            * точек прогресса.
            */}
           {screen.name === 'session' && (
-            <button className="icon-btn" onClick={() => advance()} aria-label={t.session.skipAria}>
+            <button className="icon-btn topbar-skip" onClick={() => advance()} aria-label={t.session.skipAria}>
               ⏭
             </button>
           )}
@@ -2242,7 +2247,31 @@ export default function App() {
            * а не три элемента, которые остаются в потоке шапки и сжимают
            * заголовок до нечитаемой колонки (было на 390px до этой правки).
            */}
-          <div className="topbar-tools">
+          {/*
+           * Тумблеры вида — за одной кнопкой на всех экранах, кроме главной,
+           * и только там, где нет бокового меню (кнопка скрыта от 1024px).
+           *
+           * Ряд из четырёх тумблеров был в шапке занятия целой строкой:
+           * на телефоне при A++ шапка занимала треть экрана в вертикали
+           * и больше половины в горизонтали (замер 2026-10-11), а липкая
+           * шапка забирает эту высоту навсегда. Меняют вид раз за заход,
+           * смотрят на задание всё время — поэтому строка открывается
+           * по нажатию. На главной блок 2×2 уже стоит рядом с заголовком
+           * и своей строки не занимает — там он остаётся как есть.
+           */}
+          {screen.name !== 'home' && (
+            <button
+              type="button"
+              className="icon-btn topbar-more"
+              aria-label={t.app.viewSettingsAria}
+              aria-expanded={toolsOpen}
+              aria-controls="topbar-tools"
+              onClick={() => setToolsOpen((v) => !v)}
+            >
+              ⋯
+            </button>
+          )}
+          <div id="topbar-tools" className={`topbar-tools${toolsOpen ? ' is-open' : ''}`}>
             {/*
              * Вход в «Аккаунт и данные» — только там, где нет бокового меню
              * (скрыт от 1024px, см. .topbar-account в styles.css). Тем же

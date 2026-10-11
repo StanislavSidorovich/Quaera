@@ -64,6 +64,7 @@ export const ru = {
      */
     documentTitle: 'Quaera — тренажёр аналитика',
     back: 'Назад',
+    viewSettingsAria: 'Настройки: аккаунт, шрифт, тема, язык',
     exitHint: 'Нажмите «Назад» ещё раз, чтобы выйти',
     streakSuffix: (days: number) => `серия ${days} дн.`,
   },

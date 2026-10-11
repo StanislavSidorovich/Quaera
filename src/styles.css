@@ -4510,6 +4510,127 @@ table.sample td.null {
   }
 }
 
+/*
+ * Шапка вне главной ниже 1024px: тумблеры вида за кнопкой ⋯ (.topbar-more).
+ *
+ * Замер 2026-10-11 на телефоне при A++: в вертикали шапка занятия была
+ * в треть экрана (заголовок навыка в три строки, подпись в три, строка
+ * точек, строка тумблеров), в горизонтали — больше половины, потому что
+ * тумблеры не помещались в ряд и уходили второй строкой. Шапка липкая,
+ * и эта высота отдана навсегда. Строка тумблеров открывается по нажатию
+ * и встаёт последней, во всю ширину, прижатой вправо — под кнопкой,
+ * которая её открыла.
+ *
+ * На главной правило не действует: там тумблеры собраны в блок 2×2
+ * рядом с заголовком и своей строки не занимают (.topbar-home выше).
+ */
+@media (max-width: 1023px) {
+  .topbar:not(.topbar-home) .topbar-tools:not(.is-open) {
+    display: none;
+  }
+
+  .topbar:not(.topbar-home) .topbar-tools.is-open {
+    order: 11;
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .topbar-more[aria-expanded='true'] {
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar-more {
+    display: none;
+  }
+}
+
+/*
+ * Телефон в вертикали: шапка вне главной — сетка.
+ *
+ * Общий случай — один ряд «назад · заголовок · ⋯», строка тумблеров
+ * под ним, когда открыта.
+ *
+ * Занятие (.topbar-session) — приём «большого заголовка»: кнопки одной
+ * строкой, заголовок во всю ширину под ними, точки шагов тонкой полосой
+ * в самом низу. В потоке заголовок делил ряд с четырьмя кнопками и при
+ * A++ получал около 90px из 250: «Selecting and filtering» вставал
+ * столбиком по слову в строке, подпись — в три. Замер на 360×800 при A++:
+ * шапка 300px → 200 (заголовок между двумя кнопками) → 125 (так).
+ *
+ * Отступы рядов — полями, а не row-gap: ряды бывают пустыми (нет «‹» на
+ * первом шаге, закрыты тумблеры), а row-gap оставил бы щель и вокруг них.
+ */
+@media (max-width: 599px) {
+  .topbar:not(.topbar-home) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'back title more'
+      'tools tools tools';
+    column-gap: 12px;
+    row-gap: 0;
+  }
+
+  .topbar:not(.topbar-home) > h1 {
+    grid-area: title;
+  }
+
+  .topbar-back {
+    grid-area: back;
+  }
+
+  .topbar-more {
+    grid-area: more;
+  }
+
+  .topbar:not(.topbar-home) .topbar-tools.is-open {
+    grid-area: tools;
+    margin-top: 10px;
+  }
+
+  .topbar.topbar-session {
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      'back . prev skip more'
+      'title title title title title'
+      'dots dots dots dots dots'
+      'tools tools tools tools tools';
+  }
+
+  .topbar-session > h1 {
+    margin-top: 8px;
+  }
+
+  .topbar-prev {
+    grid-area: prev;
+  }
+
+  .topbar-skip {
+    grid-area: skip;
+  }
+
+  .topbar-session .progress-dots {
+    grid-area: dots;
+    margin-top: 10px;
+  }
+}
+
+/*
+ * Низкий экран (телефон в горизонтали): шапка не липнет, а уезжает
+ * вместе со страницей. Даже одной строкой она берёт четверть высоты
+ * при A++, а в горизонтали высоты меньше всего — заданию она нужнее.
+ */
+@media (max-height: 500px) {
+  .topbar {
+    position: relative;
+  }
+}
+
 .progress-dots .dot {
   width: 22px;
   height: 4px;

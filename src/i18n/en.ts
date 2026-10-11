@@ -23,6 +23,7 @@ export const en = {
     /** См. комментарий в ru.ts: вкладка — последнее русское место в английском интерфейсе. */
     documentTitle: 'Quaera: a data analyst trainer',
     back: 'Back',
+    viewSettingsAria: 'Settings: account, font size, theme, language',
     exitHint: 'Press back again to exit',
     streakSuffix: (days: number) => `${days}-day streak`,
   },
