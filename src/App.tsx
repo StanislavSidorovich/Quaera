@@ -5002,7 +5002,7 @@ function AccountScreen({
             </div>
           </>
         ) : (
-          <button type="button" className="btn secondary" onClick={() => setResetStage('confirm')}>
+          <button type="button" className="btn secondary danger-text" onClick={() => setResetStage('confirm')}>
             {t.account.resetBtn}
           </button>
         )}
