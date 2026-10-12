@@ -336,6 +336,21 @@ export const en = {
     dataKeepTitle: 'How long it is kept, and how to remove it',
     dataKeepBody:
       'The row on the server lives until you delete it: the Delete account button removes the sign-in record, and the progress goes with it, at once and with no way back. The local copy goes with a reset or by clearing site data. And two honest boundaries: the access rules close your row to other learners but not to whoever owns the database, which is how any hosting works and cannot be undone from here; and the server takes no backups at all, so the safeguard against loss is the progress file, not the server copy.',
+    mapTitle: 'Where your data lives',
+    mapDeviceTitle: 'This browser',
+    mapDeviceItems: [
+      'progress and an unfinished session',
+      'saved sandbox scripts',
+      'settings',
+      'the downloaded Python runtime',
+    ],
+    mapDeviceRun: 'Queries and code run right here and go nowhere',
+    mapLink: 'only if you sign in · one row',
+    mapServerTitle: 'Supabase, Frankfurt',
+    mapServerItems: ['the progress row: skills, intervals, solved tasks', 'your Google account email and ID'],
+    mapNone: 'Not here at all: analytics, visit counters, ads, a language model',
+    mapSignedIn: 'You are signed in: progress from this device goes into that row',
+    mapSignedOut: 'You are not signed in: nothing leaves this device',
   },
   /**
    * См. комментарий в ru.ts: онбординг ничего не пересказывает, он выбирает

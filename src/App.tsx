@@ -27,6 +27,7 @@ import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
 import { ToolsCompare } from './ui/ToolsCompare';
+import { DataMap } from './ui/DataMap';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
@@ -4454,18 +4455,21 @@ function About({
        * нынешних 190. Текст уехал на «Аккаунт и данные», к кнопкам,
        * которыми эти данные и убирают; здесь остался краткий ответ
        * и ссылка. Довод целиком — у about.privacyBody в ru.ts.
+       *
+       * **С 2026-10-12 «Приватность» первая в потоке.** В неё встала схема
+       * «где лежат ваши данные» (ui/DataMap.tsx), и карточка выросла
+       * до ~600px. В прежнем порядке балансир оставлял «Как это устроено»
+       * одну слева и уводил вправо «Приватность» с «Автором»: 392 против
+       * 971, дыра 579px. Первой «Приватность» встаёт одна слева, а справа
+       * пара «Как устроено» + «Автор» — «Автор» по-прежнему последний
+       * и внизу. Порядок карточек здесь не несущий (см. выше), несущая
+       * только позиция «Автора».
        */}
       <div className="about-columns">
         <div className="card">
-          <h2>{t.about.howTitle}</h2>
-          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
-          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
-          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
-        </div>
-
-        <div className="card">
           <h2>{t.about.privacyTitle}</h2>
           <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.privacyBody}</p>
+          <DataMap />
           {/*
            * `link-row`, а не кнопка: это переход в соседний раздел, а не
            * действие с данными, — тот же вид, что у входа на «О тренажёре»
@@ -4475,6 +4479,13 @@ function About({
           <button type="button" className="link-row" onClick={onOpenAccount}>
             {t.about.accountLink}
           </button>
+        </div>
+
+        <div className="card">
+          <h2>{t.about.howTitle}</h2>
+          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howSrs}</p>
+          <p style={{ margin: '0 0 10px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howModes}</p>
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.howData}</p>
         </div>
 
       {/*
@@ -4783,6 +4794,14 @@ function AccountScreen({
   }
 
   return (
+    /*
+     * Сетка из колонки 680px и боковой схемы «где лежат ваши данные» — от
+     * 1280px (см. .account-layout). Уже схема уходит внутрь закрывающей
+     * карточки, а боковая колонка не рисуется: обе копии в разметке,
+     * видна одна, и скрытая через display: none в дерево доступности
+     * не попадает.
+     */
+    <div className="account-layout">
     <div className="settings-column">
       {/*
        * Аккаунт — своя карточка перед «Резервной копией», а не раздел
@@ -5066,6 +5085,9 @@ function AccountScreen({
        */}
       <div className="card">
         <h2>{t.account.dataTitle}</h2>
+        <div className="data-map-inline">
+          <DataMap signedIn={accountEmail !== null} />
+        </div>
         {[
           [t.account.dataDeviceTitle, t.account.dataDeviceBody],
           [t.account.dataServerTitle, t.account.dataServerBody],
@@ -5086,6 +5108,10 @@ function AccountScreen({
           </Fragment>
         ))}
       </div>
+    </div>
+      <aside className="account-aside">
+        <DataMap signedIn={accountEmail !== null} />
+      </aside>
     </div>
   );
 }

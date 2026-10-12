@@ -8214,3 +8214,149 @@ details.story-known > summary small {
     color: #444;
   }
 }
+
+/*
+ * «Аккаунт и данные» от 1280px: колонка 680px и справа схема «где лежат
+ * ваши данные» (ui/DataMap.tsx), прилипающая под шапкой. Все карточки
+ * экрана — действия с этими же данными (войти, сохранить файл, стереть),
+ * поэтому схема видна на всём пути вниз, а не только у закрывающей
+ * карточки. Уже 1280px справа остаётся меньше 360px — схема уходит внутрь
+ * карточки «Что происходит с вашими данными», боковая колонка пропадает.
+ */
+.account-aside {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .account-layout {
+    display: grid;
+    grid-template-columns: 680px minmax(280px, 400px);
+    gap: 24px;
+    align-items: start;
+  }
+  .account-aside {
+    display: block;
+    position: sticky;
+    top: 72px;
+  }
+  .data-map-inline {
+    display: none;
+  }
+}
+
+.data-map-inline {
+  margin: 4px 0 16px;
+}
+
+/*
+ * Схема — две зоны и стрелка между ними. Зона сервера набрана так же, как
+ * зона браузера: это не «чужое и опасное», а такое же хранилище, только
+ * условное. Условность несёт стрелка (пунктир, пока не вошли) и, на
+ * «Аккаунте», приглушённая зона при выходе.
+ */
+.data-map {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.data-map-title {
+  margin: 0 0 10px;
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.data-map-zone {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  padding: 12px 14px;
+}
+
+.data-map-zone-title {
+  margin: 0 0 6px;
+  font-size: var(--fs-text);
+  font-weight: 600;
+}
+
+.data-map-zone ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.data-map-run {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* Не вошли: зона нарисована пунктиром без заливки, как и стрелка, — путь
+   есть, но не проложен. Не opacity: она роняет контраст текста ниже 4.5:1. */
+.data-map-zone.server.idle {
+  border-style: dashed;
+  background: transparent;
+}
+
+.data-map-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 4px 22px;
+  min-height: 44px;
+}
+
+.data-map-arrow {
+  position: relative;
+  align-self: stretch;
+  width: 0;
+  border-left: 2px dashed var(--text-dim);
+}
+
+.data-map-arrow::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: -7px;
+  border: 6px solid transparent;
+  border-top-color: var(--text-dim);
+  border-bottom-width: 0;
+}
+
+.data-map-link.on .data-map-arrow {
+  border-left-style: solid;
+  border-left-color: var(--accent);
+}
+
+.data-map-link.on .data-map-arrow::after {
+  border-top-color: var(--accent);
+}
+
+.data-map-link-label {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.data-map-state {
+  margin: 10px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.data-map-state.on {
+  color: var(--text);
+}
+
+.data-map-none {
+  margin: 10px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
