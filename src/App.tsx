@@ -3043,13 +3043,23 @@ function ProofSummary({
 function WelcomeHero({
   onOnboarding,
   onOpenIntro,
+  counts,
 }: {
   onOnboarding: () => void;
   onOpenIntro: () => void;
+  counts: [number, string][];
 }) {
   return (
     <div className="card welcome-hero">
       <WelcomeIntroBody />
+      <p className="about-counts">
+        {counts.map(([n, label], i) => (
+          <span key={label}>
+            {i > 0 && <span aria-hidden> · </span>}
+            <b>{n}</b> {label}
+          </span>
+        ))}
+      </p>
       <WelcomeProofBody onOnboarding={onOnboarding} onOpenIntro={onOpenIntro} />
     </div>
   );
@@ -4233,31 +4243,20 @@ function About({
 
   return (
     <>
-      <WelcomeHero onOnboarding={onOpenOnboarding} onOpenIntro={onOpenIntro} />
-
       {/*
-       * Три плитки того же вида, что hero-счётчики на главной, — не декор,
-       * а реальные числа, которые иначе читались бы только внутри предложения
-       * structureIntro ниже. На широком экране заодно занимают часть пустого
-       * места под текстом WelcomeHero, у которого абзац ограничен по ширине
-       * ради читаемости (см. .card p { max-width: 68ch }).
+       * Числа — одной строкой в шапке, а не отдельной карточкой из трёх
+       * плиток: карточка в 100px высотой стояла между питчем и «Для кого»
+       * и пересказывала то, что structureIntro ниже говорит словами.
        */}
-      <div className="card">
-        <div className="hero">
-          <div>
-            <div className="big">{TRACK_ORDER.length}</div>
-            <div className="muted">{t.about.tracksStatLabel}</div>
-          </div>
-          <div>
-            <div className="big">{totalSkills}</div>
-            <div className="muted">{t.about.skillsStatLabel}</div>
-          </div>
-          <div>
-            <div className="big">{totalTasks}</div>
-            <div className="muted">{t.about.tasksStatLabel}</div>
-          </div>
-        </div>
-      </div>
+      <WelcomeHero
+        onOnboarding={onOpenOnboarding}
+        onOpenIntro={onOpenIntro}
+        counts={[
+          [TRACK_ORDER.length, t.about.tracksStatLabel],
+          [totalSkills, t.about.skillsStatLabel],
+          [totalTasks, t.about.tasksStatLabel],
+        ]}
+      />
 
       {/*
        * Стоит до «Структуры» намеренно: сколько внутри треков и заданий,
@@ -4287,7 +4286,7 @@ function About({
 
       <div className="card">
         <h2>{t.about.structureTitle}</h2>
-        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>
           {t.about.structureIntro(totalSkills, totalTasks)}
         </p>
         {/*
@@ -4358,9 +4357,7 @@ function About({
         >
           {t.about.tracksWhyTitle}
         </p>
-        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-          {t.about.tracksWhyBody}
-        </p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{t.about.tracksWhyBody}</p>
       </div>
 
       {/*
@@ -5167,9 +5164,7 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
          */}
         <div className="card page-toc-target" id="tools">
           <h2>{t.onboarding.toolsTitle}</h2>
-          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
-            {t.onboarding.toolsIntro}
-          </p>
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.onboarding.toolsIntro}</p>
           <div className="track-summary-list">
             {TRACK_ORDER.map((track) => (
               <div key={track} className="track-summary">
@@ -5255,9 +5250,7 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
          */}
         <div className="card page-toc-target" id="extra">
           <h2>{t.onboarding.extraTitle}</h2>
-          <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
-            {t.onboarding.extraIntro}
-          </p>
+          <p style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.6 }}>{t.onboarding.extraIntro}</p>
           {/*
            * Карта окрестностей: три зоны от «внутри» к «снаружи», рельс слева
            * гаснет от акцентного цвета к цвету линии. Диаграмма здесь —

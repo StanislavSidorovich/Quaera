@@ -8451,3 +8451,36 @@ details.story-known > summary small {
     border-left-color: var(--accent);
   }
 }
+
+/*
+ * Строка чисел в шапке «О тренажёре» («4 трека · 78 навыков · 379 заданий»)
+ * вместо отдельной карточки из трёх плиток. Числа берутся из паков в App.tsx.
+ */
+.about-counts {
+  margin: 0 0 14px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.about-counts b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * «Как проходить» в две колонки по три шага (от 1024px): в одну колонку
+ * строка шага тянулась на 870px, около 130 знаков. Колонками, а не
+ * сеткой: порядок чтения идёт сверху вниз по колонке, 1–3 слева, 4–6 справа.
+ */
+@media (min-width: 1024px) {
+  .onboard-steps {
+    display: block;
+    columns: 2;
+    column-gap: 40px;
+  }
+
+  .onboard-step {
+    break-inside: avoid;
+    margin-bottom: 16px;
+  }
+}
