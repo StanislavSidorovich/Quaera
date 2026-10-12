@@ -1,4 +1,6 @@
 import type { Locale } from '../i18n/context';
+import { lessons, packs } from './index';
+import type { Track } from './types';
 
 /**
  * «Quaera at a glance» — брошюра о тренажёре для того, кто решает, стоит ли
@@ -36,8 +38,8 @@ import type { Locale } from '../i18n/context';
  *    лендинг без границ, дальше не читает, а отказ по причине, названной
  *    нами самими, дешевле отказа по причине, найденной им.
  *
- * 2. **Числа только снятые запросом.** 305 заданий и 73 навыка посчитаны
- *    по пакам, 13 таблиц и 159 740 строк — `npm run count:rows`, падение
+ * 2. **Числа только снятые запросом.** Задания и карточки приёмов
+ *    считаются из паков при сборке, 13 таблиц и 159 740 строк — `npm run count:rows`, падение
  *    Nettora (74 точки в январе, 40 в декабре) снято запросом к тому самому
  *    файлу, который уезжает в браузер. Ни одного числа по памяти:
  *    на этом проза проекта врала уже дважды.
@@ -185,6 +187,18 @@ export interface OverviewPageContent {
   };
 }
 
+/**
+ * Счётчики заданий и карточек берутся из паков, а не пишутся строкой.
+ * Брошюра отстала молча: 305 заданий при 379, pandas 57 при 102. Её никто
+ * не открывает при добавлении задания, а гейта на неё не было. Числа
+ * набора данных (13 таблиц, 159 740 строк, 3,5 МБ) остаются строками:
+ * они не растут с контентом и сверены с `npm run count:rows`.
+ */
+const tasksIn = (track: Track): number =>
+  packs.filter((p) => p.track === track).reduce((n, p) => n + p.tasks.length, 0);
+const totalTasks = packs.reduce((n, p) => n + p.tasks.length, 0);
+const tasksLabel = (n: number): string => `${n} task${n === 1 ? '' : 's'}`;
+
 const EN: OverviewPageContent = {
   title: 'Quaera at a glance',
 
@@ -198,8 +212,8 @@ const EN: OverviewPageContent = {
   siteUrl: 'quaera.app',
 
   stats: [
-    { value: '305', label: 'tasks' },
-    { value: '73', label: 'technique cards' },
+    { value: String(totalTasks), label: 'tasks' },
+    { value: String(lessons.length), label: 'technique cards' },
     { value: '13', label: 'tables' },
     { value: '159,740', label: 'rows of data' },
     { value: '3.5 MB', label: 'to load, once' },
@@ -225,22 +239,22 @@ const EN: OverviewPageContent = {
   tracks: [
     {
       name: 'SQL for analysts',
-      count: '92 tasks',
+      count: tasksLabel(tasksIn('sql')),
       note: 'From how a table is declared to window functions. You write the query, it runs.',
     },
     {
       name: 'Analytics as a profession',
-      count: '79 tasks',
+      count: tasksLabel(tasksIn('domain')),
       note: 'What the person asking actually wants, which metric answers it, why a number with no conclusion attached is not an answer.',
     },
     {
       name: 'Data model and BI',
-      count: '77 tasks',
+      count: tasksLabel(tasksIn('model')),
       note: 'How flat exports become a model a report can be trusted on. Star schema, grain, filter context, DAX.',
     },
     {
       name: 'pandas for analysts',
-      count: '57 tasks',
+      count: tasksLabel(tasksIn('python')),
       note: 'The slice of Python that handles data, each technique placed next to its SQL equivalent. Your code runs.',
     },
   ],
