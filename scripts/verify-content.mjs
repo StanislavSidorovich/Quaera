@@ -3414,6 +3414,31 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
       same('sql-058', [trapAt('sql-058', 0).length, sqlGood('sql-058').length], [397, 18], 'без месяца в плане строка на каждый месяц плана');
       const t60 = trapAt('sql-060', 0);
       same('sql-060', [t60.length, t60[t60.length - 1][2], trapAt('sql-060', 1).length, sqlGood('sql-060').length], [14, 49.3, 33, 15], '<= 50 не доходит до половины, накопление без DESC берёт хвост');
+      // Шестая партия того же дня: уровни 1 и 2.
+      same('sql-004', [trapAt('sql-004', 0)[0].slice(0, 1).concat(trapAt('sql-004', 0)[0][2]), sqlGood('sql-004')[0].slice(0, 1).concat(sqlGood('sql-004')[0][2])], [['Aqualis Still 0.5 L', 38], ['Vitanor Omega-3 x60', 812]], 'без DESC наверху самые дешёвые');
+      same('sql-024', [trapAt('sql-024', 0)[0][2], trapAt('sql-024', 1)[0][2], sqlGood('sql-024')[0][2]], [28.5, 275, 256.5], 'размер скидки вместо цены, минус 10 вместо 10%');
+      same('sql-026', [trapAt('sql-026', 0).length, sqlGood('sql-026').length], [0, 2], "LIKE 'Forte%' не находит слово внутри названия");
+      same('sql-009', [trapAt('sql-009', 0), trapAt('sql-009', 1).length, sqlGood('sql-009').length], [[['Aqualis', 29, 110.66]], 9, 5], 'без GROUP BY одна строка, без WHERE девять брендов');
+      same('sql-012', [trapAt('sql-012', 0), brand(trapAt('sql-012', 1), 'Fruvia', 1), brand(trapAt('sql-012', 1), 'Krosti', 1), brand(sqlGood('sql-012'), 'Fruvia', 1), brand(sqlGood('sql-012'), 'Krosti', 1)], [[['Krosti', 25859233]], 4159831, 2931750, 5132050, 4095221], 'без GROUP BY одна строка, граница 1 июня теряет четыре недели');
+      const t30 = trapAt('sql-030', 0);
+      same('sql-030', [t30.length, t30.filter((r) => r[1] === null).length, trapAt('sql-030', 1).length, sqlGood('sql-030').length], [38, 17, 17, 38], '= NULL в CASE оставляет 17 пустых подписей, IS NULL в WHERE оставляет 17 строк из 38');
+      same('sql-032', [trapAt('sql-032', 0)[0], sqlGood('sql-032')[0]], [[38, 812], [218, 812]], 'без WHERE минимум по всему каталогу, максимум случайно совпал');
+      const t34 = trapAt('sql-034', 0);
+      same('sql-034', [t34.length, t34.map((r) => r[2]), sqlGood('sql-034').length], [2, [29, 18], 5], 'GROUP BY только по дивизиону: две строки с произвольной категорией');
+      const t36 = trapAt('sql-036', 0);
+      same('sql-036', [t36.length, t36.every((r) => r[0] === 'Krosti Salt 90 g'), trapAt('sql-036', 1).length, sqlGood('sql-036').length], [7, true, 939, 7], 'соединение по customer_id даёт одно имя, без недели 939 строк');
+      same('sql-109', [trapAt('sql-109', 0)[0][0], trapAt('sql-109', 1)[0][0], sqlGood('sql-109')[0][0]], [9016, null, 4702], 'месяц без года берёт три июня, равенство с «2025-06» даёт NULL');
+      same('sql-110', [trapAt('sql-110', 0)[0][1], trapAt('sql-110', 1)[0][1], sqlGood('sql-110')[0][1]], [17891, 38413, 20740], '< вместо <= теряет июнь, без отбора месяцев целый год');
+      same('sql-111', [trapAt('sql-111', 0)[0][1], trapAt('sql-111', 1), sqlGood('sql-111')[0][1]], [418846, [['2024', 636978]], 198270], 'без отбора месяцев целый год, без GROUP BY одна строка');
+      same('sql-113', [trapAt('sql-113', 0).map((r) => r[1]), trapAt('sql-113', 1).length, sqlGood('sql-113').map((r) => r[1])], [[5487, 4370, 1191], 1, [79, 79, 37]], 'COUNT без DISTINCT считает строки, без GROUP BY одна строка');
+      same('sql-120', [trapAt('sql-120', 0).map((r) => r[1]), trapAt('sql-120', 1), sqlGood('sql-120').map((r) => r[1])], [[9269, 27622, 61042], [['2024-06-01', 7633]], [1046, 2363, 4224]], 'без бренда весь каталог, без GROUP BY одна строка');
+      // Седьмая партия того же дня: три многошаговых задания уровня 4, ловушки на расчётном шаге.
+      const t61a = stepTrap('sql-061', 0);
+      const t61b = stepTrap('sql-061', 1);
+      same('sql-061', [[t61a[0][3], t61a[7][3]], [t61b[0][3], Math.round(t61b.reduce((s, r) => s + r[3], 0))], [stepGood('sql-061')[0][3], stepGood('sql-061')[7][3]]], [[3.6, 1.8], [17.8, 100], [8.9, 4.3]], 'знаменатель за три года, знаменатель по восьмёрке: доли в сумме 100%');
+      const t62a = stepTrap('sql-062', 0);
+      same('sql-062', [t62a[0][1], t62a.every((r) => r[3] === 0), stepTrap('sql-062', 1)[0][0], stepGood('sql-062')[0][0]], [25014720000, true, 'Miyagi', 'Saitama'], 'SUM(population) раздувает население, сортировка по душевой выручке ставит наверх Miyagi');
+      same('sql-063', [brand(stepTrap('sql-063', 0), 'Aqualis', 2), brand(stepTrap('sql-063', 0), 'Gastrivo', 2), brand(stepGood('sql-063'), 'Aqualis', 2), brand(stepGood('sql-063'), 'Gastrivo', 2)], [73.83, 513.1, 59.58, 459.7], 'цена, взвешенная выручкой, уходит вверх');
     }
   }
 }

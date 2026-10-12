@@ -177,6 +177,11 @@
     },
     {
       "id": "sql-004",
+      "traps": [
+        {
+          "message": "The cheapest came back: Aqualis Still 0.5 L at 38 on top, not Vitanor Omega-3 x60 at 812. Without DESC the sort runs ascending, and LIMIT simply takes the first ten rows. To put the expensive ones on top, write DESC after the column: ORDER BY list_price DESC."
+        }
+      ],
       "title": "The most expensive items",
       "brief": "Finance wants to see the top of the price list: which items to start the markup conversation with.",
       "goal": "Return the 10 most expensive products: product_name, brand, list_price. Sort by price from high to low.",
@@ -188,6 +193,14 @@
     },
     {
       "id": "sql-024",
+      "traps": [
+        {
+          "message": "discount_price came out as 28.5 instead of 256.5 for Rhinolar Spray 15 ml: the size of the discount was computed, not the price after it. list_price * 0.1 is ten percent of the price, which is the discount itself. The price after a 10% discount is ninety percent of list: list_price * 0.9."
+        },
+        {
+          "message": "discount_price came out as 275 instead of 256.5: 10 yen was subtracted, not 10%. A percentage discount depends on the price: on a 285 yen item it is 28.5 yen, on a 224 yen item only 22.4. Multiply the price by the share that remains: list_price * 0.9."
+        }
+      ],
       "title": "Discount for the «Rigla» negotiation",
       "brief": "The category manager is weighing a 10% discount for the «Rhinolar» brand ahead of negotiations with the «Farmalux» chain, and wants to see discounted prices right next to the current ones.",
       "goal": "Return for all products of the «Rhinolar» brand: product_name, list_price and discount_price (the price with a 10% discount, rounded to two decimals).",
@@ -229,6 +242,11 @@
     },
     {
       "id": "sql-026",
+      "traps": [
+        {
+          "message": "It returned zero rows. LIKE 'Forte%' looks for names that start with Forte, while in the catalogue the word sits inside the name («Vitanor Forte x30»). The % sign stands for any number of characters, including none, so it goes on both sides: LIKE '%Forte%'."
+        }
+      ],
       "title": "All items in the «Forte» line",
       "brief": "A brand manager is planning a separate «Forte» sub-line and wants every product across the company with that word in its name, regardless of which brand it belongs to.",
       "goal": "Return product_name, brand, list_price for all products whose name contains «Forte».",
@@ -392,6 +410,14 @@
     },
     {
       "id": "sql-030",
+      "traps": [
+        {
+          "message": "17 independent pharmacies have an empty label, NULL instead of «Independent pharmacy». The comparison chain_name = NULL is never true: NULL means «unknown», and an unknown is not equal even to another NULL, so CASE always falls into ELSE. Emptiness is tested with IS NULL, and the label in its place is supplied by COALESCE(chain_name, 'Independent pharmacy')."
+        },
+        {
+          "message": "17 pharmacies came back instead of 38: only the independent ones are left, and chain pharmacies are gone. The condition chain_name IS NULL in WHERE selects rows, but a label is needed for everyone: it gives the empty ones the text and leaves the others their chain. That is COALESCE's job in SELECT, while WHERE keeps only customer_type = 'pharmacy'."
+        }
+      ],
       "title": "A label for independent pharmacies",
       "brief": "For a pharmacy-channel summary you need a human-readable list of outlets: chain pharmacies show the chain name, independent ones show a clear label instead of a blank cell.",
       "goal": "For customer_type = 'pharmacy', return customer_name and chain_display (chain_name, or 'Independent pharmacy' if it's empty).",
@@ -479,6 +505,11 @@
     },
     {
       "id": "sql-032",
+      "traps": [
+        {
+          "message": "cheapest came out as 38 instead of 218: the minimum was taken over the whole catalogue, and the cheapest turned out to be a FMCG item. priciest happens to match, 812, because the most expensive item is a pharma one, and such an error easily goes unnoticed. Without WHERE division = 'Pharma', MIN and MAX look at every row of the table: rows are selected first, then the minimum and maximum."
+        }
+      ],
       "title": "Price spread in Pharma",
       "brief": "Before a price revision, the CFO asks for a quick estimate of the price spread in the Pharma division: from the cheapest drug to the most expensive.",
       "goal": "For the Pharma division, return one row: cheapest (the minimum list_price) and priciest (the maximum list_price).",
@@ -520,6 +551,14 @@
     },
     {
       "id": "sql-009",
+      "traps": [
+        {
+          "message": "One row came back: Aqualis, 29 SKUs, average price 110.66. Without GROUP BY the aggregates collapse the whole selection into one row, and SQLite takes brand from an arbitrary row without objecting. To get a row per brand, add the brand column to GROUP BY."
+        },
+        {
+          "message": "9 brands came back instead of 5: Gastrivo, Pyrexan, Rhinolar and Vitanor got into the list. The division = 'FMCG' filter was lost, and the pharmacy brands were counted alongside groceries. The division condition goes in WHERE, before grouping."
+        }
+      ],
       "title": "Brand assortment",
       "brief": "A category manager wants to know how wide each brand's lineup is in FMCG, and how average price differs.",
       "goal": "For the FMCG division only, return per brand: brand, sku_count (number of SKUs), avg_price (average price rounded to two decimal places).",
@@ -542,6 +581,11 @@
     },
     {
       "id": "sql-034",
+      "traps": [
+        {
+          "message": "2 rows came back instead of 5: one per division, each with an arbitrary category, and the 29 and 18 SKUs are counted over the whole division. A column in SELECT without GROUP BY does not group: SQLite takes any value from the group. Every column of the cut goes into GROUP BY: division, category."
+        }
+      ],
       "title": "Division × category matrix",
       "brief": "A category manager is building an assortment matrix and asks for the SKU count and average price for every combination of division and category.",
       "goal": "Return division, category, sku_count (the number of products) and avg_price (the average price rounded to two decimal places), for every combination of division and category.",
@@ -640,6 +684,14 @@
     },
     {
       "id": "sql-012",
+      "traps": [
+        {
+          "message": "One row came back: Krosti and 25,859,233, the revenue of all brands together. Without GROUP BY, SUM collects the whole selection into a single number, and brand is taken from an arbitrary row, so the query does not fail. To get revenue per brand, add p.brand to GROUP BY."
+        },
+        {
+          "message": "Revenue is understated for every brand: Fruvia 4,159,831 instead of 5,132,050, Krosti 2,931,750 instead of 4,095,221. The bound '2026-06-01' cuts June off at its first week: week_start is the Monday of the week, and the weeks of 8, 15, 22 and 29 June did not make it into the period. For a period to the end of June the bound is '2026-06-30'."
+        }
+      ],
       "title": "Revenue by brand",
       "brief": "The commercial director's standard Monday query: how brands performed in H1 2026.",
       "goal": "Return brand and revenue (the sum of revenue for the period 2026-01-01 through 2026-06-30, rounded to whole numbers), ordered by revenue descending.",
@@ -651,6 +703,14 @@
     },
     {
       "id": "sql-036",
+      "traps": [
+        {
+          "message": "All seven rows carry the same name, Krosti Salt 90 g, though the units and revenue differ. The tables were joined on the wrong columns: p.product_id = f.customer_id matches a product number with an outlet number, and outlet 13 «bought» the product numbered 13. The query does not fail and looks plausible. Columns with the same meaning are joined: p.product_id = f.product_id."
+        },
+        {
+          "message": "939 rows came back instead of 7: that is every week of the outlet over three years. The outlet condition is there and the week one is not. The week_start = '2026-06-15' filter is added with AND, otherwise only the outlet as a whole is selected."
+        }
+      ],
       "title": "Breaking down one outlet's sales",
       "brief": "A sales rep is going through the weekly report for the \"Perekrestok #1013\" outlet and asks for the product codes decoded into human-readable names.",
       "goal": "Return product_name, units, and revenue for the outlet with customer_id = 13 for the week of 2026-06-15.",
@@ -1353,6 +1413,14 @@
           "hints": [
             "The denominator of the share is revenue from all customers over the same period, not the revenue of these eight: take it from a separate subquery on fact_sellout with the same date condition.",
             "LIMIT is applied after sorting and after the share is computed, so trimming the output can be the last thing you do: it does not affect the denominator."
+          ],
+          "traps": [
+            {
+              "message": "The share came out as 3.6% for the first customer instead of 8.9%, and 1.8% for the eighth instead of 4.3%. The denominator is taken over the whole sales table, three years, while the numerator is for 2025: the subquery lacks the same week filter. A share is computed over the same period as the customer revenue, so the WHERE on week_start sits in the subquery as well."
+            },
+            {
+              "message": "The share came out as 17.8% for the first customer instead of 8.9%, and the eight shares add up to exactly 100%. Revenue was divided by the total of the eight customers, not by company revenue: the result is a share within the top eight instead of a share of revenue. The denominator is computed over all customers, before LIMIT 8 is applied, in a separate subquery over the 2025 table."
+            }
           ]
         },
         {
@@ -1393,6 +1461,14 @@
           "hints": [
             "revenue is already in the starter query. revenue_per_capita is that same revenue from the same row, divided by r.population, not by the sum across all regions.",
             "No extra JOIN is needed: r.population already comes from dim_region, which the query already joins."
+          ],
+          "traps": [
+            {
+              "message": "population came out as 25,014,720,000 for Saitama instead of 7,340,000, and revenue_per_capita is zero for every region. SUM(r.population) adds the population up once per sales row, while a region has only one. Population is a constant of the region: keep it in GROUP BY next to the name, do not sum it."
+            },
+            {
+              "message": "The row order is different: Miyagi with 2.46 is on top, not Saitama with revenue of 6,784,187. The sort is on revenue_per_capita, while the task asks for revenue: only in that order can you see that the region biggest by revenue is only fourth by revenue per head."
+            }
           ]
         },
         {
@@ -1433,6 +1509,11 @@
           "hints": [
             "naive_avg_price is already in the starter query, it is AVG(f.avg_price) across all rows. weighted_avg_price is not the average of another column; it is SUM(f.revenue) divided by SUM(f.units).",
             "Round the same way as naive_avg_price: to two decimals."
+          ],
+          "traps": [
+            {
+              "message": "weighted_avg_price came out as 73.83 for Aqualis instead of 59.58 and 513.10 for Gastrivo instead of 459.70. The price was weighted by revenue: SUM(avg_price * revenue) / SUM(revenue). Revenue itself is made of price, so expensive rows get a weight proportional to the price, and the average drifts up. Price is weighted by units: total revenue divided by total units, SUM(f.revenue) / SUM(f.units)."
+            }
           ]
         },
         {
@@ -2384,6 +2465,14 @@
     },
     {
       "id": "sql-109",
+      "traps": [
+        {
+          "message": "units came out as 9,016 instead of 4,702: every June was taken, 2024, 2025 and 2026, not June 2025. substr(week_start, 6, 2) = '06' looks only at the month and does not know the year. A period is set with a full date: week_start BETWEEN '2025-06-01' AND '2025-06-30'."
+        },
+        {
+          "message": "NULL came back instead of 4,702. A week date is written in full, for instance '2025-06-02', and the equality week_start = '2025-06' matches no row. SUM over an empty set gives NULL, not 0, so the query does not fail and the error stays hidden. A month is set with a date range: BETWEEN '2025-06-01' AND '2025-06-30'."
+        }
+      ],
       "title": "Nettora last June",
       "brief": "The sales report claims Nettora's sales fell nearly fourfold: January 2026 gave 1,216 units. You need the other end of the comparison: how much Nettora sold in June 2025.",
       "goal": "Return one row: units, the total units sold across the Nettora products (numbers 19 to 23) in June 2025.",
@@ -2395,6 +2484,14 @@
     },
     {
       "id": "sql-110",
+      "traps": [
+        {
+          "message": "June is missing: 2024 came out as 17,891 units instead of 20,740. The condition substr(week_start, 6, 2) < '06' takes months 01 to 05, while «January to June» includes the sixth. A non-strict comparison is needed: <= '06'."
+        },
+        {
+          "message": "2024 came out as 38,413 units instead of 20,740: the whole year was counted, while the first halves are being compared. The 2026 data ends in June, and against a full 2024 such a comparison is unfair. The same slice of the year is taken in all three years: substr(week_start, 6, 2) <= '06'."
+        }
+      ],
       "title": "The same months across three years",
       "brief": "The director wants an answer: did Nettora really fall, or was winter compared with summer? The fair comparison is the same months of different years: January to June of 2024, 2025 and 2026.",
       "goal": "Return year (taken from week_start) and units, the total units of Nettora (numbers 19 to 23) for January to June of each of the three years, ordered by year.",
@@ -2406,6 +2503,14 @@
     },
     {
       "id": "sql-111",
+      "traps": [
+        {
+          "message": "2024 came out as 418,846 units instead of 198,270: the whole year was counted, while the first halves are being compared. Without the month filter 2024 and 2025 look about twice the size of 2026, which has only January to June in the data. The same slice is taken in all three years: WHERE substr(week_start, 6, 2) <= '06'."
+        },
+        {
+          "message": "One row came back: 2024 and 636,978 units, that is, the total of three years under the label of the first. Without GROUP BY the aggregate collects the whole selection into one row, and year is taken from an arbitrary one. To get a row per year, add the year expression to GROUP BY: GROUP BY 1."
+        }
+      ],
       "title": "The market over the same months",
       "brief": "The first thing a sceptic will ask: maybe the whole market slipped, not one brand? The check is the same January-to-June, three-year comparison, but without the brand filter: units across all products at once.",
       "goal": "Return year and units, the total units across all products for January to June of each of the three years, ordered by year.",
@@ -2427,6 +2532,14 @@
     },
     {
       "id": "sql-113",
+      "traps": [
+        {
+          "message": "5,487, 4,370 and 1,191 «outlets» came back instead of 79, 79 and 37. COUNT(customer_id) counts sales rows, not outlets: one outlet trades week after week and gets into the selection dozens of times. To count distinct outlets, write DISTINCT inside COUNT."
+        },
+        {
+          "message": "One row came back instead of three: how many outlets traded over the three years in total, without a split by year. Without GROUP BY the aggregate collects the whole selection into one row, and year is taken from an arbitrary one, so 79 stands under 2024 and says nothing about 2026. Add the year to GROUP BY: GROUP BY 1."
+        }
+      ],
       "title": "Outlets by year",
       "brief": "Month by month the number of Nettora outlets slides: 74 in early 2025, down to 40 by December. Now one number per year to size the whole loss: how many outlets the brand had in 2024, in 2025 and in 2026.",
       "goal": "Return year and outlets, the number of distinct outlets with Nettora sales in each year, ordered by year.",
@@ -2514,6 +2627,14 @@
     },
     {
       "id": "sql-120",
+      "traps": [
+        {
+          "message": "The stock came out as 9,269, 27,622 and 61,042 instead of 1,046, 2,363 and 4,224: all brands were summed. The JOIN with dim_product is there precisely to filter by brand, and the condition p.brand = 'Nettora' was lost. Without it the whole catalogue got into the stock."
+        },
+        {
+          "message": "One row came back: 2024-06-01 and 7,633, the stock of three Junes at once under the label of the first. Without GROUP BY, SUM collects the whole selection into one number, and month_start is taken from an arbitrary row. A stock for each June separately comes from GROUP BY s.month_start."
+        }
+      ],
       "title": "Nettora stock at distributors",
       "brief": "Customers complain: \"they're not delivering\". But shipments only exceed sales by 4 to 6% each year, a small gap, so the goods must be lying somewhere on the way. Distributor stock is recorded monthly.",
       "goal": "Return month_start and units, the Nettora stock at distributors (the sum of units_on_hand) for June of each year, in ascending date order.",
