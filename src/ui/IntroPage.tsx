@@ -1,6 +1,7 @@
 import { introPage } from '../content/intro';
 import type { IntroBlock } from '../content/intro';
 import { useI18n } from '../i18n/context';
+import { PageToc } from './PageToc';
 
 /**
  * «Что такое аналитика данных» — экскурс для человека вне профессии.
@@ -39,44 +40,53 @@ export function IntroPage({
   const { locale } = useI18n();
   const page = introPage(locale);
 
+  /* Пункты — из тех же блоков, что рисуют заголовки; хвост стоит последним. */
+  const tocItems = [
+    ...page.blocks.map((block) => ({ id: block.id, title: block.title })),
+    { id: 'closing', title: page.closing.title },
+  ];
+
   return (
-    <div className="settings-column intro-page">
-      <p className="intro-lead">{page.lead}</p>
+    <div className="page-with-toc page-with-toc-narrow">
+      <div className="settings-column intro-page">
+        <p className="intro-lead">{page.lead}</p>
 
-      <MapFigure map={page.figures.map} />
+        <MapFigure map={page.figures.map} />
 
-      {page.blocks.map((block) => (
-        <section className="card" key={block.id}>
-          <h2>{block.title}</h2>
-          <IntroBlockBody block={block} join={page.join} figures={page.figures} />
-        </section>
-      ))}
+        {page.blocks.map((block) => (
+          <section className="card page-toc-target" id={block.id} key={block.id}>
+            <h2>{block.title}</h2>
+            <IntroBlockBody block={block} join={page.join} figures={page.figures} />
+          </section>
+        ))}
 
-      {/*
-       * Хвост — карточка того же вида, что и блоки, а не подвал: две двери
-       * здесь такая же часть чтения, как и всё остальное, и выделять их
-       * рамкой другого рода значило бы сказать «а теперь реклама».
-       */}
-      <section className="card">
-        <h2>{page.closing.title}</h2>
-        <p className="intro-quote">{page.closing.quote}</p>
-        <p>{page.closing.question}</p>
+        {/*
+         * Хвост — карточка того же вида, что и блоки, а не подвал: две двери
+         * здесь такая же часть чтения, как и всё остальное, и выделять их
+         * рамкой другого рода значило бы сказать «а теперь реклама».
+         */}
+        <section className="card page-toc-target" id="closing">
+          <h2>{page.closing.title}</h2>
+          <p className="intro-quote">{page.closing.quote}</p>
+          <p>{page.closing.question}</p>
 
-        <div className="intro-doors">
-          {onOpenStoryMode && (
-            <button type="button" className="link-row intro-door" onClick={onOpenStoryMode}>
-              <span className="intro-door-label">{page.closing.storyLabel} →</span>
-              <span className="intro-door-note">{page.closing.storyNote}</span>
+          <div className="intro-doors">
+            {onOpenStoryMode && (
+              <button type="button" className="link-row intro-door" onClick={onOpenStoryMode}>
+                <span className="intro-door-label">{page.closing.storyLabel} →</span>
+                <span className="intro-door-note">{page.closing.storyNote}</span>
+              </button>
+            )}
+            <button type="button" className="link-row intro-door" onClick={onOpenData}>
+              <span className="intro-door-label">{page.closing.dataLabel} →</span>
+              <span className="intro-door-note">{page.closing.dataNote}</span>
             </button>
-          )}
-          <button type="button" className="link-row intro-door" onClick={onOpenData}>
-            <span className="intro-door-label">{page.closing.dataLabel} →</span>
-            <span className="intro-door-note">{page.closing.dataNote}</span>
-          </button>
-        </div>
+          </div>
 
-        <p className="muted intro-foot">{page.closing.foot}</p>
-      </section>
+          <p className="muted intro-foot">{page.closing.foot}</p>
+        </section>
+      </div>
+    <PageToc items={tocItems} />
     </div>
   );
 }

@@ -8360,3 +8360,94 @@ details.story-known > summary small {
   line-height: 1.5;
   color: var(--text-dim);
 }
+
+/* ==========================================================================
+ * Оглавление справа (ui/PageToc.tsx): экскурс и «С чего начать».
+ *
+ * Только от 1280px, ниже его нет совсем и ничем не заменяется: на узком
+ * экране страница читается подряд, а навигация по ней — пустая трата
+ * строки. Сетка — колонка контента и 180px справа, оглавление прилипает
+ * под шапкой (как песочница). Колонка контента держит свой прежний вид:
+ * у экскурса 680px, у «С чего начать» вся оставшаяся ширина.
+ * ========================================================================== */
+
+.page-toc {
+  display: none;
+}
+
+.page-toc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.page-toc-target {
+  scroll-margin-top: 72px;
+}
+
+@media (min-width: 1024px) {
+  .page-toc-main {
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-with-toc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* Экскурс сохраняет колонку 680px: оглавление встаёт сразу за ней. */
+  .page-with-toc-narrow {
+    grid-template-columns: 680px 180px;
+  }
+
+  .page-toc {
+    display: block;
+    position: sticky;
+    top: 72px;
+  }
+
+  .page-toc-title {
+    margin: 0 0 8px;
+    font-size: var(--fs-micro);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  .page-toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-toc-item {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 4px 0 4px 10px;
+    border: 0;
+    border-left: 2px solid var(--line);
+    background: none;
+    color: var(--text-dim);
+    font: inherit;
+    font-size: var(--fs-small);
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .page-toc-item:hover {
+    color: var(--text);
+  }
+
+  .page-toc-item.is-current {
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+}

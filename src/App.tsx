@@ -23,6 +23,7 @@ import { overviewPage } from './content/overview';
 import { DataScreen } from './ui/DataScreen';
 import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
+import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
@@ -5130,183 +5131,199 @@ function AccountScreen({
 function Onboarding({ onFinish }: { onFinish: () => void }) {
   const { t, locale } = useI18n();
 
-  return (
-    <>
-      {/*
-       * Без заголовка намеренно: шапка экрана уже печатает t.onboarding.title
-       * (см. h1 в App), и h2 с той же строкой стоял бы в шестидесяти пикселях
-       * под ней — тот же дефект, что задвоенный логотип и что второй раз
-       * названный трек в trackIntro. Ни один другой экран так не делает:
-       * у about, sandbox, data и reference заголовок живёт только в шапке.
-       * Карточка остаётся ради врезки — абзац крупнее остального текста,
-       * как .brief у WelcomeHero, потому что читают его первым.
-       */}
-      <div className="card">
-        <p className="brief" style={{ margin: 0 }}>{t.onboarding.intro}</p>
-      </div>
+  /*
+   * Оглавление справа (от 1280px, см. PageToc). Пункты и заголовки карточек
+   * берут строки отсюда же, из одного массива: второго списка нет.
+   */
+  const toc = [
+    { id: 'tools', title: t.onboarding.toolsTitle },
+    { id: 'compare', title: t.onboarding.compareTitle },
+    { id: 'steps', title: t.onboarding.stepsTitle },
+    { id: 'extra', title: t.onboarding.extraTitle },
+  ];
 
-      {/*
-       * Не повтор intro.what четырёх паков, а то, чего там нет: правило
-       * выбора между инструментами. В паках оно рассыпано по четырём
-       * intro.limits и видно только тому, кто открыл все четыре вводных.
-       * Раскладка и цветная точка — те же классы, что у списка треков
-       * на «О тренажёре» и у легенды ChainDiagram, без новых стилей.
-       */}
-      <div className="card">
-        <h2>{t.onboarding.toolsTitle}</h2>
-        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.toolsIntro}
-        </p>
-        <div className="track-summary-list">
-          {TRACK_ORDER.map((track) => (
-            <div key={track} className="track-summary">
-              <div className="track-summary-head">
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className={`chain-legend-dot track-${track}`} aria-hidden />
-                  {t.tracks.names[track]}
-                </span>
+  return (
+    <div className="page-with-toc">
+      <div className="page-toc-main">
+        {/*
+         * Без заголовка намеренно: шапка экрана уже печатает t.onboarding.title
+         * (см. h1 в App), и h2 с той же строкой стоял бы в шестидесяти пикселях
+         * под ней — тот же дефект, что задвоенный логотип и что второй раз
+         * названный трек в trackIntro. Ни один другой экран так не делает:
+         * у about, sandbox, data и reference заголовок живёт только в шапке.
+         * Карточка остаётся ради врезки — абзац крупнее остального текста,
+         * как .brief у WelcomeHero, потому что читают его первым.
+         */}
+        <div className="card">
+          <p className="brief" style={{ margin: 0 }}>{t.onboarding.intro}</p>
+        </div>
+
+        {/*
+         * Не повтор intro.what четырёх паков, а то, чего там нет: правило
+         * выбора между инструментами. В паках оно рассыпано по четырём
+         * intro.limits и видно только тому, кто открыл все четыре вводных.
+         * Раскладка и цветная точка — те же классы, что у списка треков
+         * на «О тренажёре» и у легенды ChainDiagram, без новых стилей.
+         */}
+        <div className="card page-toc-target" id="tools">
+          <h2>{t.onboarding.toolsTitle}</h2>
+          <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
+            {t.onboarding.toolsIntro}
+          </p>
+          <div className="track-summary-list">
+            {TRACK_ORDER.map((track) => (
+              <div key={track} className="track-summary">
+                <div className="track-summary-head">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className={`chain-legend-dot track-${track}`} aria-hidden />
+                    {t.tracks.names[track]}
+                  </span>
+                </div>
+                <dl className="audience" style={{ marginTop: 8 }}>
+                  <div>
+                    <dt>{t.onboarding.toolsWhenLabel}</dt>
+                    <dd>{t.onboarding.toolsWhen[track]}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.onboarding.toolsCostLabel}</dt>
+                    <dd>{t.onboarding.toolsCost[track]}</dd>
+                  </div>
+                </dl>
               </div>
-              <dl className="audience" style={{ marginTop: 8 }}>
-                <div>
-                  <dt>{t.onboarding.toolsWhenLabel}</dt>
-                  <dd>{t.onboarding.toolsWhen[track]}</dd>
-                </div>
-                <div>
-                  <dt>{t.onboarding.toolsCostLabel}</dt>
-                  <dd>{t.onboarding.toolsCost[track]}</dd>
-                </div>
+            ))}
+          </div>
+        </div>
+
+        {/*
+         * Один вопрос — три ответа. Единственное место экрана, где новичок
+         * видит сам код, и потому единственное, что здесь проверяется сборкой:
+         * гейт выполняет sql- и python-фрагменты и сверяет их результаты между
+         * собой (см. content/tools-compare.ts). Порядок карточек берётся
+         * из файла, а не из TRACK_ORDER: сравниваются три инструмента,
+         * а domain среди них не инструмент.
+         */}
+        <div className="page-toc-target" id="compare">
+          <ToolsCompare variant="onboarding" />
+        </div>
+
+        {/*
+         * Единственное место в приложении, где нумерация уместна: это
+         * последовательность действий, а не набор ответов на разные вопросы
+         * (см. комментарий у onboarding.steps в i18n/ru.ts). Номер рисует
+         * экран по индексу массива, а не текст, — переставить шаг местами
+         * не потребует правки строк в двух локалях.
+         */}
+        <div className="card page-toc-target" id="steps">
+          <h2>{t.onboarding.stepsTitle}</h2>
+          <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
+            {t.onboarding.stepsIntro}
+          </p>
+          <ol className="onboard-steps">
+            {t.onboarding.steps.map((step, i) => (
+              <li key={step.title} className="onboard-step">
+                <span className="onboard-step-num" aria-hidden>
+                  {i + 1}
+                </span>
+                {/*
+                 * Тело шага — обычным цветом, а не .muted. Соседние карточки
+                 * устроены наоборот: в dl.audience подпись серая, а ответ
+                 * полной силы, и «Как проходить» была единственным местом,
+                 * где серым набран как раз ответ. Читая экран подряд,
+                 * натыкаешься на инверсию ровно там, где содержание самое
+                 * инструментальное. Иерархию держит начертание заголовка.
+                 */}
+                <span>
+                  <strong style={{ display: 'block', marginBottom: 2, fontSize: 14 }}>{step.title}</strong>
+                  <span style={{ fontSize: 14, lineHeight: 1.6 }}>{step.body}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+            {t.onboarding.stepsNote}
+          </p>
+          <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+            {t.onboarding.installNote}
+          </p>
+        </div>
+
+        {/*
+         * Два списка, не один: «пробел рядом» и «соседняя профессия» — разные
+         * обещания, и слить их значило бы поставить машинное обучение вровень
+         * со сводными таблицами (см. onboarding.extraNear/extraAdjacent в ru.ts).
+         * extraAdjacent обязан дословно продолжать about.audienceNotBody.
+         */}
+        <div className="card page-toc-target" id="extra">
+          <h2>{t.onboarding.extraTitle}</h2>
+          <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
+            {t.onboarding.extraIntro}
+          </p>
+          {/*
+           * Карта окрестностей: три зоны от «внутри» к «снаружи», рельс слева
+           * гаснет от акцентного цвета к цвету линии. Диаграмма здесь —
+           * сама раскладка, а не картинка рядом с текстом: рисовать отдельную
+           * схему значило бы вывести названия пунктов дважды.
+           *
+           * Первая зона без описаний намеренно (см. extraInsideLabel в ru.ts):
+           * четыре трека уже описаны выше на этом экране, и нужна она не ради
+           * содержимого, а ради границы — два списка ниже перечисляют
+           * отсутствующее, и без «внутри» непонятно, относительно чего.
+           */}
+          <div className="zone-map">
+            <div className="zone zone-inside">
+              <p className="zone-label">{t.onboarding.extraInsideLabel}</p>
+              <div className="zone-chips">
+                {TRACK_ORDER.map((track) => (
+                  <span key={track} className="pill">
+                    <span className={`chain-legend-dot track-${track}`} aria-hidden style={{ marginRight: 6 }} />
+                    {t.tracks.names[track]}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="zone zone-near">
+              <p className="zone-label">{t.onboarding.extraNearLabel}</p>
+              <dl className="audience">
+                {t.onboarding.extraNear.map((item) => (
+                  <div key={item.title}>
+                    <dt>{item.title}</dt>
+                    <dd>{item.body}</dd>
+                  </div>
+                ))}
               </dl>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/*
-       * Один вопрос — три ответа. Единственное место экрана, где новичок
-       * видит сам код, и потому единственное, что здесь проверяется сборкой:
-       * гейт выполняет sql- и python-фрагменты и сверяет их результаты между
-       * собой (см. content/tools-compare.ts). Порядок карточек берётся
-       * из файла, а не из TRACK_ORDER: сравниваются три инструмента,
-       * а domain среди них не инструмент.
-       */}
-      <ToolsCompare variant="onboarding" />
-
-      {/*
-       * Единственное место в приложении, где нумерация уместна: это
-       * последовательность действий, а не набор ответов на разные вопросы
-       * (см. комментарий у onboarding.steps в i18n/ru.ts). Номер рисует
-       * экран по индексу массива, а не текст, — переставить шаг местами
-       * не потребует правки строк в двух локалях.
-       */}
-      <div className="card">
-        <h2>{t.onboarding.stepsTitle}</h2>
-        <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.stepsIntro}
-        </p>
-        <ol className="onboard-steps">
-          {t.onboarding.steps.map((step, i) => (
-            <li key={step.title} className="onboard-step">
-              <span className="onboard-step-num" aria-hidden>
-                {i + 1}
-              </span>
-              {/*
-               * Тело шага — обычным цветом, а не .muted. Соседние карточки
-               * устроены наоборот: в dl.audience подпись серая, а ответ
-               * полной силы, и «Как проходить» была единственным местом,
-               * где серым набран как раз ответ. Читая экран подряд,
-               * натыкаешься на инверсию ровно там, где содержание самое
-               * инструментальное. Иерархию держит начертание заголовка.
-               */}
-              <span>
-                <strong style={{ display: 'block', marginBottom: 2, fontSize: 14 }}>{step.title}</strong>
-                <span style={{ fontSize: 14, lineHeight: 1.6 }}>{step.body}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.stepsNote}
-        </p>
-        <p className="muted" style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.installNote}
-        </p>
-      </div>
-
-      {/*
-       * Два списка, не один: «пробел рядом» и «соседняя профессия» — разные
-       * обещания, и слить их значило бы поставить машинное обучение вровень
-       * со сводными таблицами (см. onboarding.extraNear/extraAdjacent в ru.ts).
-       * extraAdjacent обязан дословно продолжать about.audienceNotBody.
-       */}
-      <div className="card">
-        <h2>{t.onboarding.extraTitle}</h2>
-        <p className="muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.extraIntro}
-        </p>
-        {/*
-         * Карта окрестностей: три зоны от «внутри» к «снаружи», рельс слева
-         * гаснет от акцентного цвета к цвету линии. Диаграмма здесь —
-         * сама раскладка, а не картинка рядом с текстом: рисовать отдельную
-         * схему значило бы вывести названия пунктов дважды.
-         *
-         * Первая зона без описаний намеренно (см. extraInsideLabel в ru.ts):
-         * четыре трека уже описаны выше на этом экране, и нужна она не ради
-         * содержимого, а ради границы — два списка ниже перечисляют
-         * отсутствующее, и без «внутри» непонятно, относительно чего.
-         */}
-        <div className="zone-map">
-          <div className="zone zone-inside">
-            <p className="zone-label">{t.onboarding.extraInsideLabel}</p>
-            <div className="zone-chips">
-              {TRACK_ORDER.map((track) => (
-                <span key={track} className="pill">
-                  <span className={`chain-legend-dot track-${track}`} aria-hidden style={{ marginRight: 6 }} />
-                  {t.tracks.names[track]}
-                </span>
-              ))}
+            <div className="zone zone-outside">
+              <p className="zone-label">{t.onboarding.extraAdjacentLabel}</p>
+              <dl className="audience">
+                {t.onboarding.extraAdjacent.map((item) => (
+                  <div key={item.title}>
+                    <dt>{item.title}</dt>
+                    <dd>{item.body}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
-
-          <div className="zone zone-near">
-            <p className="zone-label">{t.onboarding.extraNearLabel}</p>
-            <dl className="audience">
-              {t.onboarding.extraNear.map((item) => (
-                <div key={item.title}>
-                  <dt>{item.title}</dt>
-                  <dd>{item.body}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div className="zone zone-outside">
-            <p className="zone-label">{t.onboarding.extraAdjacentLabel}</p>
-            <dl className="audience">
-              {t.onboarding.extraAdjacent.map((item) => (
-                <div key={item.title}>
-                  <dt>{item.title}</dt>
-                  <dd>{item.body}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          {/* Совет, ради которого список и написан, — текстом, а не сноской (довод тот же, что у пояснений в «Один вопрос — три ответа»). */}
+          <p style={{ margin: '14px 0 0', fontSize: 14, lineHeight: 1.6 }}>
+            {t.onboarding.extraClosing}
+          </p>
         </div>
-        {/* Совет, ради которого список и написан, — текстом, а не сноской (довод тот же, что у пояснений в «Один вопрос — три ответа»). */}
-        <p style={{ margin: '14px 0 0', fontSize: 14, lineHeight: 1.6 }}>
-          {t.onboarding.extraClosing}
-        </p>
-      </div>
 
-      {/*
-       * Экран обязан куда-то вести — тот же принцип, что не пустил
-       * «Занятие закончено» остаться тупиком с одной кнопкой (см. находку
-       * навигации в ROADMAP). Ведёт на главную, а не в конкретный трек:
-       * выбор трека — отдельное решение, страница его не делает за человека.
-       */}
-      <button type="button" className="btn" style={{ marginTop: 4 }} onClick={onFinish}>
-        {t.onboarding.startBtn}
-      </button>
-    </>
+        {/*
+         * Экран обязан куда-то вести — тот же принцип, что не пустил
+         * «Занятие закончено» остаться тупиком с одной кнопкой (см. находку
+         * навигации в ROADMAP). Ведёт на главную, а не в конкретный трек:
+         * выбор трека — отдельное решение, страница его не делает за человека.
+         */}
+        <button type="button" className="btn" style={{ marginTop: 4 }} onClick={onFinish}>
+          {t.onboarding.startBtn}
+        </button>
+      </div>
+    <PageToc items={toc} />
+    </div>
   );
 }
 

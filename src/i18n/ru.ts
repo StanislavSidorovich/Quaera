@@ -66,6 +66,8 @@ export const ru = {
     back: 'Назад',
     viewSettingsAria: 'Настройки: аккаунт, шрифт, тема, язык',
     exitHint: 'Нажмите «Назад» ещё раз, чтобы выйти',
+    /** Заголовок оглавления справа на длинных страницах (ui/PageToc.tsx). */
+    onThisPage: 'На этой странице',
     streakSuffix: (days: number) => `серия ${days} дн.`,
   },
   welcome: {

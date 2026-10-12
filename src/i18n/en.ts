@@ -25,6 +25,7 @@ export const en = {
     back: 'Back',
     viewSettingsAria: 'Settings: account, font size, theme, language',
     exitHint: 'Press back again to exit',
+    onThisPage: 'On this page',
     streakSuffix: (days: number) => `${days}-day streak`,
   },
   welcome: {
