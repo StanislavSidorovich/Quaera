@@ -1535,7 +1535,17 @@
         "Связь точки с дистрибьютором — колонка served_by_distributor_id в dim_customer.",
         "Деление двух целых в SQLite даёт целое: умножьте числитель на 1.0."
       ],
-      "explain": "Разрыв между sell-in и sell-out — базовый диагностический показатель в дистрибуции. Отгрузки означают только то, что товар уехал со склада производителя; продажами он становится, лишь когда его купил конечный покупатель. Устойчивое соотношение около единицы — здоровая картина. Резкий скачок означает, что склад канала растёт, и это отложенная проблема: следующий квартал дистрибьютор проведёт, распродавая запас, а не заказывая новое. Обратная ситуация, ratio заметно ниже единицы, тоже сигнал — канал вымывает остатки и скоро упрётся в дефицит."
+      "explain": "Разрыв между sell-in и sell-out — базовый диагностический показатель в дистрибуции. Отгрузки означают только то, что товар уехал со склада производителя; продажами он становится, лишь когда его купил конечный покупатель. Устойчивое соотношение около единицы — здоровая картина. Резкий скачок означает, что склад канала растёт, и это отложенная проблема: следующий квартал дистрибьютор проведёт, распродавая запас, а не заказывая новое. Обратная ситуация, ratio заметно ниже единицы, тоже сигнал — канал вымывает остатки и скоро упрётся в дефицит.",
+      "traps": [
+        {
+          "code": "WITH si AS (\n  SELECT distributor_id, SUM(units) AS units\n  FROM fact_sellin\n  WHERE month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY distributor_id\n),\nso AS (\n  SELECT c.served_by_distributor_id AS distributor_id, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY c.served_by_distributor_id\n)\nSELECT d.customer_name AS distributor,\n       si.units AS sell_in,\n       so.units AS sell_out,\n       ROUND(1.0 * si.units / so.units, 2) AS ratio\nFROM si\nJOIN so ON so.distributor_id = si.distributor_id\nJOIN dim_customer d ON d.customer_id = si.distributor_id\nORDER BY ratio DESC",
+          "message": "У Setouchi Trading ratio вышел 3,44 вместо 2,44, у остальных от 1,4 до 1,6 вместо 1,04: sell_out занижен у всех. Фильтр недель скопирован с помесячного: BETWEEN '2025-10-01' AND '2025-12-01' обрывается на первом декабря и теряет четыре декабрьские недели (8, 15, 22 и 29 числа). Месяц в sell_in помечен первым числом, а неделя в sell_out начинается с понедельника, поэтому верхняя граница у них разная: 2025-12-29."
+        },
+        {
+          "code": "WITH si AS (\n  SELECT distributor_id, SUM(units) AS units\n  FROM fact_sellin\n  WHERE month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY distributor_id\n),\nso AS (\n  SELECT c.served_by_distributor_id AS distributor_id, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY c.served_by_distributor_id\n)\nSELECT d.customer_name AS distributor,\n       si.units AS sell_in,\n       so.units AS sell_out,\n       ROUND(si.units / so.units, 2) AS ratio\nFROM si\nJOIN so ON so.distributor_id = si.distributor_id\nJOIN dim_customer d ON d.customer_id = si.distributor_id\nORDER BY ratio DESC",
+          "message": "ratio вышел целым: 2 у Setouchi Trading и 1 у всех остальных. Деление целого на целое в SQLite даёт целое с отброшенным остатком, и ROUND(…, 2) уже ничего не исправит. Выброс 2,44 превратился в 2, а 1,04 и 1,05 слились в одну единицу. Числитель умножают на 1.0: 1.0 * si.units / so.units."
+        }
+      ]
     },
     {
       "id": "sql-023",
@@ -1854,7 +1864,17 @@
         "Остаток на складе лежит в отдельной таблице fact_stock, у неё нет прямой связи с fact_sellout: достаньте нужное число отдельным скалярным подзапросом, как в задании про карту покрытия новинки.",
         "Недельный темп продаж считайте только по точкам этого дистрибьютора — фильтр c.served_by_distributor_id, а не по всем продажам товара в стране."
       ],
-      "explain": "Запас в неделях — стандартный способ увидеть остаток не в штуках, а во времени: 1315 штук ничего не говорят сами по себе, а почти 22 недели запаса при среднем темпе продаж говорят о серьёзном затоваривании — на FMCG-товарах с ограниченным сроком годности это прямой риск списания. Здоровый уровень обычно 3–6 недель в зависимости от категории; всё, что заметно выше, означает либо ошибку в заказе, либо резкое замедление продаж в точках, которое склад ещё не отразил. Это тот же диагностический ход, что и sell-in/sell-out в задании про затоваренный склад, только для остатков, а не для потока отгрузок."
+      "explain": "Запас в неделях — стандартный способ увидеть остаток не в штуках, а во времени: 1315 штук ничего не говорят сами по себе, а почти 22 недели запаса при среднем темпе продаж говорят о серьёзном затоваривании — на FMCG-товарах с ограниченным сроком годности это прямой риск списания. Здоровый уровень обычно 3–6 недель в зависимости от категории; всё, что заметно выше, означает либо ошибку в заказе, либо резкое замедление продаж в точках, которое склад ещё не отразил. Это тот же диагностический ход, что и sell-in/sell-out в задании про затоваренный склад, только для остатков, а не для потока отгрузок.",
+      "traps": [
+        {
+          "code": "SELECT\n  (SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') AS units_on_hand,\n  ROUND(AVG(f.units), 1) AS avg_weekly_units,\n  ROUND((SELECT units_on_hand FROM fact_stock\n     WHERE distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n       AND product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') * 1.0 / AVG(f.units), 1) AS weeks_cover\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nWHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n  AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n  AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'",
+          "message": "Средние недельные продажи вышли 22,3 вместо 60,2, а запас 58,9 недели вместо 21,9: почти втрое больше. AVG по таблице продаж усредняет строки «точка × неделя», а не недели, а на одной неделе товар продают сразу несколько точек дистрибьютора. Сначала недельные итоги по всем его точкам, GROUP BY week_start, и только потом среднее по этим итогам."
+        },
+        {
+          "code": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE c.served_by_distributor_id = (SELECT customer_id FROM dim_customer WHERE customer_name = 'Setouchi Trading Co.')\n    AND f.product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n    AND f.week_start BETWEEN '2025-10-06' AND '2025-12-29'\n  GROUP BY f.week_start\n)\nSELECT\n  (SELECT SUM(units_on_hand) FROM fact_stock\n     WHERE product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') AS units_on_hand,\n  ROUND(AVG(w.units), 1) AS avg_weekly_units,\n  ROUND((SELECT SUM(units_on_hand) FROM fact_stock\n     WHERE product_id = (SELECT product_id FROM dim_product WHERE product_name = 'Aqualis Still 0.5 L')\n       AND month_start = '2025-12-01') * 1.0 / AVG(w.units), 1) AS weeks_cover\nFROM weekly w",
+          "message": "Остаток вышел 3 690 вместо 1 315, а запас 61,3 недели вместо 21,9. Остаток просуммирован по всем дистрибьюторам, хотя вопрос про одного: в fact_stock строка на дистрибьютора, товар и месяц. Остаток берут по тому же distributor_id, что и продажи, иначе запас всей сети делится на продажи одного дистрибьютора."
+        }
+      ]
     },
     {
       "id": "sql-058",
@@ -1876,7 +1896,13 @@
         "План привязан к представителю и дивизиону одновременно — соедините факт с планом по обоим ключам, rep_id и division.",
         "LEFT JOIN нужен на случай, если у представителя в декабре вообще не было продаж по своему дивизиону: тогда actual должен стать 0, а не выпасть из отчёта — COALESCE(a.revenue, 0), как в задании про карту покрытия новинки."
       ],
-      "explain": "План и факт лежат на разной гранулярности, которая на первый взгляд не видна: fact_target хранит одну строку на представителя и дивизион в месяц, а fact_sellout — россыпь продаж по точкам и товарам, из которой дивизион представителя ещё нужно собрать через два соединения. LEFT JOIN здесь принципиален по той же причине, что в задании про карту покрытия новинки: представитель без единой продажи в декабре не должен пропасть из отчёта — наоборот, именно он самый интересный случай, 0% выполнения. Фильтр attainment_pct < 100 стоит в WHERE, а не в HAVING, потому что расчёт делается над обычными колонками результата соединения: агрегаты уже посчитаны внутри CTE actual, и группировки на этом уровне запроса нет."
+      "explain": "План и факт лежат на разной гранулярности, которая на первый взгляд не видна: fact_target хранит одну строку на представителя и дивизион в месяц, а fact_sellout — россыпь продаж по точкам и товарам, из которой дивизион представителя ещё нужно собрать через два соединения. LEFT JOIN здесь принципиален по той же причине, что в задании про карту покрытия новинки: представитель без единой продажи в декабре не должен пропасть из отчёта — наоборот, именно он самый интересный случай, 0% выполнения. Фильтр attainment_pct < 100 стоит в WHERE, а не в HAVING, потому что расчёт делается над обычными колонками результата соединения: агрегаты уже посчитаны внутри CTE actual, и группировки на этом уровне запроса нет.",
+      "traps": [
+        {
+          "code": "WITH actual AS (\n  SELECT c.rep_id, p.division, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'\n  GROUP BY c.rep_id, p.division\n)\nSELECT r.rep_name, ROUND(t.target_revenue) AS target_revenue,\n       ROUND(COALESCE(a.revenue, 0)) AS actual_revenue,\n       ROUND(100.0 * COALESCE(a.revenue, 0) / t.target_revenue, 1) AS attainment_pct\nFROM fact_target t\nJOIN dim_rep r ON r.rep_id = t.rep_id\nLEFT JOIN actual a ON a.rep_id = t.rep_id AND a.division = t.division\nWHERE r.role = 'rep'\n  AND 100.0 * COALESCE(a.revenue, 0) / t.target_revenue < 100\nORDER BY attainment_pct",
+          "message": "Вернулось 397 строк вместо 18: каждый представитель попал в результат по разу на каждый месяц плана. В fact_target строка на представителя, дивизион и месяц, а декабрьский факт сравнивается с планом любого месяца и нигде не сходится. Фильтр по декабрю в факте уже стоит, план отбирают так же, по месяцу: t.month_start = '2025-12-01'."
+        }
+      ]
     },
     {
       "id": "sql-059",
@@ -1934,7 +1960,17 @@
         "Нарастающая доля — тот же приём, что и накопительный итог в задании про нарастающие отгрузки за квартал, только результат ещё делится на общую сумму и переводится в проценты.",
         "Чтобы включить ровно те строки, которых не хватало до 50%, сравните долю ДО текущей строки (без неё) с порогом — если она уже была меньше 50%, эта строка нужна."
       ],
-      "explain": "Идея в том, чтобы включить в отчёт минимальный набор лидеров, а не произвольные топ-N: сравнивается не сама накопленная доля текущей строки, а доля, накопленная ДО неё (prev_share_pct) — именно она решает, была ли эта строка обязательна для преодоления 50%. Результат: 15 из 47 товаров, то есть около трети линейки, вместе дают чуть больше половины выручки — умеренная, не экстремальная концентрация, не тот случай, когда пять хитов держат всю компанию, но и не идеально ровное распределение. Здесь легко ошибиться, ожидая классическое правило «20% товаров дают 80% выручки»: в этом портфеле оно не подтверждается, и подгонять вывод под чужую эвристику вместо того, чтобы прочитать собственные цифры, — типичная ошибка интерпретации."
+      "explain": "Идея в том, чтобы включить в отчёт минимальный набор лидеров, а не произвольные топ-N: сравнивается не сама накопленная доля текущей строки, а доля, накопленная ДО неё (prev_share_pct) — именно она решает, была ли эта строка обязательна для преодоления 50%. Результат: 15 из 47 товаров, то есть около трети линейки, вместе дают чуть больше половины выручки — умеренная, не экстремальная концентрация, не тот случай, когда пять хитов держат всю компанию, но и не идеально ровное распределение. Здесь легко ошибиться, ожидая классическое правило «20% товаров дают 80% выручки»: в этом портфеле оно не подтверждается, и подгонять вывод под чужую эвристику вместо того, чтобы прочитать собственные цифры, — типичная ошибка интерпретации.",
+      "traps": [
+        {
+          "code": "WITH sku_rev AS (\n  SELECT p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.product_name\n),\ntotal AS (\n  SELECT SUM(rev) AS grand FROM sku_rev\n),\nranked AS (\n  SELECT product_name, rev,\n         100.0 * SUM(rev) OVER (ORDER BY rev DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / (SELECT grand FROM total) AS cum_share_pct\n  FROM sku_rev\n)\nSELECT product_name, ROUND(rev) AS revenue, ROUND(cum_share_pct, 1) AS cum_share_pct\nFROM ranked\nWHERE cum_share_pct <= 50\nORDER BY revenue DESC",
+          "message": "Вернулось 14 товаров, и вместе они дают 49,3%: до половины набор не дотягивает. Условие cum_share_pct <= 50 отсекает товар, который доводит набор до порога. Минимальный набор «не менее 50%» включает и тот товар, на котором порог пересекается. Берут строки, у которых доля до них была ещё меньше 50: (нарастающий итог минус своя выручка) / общая < 50."
+        },
+        {
+          "code": "WITH sku_rev AS (\n  SELECT p.product_name, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.product_name\n),\ntotal AS (\n  SELECT SUM(rev) AS grand FROM sku_rev\n),\nranked AS (\n  SELECT product_name, rev,\n         100.0 * SUM(rev) OVER (ORDER BY rev ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / (SELECT grand FROM total) AS cum_share_pct,\n         100.0 * (SUM(rev) OVER (ORDER BY rev ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - rev) / (SELECT grand FROM total) AS prev_share_pct\n  FROM sku_rev\n)\nSELECT product_name, ROUND(rev) AS revenue, ROUND(cum_share_pct, 1) AS cum_share_pct\nFROM ranked\nWHERE prev_share_pct < 50\nORDER BY revenue DESC",
+          "message": "Вернулось 33 товара из 47 вместо 15, и это хвост ассортимента, а не лидеры. Нарастающий итог посчитан от мелких к крупным: в OVER нет DESC, и накопление идёт с конца. ORDER BY revenue DESC внизу запроса сортирует только вывод, окно считается по собственному ORDER BY. Лидеров накапливают сверху: ORDER BY rev DESC внутри OVER."
+        }
+      ]
     },
     {
       "id": "sql-061",
@@ -2311,6 +2347,16 @@
           "hints": [
             "Недели уже размечены на promo и base в заготовке. Выручка акции — сумма её недель, базовый уровень — среднее базовых недель, умноженное на три: базовых недель четыре, а промо-недель три.",
             "Прирост — разность тех же двух выражений, отдельного запроса для него не нужно."
+          ],
+          "traps": [
+            {
+              "code": "WITH weekly AS (\n  SELECT f.week_start,\n         SUM(f.revenue) AS revenue,\n         CASE\n           WHEN f.week_start BETWEEN '2025-08-04' AND '2025-08-18'\n             THEN 'promo'\n           WHEN f.week_start BETWEEN '2025-07-07' AND '2025-07-28'\n             THEN 'base'\n         END AS period\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Milvara'\n  GROUP BY f.week_start\n)\nSELECT ROUND(SUM(CASE WHEN period = 'promo' THEN revenue END)) AS promo_revenue,\n       ROUND(AVG(CASE WHEN period = 'base' THEN revenue END)) AS base_revenue,\n       ROUND(SUM(CASE WHEN period = 'promo' THEN revenue END)\n             - AVG(CASE WHEN period = 'base' THEN revenue END)) AS incremental_revenue\nFROM weekly",
+              "message": "База вышла 104 645 вместо 313 934, а прирост 435 827 вместо 226 538. Три недели акции сравнены с одной базовой неделей: AVG даёт среднее за неделю, а промо-недель три. Базу приводят к той же длине, что и акцию, среднюю неделю умножают на три. Без этого прирост завышен почти вдвое, и акция выглядит окупившейся, хотя скидку 231 546 ¥ она не покрыла."
+            },
+            {
+              "code": "WITH weekly AS (\n  SELECT f.week_start,\n         SUM(f.revenue) AS revenue,\n         CASE\n           WHEN f.week_start BETWEEN '2025-08-04' AND '2025-08-18'\n             THEN 'promo'\n           WHEN f.week_start BETWEEN '2025-07-07' AND '2025-07-28'\n             THEN 'base'\n         END AS period\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Milvara'\n  GROUP BY f.week_start\n)\nSELECT ROUND(SUM(CASE WHEN period = 'promo' THEN revenue END)) AS promo_revenue,\n       ROUND(SUM(CASE WHEN period = 'base' THEN revenue END)) AS base_revenue,\n       ROUND(SUM(CASE WHEN period = 'promo' THEN revenue END)\n             - SUM(CASE WHEN period = 'base' THEN revenue END)) AS incremental_revenue\nFROM weekly",
+              "message": "База вышла 418 578 вместо 313 934, а прирост 121 893 вместо 226 538. Четыре июльские недели сложены целиком и сравнены с тремя неделями акции: база получилась длиннее акции на неделю, и прирост занижен почти вдвое. Вывод про окупаемость здесь совпал с верным случайно, на другой акции он разошёлся бы. Сравнивают отрезки одной длины: среднюю базовую неделю умножают на три."
+            }
           ]
         },
         {
@@ -2510,6 +2556,16 @@
           "hints": [
             "Год берётся из даты недели первыми четырьмя символами: substr(week_start, 1, 4).",
             "Прайс на проданную штуку взвешивается объёмом: SUM(units * list_price) / SUM(units), иначе дорогие SKU получат тот же вес, что и ходовые."
+          ],
+          "traps": [
+            {
+              "code": "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(SUM(f.units * pr.list_price) / SUM(f.units), 1) AS list_price,\n       ROUND(SUM(f.revenue) / SUM(f.units), 1) AS realized_price,\n       ROUND(100.0 * COUNT(f.promo_id) / COUNT(*), 1) AS promo_share_units\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND substr(pr.month_start, 1, 7) = substr(f.week_start, 1, 7)\nWHERE p.brand = 'Milvara'\n  AND (f.week_start BETWEEN '2025-01-01' AND '2025-06-30'\n    OR f.week_start BETWEEN '2026-01-01' AND '2026-06-30')\nGROUP BY 1\nORDER BY year",
+              "message": "Доля промо вышла 10,9% и 20,4% вместо 9,9% и 31,7%. Она посчитана по строкам продаж: COUNT берёт каждую строку одинаково, будь в ней две штуки или двести. Доля в штуках это штуки по акции, делённые на все штуки: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) / SUM(units). По строкам рост втрое выглядит ростом меньше чем вдвое, и разрыв между прайсом и кассой остаётся без объяснения."
+            },
+            {
+              "code": "SELECT substr(f.week_start, 1, 4) AS year,\n       ROUND(SUM(f.units * pr.list_price) / SUM(f.units), 1) AS list_price,\n       ROUND(AVG(f.revenue * 1.0 / f.units), 1) AS realized_price,\n       ROUND(100.0 * SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.units ELSE 0 END)\n             / SUM(f.units), 1) AS promo_share_units\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND substr(pr.month_start, 1, 7) = substr(f.week_start, 1, 7)\nWHERE p.brand = 'Milvara'\n  AND (f.week_start BETWEEN '2025-01-01' AND '2025-06-30'\n    OR f.week_start BETWEEN '2026-01-01' AND '2026-06-30')\nGROUP BY 1\nORDER BY year",
+              "message": "Фактическая цена вышла 73,9 и 73,5 вместо 74,3 и 70,4: падение 0,4 ¥ вместо 3,9 ¥. AVG(revenue / units) усредняет цены строк, и каждая весит одинаково, будь в ней две штуки или двести. Цена за штуку это вся выручка, делённая на все штуки: SUM(revenue) / SUM(units). Простое среднее почти скрывает падение, и финансисты, которые его видят, выглядят неправыми."
+            }
           ]
         },
         {
@@ -2753,6 +2809,16 @@
           "hints": [
             "Эталон считается до соединения с прогнозом: сначала факт по месяцам и SKU, потом предыдущий месяц оконной функцией по тому же SKU. Если посчитать его после соединения, окно увидит по три строки на месяц — по одной на горизонт — и сдвинет не туда.",
             "У первого месяца ряда предыдущего нет, и LAG вернёт там пусто. Такие пары надо убрать из сравнения, иначе две ошибки посчитаются по разным наборам строк."
+          ],
+          "traps": [
+            {
+              "code": "WITH actual AS (\n  SELECT substr(week_start, 1, 7) AS ym,\n         product_id,\n         SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY substr(week_start, 1, 7), product_id\n),\njoined AS (\n  SELECT a.ym,\n         a.product_id,\n         a.units,\n         f.forecast_units,\n         f.lag_months,\n         LAG(a.units) OVER (PARTITION BY a.product_id ORDER BY a.ym) AS prev_units\n  FROM actual a\n  JOIN fact_forecast_snapshot f ON f.product_id = a.product_id\n                               AND substr(f.month_start, 1, 7) = a.ym\n)\nSELECT p.brand,\n       ROUND(100.0 * SUM(ABS(j.forecast_units - j.units)) / SUM(j.units), 1) AS wmape_model,\n       ROUND(100.0 * SUM(ABS(j.prev_units - j.units)) / SUM(j.units), 1) AS wmape_naive,\n       ROUND(100.0 * SUM(ABS(j.prev_units - j.units)) / SUM(j.units)\n             - 100.0 * SUM(ABS(j.forecast_units - j.units)) / SUM(j.units), 1) AS gain_pp\nFROM joined j\nJOIN dim_product p ON p.product_id = j.product_id\nWHERE j.lag_months = 3\n  AND j.prev_units IS NOT NULL\nGROUP BY p.brand\nORDER BY gain_pp",
+              "message": "Ошибка эталона вышла нулевой у всех девяти брендов, а gain_pp равна минус ошибке прогноза. Окно LAG посчитано уже после соединения с прогнозом: на каждый месяц там три строки, по одной на горизонт, и «предыдущей» оказывается строка того же месяца, а не прошлого. Эталон «как в прошлом месяце» считают до соединения: сначала факт по месяцам и SKU, потом LAG по SKU, и только потом присоединяют прогноз."
+            },
+            {
+              "code": "WITH actual AS (\n  SELECT substr(week_start, 1, 7) AS ym,\n         product_id,\n         SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY substr(week_start, 1, 7), product_id\n),\nnaive AS (\n  SELECT ym,\n         product_id,\n         units,\n         LAG(units) OVER (PARTITION BY product_id ORDER BY ym) AS prev_units\n  FROM actual\n)\nSELECT p.brand,\n       ROUND(100.0 * AVG(ABS(f.forecast_units - n.units) * 1.0 / n.units), 1) AS wmape_model,\n       ROUND(100.0 * AVG(ABS(n.prev_units - n.units) * 1.0 / n.units), 1) AS wmape_naive,\n       ROUND(100.0 * AVG(ABS(n.prev_units - n.units) * 1.0 / n.units)\n             - 100.0 * AVG(ABS(f.forecast_units - n.units) * 1.0 / n.units), 1) AS gain_pp\nFROM fact_forecast_snapshot f\nJOIN naive n ON n.product_id = f.product_id\n            AND n.ym = substr(f.month_start, 1, 7)\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.lag_months = 3\n  AND n.prev_units IS NOT NULL\nGROUP BY p.brand\nORDER BY gain_pp",
+              "message": "Числа сдвинулись у всех брендов: у «Nettora» ошибки 39,3% и 23,8% вместо 37,7% и 23,3%, у «Pyrexan» 36,6% и 67,2% вместо 32,5% и 57,5%. Ошибка усреднена по строкам, и мелкий SKU с промахом в сотни процентов весит как самый ходовой. Взвешенная ошибка это отношение сумм: SUM(ABS(...)) / SUM(факт)."
+            }
           ]
         },
         {

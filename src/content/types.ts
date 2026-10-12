@@ -126,7 +126,11 @@ export type TaskStep =
       solution: string;
       orderMatters?: boolean;
       hints: string[];
-      /** См. Task.traps. Сегодня заполняется только у поднятого одношагового задания. */
+      /**
+       * См. Task.traps. У поднятого одношагового задания берутся из `Task.traps`,
+       * у многошагового живут здесь: ловушка принадлежит шагу, на котором
+       * человек пишет код, а не заданию целиком.
+       */
       traps?: Trap[];
     }
   | {
@@ -376,6 +380,8 @@ export interface TaskStepTranslation {
   /** Вопрос шага интерпретации. */
   question?: string;
   hints?: string[];
+  /** Порядок обязан совпадать с `traps` расчётного шага — позиционно; код ловушки не переводится. */
+  traps?: { message: string }[];
   options?: TaskOptionTranslation[];
   /** Пункты шага на упорядочивание. Порядок обязан совпадать с оригиналом — сопоставление позиционное. */
   items?: TaskOptionTranslation[];

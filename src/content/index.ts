@@ -112,6 +112,12 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
           `Перевод ${tr.id}: у задания ${t.id} на шаге ${i + 1} ${st.options.length} переведённых вариантов вместо ${origOptions.length}`
         );
       }
+      const origTraps = os && os.kind === 'compute' ? os.traps ?? [] : [];
+      if (st.traps && origTraps.length !== st.traps.length) {
+        throw new Error(
+          `Перевод ${tr.id}: у задания ${t.id} на шаге ${i + 1} ${st.traps.length} переведённых ловушек вместо ${origTraps.length}`
+        );
+      }
     });
   }
   return tr;
@@ -153,7 +159,13 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
             ? t.steps.map((s, i) => {
                 const st = tt.steps![i];
                 if (!st) return s;
-                if (s.kind === 'compute') return { ...s, goal: st.goal ?? s.goal, hints: st.hints ?? s.hints };
+                if (s.kind === 'compute')
+                  return {
+                    ...s,
+                    goal: st.goal ?? s.goal,
+                    hints: st.hints ?? s.hints,
+                    traps: st.traps && s.traps ? s.traps.map((o, j) => ({ ...o, ...st.traps![j] })) : s.traps,
+                  };
                 if (s.kind === 'order')
                   return {
                     ...s,

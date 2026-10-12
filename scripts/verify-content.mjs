@@ -687,6 +687,17 @@ async function checkSteps(pack, t) {
       } else if (!/(^|\n)\s*result\s*=/.test(step.solution)) {
         fail(at, 'эталон не присваивает переменную result — см. контракт в ROADMAP.md §6');
       }
+      /*
+       * Ловушки шага проверяются тем же `checkTraps`, что и ловушки
+       * одношагового задания: «выглядит как шаблон», «не выполняется»,
+       * «совпала с эталоном». Шаг подставляется как задание — читаются
+       * только поля id, traps, mode, template и orderMatters.
+       */
+      await checkTraps(
+        { id: at, traps: step.traps, mode: step.mode, template: step.template, orderMatters: step.orderMatters },
+        res,
+        pack.track === 'sql' ? runSql : runPython
+      );
       lastResult = res;
       console.log(`  ok   ${at} ${String(res.rows.length).padStart(5)} строк × ${res.columns.length}`);
       continue;
@@ -3388,6 +3399,21 @@ result = f"{int(d.sum())}/{int((d & s['revenue'].str.contains(',', na=False)).su
       same('sql-081', [t81.every((r) => r[1] === r[2]), brand(trapAt('sql-081', 1), 'Aqualis', 1), brand(trapAt('sql-081', 1), 'Nettora', 1), brand(sqlGood('sql-081'), 'Nettora', 1)], [true, 14.7, -11, 11], 'ABS в смещении делает его ошибкой, обратная разность ставит наверх не того');
       same('sql-084', [trapAt('sql-084', 0), trapAt('sql-084', 1), sqlGood('sql-084')], [[['promo', 12385, -9.4, 30.8]], [['promo', 406, -15.6, 32.1]], [['plain', 846, -6, 30.2], ['promo', 406, -15.6, 32.1]]], 'соединение по бренду без месяца даёт одну группу из 12 385 пар, внутреннее оставляет 406');
       same('sql-104', [trapAt('sql-104', 0).length, trapAt('sql-104', 1).length, sqlGood('sql-104').length], [3, 0, 27], 'без даты в ON остаётся 3 точки, условия в WHERE дают пусто вместо 27');
+      // Пятая партия того же дня: уровень 5. У трёх заданий ловушки живут на расчётном шаге.
+      const stepOf = (id) => sqlPack.tasks.find((t) => t.id === id).steps[0];
+      const stepTrap = (id, i) => runSql(stepOf(id).traps[i].code).rows;
+      const stepGood = (id) => runSql(stepOf(id).solution).rows;
+      same('sql-070', [stepTrap('sql-070', 0)[0], stepTrap('sql-070', 1)[0], stepGood('sql-070')[0]], [[540472, 104645, 435827], [540472, 418578, 121893], [540472, 313934, 226538]], 'AVG без ×3 завышает прирост почти вдвое, SUM четырёх недель против трёх занижает');
+      same('sql-076', [stepTrap('sql-076', 0).map((r) => r[3]), stepTrap('sql-076', 1).map((r) => r[2]), stepGood('sql-076').map((r) => r[3]), stepGood('sql-076').map((r) => r[2])], [[10.9, 20.4], [73.9, 73.5], [9.9, 31.7], [74.3, 70.4]], 'доля по строкам вместо штук, цена как среднее цен строк');
+      const t83 = stepTrap('sql-083', 0);
+      same('sql-083', [t83.length, t83.every((r) => r[2] === 0), brand(stepTrap('sql-083', 1), 'Nettora', 1), brand(stepTrap('sql-083', 1), 'Pyrexan', 3), brand(stepGood('sql-083'), 'Nettora', 3)], [9, true, 39.3, 30.6, -14.4], 'LAG после соединения даёт нулевую ошибку эталона у всех девяти брендов, AVG процентов сдвигает числа');
+      const t22 = trapAt('sql-022', 0);
+      const t22i = trapAt('sql-022', 1);
+      same('sql-022', [t22[0].slice(1), sqlGood('sql-022')[0].slice(1), t22i[0][3], t22i.slice(1).every((r) => r[3] === 1)], [[28203, 8194, 3.44], [28203, 11574, 2.44], 2, true], 'фильтр недель до 1 декабря теряет четыре недели, целочисленное деление даёт 2 и 1');
+      same('sql-057', [trapAt('sql-057', 0)[0], trapAt('sql-057', 1)[0], sqlGood('sql-057')[0]], [[1315, 22.3, 58.9], [3690, 60.2, 61.3], [1315, 60.2, 21.9]], 'среднее по строкам продаж и остаток по всем дистрибьюторам');
+      same('sql-058', [trapAt('sql-058', 0).length, sqlGood('sql-058').length], [397, 18], 'без месяца в плане строка на каждый месяц плана');
+      const t60 = trapAt('sql-060', 0);
+      same('sql-060', [t60.length, t60[t60.length - 1][2], trapAt('sql-060', 1).length, sqlGood('sql-060').length], [14, 49.3, 33, 15], '<= 50 не доходит до половины, накопление без DESC берёт хвост');
     }
   }
 }
@@ -4057,6 +4083,16 @@ function translationPairs(orig, tr) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.steps.length} переведённых шагов вместо ${(orig.steps ?? []).length}`);
         ok = false;
       }
+      // Ловушки расчётного шага: так же строго, как у задания ниже — русское
+      // объяснение под английским интерфейсом ничего не ломает, а значит, молчит.
+      (orig.steps ?? []).forEach((os, i) => {
+        if (os.kind !== 'compute') return;
+        const have = (t.steps?.[i]?.traps ?? []).length;
+        if ((os.traps ?? []).length !== have) {
+          fail(`${packId}.en`, `у задания ${t.id} на шаге ${i + 1} ${have} переведённых ловушек вместо ${(os.traps ?? []).length}`);
+          ok = false;
+        }
+      });
       // Строже, чем у вариантов: непереведённая ловушка не ломает загрузку,
       // а молча показывает английскому интерфейсу русское объяснение.
       if ((orig.traps ?? []).length !== (t.traps ?? []).length) {

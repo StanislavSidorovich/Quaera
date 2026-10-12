@@ -1210,6 +1210,14 @@
     },
     {
       "id": "sql-022",
+      "traps": [
+        {
+          "message": "Setouchi Trading got a ratio of 3.44 instead of 2.44, the rest 1.4 to 1.6 instead of 1.04: sell_out is understated everywhere. The week filter was copied from the monthly one: BETWEEN '2025-10-01' AND '2025-12-01' stops at the first of December and drops four December weeks (the 8th, 15th, 22nd and 29th). A month in sell_in is marked by its first day, while a week in sell_out starts on a Monday, so their upper bounds differ: 2025-12-29."
+        },
+        {
+          "message": "The ratio came out whole: 2 for Setouchi Trading and 1 for everyone else. Dividing an integer by an integer in SQLite gives an integer with the remainder dropped, and ROUND(..., 2) can no longer fix it. The outlier 2.44 became 2, and 1.04 and 1.05 merged into a single 1. Multiply the numerator by 1.0: 1.0 * si.units / so.units."
+        }
+      ],
       "title": "Who overstocked the warehouse",
       "brief": "The CFO is unhappy: Q4 2025 shipments grew, but retail sales didn't. There's a suspicion that one of the distributors loaded up on stock to hit an annual bonus. That kind of stockpile comes back as a shipment drop next quarter, so it needs to be found now.",
       "goal": "For Q4 2025, compare shipments and sales at the outlets each distributor serves. Return distributor (name), sell_in (units shipped for the months 2025-10-01 through 2025-12-01), sell_out (units sold at outlets for the weeks that start in October through December, week_start 2025-10-06 through 2025-12-29), and ratio (the first divided by the second, rounded to two decimal places). Ordered by ratio descending.",
@@ -1252,6 +1260,14 @@
     },
     {
       "id": "sql-057",
+      "traps": [
+        {
+          "message": "Average weekly sales came out as 22.3 instead of 60.2, and the cover as 58.9 weeks instead of 21.9: almost three times too much. AVG over the sales table averages \"outlet × week\" rows, not weeks, and in one week several of the distributor's outlets sell the product. First the weekly totals across all of its outlets, GROUP BY week_start, and only then the average over those totals."
+        },
+        {
+          "message": "The stock came out as 3,690 instead of 1,315, and the cover as 61.3 weeks instead of 21.9. The stock was summed over all distributors, though the question is about one: fact_stock has a row per distributor, product and month. Stock is taken by the same distributor_id as sales, otherwise the whole network's stock is divided by one distributor's sales."
+        }
+      ],
       "title": "Weeks of cover at a distributor",
       "brief": "The CFO is worried about write-offs: the «Setouchi Trading» distributor is showing large warehouse stock of the «Aqualis» brand. You need to work out how many weeks of sales it will cover at the current sales pace of the outlets it serves.",
       "goal": "Return one row: units_on_hand (stock of «Aqualis Still 0.5 L» at the «Setouchi Trading» distributor at the end of December 2025), avg_weekly_units (average weekly sales of this product at the outlets served by the distributor, October–December 2025, rounded to one decimal place) and weeks_cover (how many weeks the stock will last at that sales pace, rounded to one decimal place).",
@@ -1263,6 +1279,11 @@
     },
     {
       "id": "sql-058",
+      "traps": [
+        {
+          "message": "It returned 397 rows instead of 18: every rep got one row per month of the plan. fact_target has a row per rep, division and month, and December actuals are compared with the plan of any month, which never lines up. The December filter is already on the actuals; the plan is picked the same way, by month: t.month_start = '2025-12-01'."
+        }
+      ],
       "title": "Who missed the plan in December",
       "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division, only those under 100% attainment.",
       "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (revenue from the rep's division products at the rep's outlets, rounded to whole numbers) and attainment_pct (the plan attainment percentage, rounded to one decimal place). Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
@@ -1304,6 +1325,14 @@
     },
     {
       "id": "sql-060",
+      "traps": [
+        {
+          "message": "It returned 14 products, and together they give 49.3%: the set falls short of half. The condition cum_share_pct <= 50 drops the product that takes the set to the threshold. A minimal set of \"at least 50%\" includes the product on which the threshold is crossed. Take rows whose share before them was still under 50: (running total minus own revenue) / total < 50."
+        },
+        {
+          "message": "It returned 33 products out of 47 instead of 15, and these are the tail of the range, not the leaders. The running total was built from small to large: there is no DESC in OVER, so accumulation goes from the end. ORDER BY revenue DESC at the bottom of the query sorts only the output, while the window is computed by its own ORDER BY. Leaders are accumulated from the top: ORDER BY rev DESC inside OVER."
+        }
+      ],
       "title": "How many products make up half of revenue",
       "brief": "Ahead of an assortment review, a category manager wants to gauge portfolio concentration: if half the annual revenue comes from a handful of SKUs, dropping any one of them is a serious risk; if revenue is spread across the whole lineup, the risk is lower.",
       "goal": "For 2025, determine the smallest set of top-revenue products that together account for at least 50% of annual revenue. Return product_name, revenue (rounded to whole numbers) and cum_share_pct (the cumulative share of total revenue in percent, rounded to one decimal place). Ordered by revenue descending.",
@@ -1569,6 +1598,14 @@
           "hints": [
             "Promo revenue is the sum of three weeks; the base level is the average of four weeks multiplied by three. Summing the July weeks outright will not do: there are four of them, not three.",
             "The uplift is the difference between those same two expressions; it needs no separate query."
+          ],
+          "traps": [
+            {
+              "message": "The base came out as 104,645 instead of 313,934, and the uplift as 435,827 instead of 226,538. Three promo weeks were compared with a single base week: AVG gives the average for one week, and there are three promo weeks. The base is brought to the same length as the promotion by multiplying the average week by three. Without that the uplift is overstated almost twofold, and the promotion looks like it paid for itself, though it did not cover the 231,546 yen discount."
+            },
+            {
+              "message": "The base came out as 418,578 instead of 313,934, and the uplift as 121,893 instead of 226,538. The four July weeks were added up whole and compared with three promo weeks: the base ended up a week longer than the promotion, and the uplift is understated almost twofold. The verdict on payback happens to match the right one here; on another promotion it would diverge. Compare periods of the same length: multiply the average base week by three."
+            }
           ]
         },
         {
@@ -1700,6 +1737,14 @@
           "hints": [
             "The year comes out of the week date as its first four characters: substr(week_start, 1, 4).",
             "The list price per unit sold is weighted by volume: SUM(units * list_price) / SUM(units), otherwise expensive SKUs weigh as much as the fast-moving ones."
+          ],
+          "traps": [
+            {
+              "message": "The promo share came out as 10.9% and 20.4% instead of 9.9% and 31.7%. It was counted by sales rows: COUNT takes every row alike, whether it holds two units or two hundred. A share in units is units sold on promo divided by all units: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) / SUM(units). By rows a threefold rise looks like less than a doubling, and the gap between list price and cash is left unexplained."
+            },
+            {
+              "message": "The realised price came out as 73.9 and 73.5 instead of 74.3 and 70.4: a drop of 0.4 yen instead of 3.9. AVG(revenue / units) averages row prices, and each weighs the same whether it holds two units or two hundred. Price per unit is all revenue divided by all units: SUM(revenue) / SUM(units). A plain mean almost hides the drop, and finance, who see it, look wrong."
+            }
           ]
         },
         {
@@ -1866,6 +1911,14 @@
           "hints": [
             "The benchmark is worked out before the join with the forecast: first actuals by month and SKU, then the previous month through a window function over the same SKU. Computed after the join, the window would see three rows per month, one per horizon, and shift by the wrong amount.",
             "The first month of a series has no previous one, and LAG returns nothing there. Those pairs have to leave the comparison, otherwise the two errors are worked out on different sets of rows."
+          ],
+          "traps": [
+            {
+              "message": "The baseline error came out as zero for all nine brands, and gain_pp equals minus the model error. The LAG window was computed after joining with the forecast: there are three rows per month, one per horizon, and the \"previous\" row turns out to be the same month, not the last one. The \"same as last month\" baseline is computed before the join: first the actuals by month and SKU, then LAG per SKU, and only then the forecast is attached."
+            },
+            {
+              "message": "The numbers shifted for every brand: «Nettora» has errors of 39.3% and 23.8% instead of 37.7% and 23.3%, «Pyrexan» 36.6% and 67.2% instead of 32.5% and 57.5%. The error was averaged over rows, so a small SKU with a miss of hundreds of percent weighs as much as the fastest seller. A weighted error is a ratio of sums: SUM(ABS(...)) / SUM(actual)."
+            }
           ]
         },
         {
