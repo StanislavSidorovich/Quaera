@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
-import { toolsCompareAnswers, toolsCompareQuestion } from './content/tools-compare';
 import { panelWordsIn } from './content/panelKeywords';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { compareTaskOrder } from './content/taskOrder';
@@ -27,6 +26,7 @@ import { IntroPage } from './ui/IntroPage';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
+import { ToolsCompare } from './ui/ToolsCompare';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
@@ -4362,6 +4362,16 @@ function About({
       </div>
 
       {/*
+       * Одни данные, три инструмента — сразу за «Структурой»: она назвала
+       * четыре трека, здесь три из них отвечают на один вопрос, и SQL
+       * с pandas сходятся в одну таблицу. Во всю ширину и вне about-columns
+       * по той же причине, что «Почему сделано так» ниже: три колонки кода
+       * не помещаются в колонку потока 440px, а высокая карточка сломала бы
+       * баланс пары под ней.
+       */}
+      <ToolsCompare variant="brief" />
+
+      {/*
        * «Почему сделано так» — два решения и цена каждого. Во всю ширину
        * и вне about-columns: колонки ниже балансируются по высоте парой
        * «Как устроено» / «Приватность + Автор», и третий блок эту пару
@@ -5153,63 +5163,7 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
        * из файла, а не из TRACK_ORDER: сравниваются три инструмента,
        * а domain среди них не инструмент.
        */}
-      <div className="card">
-        <h2>{t.onboarding.compareTitle}</h2>
-        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.compareIntro}
-        </p>
-        <p className="muted" style={{ margin: '0 0 4px', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          {t.onboarding.compareQuestionLabel}
-        </p>
-        <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, fontWeight: 600 }}>
-          {toolsCompareQuestion(locale)}
-        </p>
-        <div className="compare-list">
-          {toolsCompareAnswers.map((answer) => (
-            <div key={answer.track} className="compare-item">
-              <div className="compare-head">
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 14 }}>
-                  <span className={`chain-legend-dot track-${answer.track}`} aria-hidden />
-                  {t.tracks.names[answer.track]}
-                </span>
-                {/*
-                 * Пометка исполнимости — не украшение: во всём остальном
-                 * тренажёре код выполняется по-настоящему, и без явной
-                 * подписи читатель по привычке решит, что и мера DAX
-                 * прогнана по данным. Она не прогнана и прогнана быть
-                 * не может.
-                 *
-                 * Выделена та пилюля, которая говорит неожиданное. Сначала
-                 * было наоборот — две исполнимые светились акцентом,
-                 * а единственная предупреждающая была обычной серой,
-                 * и глаз проскакивал именно её. Правило общее: подсвечивать
-                 * исключение, а не правило, иначе подсветка перестаёт
-                 * что-либо значить.
-                 */}
-                <span className={`pill${answer.runnable ? '' : ' warn'}`}>
-                  {answer.runnable ? t.onboarding.compareRunnable : t.onboarding.compareNotRunnable}
-                </span>
-              </div>
-              <CodeBlock code={answer.code} style={{ marginTop: 8, fontSize: 12.5 }} />
-              {/*
-               * Пояснение под кодом — сам вывод сравнения («шагами и с
-               * именами», «формула отвечает на все однотипные вопросы
-               * сразу»), поэтому набрано текстом, а не .muted. Приглушённым
-               * 13px оно читалось подписью к коду, и глаз, пройдя три
-               * фрагмента, уносил «три способа написать одно», а не то,
-               * чем они различаются. Приглушёнными на экране остаются
-               * вводные строки карточек и примечания.
-               */}
-              <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6 }}>
-                {answer.note[locale]}
-              </p>
-            </div>
-          ))}
-        </div>
-        <p className="muted" style={{ margin: '14px 0 0', fontSize: 13, lineHeight: 1.5 }}>
-          {t.onboarding.compareFooter}
-        </p>
-      </div>
+      <ToolsCompare variant="onboarding" />
 
       {/*
        * Единственное место в приложении, где нумерация уместна: это

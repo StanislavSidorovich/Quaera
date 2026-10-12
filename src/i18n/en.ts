@@ -374,6 +374,10 @@ export const en = {
     compareNotRunnable: 'cannot be run',
     compareFooter:
       'The build executes the first two fragments and checks their results against each other: had they disagreed, this page would not have built. For the third there is nothing to check against, and that is exactly the difference between the tools worth knowing in advance.',
+    compareResultLabel: 'SQL and pandas returned the same table',
+    compareBriefTitle: 'One dataset, three tools',
+    compareBriefIntro:
+      'One question to the dataset, written three ways. The build really runs the SQL query and the pandas code and checks them against each other, which is why there is a single table below them.',
     toolsCost: {
       domain:
         'Not a line of code, and no automatic checking: no engine will confirm that a judgement about the business is right. Everything expressible as a number is reconciled against the dataset, but a conclusion stays a conclusion.',

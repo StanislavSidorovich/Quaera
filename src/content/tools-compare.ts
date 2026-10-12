@@ -57,9 +57,16 @@ export interface ToolAnswer {
 interface ToolsCompare {
   question: Record<Locale, string>;
   answers: ToolAnswer[];
+  /**
+   * Общий ответ SQL и pandas — таблица под двумя фрагментами. Снимок, а не
+   * источник: гейт сверяет его с тем, что оба фрагмента возвращают сейчас,
+   * и падает при первом расхождении (см. verify-content.mjs, tools-compare).
+   */
+  result: { columns: string[]; rows: (string | number)[][] };
 }
 
 const data = raw as ToolsCompare;
 
 export const toolsCompareQuestion = (locale: Locale): string => data.question[locale];
 export const toolsCompareAnswers: ToolAnswer[] = data.answers;
+export const toolsCompareResult = data.result;
