@@ -119,6 +119,20 @@
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Quaera: a data analyst trainer</title>
+    <!--
+      Cloudflare Web Analytics: посещения без cookie, как на model. и flow.
+      Только на боевом домене, чтобы dev-сервер и превью Pages не попадали
+      в цифры. Токен публичный: он и так лежит в HTML каждой страницы.
+    -->
+    <script>
+      if (location.hostname === 'quaera.app') {
+        var cfb = document.createElement('script');
+        cfb.defer = true;
+        cfb.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+        cfb.dataset.cfBeacon = '{"token": "f19fa83e6bf44164b891823e09141532"}';
+        document.head.appendChild(cfb);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -540,6 +540,18 @@ textarea.sql {
   color: var(--accent);
 }
 
+/* Инструменты Quaera над копирайтом: прижатие ко дну переходит к ним. */
+.sidebar-family {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-family + .sidebar-legal {
+  margin-top: 0;
+  padding-top: 10px;
+}
+
 /*
  * Крупный шрифт — через zoom, а не через рост каждого font-size по отдельности:
  * так масштабируются разом и текст, и отступы, и кнопки, без риска, что где-то

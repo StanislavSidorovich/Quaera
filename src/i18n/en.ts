@@ -88,6 +88,11 @@ export const en = {
     /** См. комментарий в ru.ts: подпись называет состояние, а не требует действия. */
     accountSignedOut: 'On this device only',
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
+    familyTitle: 'More in Quaera',
+    familyModel: 'Model: database design',
+    familyFlow: 'Flow: BPMN processes',
+    familyPandas: 'Pandas: a Colab notebook',
+    familyLab: 'Lab: SQL on your own files',
   },
   tracks: {
     ariaLabel: 'Tracks',
@@ -842,7 +847,7 @@ export const en = {
     /** Приглашение нажать — только там, где нажатие действительно работает (см. SchemaMap). */
     mapIntroOpen: 'Click a table to open its description below.',
     /** См. довод у mapDesign в ru.ts. */
-    mapDesign: 'See how this database was designed, from the conceptual model to the SQL tables, in StrataSQL',
+    mapDesign: 'See how this database was designed, from the conceptual model to the SQL tables, in Quaera Model',
     mapAria: 'Diagram of the links between tables',
     mapFactsLabel: 'Facts',
     mapDimsLabel: 'Lookups',

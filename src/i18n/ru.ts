@@ -190,6 +190,12 @@ export const ru = {
     accountSignedOut: 'Только на этом устройстве',
     /** Подпись под названием трека в меню: сколько заданий трека уже решено. */
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
+    /** Подвал меню: остальные инструменты Quaera (адреса — FAMILY в links.ts). */
+    familyTitle: 'Ещё в Quaera',
+    familyModel: 'Model: проектирование баз',
+    familyFlow: 'Flow: процессы BPMN',
+    familyPandas: 'Pandas: тетрадь в Colab',
+    familyLab: 'Lab: SQL на своих файлах',
   },
   tracks: {
     ariaLabel: 'Треки',
@@ -1673,7 +1679,7 @@ export const ru = {
      * вопрос — почему они так устроены. Стрелка ↗ говорит, что откроется
      * другое приложение в новой вкладке, а не экран внутри этого.
      */
-    mapDesign: 'Как эту базу спроектировали, от концептуальной модели до SQL-таблиц, можно посмотреть в StrataSQL',
+    mapDesign: 'Как эту базу спроектировали, от концептуальной модели до SQL-таблиц, можно посмотреть в Quaera Model',
     mapAria: 'Схема связей между таблицами',
     mapFactsLabel: 'Факты',
     mapDimsLabel: 'Справочники',

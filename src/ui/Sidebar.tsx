@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { packForTrack } from '../content';
 import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
-import { AUTHOR_LINKEDIN, AUTHOR_NAME, COPYRIGHT_YEAR } from '../links';
+import { AUTHOR_LINKEDIN, AUTHOR_NAME, COPYRIGHT_YEAR, FAMILY } from '../links';
 import type { Progress } from '../srs/store';
 
 /**
@@ -290,6 +290,28 @@ export function Sidebar({
               <small className="side-item-note">{accountEmail ?? t.nav.accountSignedOut}</small>
             </span>
           </button>
+        </div>
+
+        {/*
+         * Остальные инструменты Quaera — той же прозой, что копирайт, и по
+         * той же причине: ссылки уводят с сайта, равноправными пунктами меню
+         * им быть незачем. Стоят над копирайтом и забирают себе его
+         * `margin-top: auto`, чтобы оба блока остались прижаты ко дну.
+         */}
+        <div className="sidebar-legal sidebar-family">
+          <div>{t.nav.familyTitle}</div>
+          {FAMILY.map((f) => (
+            <a key={f.key} href={f.url} target="_blank" rel="noreferrer">
+              {
+                {
+                  model: t.nav.familyModel,
+                  flow: t.nav.familyFlow,
+                  pandas: t.nav.familyPandas,
+                  lab: t.nav.familyLab,
+                }[f.key]
+              }
+            </a>
+          ))}
         </div>
 
         {/*

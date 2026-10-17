@@ -31,6 +31,19 @@ export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
 
 /**
+ * Остальные инструменты Quaera — по поддомену на каждый. Список общий для
+ * всех экранов, где семейство перечисляется целиком (подвал Sidebar), чтобы
+ * новый инструмент добавлялся в одном месте. Подписи — в i18n
+ * (`nav.family*`): адреса одинаковы на обеих локалях, назначение — нет.
+ */
+export const FAMILY = [
+  { key: 'model', url: 'https://model.quaera.app' },
+  { key: 'flow', url: 'https://flow.quaera.app' },
+  { key: 'pandas', url: 'https://pandas.quaera.app' },
+  { key: 'lab', url: 'https://lab.quaera.app' },
+] as const;
+
+/**
  * Имя правообладателя — латиницей на обеих локалях, ровно той строкой, что
  * стоит в LICENSE и LICENSE-CONTENT («Copyright 2026 Stanislav Sidorovich»).
  * Русская форма имени в прозе «О тренажёре» этому не противоречит: там текст
