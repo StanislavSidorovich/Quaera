@@ -8496,3 +8496,38 @@ details.story-known > summary small {
     margin-bottom: 16px;
   }
 }
+
+/*
+ * Остальные инструменты Quaera — последний блок главной (см. Home).
+ * Две колонки ссылок, на узком экране одна: подписи вида «Lab: SQL
+ * на своих файлах» в половину ширины телефона уже не влезают.
+ */
+.home-family {
+  margin-top: 16px;
+}
+
+.home-family h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.home-family-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+.home-family-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.home-family-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .home-family-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

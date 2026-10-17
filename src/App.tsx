@@ -8,7 +8,7 @@ import { workerCodeText } from './engine/diagnose';
 import { WORKER_FAILURE } from './engine/types';
 import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
-import { AUTHOR_LINKEDIN, AUTHOR_REPO } from './links';
+import { AUTHOR_LINKEDIN, AUTHOR_REPO, FAMILY } from './links';
 import { promptInstall, subscribeInstallAvailable } from './pwa/installPrompt';
 import {
   disablePush,
@@ -4194,6 +4194,32 @@ function Home({
           <ProofSummary onOnboarding={onOpenOnboarding} onSandbox={onOpenSandbox} />
         </div>
       )}
+
+      {/*
+       * Остальные инструменты Quaera — самым последним блоком: к ним
+       * переходят, когда с тренажёром всё ясно, и выше кнопки занятия
+       * они бы только отвлекали. На всех ширинах, а не только в подвале
+       * Sidebar: меню видно от 1024px, и на телефоне без этого блока
+       * о семействе не узнать вовсе. Адреса и подписи общие с Sidebar.
+       */}
+      <nav className="card home-family" aria-label={t.nav.familyTitle}>
+        <h2>{t.nav.familyTitle}</h2>
+        <div className="home-family-links">
+          {FAMILY.map((f) => (
+            <a key={f.key} href={f.url} target="_blank" rel="noreferrer">
+              {
+                {
+                  model: t.nav.familyModel,
+                  flow: t.nav.familyFlow,
+                  pandas: t.nav.familyPandas,
+                  lab: t.nav.familyLab,
+                }[f.key]
+              }{' '}
+              ↗
+            </a>
+          ))}
+        </div>
+      </nav>
     </>
   );
 }
