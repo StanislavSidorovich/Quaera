@@ -10,6 +10,7 @@ import '../family/fonts.css';
 import '../family/tokens.css';
 import '../family/switcher.js';
 import './styles.css';
+import { trackRegistration } from './pwa/updates';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,12 +32,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker
     .register('/sw.js')
-    .then((reg) => {
-      reg.update().catch(() => undefined);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') reg.update().catch(() => undefined);
-      });
-    })
+    .then(trackRegistration)
     .catch(() => undefined);
 
   /*

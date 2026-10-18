@@ -10,6 +10,7 @@ import type { LoadState } from './engine/types';
 import { useI18n, type Locale } from './i18n/context';
 import { AUTHOR_LINKEDIN, AUTHOR_REPO, FAMILY } from './links';
 import { promptInstall, subscribeInstallAvailable } from './pwa/installPrompt';
+import { checkForUpdates, type UpdateCheck } from './pwa/updates';
 import {
   disablePush,
   enablePush,
@@ -4266,6 +4267,7 @@ function About({
   // событие одноразовое, см. src/pwa/installPrompt.ts.
   const [installAvailable, setInstallAvailable] = useState(false);
   useEffect(() => subscribeInstallAvailable(setInstallAvailable), []);
+  const [updateState, setUpdateState] = useState<UpdateCheck | 'checking' | null>(null);
 
   return (
     <>
@@ -4430,6 +4432,35 @@ function About({
        * и в уже установленном приложении события нет вовсе, и пустая
        * кнопка обманывала бы.
        */}
+      <div className="card">
+        <h2>{t.about.updateTitle}</h2>
+        <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.6 }}>{t.about.updateBody}</p>
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={updateState === 'checking'}
+          onClick={() => {
+            setUpdateState('checking');
+            void checkForUpdates().then(setUpdateState);
+          }}
+        >
+          {t.about.updateBtn}
+        </button>
+        {updateState && (
+          <p role="status" style={{ margin: '12px 0 0', fontSize: 14, lineHeight: 1.6 }}>
+            {updateState === 'checking'
+              ? t.about.updateChecking
+              : updateState === 'latest'
+                ? t.about.updateLatest
+                : updateState === 'installing'
+                  ? t.about.updateInstalling
+                  : updateState === 'failed'
+                    ? t.about.updateFailed
+                    : t.about.updateDev}
+          </p>
+        )}
+      </div>
+
       {installAvailable && (
         <div className="card">
           <h2>{t.about.installTitle}</h2>

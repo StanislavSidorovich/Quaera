@@ -237,6 +237,16 @@ export const en = {
     installBody:
       'You can install the trainer on your device like a regular app: its own icon, its own entry in the app list, no browser tabs around it.',
     installBtn: 'Install',
+    /** См. комментарий в ru.ts. */
+    updateTitle: 'Updates',
+    updateBody:
+      'The app updates itself when it finds a new version. After a release, the new version shows up within a few minutes: GitHub Pages keeps files cached for up to 10 minutes.',
+    updateBtn: 'Check for updates',
+    updateChecking: 'Checking…',
+    updateLatest: 'You have the latest version.',
+    updateInstalling: 'A new version was found, the page is about to reload.',
+    updateFailed: 'Could not check: you are probably offline. Try again when you are back online.',
+    updateDev: 'Updates work only in the published version, not in the development server.',
     authorTitle: 'Author and licence',
     authorBody:
       'Quaera was built by Stanislav Sidorovich, an analyst who made this trainer first of all to keep their own SQL, Power BI and Python in working shape. If you found an error in a task, disagree with an explanation, or just want to get in touch, both links below work.',
