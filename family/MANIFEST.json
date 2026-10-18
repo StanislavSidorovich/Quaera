@@ -1,7 +1,7 @@
 {
   "version": 1,
   "files": {
-    "family.d.ts": "e7ff41fd6458806fef7402a1159404cec8f4caff06fe23a951196c73984894ac",
+    "family.d.ts": "2c5415e9a8295c46393af462b023060a64bb9c5bf39dcab637125f620667c02b",
     "family.json": "5cff952a253cafee4f42d6251a9d323175fbdece912c2e46b260b902993a6a88",
     "fonts.css": "01971da88d0f0952ee9a22ba339b85ad52781056be6ee05acdb5a78b0e6c9d41",
     "fonts/OFL.txt": "23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f",
@@ -16,7 +16,7 @@
     "marks/model.svg": "1f7742915755ed7dcbfb94048bff095193cf8760fb7c8c11327f6898c11a3a0e",
     "marks/pandas.svg": "793c30d4b8e9ae970f012f9732bbdf84061fa437f5d9c15520982d213ab82ff6",
     "marks/quaera.svg": "a4b3d13e070053d6a5f08aea41a2f845e592613786dfd42e16d8f494734eb1b5",
-    "switcher.js": "6fe3cd270ea189303b94b61f8beca030f007dfc870ddce61119beb77bb48adcd",
+    "switcher.js": "d7f57335b7ca429dbfb3b7d29252ccee1ac0b944757f9c9d1dea611c8a69ae50",
     "tokens.css": "7975802e23ca283f6b7e4ee7cb2c536e9e78b3430a4f56a77bed502e648d8b12"
   }
 }

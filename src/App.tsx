@@ -4207,7 +4207,13 @@ function Home({
         <h2>{t.nav.familyTitle}</h2>
         <div className="home-family-links">
           {FAMILY.map((f) => (
-            <a key={f.key} href={f.url} target="_blank" rel="noreferrer">
+            <a
+              key={f.key}
+              href={f.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
+            >
               {
                 {
                   model: t.nav.familyModel,

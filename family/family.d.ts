@@ -10,3 +10,10 @@ declare module 'react' {
     }
   }
 }
+
+declare global {
+  interface Window {
+    /** Set by switcher.js: reuse the one named window per app; true when the click was handled. */
+    quaeraOpenApp?: (anchor: HTMLAnchorElement, event: MouseEvent, id: string) => boolean
+  }
+}

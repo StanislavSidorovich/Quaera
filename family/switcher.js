@@ -13,9 +13,75 @@
  * контейнерном запросе. Имя приложения остаётся в aria-label кнопки.
  *
  * Язык подписей: lang у <quaera-switcher> или у <html>, ru или en.
+ *
+ * Одно окно на приложение. Каждое приложение держит имя окна `quaera-<id>`
+ * (переключатель ставит его себе при загрузке, если window.name пуст или уже
+ * `quaera-*`; чужое осмысленное имя не трогает). Обычный левый клик по пункту
+ * делает window.open('', 'quaera-<id>'):
+ *   - окно новое (about:blank, location читается) → ему ставится opener = null и
+ *     адрес приложения;
+ *   - location читается с ошибкой (чужой origin) → приложение уже открыто, только
+ *     focus(), без перезагрузки и без потери состояния;
+ *   - window.open вернул null → ничего не перехватывается, работает обычная
+ *     ссылка с target=_blank.
+ * Пункт текущего приложения только закрывает меню. Средняя кнопка, Ctrl/Cmd/Shift/Alt+клик
+ * и «Открыть в новой вкладке» остаются обычными ссылками: у пунктов настоящий href.
+ * Функция торчит наружу как window.quaeraOpenApp(anchor, event, id) → true, если
+ * перехватила клик; её берут и другие ссылки семьи (блок на главной тренажёра).
+ *
+ * Ограничения, худший случай во всех — прежнее поведение (новая вкладка):
+ *   - установленная PWA может открыть приложение своим окном, по имени его не найти:
+ *     возможен дубль. В standalone-режиме схема отключена (обычная ссылка);
+ *   - iOS Safari и часть мобильных браузеров focus() не выполняют, поэтому на
+ *     сенсорных экранах (без hover/fine pointer) схема тоже отключена;
+ *   - фокус на окно в фоне браузер может не перевести (политика фокуса): клик тогда
+ *     выглядит как «ничего не произошло», окно приложения остаётся где было;
+ *   - окно, у которого после открытия сменился origin или имя (пользователь ушёл
+ *     по ссылке), не найдётся: откроется новое.
  */
 (function () {
   if (typeof customElements === 'undefined' || customElements.get('quaera-switcher')) return;
+
+  const NAME_PREFIX = 'quaera-';
+
+  /** Окно можно искать по имени и переключать фокусом: мышь и не установленная PWA. */
+  function canReuseWindows() {
+    try {
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return false;
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return false;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /** Своё имя окна: только если оно пустое или чужое quaera-*. */
+  function nameOwnWindow(id) {
+    try {
+      if (!window.name || window.name.indexOf(NAME_PREFIX) === 0) window.name = NAME_PREFIX + id;
+    } catch (e) { /* имя не критично */ }
+  }
+
+  /**
+   * Обработать клик по ссылке на приложение id. true — клик перехвачен
+   * (preventDefault уже вызван), false — пусть сработает обычная ссылка.
+   */
+  function openApp(anchor, event, id) {
+    if (!anchor || !id) return false;
+    if (event && (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return false;
+    if (!canReuseWindows()) return false;
+    let w = null;
+    try { w = window.open('', NAME_PREFIX + id); } catch (e) { w = null; }
+    if (!w) return false;
+    let fresh = false;
+    try { fresh = w.location.href === 'about:blank'; } catch (e) { fresh = false; }
+    if (fresh) {
+      w.location.href = anchor.href;
+    } else {
+      try { w.focus(); } catch (e) { /* iOS и подобные: остаётся прежнее окно */ }
+    }
+    if (event) event.preventDefault();
+    return true;
+  }
+  if (!window.quaeraOpenApp) window.quaeraOpenApp = openApp;
 
   /* @family-data:begin */
   const APPS = [
@@ -158,7 +224,7 @@
       this._onEsc = (e) => { if (e.key === 'Escape') { e.preventDefault(); this._close(true); } };
     }
 
-    connectedCallback() { this._render(); }
+    connectedCallback() { this._render(); nameOwnWindow(this.getAttribute('app') || 'quaera'); }
     disconnectedCallback() {
       document.removeEventListener('pointerdown', this._onDoc, true);
       document.removeEventListener('keydown', this._onEsc, true);
@@ -179,7 +245,7 @@
         ? `Quaera <span class="suffix">${esc(short)}</span>`
         : '<span class="solo">Quaera</span>';
       const items = APPS.map((a) => `
-        <li role="none"><a class="item" role="menuitem" href="${esc(a.url)}" target="_blank" rel="noopener"
+        <li role="none"><a class="item" role="menuitem" data-app="${a.id}" href="${esc(a.url)}" target="_blank" rel="noopener"
             style="--tint: var(--q-accent-${a.id}, ${a.accent.light})"${a.id === cur.id ? ' aria-current="true"' : ''}>
           <span class="tile">${a.svg}</span>
           <span><span class="name">${esc(a.name)}</span><span class="purpose">${esc(a.purpose[lang])}</span></span>
@@ -192,7 +258,7 @@
           <span class="tile">${cur.svg}</span><span class="label" part="label">${label}</span>${CARET}
         </button>
         <ul class="menu" role="menu" hidden aria-label="Quaera">${items}
-          <li role="none" class="foot"><a role="menuitem" href="https://quaera.app" target="_blank" rel="noopener">quaera.app</a></li>
+          <li role="none" class="foot"><a role="menuitem" data-app="quaera" href="https://quaera.app" target="_blank" rel="noopener">quaera.app</a></li>
         </ul>`;
       this._btn = this._root.querySelector('.trigger');
       this._menu = this._root.querySelector('.menu');
@@ -201,7 +267,18 @@
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); this._open(e.key === 'ArrowUp' ? -1 : 0); }
       });
       this._menu.addEventListener('keydown', (e) => this._onMenuKey(e));
-      this._menu.addEventListener('click', () => this._close(false));
+      this._menu.addEventListener('click', (e) => this._onMenuClick(e));
+    }
+
+    _onMenuClick(e) {
+      const a = e.composedPath().find((n) => n instanceof HTMLAnchorElement);
+      const plain = !e.defaultPrevented && e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
+      if (a && plain && a.dataset.app === (this.getAttribute('app') || 'quaera')) {
+        e.preventDefault(); // текущее приложение: ничего не открываем
+      } else if (a && plain) {
+        window.quaeraOpenApp(a, e, a.dataset.app);
+      }
+      this._close(false);
     }
 
     _links() { return Array.from(this._menu.querySelectorAll('a')); }
