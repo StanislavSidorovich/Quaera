@@ -4,6 +4,8 @@
  *
  *   node scripts/family-sync.mjs           пересобрать блок данных и MANIFEST,
  *                                          скопировать набор в остальные репозитории
+ *   node scripts/family-sync.mjs --only <app>  раскладывать (или с --check сверять) только один
+ *                                          репозиторий: lab, model, flow или pandas
  *   node scripts/family-sync.mjs --build   только пересобрать эталон (блок данных, MANIFEST), никуда не копировать
  *   node scripts/family-sync.mjs --check   только сравнить, ничего не менять;
  *                                          печатает, кто отстал; код 1, если кто-то отстал
@@ -22,7 +24,14 @@ const root = path.resolve(here, '../..');
 const check = process.argv.includes('--check');
 const buildOnly = process.argv.includes('--build');
 
-const TARGETS = ['lab/src/family', 'model/src/family', 'flow/src/family', 'pandas/docs/family'];
+const ALL_TARGETS = ['lab/src/family', 'model/src/family', 'flow/src/family', 'pandas/docs/family'];
+const onlyAt = process.argv.indexOf('--only');
+const only = onlyAt > 0 ? process.argv[onlyAt + 1] : null;
+const TARGETS = only ? ALL_TARGETS.filter((t) => t.split('/')[0] === only) : ALL_TARGETS;
+if (only && !TARGETS.length) {
+  console.error(`--only ${only}: ждали одно из ${ALL_TARGETS.map((t) => t.split('/')[0]).join(', ')}`);
+  process.exit(2);
+}
 
 const read = (p) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 

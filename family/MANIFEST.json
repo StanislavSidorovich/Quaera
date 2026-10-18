@@ -1,6 +1,7 @@
 {
   "version": 1,
   "files": {
+    "family.d.ts": "e7ff41fd6458806fef7402a1159404cec8f4caff06fe23a951196c73984894ac",
     "family.json": "5cff952a253cafee4f42d6251a9d323175fbdece912c2e46b260b902993a6a88",
     "fonts.css": "01971da88d0f0952ee9a22ba339b85ad52781056be6ee05acdb5a78b0e6c9d41",
     "fonts/OFL.txt": "23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f",

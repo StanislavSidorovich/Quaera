@@ -9,7 +9,7 @@ import path from 'node:path';
 
 export const BEGIN = '/* @family-data:begin */';
 export const END = '/* @family-data:end */';
-const TEXT = new Set(['.css', '.js', '.json', '.svg', '.txt', '.html']);
+const TEXT = new Set(['.css', '.js', '.json', '.svg', '.txt', '.html', '.ts']);
 
 /** Файлы набора относительно family/, без MANIFEST.json и без demo.html (образец не копируется). */
 export function listSetFiles(dir) {
