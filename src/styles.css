@@ -5212,6 +5212,44 @@ table.sample td.null {
   margin: 8px 12px 0;
 }
 
+/*
+ * В карточке новичка рядом с окном задания (ширина контейнера от 820px) левая
+ * колонка вдвое ниже правой, и под ссылками оставалась пустота. Колонка
+ * растягивается на высоту окна, а блок входа прижат к её низу и набран
+ * двумя карточками: пустое место оказывается между главной кнопкой и
+ * входом, то есть читается разделителем, а не недосмотром. Абзац с кнопкой
+ * остаётся вверху (по центру он отрывался от заголовка, см. выше).
+ */
+@container (min-width: 820px) {
+  .story-invite-body > div:first-child {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .story-invite-body .story-entry {
+    margin-top: auto;
+    padding-top: 24px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .story-invite-body .story-entry-title {
+    margin: 0;
+  }
+
+  .story-invite-body .story-entry-btn {
+    padding: 10px 14px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .story-invite-body .story-entry-btn:hover {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  }
+}
+
 .story-entry-title {
   margin: 0 0 2px;
   font-size: var(--fs-micro);
