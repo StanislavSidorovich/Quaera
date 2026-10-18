@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "files": {
+    "family.json": "5cff952a253cafee4f42d6251a9d323175fbdece912c2e46b260b902993a6a88",
+    "fonts.css": "01971da88d0f0952ee9a22ba339b85ad52781056be6ee05acdb5a78b0e6c9d41",
+    "fonts/OFL.txt": "23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f",
+    "fonts/ibm-plex-mono-cyrillic-400-normal.woff2": "7635422bd10ddbbcb0e0caa1154b928298f5c8319b8c00b30978d4395f4783ce",
+    "fonts/ibm-plex-mono-cyrillic-600-normal.woff2": "2b05a8695c7f9f4abd7178b279646a3b005a8ce57546bef6fd145f25d131e0aa",
+    "fonts/ibm-plex-mono-latin-400-normal.woff2": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+    "fonts/ibm-plex-mono-latin-600-normal.woff2": "0d1f0b8d0722224e32e9f28261bdc86c79115be73444ae5eceb73976a1bcdf83",
+    "fonts/ibm-plex-sans-cyrillic-wght-normal.woff2": "9409ee21811f0f5272b7e1d828fe8838005b0573481ef906e7e55b63f6610ab0",
+    "fonts/ibm-plex-sans-latin-wght-normal.woff2": "e2291e842cf5af167122a22881a740c7f2dda7716f1e8cd76680264f4a859470",
+    "marks/flow.svg": "05042636ef667a60caf643fb780eb36326913f9711e4d45c1b5837fbac5229c2",
+    "marks/lab.svg": "8250c04af723045ca8170207219b70a584e2d5aa6dca8c020ce071154ca67ca8",
+    "marks/model.svg": "1f7742915755ed7dcbfb94048bff095193cf8760fb7c8c11327f6898c11a3a0e",
+    "marks/pandas.svg": "793c30d4b8e9ae970f012f9732bbdf84061fa437f5d9c15520982d213ab82ff6",
+    "marks/quaera.svg": "a4b3d13e070053d6a5f08aea41a2f845e592613786dfd42e16d8f494734eb1b5",
+    "switcher.js": "5008975118b4c2a7488fac983a770170079697e35c75e219e1db5bf534c26588",
+    "tokens.css": "15e39d81dd686acf2fa3c520fb7520e777d1a46cd80a3fed746fcbf4ec913456"
+  }
+}

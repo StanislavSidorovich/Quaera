@@ -1,0 +1,107 @@
+/*
+ * Общие токены семейства Quaera. Эталон лежит в quaera/family/, в другие
+ * репозитории он копируется scripts/family-sync.mjs: здесь не править копию.
+ *
+ * Тёмная тема включается так:
+ *   1. класс .dark на <html>            (Lab, Model, Flow)
+ *   2. класс .theme-dark на <html>      (тренажёр; .theme-light принудительно светлая)
+ *   3. data-theme="dark" на <html>      (на будущее, cookie-договорённость фазы 2)
+ *   4. data-theme="system": следовать системной настройке через media-запрос
+ *      (тренажёр в режиме «системная», Pandas). Без атрибута media не работает:
+ *      Lab, Model и Flow сами читают системную тему и ставят .dark, и без этой
+ *      оговорки светлый выбор на тёмной системе перекрасился бы.
+ * Приложение выбирает свой акцент: <html data-app="lab">.
+ */
+:root {
+  --q-font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --q-font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --q-bg: #f6f7f9;
+  --q-surface: #ffffff;
+  --q-surface-2: #f1f3f6;
+  --q-line: #e3e6eb;
+  --q-text: #1d2330;
+  --q-muted: #6b7385;
+  --q-field: #ffffff;
+  --q-ok: #15803d;
+  --q-warn: #b45309;
+  --q-err: #b91c1c;
+
+  --q-accent-quaera: #2563eb;
+  --q-accent-lab: #15803d;
+  --q-accent-model: #c2410c;
+  --q-accent-flow: #0f766e;
+  --q-accent-pandas: #7c3aed;
+  --q-accent-quaera-ink: #ffffff;
+  --q-accent-lab-ink: #ffffff;
+  --q-accent-model-ink: #ffffff;
+  --q-accent-flow-ink: #ffffff;
+  --q-accent-pandas-ink: #ffffff;
+
+  --q-accent: var(--q-accent-quaera);
+  --q-accent-ink: var(--q-accent-quaera-ink);
+
+  color-scheme: light;
+}
+
+:root[data-app='quaera'] { --q-accent: var(--q-accent-quaera); --q-accent-ink: var(--q-accent-quaera-ink); }
+:root[data-app='lab'] { --q-accent: var(--q-accent-lab); --q-accent-ink: var(--q-accent-lab-ink); }
+:root[data-app='model'] { --q-accent: var(--q-accent-model); --q-accent-ink: var(--q-accent-model-ink); }
+:root[data-app='flow'] { --q-accent: var(--q-accent-flow); --q-accent-ink: var(--q-accent-flow-ink); }
+:root[data-app='pandas'] { --q-accent: var(--q-accent-pandas); --q-accent-ink: var(--q-accent-pandas-ink); }
+
+:root.dark,
+:root.theme-dark,
+:root[data-theme='dark'] {
+  --q-bg: #14171d;
+  --q-surface: #1b1f27;
+  --q-surface-2: #20252f;
+  --q-line: #2c323e;
+  --q-text: #e4e7ee;
+  --q-muted: #98a0b3;
+  --q-field: #101319;
+  --q-ok: #4ade80;
+  --q-warn: #fbbf24;
+  --q-err: #f87171;
+
+  --q-accent-quaera: #6ea8fe;
+  --q-accent-lab: #4ade80;
+  --q-accent-model: #fb923c;
+  --q-accent-flow: #2dd4bf;
+  --q-accent-pandas: #a78bfa;
+  --q-accent-quaera-ink: #14171d;
+  --q-accent-lab-ink: #14171d;
+  --q-accent-model-ink: #14171d;
+  --q-accent-flow-ink: #14171d;
+  --q-accent-pandas-ink: #14171d;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system']:not(.dark):not(.theme-light):not(.theme-dark) {
+    --q-bg: #14171d;
+    --q-surface: #1b1f27;
+    --q-surface-2: #20252f;
+    --q-line: #2c323e;
+    --q-text: #e4e7ee;
+    --q-muted: #98a0b3;
+    --q-field: #101319;
+    --q-ok: #4ade80;
+    --q-warn: #fbbf24;
+    --q-err: #f87171;
+
+    --q-accent-quaera: #6ea8fe;
+    --q-accent-lab: #4ade80;
+    --q-accent-model: #fb923c;
+    --q-accent-flow: #2dd4bf;
+    --q-accent-pandas: #a78bfa;
+    --q-accent-quaera-ink: #14171d;
+    --q-accent-lab-ink: #14171d;
+    --q-accent-model-ink: #14171d;
+    --q-accent-flow-ink: #14171d;
+    --q-accent-pandas-ink: #14171d;
+
+    color-scheme: dark;
+  }
+}

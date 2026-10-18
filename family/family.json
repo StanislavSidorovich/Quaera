@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "apps": [
+    {
+      "id": "quaera",
+      "name": "Quaera",
+      "url": "https://quaera.app",
+      "purpose": { "en": "Trainer: SQL, pandas, DAX and the analyst profession", "ru": "Тренажёр: SQL, pandas, DAX и профессия аналитика" },
+      "accent": { "light": "#2563eb", "dark": "#6ea8fe", "ink": { "light": "#ffffff", "dark": "#14171d" } }
+    },
+    {
+      "id": "lab",
+      "name": "Quaera Lab",
+      "url": "https://lab.quaera.app",
+      "purpose": { "en": "SQL workbench for your own CSV and Excel files", "ru": "SQL-верстак для ваших CSV и Excel" },
+      "accent": { "light": "#15803d", "dark": "#4ade80", "ink": { "light": "#ffffff", "dark": "#14171d" } }
+    },
+    {
+      "id": "model",
+      "name": "Quaera Model",
+      "url": "https://model.quaera.app",
+      "purpose": { "en": "Data modelling: CDM, PDM and SQL", "ru": "Моделирование данных: CDM, PDM и SQL" },
+      "accent": { "light": "#c2410c", "dark": "#fb923c", "ink": { "light": "#ffffff", "dark": "#14171d" } }
+    },
+    {
+      "id": "flow",
+      "name": "Quaera Flow",
+      "url": "https://flow.quaera.app",
+      "purpose": { "en": "Business process modelling in BPMN 2.0", "ru": "Моделирование процессов в BPMN 2.0" },
+      "accent": { "light": "#0f766e", "dark": "#2dd4bf", "ink": { "light": "#ffffff", "dark": "#14171d" } }
+    },
+    {
+      "id": "pandas",
+      "name": "Quaera Pandas",
+      "url": "https://pandas.quaera.app",
+      "purpose": { "en": "137 pandas tasks in a Colab notebook", "ru": "137 заданий по pandas в тетради Colab" },
+      "accent": { "light": "#7c3aed", "dark": "#a78bfa", "ink": { "light": "#ffffff", "dark": "#14171d" } }
+    }
+  ]
+}
