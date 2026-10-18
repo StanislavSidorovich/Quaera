@@ -97,17 +97,18 @@ for (const [theme, b, key] of [['light', light, 'light'], ['dark', dark, 'dark']
   if (muted < 4.5) fail(`${theme}: --q-muted на поверхности ${muted.toFixed(2)}:1`);
 }
 
-// 6. @font-face набора против тренажёра (пока тренажёр не переведён на набор)
-const faces = (s) => (s.match(/@font-face\s*\{[\s\S]*?\}/g) || []).map((x) => x.replace(/\s+/g, ' ').trim());
+// 6. @font-face: шесть штук в наборе, у тренажёра своих нет (набор подключён в main.tsx)
+const faces = (x) => (x.match(/@font-face\s*\{[\s\S]*?\}/g) || []).map((y) => y.replace(/\s+/g, ' ').trim());
 const own = faces(read(path.join(dir, 'fonts.css')));
-const app = faces(read(path.join(root, 'src/styles.css')));
 if (own.length !== 6) fail(`fonts.css: ${own.length} @font-face, ждали 6`);
-if (app.length && JSON.stringify(own) !== JSON.stringify(app)) fail('fonts.css: @font-face разошлись с src/styles.css тренажёра');
+if (faces(read(path.join(root, 'src/styles.css'))).length) fail('src/styles.css: свои @font-face, шрифты должны идти из family/fonts.css');
+if (existsSync(path.join(root, 'src/fonts'))) fail('src/fonts: вторая копия шрифтов рядом с family/fonts');
+const main = read(path.join(root, 'src/main.tsx'));
+for (const f of ['fonts.css', 'tokens.css', 'switcher.js']) {
+  if (!main.includes(`../family/${f}`)) fail(`src/main.tsx не подключает family/${f}`);
+}
 for (const f of own.join(' ').match(/fonts\/[\w.-]+\.woff2/g) || []) {
   if (!existsSync(path.join(dir, f))) fail(`fonts.css ссылается на ${f}, файла нет`);
-  else if (existsSync(path.join(root, 'src', f)) && hashFile(path.join(dir, f)) !== hashFile(path.join(root, 'src', f))) {
-    fail(`${f}: отличается от копии в src/fonts`);
-  }
 }
 
 // 7. Строки назначения: оба языка, без длинных тире

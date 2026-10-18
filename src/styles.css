@@ -1,86 +1,26 @@
 /* Мобильный интерфейс: тёмная тема по умолчанию, светлая — по системной настройке. */
 
 /*
- * IBM Plex Sans + Mono — тот же шрифт, что у pandas.quaera.app, чтобы семейство
- * сайтов читалось одним.
+ * Шрифты (IBM Plex Sans + Mono, свой хостинг), нейтрали --q-* и акцент
+ * приходят из набора семейства: family/fonts.css и family/tokens.css
+ * подключены в main.tsx. Здесь только связка имён тренажёра с общими
+ * токенами (договор об общем виде, 2026-10-18) и то, что остаётся своим:
+ * цвета треков, смысловые ok/warn/err/code.
  *
- * Свой хостинг, а не Google Fonts: приложение офлайновое, а файлы из src/fonts
- * Vite кладёт в /assets/ с хешем в имени — оттуда их забирает в предзагрузку
- * scripts/postbuild-sw.mjs вместе с бандлами, и шрифт есть уже при первом
- * запуске без сети. Чужой домен service worker не перехватывает (см. fetch
- * в public/sw.js), то есть шрифт с CDN офлайн пропадал бы.
- *
- * Состав — ровно то, что предзагружается на каждое устройство, поэтому скупо
- * (123 КБ на шесть файлов): только латиница и кириллица; Sans — одним
- * переменным файлом на подмножество (оси веса хватает на 400…700 интерфейса),
- * Mono — 400 и 600 (700 берёт 600 без синтетического утолщения). Курсива нет:
- * он стоял бы ещё 82 КБ ради десятка подписей, браузер наклонит прямой.
- * Подмножества и unicode-range — из @fontsource 5.3.0; лицензия — fonts/OFL.txt.
+ * Тема следует за системной через data-theme="system" на <html> (index.html);
+ * .theme-light / .theme-dark, которые ставит App, переключают и --q-*, и
+ * эти связки разом.
  */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 100 700;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-sans-cyrillic-wght-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 100 700;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-sans-latin-wght-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-mono-cyrillic-400-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-mono-cyrillic-600-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('./fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 :root {
-  --bg: #0b1020;
-  --bg-raised: #141a2e;
-  --bg-sunken: #080c18;
-  --field-bg: #080c18;
-  --line: #232b45;
-  --text: #e8ecf7;
-  --text-dim: #96a0be;
-  --accent: #6ea8fe;
-  --accent-ink: #0b1020;
+  --bg: var(--q-bg);
+  --bg-raised: var(--q-surface);
+  --bg-sunken: var(--q-field);
+  --field-bg: var(--q-field);
+  --line: var(--q-line);
+  --text: var(--q-text);
+  --text-dim: var(--q-muted);
+  --accent: var(--q-accent);
+  --accent-ink: var(--q-accent-ink);
   --ok: #4ade80;
   --warn: #fbbf24;
   --err: #f87171;
@@ -104,15 +44,15 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f6f7fb;
-    --bg-raised: #ffffff;
-    --bg-sunken: #eceff7;
-    --field-bg: #ffffff;
-    --line: #d9deeb;
-    --text: #131a2c;
-    --text-dim: #5a6580;
-    --accent: #2563eb;
-    --accent-ink: #ffffff;
+    --bg: var(--q-bg);
+    --bg-raised: var(--q-surface);
+    --bg-sunken: var(--q-surface-2);
+    --field-bg: var(--q-field);
+    --line: var(--q-line);
+    --text: var(--q-text);
+    --text-dim: var(--q-muted);
+    --accent: var(--q-accent);
+    --accent-ink: var(--q-accent-ink);
     --ok: #15803d;
     --warn: #a16207;
     --err: #b91c1c;
@@ -129,15 +69,15 @@
  * и наоборот. Отсутствие класса (режим «как в системе») ничего не трогает.
  */
 :root.theme-light {
-  --bg: #f6f7fb;
-  --bg-raised: #ffffff;
-  --bg-sunken: #eceff7;
-  --field-bg: #ffffff;
-  --line: #d9deeb;
-  --text: #131a2c;
-  --text-dim: #5a6580;
-  --accent: #2563eb;
-  --accent-ink: #ffffff;
+  --bg: var(--q-bg);
+  --bg-raised: var(--q-surface);
+  --bg-sunken: var(--q-surface-2);
+  --field-bg: var(--q-field);
+  --line: var(--q-line);
+  --text: var(--q-text);
+  --text-dim: var(--q-muted);
+  --accent: var(--q-accent);
+  --accent-ink: var(--q-accent-ink);
   --ok: #15803d;
   --warn: #a16207;
   --err: #b91c1c;
@@ -146,15 +86,15 @@
 }
 
 :root.theme-dark {
-  --bg: #0b1020;
-  --bg-raised: #141a2e;
-  --bg-sunken: #080c18;
-  --field-bg: #080c18;
-  --line: #232b45;
-  --text: #e8ecf7;
-  --text-dim: #96a0be;
-  --accent: #6ea8fe;
-  --accent-ink: #0b1020;
+  --bg: var(--q-bg);
+  --bg-raised: var(--q-surface);
+  --bg-sunken: var(--q-field);
+  --field-bg: var(--q-field);
+  --line: var(--q-line);
+  --text: var(--q-text);
+  --text-dim: var(--q-muted);
+  --accent: var(--q-accent);
+  --accent-ink: var(--q-accent-ink);
   --ok: #4ade80;
   --warn: #fbbf24;
   --err: #f87171;
@@ -321,35 +261,21 @@ textarea.sql {
 }
 
 .sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 8px 2px;
+  padding: 0 0 2px;
 }
 
-.sidebar-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: var(--fs-body);
-  font-weight: 700;
-}
-
-.sidebar-brand b {
+.sidebar-brand quaera-switcher {
   display: block;
   font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  /* Колонка 248px и прокрутка по вертикали обрезают всё, что шире неё. */
+  --q-switcher-menu-min: 0px;
+  --q-switcher-menu-max: 100%;
 }
 
 .sidebar-brand small {
   display: block;
   margin-top: 1px;
+  padding: 0 8px 0 34px;
   font-size: var(--fs-micro);
   color: var(--text-dim);
 }
@@ -538,18 +464,6 @@ textarea.sql {
 
 .sidebar-legal a:hover {
   color: var(--accent);
-}
-
-/* Инструменты Quaera над копирайтом: прижатие ко дну переходит к ним. */
-.sidebar-family {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar-family + .sidebar-legal {
-  margin-top: 0;
-  padding-top: 10px;
 }
 
 /*

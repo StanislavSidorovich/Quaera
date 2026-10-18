@@ -6,6 +6,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { I18nProvider } from './i18n/context';
+import '../family/fonts.css';
+import '../family/tokens.css';
+import '../family/switcher.js';
 import './styles.css';
 
 createRoot(document.getElementById('root')!).render(

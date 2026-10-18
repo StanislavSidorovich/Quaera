@@ -17,6 +17,8 @@
  * бокового меню (см. Sidebar), а импортировать их оттуда из App нельзя —
  * App сам импортирует Sidebar.
  */
+import family from '../family/family.json';
+
 export const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/stanislavsidorovich';
 export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 
@@ -31,17 +33,15 @@ export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
 
 /**
- * Остальные инструменты Quaera — по поддомену на каждый. Список общий для
+ * Остальные инструменты Quaera — по поддомену на каждый. Список читается из
+ * family/family.json (один на все пять приложений, его же берёт переключатель). Общий для
  * всех экранов, где семейство перечисляется целиком (подвал Sidebar), чтобы
  * новый инструмент добавлялся в одном месте. Подписи — в i18n
  * (`nav.family*`): адреса одинаковы на обеих локалях, назначение — нет.
  */
-export const FAMILY = [
-  { key: 'model', url: 'https://model.quaera.app' },
-  { key: 'flow', url: 'https://flow.quaera.app' },
-  { key: 'pandas', url: 'https://pandas.quaera.app' },
-  { key: 'lab', url: 'https://lab.quaera.app' },
-] as const;
+export const FAMILY = (family.apps as { id: string; url: string }[])
+  .filter((a) => a.id !== 'quaera')
+  .map((a) => ({ key: a.id as 'model' | 'flow' | 'pandas' | 'lab', url: a.url }));
 
 /**
  * Имя правообладателя — латиницей на обеих локалях, ровно той строкой, что
