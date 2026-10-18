@@ -8,6 +8,10 @@
  * Ширину меню можно сузить для узкой колонки: --q-switcher-menu-min и
  * --q-switcher-menu-max на самом <quaera-switcher> (тренажёр: боковая панель).
  *
+ * Компактный вид (плитка и стрелка, меню то же) для узкой шапки: атрибут compact
+ * или снаружи `quaera-switcher::part(label) { display: none }` в своём медиа- или
+ * контейнерном запросе. Имя приложения остаётся в aria-label кнопки.
+ *
  * Язык подписей: lang у <quaera-switcher> или у <html>, ru или en.
  */
 (function () {
@@ -118,6 +122,7 @@
     .tile { display: block; width: 22px; height: 22px; flex: none; }
     .tile svg { display: block; width: 100%; height: 100%; }
     .label { font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+    :host([compact]) .label { display: none; }
     .suffix, .solo { color: var(--tint); }
     .caret { width: 10px; height: 10px; flex: none; color: var(--q-muted, #626a7c); transition: transform .15s; }
     .trigger[aria-expanded='true'] .caret { transform: rotate(180deg); }
@@ -182,9 +187,9 @@
         </a></li>`).join('');
       this._root.innerHTML = `
         <style>${CSS}</style>
-        <button class="trigger" type="button" aria-haspopup="menu" aria-expanded="false"
+        <button class="trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="${esc(cur.name)}"
             style="--tint: var(--q-accent-${cur.id}, ${cur.accent.light})">
-          <span class="tile">${cur.svg}</span><span class="label">${label}</span>${CARET}
+          <span class="tile">${cur.svg}</span><span class="label" part="label">${label}</span>${CARET}
         </button>
         <ul class="menu" role="menu" hidden aria-label="Quaera">${items}
           <li role="none" class="foot"><a role="menuitem" href="https://quaera.app" target="_blank" rel="noopener">quaera.app</a></li>
