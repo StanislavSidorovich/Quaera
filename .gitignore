@@ -5,7 +5,8 @@ dist/
 public/data/
 public/sqljs/
 public/pyodide/
-public/icons/
+public/icons/*
+!public/icons/og.png
 *.local
 .DS_Store
 # Локальные архивы проекта: их кладут рядом с кодом и они не должны уезжать

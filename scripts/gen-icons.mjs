@@ -1,12 +1,10 @@
-// Генерирует растровые ассеты без внешних зависимостей: иконки приложения
-// и превью-картинку для ссылок в соцсетях. Рисуем в RGBA-буфер и кодируем
-// PNG вручную через zlib.
+// Рисует значки приложения без внешних зависимостей: рисуем в RGBA-буфер и кодируем
+// PNG вручную через zlib. Знак берётся из family/marks/quaera.svg (плитка #1f2a40 и три
+// цветных столбца, тот же, что в боковой панели); геометрию повторяем здесь вручную,
+// потому что сборка на Cloudflare не должна зависеть от браузера.
 //
-// og.png нужна именно как растр: LinkedIn, Telegram и Slack не принимают SVG
-// в og:image. Шрифта в проекте нет, поэтому надпись набирается собственным
-// растровым шрифтом 5×7 ниже — для семи букв логотипа и латинского подзаголовка
-// этого достаточно, а тянуть ради этого зависимость с рендерингом шрифтов
-// в проект, который принципиально собирается без них, не стоит.
+// Картинка превью для ссылок (og.png) рисуется отдельно, scripts/make-og.mjs, вместе
+// с четырьмя другими приложениями семьи: ей нужен шрифт Plex, а значит браузер.
 import { deflateSync } from 'node:zlib';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -66,27 +64,21 @@ const hex = (c) => [
   parseInt(c.slice(5, 7), 16),
 ];
 
-function canvas(width, height, bg) {
-  const buf = Buffer.alloc(width * height * 4);
-  const [r, g, b] = hex(bg);
-  for (let i = 0; i < width * height; i++) {
-    buf[i * 4] = r;
-    buf[i * 4 + 1] = g;
-    buf[i * 4 + 2] = b;
-    buf[i * 4 + 3] = 255;
-  }
-  return buf;
+function canvas(width, height) {
+  return Buffer.alloc(width * height * 4); // прозрачный
 }
 
 function rect(buf, width, height, x0, y0, w, h, color, radius = 0) {
   const [r, g, b] = hex(color);
-  for (let y = Math.max(0, y0); y < Math.min(height, y0 + h); y++) {
-    for (let x = Math.max(0, x0); x < Math.min(width, x0 + w); x++) {
+  const x1 = x0 + w;
+  const y1 = y0 + h;
+  for (let y = Math.max(0, Math.floor(y0)); y < Math.min(height, Math.ceil(y1)); y++) {
+    for (let x = Math.max(0, Math.floor(x0)); x < Math.min(width, Math.ceil(x1)); x++) {
       if (radius > 0) {
         // скругление углов: проверяем расстояние до ближайшего центра дуги
-        const cx = Math.min(Math.max(x, x0 + radius), x0 + w - radius);
-        const cy = Math.min(Math.max(y, y0 + radius), y0 + h - radius);
-        if ((x - cx) ** 2 + (y - cy) ** 2 > radius ** 2) continue;
+        const cx = Math.min(Math.max(x + 0.5, x0 + radius), x1 - radius);
+        const cy = Math.min(Math.max(y + 0.5, y0 + radius), y1 - radius);
+        if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 > radius ** 2) continue;
       }
       const i = (y * width + x) * 4;
       buf[i] = r;
@@ -97,118 +89,73 @@ function rect(buf, width, height, x0, y0, w, h, color, radius = 0) {
   }
 }
 
-/** Растровый шрифт 5×7: только заглавная латиница и знаки, нужные для превью. */
-const GLYPHS = {
-  A: '.###.|#...#|#...#|#####|#...#|#...#|#...#',
-  B: '####.|#...#|#...#|####.|#...#|#...#|####.',
-  C: '.####|#....|#....|#....|#....|#....|.####',
-  D: '####.|#...#|#...#|#...#|#...#|#...#|####.',
-  E: '#####|#....|#....|####.|#....|#....|#####',
-  G: '.####|#....|#....|#..##|#...#|#...#|.###.',
-  I: '#####|..#..|..#..|..#..|..#..|..#..|#####',
-  L: '#....|#....|#....|#....|#....|#....|#####',
-  M: '#...#|##.##|#.#.#|#...#|#...#|#...#|#...#',
-  N: '#...#|##..#|#.#.#|#..##|#...#|#...#|#...#',
-  O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
-  P: '####.|#...#|#...#|####.|#....|#....|#....',
-  Q: '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#',
-  R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
-  S: '.####|#....|#....|.###.|....#|....#|####.',
-  T: '#####|..#..|..#..|..#..|..#..|..#..|..#..',
-  U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
-  V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..',
-  Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..',
-  '.': '.....|.....|.....|.....|.....|.....|..#..',
-  '·': '.....|.....|.....|..#..|.....|.....|.....',
-  ' ': '.....|.....|.....|.....|.....|.....|.....',
-};
-
-/** Возвращает ширину надписи в пикселях — нужна, чтобы центрировать без замеров на глаз. */
-const textWidth = (text, scale) => text.length * 6 * scale - scale;
-
-function drawText(buf, width, height, text, x0, y0, scale, color) {
-  [...text].forEach((ch, i) => {
-    const glyph = GLYPHS[ch];
-    if (!glyph) throw new Error(`В растровом шрифте нет знака «${ch}» — добавьте его в GLYPHS`);
-    glyph.split('|').forEach((row, ry) => {
-      [...row].forEach((px, rx) => {
-        if (px !== '#') return;
-        rect(buf, width, height, x0 + (i * 6 + rx) * scale, y0 + ry * scale, scale, scale, color);
-      });
-    });
-  });
+const SS = 4; // сглаживание: рисуем в SS раз крупнее и усредняем
+function downsample(buf, size) {
+  const big = size * SS;
+  const out = Buffer.alloc(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let r = 0, g = 0, b = 0, a = 0;
+      for (let dy = 0; dy < SS; dy++) {
+        for (let dx = 0; dx < SS; dx++) {
+          const i = ((y * SS + dy) * big + x * SS + dx) * 4;
+          const al = buf[i + 3];
+          r += buf[i] * al; g += buf[i + 1] * al; b += buf[i + 2] * al; a += al;
+        }
+      }
+      const o = (y * size + x) * 4;
+      if (a > 0) {
+        out[o] = Math.round(r / a);
+        out[o + 1] = Math.round(g / a);
+        out[o + 2] = Math.round(b / a);
+      }
+      out[o + 3] = Math.round(a / (SS * SS));
+    }
+  }
+  return out;
 }
 
-// Знак приложения: три растущих столбца (данные) + подчёркивание-каретка (запрос).
-function drawMark(size, inset) {
-  const buf = canvas(size, size, '#0b1020');
-  const u = size / 100;
-  const pad = inset * size;
-  const area = size - pad * 2;
-  const barW = area * 0.19;
-  const gap = area * 0.115;
-  const baseY = pad + area * 0.74;
-  const bars = [
-    { h: area * 0.3, color: '#38bdf8' },
-    { h: area * 0.48, color: '#818cf8' },
-    { h: area * 0.66, color: '#4ade80' },
-  ];
-  bars.forEach((bar, i) => {
-    const x = pad + area * 0.06 + i * (barW + gap);
-    rect(buf, size, size, Math.round(x), Math.round(baseY - bar.h), Math.round(barW), Math.round(bar.h), bar.color, Math.round(u * 2));
-  });
-  // каретка терминала под столбцами
-  rect(buf, size, size, Math.round(pad + area * 0.06), Math.round(baseY + area * 0.09), Math.round(area * 0.5), Math.round(u * 5), '#e2e8f0', Math.round(u * 2.5));
-  rect(buf, size, size, Math.round(pad + area * 0.62), Math.round(baseY + area * 0.09), Math.round(area * 0.2), Math.round(u * 5), '#475569', Math.round(u * 2.5));
-  return buf;
-}
+const TILE = '#1f2a40'; // плитка знака, как в family/marks/quaera.svg
 
 /**
- * Превью для ссылки в соцсетях. 1200×630 — размер, который LinkedIn, Telegram
- * и Slack показывают широкой карточкой; при меньшем ссылка сворачивается
- * в мелкий квадратный значок и теряется в ленте.
+ * Знак в 32-единичной сетке marks/quaera.svg. full=true: плитка на весь квадрат
+ * (maskable и apple-touch: маску рисует система); иначе плитка со скруглением rx 7
+ * на прозрачном фоне. scale<1 уменьшает знак внутри плитки (safe zone).
  */
-function drawOg() {
-  const W = 1200;
-  const H = 630;
-  const buf = canvas(W, H, '#0b1020');
-  const pad = 96;
-
-  // тот же знак, что и на иконке, — три столбца
-  const barW = 46;
-  const gap = 24;
-  const baseY = 200;
-  [
-    { h: 74, color: '#38bdf8' },
-    { h: 122, color: '#818cf8' },
-    { h: 166, color: '#4ade80' },
-  ].forEach((bar, i) => {
-    rect(buf, W, H, pad + i * (barW + gap), baseY - bar.h, barW, bar.h, bar.color, 6);
-  });
-
-  // Вертикальный ритм считаем от высоты знаков (7 строк × scale), а не подбором
-  // на глаз: иначе строки съезжают при любой правке масштаба.
-  const titleY = 250;
-  const titleBottom = titleY + 7 * 14;
-  drawText(buf, W, H, 'QUAERA', pad, titleY, 14, '#e2e8f0');
-  rect(buf, W, H, pad, titleBottom + 26, 128, 8, '#38bdf8', 4);
-  drawText(buf, W, H, 'SQL · PANDAS · ANALYTICS', pad, titleBottom + 74, 6, '#94a3b8');
-  drawText(buf, W, H, 'QUAERA.APP', pad, H - pad - 7 * 4, 4, '#475569');
-  return { W, H, buf };
+function drawMark(size, full, scale = 1) {
+  const big = size * SS;
+  const buf = canvas(big, big);
+  const u = big / 32;
+  rect(buf, big, big, 0, 0, big, big, TILE, full ? 0 : 7 * u);
+  // знак в оригинале сдвинут на (5.75, 3.45); центр его группы (9.25, 11.05) ставим в центр плитки
+  const cx = 16 * u;
+  const cy = 16 * u;
+  const k = u * scale;
+  const X = (x) => cx + (x - 9.25) * k;
+  const Y = (y) => cy + (y - 11.05) * k;
+  const bars = [
+    [0, 11, 6, '#38bdf8'],
+    [6.5, 7, 10, '#818cf8'],
+    [13, 3, 14, '#4ade80'],
+  ];
+  for (const [x, y, h, color] of bars) rect(buf, big, big, X(x), Y(y), 4.5 * k, h * k, color, 1.2 * k);
+  rect(buf, big, big, X(0), Y(19.5), 12 * k, 2.6 * k, '#ffffff', 1.3 * k);
+  // хвост каретки: белый с непрозрачностью 0.4 поверх плитки
+  const mix = (c, t) => Math.round(c + (255 - c) * t);
+  const [tr, tg, tb] = hex(TILE);
+  rect(buf, big, big, X(13.8), Y(19.5), 4.7 * k, 2.6 * k, `#${[mix(tr, 0.4), mix(tg, 0.4), mix(tb, 0.4)].map((v) => v.toString(16).padStart(2, '0')).join('')}`, 1.3 * k);
+  return downsample(buf, size);
 }
 
 await mkdir(outDir, { recursive: true });
 const targets = [
-  { name: 'icon-192.png', size: 192, inset: 0.1 },
-  { name: 'icon-512.png', size: 512, inset: 0.1 },
-  // maskable: контент внутри safe zone (≈20% отступа со всех сторон)
-  { name: 'icon-maskable-512.png', size: 512, inset: 0.22 },
+  { name: 'icon-192.png', size: 192, full: false, scale: 1.12 },
+  { name: 'icon-512.png', size: 512, full: false, scale: 1.12 },
+  // maskable и apple-touch: плитка на весь квадрат, знак внутри safe zone (~80%)
+  { name: 'icon-maskable-512.png', size: 512, full: true, scale: 0.9 },
+  { name: 'apple-touch-icon.png', size: 180, full: true, scale: 0.95 },
 ];
 for (const t of targets) {
-  await writeFile(path.join(outDir, t.name), encodePng(t.size, t.size, drawMark(t.size, t.inset)));
+  await writeFile(path.join(outDir, t.name), encodePng(t.size, t.size, drawMark(t.size, t.full, t.scale)));
   console.log(`icons: ${t.name} (${t.size}x${t.size})`);
 }
-
-const og = drawOg();
-await writeFile(path.join(outDir, 'og.png'), encodePng(og.W, og.H, og.buf));
-console.log(`icons: og.png (${og.W}x${og.H}) — превью для ссылок`);

@@ -32,7 +32,7 @@
     <!--
       Карточка ссылки в соцсетях и мессенджерах. og:image обязан быть абсолютным
       URL — относительный путь превью не покажет, поэтому адрес прописан явно
-      и завязан на боевой домен. Картинка генерируется scripts/gen-icons.mjs.
+      и завязан на боевой домен. Картинка рисуется scripts/make-og.mjs (общий вид семьи; после перерисовки менять ?v= ниже).
 
       Карточка английская, а страница ниже по-прежнему объявляет lang="ru",
       и это не рассогласование, а то же решение, что и в initialLocale():
@@ -61,14 +61,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Quaera" />
     <meta property="og:url" content="https://quaera.app/" />
-    <meta property="og:title" content="Quaera — an analytics trainer where the query actually runs" />
+    <meta property="og:title" content="Quaera: an analytics trainer where the query actually runs" />
     <meta property="og:description" content="An FMCG analyst trainer on a realistic business dataset: a fictional distributor. Queries execute in the browser, offline, with no sign-up." />
-    <meta property="og:image" content="https://quaera.app/icons/og.png?v=quaera" />
+    <meta property="og:image" content="https://quaera.app/icons/og.png?v=family" />
+    <meta property="og:image:alt" content="Quaera: practise SQL, pandas and DAX on a realistic business dataset" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="ru_RU" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://quaera.app/icons/og.png?v=family" />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!--
@@ -117,7 +119,7 @@
     </script>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Quaera: a data analyst trainer</title>
     <!--
       Cloudflare Web Analytics: посещения без cookie, как на model. и flow.
