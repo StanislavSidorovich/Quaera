@@ -782,7 +782,7 @@ export const en = {
     labNote: (track: string): string =>
       track === 'python'
         ? 'In Lab the tables come from DuckDB: dates there are already datetime, not strings as here.'
-        : 'Lab runs the query in DuckDB: dates there are DATE values, so SQLite functions such as substr(date, 1, 7) may not work.',
+        : 'Lab runs the query in DuckDB, where dates are DATE values. So that substr(date, 1, 7) works as here, the query opens there with SET old_implicit_casting on its first line.',
     /** См. комментарий в ru.ts: показывается на зачтённом задании. */
     solvedRunNote: 'Task passed. You can still change the query and run it: neither the verdict nor the review schedule changes.',
     /** См. комментарий в ru.ts: граница проверки там, где движка нет. */
