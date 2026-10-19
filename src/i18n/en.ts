@@ -776,6 +776,13 @@ export const en = {
     checkBtn: 'Check',
     runBtn: 'Run',
     runNote: '"Run" just shows the result. Try things: mistakes cost nothing here.',
+    /** См. комментарий в ru.ts у openInLab. */
+    openInLab: 'Open in Lab',
+    openInLabTitle: 'Your code opens in Quaera Lab on the same data',
+    labNote: (track: string): string =>
+      track === 'python'
+        ? 'In Lab the tables come from DuckDB: dates there are already datetime, not strings as here.'
+        : 'Lab runs the query in DuckDB: dates there are DATE values, so SQLite functions such as substr(date, 1, 7) may not work.',
     /** См. комментарий в ru.ts: показывается на зачтённом задании. */
     solvedRunNote: 'Task passed. You can still change the query and run it: neither the verdict nor the review schedule changes.',
     /** См. комментарий в ru.ts: граница проверки там, где движка нет. */

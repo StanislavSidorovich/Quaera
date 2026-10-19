@@ -4,6 +4,7 @@ import { taskLiterals, taskTables } from '../content';
 import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types';
 import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
+import { labShare, labUrl, openLab, tablesInCode } from '../labLink';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
@@ -844,6 +845,47 @@ function StepView({
     }
   }
 
+  /**
+   * «Открыть в Lab» (см. src/labLink.ts). Только у кода, который человек
+   * пишет сам (write в треках sql и python): у fill, order и predict уносить
+   * в песочницу нечего, кроме нашего же шаблона. И только после первой
+   * проверки: до неё кнопка звала бы уйти из задания, не попробовав его здесь.
+   * Уходит код из редактора, не эталон, даже после «Сдаться».
+   */
+  const labAllowed =
+    step.kind === 'compute' &&
+    step.mode === 'write' &&
+    (task.track === 'sql' || task.track === 'python') &&
+    schema !== null &&
+    (draft.wrongAttempts > 0 || draft.wasCorrect) &&
+    draft.code.trim().length > 0;
+  /**
+   * Адрес считается заранее, а не по клику: упаковка асинхронная
+   * (CompressionStream), а окно после await браузер может счесть
+   * всплывающим и не открыть. Пересчёт на каждую правку кода дешёвый.
+   */
+  const [labHref, setLabHref] = useState<string | null>(null);
+  useEffect(() => {
+    if (!labAllowed || !schema) {
+      setLabHref(null);
+      return;
+    }
+    const all = schema.tables.map((tb) => tb.table);
+    const language = task.track === 'python' ? 'python' : 'sql';
+    const used =
+      language === 'python'
+        ? all.filter((name) => knownTables.includes(name) || tablesInCode(draft.code, [name]).length > 0)
+        : all;
+    let live = true;
+    labUrl(labShare(task.title, draft.code, language, used)).then(
+      (url) => live && setLabHref(url),
+      () => live && setLabHref(null)
+    );
+    return () => {
+      live = false;
+    };
+  }, [labAllowed, schema, task.track, task.title, draft.code, knownTables]);
+
   /** Обмен соседей: единственная операция над порядком — см. довод у кнопок ниже. */
   function move(from: number, to: number) {
     if (draft.solved || to < 0 || to >= arrangement.length) return;
@@ -1285,6 +1327,28 @@ function StepView({
                   ? t.task.runNote
                   : t.task.checkTextNote}
           </p>
+          {/*
+           * Строкой-ссылкой под заметкой, а не третьей кнопкой в ряду: на 390
+           * «Открыть в Lab» в трети ряда переносилось на две строки, и уход
+           * из задания выглядел бы равным «Проверить».
+           */}
+          {labHref && (
+            <>
+              <a
+                className="link-row lab-open"
+                href={labHref}
+                target="_blank"
+                rel="noopener"
+                title={t.task.openInLabTitle}
+                onClick={(e) => openLab(labHref, e)}
+              >
+                {t.task.openInLab} ↗
+              </a>
+              <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+                {t.task.labNote(task.track)}
+              </p>
+            </>
+          )}
         </div>
         </>
       )}
