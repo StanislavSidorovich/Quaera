@@ -33,7 +33,7 @@ try {
     { cwd: root, stdio: 'inherit' }
   );
   writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
-  const { labSql, labPython, labShare, labUrl, tablesInCode, LAB_URL } = await import(
+  const { labSql, labPython, labShare, labUrl, tablesInCode, needsDatePrelude, LAB_URL } = await import(
     pathToFileURL(path.join(outDir, 'labLink.js')).href
   );
 
@@ -126,6 +126,16 @@ try {
     d: ['quaera'],
     t: [{ n: 'Бренды и выручка', q: "SELECT brand, 'Ёж — «кавычки»' AS t FROM quaera.dim_product" }],
   });
+
+  // Даты текстом: substr(DATE, …) в DuckDB без old_implicit_casting падает (22 эталона из 82).
+  const dateSql = 'SELECT substr(week_start, 1, 7) AS month FROM fact_sellout';
+  const dateTab = labShare('Месяцы', dateSql, 'sql', TABLES).t[0].q;
+  assertEq('даты текстом: SET old_implicit_casting стоит первой инструкцией', /^(--[^\n]*\n)*SET old_implicit_casting = true;\n/.test(dateTab), true);
+  assertEq('даты текстом: после строки SET код как без неё', dateTab.endsWith(labSql(dateSql, TABLES)), true);
+  assertEq('даты текстом: LIKE тоже включает строку SET', needsDatePrelude("WHERE week_start LIKE '2025-%'"), true);
+  assertEq('без работы с датой как с текстом строки SET нет', back.t[0].q.includes('SET '), false);
+  assertEq('слово с общим корнем (substrate) строку SET не включает', needsDatePrelude('SELECT substrate FROM t'), false);
+  assertEq('pandas строку SET не получает', labShare('P', 'result = x.str[:7]  # substr', 'python', []).t[0].q.includes('SET '), false);
 
   const pyUrl = await labUrl(labShare('Pandas', 'result = dim_product', 'python', ['dim_product']));
   const pyBack = await readLink(pyUrl);

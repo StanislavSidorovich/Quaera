@@ -132,12 +132,33 @@ export function tablesInCode(code: string, tables: readonly string[]): string[] 
   return tables.filter((t) => new RegExp(`\\b${t}\\b`, 'i').test(code));
 }
 
+/**
+ * Строки, которые ставятся перед SQL, если код работает с датой как с текстом.
+ *
+ * В тренажёре (SQLite) даты лежат текстом YYYY-MM-DD, и курс этому учит:
+ * `substr(week_start, 1, 7)` — месяц. В Lab те же колонки имеют тип DATE,
+ * а DuckDB с 0.10 сам не приводит DATE к тексту: `substr(DATE, …)` падает
+ * ошибкой Binder (22 эталона из 82 на 2026-10-19). `old_implicit_casting`
+ * возвращает это приведение, и все эталоны проходят. Строка видна в коде
+ * вкладки, а не ставится в Lab молча: разница диалектов — тоже урок.
+ * Настройка действует до конца визита в Lab, во всех вкладках.
+ */
+export const LAB_DATE_PRELUDE =
+  "-- quaera.app keeps dates as text, Lab keeps them as DATE.\n" +
+  '-- This line lets substr(date, …) and LIKE work on dates as in the trainer:\n' +
+  'SET old_implicit_casting = true;\n\n';
+
+/** Код обращается с датой как с текстом: функции строк и LIKE. */
+export function needsDatePrelude(code: string): boolean {
+  return /\b(substr|substring|instr|like|glob)\b/i.test(code);
+}
+
 /** JSON ссылки: одна вкладка с кодом задания. */
 export function labShare(title: string, code: string, language: 'sql' | 'python', tables: readonly string[]): LabShare {
   const tab: LabTab =
     language === 'python'
       ? { n: title, q: labPython(code, tables), l: 'python' }
-      : { n: title, q: labSql(code, tables) };
+      : { n: title, q: (needsDatePrelude(code) ? LAB_DATE_PRELUDE : '') + labSql(code, tables) };
   return { v: 1, d: [LAB_DATASET], t: [tab] };
 }
 
