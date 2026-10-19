@@ -32,6 +32,7 @@ import { ToolsCompare } from './ui/ToolsCompare';
 import { DataMap } from './ui/DataMap';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
+import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
@@ -136,6 +137,17 @@ function initialTheme(): Theme {
     // localStorage недоступен — просто не запоминаем выбор
   }
   return 'system';
+}
+
+const BORDERS_STORAGE_KEY = 'quaera-borders';
+
+/** Чёткие границы — по умолчанию (--q-line набора); 'soft' лежит в хранилище и ставит data-borders на <html>. */
+function initialBorders(): Borders {
+  try {
+    return appStorage().getItem(BORDERS_STORAGE_KEY) === 'soft' ? 'soft' : 'strong';
+  } catch {
+    return 'strong';
+  }
 }
 
 const ACTIVE_TRACK_STORAGE_KEY = 'quaera-active-track';
@@ -773,6 +785,8 @@ export default function App() {
   const [schemaTable, setSchemaTable] = useState<string | null>(null);
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
+  const [borders, setBorders] = useState<Borders>(initialBorders);
+  const [focusReferenceSearch, setFocusReferenceSearch] = useState(false);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   /**
    * «Позже» на карточке согласия — только в памяти, без localStorage.
@@ -855,8 +869,7 @@ export default function App() {
    */
   const recordedTasksRef = useRef(boot.recorded);
 
-  const cycleFontSize = () => {
-    const next = FONT_SIZE_ORDER[(FONT_SIZE_ORDER.indexOf(fontSize) + 1) % FONT_SIZE_ORDER.length];
+  const chooseFontSize = (next: FontSize) => {
     setFontSize(next);
     try {
       appStorage().setItem(FONT_SIZE_STORAGE_KEY, next);
@@ -865,8 +878,7 @@ export default function App() {
     }
   };
 
-  const cycleTheme = () => {
-    const next = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+  const chooseTheme = (next: Theme) => {
     setTheme(next);
     try {
       appStorage().setItem(THEME_STORAGE_KEY, next);
@@ -874,6 +886,22 @@ export default function App() {
       // см. initialTheme
     }
   };
+
+  const chooseBorders = (next: Borders) => {
+    setBorders(next);
+    try {
+      if (next === 'soft') appStorage().setItem(BORDERS_STORAGE_KEY, 'soft');
+      else appStorage().removeItem(BORDERS_STORAGE_KEY);
+    } catch {
+      // см. initialBorders
+    }
+  };
+
+  useEffect(() => {
+    const el = document.documentElement;
+    if (borders === 'soft') el.setAttribute('data-borders', 'soft');
+    else el.removeAttribute('data-borders');
+  }, [borders]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -2178,6 +2206,7 @@ export default function App() {
                   onClick={() => switchTrack(track)}
                 >
                   <TrackGlyph track={track} />
+                  {track === activeTrack && <span className="track-chip-label">{t.trackShort[track]}</span>}
                 </button>
               ))}
             </nav>
@@ -2296,19 +2325,41 @@ export default function App() {
             >
               <IconAccount />
             </button>
-            <button className="icon-btn" aria-label={t.fontSize.aria} onClick={cycleFontSize}>
-              {fontSize === 'md' ? 'A' : fontSize === 'lg' ? 'A+' : 'A++'}
-            </button>
-            <button className="icon-btn" aria-label={t.theme.aria(theme)} onClick={cycleTheme}>
-              {theme === 'system' ? '◐' : theme === 'light' ? '☀' : '☾'}
+            <button
+              type="button"
+              className="icon-btn topbar-search"
+              aria-label={t.appearance.searchAria}
+              title={t.appearance.searchAria}
+              onClick={() => {
+                setFocusReferenceSearch(true);
+                setScreen({ name: 'reference' });
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
             </button>
             <button
-              className="icon-btn"
-              aria-label={t.locale.switchAriaLabel}
-              onClick={() => setLocale(locale === 'ru' ? 'en' : 'ru')}
+              type="button"
+              className="icon-btn topbar-help"
+              aria-label={t.appearance.helpAria}
+              title={t.appearance.helpAria}
+              aria-current={screen.name === 'about' ? 'page' : undefined}
+              onClick={() => setScreen({ name: 'about' })}
             >
-              {locale === 'ru' ? 'EN' : 'RU'}
+              ?
             </button>
+            <AppearanceMenu
+              fontSize={fontSize}
+              onFontSize={chooseFontSize}
+              theme={theme}
+              onTheme={chooseTheme}
+              locale={locale}
+              onLocale={setLocale}
+              borders={borders}
+              onBorders={chooseBorders}
+            />
           </div>
         </header>
 
@@ -2637,7 +2688,7 @@ export default function App() {
           )}
 
           {screen.name === 'reference' && (
-            <Reference activeTrack={activeTrack} progress={progress} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
+            <Reference activeTrack={activeTrack} progress={progress} autoFocusSearch={focusReferenceSearch} onSearchFocused={() => setFocusReferenceSearch(false)} onOpen={(skill) => setScreen({ name: 'lesson', skill })} />
           )}
 
           {screen.name === 'sandbox' && <Sandbox schema={schema} onOpenSchema={openSchema} />}
@@ -5538,12 +5589,22 @@ function Reference({
   activeTrack,
   progress,
   onOpen,
+  autoFocusSearch,
+  onSearchFocused,
 }: {
   activeTrack: Track;
   progress: Progress;
   onOpen: (skill: string) => void;
+  autoFocusSearch: boolean;
+  onSearchFocused: () => void;
 }) {
   const { t, locale } = useI18n();
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!autoFocusSearch) return;
+    searchRef.current?.focus();
+    onSearchFocused();
+  }, [autoFocusSearch, onSearchFocused]);
   const [filterTrack, setFilterTrack] = useState<Track>(activeTrack);
   const [query, setQuery] = useState('');
 
@@ -5601,6 +5662,7 @@ function Reference({
 
   const searchBox = (
     <input
+      ref={searchRef}
       type="search"
       className="reference-search"
       placeholder={t.reference.searchPlaceholder}

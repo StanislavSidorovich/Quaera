@@ -586,6 +586,83 @@ textarea.sql {
   background: color-mix(in srgb, var(--track, var(--accent)) 15%, var(--bg-raised));
 }
 
+/* Подпись активного трека в полоске шапки главной (на телефоне знаки без слов не опознаются). */
+.track-chip.is-active {
+  flex: 2.4 1 0;
+  gap: 6px;
+  min-width: 0;
+}
+
+.track-chip-label {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Меню «Aa»: размер, тема, язык, границы. Всплывает под кнопкой, прижато
+ * к правому краю, на узком экране не шире вьюпорта.
+ */
+.appearance {
+  position: relative;
+  display: flex;
+}
+
+.appearance-btn {
+  width: 100%;
+  font-weight: 600;
+}
+
+.appearance-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  width: min(19rem, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  color: var(--text);
+}
+
+.appearance-label {
+  margin-bottom: 6px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.appearance-seg {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.appearance-seg button {
+  flex: 1 1 0;
+  min-height: 36px;
+  padding: 0 8px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.appearance-seg button[aria-checked='true'] {
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg-raised));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.appearance-reset {
+  align-self: flex-start;
+}
+
 .track-chip.track-domain {
   --track: var(--track-domain);
 }
