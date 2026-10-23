@@ -1,0 +1,248 @@
+{
+  "axes": [
+    {
+      "id": "sql",
+      "title": { "ru": "SQL", "en": "SQL" },
+      "note": { "ru": "Трек SQL целиком.", "en": "The whole SQL track." },
+      "trainerMax": 2,
+      "skills": ["sql-schema", "sql-select", "sql-where", "sql-order-limit", "sql-null", "sql-aggregate", "sql-group-by", "sql-having", "sql-join-inner", "sql-join-left", "sql-fanout", "sql-case", "sql-cte", "sql-promo-lift", "sql-window-rank", "sql-window-frame", "sql-data-quality", "sql-price-realization", "sql-forecast-accuracy", "sql-business-case"]
+    },
+    {
+      "id": "modeling",
+      "title": { "ru": "Модель данных", "en": "Data modelling" },
+      "note": { "ru": "Звезда, зерно и связи из трека «Модель и BI». Проект в Quaera Model засчитывается отметкой.", "en": "Star schema, grain and relationships from the Model and BI track. A project in Quaera Model counts as a check mark." },
+      "trainerMax": 2,
+      "skills": ["model-oltp-olap", "model-grain", "model-star", "model-relationships", "model-ambiguity", "model-role-playing", "model-many-to-many", "model-scd2", "model-date-table"]
+    },
+    {
+      "id": "bi",
+      "title": { "ru": "BI и DAX", "en": "BI and DAX" },
+      "note": { "ru": "Меры, контексты и CALCULATE из трека «Модель и BI», выбор графика.", "en": "Measures, contexts and CALCULATE from the Model and BI track, plus chart choice." },
+      "trainerMax": 2,
+      "skills": ["model-measure-vs-column", "model-filter-context", "model-row-context", "model-additivity", "model-calculate", "model-context-transition", "model-time-intelligence", "model-power-query", "model-performance", "model-incremental-refresh", "dom-chart-choice"]
+    },
+    {
+      "id": "python",
+      "title": { "ru": "Python и pandas", "en": "Python and pandas" },
+      "note": { "ru": "Трек pandas целиком.", "en": "The whole pandas track." },
+      "trainerMax": 2,
+      "skills": ["py-dataframe", "py-select-filter", "py-dtypes", "py-explore", "py-index", "py-groupby", "py-tidy", "py-transform", "py-nan", "py-merge", "py-timeseries", "py-reshape", "py-chaining", "py-performance", "py-duplicates", "py-conditions", "py-binning", "py-outliers", "py-rfm"]
+    },
+    {
+      "id": "stats",
+      "title": { "ru": "Статистика", "en": "Statistics" },
+      "note": { "ru": "Тренажёр видит её краешком: сезонность, причинность, точность прогноза. Выше единицы ось поднимают только отметки.", "en": "The trainer sees only the edge of it: seasonality, causality, forecast accuracy. Above level 1 only check marks raise this axis." },
+      "trainerMax": 1,
+      "skills": ["dom-causality", "dom-seasonality", "sql-forecast-accuracy", "sql-promo-lift", "py-outliers", "py-binning"]
+    },
+    {
+      "id": "engineering",
+      "title": { "ru": "Инженерия данных", "en": "Data engineering" },
+      "note": { "ru": "Пайплайны, облако, git и dbt в браузере не живут. Тренажёр даёт здесь только единицу за качество данных и обновление.", "en": "Pipelines, cloud, git and dbt do not live in a browser. The trainer gives at most level 1 here, for data quality and refresh." },
+      "trainerMax": 1,
+      "skills": ["sql-data-quality", "model-incremental-refresh", "model-power-query", "py-performance"]
+    },
+    {
+      "id": "business",
+      "title": { "ru": "Бизнес и коммуникация", "en": "Business and communication" },
+      "note": { "ru": "Трек «Профессия»: постановка, метрики, домен, вывод вперёд.", "en": "The Profession track: framing, metrics, domain, conclusion first." },
+      "trainerMax": 2,
+      "skills": ["dom-roles", "dom-requirements", "dom-metric-definition", "dom-sanity-check", "dom-sellin-sellout", "dom-fmcg-distribution", "dom-fmcg-consumer", "dom-fmcg-promo", "dom-pharma-rx", "dom-pharma-data", "dom-decomposition", "dom-abc-xyz", "dom-storytelling", "dom-chart-choice", "sql-business-case"]
+    },
+    {
+      "id": "process",
+      "title": { "ru": "Процессы и управление данными", "en": "Processes and data governance" },
+      "note": { "ru": "Цепочка стоимости, order-to-cash, владелец данных. Модель процесса в Quaera Flow засчитывается отметкой.", "en": "Value chain, order to cash, data ownership. A process model in Quaera Flow counts as a check mark." },
+      "trainerMax": 1,
+      "skills": ["dom-value-chain", "dom-order-to-cash", "dom-planning", "dom-governance", "sql-data-quality"]
+    }
+  ],
+
+  "roles": [
+    {
+      "id": "da",
+      "title": { "ru": "Data Analyst", "en": "Data Analyst" },
+      "does": { "ru": "Превращает вопрос бизнеса в метрики, считает и защищает вывод.", "en": "Turns a business question into metrics, does the numbers and defends the conclusion." },
+      "targets": { "sql": 2, "modeling": 1, "bi": 1, "python": 2, "stats": 2, "engineering": 0, "business": 2, "process": 1 },
+      "core": ["sql", "python", "stats", "business"],
+      "hybrid": { "ru": "В небольшой компании аналитик сам собирает модель и отчёт, то есть совмещает DA, AE и BI.", "en": "In a small company the analyst also builds the model and the report, covering DA, AE and BI at once." },
+      "ai": { "ru": "ИИ быстро пишет запросы и строит графики. Ценность смещается к выбору вопроса, проверке числа и выводу.", "en": "AI writes queries and charts quickly. The value moves to choosing the question, checking the number and the conclusion." }
+    },
+    {
+      "id": "bi",
+      "title": { "ru": "BI Analyst / Developer", "en": "BI Analyst / Developer" },
+      "does": { "ru": "Строит семантическую модель и отчёт, который обновляется сам и нужен не одному вопросу.", "en": "Builds the semantic model and a report that refreshes itself and serves more than one question." },
+      "targets": { "sql": 2, "modeling": 2, "bi": 2, "python": 1, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
+      "core": ["sql", "modeling", "bi", "business"],
+      "hybrid": { "ru": "BI-аналитик часто ещё и аналитик: сам отвечает на вопросы по своему отчёту.", "en": "A BI analyst is often an analyst too, answering questions from their own report." },
+      "ai": { "ru": "Copilot пишет черновики мер и раскладывает визуалы. Остаются модель, права доступа и понятные определения.", "en": "Copilot drafts measures and lays out visuals. The model, access rights and clear definitions stay with you." }
+    },
+    {
+      "id": "ae",
+      "title": { "ru": "Analytics Engineer", "en": "Analytics Engineer" },
+      "does": { "ru": "Чистит данные и собирает из них звезду с тестами, на которой работают аналитики и BI.", "en": "Cleans the data and builds a tested star schema that analysts and BI work on." },
+      "targets": { "sql": 3, "modeling": 2, "bi": 1, "python": 1, "stats": 0, "engineering": 2, "business": 1, "process": 1 },
+      "core": ["sql", "modeling", "engineering"],
+      "hybrid": { "ru": "Роль появилась между аналитиком и инженером данных; в технологичных компаниях её часто совмещают с аналитиком.", "en": "The role grew between analyst and data engineer; at tech companies it is often combined with the analyst." },
+      "ai": { "ru": "SQL ИИ пишет хорошо. Гранулярность, тесты и то, что соединение не размножило строки, проверяет человек.", "en": "AI writes SQL well. Grain, tests and making sure a join did not multiply rows are on a person." }
+    },
+    {
+      "id": "de",
+      "title": { "ru": "Data Engineer", "en": "Data Engineer" },
+      "does": { "ru": "Подключает источники и держит регулярную загрузку данных.", "en": "Connects sources and keeps data loading on schedule." },
+      "targets": { "sql": 2, "modeling": 2, "bi": 0, "python": 2, "stats": 0, "engineering": 3, "business": 0, "process": 1 },
+      "core": ["sql", "python", "engineering"],
+      "hybrid": { "ru": "В небольшой команде инженер данных заодно собирает модель, как Analytics Engineer.", "en": "In a small team the data engineer also builds the model, like an analytics engineer." },
+      "ai": { "ru": "ИИ пишет шаблоны пайплайнов и разбирает ошибки загрузки. Доступы, расписание и ответственность за источник остаются на людях.", "en": "AI writes pipeline templates and reads load errors. Access, schedules and owning the source stay with people." }
+    },
+    {
+      "id": "ds",
+      "title": { "ru": "Data Scientist", "en": "Data Scientist" },
+      "does": { "ru": "Строит модели прогноза и эффекта и называет их ограничения.", "en": "Builds forecast and effect models and states their limits." },
+      "targets": { "sql": 2, "modeling": 0, "bi": 0, "python": 3, "stats": 3, "engineering": 1, "business": 1, "process": 0 },
+      "core": ["python", "stats"],
+      "hybrid": { "ru": "Во многих компаниях этой роли нет, и её задачи берёт аналитик.", "en": "Many companies do not have this role, and the analyst takes its tasks." },
+      "ai": { "ru": "ИИ подберёт модель и напишет код. Понять, где модель ошибается и что нельзя обещать бизнесу, должен человек.", "en": "AI picks a model and writes the code. Seeing where the model is wrong and what not to promise the business is a person's job." }
+    },
+    {
+      "id": "ba",
+      "title": { "ru": "Business / Process Analyst", "en": "Business / Process Analyst" },
+      "does": { "ru": "Выясняет, как на самом деле идёт процесс и что нужно бизнесу, и записывает это в требования.", "en": "Finds out how the process really runs and what the business needs, and writes it down as requirements." },
+      "targets": { "sql": 1, "modeling": 1, "bi": 1, "python": 0, "stats": 0, "engineering": 0, "business": 3, "process": 2 },
+      "core": ["business", "process"],
+      "hybrid": { "ru": "Ближе всех к роли руководителя проектов: интервью, требования, согласования.", "en": "Closest to project management: interviews, requirements, sign-offs." },
+      "ai": { "ru": "ИИ сделает черновик BPMN и требований из текста. Что происходит на самом деле, узнают только на интервью с участниками.", "en": "AI drafts BPMN and requirements from text. What really happens is learned only by interviewing the people involved." }
+    },
+    {
+      "id": "gov",
+      "title": { "ru": "Data Governance / Steward", "en": "Data Governance / Steward" },
+      "does": { "ru": "Записывает определения метрик, назначает владельцев и следит за качеством и доступом.", "en": "Records metric definitions, assigns owners and looks after quality and access." },
+      "targets": { "sql": 1, "modeling": 2, "bi": 0, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
+      "core": ["modeling", "business", "process"],
+      "hybrid": { "ru": "Часто это не отдельная должность, а часть работы аналитика или BI-команды.", "en": "Often not a separate job but part of the analyst's or BI team's work." },
+      "ai": { "ru": "ИИ описывает таблицы и находит аномалии. Назначить владельца и решить, кому что видеть, могут только люди.", "en": "AI describes tables and spots anomalies. Assigning an owner and deciding who sees what is up to people." }
+    }
+  ],
+
+  "stages": [
+    {
+      "id": "question",
+      "title": { "ru": "Вопрос и метрики", "en": "Question and metrics" },
+      "who": ["da", "ba"],
+      "tools": ["Teams", "Excel", "Miro", "Jira"],
+      "skills": ["dom-roles", "dom-requirements", "dom-metric-definition"],
+      "apps": [],
+      "courses": { "ru": "Decision making", "en": "Decision making" },
+      "ai": { "ru": "Набросает определения и вопросы к заказчику. Договориться, что именно считать, может только человек.", "en": "Drafts definitions and questions for the stakeholder. Agreeing on what exactly to count is a person's job." }
+    },
+    {
+      "id": "process",
+      "title": { "ru": "Процесс: где рождаются данные", "en": "Process: where data is born" },
+      "who": ["ba"],
+      "tools": ["Bizagi", "Signavio", "Camunda", "Celonis"],
+      "skills": ["dom-value-chain", "dom-order-to-cash", "dom-planning"],
+      "apps": ["flow"],
+      "courses": { "ru": "BPM, process mining", "en": "BPM, process mining" },
+      "ai": { "ru": "Черновик BPMN по описанию. Каждое событие процесса потом станет строкой в таблице фактов.", "en": "A BPMN draft from a description. Every event in the process later becomes a row in a fact table." }
+    },
+    {
+      "id": "model",
+      "title": { "ru": "Модель данных", "en": "Data model" },
+      "who": ["ae", "gov"],
+      "tools": ["PowerDesigner", "ER/Studio", "dbdiagram", "draw.io"],
+      "skills": ["model-oltp-olap", "model-grain", "model-star", "model-relationships", "model-many-to-many", "model-role-playing", "model-scd2"],
+      "apps": ["model"],
+      "courses": { "ru": "Базы данных (СУБД)", "en": "Database management" },
+      "ai": { "ru": "Предложит схему по описанию. Зерно факта решает человек: ошибка здесь тихо размножает строки во всех отчётах.", "en": "Proposes a schema from a description. The grain of the fact is a person's call: a mistake here silently multiplies rows in every report." }
+    },
+    {
+      "id": "ingest",
+      "title": { "ru": "Загрузка", "en": "Ingestion" },
+      "who": ["de"],
+      "tools": ["Fabric Data Factory", "Azure Data Factory", "Airflow", "Fivetran", "PySpark"],
+      "skills": ["sql-data-quality", "model-incremental-refresh"],
+      "apps": ["lab"],
+      "courses": { "ru": "BI (Fabric)", "en": "BI (Fabric)" },
+      "ai": { "ru": "Пишет шаблоны пайплайнов и разбирает ошибки загрузки. Доступы и ответственность за источник остаются на людях.", "en": "Writes pipeline templates and reads load errors. Access and owning the source stay with people." }
+    },
+    {
+      "id": "transform",
+      "title": { "ru": "Чистка и звезда", "en": "Cleaning and star schema" },
+      "who": ["ae"],
+      "tools": ["SQL", "dbt", "Fabric Warehouse", "Snowflake", "Databricks", "BigQuery"],
+      "skills": ["sql-join-left", "sql-fanout", "sql-case", "sql-cte", "sql-data-quality", "model-power-query", "model-date-table"],
+      "apps": ["lab"],
+      "courses": { "ru": "Базы данных, BI", "en": "Database management, BI" },
+      "ai": { "ru": "SQL пишет хорошо. Проверить, что соединение не размножило строки и тесты данных зелёные, должен человек.", "en": "Writes SQL well. Checking that a join did not multiply rows and that data tests pass is a person's job." }
+    },
+    {
+      "id": "report",
+      "title": { "ru": "Семантическая модель и отчёт", "en": "Semantic model and report" },
+      "who": ["bi"],
+      "tools": ["Power BI", "DAX", "Tableau", "Looker", "Qlik"],
+      "skills": ["model-measure-vs-column", "model-filter-context", "model-calculate", "model-time-intelligence", "model-additivity", "dom-chart-choice"],
+      "apps": [],
+      "courses": { "ru": "BI, визуализация", "en": "BI, visualisation" },
+      "ai": { "ru": "Copilot пишет черновики мер и раскладывает визуалы. Права доступа, понятные имена мер и отказ от лишнего графика за человеком.", "en": "Copilot drafts measures and lays out visuals. Access rights, clear measure names and dropping a needless chart are on a person." }
+    },
+    {
+      "id": "analysis",
+      "title": { "ru": "Анализ", "en": "Analysis" },
+      "who": ["da"],
+      "tools": ["SQL", "Python (pandas)", "Excel", "Jupyter"],
+      "skills": ["sql-group-by", "sql-window-rank", "py-explore", "py-groupby", "py-merge", "dom-decomposition", "sql-promo-lift"],
+      "apps": ["lab", "pandas"],
+      "courses": { "ru": "Data Mining", "en": "Data mining" },
+      "ai": { "ru": "Быстро разведывает данные и строит графики. Выбрать вопрос, заметить подвох в данных и проверить число должен аналитик.", "en": "Explores data and draws charts fast. Choosing the question, spotting a trap in the data and checking the number are the analyst's job." }
+    },
+    {
+      "id": "forecast",
+      "title": { "ru": "Прогноз и эффект", "en": "Forecast and effect" },
+      "who": ["ds"],
+      "tools": ["scikit-learn", "statsmodels", "Jupyter", "Databricks ML"],
+      "skills": ["py-timeseries", "dom-seasonality", "dom-causality", "sql-forecast-accuracy"],
+      "apps": ["pandas"],
+      "courses": { "ru": "Data Mining, второй уровень", "en": "Data mining, second level" },
+      "ai": { "ru": "Подберёт модель и напишет код. Понять, где модель ошибается и чего нельзя обещать бизнесу, остаётся человеку.", "en": "Picks a model and writes the code. Seeing where the model is wrong and what not to promise the business stays with a person." }
+    },
+    {
+      "id": "decision",
+      "title": { "ru": "Вывод и решение", "en": "Conclusion and decision" },
+      "who": ["da", "ba"],
+      "tools": ["PowerPoint", "Teams", "Power BI"],
+      "skills": ["dom-storytelling", "dom-sanity-check", "sql-business-case"],
+      "apps": [],
+      "courses": { "ru": "Decision making", "en": "Decision making" },
+      "ai": { "ru": "Соберёт черновик слайдов. Вывод одной фразой и ответ на «а почему так» на встрече за человеком.", "en": "Assembles draft slides. The one-sentence conclusion and the answer to \"why\" in the meeting are on a person." }
+    },
+    {
+      "id": "quality",
+      "title": { "ru": "Качество и владелец метрики", "en": "Quality and metric owner" },
+      "who": ["gov"],
+      "tools": ["Microsoft Purview", "Collibra", "dbt tests", "Great Expectations"],
+      "skills": ["dom-governance", "sql-data-quality", "dom-metric-definition"],
+      "apps": [],
+      "courses": { "ru": "Data Governance", "en": "Data governance" },
+      "ai": { "ru": "Описывает таблицы и находит аномалии. Назначить владельца и решить, кому что видеть, могут только люди.", "en": "Describes tables and spots anomalies. Assigning an owner and deciding who sees what is up to people." }
+    }
+  ],
+
+  "evidence": [
+    { "id": "sql-medium", "axis": "sql", "level": 3, "title": { "ru": "Решил 10 задач уровня medium на DataLemur или StrataScratch без подсказок", "en": "Solved 10 medium problems on DataLemur or StrataScratch without hints" } },
+    { "id": "model-cdm-pdm", "axis": "modeling", "level": 2, "title": { "ru": "Довёл модель от концептуальной до SQL в Quaera Model или PowerDesigner", "en": "Took a model from conceptual to SQL in Quaera Model or PowerDesigner" } },
+    { "id": "model-star-project", "axis": "modeling", "level": 3, "title": { "ru": "Собрал звезду для чужого датасета в проекте (Fabric, Power BI или SQL)", "en": "Built a star schema for someone else's dataset in a project (Fabric, Power BI or SQL)" } },
+    { "id": "pl300-practice", "axis": "bi", "level": 2, "title": { "ru": "Practice Assessment PL-300 на Microsoft Learn: 80% или больше", "en": "PL-300 Practice Assessment on Microsoft Learn: 80% or more" } },
+    { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт Power BI с мерами DAX на реальных данных и могу его показать", "en": "Built a Power BI report with DAX measures on real data and can show it" } },
+    { "id": "pandas-notebook", "axis": "python", "level": 2, "title": { "ru": "Прошёл тетрадь Quaera Pandas до конца", "en": "Finished the Quaera Pandas notebook" } },
+    { "id": "pandas-own-data", "axis": "python", "level": 3, "title": { "ru": "Разобрал незнакомый датасет в pandas от загрузки до вывода", "en": "Analysed an unfamiliar dataset in pandas from loading to conclusion" } },
+    { "id": "stats-test", "axis": "stats", "level": 2, "title": { "ru": "Посчитал A/B-тест или доверительный интервал на реальных данных и объяснил вывод", "en": "Ran an A/B test or a confidence interval on real data and explained the result" } },
+    { "id": "stats-model", "axis": "stats", "level": 3, "title": { "ru": "Построил и проверил прогнозную модель: train/test и метрика ошибки", "en": "Built and validated a predictive model: train/test split and an error metric" } },
+    { "id": "eng-git", "axis": "engineering", "level": 1, "title": { "ru": "Веду свой проект в git: коммиты и README", "en": "Keep my own project in git: commits and a README" } },
+    { "id": "eng-pipeline", "axis": "engineering", "level": 2, "title": { "ru": "Загрузил данные пайплайном в Lakehouse или Warehouse (Fabric, ADF)", "en": "Loaded data with a pipeline into a lakehouse or warehouse (Fabric, ADF)" } },
+    { "id": "eng-dbt", "axis": "engineering", "level": 3, "title": { "ru": "Сделал проект dbt с тестами данных", "en": "Built a dbt project with data tests" } },
+    { "id": "biz-case", "axis": "business", "level": 3, "title": { "ru": "Разобрал бизнес-кейс с выводом в первой фразе на пробном интервью или защите", "en": "Worked through a business case with the conclusion first, in a mock interview or a presentation" } },
+    { "id": "process-bpmn", "axis": "process", "level": 2, "title": { "ru": "Смоделировал процесс в BPMN (Quaera Flow или Bizagi) по разговору с участником", "en": "Modelled a process in BPMN (Quaera Flow or Bizagi) after talking to someone who runs it" } },
+    { "id": "gov-metric", "axis": "process", "level": 2, "title": { "ru": "Записал метрику: определение, владелец, проверки качества", "en": "Documented a metric: definition, owner, quality checks" } },
+    { "id": "process-mining", "axis": "process", "level": 3, "title": { "ru": "Сделал process mining по журналу событий (Celonis или pm4py)", "en": "Did process mining on an event log (Celonis or pm4py)" } }
+  ]
+}

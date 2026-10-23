@@ -40,11 +40,11 @@ git fetch origin && git status
 npm run verify
 ```
 
-18 шагов (`verify:data`, `verify:content`, `test:scheduler`, `test:merge`,
+19 шагов (`verify:data`, `verify:content`, `test:scheduler`, `test:merge`,
 `test:chart`, `test:schema-layout`, `test:prose-en`, `test:text-grade`,
 `test:storage-migration`, `test:grade-compare`, `test:push-schedule`,
 `test:css-width`, `test:story-line`, `test:story-ladder`,
-`test:lesson-figure`, `test:readme-numbers`, `test:family`, `test:lab-link`). Каждый уже ловил реальный
+`test:lesson-figure`, `test:readme-numbers`, `test:family`, `test:lab-link`, `test:career`). Каждый уже ловил реальный
 дефект в первый прогон — не формальность.
 
 **Гейты статические: DOM, раскладку, контраст, обрезание текста они не видят
