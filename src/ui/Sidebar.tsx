@@ -25,6 +25,7 @@ export type SidebarSection =
   | 'data'
   | 'about'
   | 'intro'
+  | 'career'
   | 'account'
   | 'onboarding'
   | null;
@@ -46,6 +47,7 @@ export function Sidebar({
   onData,
   onAbout,
   onIntro,
+  onCareer,
   onAccount,
   onOnboarding,
   onSelectTrack,
@@ -76,6 +78,8 @@ export function Sidebar({
   onAbout: () => void;
   /** Экскурс в профессию — для того, кто не понял, о чём вообще сайт. */
   onIntro: () => void;
+  /** «Путь к роли»: роли, этапы задачи и готовность по осям. */
+  onCareer: () => void;
   onAccount: () => void;
   onOnboarding: () => void;
   onSelectTrack: (track: Track) => void;
@@ -242,6 +246,15 @@ export function Sidebar({
           >
             <IconQuestion />
             {t.nav.intro}
+          </button>
+          <button
+            type="button"
+            className="side-item"
+            aria-current={section === 'career' ? 'page' : undefined}
+            onClick={onCareer}
+          >
+            <IconCompass />
+            {t.nav.career}
           </button>
           <button
             type="button"

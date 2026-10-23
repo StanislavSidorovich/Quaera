@@ -24,6 +24,7 @@ import { overviewPage } from './content/overview';
 import { DataScreen } from './ui/DataScreen';
 import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
+import { CareerPage } from './ui/CareerPage';
 import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
@@ -278,6 +279,25 @@ function readIntroOpenOnBoot(): boolean {
 const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
 
 /**
+ * `?roles` — прямая ссылка на экран «Путь к роли». Параметр стирается
+ * из адреса по той же причине, что у `?intro`.
+ */
+function readRolesOpenOnBoot(): boolean {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('roles')) return false;
+    const on = params.get('roles') !== '0';
+    params.delete('roles');
+    const rest = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    return on;
+  } catch {
+    return false;
+  }
+}
+const ROLES_OPEN_ON_BOOT = readRolesOpenOnBoot();
+
+/**
  * `?overview` — прямая ссылка на брошюру «Quaera in four pages».
  *
  * Тот же приём и та же причина, что у `?intro` и `?story`: адресат
@@ -490,6 +510,8 @@ type Screen =
    * и печатью, в боковое меню не поставлена (см. src/content/overview.ts).
    */
   | { name: 'overview' }
+  /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
+  | { name: 'career' }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -681,6 +703,7 @@ function initialBoot(locale: Locale): Boot {
    * локали, ему не нужно — контента вне пака у него нет.
    */
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
+  if (ROLES_OPEN_ON_BOOT) return { screen: { name: 'career' }, ...empty };
   if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);
@@ -699,6 +722,7 @@ function initialBoot(locale: Locale): Boot {
     case 'about':
     case 'intro':
     case 'overview':
+    case 'career':
     case 'account':
     case 'onboarding':
       return { screen: { name: stored.name }, ...empty };
@@ -1575,8 +1599,11 @@ export default function App() {
    * выбирается алгоритмом — человек уже выбрал её сам, кликнув по строке.
    */
   function startSkillSession(skillId: string) {
-    const pool = activePack.tasks.filter((t) => t.skill === skillId);
+    // Навык может быть из другого трека (экран «Путь к роли» ведёт по всем): тогда трек переключается.
+    const skillTrack = trackBySkill.get(skillId) ?? activeTrack;
+    const pool = (packForTrack(skillTrack, locale) ?? activePack).tasks.filter((t) => t.skill === skillId);
     if (!pool.length) return;
+    applyStoryTrack(skillTrack);
     const solvedTaskIds = new Set(
       Object.entries(progress.taskRecords).filter(([, r]) => r.solved).map(([id]) => id)
     );
@@ -1988,6 +2015,7 @@ export default function App() {
     data: 'data',
     about: 'about',
     intro: 'intro',
+    career: 'career',
     account: 'account',
     onboarding: 'onboarding',
   };
@@ -2027,6 +2055,7 @@ export default function App() {
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
         onIntro={() => setScreen({ name: 'intro' })}
+        onCareer={() => setScreen({ name: 'career' })}
         onAccount={() => setScreen({ name: 'account' })}
         accountEmail={session?.user.email ?? null}
         onOnboarding={() => setScreen({ name: 'onboarding' })}
@@ -2096,6 +2125,8 @@ export default function App() {
                          */
                         screen.name === 'intro'
                         ? introPage(locale).title
+                      : screen.name === 'career'
+                        ? t.career.title
                       : screen.name === 'overview'
                         ? overviewPage(locale).title
                       : screen.name === 'account'
@@ -2145,6 +2176,8 @@ export default function App() {
                     : screen.name === 'about'
                       ? t.app.name
                       : screen.name === 'intro'
+                        ? t.app.name
+                      : screen.name === 'career'
                         ? t.app.name
                       : screen.name === 'overview'
                         ? /*
@@ -2452,6 +2485,14 @@ export default function App() {
             />
           )}
 
+          {screen.name === 'career' && (
+            <CareerPage
+              progress={progress}
+              onStartSkill={startSkillSession}
+              onOpenSkill={(skill) => setScreen({ name: 'lesson', skill })}
+            />
+          )}
+
           {screen.name === 'overview' && (
             <OverviewPage
               schema={schema}
@@ -2718,15 +2759,22 @@ export default function App() {
               const skillTrack = trackBySkill.get(screen.skill);
               const lessonExecutor = skillTrack ? getExecutor(skillTrack) : null;
               return (
-                <LessonCard
-                  lesson={lessonBySkill.get(screen.skill)!}
-                  executor={lessonExecutor ?? executor!}
-                  runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
-                  // Из справочника карточка вела в тупик — с карты навыков в практику
-                  // перейти можно было, а отсюда нет (находка 2 из разбора навигации
-                  // 2026-08-09). startSkillSession — тот же вход, что и у карты.
-                  onPractice={() => startSkillSession(screen.skill)}
-                />
+                <>
+                  <LessonCard
+                    lesson={lessonBySkill.get(screen.skill)!}
+                    executor={lessonExecutor ?? executor!}
+                    runnable={skillTrack === 'sql' || (skillTrack === 'python' && pythonReady)}
+                    // Из справочника карточка вела в тупик — с карты навыков в практику
+                    // перейти можно было, а отсюда нет (находка 2 из разбора навигации
+                    // 2026-08-09). startSkillSession — тот же вход, что и у карты.
+                    onPractice={() => startSkillSession(screen.skill)}
+                  />
+                  {screen.skill === 'dom-roles' && (
+                    <button type="button" className="btn secondary" style={{ marginTop: 10 }} onClick={() => setScreen({ name: 'career' })}>
+                      {t.career.lessonLink}
+                    </button>
+                  )}
+                </>
               );
             })()
           )}

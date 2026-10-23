@@ -8570,3 +8570,337 @@ details.story-known > summary small {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ----------------------------------------------------------- Путь к роли */
+
+.career-page {
+  max-width: 760px;
+}
+
+.career-page h3 {
+  margin: 0 0 6px;
+  font-size: var(--fs-text);
+  font-weight: 600;
+}
+
+.career-roles-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* Выбор роли: пилюля-кнопка, выбранная подсвечена и цветом, и рамкой. */
+.career-role-pill {
+  min-height: 36px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: normal;
+}
+
+.career-role-pill.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+  font-weight: 600;
+}
+
+.career-does {
+  margin: 0 0 14px;
+}
+
+.career-band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.career-band span,
+.career-level-bar span {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+}
+
+.career-band span.on,
+.career-level-bar span.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.career-band-label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+}
+
+.career-week {
+  margin: 10px 0 0;
+  font-size: var(--fs-small);
+}
+
+.career-gaps,
+.career-axes,
+.career-skill-list,
+.career-evidence,
+.career-gap-evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.career-gaps > li + li,
+.career-axis + .career-axis {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.career-gap-line {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.career-gap-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.career-skill-btn {
+  width: 100%;
+  min-height: var(--tap);
+  text-align: left;
+  white-space: normal;
+}
+
+.career-gap-note {
+  margin: 10px 0 4px;
+  font-size: var(--fs-small);
+}
+
+.career-gap-evidence {
+  list-style: disc;
+  padding-left: 20px;
+  font-size: var(--fs-small);
+}
+
+.career-axis-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin-bottom: 6px;
+}
+
+.career-level-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+/* Цель оси: рамка потолще и светлая метка, чтобы читалась и на закрашенной ступени. */
+.career-level-bar span.target {
+  border: 2px solid var(--text);
+}
+
+.career-axis-count,
+.career-axis-note {
+  margin: 6px 0 0;
+  font-size: var(--fs-small);
+}
+
+.career-evidence {
+  margin-top: 8px;
+}
+
+.career-evidence label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  min-height: var(--tap);
+}
+
+.career-evidence input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.career-capped {
+  color: var(--warn);
+}
+
+.career-foot {
+  margin: 16px 0 0;
+  font-size: var(--fs-small);
+}
+
+.career-stages {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.career-stages-h {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.career-stages-v {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.career-stage-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  font-size: var(--fs-small);
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.career-stage-btn[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+}
+
+.career-stage-n {
+  flex: none;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.career-stage-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.career-stage-detail {
+  margin: 10px 0 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.career-dl {
+  margin: 0;
+}
+
+.career-dl dt {
+  margin-top: 8px;
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+  text-transform: none;
+}
+
+.career-dl dt:first-child {
+  margin-top: 0;
+}
+
+.career-dl dd {
+  margin: 2px 0 0;
+  line-height: 1.45;
+}
+
+.career-h3 {
+  margin-top: 14px !important;
+}
+
+.career-skill-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+}
+
+.career-dots {
+  display: inline-flex;
+  gap: 3px;
+  flex: none;
+}
+
+.career-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-dim);
+}
+
+.career-dots i.on {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.career-apps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.career-apps a {
+  color: var(--accent);
+  text-decoration: none;
+  min-height: 32px;
+}
+
+.career-role-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.career-role-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.career-role-card .btn {
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) {
+  .career-role-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.career-does {
+  font-size: var(--fs-text);
+  line-height: 1.5;
+}
+
+.career-gap-line {
+  font-size: var(--fs-text);
+}
+
+.career-skill-btn {
+  font-size: var(--fs-text);
+  font-weight: 500;
+}
+
+.career-dl dd {
+  font-size: var(--fs-text);
+}
+
+.career-skill-link {
+  font-size: var(--fs-text);
+}
