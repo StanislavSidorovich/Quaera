@@ -18,7 +18,10 @@ import {
   withWeeklySnapshot,
 } from '../career/store';
 import type { AxisLevels, CareerState } from '../career/store';
-import { passedQuizEvidence } from '../career/quiz';
+import { passedQuizEvidence, quizStatus } from '../career/quiz';
+import { withQuizAttempt } from '../career/store';
+import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
+import { quizBank } from '../content/careerQuiz';
 
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
@@ -52,6 +55,8 @@ export function CareerPage({
 
   const state = progress.career ?? emptyCareerState();
   const [openStage, setOpenStage] = useState<string | null>(null);
+  const [quizAxis, setQuizAxis] = useState<AxisId | null>(null);
+  const quizStatusText = useQuizStatusText();
   const narrow = useNarrow();
 
   const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
@@ -63,8 +68,17 @@ export function CareerPage({
     () => new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date())]),
     [state]
   );
-  /* Экран теста — фаза 4b; до него отметки-тесты в списках не показываются. */
+  /* Отметка-тест оси и непустой банк: цель роли может быть выше единицы, и тогда в разрыве самой отметки нет, а первая ступень всё равно за тестом. */
+  const hasQuiz = (axis: AxisId) => careerEvidence.some((e) => e.axis === axis && e.source === 'quiz') && quizBank(axis).length > 0;
   const isQuiz = (id: string) => careerEvidence.find((e) => e.id === id)?.source === 'quiz';
+  const openQuiz = (axis: AxisId) => {
+    setQuizAxis(axis);
+    window.scrollTo({ top: 0 });
+  };
+  const closeQuiz = () => {
+    setQuizAxis(null);
+    window.scrollTo({ top: 0 });
+  };
 
   /* Названия и уровни навыков — по текущей локали, из всех четырёх паков. */
   const skillInfo = useMemo(() => {
@@ -169,6 +183,19 @@ export function CareerPage({
 
   const chosenStage = careerStages.find((s) => s.id === openStage);
 
+  if (quizAxis) {
+    return (
+      <div className="settings-column career-page">
+        <CareerQuiz
+          axis={quizAxis}
+          attempts={state.quiz}
+          onFinish={(attempt) => onCareerChange((s) => withQuizAttempt(s, attempt))}
+          onClose={closeQuiz}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="settings-column career-page">
       <p className="intro-lead">{c.lead}</p>
@@ -225,6 +252,22 @@ export function CareerPage({
                     {g.skills.map((id, i) => skillButton(id, c.practice(skillTitle(id)), i === 0))}
                   </div>
                 )}
+                {levels[g.axis] < 1 && hasQuiz(g.axis) && (
+                  <>
+                    <p className="muted career-gap-note">{c.quiz.gapNote}</p>
+                    <button
+                      type="button"
+                      className="btn secondary career-skill-btn"
+                      disabled={!quizStatus(state.quiz, g.axis, new Date()).canStart}
+                      onClick={() => openQuiz(g.axis)}
+                    >
+                      {c.quiz.gapButton(axisTitle(g.axis))}
+                    </button>
+                    {!quizStatus(state.quiz, g.axis, new Date()).canStart && (
+                      <p className="muted career-gap-note">{quizStatusText(state.quiz, g.axis, new Date()).slice(-1)[0]}</p>
+                    )}
+                  </>
+                )}
                 {g.evidence.filter((id) => !isQuiz(id)).length > 0 && (
                   <>
                     <p className="muted career-gap-note">{g.skills.length ? c.evidenceToCheck : c.beyondTrainer}</p>
@@ -247,7 +290,7 @@ export function CareerPage({
         <ul className="career-axes">
           {readiness.axes.map((a) => {
             const def = careerAxes.find((x) => x.id === a.axis)!;
-            const evs = careerEvidence.filter((e) => e.axis === a.axis && e.source !== 'quiz');
+            const evs = careerEvidence.filter((e) => e.axis === a.axis);
             return (
               <li key={a.axis} className="career-axis">
                 <div className="career-axis-head">
@@ -263,17 +306,38 @@ export function CareerPage({
                 <p className="muted career-axis-note">{def.note[locale]}</p>
                 {evs.length > 0 && (
                   <ul className="career-evidence">
-                    {evs.map((e) => (
-                      <li key={e.id}>
-                        <label>
-                          <input type="checkbox" checked={checked.has(e.id)} onChange={() => toggleEvidence(e.id)} />
-                          <span>
-                            {e.title[locale]}
-                            {a.evidenceCapped.includes(e.id) && <small className="career-capped"> {c.evidenceCapped}</small>}
-                          </span>
-                        </label>
-                      </li>
-                    ))}
+                    {evs.map((e) =>
+                      e.source === 'quiz' ? (
+                        <li key={e.id} className="career-quiz-row">
+                          <span>{e.title[locale]}</span>
+                          {quizStatusText(state.quiz, e.axis, new Date()).map((line) => (
+                            <small key={line} className="muted">
+                              {line}
+                            </small>
+                          ))}
+                          {!quizStatus(state.quiz, e.axis, new Date()).passed && quizBank(e.axis).length > 0 && (
+                            <button
+                              type="button"
+                              className="btn secondary"
+                              disabled={!quizStatus(state.quiz, e.axis, new Date()).canStart}
+                              onClick={() => openQuiz(e.axis)}
+                            >
+                              {c.quiz.start}
+                            </button>
+                          )}
+                        </li>
+                      ) : (
+                        <li key={e.id}>
+                          <label>
+                            <input type="checkbox" checked={checked.has(e.id)} onChange={() => toggleEvidence(e.id)} />
+                            <span>
+                              {e.title[locale]}
+                              {a.evidenceCapped.includes(e.id) && <small className="career-capped"> {c.evidenceCapped}</small>}
+                            </span>
+                          </label>
+                        </li>
+                      )
+                    )}
                   </ul>
                 )}
               </li>
