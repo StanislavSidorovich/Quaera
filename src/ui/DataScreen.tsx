@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GROUP_ORDER, groupTables, keyColumns, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
-import { STRATASQL_MODEL } from '../links';
+import { DATASET_CSV_ZIP, LAB_QUAERA, STRATASQL_MODEL } from '../links';
 import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 
@@ -206,6 +206,18 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
           <p className="data-map-design">
             <a href={STRATASQL_MODEL} target="_blank" rel="noreferrer">
               {t.data.mapDesign} ↗
+            </a>
+          </p>
+          {/*
+           * Вынести данные: открыть в Lab или забрать CSV (Power BI, Excel, свои
+           * инструменты). Рядом со схемой по той же причине, что и ссылка на модель.
+           */}
+          <p className="data-export">
+            <a href={LAB_QUAERA} target="_blank" rel="noreferrer">
+              {t.data.openInLab} ↗
+            </a>
+            <a href={DATASET_CSV_ZIP} download>
+              {t.data.downloadCsv}
             </a>
           </p>
         </div>

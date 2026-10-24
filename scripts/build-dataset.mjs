@@ -24,6 +24,7 @@ import { createRequire } from 'node:module';
 import { mkdir, writeFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { zipFiles } from './lib/zip.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1378,6 +1379,31 @@ const schemaJson = {
   }),
 };
 await writeFile(path.join(outDir, 'schema.json'), JSON.stringify(schemaJson, null, 2), 'utf8');
+
+/**
+ * Те же 13 таблиц CSV-архивом: кнопка «Скачать таблицы» на экране «Данные».
+ *
+ * Статический файл, а не сборка в браузере: у ссылки в README и в гиде по Power BI
+ * должен быть постоянный адрес, а базу для этого грузить не нужно. Формат как в
+ * Quaera Lab: UTF-8 с BOM (Excel и Power BI иначе читают кириллицу и ¥ как ANSI),
+ * RFC 4180, NULL пустым полем. Время в архиве фиксировано, ради воспроизводимости.
+ */
+const csvCell = (v) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+const csvFiles = SCHEMA.map((t) => {
+  const [res] = db.exec(`SELECT * FROM ${t.table}`);
+  const lines = [res.columns, ...res.values].map((r) => r.map(csvCell).join(','));
+  return { name: `${t.table}.csv`, data: Buffer.from('\uFEFF' + lines.join('\n') + '\n', 'utf8') };
+});
+const dlDir = path.join(root, 'public', 'downloads');
+await mkdir(dlDir, { recursive: true });
+await writeFile(
+  path.join(dlDir, 'kaiyo-trading-csv.zip'),
+  zipFiles(csvFiles, new Date(Date.UTC(2025, 11, 31, 0, 0, 0)))
+);
 
 const { size } = await stat(dbFile);
 console.log(`\nВсего строк: ${total.toLocaleString('ru-RU')}`);

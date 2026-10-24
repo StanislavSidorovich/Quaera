@@ -866,6 +866,9 @@ export const en = {
     mapIntroOpen: 'Click a table to open its description below.',
     /** См. довод у mapDesign в ru.ts. */
     mapDesign: 'See how this database was designed, from the conceptual model to the SQL tables, in Quaera Model',
+    /** See openInLab in ru.ts. */
+    openInLab: 'Open in Quaera Lab',
+    downloadCsv: 'Download tables (CSV, 2 MB)',
     mapAria: 'Diagram of the links between tables',
     mapFactsLabel: 'Facts',
     mapDimsLabel: 'Lookups',

@@ -33,6 +33,21 @@ export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
 
 /**
+ * Эта же база в Quaera Lab (lab.quaera.app): датасет открывается как учебный,
+ * со схемой `quaera`, и по нему можно писать свои запросы, не выходя из браузера.
+ * Формат `#ds=<id>` принимает Lab (src/data/datasets.ts там), см. таблицу
+ * переходов в корневом CLAUDE.md. Другой origin, поэтому `rel="noreferrer"`.
+ */
+export const LAB_QUAERA = 'https://lab.quaera.app/#ds=quaera';
+
+/**
+ * Те же 13 таблиц CSV-архивом. Файл собирает scripts/build-dataset.mjs
+ * (gen:data) и кладёт в public/downloads/: путь постоянный, на него ссылаются
+ * README и гид по Power BI, не переименовывать.
+ */
+export const DATASET_CSV_ZIP = '/downloads/kaiyo-trading-csv.zip';
+
+/**
  * Остальные инструменты Quaera — по поддомену на каждый. Список читается из
  * family/family.json (один на все пять приложений, его же берёт переключатель). Общий для
  * всех экранов, где семейство перечисляется целиком (подвал Sidebar), чтобы

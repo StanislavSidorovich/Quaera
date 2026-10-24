@@ -293,9 +293,13 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // /downloads/ (архив таблиц по <a download>) браузер запрашивает как навигацию.
+  // Из этой ветки он исключён: иначе zip с res.ok лёг бы в SHELL под ключом
+  // /index.html и офлайн-оболочка перестала бы быть страницей. Дальше по коду
+  // такой путь не immutable и не в предкеше, то есть просто идёт в сеть.
   // Навигация: сеть вперёд, чтобы обновление подхватывалось сразу,
   // с откатом на кеш, когда сети нет.
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate' && !url.pathname.startsWith('/downloads/')) {
     event.respondWith(
       fetch(request)
         .then((res) => {

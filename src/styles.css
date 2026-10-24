@@ -4378,6 +4378,23 @@ table.sample td.null {
   text-underline-offset: 2px;
 }
 
+/* Две ссылки «вынести данные»: в строку, на узком экране переносятся друг под друга. */
+.data-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 8px 0 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.data-export a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 .schema-legend-mark {
   flex: none;
   width: 22px;

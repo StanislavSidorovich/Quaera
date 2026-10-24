@@ -3,6 +3,8 @@ dist/
 .cache/
 # Датасет генерируется из скрипта и весит 3.5 МБ — в репозитории ему не место.
 public/data/
+# Архив CSV собирает тот же gen:data (scripts/build-dataset.mjs).
+public/downloads/
 public/sqljs/
 public/pyodide/
 public/icons/*
