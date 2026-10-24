@@ -44,8 +44,11 @@ try {
   writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
 
   const { mergeProgress, planSync } = await import(pathToFileURL(path.join(outDir, 'sync', 'merge.js')).href);
-  const { applyAttempt, emptyProgress, clearedProgress } = await import(
+  const { applyAttempt, emptyProgress, clearedProgress, withParsedCareer } = await import(
     pathToFileURL(path.join(outDir, 'srs', 'store.js')).href
+  );
+  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, checkedIds, weeklyChanges } = await import(
+    pathToFileURL(path.join(outDir, 'career', 'store.js')).href
   );
   const { review, gradeFromAttempt } = await import(pathToFileURL(path.join(outDir, 'srs', 'scheduler.js')).href);
 
@@ -138,15 +141,44 @@ try {
 
   const rand = rng(seed);
   const base0 = new Date('2026-03-01T09:00:00.000Z').getTime();
+
+  /**
+   * Состояние «Пути к роли» на устройстве: роль, отметки и снимки со своими
+   * метками времени из общего небольшого пула. Пул маленький нарочно:
+   * совпадения отметок и даже меток времени на двух копиях должны
+   * встречаться, иначе правила разрешения ничьих не проверяются вовсе.
+   * Собирается через `parseCareer`, то есть сразу в канонической форме, —
+   * как и состояние, прочитанное приложением из хранилища.
+   */
+  const ROLES = ['bi', 'da', 'ae', 'de'];
+  const EVIDENCE = ['sql-medium', 'bi-report', 'py-notebook', 'stats-ab', 'process-bpmn'];
+  const LEVELS0 = { sql: 0, modeling: 0, bi: 0, python: 0, stats: 0, engineering: 0, business: 0, process: 0 };
+  function career(r) {
+    if (r() < 0.25) return undefined;
+    const at = () => new Date(base0 + Math.floor(r() * 40) * DAY_MS).toISOString();
+    const checks = {};
+    for (const id of EVIDENCE) if (r() < 0.6) checks[id] = { on: r() < 0.5, at: at() };
+    const weekly = [];
+    for (let i = 0; i < Math.floor(r() * 9); i++) {
+      weekly.push({ date: at(), levels: { ...LEVELS0, sql: Math.floor(r() * 4), bi: Math.floor(r() * 3) } });
+    }
+    return parseCareer({
+      role: ROLES[Math.floor(r() * ROLES.length)],
+      roleAt: r() < 0.3 ? null : at(),
+      checks,
+      weekly,
+    });
+  }
+  const withCareer = (p, c) => (c ? { ...p, career: c } : p);
   /** Пары «общий предок → две разошедшиеся копии», плюс третья ветка для ассоциативности. */
   const cases = [];
   for (let i = 0; i < 200; i++) {
     const ancestor = device(emptyProgress(), Math.floor(rand() * 6), base0, rand);
     const forkMs = ancestor.endMs + Math.floor(rand() * 20 * DAY_MS);
     cases.push({
-      a: device(ancestor, 1 + Math.floor(rand() * 8), forkMs, rand).p,
-      b: device(ancestor, 1 + Math.floor(rand() * 8), forkMs, rand).p,
-      c: device(ancestor, Math.floor(rand() * 5), forkMs + 5 * DAY_MS, rand).p,
+      a: withCareer(device(ancestor, 1 + Math.floor(rand() * 8), forkMs, rand).p, career(rand)),
+      b: withCareer(device(ancestor, 1 + Math.floor(rand() * 8), forkMs, rand).p, career(rand)),
+      c: withCareer(device(ancestor, Math.floor(rand() * 5), forkMs + 5 * DAY_MS, rand).p, career(rand)),
     });
   }
 
@@ -326,6 +358,120 @@ try {
     assertTrue(
       'обрезка дней ассоциативна',
       same(mergeProgress(mergeProgress(a, b), c), mergeProgress(a, mergeProgress(b, c)))
+    );
+  }
+
+  // --- «Путь к роли» (progress.career): роль, отметки, снимки.
+  //     Полурешётку на случайных копиях проверяют общие свойства выше —
+  //     у трёх четвертей случайных копий поле есть. Здесь именные сценарии,
+  //     каждый в обе стороны: слияние коммутативно, но гейт обязан это
+  //     видеть на тех случаях, ради которых правило заводилось.
+  {
+    const t = (d) => new Date(base0 + d * DAY_MS);
+    const on = (s, id) => checkedIds(s).includes(id);
+    const both = (a, b) => [mergeProgress(a, b), mergeProgress(b, a)];
+
+    // Ловушка, ради которой у отметки метка времени: снятая галочка
+    // не должна возвращаться с устройства, где она стояла раньше.
+    const setOnB = withToggledEvidence(emptyCareerState(), 'sql-medium', t(1));
+    const clearedOnA = withToggledEvidence(setOnB, 'sql-medium', t(3));
+    const [x1, x2] = both(withCareer(emptyProgress(), clearedOnA), withCareer(emptyProgress(), setOnB));
+    assertTrue('отметка снята на A позже, чем поставлена на B: снята (A, B)', !on(x1.career, 'sql-medium'));
+    assertTrue('отметка снята на A позже, чем поставлена на B: снята (B, A)', !on(x2.career, 'sql-medium'));
+
+    const clearedEarly = withToggledEvidence(withToggledEvidence(emptyCareerState(), 'bi-report', t(1)), 'bi-report', t(2));
+    const setLate = withToggledEvidence(emptyCareerState(), 'bi-report', t(5));
+    const [y1, y2] = both(withCareer(emptyProgress(), clearedEarly), withCareer(emptyProgress(), setLate));
+    assertTrue('отметка поставлена на B позже, чем снята на A: стоит (A, B)', on(y1.career, 'bi-report'));
+    assertTrue('отметка поставлена на B позже, чем снята на A: стоит (B, A)', on(y2.career, 'bi-report'));
+
+    const onlyA = withToggledEvidence(emptyCareerState(), 'stats-ab', t(1));
+    const onlyB = withToggledEvidence(emptyCareerState(), 'py-notebook', t(1));
+    const [z1, z2] = both(withCareer(emptyProgress(), onlyA), withCareer(emptyProgress(), onlyB));
+    assertTrue(
+      'отметки на разных устройствах складываются',
+      [z1, z2].every((m) => on(m.career, 'stats-ab') && on(m.career, 'py-notebook'))
+    );
+
+    // Роль: последняя выбранная, по своей метке. Невыбранная (роль
+    // по умолчанию, roleAt = null) не перебивает выбранную руками.
+    const roleDa = withRole(emptyCareerState(), 'da', t(2));
+    const roleDe = withRole(emptyCareerState(), 'de', t(4));
+    const [r1, r2] = both(withCareer(emptyProgress(), roleDa), withCareer(emptyProgress(), roleDe));
+    assertTrue('роль: побеждает выбранная позже, в обе стороны', r1.career.role === 'de' && r2.career.role === 'de');
+    const [d1, d2] = both(withCareer(emptyProgress(), emptyCareerState()), withCareer(emptyProgress(), roleDa));
+    assertTrue(
+      'роль: роль по умолчанию не перебивает выбранную, в обе стороны',
+      d1.career.role === 'da' && d2.career.role === 'da'
+    );
+
+    // Снимки: объединение по дате, по возрастанию, не больше двенадцати последних.
+    const snaps = (from, n) =>
+      Array.from({ length: n }, (_, i) => ({ date: t(from + i * 7).toISOString(), levels: { ...LEVELS0, sql: i % 4 } }));
+    const wa = parseCareer({ ...emptyCareerState(), weekly: snaps(0, 8) });
+    const wb = parseCareer({ ...emptyCareerState(), weekly: [...snaps(3, 8), ...snaps(0, 2)] });
+    const [w1, w2] = both(withCareer(emptyProgress(), wa), withCareer(emptyProgress(), wb));
+    const dates = w1.career.weekly.map((w) => w.date);
+    const expected = [...new Set([...snaps(0, 8), ...snaps(3, 8)].map((w) => w.date))].sort().slice(-12);
+    assertTrue(
+      'снимки: объединение по дате без повторов, двенадцать последних',
+      JSON.stringify(dates) === JSON.stringify(expected)
+    );
+    assertTrue('снимки: порядок аргументов не решает', same(w1, w2));
+
+    // «За неделю» после слияния сравнивает со снимком недельной давности,
+    // а не со вчерашним снимком другого устройства.
+    const lv = (sql) => ({ ...LEVELS0, sql });
+    const interleaved = [
+      { date: t(0).toISOString(), levels: lv(1) },
+      { date: t(6).toISOString(), levels: lv(2) },
+      { date: t(7).toISOString(), levels: lv(3) },
+    ];
+    const ch = weeklyChanges(interleaved, lv(3));
+    assertTrue(
+      'за неделю: база — снимок старше последнего на семь дней',
+      ch?.length === 1 && ch[0].from === 1 && ch[0].to === 3
+    );
+    assertTrue('за неделю: одного снимка мало — сравнивать не с чем', weeklyChanges(interleaved.slice(0, 1), lv(1)) === null);
+
+    // Сброс гасит и это состояние: стёртое поколение не приносит отметок
+    // обратно, а отметки, поставленные после сброса, выживают.
+    const olderWithCareer = withCareer(device(emptyProgress(), 3, base0, rng(31)).p, withRole(setOnB, 'da', t(1)));
+    const wiped = clearedProgress(t(30));
+    const [e1, e2] = both(wiped, olderWithCareer);
+    assertTrue('сброс: отметки и роль стёртого поколения не возвращаются, в обе стороны', !e1.career && !e2.career);
+    const afterReset = withCareer(wiped, withToggledEvidence(emptyCareerState(), 'bi-report', t(31)));
+    const [f1, f2] = both(afterReset, olderWithCareer);
+    assertTrue(
+      'сброс: отметка после сброса выживает, старые нет, в обе стороны',
+      [f1, f2].every((m) => on(m.career, 'bi-report') && !on(m.career, 'sql-medium') && m.career.role === 'bi')
+    );
+
+    // Запись без поля (до фазы 3): не теряет чужого состояния и сама
+    // не обрастает полем, если его нет ни у кого.
+    const plain = device(emptyProgress(), 3, base0, rng(32)).p;
+    const [g1, g2] = both(plain, withCareer(emptyProgress(), roleDa));
+    assertTrue(
+      'запись без поля: состояние другой стороны сохраняется, в обе стороны',
+      g1.career?.role === 'da' && g2.career?.role === 'da'
+    );
+    assertTrue('запись без поля с такой же: поля нет и в результате', !('career' in mergeProgress(plain, plain)));
+
+    // Проверка формы на входе (localStorage, файл, jsonb с сервера).
+    assertTrue(
+      'мусор вместо поля читается как «состояния нет»',
+      !('career' in withParsedCareer({ ...emptyProgress(), career: 'oops' }))
+    );
+    const dirty = withParsedCareer({
+      ...emptyProgress(),
+      career: { role: 'da', checks: { a: { on: true, at: 'x' }, b: { on: 'yes' } }, weekly: [{ date: 'd' }] },
+    });
+    assertTrue(
+      'битые отметки и снимки отбрасываются, целые остаются',
+      dirty.career.role === 'da' &&
+        dirty.career.roleAt === null &&
+        Object.keys(dirty.career.checks).join() === 'a' &&
+        dirty.career.weekly.length === 0
     );
   }
 

@@ -1,5 +1,6 @@
 import { initialSkillState, type Grade, type SkillState } from './scheduler';
 import { appStorage } from '../guestMode';
+import { parseCareer, type CareerState } from '../career/store';
 
 /**
  * Локальное хранилище прогресса.
@@ -39,6 +40,15 @@ export interface Progress {
    * — ровно то, что верно для прогресса, созданного до появления поля.
    */
   resetAt?: string | null;
+  /**
+   * Состояние экрана «Путь к роли» (роль, отметки, недельные снимки).
+   *
+   * Поле добавлено, как и `resetAt`, без смены `version`: в записях до фазы 3
+   * его нет, и `undefined` читается как «состояния нет». Внутри прогресса,
+   * а не своим ключом — чтобы ехать на второе устройство той же строкой
+   * и гаснуть тем же сбросом. Правила слияния — `mergeCareer`.
+   */
+  career?: CareerState;
 }
 
 export const emptyProgress = (): Progress => ({
@@ -60,13 +70,24 @@ export const clearedProgress = (now = new Date()): Progress => ({
   resetAt: now.toISOString(),
 });
 
+/**
+ * Поле `career` с проверкой формы: оно приходит из localStorage, файла
+ * и jsonb на сервере, а `mergeCareer` обходит его ключи без оглядки.
+ * Мусор вместо поля равен отсутствию поля, и ключа в объекте тогда нет вовсе.
+ */
+export function withParsedCareer(p: Progress): Progress {
+  const { career, ...rest } = p;
+  const parsed = parseCareer(career);
+  return parsed ? { ...rest, career: parsed } : rest;
+}
+
 export function loadProgress(): Progress {
   try {
     const raw = appStorage().getItem(KEY);
     if (!raw) return emptyProgress();
     const parsed = JSON.parse(raw) as Progress;
     if (parsed.version !== 1) return emptyProgress();
-    return { ...emptyProgress(), ...parsed };
+    return withParsedCareer({ ...emptyProgress(), ...parsed });
   } catch {
     // Повреждённое хранилище не должно мешать заниматься.
     return emptyProgress();
@@ -98,7 +119,7 @@ export function parseImportedProgress(raw: string): Progress | null {
   try {
     const parsed = JSON.parse(raw) as Partial<Progress>;
     if (parsed.version !== 1 || typeof parsed !== 'object' || parsed === null) return null;
-    return { ...emptyProgress(), ...parsed };
+    return withParsedCareer({ ...emptyProgress(), ...parsed });
   } catch {
     return null;
   }

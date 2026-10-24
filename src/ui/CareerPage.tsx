@@ -10,9 +10,11 @@ import { AXES, roleReadiness, skillLevel } from '../career/readiness';
 import type { AxisId, Band, Level } from '../career/readiness';
 import {
   DEFAULT_ROLE,
-  loadCareerState,
-  saveCareerState,
+  checkedIds,
+  emptyCareerState,
   weeklyChanges,
+  withRole,
+  withToggledEvidence,
   withWeeklySnapshot,
 } from '../career/store';
 import type { AxisLevels, CareerState } from '../career/store';
@@ -26,14 +28,19 @@ const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
  * Экран ведёт в задания, а не рисует ещё одну карту: «что добрать» стоит
  * сразу под полосой готовности, и у каждого разрыва есть кнопка навыка.
  * Данные приходят из content/career.ts, формула из career/readiness.ts;
- * здесь только раскладка и хранилище отметок.
+ * здесь только раскладка. Роль, отметки и снимки лежат в `progress.career`
+ * и меняются через `onCareerChange`: своего хранилища у экрана нет, иначе
+ * оно разошлось бы с тем, что уезжает на второе устройство.
  */
 export function CareerPage({
   progress,
+  onCareerChange,
   onStartSkill,
   onOpenSkill,
 }: {
   progress: Progress;
+  /** Правка состояния экрана; функция получает текущее и возвращает новое (или то же, если менять нечего). */
+  onCareerChange: (update: (s: CareerState) => CareerState) => void;
   /** Практика по навыку (переключает трек, если навык чужой). */
   onStartSkill: (skillId: string) => void;
   /** Карточка приёма навыка. */
@@ -42,12 +49,12 @@ export function CareerPage({
   const { t, locale } = useI18n();
   const c = t.career;
 
-  const [state, setState] = useState<CareerState>(() => loadCareerState());
+  const state = progress.career ?? emptyCareerState();
   const [openStage, setOpenStage] = useState<string | null>(null);
   const narrow = useNarrow();
 
   const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
-  const checked = useMemo(() => new Set(state.checked), [state.checked]);
+  const checked = useMemo(() => new Set(checkedIds(state)), [state]);
 
   /* Названия и уровни навыков — по текущей локали, из всех четырёх паков. */
   const skillInfo = useMemo(() => {
@@ -71,23 +78,19 @@ export function CareerPage({
 
   /* Снимок раз в неделю: при открытии, не при каждой отметке. */
   useEffect(() => {
-    setState((s) => {
+    onCareerChange((s) => {
       const weekly = withWeeklySnapshot(s.weekly, levels, new Date());
       return weekly === s.weekly ? s : { ...s, weekly };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    saveCareerState(state);
-  }, [state]);
-
   const changes = weeklyChanges(state.weekly, levels);
   const axisTitle = (id: AxisId) => careerAxes.find((a) => a.id === id)!.title[locale];
   const levelName = (n: number) => c.levels[n];
 
-  const toggleEvidence = (id: string) =>
-    setState((s) => ({ ...s, checked: s.checked.includes(id) ? s.checked.filter((x) => x !== id) : [...s.checked, id] }));
+  const toggleEvidence = (id: string) => onCareerChange((s) => withToggledEvidence(s, id, new Date()));
+  const chooseRole = (id: string) => onCareerChange((s) => (s.role === id ? s : withRole(s, id, new Date())));
 
   const bandStep = BANDS.indexOf(readiness.band) + 1;
   const evidenceTitle = (id: string) => careerEvidence.find((e) => e.id === id)!.title[locale];
@@ -170,7 +173,7 @@ export function CareerPage({
               role="radio"
               aria-checked={r.id === role.id}
               className={`pill career-role-pill${r.id === role.id ? ' on' : ''}`}
-              onClick={() => setState((s) => ({ ...s, role: r.id }))}
+              onClick={() => chooseRole(r.id)}
             >
               {r.title[locale]}
             </button>
@@ -342,7 +345,7 @@ export function CareerPage({
                 className="btn secondary"
                 disabled={r.id === role.id}
                 onClick={() => {
-                  setState((s) => ({ ...s, role: r.id }));
+                  chooseRole(r.id);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >

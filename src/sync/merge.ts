@@ -1,3 +1,4 @@
+import { mergeCareer } from '../career/store';
 import type { SkillState } from '../srs/scheduler';
 import type { Progress, TaskRecord } from '../srs/store';
 
@@ -197,6 +198,19 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
    */
   const activeDays = [...new Set([...a.activeDays, ...b.activeDays])].sort().slice(-400);
 
+  /*
+   * Состояние экрана «Путь к роли» — своя полурешётка (`mergeCareer`),
+   * вложенная в эту. Сброс до неё не доходит: копии разных эпох разведены
+   * выше, и стёртые отметки уходят вместе со стёртым поколением. Поля нет
+   * ни у одной стороны — его нет и в результате: запись до фазы 3 после
+   * слияния с такой же остаётся побайтово прежней. Одна сторона сливается
+   * сама с собой, а не берётся как есть: так результат всегда в канонической
+   * форме, как и проигравшая эпоха выше.
+   */
+  const ca = a.career ?? b.career;
+  const cb = b.career ?? a.career;
+  const career = ca && cb ? mergeCareer(ca, cb) : undefined;
+
   return {
     version: 1,
     skills,
@@ -204,6 +218,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     activeDays,
     totalSolved: Object.values(taskRecords).filter((r) => r.solved).length,
     resetAt: a.resetAt ?? b.resetAt ?? null,
+    ...(career ? { career } : {}),
   };
 }
 

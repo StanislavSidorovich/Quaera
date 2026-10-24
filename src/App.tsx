@@ -25,6 +25,8 @@ import { DataScreen } from './ui/DataScreen';
 import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
 import { CareerPage } from './ui/CareerPage';
+import { withLegacyCareer } from './career/legacy';
+import { emptyCareerState, type CareerState } from './career/store';
 import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
@@ -779,7 +781,8 @@ function initialBoot(locale: Locale): Boot {
 
 export default function App() {
   const { t, locale, setLocale } = useI18n();
-  const [progress, setProgress] = useState<Progress>(() => loadProgress());
+  /* withLegacyCareer: одноразовый перенос «Пути к роли» из quaera.career.v1 в progress.career. */
+  const [progress, setProgress] = useState<Progress>(() => withLegacyCareer(loadProgress()));
   /**
    * Снимок хранилища на момент открытия вкладки — читается ровно один раз
    * (см. initialBoot). Дальше не обновляется и обновляться не должен: это
@@ -1721,6 +1724,19 @@ export default function App() {
   }
 
   /** Скачивает текущий прогресс файлом — см. пояснение у exportProgress в srs/store.ts. */
+  /**
+   * Правка состояния «Пути к роли» внутри прогресса. Если функция вернула
+   * то же состояние, прогресс не меняется вовсе: иначе открытие экрана без
+   * нового снимка всё равно запускало бы сохранение и отправку на сервер.
+   */
+  function updateCareer(update: (s: CareerState) => CareerState) {
+    setProgress((p) => {
+      const cur = p.career ?? emptyCareerState();
+      const next = update(cur);
+      return next === cur ? p : { ...p, career: next };
+    });
+  }
+
   function downloadProgress() {
     const blob = new Blob([exportProgress(progress)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -2488,6 +2504,7 @@ export default function App() {
           {screen.name === 'career' && (
             <CareerPage
               progress={progress}
+              onCareerChange={updateCareer}
               onStartSkill={startSkillSession}
               onOpenSkill={(skill) => setScreen({ name: 'lesson', skill })}
             />

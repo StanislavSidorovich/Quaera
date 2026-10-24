@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import { planSync, type RemoteRead } from './merge';
-import { emptyProgress, type Progress } from '../srs/store';
+import { emptyProgress, withParsedCareer, type Progress } from '../srs/store';
 
 /**
  * Обмен прогрессом с сервером.
@@ -53,7 +53,7 @@ async function pull(userId: string): Promise<RemoteRead> {
     console.warn('[sync] строка на сервере не похожа на прогресс — игнорируем');
     return { ok: true, progress: null };
   }
-  return { ok: true, progress: { ...emptyProgress(), ...raw } };
+  return { ok: true, progress: withParsedCareer({ ...emptyProgress(), ...raw }) };
 }
 
 /** true — записалось. false — не записалось, и это не повод что-либо менять на экране. */
