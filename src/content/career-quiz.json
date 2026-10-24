@@ -292,7 +292,7 @@
         {
           "correct": true,
           "text": {
-            "ru": "Тест мог не хватить мощности: на такой выборке виден лишь очень большой эффект",
+            "ru": "Тесту могло не хватить мощности: на такой выборке виден лишь очень большой эффект",
             "en": "The test may lack power: this sample shows only a very large effect"
           },
           "why": {
@@ -307,8 +307,8 @@
             "en": "Since p is above 0.05, there is no effect, so the result is proven and the question is closed"
           },
           "why": {
-            "ru": "Это ошибка второго рода, принятая за вывод: p выше порога говорит лишь о том, что данных мало для отказа от нулевой гипотезы, но не о том, что она верна.",
-            "en": "This takes a type II error for a conclusion: a p above the threshold only says the data is too thin to reject the null hypothesis, not that the null is true."
+            "ru": "Отсутствие значимости принято за доказательство отсутствия эффекта: p выше порога говорит лишь о том, что данных мало для отказа от нулевой гипотезы, но не о том, что она верна.",
+            "en": "This takes absence of significance for proof of no effect: a p above the threshold only says the data is too thin to reject the null hypothesis, not that the null is true."
           }
         },
         {
@@ -374,8 +374,8 @@
             "en": "The effect is too weak: p = 0.04 counts as convincing only when it is below 0.001"
           },
           "why": {
-            "ru": "Порог 0,001 тоже не спасает от множественных проверок, он лишь делает их менее вероятными. Дело не в величине p, а в числе попыток.",
-            "en": "A 0.001 threshold does not solve multiple checks either, it only makes them rarer. The issue is the number of tries, not the size of p."
+            "ru": "Строгий порог, взятый без связи с числом проверок, выбран наугад. Поправка как раз выводит порог из числа метрик: по Бонферрони 0,05 / 20 = 0,0025. Дело не в величине p самой по себе, а в числе попыток.",
+            "en": "A strict threshold picked without regard to the number of checks is arbitrary. A correction derives the threshold from the number of metrics: Bonferroni gives 0.05 / 20 = 0.0025. The issue is the number of tries, not the size of p as such."
           }
         },
         {
@@ -475,8 +475,8 @@
             "en": "A small p means a large effect, so it should be rolled out right away"
           },
           "why": {
-            "ru": "p-value не измеряет размер эффекта: тот же +0,1% при другой выборке дал бы p около 0,5.",
-            "en": "The p-value does not measure effect size: the same +0.1% with another sample would give p near 0.5."
+            "ru": "p-value не измеряет размер эффекта: тот же +0,1% на выборке в сто раз меньше оказался бы незначимым.",
+            "en": "The p-value does not measure effect size: the same +0.1% on a sample a hundred times smaller would not be significant."
           }
         },
         {
@@ -605,12 +605,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Опрос надо повторить на тех же клиентах, пока оценка не снизится",
-            "en": "The survey should be repeated on the same customers until the score drops"
+            "ru": "Опрос надо повторить через месяц на тех же клиентах и проверить устойчивость",
+            "en": "Repeat the survey on the same customers in a month to check stability"
           },
           "why": {
-            "ru": "Повтор на тех же людях даст те же смещённые ответы. Нужна другая группа, а не другой прогон.",
-            "en": "Repeating on the same people gives the same biased answers. A different group is needed, not another run."
+            "ru": "Повтор на тех же людях даст ту же смещённую выборку: ушедшие в неё снова не попадут. Нужна другая группа, а не другой прогон.",
+            "en": "Repeating on the same people gives the same biased sample: those who left are still not in it. A different group is needed, not another run."
           }
         }
       ]
@@ -801,7 +801,7 @@
           },
           "why": {
             "ru": "Сеансы одного человека не независимы, а переключение вариантов меняет поведение. Поэтому пользователя закрепляют за одним вариантом на весь тест.",
-            "en": "One person sessions are not independent, and switching variants changes behaviour. So a user is pinned to one variant for the whole test."
+            "en": "One person's sessions are not independent, and switching variants changes behaviour. So a user is pinned to one variant for the whole test."
           }
         },
         {
@@ -818,12 +818,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Нужно разделить клиентов по числу заказов и отдать лучшим новую кнопку",
-            "en": "Customers should be split by order count, with the best ones getting the new button"
+            "ru": "Достаточно убрать из анализа клиентов, видевших обе кнопки",
+            "en": "It is enough to drop the customers who saw both buttons from the analysis"
           },
           "why": {
-            "ru": "Выбор лучших для нового варианта это не случайность, а отбор: разница в группах будет вызвана клиентами, а не кнопкой.",
-            "en": "Giving the new variant to the best is selection, not randomness: the group difference would come from the customers, not the button."
+            "ru": "Обе кнопки видели вернувшиеся, самые активные клиенты. Без них тест оценит эффект на разовых посетителях, а оставшиеся группы перестанут быть случайными.",
+            "en": "Those who saw both buttons are returning, most active customers. Without them the test measures one-off visitors, and the remaining groups are no longer random."
           }
         },
         {
@@ -1165,12 +1165,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Хранить данные только в общем Excel-файле с доступом по ссылке",
-            "en": "Keep the data only in a shared Excel file with link access"
+            "ru": "Data mesh: отдать данные доменным командам",
+            "en": "A data mesh: hand the data over to domain teams"
           },
           "why": {
-            "ru": "Файл не даёт ни масштаба, ни контроля схемы, ни истории изменений, а потому не решает ни одной из названных задач.",
-            "en": "A file offers neither scale, nor schema control, nor change history, so it solves none of the stated needs."
+            "ru": "Data mesh отвечает на вопрос, кто владеет данными. Транзакций и контроля схемы поверх файлов он сам по себе не даёт.",
+            "en": "A data mesh answers who owns the data. It does not by itself add transactions or schema enforcement on top of files."
           }
         }
       ]
@@ -1333,12 +1333,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Проверка, что имена столбцов написаны строчными буквами",
-            "en": "A check that column names are in lower case"
+            "ru": "Тест связей: каждый товар продаж есть в справочнике",
+            "en": "A relationship test: every product in sales exists in the catalog"
           },
           "why": {
-            "ru": "Это стиль, а не качество данных: на пустой файл такая проверка никак не реагирует.",
-            "en": "That is style, not data quality: such a check does not react to an empty file at all."
+            "ru": "В пустой таблице нет ни одной строки без пары в справочнике, поэтому тест связей пройдёт.",
+            "en": "An empty table has no rows without a match in the catalog, so the relationship test passes."
           }
         }
       ]
@@ -1378,23 +1378,23 @@
         {
           "correct": false,
           "text": {
-            "ru": "Выбрать SELECT *, чтобы не перечислять столбцы",
-            "en": "Write SELECT * so that columns need not be listed"
+            "ru": "Взять вычислительный кластер побольше",
+            "en": "Move to a larger compute cluster"
           },
           "why": {
-            "ru": "В колоночном хранилище лишние столбцы оплачиваются. Звёздочка наоборот увеличивает прочитанное.",
-            "en": "In a columnar warehouse extra columns are billed. The asterisk makes the amount read larger, not smaller."
+            "ru": "Мощность ускорит скан, но не сократит его: прочитаны будут те же три года, и при оплате за байты счёт не уменьшится.",
+            "en": "More power speeds up the scan but does not shrink it: the same three years are read, and with billing by bytes the bill does not go down."
           }
         },
         {
           "correct": false,
           "text": {
-            "ru": "Увеличить размер экрана в BI-инструменте",
-            "en": "Increase the screen size in the BI tool"
+            "ru": "Добавить в запрос LIMIT 1000",
+            "en": "Add LIMIT 1000 to the query"
           },
           "why": {
-            "ru": "Экран на скорость запроса к хранилищу не влияет. Расход идёт на сканирование таблицы, а не на отрисовку.",
-            "en": "The screen does not affect warehouse query speed. The cost is in scanning the table, not in rendering."
+            "ru": "LIMIT обрезает ответ, но в колоночном хранилище вроде BigQuery не сокращает прочитанное: таблица сканируется целиком, и счёт тот же.",
+            "en": "LIMIT trims the answer, but in a columnar warehouse such as BigQuery it does not cut the amount read: the table is scanned in full and the bill is the same."
           }
         }
       ]
@@ -1434,23 +1434,23 @@
         {
           "correct": false,
           "text": {
-            "ru": "Столбцы нельзя соединять между собой, поэтому в хранилище JOIN вообще не нужен",
-            "en": "Columns cannot be joined with each other, so a warehouse needs no JOIN at all"
+            "ru": "Так на каждый столбец автоматически строится индекс и поиск строк ускоряется",
+            "en": "Every column gets an index automatically, which speeds up row lookups"
           },
           "why": {
-            "ru": "JOIN в хранилищах работает как обычно. Формат хранения на способность соединять таблицы не влияет.",
-            "en": "JOINs work as usual in warehouses. The storage format does not affect the ability to join tables."
+            "ru": "Индексов в привычном смысле у таких хранилищ обычно нет. Скорость даёт то, что запрос читает только свои столбцы, а сжатые данные читаются быстрее.",
+            "en": "Such warehouses usually have no indexes in the usual sense. Speed comes from reading only the needed columns, and compressed data reads faster."
           }
         },
         {
           "correct": false,
           "text": {
-            "ru": "Так хранение дешевле только потому, что все данные заранее шифруются",
-            "en": "Storage is cheaper only because all the data is encrypted up front"
+            "ru": "Так столбцовые хранилища поддерживают транзакции, а строчные нет",
+            "en": "Columnar warehouses support transactions, while row stores do not"
           },
           "why": {
-            "ru": "Шифрование цену хранения не снижает. Экономия идёт от сжатия однотипных значений в одном столбце.",
-            "en": "Encryption does not lower storage cost. The saving comes from compressing similar values in one column."
+            "ru": "Транзакции как раз родная среда строчных рабочих баз. Формат хранения определяет, как читают данные, а не есть ли транзакции.",
+            "en": "Transactions are the home turf of row-based operational databases. The storage layout decides how data is read, not whether there are transactions."
           }
         }
       ]
@@ -2032,8 +2032,8 @@
             "en": "The warehouse, marts, extracts and backups hold copies too"
           },
           "why": {
-            "ru": "Право на удаление касается всех копий. Для резервных копий и витрин нужен описанный процесс: удалить, обезличить или удалить при ближайшем пересоздании.",
-            "en": "The right to erasure covers every copy. Backups and marts need a defined process: delete, anonymise, or remove at the next rebuild."
+            "ru": "Право на удаление касается всех копий. Витрины пересобирают уже без клиента, а для резервных копий описывают процесс: данные из них не восстанавливают и удаляют вместе с истечением срока копии.",
+            "en": "The right to erasure covers every copy. Marts are rebuilt without the customer, and backups need a defined process: the data is not restored from them and goes away when the backup expires."
           }
         },
         {
@@ -2117,12 +2117,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Хранить тексты дольше, чтобы их хватило для рекламы",
-            "en": "Keep the texts longer so there is enough for advertising"
+            "ru": "Достаточно дописать новую цель в политику конфиденциальности",
+            "en": "It is enough to add the new purpose to the privacy policy"
           },
           "why": {
-            "ru": "Это усугубляет нарушение: срок хранения тоже привязан к цели, и расширять его ради новой цели нельзя.",
-            "en": "This makes the breach worse: retention is also tied to purpose and cannot be extended for a new one."
+            "ru": "Строчка в политике информирует, но основания не создаёт: для новой цели его нужно иметь, а для рекламы по содержанию обращений обычно нужно согласие.",
+            "en": "A line in the policy informs but does not create a legal basis: the new purpose needs one, and ads based on ticket content usually need consent."
           }
         }
       ]
@@ -2285,12 +2285,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Заранее переименовать это поле во всех отчётах и моделях",
-            "en": "Rename the field in all reports and models in advance"
+            "ru": "Найти имя поля поиском по репозиторию SQL-кода",
+            "en": "Search the SQL code repository for the field name"
           },
           "why": {
-            "ru": "Переименование ничего не говорит о том, где поле используется, и само может сломать отчёты. Сначала нужно узнать, где оно живёт.",
-            "en": "Renaming says nothing about where the field is used and can itself break reports. First you need to find where it lives."
+            "ru": "Поиск найдёт код в репозитории, но не отчёты, собранные в BI-инструменте, выгрузки и запросы с SELECT *, где имени поля нет. Lineage видит все эти связи.",
+            "en": "A search finds code in the repository, but not reports built in the BI tool, extracts, or queries with SELECT * where the field name never appears. Lineage sees all of these links."
           }
         }
       ]
@@ -2386,12 +2386,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "На увеличение числа заказов, чтобы улучшить средний показатель",
-            "en": "On increasing the number of orders to improve the average"
+            "ru": "На автоматизацию самого долгого рабочего шага",
+            "en": "Automating the longest working step"
           },
           "why": {
-            "ru": "Рост потока обычно удлиняет очереди и ожидание, а не сокращает их.",
-            "en": "More flow usually lengthens queues and waiting rather than shortening them."
+            "ru": "Даже если самый долгий шаг занимает почти все рабочие сутки, автоматизация сократит цикл примерно на сутки из двенадцати.",
+            "en": "Even if the longest step takes nearly the whole working day, automating it cuts about one day out of twelve."
           }
         },
         {
@@ -2424,8 +2424,8 @@
             "en": "Procure to pay: from requisition to supplier payment"
           },
           "why": {
-            "ru": "Типичные шаги: заявка, заказ поставщику, приёмка товара, сверка счёта с заказом и приёмкой, платёж. DSO там не измеряется.",
-            "en": "Typical steps: requisition, purchase order, goods receipt, matching the invoice to order and receipt, payment. DSO is not measured there."
+            "ru": "Типичные шаги: заявка, заказ поставщику, приёмка товара, сверка счёта с заказом и приёмкой, платёж. Срок оплаты поставщикам меряет DPO, зеркало DSO.",
+            "en": "Typical steps: requisition, purchase order, goods receipt, matching the invoice to order and receipt, payment. Supplier payment time is measured by DPO, the mirror of DSO."
           }
         },
         {
@@ -2470,7 +2470,7 @@
       "ref": "prep:Power BI row-level security",
       "q": {
         "ru": "Региональные менеджеры должны видеть в общем отчёте продажи только своего региона. Как сделать правильно?",
-        "en": "Regional managers should see only their own region sales in a shared report. What is the right way?"
+        "en": "Regional managers should see only their own region's sales in a shared report. What is the right way?"
       },
       "options": [
         {
@@ -2509,12 +2509,12 @@
         {
           "correct": false,
           "text": {
-            "ru": "Положиться на то, что менеджеры сами выберут в срезе только свой регион",
-            "en": "Rely on managers to pick only their own region in the slicer"
+            "ru": "Фильтр уровня отчёта с регионом из параметра в ссылке",
+            "en": "A report-level filter with the region taken from a URL parameter"
           },
           "why": {
-            "ru": "Доверие не контроль доступа. Для данных, к которым не все должны иметь доступ, нужны технические ограничения.",
-            "en": "Trust is not access control. Data that not everyone should see needs technical restrictions."
+            "ru": "Фильтр отчёта и параметр ссылки читатель меняет сам: достаточно поправить адрес или выгрузить данные. Это навигация, а не защита.",
+            "en": "A report filter and a URL parameter are under the reader's control: edit the address or export the data. That is navigation, not protection."
           }
         }
       ]
