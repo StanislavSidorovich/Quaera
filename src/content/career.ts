@@ -56,6 +56,11 @@ export interface CareerStage {
 
 export interface CareerEvidence extends EvidenceDef {
   title: Text;
+  /**
+   * `quiz` — отметку ставит самопроверка (`career/quiz.ts`), а не человек:
+   * галочки у неё нет, засчитана она, когда сдан тест оси.
+   */
+  source?: 'quiz';
 }
 
 interface CareerData {

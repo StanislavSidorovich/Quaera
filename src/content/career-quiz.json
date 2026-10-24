@@ -1,0 +1,831 @@
+{
+  "questions": [
+    {
+      "id": "stats-pvalue",
+      "axis": "stats",
+      "ref": "prep:stats p-value",
+      "q": {
+        "ru": "A/B-тест новой кнопки оформления заказа дал p = 0,03. Что это значит?",
+        "en": "An A/B test of a new checkout button gave p = 0.03. What does this mean?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Без эффекта кнопки такая или бóльшая разница выпадала бы примерно в 3% тестов",
+            "en": "With no real effect, a difference this large or larger would show up in about 3% of tests"
+          },
+          "why": {
+            "ru": "Так и определяется p-value: вероятность получить такой или более сильный результат при условии, что эффекта нет. Это мера удивления данными, а не вероятность гипотезы.",
+            "en": "That is the definition: the probability of a result this strong or stronger, assuming there is no effect. It measures how surprising the data is, not how likely a hypothesis is."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "С вероятностью 97% новая кнопка лучше старой",
+            "en": "There is a 97% probability that the new button is better"
+          },
+          "why": {
+            "ru": "p-value считается в предположении, что эффекта нет, и вероятности того, что кнопка лучше, не даёт. 1 − p ничего не означает.",
+            "en": "The p-value is computed assuming there is no effect, so it cannot give the probability that the button is better. 1 − p means nothing."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Вероятность того, что эффекта на самом деле нет, равна 3%",
+            "en": "The probability that there is really no effect is 3%"
+          },
+          "why": {
+            "ru": "Самая частая подмена на собеседовании: p-value это вероятность данных при нулевой гипотезе, а не вероятность нулевой гипотезы при данных.",
+            "en": "The most common mix-up in interviews: the p-value is the probability of the data given the null hypothesis, not the probability of the null hypothesis given the data."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Конверсия с новой кнопкой выросла примерно на 3%, и прирост не случаен",
+            "en": "Conversion with the new button grew by about 3%, and the lift is not random"
+          },
+          "why": {
+            "ru": "p-value не говорит о размере эффекта. Размер читают по самой разнице и её доверительному интервалу; при миллионе пользователей крошечный прирост тоже даст маленькое p.",
+            "en": "The p-value says nothing about effect size. Size is read from the difference itself and its confidence interval; with a million users even a tiny lift gives a small p."
+          }
+        }
+      ]
+    },
+    {
+      "id": "stats-median",
+      "axis": "stats",
+      "ref": "prep:stats mean vs median",
+      "q": {
+        "ru": "Почти все заказы в отчёте от 20 до 60 €, но есть несколько оптовых по 5 000 € и больше. Руководитель просит одно число: «типичный заказ». Что показать?",
+        "en": "Almost all orders in the report are between €20 and €60, but a few wholesale orders are €5,000 or more. The manager asks for one number: the typical order. What do you show?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Медиану, а рядом квартили p25 и p75",
+            "en": "The median, with p25 and p75 next to it"
+          },
+          "why": {
+            "ru": "Медиана устойчива к редким крупным значениям и описывает заказ, который и имеют в виду под «типичным». Квартили показывают разброс, не выбрасывая данные.",
+            "en": "The median is robust to rare large values and describes the order people actually mean by typical. Quartiles show the spread without throwing data away."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Среднее: оно учитывает каждый заказ",
+            "en": "The mean, because it takes every order into account"
+          },
+          "why": {
+            "ru": "Именно поэтому несколько оптовых заказов и тянут среднее вверх: оно окажется выше почти всех реальных заказов. При скошенном распределении среднее типичное значение не описывает.",
+            "en": "That is exactly why a few wholesale orders pull the mean up: it ends up above almost every real order. With a skewed distribution the mean does not describe the typical value."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Среднее после удаления заказов дороже 5 000 €",
+            "en": "The mean after removing orders above €5,000"
+          },
+          "why": {
+            "ru": "Оптовые заказы настоящие, и удалять их ради удобной цифры значит тихо поменять вопрос. Порог к тому же произвольный. Медиана решает задачу без удаления данных.",
+            "en": "The wholesale orders are real, and dropping them for a convenient number quietly changes the question. The cutoff is arbitrary too. The median solves this without deleting data."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Моду: самую частую сумму заказа",
+            "en": "The mode: the most frequent order amount"
+          },
+          "why": {
+            "ru": "У денежных сумм почти каждая встречается один раз, поэтому мода зависит от того, как округлить, и легко выдаёт случайное число. Для непрерывных величин она годится плохо.",
+            "en": "With money amounts almost every value occurs once, so the mode depends on how you round and can easily return a random number. It suits continuous values poorly."
+          }
+        }
+      ]
+    },
+    {
+      "id": "stats-peeking",
+      "axis": "stats",
+      "ref": "prep:stats A/B pitfalls",
+      "q": {
+        "ru": "A/B-тест запланирован на две недели. Аналитик смотрит p-value каждый день и на четвёртый день, увидев p < 0,05, останавливает тест. В чём проблема?",
+        "en": "An A/B test is planned for two weeks. The analyst checks the p-value every day and stops the test on day four after seeing p < 0.05. What is the problem?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Ранняя остановка на p < 0,05 даёт ложных находок намного больше 5%",
+            "en": "Stopping at the first p < 0.05 gives far more than 5% false positives"
+          },
+          "why": {
+            "ru": "Без эффекта p-value блуждает, и каждый взгляд даёт ему ещё один шанс случайно пересечь 0,05. Срок фиксируют заранее или берут последовательные методы. Четыре дня к тому же не покрывают недельный цикл.",
+            "en": "With no effect the p-value wanders, and every look gives it another chance to cross 0.05 by luck. Fix the duration in advance or use sequential methods. Four days also miss the weekly cycle."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Проблемы нет: значимость достигнута, новые данные вывод не изменят",
+            "en": "There is no problem: significance is reached and more data will not change the conclusion"
+          },
+          "why": {
+            "ru": "Изменят: на ранних днях выборка мала и p-value скачет. Значимость, пойманная на пике колебания, часто исчезает к запланированному сроку.",
+            "en": "It can: in the early days the sample is small and the p-value jumps around. Significance caught at a peak of that noise often disappears by the planned end date."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Мала мощность: её стоит пересчитать, а сам вывод верен",
+            "en": "Power is low: recompute it, but the conclusion itself is valid"
+          },
+          "why": {
+            "ru": "Мощность отвечает за пропуск настоящего эффекта (ошибку второго рода). Подглядывание раздувает ошибку первого рода, ложную находку, и пересчёт мощности её не лечит.",
+            "en": "Power is about missing a real effect (a type II error). Peeking inflates the type I error, a false finding, and recomputing power does not fix it."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Ежедневные проверки делают тест слишком строгим, и настоящий эффект теряется",
+            "en": "Daily checks make the test too strict, so a real effect gets lost"
+          },
+          "why": {
+            "ru": "Наоборот: много взглядов без поправки делают тест мягче, а не строже. Строже его делают как раз поправки за повторные взгляды.",
+            "en": "The opposite: many looks without correction make the test more lenient, not stricter. Corrections for repeated looks are what make it stricter."
+          }
+        }
+      ]
+    },
+    {
+      "id": "stats-simpson",
+      "axis": "stats",
+      "ref": "prep:stats Simpson",
+      "q": {
+        "ru": "Сегментов два, мобильный и десктоп. За месяц конверсия выросла в каждом из них, а общая конверсия упала. Что вероятнее всего?",
+        "en": "There are two segments, mobile and desktop. Over the month conversion rose in each of them, yet overall conversion fell. What is the most likely explanation?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Трафик сместился в мобильный, где конверсия ниже",
+            "en": "Traffic shifted to mobile, where conversion is lower"
+          },
+          "why": {
+            "ru": "Парадокс Симпсона: общая конверсия это среднее сегментов, взвешенное их долей трафика. Когда растёт доля слабого сегмента, итог падает при росте внутри каждого. Первым делом проверяют сдвиг структуры.",
+            "en": "Simpson's paradox: overall conversion is an average of the segments weighted by their share of traffic. When the weaker segment grows its share, the total falls even though each segment improves. Check the mix shift first."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Ошибка в расчёте: если растут все сегменты, общая цифра обязана расти",
+            "en": "A calculation error: if every segment grows, the total has to grow"
+          },
+          "why": {
+            "ru": "Не обязана: итог зависит не только от конверсии сегментов, но и от их весов. Это интуиция, на которой парадокс и ловит.",
+            "en": "It does not have to: the total depends not only on segment conversion but also on segment weights. This intuition is exactly what the paradox catches."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Сегменты меньше по объёму, поэтому верить стоит общей цифре",
+            "en": "The segments are smaller samples, so trust the overall number"
+          },
+          "why": {
+            "ru": "Размер выборки влияет на шум, но не объясняет, почему направление меняется на противоположное. Обе цифры могут быть верны одновременно.",
+            "en": "Sample size affects noise but does not explain why the direction reverses. Both numbers can be correct at the same time."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Сезонность: общий спад даёт календарь, а сегменты его не учитывают",
+            "en": "Seasonality: the overall drop comes from the calendar, and the segments ignore it"
+          },
+          "why": {
+            "ru": "Сезонность действовала бы и на сегменты, ведь они за тот же месяц. Если оба сегмента растут, спад итога объясняет только перераспределение между ними.",
+            "en": "Seasonality would hit the segments too, since they cover the same month. If both segments grow, only a shift between them explains the drop in the total."
+          }
+        }
+      ]
+    },
+    {
+      "id": "stats-causation",
+      "axis": "stats",
+      "ref": "prep:stats correlation vs causation; stage:analysis",
+      "q": {
+        "ru": "Клиенты с приложением лояльности покупают на 30% больше остальных. Маркетинг хочет навязать приложение всем и обещает +30% продаж. Что ответить?",
+        "en": "Customers with the loyalty app buy 30% more than the rest. Marketing wants to push the app to everyone and promises +30% sales. What do you answer?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Приложение ставят те, кто и так покупает больше; эффект покажет эксперимент",
+            "en": "App users may have bought more anyway; only an experiment shows the effect"
+          },
+          "why": {
+            "ru": "Это смещение отбора: активные клиенты и ставят приложение, и покупают больше. Причинность устанавливает рандомизированный эксперимент или хотя бы сравнение с контрольной группой.",
+            "en": "This is selection bias: engaged customers both install the app and buy more. Causality is established by a randomised experiment or at least a comparison with a control group."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Согласиться, если разница между группами статистически значима",
+            "en": "Agree, if the difference between the groups is statistically significant"
+          },
+          "why": {
+            "ru": "Значимость говорит, что разница в выборке не случайный шум. Откуда она взялась, приложение это или тип клиента, значимость не отвечает.",
+            "en": "Significance says the difference in the sample is not random noise. It does not say where the difference comes from, the app or the type of customer."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Согласиться, если корреляция сильная, например r > 0,7",
+            "en": "Agree, if the correlation is strong, say r > 0.7"
+          },
+          "why": {
+            "ru": "Сила связи не показывает ни её направление, ни общую причину. Сильная корреляция с вмешивающимся фактором остаётся сильной и без всякого эффекта приложения.",
+            "en": "The strength of a relationship shows neither its direction nor a common cause. A strong correlation driven by a confounder stays strong with no app effect at all."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Отказать: корреляция о причинах ничего не говорит",
+            "en": "Refuse: correlation says nothing about causes"
+          },
+          "why": {
+            "ru": "Слишком сильно сказано. Корреляция это повод проверить гипотезу, и правильный ответ бизнесу предлагает проверку, а не закрывает вопрос.",
+            "en": "Too strong. A correlation is a reason to test the hypothesis, and the right answer to the business proposes a test rather than closing the question."
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "eng-idempotent",
+      "axis": "engineering",
+      "ref": "stage:ingest",
+      "q": {
+        "ru": "Ночная загрузка дописывает в таблицу заказы за вчера. Вчера она упала на середине, её перезапустили, и часть заказов задвоилась. Что исправляет причину?",
+        "en": "A nightly load appends yesterday's orders to a table. Last night it failed halfway, was rerun, and some orders were duplicated. What fixes the cause?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Сделать загрузку идемпотентной: заменять партицию дня или MERGE по ключу",
+            "en": "Make the load idempotent: replace the day's partition or MERGE on the key"
+          },
+          "why": {
+            "ru": "Идемпотентная загрузка при повторе даёт тот же результат, что и при первом запуске. Тогда перезапуск безопасен, а сбои в пайплайнах случаются всегда.",
+            "en": "An idempotent load gives the same result on a rerun as on the first run. Then a restart is safe, and pipelines always fail sooner or later."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Включить автоматический повтор загрузки при сбое",
+            "en": "Turn on automatic retry of the load when it fails"
+          },
+          "why": {
+            "ru": "Повтор выполнит то же дописывание ещё раз и задвоит строки точно так же. Проблема не в том, кто перезапускает, а в том, что запись неидемпотентна.",
+            "en": "A retry runs the same append again and duplicates rows in exactly the same way. The problem is not who restarts it but that the write is not idempotent."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Добавить DISTINCT во все отчёты, которые читают таблицу",
+            "en": "Add DISTINCT to every report that reads this table"
+          },
+          "why": {
+            "ru": "Это маскирует дефект ниже по потоку: каждый потребитель должен помнить про DISTINCT, а две законно одинаковые строки схлопнутся в одну.",
+            "en": "This hides the defect downstream: every consumer has to remember DISTINCT, and two legitimately identical rows collapse into one."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Запретить перезапуски и править каждый сбой в таблице руками",
+            "en": "Forbid reruns and fix every failure by hand in the table"
+          },
+          "why": {
+            "ru": "Сбои будут, а ручная правка медленная и сама порождает ошибки. Пайплайн должен быть устроен так, чтобы его можно было спокойно перезапустить.",
+            "en": "Failures will happen, and manual fixes are slow and create errors of their own. A pipeline should be built so it can be rerun without worry."
+          }
+        }
+      ]
+    },
+    {
+      "id": "eng-elt",
+      "axis": "engineering",
+      "ref": "stage:ingest, stage:transform",
+      "q": {
+        "ru": "Команда грузит сырые данные в облачное хранилище как есть, а преобразует их уже там SQL-моделями dbt. Как называется подход и в чём его главный плюс?",
+        "en": "The team loads raw data into a cloud warehouse as is and transforms it there with dbt SQL models. What is this approach called and what is its main benefit?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "ELT: сырьё в хранилище, преобразование можно переделать без новой выгрузки",
+            "en": "ELT: raw data stays in the warehouse, so transformations can be redone without a new extract"
+          },
+          "why": {
+            "ru": "Порядок букв говорит, где происходит преобразование: после загрузки, внутри хранилища. Сырой слой позволяет пересобрать модели, когда поменялась логика.",
+            "en": "The order of the letters says where the transformation happens: after loading, inside the warehouse. The raw layer lets you rebuild models when the logic changes."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "ETL: данные преобразуют до загрузки, и в хранилище лежит только чистое",
+            "en": "ETL: data is transformed before loading, so the warehouse holds only clean data"
+          },
+          "why": {
+            "ru": "Определение ETL верное, но в описанной команде порядок обратный: сначала загрузка, потом преобразование.",
+            "en": "That is a correct definition of ETL, but the team described does the opposite: load first, transform afterwards."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "ELT: раз сырьё сохранено, тесты качества данных не нужны",
+            "en": "ELT: since the raw data is kept, data quality tests are not needed"
+          },
+          "why": {
+            "ru": "Название верное, плюс нет. Сырьё помогает исправить и пересчитать, но ошибки в моделях ловят только тесты, и dbt держит их рядом с моделями именно поэтому.",
+            "en": "Right name, wrong benefit. Raw data helps you fix and recompute, but only tests catch errors in the models, which is why dbt keeps tests next to them."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "ETL: SQL внутри хранилища и есть шаг преобразования в ETL",
+            "en": "ETL: SQL inside the warehouse is the transform step of ETL"
+          },
+          "why": {
+            "ru": "Преобразование есть в обоих подходах. Различает их место этого шага: до загрузки это ETL, после загрузки внутри хранилища это ELT.",
+            "en": "Both approaches have a transform step. What tells them apart is where it happens: before loading is ETL, after loading inside the warehouse is ELT."
+          }
+        }
+      ]
+    },
+    {
+      "id": "eng-medallion",
+      "axis": "engineering",
+      "ref": "stage:transform",
+      "q": {
+        "ru": "Данные в lakehouse идут по слоям bronze, silver и gold. Где лучше снимать дубли и приводить типы?",
+        "en": "Data in a lakehouse moves through bronze, silver and gold layers. Where is the best place to remove duplicates and cast types?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "В silver: один раз для всех потребителей",
+            "en": "In silver: once, for every consumer"
+          },
+          "why": {
+            "ru": "Silver это очищенные и согласованные данные на уровне сущностей. Почистив их здесь, все витрины gold и отчёты получают одну и ту же чистую основу.",
+            "en": "Silver holds cleaned and conformed data at the entity level. Cleaning here gives every gold mart and report the same clean base."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "В bronze: чем раньше почистить, тем лучше",
+            "en": "In bronze: the earlier you clean, the better"
+          },
+          "why": {
+            "ru": "Bronze хранит данные ровно такими, какими пришли. Это страховка: если логика очистки окажется неверной, её можно пересчитать с исходника.",
+            "en": "Bronze keeps the data exactly as it arrived. That is the safety net: if the cleaning logic turns out wrong, you can recompute from the original."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "В gold: рядом с бизнес-логикой витрины",
+            "en": "In gold: next to the mart's business logic"
+          },
+          "why": {
+            "ru": "Gold собирает агрегаты и звёзды под задачи. Если чистить здесь, одна и та же очистка повторится в каждой витрине и где-нибудь разойдётся.",
+            "en": "Gold builds aggregates and star schemas for specific needs. Cleaning there repeats the same logic in every mart, and sooner or later the copies drift apart."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "В Power Query каждого отчёта",
+            "en": "In the Power Query of each report"
+          },
+          "why": {
+            "ru": "Тогда очистка живёт в каждом отчёте отдельно, без тестов и без владельца, и два отчёта покажут разные цифры по одним данным.",
+            "en": "Then cleaning lives separately in every report, with no tests and no owner, and two reports will show different numbers from the same data."
+          }
+        }
+      ]
+    },
+    {
+      "id": "eng-key-test",
+      "axis": "engineering",
+      "ref": "prep:data quality tests",
+      "q": {
+        "ru": "Какой тест данных поймает до отчёта размножение строк при соединении факта со справочником, где ключ товара задвоился?",
+        "en": "Which data test catches, before the report, rows multiplying when the fact joins a dimension whose product key got duplicated?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Уникальность и not null на ключе справочника",
+            "en": "Unique and not null on the dimension key"
+          },
+          "why": {
+            "ru": "Размножение строк начинается с неуникального ключа на стороне «одного». Тест unique на ключе справочника падает раньше, чем соединение успеет испортить суммы.",
+            "en": "Row multiplication starts with a non-unique key on the one side. A unique test on the dimension key fails before the join can inflate the totals."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Not null на внешнем ключе факта",
+            "en": "Not null on the fact's foreign key"
+          },
+          "why": {
+            "ru": "Этот тест ловит строки факта без ссылки на справочник, то есть потерю, а не размножение. Задвоенный ключ в справочнике он не видит.",
+            "en": "This test catches fact rows with no link to the dimension, which is loss, not multiplication. It cannot see a duplicated key in the dimension."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Число строк факта отличается от вчерашнего не больше чем на 10%",
+            "en": "The fact's row count is within 10% of yesterday's"
+          },
+          "why": {
+            "ru": "Сама таблица факта не задвоена, задваивается результат соединения. Кроме того, задвоение одного товара легко уместится в 10%.",
+            "en": "The fact table itself is not duplicated; the join result is. Besides, a single duplicated product easily fits within 10%."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Допустимые значения в колонке категории справочника",
+            "en": "Accepted values on the dimension's category column"
+          },
+          "why": {
+            "ru": "Тест accepted_values проверяет, что значения из разрешённого списка. Две строки с одним ключом и правильной категорией он пропустит.",
+            "en": "An accepted_values test checks that values come from an allowed list. Two rows with the same key and a valid category pass it."
+          }
+        }
+      ]
+    },
+    {
+      "id": "eng-watermark",
+      "axis": "engineering",
+      "ref": "stage:ingest",
+      "q": {
+        "ru": "Инкрементальная загрузка берёт строки, где updated_at больше максимума прошлой загрузки. Какие изменения источника она пропустит?",
+        "en": "An incremental load takes rows where updated_at is greater than the maximum from the previous load. Which source changes will it miss?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Строки, удалённые в источнике",
+            "en": "Rows deleted in the source"
+          },
+          "why": {
+            "ru": "У удалённой строки нет нового updated_at, её просто нет, и хранилище продолжит её держать. Удаления ловят мягким удалением в источнике, журналом изменений (CDC) или периодической сверкой ключей.",
+            "en": "A deleted row gets no new updated_at; it is simply gone, and the warehouse keeps it. Deletes are caught with soft deletes in the source, change data capture or a periodic key reconciliation."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Строки, добавленные после прошлой загрузки",
+            "en": "Rows added after the previous load"
+          },
+          "why": {
+            "ru": "У новых строк updated_at позже отметки, и следующая загрузка их заберёт. Ради них инкремент и придуман.",
+            "en": "New rows have an updated_at later than the watermark, and the next load picks them up. That is what incremental loading is for."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Строки, изменённые ночью, пока загрузка не шла",
+            "en": "Rows changed at night while no load was running"
+          },
+          "why": {
+            "ru": "Отметка не зависит от того, когда идёт загрузка: всё, что изменилось позже прошлого максимума, придёт в следующий раз.",
+            "en": "The watermark does not depend on when the load runs: anything changed after the previous maximum arrives next time."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Строки, изменённые дважды за день",
+            "en": "Rows changed twice in one day"
+          },
+          "why": {
+            "ru": "Последняя версия строки придёт, у неё самый поздний updated_at. Пропадёт промежуточная версия, и это важно, только если нужна вся история изменений.",
+            "en": "The latest version of the row arrives, since it has the latest updated_at. The intermediate version is lost, which matters only if you need the full change history."
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "process-pseudonym",
+      "axis": "process",
+      "ref": "prep:GDPR pseudonymisation",
+      "q": {
+        "ru": "Перед передачей выгрузки подрядчику аналитик заменил e-mail клиентов хешем. Таблица соответствий осталась в компании. Чем по GDPR стала выгрузка?",
+        "en": "Before sending an extract to a contractor, the analyst replaced customer emails with a hash. The mapping table stayed in the company. Under GDPR, what is the extract now?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Псевдонимизированными персональными данными: GDPR по-прежнему действует",
+            "en": "Pseudonymised personal data: GDPR still applies"
+          },
+          "why": {
+            "ru": "Человека можно опознать, если добавить сведения, которые где-то существуют. Это псевдонимизация, а не анонимизация, и правила для персональных данных сохраняются.",
+            "en": "A person can be re-identified by adding information that exists somewhere. That is pseudonymisation, not anonymisation, so the rules for personal data still apply."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Анонимными данными: GDPR на них больше не распространяется",
+            "en": "Anonymous data: GDPR no longer applies"
+          },
+          "why": {
+            "ru": "Анонимизация необратима для всех. Здесь обратный путь есть даже без таблицы: любой со списком адресов посчитает их хеши и сопоставит строки.",
+            "en": "Anonymisation is irreversible for everyone. Here there is a way back even without the mapping: anyone with a list of addresses can hash them and match the rows."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Анонимными, если хеш стойкий, например SHA-256",
+            "en": "Anonymous, if the hash is strong, for example SHA-256"
+          },
+          "why": {
+            "ru": "Стойкость хеша мешает обратить его вычислением, но не мешает сопоставить: тот же адрес всегда даёт тот же хеш. Дело в связываемости, а не в алгоритме.",
+            "en": "A strong hash prevents reversing it by computation, but not matching: the same address always gives the same hash. The issue is linkability, not the algorithm."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Персональными, только пока таблица соответствий у подрядчика",
+            "en": "Personal only while the contractor holds the mapping table"
+          },
+          "why": {
+            "ru": "GDPR смотрит, можно ли разумными средствами опознать человека, а не у кого лежит ключ. Таблица есть в компании, хеши знакомых адресов считаются, значит данные персональные.",
+            "en": "GDPR asks whether a person can be identified by reasonable means, not who holds the key. The mapping exists in the company and known addresses can be hashed, so the data is personal."
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-reconcile",
+      "axis": "process",
+      "ref": "prep:data quality dimensions",
+      "q": {
+        "ru": "Выручка за закрытый месяц в BI на 2% расходится с цифрой финансов из ERP. С чего начать?",
+        "en": "Revenue for a closed month in BI differs by 2% from the finance figure in the ERP. Where do you start?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Сверить определения: что входит в выручку и по какой дате считается месяц",
+            "en": "Reconcile definitions: what counts as revenue and which date sets the month"
+          },
+          "why": {
+            "ru": "Это вопрос согласованности, и чаще всего обе цифры верны при разных определениях: возвраты, скидки, дата заказа против даты счёта. Сверка определений быстро находит расхождение или сужает поиск ошибки.",
+            "en": "This is a consistency question, and most often both numbers are right under different definitions: returns, discounts, order date versus invoice date. Reconciling definitions quickly explains the gap or narrows the search for a bug."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Признать BI неточным и пересчитать модель с нуля",
+            "en": "Treat BI as inaccurate and rebuild the model from scratch"
+          },
+          "why": {
+            "ru": "Это заранее решает, кто прав. Пересчёт по той же логике даст те же цифры, если расхождение в определениях, а время уйдёт.",
+            "en": "This decides in advance who is right. Rebuilding with the same logic gives the same numbers if the gap is in definitions, and the time is gone."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Перезагрузить данные: при загрузке потерялась часть строк",
+            "en": "Reload the data: some rows were lost during loading"
+          },
+          "why": {
+            "ru": "Потеря строк возможна, но перезагрузка без сверки это выстрел наугад. Сначала понять, где расходится, по сумме строк и по определениям, потом чинить.",
+            "en": "Lost rows are possible, but reloading without reconciling is a shot in the dark. First find where the numbers diverge, by row totals and by definitions, then fix."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Подождать следующего обновления: цифры сойдутся",
+            "en": "Wait for the next refresh: the numbers will converge"
+          },
+          "why": {
+            "ru": "Своевременность объяснила бы расхождение в текущем месяце. Закрытый месяц при разных определениях сам по себе не сойдётся никогда.",
+            "en": "Timeliness would explain a gap in the current month. A closed month with different definitions will never converge on its own."
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-owner",
+      "axis": "process",
+      "ref": "prep:data governance; stage:quality",
+      "q": {
+        "ru": "Кто решает, что считать «активным клиентом», и утверждает смену определения?",
+        "en": "Who decides what counts as an active customer and approves a change to the definition?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Владелец данных со стороны бизнеса",
+            "en": "The data owner on the business side"
+          },
+          "why": {
+            "ru": "Владелец данных отвечает за смысл и использование данных своей области и утверждает определения. Остальные роли помогают ему, но решение за ним.",
+            "en": "The data owner is accountable for the meaning and use of their domain's data and approves definitions. Other roles support them, but the decision is theirs."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Data steward",
+            "en": "The data steward"
+          },
+          "why": {
+            "ru": "Steward ведёт каталог, описания и качество изо дня в день и готовит изменения. Утверждает определение не он, а владелец, для которого он работает.",
+            "en": "The steward maintains the catalogue, descriptions and quality day to day and prepares changes. The owner they work for approves the definition, not the steward."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Инженер данных, который собрал пайплайн",
+            "en": "The data engineer who built the pipeline"
+          },
+          "why": {
+            "ru": "Инженер реализует правило в коде, но бизнес-смысл метрики не его решение. Определение, принятое в коде без владельца, и есть путь к двум разным «активным клиентам».",
+            "en": "The engineer implements the rule in code, but the business meaning of a metric is not their call. A definition decided in code without an owner is how you end up with two different active customers."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Инспектор по защите данных (DPO)",
+            "en": "The data protection officer (DPO)"
+          },
+          "why": {
+            "ru": "DPO следит за законностью обработки персональных данных. Как считать метрики, он не определяет.",
+            "en": "The DPO oversees whether personal data is processed lawfully. They do not define how metrics are calculated."
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-dso",
+      "axis": "process",
+      "ref": "stage:process (order-to-cash)",
+      "q": {
+        "ru": "В процессе order-to-cash растёт DSO (days sales outstanding). Какой участок он измеряет?",
+        "en": "In the order-to-cash process, DSO (days sales outstanding) is rising. Which part of the process does it measure?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "От выставления счёта до получения оплаты",
+            "en": "From issuing the invoice to receiving payment"
+          },
+          "why": {
+            "ru": "DSO показывает, сколько дней в среднем деньги клиентов лежат в дебиторской задолженности. Рост значит, что платят позже или взыскание работает хуже.",
+            "en": "DSO shows how many days, on average, customer money sits in receivables. A rise means customers pay later or collection works worse."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "От заказа до отгрузки",
+            "en": "From order to shipment"
+          },
+          "why": {
+            "ru": "Это срок исполнения заказа, логистический показатель. Деньги на этом участке ещё не выставлены к оплате.",
+            "en": "That is order fulfilment lead time, a logistics measure. On this stretch the money has not even been invoiced yet."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "От заказа до выставления счёта",
+            "en": "From order to invoice"
+          },
+          "why": {
+            "ru": "Это задержка выставления счёта, она тоже отодвигает деньги, но DSO начинает счёт уже с продажи, оформленной счётом.",
+            "en": "That is billing lag; it delays cash too, but DSO starts counting from the sale once it has been invoiced."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "От получения оплаты до сверки в бухгалтерии",
+            "en": "From receiving payment to reconciliation in accounting"
+          },
+          "why": {
+            "ru": "После оплаты дебиторка уже закрыта, и DSO этот участок не видит. Сверка платежей это отдельный учётный процесс.",
+            "en": "Once paid, the receivable is closed and DSO does not see this stretch. Payment reconciliation is a separate accounting process."
+          }
+        }
+      ]
+    },
+    {
+      "id": "process-event-log",
+      "axis": "process",
+      "ref": "stage:process (process mining)",
+      "q": {
+        "ru": "Для process mining из ERP выгружают журнал событий. Без каких трёх полей анализ невозможен?",
+        "en": "For process mining, an event log is extracted from the ERP. Which three fields can the analysis not do without?"
+      },
+      "options": [
+        {
+          "correct": true,
+          "text": {
+            "ru": "Номер случая, действие и время",
+            "en": "Case ID, activity and timestamp"
+          },
+          "why": {
+            "ru": "Номер случая связывает события в один экземпляр процесса, действие говорит, что произошло, время задаёт порядок и длительности. Исполнитель и стоимость полезны, но необязательны.",
+            "en": "The case ID links events into one process instance, the activity says what happened, and the timestamp gives order and durations. Resource and cost help, but are optional."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Номер случая, действие и исполнитель",
+            "en": "Case ID, activity and resource"
+          },
+          "why": {
+            "ru": "Без времени не восстановить порядок событий и не посчитать длительности, а это основа любой карты процесса. Исполнитель нужен для анализа нагрузки, но не обязателен.",
+            "en": "Without a timestamp you cannot rebuild the order of events or compute durations, and that is the basis of any process map. The resource is needed for workload analysis but is optional."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Действие, время и стоимость",
+            "en": "Activity, timestamp and cost"
+          },
+          "why": {
+            "ru": "Без номера случая события не собрать в цепочки: непонятно, какое согласование относится к какому заказу.",
+            "en": "Without a case ID events cannot be chained: you cannot tell which approval belongs to which order."
+          }
+        },
+        {
+          "correct": false,
+          "text": {
+            "ru": "Номер случая, текущий статус и дата изменения",
+            "en": "Case ID, current status and last change date"
+          },
+          "why": {
+            "ru": "Это снимок состояния, а не история: от каждого случая остаётся одна строка. Process mining нужна каждая смена статуса отдельным событием.",
+            "en": "That is a snapshot of state, not a history: each case keeps one row. Process mining needs every status change as a separate event."
+          }
+        }
+      ]
+    }
+  ]
+}

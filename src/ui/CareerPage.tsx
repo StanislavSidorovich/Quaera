@@ -18,6 +18,7 @@ import {
   withWeeklySnapshot,
 } from '../career/store';
 import type { AxisLevels, CareerState } from '../career/store';
+import { passedQuizEvidence } from '../career/quiz';
 
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
@@ -54,7 +55,16 @@ export function CareerPage({
   const narrow = useNarrow();
 
   const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
-  const checked = useMemo(() => new Set(checkedIds(state)), [state]);
+  /*
+   * Засчитанные самопроверки входят в формулу как отметки, но выводятся
+   * из истории подходов, а не из галочек: поставить их руками нельзя.
+   */
+  const checked = useMemo(
+    () => new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date())]),
+    [state]
+  );
+  /* Экран теста — фаза 4b; до него отметки-тесты в списках не показываются. */
+  const isQuiz = (id: string) => careerEvidence.find((e) => e.id === id)?.source === 'quiz';
 
   /* Названия и уровни навыков — по текущей локали, из всех четырёх паков. */
   const skillInfo = useMemo(() => {
@@ -215,11 +225,11 @@ export function CareerPage({
                     {g.skills.map((id, i) => skillButton(id, c.practice(skillTitle(id)), i === 0))}
                   </div>
                 )}
-                {g.evidence.length > 0 && (
+                {g.evidence.filter((id) => !isQuiz(id)).length > 0 && (
                   <>
                     <p className="muted career-gap-note">{g.skills.length ? c.evidenceToCheck : c.beyondTrainer}</p>
                     <ul className="career-gap-evidence">
-                      {g.evidence.map((id) => (
+                      {g.evidence.filter((id) => !isQuiz(id)).map((id) => (
                         <li key={id}>{evidenceTitle(id)}</li>
                       ))}
                     </ul>
@@ -237,7 +247,7 @@ export function CareerPage({
         <ul className="career-axes">
           {readiness.axes.map((a) => {
             const def = careerAxes.find((x) => x.id === a.axis)!;
-            const evs = careerEvidence.filter((e) => e.axis === a.axis);
+            const evs = careerEvidence.filter((e) => e.axis === a.axis && e.source !== 'quiz');
             return (
               <li key={a.axis} className="career-axis">
                 <div className="career-axis-head">

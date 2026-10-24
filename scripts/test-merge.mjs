@@ -47,9 +47,10 @@ try {
   const { applyAttempt, emptyProgress, clearedProgress, withParsedCareer } = await import(
     pathToFileURL(path.join(outDir, 'srs', 'store.js')).href
   );
-  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, checkedIds, weeklyChanges } = await import(
+  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, withQuizAttempt, checkedIds, weeklyChanges } = await import(
     pathToFileURL(path.join(outDir, 'career', 'store.js')).href
   );
+  const { quizStatus } = await import(pathToFileURL(path.join(outDir, 'career', 'quiz.js')).href);
   const { review, gradeFromAttempt } = await import(pathToFileURL(path.join(outDir, 'srs', 'scheduler.js')).href);
 
   let failed = 0;
@@ -152,6 +153,7 @@ try {
    */
   const ROLES = ['bi', 'da', 'ae', 'de'];
   const EVIDENCE = ['sql-medium', 'bi-report', 'py-notebook', 'stats-ab', 'process-bpmn'];
+  const QUIZ_AXES = ['stats', 'engineering', 'process'];
   const LEVELS0 = { sql: 0, modeling: 0, bi: 0, python: 0, stats: 0, engineering: 0, business: 0, process: 0 };
   function career(r) {
     if (r() < 0.25) return undefined;
@@ -162,11 +164,19 @@ try {
     for (let i = 0; i < Math.floor(r() * 9); i++) {
       weekly.push({ date: at(), levels: { ...LEVELS0, sql: Math.floor(r() * 4), bi: Math.floor(r() * 3) } });
     }
+    // Подходы из того же маленького пула меток: совпадения по (ось, время)
+    // с разным содержимым проверяют правило ничьей в normalizeQuiz.
+    const quiz = [];
+    for (let i = 0; i < Math.floor(r() * 30); i++) {
+      const asked = ['q1', 'q2', 'q3'];
+      quiz.push({ axis: QUIZ_AXES[Math.floor(r() * 3)], at: at(), asked, wrong: asked.filter(() => r() < 0.3) });
+    }
     return parseCareer({
       role: ROLES[Math.floor(r() * ROLES.length)],
       roleAt: r() < 0.3 ? null : at(),
       checks,
       weekly,
+      quiz,
     });
   }
   const withCareer = (p, c) => (c ? { ...p, career: c } : p);
@@ -418,6 +428,24 @@ try {
       JSON.stringify(dates) === JSON.stringify(expected)
     );
     assertTrue('снимки: порядок аргументов не решает', same(w1, w2));
+
+    // Подходы самопроверки: первый сдан на телефоне, второй через неделю
+    // на ноутбуке. После слияния зачёт виден на обоих — ради этого список
+    // подходов и лежит в career, а не в отдельном ключе устройства.
+    const ten = Array.from({ length: 10 }, (_, i) => `q${i}`);
+    const pass = (d) => ({ axis: 'stats', at: t(d).toISOString(), asked: ten, wrong: ['q0'] });
+    const onPhone = withQuizAttempt(emptyCareerState(), pass(1));
+    const onLaptop = withQuizAttempt(emptyCareerState(), pass(8));
+    const [qz1, qz2] = both(withCareer(emptyProgress(), onPhone), withCareer(emptyProgress(), onLaptop));
+    assertTrue('самопроверка: подходы двух устройств сложились', qz1.career.quiz.length === 2 && same(qz1, qz2));
+    assertTrue(
+      'самопроверка: зачёт из подходов двух устройств засчитан',
+      quizStatus(qz1.career.quiz, 'stats', t(9)).passed && !quizStatus(onPhone.quiz, 'stats', t(9)).passed
+    );
+    const legacyNoQuiz = parseCareer({ role: 'da', roleAt: null, checks: {}, weekly: [] });
+    assertTrue('самопроверка: запись до фазы 4 читается с пустым списком', Array.isArray(legacyNoQuiz.quiz) && legacyNoQuiz.quiz.length === 0);
+    const dirtyQuiz = parseCareer({ ...emptyCareerState(), quiz: [pass(1), { axis: 'stats', at: 'x' }, 'oops'] });
+    assertTrue('самопроверка: мусорные подходы отброшены', dirtyQuiz.quiz.length === 1);
 
     // «За неделю» после слияния сравнивает со снимком недельной давности,
     // а не со вчерашним снимком другого устройства.

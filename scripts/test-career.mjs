@@ -17,6 +17,14 @@
  * есть отрицательная сторона: гейт, проверяющий только «уровень вырос»,
  * прошёл бы на формуле, которая растит его всегда.
  *
+ * Самопроверка (src/content/career-quiz.json, src/career/quiz.ts). Банк:
+ * ровно один верный вариант из четырёх, разбор у каждого, обе локали,
+ * без тире и имени школы, и длина не выдаёт ответ: верный вариант не самый
+ * длинный в большинстве вопросов оси и не длиннее полутора средних
+ * дистракторов. Тест-разумный человек угадывает по длине раньше, чем
+ * по смыслу, и тогда зачёт меряет не то. Правило зачёта: подход 8 из 10,
+ * второй сданный не раньше чем через три дня, один подход в день.
+ *
  * Запуск: npm run test:career (входит в npm run verify).
  */
 import { execSync } from 'node:child_process';
@@ -48,7 +56,7 @@ const assertTrue = (name, cond, detail = '') => {
 
 try {
   execSync(
-    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" ` +
+    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" "${path.join(root, 'src/career/quiz.ts')}" ` +
       `--target ES2020 --module ES2020 --moduleResolution bundler ` +
       `--rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
@@ -214,6 +222,144 @@ try {
   // Настоящие данные на пустом прогрессе: ни одна роль не готова.
   const real = career.roles.map((r) => roleReadiness(r, career.axes, {}, evidence, none).band);
   assertEq('настоящие роли на пустом прогрессе → start', [...new Set(real)], ['start']);
+
+  // ── Самопроверка: банк ──────────────────────────────────────────────────
+  const Q = await import(pathToFileURL(path.join(outDir, 'career', 'quiz.js')).href);
+  const bank = readJson('src/content/career-quiz.json').questions;
+  /** Сколько вопросов на ось как минимум. Фаза 4b поднимет до 15: подход берёт 10, второй должен быть из новых. */
+  const MIN_BANK = 5;
+  /** Во скольких вопросах оси верный вариант может оказаться самым длинным. */
+  const LONGEST_SHARE = 0.4;
+  /** Во сколько раз верный вариант может быть длиннее среднего дистрактора. */
+  const LENGTH_RATIO = 1.5;
+
+  const quizEvidence = evidence.filter((e) => e.source === 'quiz');
+  const quizAxes = quizEvidence.map((e) => e.axis);
+  assertEq('отметки-тесты: по одной на статистику, инженерию и процессы', [...quizAxes].sort(), ['engineering', 'process', 'stats']);
+  for (const e of quizEvidence) {
+    if (e.level !== 1) fail(`отметка ${e.id}`, `тест засчитывает уровень 1, а не ${e.level}`);
+    if (career.axes.find((a) => a.id === e.axis).trainerMax !== 1) fail(`отметка ${e.id}`, 'тест только для осей, которые тренажёр не меряет выше единицы');
+  }
+  for (const e of evidence) if (e.source !== undefined && e.source !== 'quiz') fail(`отметка ${e.id}`, `source ${e.source}`);
+
+  assertTrue('банк: id уникальны', new Set(bank.map((q) => q.id)).size === bank.length);
+  const loc = ['ru', 'en'];
+  const filled = (t) => loc.every((l) => typeof t?.[l] === 'string' && t[l].trim());
+  for (const q of bank) {
+    const where = `вопрос ${q.id}`;
+    if (!quizAxes.includes(q.axis)) fail(where, `ось ${q.axis} без отметки-теста`);
+    if (!q.ref?.trim()) fail(where, 'нет ref: откуда вопрос');
+    if (!filled(q.q)) fail(where, 'условие не на обеих локалях');
+    if (!Array.isArray(q.options) || q.options.length !== 4) {
+      fail(where, `вариантов ${q.options?.length}, нужно 4`);
+      continue;
+    }
+    const correct = q.options.filter((o) => o.correct === true).length;
+    if (correct !== 1) fail(where, `верных вариантов ${correct}`);
+    if (q.options.some((o) => typeof o.correct !== 'boolean')) fail(where, 'correct не true/false');
+    q.options.forEach((o, i) => {
+      if (!filled(o.text)) fail(where, `вариант ${i}: текст не на обеих локалях`);
+      if (!filled(o.why)) fail(where, `вариант ${i}: разбор не на обеих локалях`);
+    });
+    for (const l of loc) {
+      const texts = q.options.map((o) => o.text[l].trim().toLowerCase());
+      if (new Set(texts).size !== texts.length) fail(where, `${l}: варианты повторяются`);
+      if (texts.some((t) => /все перечисленн|ничего из перечисленн|all of the above|none of the above/.test(t))) {
+        fail(where, `${l}: «все/ничего из перечисленного» отвечается без знания предмета`);
+      }
+    }
+  }
+  ok('банк: четыре варианта, один верный, разборы на обеих локалях');
+
+  const bankStrings = JSON.stringify(bank);
+  assertTrue('банк: тире нет', !/[—–]/.test(bankStrings), (bankStrings.match(/.{20}[—–].{20}/g) || []).join(' | '));
+  assertTrue('банк: имени школы нет', !/\bnova\b|\bims\b|universidade/i.test(bankStrings));
+  const enCyr = bank.flatMap((q) => [q.q, ...q.options.flatMap((o) => [o.text, o.why])]).filter((t) => /[А-Яа-яЁё]/.test(t.en));
+  assertEq('банк: в английских строках нет кириллицы', enCyr.map((t) => t.en.slice(0, 40)), []);
+
+  for (const axisId of quizAxes) {
+    const qs = bank.filter((q) => q.axis === axisId);
+    if (qs.length < MIN_BANK) fail(`банк ${axisId}`, `${qs.length} вопросов, нужно не меньше ${MIN_BANK}`);
+    for (const l of loc) {
+      let longest = 0;
+      for (const q of qs) {
+        const len = q.options.map((o) => o.text[l].length);
+        const c = q.options.findIndex((o) => o.correct);
+        const others = len.filter((_, i) => i !== c);
+        if (len[c] === Math.max(...len)) longest++;
+        const ratio = len[c] / (others.reduce((x, y) => x + y, 0) / others.length);
+        if (ratio > LENGTH_RATIO) fail(`вопрос ${q.id}`, `${l}: верный вариант в ${ratio.toFixed(2)} раза длиннее среднего дистрактора`);
+      }
+      if (longest > Math.floor(qs.length * LONGEST_SHARE)) {
+        fail(`банк ${axisId}`, `${l}: верный вариант самый длинный в ${longest} из ${qs.length}`);
+      }
+    }
+  }
+  ok('банк: длина варианта ответ не выдаёт');
+
+  // ── Самопроверка: правило зачёта ────────────────────────────────────────
+  const day = (d, h = 12) => new Date(2026, 9, d, h); // локальное время: «день» человека
+  const ids = (n, p = 'q') => Array.from({ length: n }, (_, i) => `${p}${i}`);
+  const att = (axis, d, wrongN, asked = ids(10), h = 12) => ({ axis, at: day(d, h).toISOString(), asked, wrong: asked.slice(0, wrongN) });
+
+  assertTrue('подход: 8 из 10 сдан', Q.isPassingAttempt(att('stats', 1, 2)));
+  assertTrue('подход: 7 из 10 не сдан', !Q.isPassingAttempt(att('stats', 1, 3)));
+  assertTrue('подход: 5 из 5 не зачётный (неполный)', !Q.isPassingAttempt(att('stats', 1, 0, ids(5))));
+
+  const s1 = Q.quizStatus([att('stats', 1, 1)], 'stats', day(1, 20));
+  assertEq('зачёт: один сданный → 1 из 2', [s1.passes, s1.passed], [1, false]);
+  assertEq('зачёт: второй засчитается через три дня', s1.secondFrom?.toISOString(), new Date(day(1).getTime() + Q.QUIZ_GAP_DAYS * 864e5).toISOString());
+  assertEq('зачёт: два сданных с паузой в два дня → ещё 1', Q.quizStatus([att('stats', 1, 0), att('stats', 3, 0)], 'stats', day(3, 20)).passes, 1);
+  assertEq('зачёт: два сданных с паузой в три дня → засчитан', Q.quizStatus([att('stats', 1, 0), att('stats', 4, 0)], 'stats', day(4, 20)).passed, true);
+  assertEq(
+    'зачёт: несданный между ними не мешает',
+    Q.quizStatus([att('stats', 1, 0), att('stats', 3, 5), att('stats', 5, 1)], 'stats', day(5, 20)).passed,
+    true
+  );
+  assertEq('зачёт: подходы другой оси не считаются', Q.quizStatus([att('process', 1, 0), att('process', 5, 0)], 'stats', day(5, 20)).passes, 0);
+  assertEq('зачёт: два несданных → 0', Q.quizStatus([att('stats', 1, 3), att('stats', 5, 4)], 'stats', day(5, 20)).passes, 0);
+
+  const today = Q.quizStatus([att('stats', 2, 5, ids(10), 9)], 'stats', day(2, 23));
+  assertEq('пересдача: сегодня уже был подход → нельзя', today.canStart, false);
+  assertEq('пересдача: можно с полуночи', today.nextAt?.toISOString(), new Date(2026, 9, 3).toISOString());
+  assertEq('пересдача: вчерашний подход не мешает', Q.quizStatus([att('stats', 2, 5, ids(10), 23)], 'stats', day(3, 0)).canStart, true);
+  assertEq('пересдача: подход другой оси не мешает', Q.quizStatus([att('process', 2, 5)], 'stats', day(2, 20)).canStart, true);
+
+  assertEq(
+    'отметки-тесты: засчитана только сданная ось',
+    Q.passedQuizEvidence(evidence, [att('stats', 1, 0), att('stats', 4, 2), att('process', 1, 0)], day(6)),
+    ['stats-quiz']
+  );
+  const statsAxis = career.axes.find((a) => a.id === 'stats');
+  const passedSet = new Set(Q.passedQuizEvidence(evidence, [att('stats', 1, 0), att('stats', 4, 2)], day(6)));
+  assertEq('отметки-тесты: сданный тест поднимает пустую ось до 1', axisReading(statsAxis, {}, evidence, passedSet).level, 1);
+
+  // ── Самопроверка: отбор вопросов ────────────────────────────────────────
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const bank15 = ids(15, 'b');
+  const firstDraw = Q.drawQuiz(bank15, [], 'stats', rand);
+  assertTrue('отбор: 10 разных вопросов', firstDraw.length === Q.QUIZ_SIZE && new Set(firstDraw).size === Q.QUIZ_SIZE);
+  const prev = { axis: 'stats', at: day(1).toISOString(), asked: firstDraw, wrong: [firstDraw[3], firstDraw[7]] };
+  const second = Q.drawQuiz(bank15, [prev], 'stats', rand);
+  assertEq('отбор: ошибки прошлого подхода идут первыми', [...second.slice(0, 2)].sort(), [firstDraw[3], firstDraw[7]].sort());
+  assertEq('отбор: дальше все ни разу не заданные', second.slice(2, 7).every((id) => !firstDraw.includes(id)), true);
+  assertEq('отбор: банк меньше подхода → весь банк', Q.drawQuiz(ids(5), [], 'stats', rand).length, 5);
+  seed = 11;
+  const noHistory = Q.drawQuiz(bank15, [], 'stats', rand);
+  seed = 11;
+  const otherAxis = Q.drawQuiz(bank15, [{ ...prev, axis: 'process' }], 'stats', rand);
+  assertEq('отбор: история другой оси на отбор не влияет', otherAxis, noHistory);
+
+  // ── Самопроверка: каноническая форма ────────────────────────────────────
+  const many = Array.from({ length: 25 }, (_, i) => att('stats', 1 + i, 0, ids(10)));
+  assertEq('хранение: на ось не больше QUIZ_KEEP', Q.normalizeQuiz(many).length, Q.QUIZ_KEEP);
+  assertEq('хранение: остаются самые новые', Q.normalizeQuiz(many)[0].at, many[5].at);
+  const a1 = att('stats', 1, 1);
+  assertEq('хранение: повтор подхода схлопывается', Q.normalizeQuiz([a1, a1, att('process', 1, 1)]).length, 2);
+  const A1 = [att('stats', 1, 1), att('process', 2, 0)];
+  const B1 = [att('stats', 3, 0), att('process', 2, 0)];
+  assertEq('хранение: слияние не зависит от порядка', Q.normalizeQuiz([...A1, ...B1]), Q.normalizeQuiz([...B1, ...A1]));
 } finally {
   rmSync(outDir, { recursive: true, force: true });
 }

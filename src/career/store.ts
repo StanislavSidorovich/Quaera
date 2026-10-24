@@ -1,4 +1,5 @@
 import { AXES, type AxisId, type Level } from './readiness';
+import { isQuizAttempt, normalizeQuiz, type QuizAttempt } from './quiz';
 
 /**
  * Состояние экрана «Путь к роли»: выбранная роль, отметки-доказательства
@@ -49,9 +50,15 @@ export interface CareerState {
   roleAt: string | null;
   checks: Record<string, EvidenceMark>;
   weekly: WeeklySnapshot[];
+  /**
+   * Подходы самопроверки (`quiz.ts`). Засчитанный тест — отметка уровня 1,
+   * но выводится из этого списка, а не хранится в `checks`: галочку там
+   * можно поставить руками. В записях до фазы 4 поля нет, читается как [].
+   */
+  quiz: QuizAttempt[];
 }
 
-export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [] });
+export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [], quiz: [] });
 
 /** Идентификаторы поставленных отметок — то, что нужно формуле готовности. */
 export const checkedIds = (s: CareerState): string[] =>
@@ -61,6 +68,11 @@ export const withRole = (s: CareerState, role: string, now: Date): CareerState =
   ...s,
   role,
   roleAt: now.toISOString(),
+});
+
+export const withQuizAttempt = (s: CareerState, attempt: QuizAttempt): CareerState => ({
+  ...s,
+  quiz: normalizeQuiz([...s.quiz, attempt]),
 });
 
 export const withToggledEvidence = (s: CareerState, id: string, now: Date): CareerState => ({
@@ -100,6 +112,7 @@ export function parseCareer(v: unknown): CareerState | undefined {
     roleAt: typeof p.roleAt === 'string' ? p.roleAt : null,
     checks,
     weekly: Array.isArray(p.weekly) ? p.weekly.filter(isSnapshot) : [],
+    quiz: Array.isArray(p.quiz) ? p.quiz.filter(isQuizAttempt) : [],
   });
 }
 
@@ -115,6 +128,9 @@ export function parseCareer(v: unknown): CareerState | undefined {
  * - *Снимки* — объединение по дате, не больше двенадцати последних.
  *   Обрезка оставляет самые новые, поэтому ассоциативна, как обрезка дней
  *   активности в прогрессе.
+ * - *Подходы самопроверки* — объединение по (ось, время), не больше
+ *   двадцати последних на ось (`normalizeQuiz`). Список только дописывается,
+ *   удалять в нём нечего, поэтому меток «снято» ему не нужно.
  *
  * Сброс здесь не решается: копии разных эпох до этой функции не доходят,
  * их разводит `mergeProgress`.
@@ -136,7 +152,13 @@ export function mergeCareer(a: CareerState, b: CareerState): CareerState {
     checks[id] = x && y ? (markKey(x) >= markKey(y) ? x : y) : (x ?? y);
   }
 
-  return normalizeCareer({ role: roleWin.role, roleAt: roleWin.roleAt, checks, weekly: [...a.weekly, ...b.weekly] });
+  return normalizeCareer({
+    role: roleWin.role,
+    roleAt: roleWin.roleAt,
+    checks,
+    weekly: [...a.weekly, ...b.weekly],
+    quiz: [...a.quiz, ...b.quiz],
+  });
 }
 
 const markKey = (m: EvidenceMark) => `${m.at}|${m.on ? 1 : 0}`;
@@ -160,7 +182,7 @@ function normalizeCareer(s: CareerState): CareerState {
   }
   const weekly = [...byDate.values()].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)).slice(-SNAPSHOT_LIMIT);
 
-  return { role: s.role, roleAt: s.roleAt, checks, weekly };
+  return { role: s.role, roleAt: s.roleAt, checks, weekly, quiz: normalizeQuiz(s.quiz) };
 }
 
 /**
