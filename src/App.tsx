@@ -472,7 +472,7 @@ type Screen =
    * с возвратом на пройденный шаг появилось второе движение — вернуться
    * обратно туда, где остановился, не проходя середину заново.
    */
-  | { name: 'session'; queue: Step[]; index: number; maxIndex: number }
+  | { name: 'session'; queue: Step[]; index: number; maxIndex: number; fromCareer?: boolean }
   /**
    * `fromStory` — занятие было миссией линии, и «Занятие закончено» обязано
    * вернуть на линию, а не на главную. Флаг, а не id миссии: экран линии
@@ -562,6 +562,8 @@ function backTarget(current: Screen, locale: Locale): Screen {
     if (step?.kind === 'task') {
       const lessonIndex = lessonStepIndex(current.queue, step.task.skill);
       if (lessonIndex >= 0 && lessonIndex < current.index) return { ...current, index: lessonIndex };
+      // Занятие открыто с «Пути к роли»: выходим туда, а не на главную или в справочник.
+      if (current.fromCareer) return { name: 'career' };
       // Занятие без карточки в очереди — обычное дело для повторения:
       // приём уже показывали в прошлый раз, и в эту очередь его не кладут.
       // «Назад» тогда ведёт на карточку приёма из справочника, а не на
@@ -569,6 +571,7 @@ function backTarget(current: Screen, locale: Locale): Screen {
       // для session выше и разбор в ROADMAP, «Кнопка "назад"...»).
       return { name: 'lesson', skill: step.task.skill };
     }
+    if (current.fromCareer) return { name: 'career' };
   }
   return { name: 'home' };
 }
@@ -1559,10 +1562,10 @@ export default function App() {
   }, []);
 
   /** Общий вход в занятие для обоих способов подбора — вместе со сбросом того, что живёт одно занятие. */
-  function startQueue(queue: Step[]) {
+  function startQueue(queue: Step[], fromCareer = false) {
     taskDraftsRef.current.clear();
     recordedTasksRef.current.clear();
-    setScreen({ name: 'session', queue, index: 0, maxIndex: 0 });
+    setScreen({ name: 'session', queue, index: 0, maxIndex: 0, ...(fromCareer ? { fromCareer } : {}) });
   }
 
   /**
@@ -1601,7 +1604,7 @@ export default function App() {
    * заданий именно на этот навык. В отличие от startSession, тема здесь не
    * выбирается алгоритмом — человек уже выбрал её сам, кликнув по строке.
    */
-  function startSkillSession(skillId: string) {
+  function startSkillSession(skillId: string, fromCareer = false) {
     // Навык может быть из другого трека (экран «Путь к роли» ведёт по всем): тогда трек переключается.
     const skillTrack = trackBySkill.get(skillId) ?? activeTrack;
     const pool = (packForTrack(skillTrack, locale) ?? activePack).tasks.filter((t) => t.skill === skillId);
@@ -1618,7 +1621,7 @@ export default function App() {
     const lesson = lessonBySkill.get(skillId);
     const queue: Step[] = lesson ? [{ kind: 'lesson', lesson }] : [];
     for (const task of picked) queue.push({ kind: 'task', task });
-    startQueue(queue);
+    startQueue(queue, fromCareer);
   }
 
   /**
@@ -2506,7 +2509,7 @@ export default function App() {
             <CareerPage
               progress={progress}
               onCareerChange={updateCareer}
-              onStartSkill={startSkillSession}
+              onStartSkill={(skill) => startSkillSession(skill, true)}
               onOpenSkill={(skill) => setScreen({ name: 'lesson', skill })}
             />
           )}
