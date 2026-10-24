@@ -2454,6 +2454,7 @@ export default function App() {
               onOpenData={() => setScreen({ name: 'data' })}
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
+              onOpenCareer={() => setScreen({ name: 'career' })}
               onOpenAbout={() => setScreen({ name: 'about' })}
               onOpenIntro={() => setScreen({ name: 'intro' })}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
@@ -3343,6 +3344,7 @@ function Home({
   onOpenData,
   onOpenReference,
   onOpenSandbox,
+  onOpenCareer,
   onOpenAbout,
   onOpenIntro,
   onOpenOnboarding,
@@ -3382,6 +3384,7 @@ function Home({
   onOpenData: () => void;
   onOpenReference: () => void;
   onOpenSandbox: () => void;
+  onOpenCareer: () => void;
   onOpenAbout: () => void;
   /** Экскурс в профессию. Строку показываем только новичку — довод у самой строки. */
   onOpenIntro: () => void;
@@ -4272,6 +4275,14 @@ function Home({
                */}
               <button className="btn secondary" onClick={onOpenData}>
                 {t.home.schemaBtn}
+              </button>
+              {/*
+               * «Путь к роли» — по той же причине, что и песочница: пункт
+               * стоит в боковом меню, а его видно только от 1024px, и на
+               * телефоне и планшете экран открывался лишь адресом ?roles.
+               */}
+              <button className="btn secondary" onClick={onOpenCareer}>
+                {t.nav.career}
               </button>
             </div>
           )}
