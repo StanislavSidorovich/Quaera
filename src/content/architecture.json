@@ -251,7 +251,7 @@
         "role": "da",
         "who": { "ru": "Аналитик проверяет зерно", "en": "The analyst checks the grain" },
         "text": {
-          "ru": "Ушли 37 точек, пришли 3. Все 37 в декабре по-прежнему покупают другие товары Kaiyo: магазины работают, отчёты приходят, пропал только бренд. В `fact_sellout` нет строки значит нет продаж, а не ноль.",
+          "ru": "Ушли 37 точек, пришли 3. Все 37 в декабре по-прежнему покупают другие товары Kaiyo: магазины работают, отчёты приходят, пропал только бренд. В `fact_sellout` отсутствие строки означает, что продаж не было, а не ноль.",
           "en": "37 outlets left and 3 joined. All 37 still buy other Kaiyo products in December: the shops are open and reports arrive, only the brand is gone. In `fact_sellout` a missing row means no sales, not a zero."
         },
         "sql": "WITH jan AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-01%'\n), dec AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-12%'\n), lost AS (\n  SELECT customer_id FROM jan EXCEPT SELECT customer_id FROM dec\n)\nSELECT COUNT(*) AS lost,\n       SUM(customer_id IN (SELECT customer_id FROM fact_sellout\n                           WHERE week_start LIKE '2025-12%')) AS still_buying\nFROM lost;"
