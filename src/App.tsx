@@ -25,6 +25,7 @@ import { DataScreen } from './ui/DataScreen';
 import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
 import { CareerPage } from './ui/CareerPage';
+import { DataMapTeaser } from './ui/ArchitectureMap';
 import { withLegacyCareer } from './career/legacy';
 import { emptyCareerState, type CareerState } from './career/store';
 import { PageToc } from './ui/PageToc';
@@ -281,20 +282,22 @@ function readIntroOpenOnBoot(): boolean {
 const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
 
 /**
- * `?roles` — прямая ссылка на экран «Путь к роли». Параметр стирается
- * из адреса по той же причине, что у `?intro`.
+ * `?roles` — прямая ссылка на экран «Путь к роли», `?roles=map` — сразу
+ * на его вкладку «Карта данных» (для ссылок в постах и сообщениях).
+ * Параметр стирается из адреса по той же причине, что у `?intro`.
  */
-function readRolesOpenOnBoot(): boolean {
+function readRolesOpenOnBoot(): 'path' | 'map' | null {
   try {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has('roles')) return false;
-    const on = params.get('roles') !== '0';
+    if (!params.has('roles')) return null;
+    const value = params.get('roles');
     params.delete('roles');
     const rest = params.toString();
     window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
-    return on;
+    if (value === '0') return null;
+    return value === 'map' ? 'map' : 'path';
   } catch {
-    return false;
+    return null;
   }
 }
 const ROLES_OPEN_ON_BOOT = readRolesOpenOnBoot();
@@ -513,7 +516,7 @@ type Screen =
    */
   | { name: 'overview' }
   /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
-  | { name: 'career' }
+  | { name: 'career'; map?: { layer?: string; trace?: boolean } }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -708,7 +711,8 @@ function initialBoot(locale: Locale): Boot {
    * локали, ему не нужно — контента вне пака у него нет.
    */
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
-  if (ROLES_OPEN_ON_BOOT) return { screen: { name: 'career' }, ...empty };
+  if (ROLES_OPEN_ON_BOOT)
+    return { screen: ROLES_OPEN_ON_BOOT === 'map' ? { name: 'career', map: {} } : { name: 'career' }, ...empty };
   if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);
@@ -2457,7 +2461,15 @@ export default function App() {
               onOpenData={() => setScreen({ name: 'data' })}
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
-              onOpenCareer={() => setScreen({ name: 'career' })}
+              /* Обе кнопки стоят внизу главной: без сброса экран открывался бы прокрученным. */
+              onOpenCareer={() => {
+                setScreen({ name: 'career' });
+                window.scrollTo({ top: 0 });
+              }}
+              onOpenMap={(map) => {
+                setScreen({ name: 'career', map });
+                window.scrollTo({ top: 0 });
+              }}
               onOpenAbout={() => setScreen({ name: 'about' })}
               onOpenIntro={() => setScreen({ name: 'intro' })}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
@@ -2502,11 +2514,18 @@ export default function App() {
                  только когда её миссия разрешается в задания активного пака. */
               onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
               onOpenData={() => setScreen({ name: 'data' })}
+              onOpenMap={() => {
+                setScreen({ name: 'career', map: { trace: true } });
+                window.scrollTo({ top: 0 });
+              }}
             />
           )}
 
           {screen.name === 'career' && (
             <CareerPage
+              /* Новый вход на карту (другой слой, маршрут) ставит экран заново. */
+              key={JSON.stringify(screen.map ?? null)}
+              openMap={screen.map}
               progress={progress}
               onCareerChange={updateCareer}
               onStartSkill={(skill) => startSkillSession(skill, true)}
@@ -3348,6 +3367,7 @@ function Home({
   onOpenReference,
   onOpenSandbox,
   onOpenCareer,
+  onOpenMap,
   onOpenAbout,
   onOpenIntro,
   onOpenOnboarding,
@@ -3388,6 +3408,8 @@ function Home({
   onOpenReference: () => void;
   onOpenSandbox: () => void;
   onOpenCareer: () => void;
+  /** Карта данных на экране «Путь к роли»: слой или сразу маршрут. */
+  onOpenMap: (map: { layer?: string; trace?: boolean }) => void;
   onOpenAbout: () => void;
   /** Экскурс в профессию. Строку показываем только новичку — довод у самой строки. */
   onOpenIntro: () => void;
@@ -4333,6 +4355,8 @@ function Home({
        * Sidebar: меню видно от 1024px, и на телефоне без этого блока
        * о семействе не узнать вовсе. Адреса и подписи общие с Sidebar.
        */}
+      {ready && <DataMapTeaser onOpen={onOpenMap} />}
+
       <nav className="card home-family" aria-label={t.nav.familyTitle}>
         <h2>{t.nav.familyTitle}</h2>
         <div className="home-family-links">

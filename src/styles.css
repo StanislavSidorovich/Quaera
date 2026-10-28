@@ -8582,6 +8582,70 @@ details.story-known > summary small {
   text-decoration: underline;
 }
 
+/* Вход на карту данных над семьёй Quaera (см. DataMapTeaser). */
+.home-map {
+  margin-top: 16px;
+}
+
+.home-map h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.home-map > p {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+}
+
+/* Цепочка слоёв: стрелка между звеньями, при переносе строка начинается со звена. */
+.home-map-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-map-chain li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.home-map-chain li:not(:last-child)::after {
+  content: '→';
+  color: var(--text-dim);
+}
+
+.home-map-chain button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+.home-map-chain button:hover {
+  border-color: var(--accent);
+}
+
+.home-map-chain button.here {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+}
+
+.home-map-chain .arch-here {
+  margin-left: 0;
+}
+
 @media (max-width: 600px) {
   .home-family-links {
     grid-template-columns: minmax(0, 1fr);

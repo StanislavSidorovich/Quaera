@@ -28,6 +28,7 @@ import { PageToc } from './PageToc';
 export function IntroPage({
   onOpenStoryMode,
   onOpenData,
+  onOpenMap,
 }: {
   /**
    * null — кампания сейчас недоступна (её миссия не разрешается в задания).
@@ -36,6 +37,8 @@ export function IntroPage({
    */
   onOpenStoryMode: (() => void) | null;
   onOpenData: () => void;
+  /** Карта данных сразу на маршруте: запрос хвоста и есть вопрос маршрута. */
+  onOpenMap: () => void;
 }) {
   const { locale } = useI18n();
   const page = introPage(locale);
@@ -80,6 +83,10 @@ export function IntroPage({
             <button type="button" className="link-row intro-door" onClick={onOpenData}>
               <span className="intro-door-label">{page.closing.dataLabel} →</span>
               <span className="intro-door-note">{page.closing.dataNote}</span>
+            </button>
+            <button type="button" className="link-row intro-door" onClick={onOpenMap}>
+              <span className="intro-door-label">{page.closing.mapLabel} →</span>
+              <span className="intro-door-note">{page.closing.mapNote}</span>
             </button>
           </div>
 

@@ -37,11 +37,19 @@ const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
  * и меняются через `onCareerChange`: своего хранилища у экрана нет, иначе
  * оно разошлось бы с тем, что уезжает на второе устройство.
  */
+/**
+ * Вкладка, на которой экран был в последний раз: уход в занятие из карты
+ * и возврат «назад» снова ставят экран заново, и без этого человек
+ * возвращался бы на «Путь к роли», потеряв карту.
+ */
+let lastTab: 'path' | 'map' = 'path';
+
 export function CareerPage({
   progress,
   onCareerChange,
   onStartSkill,
   onOpenSkill,
+  openMap,
 }: {
   progress: Progress;
   /** Правка состояния экрана; функция получает текущее и возвращает новое (или то же, если менять нечего). */
@@ -50,6 +58,8 @@ export function CareerPage({
   onStartSkill: (skillId: string) => void;
   /** Карточка приёма навыка. */
   onOpenSkill: (skillId: string) => void;
+  /** Открыться на вкладке карты: с главной или по адресу `?roles=map`. */
+  openMap?: { layer?: string; trace?: boolean };
 }) {
   const { t, locale } = useI18n();
   const c = t.career;
@@ -57,7 +67,11 @@ export function CareerPage({
   const state = progress.career ?? emptyCareerState();
   const [openStage, setOpenStage] = useState<string | null>(null);
   const [quizAxis, setQuizAxis] = useState<AxisId | null>(null);
-  const [tab, setTab] = useState<'path' | 'map'>('path');
+  const [tab, setTabState] = useState<'path' | 'map'>(() => (openMap ? (lastTab = 'map') : lastTab));
+  const setTab = (next: 'path' | 'map') => {
+    lastTab = next;
+    setTabState(next);
+  };
   /* Роль, на которую повела ссылка с карты: после смены вкладки к её карточке прокручивается экран. */
   const [roleJump, setRoleJump] = useState<string | null>(null);
   const quizStatusText = useQuizStatusText();
@@ -218,6 +232,8 @@ export function CareerPage({
 
       {tab === 'map' && (
         <ArchitectureMap
+          initialLayer={openMap?.layer}
+          startTrace={openMap?.trace}
           skillTitle={skillTitle}
           onStartSkill={onStartSkill}
           onOpenRole={(id) => {

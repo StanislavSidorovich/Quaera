@@ -1882,6 +1882,10 @@ export const ru = {
       openLab: 'Открыть в Lab',
       openLabTitle: 'Запрос откроется в Quaera Lab на тех же данных Kaiyo',
       roleLink: (role: string) => `Роль на экране: ${role}`,
+      teaserTitle: 'Как данные становятся решением',
+      teaserLead: 'Путь данных в компании от заказа в ERP до встречи руководства. Тренажёр учит работать на одном из этих слоёв.',
+      teaserOpen: 'Открыть карту',
+      teaserLayer: (layer: string) => `Открыть карту на слое «${layer}»`,
     },
     quiz: {
       title: (axis: string) => `Самопроверка: ${axis}`,

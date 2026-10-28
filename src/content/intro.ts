@@ -133,7 +133,7 @@ export interface IntroPageContent {
   figures: IntroFigureCaptions;
   join: IntroJoinFigure;
   blocks: IntroBlock[];
-  /** Хвост: запрос, вопрос читателю и две двери. */
+  /** Хвост: запрос, вопрос читателю и двери. */
   closing: {
     title: string;
     quote: string;
@@ -142,6 +142,9 @@ export interface IntroPageContent {
     storyNote: string;
     dataLabel: string;
     dataNote: string;
+    /** Третья дверь: тот же запрос маршрутом по карте данных компании. */
+    mapLabel: string;
+    mapNote: string;
     foot: string;
   };
 }
@@ -385,6 +388,8 @@ const RU: IntroPageContent = {
     storyNote: 'Задача от заказчика, ваши ответы и встреча в пятницу',
     dataLabel: 'Просто посмотреть на данные',
     dataNote: 'Те самые тринадцать таблиц, без всякой учёбы',
+    mapLabel: 'Посмотреть, как такой вопрос проходит через компанию',
+    mapNote: 'От встречи руководства до исходных данных и обратно, по шагам и ролям',
     foot: 'Регистрации нет, вводить ничего не нужно.',
   },
 };
@@ -628,6 +633,8 @@ const EN: IntroPageContent = {
     storyNote: 'A request from a client, your answers, and the meeting on Friday',
     dataLabel: 'Just look at the data',
     dataNote: 'Those thirteen tables, with no lesson attached',
+    mapLabel: 'See how a question like this travels through a company',
+    mapNote: 'From the management meeting down to the source data and back, step by step and role by role',
     foot: 'There is no sign up and nothing to fill in.',
   },
 };

@@ -45,19 +45,27 @@ export function ArchitectureMap({
   skillTitle,
   onStartSkill,
   onOpenRole,
+  initialLayer,
+  startTrace = false,
 }: {
   skillTitle: (id: string) => string;
   onStartSkill: (skillId: string) => void;
   /** Роль на том же экране: вкладка «Путь к роли», карточка роли. */
   onOpenRole: (roleId: string) => void;
+  /** Слой, на котором открыться (клик по слою в карточке на главной). */
+  initialLayer?: string;
+  /** Открыться сразу на первом шаге маршрута. */
+  startTrace?: boolean;
 }) {
   const { t, locale } = useI18n();
   const m = t.career.map;
   const schema = useSchema();
 
-  const [picked, setPicked] = useState(DEFAULT_LAYER);
+  const [picked, setPicked] = useState(() =>
+    initialLayer && architecture.layers.some((l) => l.id === initialLayer) ? initialLayer : DEFAULT_LAYER
+  );
   const [lens, setLens] = useState<LensId>('roles');
-  const [step, setStep] = useState<number | null>(null);
+  const [step, setStep] = useState<number | null>(startTrace ? 0 : null);
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
   const wide = useWide();
@@ -337,5 +345,46 @@ export function ArchitectureMap({
         {wide && detail}
       </div>
     </div>
+  );
+}
+
+/**
+ * Вход на карту с главной: цепочка слоёв одной строкой, gold помечен «вы здесь».
+ * Стоит внизу главной над семьёй Quaera: верх главной держит кнопку занятия
+ * на первом экране, а здесь карточка объясняет блок под собой (где в работе
+ * компании живут Lab, Model, Flow и Pandas). Слой в цепочке открывает карту
+ * сразу на нём, так что цепочка работает оглавлением.
+ */
+export function DataMapTeaser({ onOpen }: { onOpen: (target: { layer?: string; trace?: boolean }) => void }) {
+  const { t, locale } = useI18n();
+  const m = t.career.map;
+  return (
+    <section className="card home-map" aria-labelledby="home-map-title">
+      <h2 id="home-map-title">{m.teaserTitle}</h2>
+      <p className="muted">{m.teaserLead}</p>
+      <ol className="home-map-chain">
+        {architecture.layers.map((l) => (
+          <li key={l.id}>
+            <button
+              type="button"
+              className={l.here ? 'here' : undefined}
+              aria-label={m.teaserLayer(l.title[locale])}
+              onClick={() => onOpen({ layer: l.id })}
+            >
+              {l.title[locale]}
+              {l.here && <span className="arch-here">{m.hereBadge}</span>}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <div className="row">
+        <button type="button" className="btn secondary" onClick={() => onOpen({})}>
+          {m.teaserOpen}
+        </button>
+        <button type="button" className="btn secondary" onClick={() => onOpen({ trace: true })}>
+          {architecture.trace.title[locale]}
+        </button>
+      </div>
+    </section>
   );
 }

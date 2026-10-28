@@ -1026,6 +1026,10 @@ export const en = {
       openLab: 'Open in Lab',
       openLabTitle: 'The query opens in Quaera Lab on the same Kaiyo data',
       roleLink: (role: string) => `Role on this screen: ${role}`,
+      teaserTitle: 'How data becomes a decision',
+      teaserLead: 'The path data takes through a company, from an order in the ERP to the management meeting. The trainer teaches you to work on one of these layers.',
+      teaserOpen: 'Open the map',
+      teaserLayer: (layer: string) => `Open the map on the ${layer} layer`,
     },
     quiz: {
       title: (axis: string) => `Self-check: ${axis}`,
