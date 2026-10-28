@@ -9020,6 +9020,10 @@ details.story-known > summary small {
   transition: opacity 0.15s;
 }
 
+.arch-layer {
+  scroll-margin-top: 72px;
+}
+
 .arch-layer.on {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
@@ -9110,12 +9114,15 @@ details.story-known > summary small {
   text-align: left;
 }
 
-.arch-trace {
-  margin-top: 14px;
+.arch-trace-start {
+  margin-bottom: 14px;
+  min-height: var(--tap);
 }
 
-.arch-trace h2 {
-  margin-top: 0;
+/* Карточка прокручивается в поле зрения после клика: липкая шапка не должна её закрыть. */
+.arch-card {
+  scroll-margin-top: 72px;
+  scroll-margin-bottom: 16px;
 }
 
 .arch-step-n {
@@ -9195,8 +9202,15 @@ details.story-known > summary small {
   margin-top: 8px;
 }
 
-.arch-nav .btn {
+.arch-nav .btn,
+.arch-sql-actions .btn {
+  width: auto;
   min-height: var(--tap);
+}
+
+/* Кнопки шага в один ряд, на телефоне переносятся, а не встают столбиком во всю ширину. */
+.arch-nav .btn {
+  flex: 1 1 140px;
 }
 
 /* Ссылка с карты прокручивает к карточке роли: отступ, чтобы липкая шапка её не закрыла. */
