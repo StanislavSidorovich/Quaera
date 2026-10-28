@@ -1,0 +1,298 @@
+{
+  "lake": {
+    "title": { "ru": "Lakehouse или хранилище данных", "en": "Lakehouse or data warehouse" },
+    "note": { "ru": "Fabric, Databricks, Snowflake, BigQuery: одна платформа держит три слоя сразу.", "en": "Fabric, Databricks, Snowflake, BigQuery: one platform holds all three layers." }
+  },
+
+  "lenses": [
+    { "id": "roles", "title": { "ru": "Роли", "en": "Roles" } },
+    { "id": "quaera", "title": { "ru": "Где это в Quaera", "en": "Where it is in Quaera" } },
+    { "id": "money", "title": { "ru": "Кто за что платит", "en": "Who pays for what" } }
+  ],
+
+  "money": [
+    { "id": "work", "title": { "ru": "лицензии ради работы", "en": "licences for the work" } },
+    { "id": "storage", "title": { "ru": "дёшево", "en": "cheap" } },
+    { "id": "compute", "title": { "ru": "вычисления", "en": "compute" } },
+    { "id": "seats", "title": { "ru": "лицензии на людей", "en": "per-person licences" } },
+    { "id": "people", "title": { "ru": "время людей", "en": "people's time" } }
+  ],
+
+  "layers": [
+    {
+      "id": "sources",
+      "lake": false,
+      "title": { "ru": "Источники", "en": "Sources" },
+      "what": {
+        "ru": "Данные рождаются в работе. Заказ дистрибьютора проводят в ERP, торговый представитель отмечает визит в CRM, дистрибьюторы присылают отчёты о продажах в магазины. Никто из них не думает об аналитике: они делают свою работу.",
+        "en": "Data is born in the work itself. A distributor's order is posted in the ERP, a sales rep logs a visit in the CRM, distributors send reports of sales to shops. None of them think about analytics: they are doing their jobs."
+      },
+      "kaiyo": {
+        "ru": "Заказы и отгрузки становятся `fact_sellin`, отчёты дистрибьюторов `fact_sellout`, прайс-лист `fact_price`, планы продаж `fact_target`.",
+        "en": "Orders and shipments become `fact_sellin`, distributor reports `fact_sellout`, the price list `fact_price`, sales targets `fact_target`."
+      },
+      "roles": ["ba"],
+      "stages": ["process"],
+      "tools": ["SAP", "1C", "Salesforce", "Excel"],
+      "money": {
+        "kind": "work",
+        "text": {
+          "ru": "Лицензии ERP и CRM. Их покупают ради работы, а не ради аналитики, поэтому аналитик берёт данные такими, какими их ввели.",
+          "en": "ERP and CRM licences. They are bought for the work, not for analytics, so the analyst takes the data as it was entered."
+        }
+      },
+      "practice": {
+        "mode": "hands",
+        "apps": ["flow"],
+        "skills": ["dom-value-chain", "dom-order-to-cash"],
+        "text": {
+          "ru": "Нарисовать процесс в Flow и найти, на каком шаге рождается строка таблицы фактов.",
+          "en": "Draw the process in Flow and find the step where a fact table row is born."
+        }
+      }
+    },
+    {
+      "id": "bronze",
+      "lake": true,
+      "title": { "ru": "Приёмник (bronze)", "en": "Landing (bronze)" },
+      "what": {
+        "ru": "По расписанию, обычно ночью, копии из источников складываются в облачное хранилище как есть, без исправлений. Если дальше что-то сломается, всё можно пересчитать от сырья.",
+        "en": "On a schedule, usually at night, copies from the sources land in cloud storage as they are, with nothing fixed. If something breaks further down, everything can be rebuilt from the raw files."
+      },
+      "kaiyo": {
+        "ru": "`staging_raw_sellout`: все поля текстом, даты в разных форматах, у каждой строки `source_file`. Выгрузка ежемесячная, за 2025 год их 12.",
+        "en": "`staging_raw_sellout`: every field is text, dates come in mixed formats, each row has a `source_file`. The export is monthly, 12 files for 2025."
+      },
+      "roles": ["de"],
+      "stages": ["ingest"],
+      "tools": ["Fabric Data Factory", "Azure Data Factory", "Fivetran", "Airflow", "S3", "ADLS", "OneLake"],
+      "money": {
+        "kind": "storage",
+        "text": {
+          "ru": "Облаку платят помесячно за гигабайты хранения. Это самая дешёвая часть, поэтому сырьё хранят целиком.",
+          "en": "The cloud is paid monthly per gigabyte stored. This is the cheapest part, which is why raw data is kept in full."
+        }
+      },
+      "practice": {
+        "mode": "described",
+        "apps": ["lab"],
+        "skills": ["sql-data-quality"],
+        "text": {
+          "ru": "Пайплайн в браузере не построить, он здесь только описан. Сырая таблица есть: открыть `staging_raw_sellout` в Lab.",
+          "en": "A pipeline cannot be built in a browser, so it is only described here. The raw table is real: open `staging_raw_sellout` in Lab."
+        }
+      }
+    },
+    {
+      "id": "silver",
+      "lake": true,
+      "title": { "ru": "Чистка (silver)", "en": "Cleaning (silver)" },
+      "what": {
+        "ru": "Типы приведены, дубли убраны, одна сеть, записанная двумя способами, стала одной, отрицательные количества помечены. Без этого слоя одна сеть посчиталась бы двумя точками.",
+        "en": "Types are cast, duplicates removed, one chain spelled two ways becomes one, negative quantities are flagged. Without this layer one chain would count as two outlets."
+      },
+      "kaiyo": {
+        "ru": "Та же `staging_raw_sellout` после CAST, TRIM и дедупликации. На ней тренажёр учит чистке.",
+        "en": "The same `staging_raw_sellout` after CAST, TRIM and deduplication. The trainer teaches cleaning on it."
+      },
+      "roles": ["de", "ae"],
+      "stages": ["transform"],
+      "tools": ["SQL", "PySpark", "dbt", "Power Query"],
+      "money": {
+        "kind": "compute",
+        "text": {
+          "ru": "Здесь начинаются вычисления, а за них платят за время работы: кредиты Snowflake, DBU в Databricks, ёмкость Fabric. Отсюда правило: не гонять SELECT * по миллиардам строк.",
+          "en": "Compute starts here, and it is paid for by running time: Snowflake credits, Databricks DBUs, Fabric capacity. Hence the rule: do not run SELECT * over billions of rows."
+        }
+      },
+      "practice": {
+        "mode": "hands",
+        "apps": ["lab"],
+        "skills": ["sql-data-quality", "py-duplicates", "model-power-query"],
+        "text": {
+          "ru": "Задания на качество данных в треке SQL, дубли в pandas, Power Query в треке «Модель и BI».",
+          "en": "Data quality tasks in the SQL track, duplicates in pandas, Power Query in the Model and BI track."
+        }
+      }
+    },
+    {
+      "id": "gold",
+      "lake": true,
+      "title": { "ru": "Звезда (gold)", "en": "Star schema (gold)" },
+      "what": {
+        "ru": "Таблицы фактов хранят события с числами, таблицы измерений отвечают на вопросы «кто, что, где, когда». У каждого факта одно зерно. К этому слою подключаются и отчёты, и аналитики.",
+        "en": "Fact tables hold events with numbers, dimension tables answer who, what, where and when. Every fact has one grain. Both reports and analysts connect to this layer."
+      },
+      "kaiyo": {
+        "ru": "Весь датасет Kaiyo: `fact_sellout` (неделя × точка × SKU), `fact_sellin`, `dim_product`, `dim_customer`, `dim_date` и остальные. В тренажёре вы работаете здесь.",
+        "en": "The whole Kaiyo dataset: `fact_sellout` (week × outlet × SKU), `fact_sellin`, `dim_product`, `dim_customer`, `dim_date` and the rest. In the trainer you work here."
+      },
+      "here": true,
+      "roles": ["ae", "gov"],
+      "stages": ["model", "transform", "quality"],
+      "tools": ["dbt", "Snowflake", "Fabric Warehouse", "Databricks SQL", "BigQuery", "PowerDesigner"],
+      "money": {
+        "kind": "compute",
+        "text": {
+          "ru": "Те же вычисления. Хорошая звезда дешевле: запрос читает меньше строк и меньше колонок.",
+          "en": "The same compute. A good star schema is cheaper: a query reads fewer rows and fewer columns."
+        }
+      },
+      "practice": {
+        "mode": "hands",
+        "apps": ["model", "lab"],
+        "skills": ["model-star", "model-grain", "sql-join-left", "sql-fanout"],
+        "text": {
+          "ru": "Собрать звезду в Model, посмотреть схему на экране «Данные», писать запросы в треке SQL и в Lab.",
+          "en": "Build a star in Model, look at the schema on the Data screen, write queries in the SQL track and in Lab."
+        }
+      }
+    },
+    {
+      "id": "serve",
+      "lake": false,
+      "title": { "ru": "Отчёт и разбор", "en": "Report and analysis" },
+      "what": {
+        "ru": "Отчёт показывает, что случилось: семантическая модель Power BI подключена к звезде, меры написаны на DAX, данные обновляются по расписанию, каждый представитель видит свой регион. Почему это случилось, выясняет аналитик: запросом SQL или в pandas к той же звезде.",
+        "en": "The report shows what happened: a Power BI semantic model sits on the star schema, measures are written in DAX, data refreshes on a schedule, each rep sees their own region. Why it happened is the analyst's question, answered with SQL or pandas on the same star schema."
+      },
+      "kaiyo": {
+        "ru": "Мера «Sell-out, шт» по месяцам на странице отчёта. Запрос по Nettora: точки и штуки по месяцам.",
+        "en": "A Sell-out units measure by month on a report page. A query on Nettora: outlets and units by month."
+      },
+      "roles": ["bi", "da", "ds"],
+      "stages": ["report", "analysis", "forecast"],
+      "tools": ["Power BI", "DAX", "SQL", "Python", "Jupyter"],
+      "money": {
+        "kind": "seats",
+        "text": {
+          "ru": "Power BI Desktop бесплатный. Чтобы публиковать отчёты и смотреть их внутри компании, нужна платная лицензия на каждого человека или ёмкость Fabric.",
+          "en": "Power BI Desktop is free. Publishing reports and viewing them inside the company takes a paid licence per person or Fabric capacity."
+        }
+      },
+      "practice": {
+        "mode": "hands",
+        "apps": ["lab", "pandas"],
+        "skills": ["model-measure-vs-column", "model-calculate", "sql-group-by", "py-groupby", "dom-decomposition"],
+        "text": {
+          "ru": "Трек «Модель и BI» для мер DAX, треки SQL и pandas для разбора, кампания на главной. Скоро: гид «Проект в Power BI на Kaiyo».",
+          "en": "The Model and BI track for DAX measures, the SQL and pandas tracks for analysis, the campaign on the home page. Coming next: the guide to a Power BI project on Kaiyo."
+        }
+      }
+    },
+    {
+      "id": "meeting",
+      "lake": false,
+      "title": { "ru": "Встреча и решение", "en": "Meeting and decision" },
+      "what": {
+        "ru": "Раз в месяц разбирают продажи: руководство смотрит дашборд, аналитик называет причину одной фразой, решают, кто что делает. Решение уходит обратно в процесс, и через месяц его видно в тех же данных.",
+        "en": "Once a month sales are reviewed: management looks at the dashboard, the analyst names the cause in one sentence, and they agree who does what. The decision goes back into the process, and a month later it shows up in the same data."
+      },
+      "kaiyo": {
+        "ru": "«Nettora ушла с полок 37 точек, хотя продажи на точку выросли». Решение: разобрать с сетями, почему бренд убрали с полки.",
+        "en": "\"Nettora left the shelves of 37 outlets, although sales per outlet grew.\" Decision: work out with the chains why the brand was taken off the shelf."
+      },
+      "roles": ["da", "ba", "gov"],
+      "stages": ["decision", "question"],
+      "tools": ["Power BI", "PowerPoint", "Teams"],
+      "money": {
+        "kind": "people",
+        "text": {
+          "ru": "Самое дорогое здесь время людей в комнате. Ради этих тридцати минут работают все слои выше.",
+          "en": "The most expensive thing here is the time of the people in the room. Every layer above works for these thirty minutes."
+        }
+      },
+      "practice": {
+        "mode": "described",
+        "apps": [],
+        "skills": ["dom-storytelling", "dom-sanity-check", "sql-business-case"],
+        "text": {
+          "ru": "Навыки «Сторителлинг» и «Проверка на здравый смысл», задания «бизнес-кейс» в треке SQL.",
+          "en": "The Storytelling and Sanity check skills, business case tasks in the SQL track."
+        }
+      }
+    }
+  ],
+
+  "trace": {
+    "id": "nettora",
+    "title": { "ru": "Проследить вопрос: Nettora", "en": "Follow a question: Nettora" },
+    "steps": [
+      {
+        "layer": "meeting",
+        "role": null,
+        "who": { "ru": "Коммерческий директор", "en": "Sales director" },
+        "text": {
+          "ru": "На встрече дашборд показывает: с лета продажи Nettora падают и к декабрю ниже январских. Вопрос: почему и что делать?",
+          "en": "At the meeting the dashboard shows Nettora sales falling since the summer and ending below January. The question: why, and what do we do?"
+        }
+      },
+      {
+        "layer": "serve",
+        "role": "bi",
+        "who": { "ru": "BI-аналитик", "en": "BI analyst" },
+        "text": {
+          "ru": "В отчёте мера «Sell-out, шт» по месяцам: январь 2 200, пик в июне 4 702, декабрь 1 701. Отчёт отвечает на «что», но не на «почему».",
+          "en": "The report has a Sell-out units measure by month: January 2,200, a June peak of 4,702, December 1,701. The report answers what, not why."
+        }
+      },
+      {
+        "layer": "serve",
+        "role": "da",
+        "who": { "ru": "Аналитик данных", "en": "Data analyst" },
+        "text": {
+          "ru": "Раскладывает: штуки = точки × штук на точку. Точек было 74, стало 40. На одну точку продажи выросли с 29,7 до 42,5 штуки. Цена ни при чём: бренд теряет полки.",
+          "en": "Breaks it down: units = outlets × units per outlet. Outlets went from 74 to 40. Sales per outlet grew from 29.7 to 42.5 units. Price is not the cause: the brand is losing shelves."
+        },
+        "sql": "SELECT substr(s.week_start, 1, 7) AS month,\n       COUNT(DISTINCT s.customer_id) AS outlets,\n       SUM(s.units) AS units\nFROM fact_sellout s\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE p.brand = 'Nettora'\n  AND s.week_start >= '2025-01-01'\n  AND s.week_start <  '2026-01-01'\nGROUP BY month\nORDER BY month;"
+      },
+      {
+        "layer": "gold",
+        "role": "da",
+        "who": { "ru": "Аналитик проверяет зерно", "en": "The analyst checks the grain" },
+        "text": {
+          "ru": "Ушли 37 точек, пришли 3. Все 37 в декабре по-прежнему покупают другие товары Kaiyo: магазины работают, отчёты приходят, пропал только бренд. В `fact_sellout` нет строки значит нет продаж, а не ноль.",
+          "en": "37 outlets left and 3 joined. All 37 still buy other Kaiyo products in December: the shops are open and reports arrive, only the brand is gone. In `fact_sellout` a missing row means no sales, not a zero."
+        },
+        "sql": "WITH jan AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-01%'\n), dec AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-12%'\n), lost AS (\n  SELECT customer_id FROM jan EXCEPT SELECT customer_id FROM dec\n)\nSELECT COUNT(*) AS lost,\n       SUM(customer_id IN (SELECT customer_id FROM fact_sellout\n                           WHERE week_start LIKE '2025-12%')) AS still_buying\nFROM lost;"
+      },
+      {
+        "layer": "silver",
+        "role": "ae",
+        "who": { "ru": "Analytics engineer", "en": "Analytics engineer" },
+        "text": {
+          "ru": "Число точек честное, потому что при чистке одна сеть, записанная двумя способами, стала одной точкой.",
+          "en": "The outlet count is honest because cleaning turned one chain spelled two ways into one outlet."
+        }
+      },
+      {
+        "layer": "bronze",
+        "role": "de",
+        "who": { "ru": "Data engineer", "en": "Data engineer" },
+        "text": {
+          "ru": "Проверка на стороне данных: в приёмнике все 12 месячных выгрузок за 2025 год. Ни один файл не пропал, значит, падение настоящее.",
+          "en": "A check on the data side: all 12 monthly exports for 2025 are in the landing zone. No file is missing, so the drop is real."
+        },
+        "sql": "SELECT COUNT(DISTINCT source_file) AS files\nFROM staging_raw_sellout\nWHERE source_file LIKE 'export_2025%';"
+      },
+      {
+        "layer": "sources",
+        "role": "ba",
+        "who": { "ru": "Бизнес-аналитик", "en": "Business analyst" },
+        "text": {
+          "ru": "Потери разбросаны по 16 регионам и 15 представителям, 23 точки из 37 принадлежат сетям. Значит, причина не в одном регионе. Вопрос к процессу: где сеть решает, стоит ли бренд на полке.",
+          "en": "The losses are spread over 16 regions and 15 reps, and 23 of the 37 outlets belong to chains. So the cause is not one region. The question goes to the process: where does a chain decide whether the brand stays on the shelf?"
+        }
+      },
+      {
+        "layer": "meeting",
+        "role": "da",
+        "who": { "ru": "Вывод на встрече", "en": "Conclusion at the meeting" },
+        "text": {
+          "ru": "«Nettora ушла с полок 37 точек, хотя продажи на точку выросли». Решение: разобрать с сетями, почему бренд убрали, и вернуть его на полки. Через месяц результат видно в тех же данных.",
+          "en": "\"Nettora left the shelves of 37 outlets, although sales per outlet grew.\" Decision: work out with the chains why the brand was removed and get it back on the shelves. A month later the result shows up in the same data."
+        }
+      }
+    ]
+  }
+}
