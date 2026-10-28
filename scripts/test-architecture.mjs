@@ -71,6 +71,15 @@ for (const l of arch.lenses) checkText(`линза ${l.id}`, l.title);
 for (const m of arch.money) checkText(`затраты ${m.id}`, m.title);
 checkText('trace.title', arch.trace.title);
 
+{
+  // Подсказка без инструмента на карте никому не видна: значит, опечатка в имени.
+  const onMap = new Set(arch.layers.flatMap((l) => l.tools));
+  for (const [name, v] of Object.entries(arch.tools ?? {})) {
+    checkText(`инструмент ${name}`, v);
+    if (!onMap.has(name)) fail(`инструмент ${name}`, 'подсказка есть, а на карте инструмента нет');
+  }
+}
+
 // ── Линзы и виды затрат ────────────────────────────────────────────────────
 check('линзы: ровно roles, quaera, money', JSON.stringify(arch.lenses.map((l) => l.id)) === JSON.stringify(LENSES), 'порядок или состав линз');
 check('слои: id уникальны', new Set(layerIds).size === layerIds.length, 'повтор id слоя');
@@ -97,6 +106,7 @@ for (const l of arch.layers) {
   if (!moneyIds.has(l.money.kind)) fail(w, `вид затрат ${l.money.kind} не описан в money`);
   if (!MODES.includes(l.practice.mode)) fail(w, `режим практики ${l.practice.mode}`);
   if (!l.tools.length) fail(w, 'нет инструментов');
+  for (const t of l.tools) if (!arch.tools?.[t]) fail(w, `у инструмента ${t} нет подсказки в tools`);
   if (new Set(l.practice.skills).size !== l.practice.skills.length) fail(w, 'навык повторён');
 }
 ok('слои: id, роли, этапы, навыки, приложения, затраты', `${arch.layers.length} слоёв`);

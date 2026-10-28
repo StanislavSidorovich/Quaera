@@ -9178,6 +9178,31 @@ details.story-known > summary small {
   text-align: left;
 }
 
+/* Название инструмента: нажатие открывает одну фразу «что это» под списком. */
+.arch-tool {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.arch-tool[aria-expanded='true'] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.arch-tool-note {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-sunken);
+  color: var(--text);
+}
+
 .arch-trace-start {
   margin-bottom: 14px;
   min-height: var(--tap);

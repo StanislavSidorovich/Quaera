@@ -51,6 +51,8 @@ export interface Architecture {
   lake: { title: Text; note: Text };
   lenses: { id: LensId; title: Text }[];
   money: { id: MoneyKind; title: Text }[];
+  /** Одна фраза «что это и кто им пользуется» на каждый инструмент из `layers[].tools`. */
+  tools: Record<string, Text>;
   layers: ArchLayer[];
   trace: { id: string; title: Text; steps: ArchStep[] };
 }

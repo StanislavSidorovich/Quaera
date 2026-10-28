@@ -68,6 +68,7 @@ export function ArchitectureMap({
   const [step, setStep] = useState<number | null>(startTrace ? 0 : null);
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
+  const [tool, setTool] = useState<string | null>(null);
   const wide = useWide();
   const detailRef = useRef<HTMLElement>(null);
   const touched = useRef(false);
@@ -76,6 +77,9 @@ export function ArchitectureMap({
   const current = step === null ? null : trace.steps[step];
   const selectedId = current ? current.layer : picked;
   const layer = layers.find((l) => l.id === selectedId) ?? layers[0];
+
+  /* Подсказка открыта, только пока инструмент есть в выбранном слое. */
+  const openTool = tool && layer.tools.includes(tool) ? tool : null;
 
   const roleName = (id: string) => careerRole(id)?.title[locale] ?? id;
   const moneyTitle = (kind: string) => architecture.money.find((x) => x.id === kind)?.title[locale] ?? kind;
@@ -164,7 +168,27 @@ export function ArchitectureMap({
         <dt>{m.stagesTitle}</dt>
         <dd>{stages.map((s) => s.title[locale]).join(', ')}</dd>
         <dt>{m.toolsTitle}</dt>
-        <dd>{layer.tools.join(', ')}</dd>
+        <dd>
+          {layer.tools.map((name, i) => (
+            <Fragment key={name}>
+              {i > 0 && ', '}
+              <button
+                type="button"
+                className="arch-tool"
+                aria-expanded={openTool === name}
+                title={m.toolAbout(name)}
+                onClick={() => setTool(openTool === name ? null : name)}
+              >
+                {name}
+              </button>
+            </Fragment>
+          ))}
+          {openTool && (
+            <p className="arch-tool-note" role="note">
+              <strong>{openTool}.</strong> {architecture.tools[openTool][locale]}
+            </p>
+          )}
+        </dd>
         <dt>{m.moneyTitle}</dt>
         <dd>
           <strong>{cap(moneyTitle(layer.money.kind))}.</strong> {layer.money.text[locale]}

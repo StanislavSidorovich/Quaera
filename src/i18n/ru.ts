@@ -1864,6 +1864,7 @@ export const ru = {
       rolesTitle: 'Роли',
       stagesTitle: 'Этапы пути задачи',
       toolsTitle: 'Инструменты рынка',
+      toolAbout: (name: string) => `Что такое ${name}`,
       moneyTitle: 'Кто за что платит',
       practiceTitle: 'Попробовать в Quaera',
       modeHands: 'руками',

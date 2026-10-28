@@ -1008,6 +1008,7 @@ export const en = {
       rolesTitle: 'Roles',
       stagesTitle: 'Stages of the task path',
       toolsTitle: 'Market tools',
+      toolAbout: (name: string) => `What ${name} is`,
       moneyTitle: 'Who pays for what',
       practiceTitle: 'Try it in Quaera',
       modeHands: 'hands on',
