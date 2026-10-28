@@ -22,6 +22,7 @@ import { passedQuizEvidence, quizStatus } from '../career/quiz';
 import { withQuizAttempt } from '../career/store';
 import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
 import { quizBank } from '../content/careerQuiz';
+import { ArchitectureMap } from './ArchitectureMap';
 
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
@@ -56,6 +57,9 @@ export function CareerPage({
   const state = progress.career ?? emptyCareerState();
   const [openStage, setOpenStage] = useState<string | null>(null);
   const [quizAxis, setQuizAxis] = useState<AxisId | null>(null);
+  const [tab, setTab] = useState<'path' | 'map'>('path');
+  /* Роль, на которую повела ссылка с карты: после смены вкладки к её карточке прокручивается экран. */
+  const [roleJump, setRoleJump] = useState<string | null>(null);
   const quizStatusText = useQuizStatusText();
   const narrow = useNarrow();
 
@@ -75,6 +79,11 @@ export function CareerPage({
     setQuizAxis(axis);
     window.scrollTo({ top: 0 });
   };
+  useEffect(() => {
+    if (!roleJump || tab !== 'path') return;
+    document.getElementById(`career-role-${roleJump}`)?.scrollIntoView({ block: 'start' });
+    setRoleJump(null);
+  }, [roleJump, tab]);
   const closeQuiz = () => {
     setQuizAxis(null);
     window.scrollTo({ top: 0 });
@@ -197,7 +206,29 @@ export function CareerPage({
   }
 
   return (
-    <div className="settings-column career-page">
+    <div className={`settings-column career-page${tab === 'map' ? ' career-wide' : ''}`}>
+      <div className="tabs career-tabs" role="group" aria-label={c.tabsAria}>
+        <button type="button" aria-pressed={tab === 'path'} onClick={() => setTab('path')}>
+          {c.tabPath}
+        </button>
+        <button type="button" aria-pressed={tab === 'map'} onClick={() => setTab('map')}>
+          {c.tabMap}
+        </button>
+      </div>
+
+      {tab === 'map' && (
+        <ArchitectureMap
+          skillTitle={skillTitle}
+          onStartSkill={onStartSkill}
+          onOpenRole={(id) => {
+            setRoleJump(id);
+            setTab('path');
+          }}
+        />
+      )}
+
+      {tab === 'path' && (
+        <>
       <p className="intro-lead">{c.lead}</p>
 
       <section className="card career-target">
@@ -396,7 +427,7 @@ export function CareerPage({
         <h2>{c.rolesTitle}</h2>
         <div className="career-role-cards">
           {careerRoles.map((r) => (
-            <article key={r.id} className="career-role-card">
+            <article key={r.id} id={`career-role-${r.id}`} className="career-role-card">
               <h3>{r.title[locale]}</h3>
               <dl className="career-dl">
                 <dt>{c.roleDoes}</dt>
@@ -429,6 +460,8 @@ export function CareerPage({
           ))}
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }

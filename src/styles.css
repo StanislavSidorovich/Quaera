@@ -8969,3 +8969,237 @@ details.story-known > summary small {
 .career-skill-link {
   font-size: var(--fs-text);
 }
+
+/* ------------------------------------------------- Карта данных компании */
+
+.career-tabs {
+  margin-bottom: 14px;
+}
+
+.career-page.career-wide {
+  max-width: 1080px;
+}
+
+.arch-lenses {
+  margin-bottom: 12px;
+}
+
+/* До 1024px слои идут столбцом над карточкой, дальше слева столбец, справа карточка. */
+.arch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .arch-grid {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+}
+
+.arch-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arch-layer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 12px;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--text);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.arch-layer.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+}
+
+.arch-layer.dim {
+  opacity: 0.45;
+}
+
+.arch-layer-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-weight: 600;
+}
+
+.arch-layer-caption {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.arch-here {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.arch-layer-title .arch-here {
+  margin-left: 0;
+}
+
+/* Lakehouse: bronze, silver и gold обведены одной пунктирной рамкой. */
+.arch-lake {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+}
+
+.arch-lake-title {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.arch-lake-note {
+  margin: 0;
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+.arch-card h2 {
+  margin-top: 0;
+}
+
+.arch-card code,
+.arch-trace code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--code);
+  overflow-wrap: anywhere;
+}
+
+.arch-mode {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.arch-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+.arch-trace {
+  margin-top: 14px;
+}
+
+.arch-trace h2 {
+  margin-top: 0;
+}
+
+.arch-step-n {
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+
+.arch-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+/* Точка мала, но тап по ней ловит вся клетка 28x28. */
+.arch-dots button {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.arch-dots button::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.arch-dots button.past::before {
+  background: color-mix(in srgb, var(--accent) 45%, var(--bg-sunken));
+  border-color: var(--accent);
+}
+
+.arch-dots button.on::before {
+  inset: 6px;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.arch-who {
+  margin: 0 0 4px;
+}
+
+.arch-sql-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.arch-sql {
+  margin: 0 0 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: var(--fs-small);
+}
+
+.arch-sql code {
+  white-space: pre;
+}
+
+.arch-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.arch-nav .btn {
+  min-height: var(--tap);
+}
+
+/* Ссылка с карты прокручивает к карточке роли: отступ, чтобы липкая шапка её не закрыла. */
+.career-role-card {
+  scroll-margin-top: 72px;
+}

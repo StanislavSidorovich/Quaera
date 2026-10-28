@@ -102,6 +102,8 @@ const targets = () => {
     // пока нет; русские здесь только комментарии, и их отбрасывает englishOnly.
     'src/content/overview.ts',
     'src/content/tools-compare.json',
+    // Карта данных компании: слои и маршрут Nettora, ru и en в одной записи.
+    'src/content/architecture.json',
     // Схема данных — карточка value_guide и описания колонок в обеих локалях.
     // Генерируется build-dataset.mjs, но гейты и так требуют собранных
     // данных (verify:content читает тот же файл), так что новой зависимости
