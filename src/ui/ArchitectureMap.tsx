@@ -1,18 +1,32 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { architecture } from '../content/architecture';
 import type { ArchLayer, LensId } from '../content/architecture';
 import { careerRole, careerStages } from '../content/career';
+import { skillLevel } from '../career/readiness';
+import type { Progress } from '../srs/store';
 import { useI18n } from '../i18n/context';
 import { FAMILY } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
-const WIDE = '(min-width: 1024px)';
+const WIDE = '(min-width: 1240px)';
+
+type BlockId = 'kaiyo' | 'work' | 'money' | 'practice';
+const BLOCKS: BlockId[] = ['kaiyo', 'work', 'money', 'practice'];
+/** Блок карточки, который линза ставит первым; остальные идут в обычном порядке. */
+const FIRST_BLOCK: Record<LensId, BlockId> = { roles: 'work', quaera: 'practice', money: 'money' };
+
+/**
+ * Линза, на которой карта была в последний раз: кнопка навыка уводит в занятие,
+ * а возврат ставит экран заново. Тот же приём, что у `lastTab` в CareerPage.
+ */
+let lastLens: LensId = 'roles';
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Две колонки от 1024px: тогда карточка справа, иначе раскрывается под своим слоем. */
+/** Цепочка в строку, карточка под ней; уже порога цепочка в столбец, карточка под своим слоем. Порог продублирован в styles.css. */
 function useWide() {
   const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
   useEffect(() => {
@@ -42,12 +56,15 @@ function Rich({ text }: { text: string }) {
  * хранилища нет: выбранный слой и шаг маршрута живут, пока открыта вкладка.
  */
 export function ArchitectureMap({
+  skills,
   skillTitle,
   onStartSkill,
   onOpenRole,
   initialLayer,
   startTrace = false,
 }: {
+  /** Прогресс по навыкам: тот же `progress.skills`, что считает вкладка «Путь к роли». */
+  skills: Progress['skills'];
   skillTitle: (id: string) => string;
   onStartSkill: (skillId: string) => void;
   /** Роль на том же экране: вкладка «Путь к роли», карточка роли. */
@@ -64,7 +81,11 @@ export function ArchitectureMap({
   const [picked, setPicked] = useState(() =>
     initialLayer && architecture.layers.some((l) => l.id === initialLayer) ? initialLayer : DEFAULT_LAYER
   );
-  const [lens, setLens] = useState<LensId>('roles');
+  const [lens, setLensState] = useState<LensId>(lastLens);
+  const setLens = (next: LensId) => {
+    lastLens = next;
+    setLensState(next);
+  };
   const [step, setStep] = useState<number | null>(startTrace ? 0 : null);
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
@@ -87,11 +108,33 @@ export function ArchitectureMap({
     ({ model: t.nav.familyModel, flow: t.nav.familyFlow, pandas: t.nav.familyPandas, lab: t.nav.familyLab })[key];
   const modeName = (mode: 'hands' | 'described') => (mode === 'hands' ? m.modeHands : m.modeDescribed);
 
-  const caption = (l: ArchLayer): string => {
-    if (lens === 'roles') return l.roles.map(roleName).join(', ');
-    if (lens === 'quaera') return modeName(l.practice.mode);
-    return moneyTitle(l.money.kind);
+  /* Содержимое узла зависит от линзы. Внутри кнопки только span: блоки в ней недопустимы. */
+  const nodeBody = (l: ArchLayer) => {
+    if (lens === 'roles') {
+      return (
+        <span className="arch-node-roles">
+          {l.roles.map((id) => (
+            <span key={id}>{roleName(id)}</span>
+          ))}
+        </span>
+      );
+    }
+    if (lens === 'money') return <span className="arch-node-money">{cap(moneyTitle(l.money.kind))}</span>;
+    const levels = l.practice.skills.map((id) => skillLevel(skills[id]));
+    return (
+      <span className="arch-node-progress">
+        <span className="arch-node-count">{m.nodeProgress(levels.filter((n) => n >= 1).length, levels.length)}</span>
+        <span className="arch-node-meter" aria-hidden="true">
+          {levels.map((n, i) => (
+            <i key={i} className={n >= 1 ? 'on' : ''} />
+          ))}
+        </span>
+        {l.practice.mode === 'described' && <span className="arch-node-described">{m.nodeDescribed}</span>}
+      </span>
+    );
   };
+
+  const tierClass = (l: ArchLayer) => (l.lake ? ` arch-tier-${l.id}` : '');
 
   /* Ссылка в Lab у шага с запросом: таблицы берутся из схемы, как у «Открыть в Lab» в задании. */
   const sql = current?.sql;
@@ -131,7 +174,7 @@ export function ArchitectureMap({
     setStep(i);
   };
 
-  /* Группа подряд идущих слоёв lakehouse обводится одной рамкой. */
+  /* Группа подряд идущих слоёв lakehouse обводится одной общей зоной. */
   const groups: ArchLayer[][] = [];
   for (const l of layers) {
     const last = groups[groups.length - 1];
@@ -142,17 +185,16 @@ export function ArchitectureMap({
   const stages = careerStages.filter((s) => layer.stages.includes(s.id));
   const apps = FAMILY.filter((f) => layer.practice.apps.includes(f.key));
 
-  const layerCard = (
-    <>
-      <h2>
-        {layer.title[locale]}
-        {layer.here && <span className="arch-here">{m.hereBadge}</span>}
-      </h2>
-      <p>{layer.what[locale]}</p>
-      <h3 className="career-h3">{m.kaiyoTitle}</h3>
-      <p>
-        <Rich text={layer.kaiyo[locale]} />
-      </p>
+  const blocks: Record<BlockId, ReactNode> = {
+    kaiyo: (
+      <>
+        <h3 className="career-h3">{m.kaiyoTitle}</h3>
+        <p>
+          <Rich text={layer.kaiyo[locale]} />
+        </p>
+      </>
+    ),
+    work: (
       <dl className="career-dl">
         <dt>{m.rolesTitle}</dt>
         <dd>
@@ -189,41 +231,76 @@ export function ArchitectureMap({
             </p>
           )}
         </dd>
+      </dl>
+    ),
+    money: (
+      <dl className="career-dl">
         <dt>{m.moneyTitle}</dt>
         <dd>
           <strong>{cap(moneyTitle(layer.money.kind))}.</strong> {layer.money.text[locale]}
         </dd>
       </dl>
-      <h3 className="career-h3">
-        {m.practiceTitle}: <span className="arch-mode">{modeName(layer.practice.mode)}</span>
-      </h3>
-      <p>
-        <Rich text={layer.practice.text[locale]} />
-      </p>
-      {layer.practice.skills.length > 0 && (
-        <div className="career-gap-actions">
-          {layer.practice.skills.map((id) => (
-            <button key={id} type="button" className="btn secondary career-skill-btn" onClick={() => onStartSkill(id)}>
-              {skillTitle(id)}
-            </button>
-          ))}
-        </div>
-      )}
-      {apps.length > 0 && (
-        <div className="career-apps">
-          {apps.map((f) => (
-            <a
-              key={f.key}
-              href={f.url}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
-            >
-              {appName(f.key)} ↗
-            </a>
-          ))}
-        </div>
-      )}
+    ),
+    practice: (
+      <>
+        <h3 className="career-h3">
+          {m.practiceTitle}: <span className="arch-mode">{modeName(layer.practice.mode)}</span>
+        </h3>
+        <p>
+          <Rich text={layer.practice.text[locale]} />
+        </p>
+        {layer.practice.skills.length > 0 && (
+          <div className="career-gap-actions">
+            {layer.practice.skills.map((id) => {
+              const lvl = skillLevel(skills[id]);
+              return (
+                <button key={id} type="button" className="btn secondary career-skill-btn" onClick={() => onStartSkill(id)}>
+                  <span className="career-dots" role="img" aria-label={t.career.skillLevelAria(lvl)}>
+                    {[1, 2].map((n) => (
+                      <i key={n} className={lvl >= n ? 'on' : ''} />
+                    ))}
+                  </span>
+                  {skillTitle(id)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {apps.length > 0 && (
+          <div className="career-apps">
+            {apps.map((f) => (
+              <a
+                key={f.key}
+                href={f.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
+              >
+                {appName(f.key)} ↗
+              </a>
+            ))}
+          </div>
+        )}
+      </>
+    ),
+  };
+  const first = FIRST_BLOCK[lens];
+
+  /* Заголовок и «что происходит» держат карточку на месте, линза переставляет блоки под ними. */
+  const layerCard = (
+    <>
+      <h2>
+        {layer.title[locale]}
+        {layer.here && <span className="arch-here">{m.hereBadge}</span>}
+      </h2>
+      <p className="arch-what">{layer.what[locale]}</p>
+      <div className="arch-blocks">
+        {[first, ...BLOCKS.filter((b) => b !== first)].map((b) => (
+          <div key={b} className="arch-block">
+            {blocks[b]}
+          </div>
+        ))}
+      </div>
     </>
   );
 
@@ -305,28 +382,32 @@ export function ArchitectureMap({
   );
 
   const detail = (
-    <section ref={detailRef} className={`card arch-card${current ? ' arch-trace' : ''}`} aria-live="polite">
+    <section ref={detailRef} className={`card arch-card${tierClass(layer)}${current ? ' arch-trace' : ''}`} aria-live="polite">
       {traceCard || layerCard}
     </section>
   );
 
+  /* Стрелка между слоями: направление задаёт CSS, вправо в строке и вниз в столбце. */
+  const arrow = <span className="arch-arrow" aria-hidden="true" />;
+
   /* На узком экране карточка раскрывается прямо под выбранным слоем. */
-  const layerButton = (l: ArchLayer) => {
+  const layerButton = (l: ArchLayer, i: number) => {
     const on = l.id === layer.id;
     const dim = current !== null && !on;
     return (
       <Fragment key={l.id}>
+        {i > 0 && arrow}
         <button
           type="button"
           aria-pressed={on}
-          className={`arch-layer${on ? ' on' : ''}${dim ? ' dim' : ''}`}
+          className={`arch-layer${tierClass(l)}${on ? ' on' : ''}${dim ? ' dim' : ''}`}
           onClick={() => pickLayer(l.id)}
         >
           <span className="arch-layer-title">
             {l.title[locale]}
             {l.here && <span className="arch-here">{m.hereBadge}</span>}
           </span>
-          <span className="arch-layer-caption">{caption(l)}</span>
+          <span className="arch-layer-caption">{nodeBody(l)}</span>
         </button>
         {on && !wide && detail}
       </Fragment>
@@ -337,6 +418,15 @@ export function ArchitectureMap({
     <div className="arch">
       <p className="intro-lead">{m.lead}</p>
 
+      {/* Единственное сплошное действие экрана: своё место над картой, чтобы маршрут мог вырасти в главный проход. */}
+      {current === null && (
+        <div className="arch-route">
+          <button type="button" className="btn arch-trace-start" onClick={() => goStep(0)}>
+            {trace.title[locale]}
+          </button>
+        </div>
+      )}
+
       <div className="tabs arch-lenses" role="group" aria-label={m.lensesAria}>
         {architecture.lenses.map((ln) => (
           <button key={ln.id} type="button" aria-pressed={lens === ln.id} onClick={() => setLens(ln.id)}>
@@ -345,23 +435,20 @@ export function ArchitectureMap({
         ))}
       </div>
 
-      {current === null && (
-        <button type="button" className="btn arch-trace-start" onClick={() => goStep(0)}>
-          {trace.title[locale]}
-        </button>
-      )}
-
       <div className="arch-grid">
         <div className="arch-layers" role="group" aria-label={m.layersAria}>
-          {groups.map((g) =>
+          {groups.map((g, gi) =>
             g[0].lake ? (
-              <div key={g[0].id} className="arch-lake">
-                <p className="arch-lake-title">{architecture.lake.title[locale]}</p>
-                {g.map(layerButton)}
-                <p className="arch-lake-note">{architecture.lake.note[locale]}</p>
-              </div>
+              <Fragment key={g[0].id}>
+                {gi > 0 && arrow}
+                <div className="arch-lake">
+                  <p className="arch-lake-title">{architecture.lake.title[locale]}</p>
+                  <div className="arch-lake-row">{g.map(layerButton)}</div>
+                  <p className="arch-lake-note">{architecture.lake.note[locale]}</p>
+                </div>
+              </Fragment>
             ) : (
-              layerButton(g[0])
+              layerButton(g[0], gi)
             )
           )}
         </div>

@@ -9036,36 +9036,195 @@ details.story-known > summary small {
 
 /* ------------------------------------------------- Карта данных компании */
 
-.career-tabs {
+/*
+ * Сплошной синий на карте только у главного действия. Вкладка экрана читается
+ * подчёркиванием, линза сегментом: у них разный вид и ни у кого нет заливки акцентом.
+ */
+.tabs.career-tabs {
+  gap: 4px;
   margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs.career-tabs button {
+  flex: 0 1 auto;
+  min-height: var(--tap);
+  padding: 0 14px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font-size: var(--fs-small);
+}
+
+.tabs.career-tabs button[aria-pressed='true'] {
+  background: none;
+  border-color: var(--text);
+  color: var(--text);
 }
 
 .career-page.career-wide {
   max-width: 1080px;
 }
 
-.arch-lenses {
-  margin-bottom: 12px;
+/* Оттенки слоёв lakehouse: функциональная метка качества данных, а не украшение. */
+:root {
+  --arch-bronze: #cd8f5a;
+  --arch-silver: #aab4c2;
+  --arch-gold: #e3b949;
 }
 
-/* До 1024px слои идут столбцом над карточкой, дальше слева столбец, справа карточка. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --arch-bronze: #9a5b2a;
+    --arch-silver: #64748b;
+    --arch-gold: #a37a00;
+  }
+}
+
+:root.theme-light {
+  --arch-bronze: #9a5b2a;
+  --arch-silver: #64748b;
+  --arch-gold: #a37a00;
+}
+
+:root.theme-dark {
+  --arch-bronze: #cd8f5a;
+  --arch-silver: #aab4c2;
+  --arch-gold: #e3b949;
+}
+
+.arch-tier-bronze {
+  --arch-tier: var(--arch-bronze);
+}
+
+.arch-tier-silver {
+  --arch-tier: var(--arch-silver);
+}
+
+.arch-tier-gold {
+  --arch-tier: var(--arch-gold);
+}
+
+.tabs.arch-lenses {
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 12px;
+  border-radius: 11px;
+  background: var(--bg-sunken);
+}
+
+.tabs.arch-lenses button {
+  min-height: var(--tap);
+  padding: 0 6px;
+  border-color: transparent;
+  background: none;
+}
+
+.tabs.arch-lenses button[aria-pressed='true'] {
+  background: var(--bg-raised);
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.arch-route {
+  margin-bottom: 14px;
+}
+
+/* Цепочка над карточкой; уже порога цепочка столбцом, и карточка живёт внутри неё. */
 .arch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 14px;
-  align-items: start;
 }
 
-@media (min-width: 1024px) {
-  .arch-grid {
-    grid-template-columns: 280px minmax(0, 1fr);
-  }
-}
-
-.arch-layers {
+.arch-layers,
+.arch-lake-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+
+.arch-arrow {
+  display: block;
+  flex: none;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--text-dim);
+}
+
+.arch-arrow::before {
+  content: '↓';
+}
+
+/* Порог продублирован в WIDE (ArchitectureMap.tsx). */
+@media (min-width: 1240px) {
+  .arch-layers {
+    flex-direction: row;
+    align-items: stretch;
+    padding: 14px;
+    border-radius: var(--radius);
+    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+
+  .arch-lake-row {
+    flex-direction: row;
+    flex: 1;
+  }
+
+  /*
+   * Шесть узлов равной ширины: зона lakehouse занимает три доли. Уже самого
+   * длинного слова узел не сжимается: при A++ цепочка прокрутится сама, а не обрежет название.
+   */
+  .arch-layers {
+    overflow-x: auto;
+  }
+
+  .arch-layers > .arch-layer {
+    flex: 1 1 0;
+    min-width: min-content;
+  }
+
+  .arch-lake {
+    flex: 3.5 1 0;
+    min-width: min-content;
+  }
+
+  .tabs.arch-lenses {
+    max-width: 560px;
+  }
+
+  .arch-lake-row > .arch-layer {
+    flex: 1 1 0;
+    min-width: min-content;
+  }
+
+  .arch-arrow {
+    align-self: center;
+    width: 20px;
+  }
+
+  .arch-arrow::before {
+    content: '→';
+  }
+
+  .arch-route .btn {
+    width: auto;
+    padding: 0 24px;
+  }
+
+  /* Карточка во всю ширину: блоки в две колонки, строка абзаца остаётся читаемой. */
+  .arch-blocks {
+    columns: 2;
+    column-gap: 32px;
+  }
+
+  .arch-block {
+    break-inside: avoid;
+  }
 }
 
 .arch-layer {
@@ -9088,9 +9247,19 @@ details.story-known > summary small {
   scroll-margin-top: 72px;
 }
 
-.arch-layer.on {
+.arch-layer[class*='arch-tier-'] {
+  border-top: 3px solid var(--arch-tier);
+  background: color-mix(in srgb, var(--arch-tier) 8%, var(--bg-raised));
+}
+
+.arch-layer.on,
+.arch-layer[class*='arch-tier-'].on {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.arch-layer[class*='arch-tier-'].on {
+  border-top-color: var(--arch-tier);
 }
 
 .arch-layer.dim {
@@ -9110,6 +9279,76 @@ details.story-known > summary small {
   color: var(--text-dim);
 }
 
+.arch-node-roles,
+.arch-node-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arch-node-count {
+  color: var(--text);
+}
+
+.arch-node-meter {
+  display: flex;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.arch-node-meter i {
+  flex: 1;
+  max-width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.arch-node-meter i.on {
+  background: var(--ok);
+}
+
+.arch-node-described {
+  font-size: var(--fs-micro);
+  font-style: italic;
+}
+
+.career-skill-btn .career-dots {
+  margin-right: 8px;
+}
+
+.arch-what {
+  max-width: 72ch;
+}
+
+/* Блоки разведены сильнее, чем строки внутри них; верх колонок на одной линии. */
+.arch-block {
+  padding-bottom: 18px;
+}
+
+.arch-card .arch-block > :first-child {
+  margin-top: 0;
+}
+
+.arch-block > :last-child {
+  margin-bottom: 0;
+}
+
+.arch-block .career-apps {
+  margin-top: 12px;
+}
+
+/* В столбце карточка отделена от своего узла: иначе рамки слипаются. */
+.arch-layer + .arch-card {
+  margin-top: 6px;
+}
+
+.arch-tier-bronze.arch-card,
+.arch-tier-silver.arch-card,
+.arch-tier-gold.arch-card {
+  border-top: 3px solid var(--arch-tier);
+}
+
 .arch-here {
   display: inline-block;
   margin-left: 8px;
@@ -9126,7 +9365,7 @@ details.story-known > summary small {
   margin-left: 0;
 }
 
-/* Lakehouse: bronze, silver и gold обведены одной пунктирной рамкой. */
+/* Lakehouse: bronze, silver и gold обведены одной пунктирной зоной; фон закрывает сетку под подписями. */
 .arch-lake {
   display: flex;
   flex-direction: column;
@@ -9134,6 +9373,7 @@ details.story-known > summary small {
   padding: 10px;
   border: 2px dashed var(--line);
   border-radius: 14px;
+  background: var(--bg);
 }
 
 .arch-lake-title {

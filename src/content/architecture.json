@@ -5,15 +5,15 @@
   },
 
   "lenses": [
-    { "id": "roles", "title": { "ru": "Роли", "en": "Roles" } },
-    { "id": "quaera", "title": { "ru": "Где это в Quaera", "en": "Where it is in Quaera" } },
-    { "id": "money", "title": { "ru": "Кто за что платит", "en": "Who pays for what" } }
+    { "id": "roles", "title": { "ru": "Кто работает", "en": "Who works here" } },
+    { "id": "quaera", "title": { "ru": "Мой прогресс", "en": "My progress" } },
+    { "id": "money", "title": { "ru": "За что платят", "en": "What gets paid for" } }
   ],
 
   "money": [
     { "id": "work", "title": { "ru": "лицензии ради работы", "en": "licences for the work" } },
-    { "id": "storage", "title": { "ru": "дёшево", "en": "cheap" } },
-    { "id": "compute", "title": { "ru": "вычисления", "en": "compute" } },
+    { "id": "storage", "title": { "ru": "гигабайты хранения", "en": "gigabytes stored" } },
+    { "id": "compute", "title": { "ru": "время вычислений", "en": "compute time" } },
     { "id": "seats", "title": { "ru": "лицензии на людей", "en": "per-person licences" } },
     { "id": "people", "title": { "ru": "время людей", "en": "people's time" } }
   ],

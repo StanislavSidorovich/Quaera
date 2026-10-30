@@ -234,6 +234,7 @@ export function CareerPage({
         <ArchitectureMap
           initialLayer={openMap?.layer}
           startTrace={openMap?.trace}
+          skills={progress.skills}
           skillTitle={skillTitle}
           onStartSkill={onStartSkill}
           onOpenRole={(id) => {
