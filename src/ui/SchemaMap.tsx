@@ -27,6 +27,7 @@ export function SchemaMap({
   onOpenTable,
   highlight,
   legend = true,
+  intro = true,
 }: {
   doc: SchemaDoc;
   /**
@@ -40,6 +41,11 @@ export function SchemaMap({
    * там нужна форма целиком, не разбор стрелок (он есть на экране «Данные»).
    */
   legend?: boolean;
+  /**
+   * Абзац над схемой. В урезанной звезде (карточка слоя gold на «Карте данных»)
+   * он неверен: говорит, что фактов несколько, а на картинке один.
+   */
+  intro?: boolean;
   /**
    * Раскрыть и показать таблицу в списке ниже. Необязателен: в брошюре
    * `?overview` списка таблиц нет вовсе, и раскрывать нечего. Тогда узлы
@@ -56,9 +62,11 @@ export function SchemaMap({
 
   return (
     <>
-      <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.55 }}>
-        {open ? `${t.data.mapIntro} ${t.data.mapIntroOpen}` : t.data.mapIntro}
-      </p>
+      {intro && (
+        <p className="muted" style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.55 }}>
+          {open ? `${t.data.mapIntro} ${t.data.mapIntroOpen}` : t.data.mapIntro}
+        </p>
+      )}
       {/*
        * Своя горизонтальная прокрутка, а не вписывание по ширине: тот же
        * приём, что у примеров строк в TableDoc. Вписывание уменьшало бы
