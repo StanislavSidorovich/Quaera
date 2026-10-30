@@ -283,10 +283,11 @@ const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
 
 /**
  * `?roles` — прямая ссылка на экран «Путь к роли», `?roles=map` — сразу
- * на его вкладку «Карта данных» (для ссылок в постах и сообщениях).
+ * на его вкладку «Карта данных», `?roles=project` — на первую станцию маршрута
+ * «Проект от и до» (для ссылок в постах и сообщениях).
  * Параметр стирается из адреса по той же причине, что у `?intro`.
  */
-function readRolesOpenOnBoot(): 'path' | 'map' | null {
+function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | null {
   try {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('roles')) return null;
@@ -295,7 +296,7 @@ function readRolesOpenOnBoot(): 'path' | 'map' | null {
     const rest = params.toString();
     window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
     if (value === '0') return null;
-    return value === 'map' ? 'map' : 'path';
+    return value === 'map' || value === 'project' ? value : 'path';
   } catch {
     return null;
   }
@@ -516,7 +517,7 @@ type Screen =
    */
   | { name: 'overview' }
   /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
-  | { name: 'career'; map?: { layer?: string; trace?: boolean } }
+  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean } }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -712,7 +713,10 @@ function initialBoot(locale: Locale): Boot {
    */
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
   if (ROLES_OPEN_ON_BOOT)
-    return { screen: ROLES_OPEN_ON_BOOT === 'map' ? { name: 'career', map: {} } : { name: 'career' }, ...empty };
+    return { screen:
+        ROLES_OPEN_ON_BOOT === 'path'
+          ? { name: 'career' }
+          : { name: 'career', map: ROLES_OPEN_ON_BOOT === 'project' ? { project: true } : {} }, ...empty };
   if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
     const mission = storyEntryMission(locale);

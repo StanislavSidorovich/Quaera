@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/context';
 import { FAMILY } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
+import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
 const WIDE = '(min-width: 1240px)';
@@ -111,6 +112,7 @@ export function ArchitectureMap({
   onOpenRole,
   initialLayer,
   startTrace = false,
+  startProject = false,
 }: {
   /** Прогресс по навыкам: тот же `progress.skills`, что считает вкладка «Путь к роли». */
   skills: Progress['skills'];
@@ -122,6 +124,8 @@ export function ArchitectureMap({
   initialLayer?: string;
   /** Открыться сразу на первом шаге маршрута. */
   startTrace?: boolean;
+  /** Открыться сразу на первой станции маршрута «Проект от и до». */
+  startProject?: boolean;
 }) {
   const { t, locale } = useI18n();
   const m = t.career.map;
@@ -136,6 +140,9 @@ export function ArchitectureMap({
     setLensState(next);
   };
   const [step, setStep] = useState<number | null>(startTrace ? 0 : null);
+  /* Станция «Проекта от и до»: индекс; на единицу больше последней станции стоит финиш. Отметки финиша только в состоянии экрана. */
+  const [pstep, setPstep] = useState<number | null>(startProject ? 0 : null);
+  const [marks, setMarks] = useState<Set<string>>(() => new Set());
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
   const [tool, setTool] = useState<string | null>(null);
@@ -143,9 +150,11 @@ export function ArchitectureMap({
   const detailRef = useRef<HTMLElement>(null);
   const touched = useRef(false);
 
-  const { trace, layers } = architecture;
+  const { trace, layers, project } = architecture;
   const current = step === null ? null : trace.steps[step];
-  const selectedId = current ? current.layer : picked;
+  const pstation = pstep === null ? null : project.stations[Math.min(pstep, project.stations.length - 1)];
+  const routing = current !== null || pstep !== null;
+  const selectedId = current ? current.layer : pstation ? pstation.layer : picked;
   const layer = layers.find((l) => l.id === selectedId) ?? layers[0];
 
   /* Подсказка открыта, только пока инструмент есть в выбранном слое. */
@@ -211,17 +220,30 @@ export function ArchitectureMap({
     /* На узком экране к верху встаёт сам слой, под ним карточка: видно, где шаг. */
     const target = wide ? detailRef.current : detailRef.current?.previousElementSibling;
     target?.scrollIntoView({ block: wide ? 'nearest' : 'start', behavior: 'smooth' });
-  }, [selectedId, step, wide]);
+  }, [selectedId, step, pstep, wide]);
 
   const pickLayer = (id: string) => {
     touched.current = true;
     setStep(null);
+    setPstep(null);
     setPicked(id);
   };
   const goStep = (i: number | null) => {
     touched.current = true;
+    setPstep(null);
     setStep(i);
   };
+  const goProject = (i: number | null) => {
+    touched.current = true;
+    setStep(null);
+    setPstep(i);
+  };
+  const toggleMark = (id: string) =>
+    setMarks((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
 
   /* Группа подряд идущих слоёв lakehouse обводится одной общей зоной. */
   const groups: ArchLayer[][] = [];
@@ -437,9 +459,32 @@ export function ArchitectureMap({
     </>
   );
 
+  const projectCard =
+    pstep === null ? null : pstep >= project.stations.length ? (
+      <ProjectFinishCard
+        marks={marks}
+        onToggle={toggleMark}
+        onGo={goProject}
+        onClose={() => goProject(null)}
+        onOpenRole={onOpenRole}
+        onNext={() => goStep(0)}
+      />
+    ) : (
+      <ProjectStationCard
+        key={pstep}
+        index={pstep}
+        skills={skills}
+        skillTitle={skillTitle}
+        onStartSkill={onStartSkill}
+        onOpenRole={onOpenRole}
+        onGo={goProject}
+        onClose={() => goProject(null)}
+      />
+    );
+
   const detail = (
-    <section ref={detailRef} className={`card arch-card${tierClass(layer)}${current ? ' arch-trace' : ''}`} aria-live="polite" aria-label={!current && !wide ? layer.title[locale] : undefined}>
-      {traceCard || layerCard}
+    <section ref={detailRef} className={`card arch-card${tierClass(layer)}${routing ? ' arch-trace' : ''}`} aria-live={pstep === null ? 'polite' : undefined} aria-label={!routing && !wide ? layer.title[locale] : undefined}>
+      {projectCard || traceCard || layerCard}
     </section>
   );
 
@@ -449,7 +494,7 @@ export function ArchitectureMap({
   /* На узком экране карточка раскрывается прямо под выбранным слоем. */
   const layerButton = (l: ArchLayer, i: number) => {
     const on = l.id === layer.id;
-    const dim = current !== null && !on;
+    const dim = routing && !on;
     return (
       <Fragment key={l.id}>
         {i > 0 && arrow}
@@ -475,9 +520,12 @@ export function ArchitectureMap({
       <p className="intro-lead">{m.lead}</p>
 
       {/* Единственное сплошное действие экрана: своё место над картой, чтобы маршрут мог вырасти в главный проход. */}
-      {current === null && (
+      {!routing && (
         <div className="arch-route">
-          <button type="button" className="btn arch-trace-start" onClick={() => goStep(0)}>
+          <button type="button" className="btn arch-trace-start" onClick={() => goProject(0)}>
+            {project.title[locale]}
+          </button>
+          <button type="button" className="btn secondary arch-trace-start" onClick={() => goStep(0)}>
             {trace.title[locale]}
           </button>
         </div>

@@ -60,7 +60,7 @@ export function CareerPage({
   /** Карточка приёма навыка. */
   onOpenSkill: (skillId: string) => void;
   /** Открыться на вкладке карты: с главной или по адресу `?roles=map`. */
-  openMap?: { layer?: string; trace?: boolean };
+  openMap?: { layer?: string; trace?: boolean; project?: boolean };
 }) {
   const { t, locale } = useI18n();
   const c = t.career;
@@ -235,6 +235,7 @@ export function CareerPage({
         <ArchitectureMap
           initialLayer={openMap?.layer}
           startTrace={openMap?.trace}
+          startProject={openMap?.project}
           skills={progress.skills}
           skillTitle={skillTitle}
           onStartSkill={onStartSkill}
