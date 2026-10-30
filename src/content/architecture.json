@@ -1820,8 +1820,8 @@
         "en": "Cleaning on real data"
       },
       "caption": {
-        "ru": "Включайте шаги и смотрите на числа: каждый раз считается настоящий запрос к `staging_raw_sellout`.",
-        "en": "Switch the steps on and watch the numbers: each time a real query runs against `staging_raw_sellout`."
+        "ru": "Включайте шаги и смотрите на числа: каждое сочетание посчитано настоящим запросом к `staging_raw_sellout`, его можно открыть в Lab.",
+        "en": "Switch the steps on and watch the numbers: each combination was computed by a real query on `staging_raw_sellout`, and you can open it in Lab."
       },
       "toggles": {
         "trim": {
