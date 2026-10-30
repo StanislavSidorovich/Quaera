@@ -9811,3 +9811,248 @@ figure.arch-figure {
 .arch-fold {
   margin-top: 12px;
 }
+
+/* Артефакты слоёв «Карты данных»: что в слое реально лежит. Только токены темы, новых цветов нет. */
+.arch-art {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-sunken);
+  min-width: 0;
+}
+
+.arch-art > .career-h3 {
+  margin-top: 0;
+}
+
+.arch-art-caption {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+}
+
+.arch-art-pairs {
+  display: grid;
+  gap: 14px;
+}
+
+.arch-art-pair {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.arch-art-event {
+  margin: 0;
+  font-size: var(--fs-text);
+}
+
+/* Стрелка «событие → строка»: вниз в узкой раскладке, вправо в широкой. */
+.arch-art-arrow {
+  justify-self: start;
+  width: 2px;
+  height: 14px;
+  margin-left: 10px;
+  background: var(--line);
+  position: relative;
+}
+
+.arch-art-arrow::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  bottom: -2px;
+  border: 5px solid transparent;
+  border-top-color: var(--text-dim);
+  border-bottom: 0;
+}
+
+.arch-art-row {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  min-width: 0;
+}
+
+.arch-art-tag {
+  margin: 0 0 4px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.arch-art-row dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.arch-art-row dt {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.arch-art-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.arch-art-scroll {
+  overflow-x: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.arch-art-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  white-space: pre;
+}
+
+.arch-art-table th,
+.arch-art-table td {
+  padding: 5px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.arch-art-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.arch-art-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.arch-art-toggles {
+  margin-bottom: 8px;
+}
+
+.arch-art-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.arch-art-metrics > div {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.arch-art-metrics dd {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.arch-art-metrics dt {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+/* Число, которое отличается от сырого, подчёркнуто акцентом: цвет не единственный признак, сами цифры тоже другие. */
+.arch-art-metrics .changed dd {
+  color: var(--accent);
+}
+
+.arch-art-query .arch-sql {
+  margin-bottom: 0;
+}
+
+.arch-art-grain {
+  margin: 0 0 10px;
+}
+
+.arch-art-star {
+  min-width: 0;
+}
+
+.arch-art-dax code {
+  font-family: var(--font-mono);
+}
+
+.arch-art-slide {
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.arch-art-slide figcaption {
+  margin-bottom: 8px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.arch-art-slide blockquote {
+  margin: 0;
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@media (min-width: 760px) {
+  .arch-art-pairs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Звезда в карточке слоя вписывается в ширину: пять узлов, и на телефоне важна форма целиком, а не прокрутка. */
+.arch-art-star .schema-map {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Узкий экран: строка bronze разворачивается в пары «колонка: значение», иначе пробелы, регистр и файл уезжают за край таблицы. */
+@media (max-width: 759px) {
+  .arch-art-table,
+  .arch-art-table tbody,
+  .arch-art-table tr,
+  .arch-art-table td {
+    display: block;
+  }
+
+  .arch-art-table thead {
+    display: none;
+  }
+
+  .arch-art-table tr {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .arch-art-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .arch-art-table td {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0 12px;
+    padding: 1px 10px;
+    border: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .arch-art-table td::before {
+    content: attr(data-label);
+    color: var(--text-dim);
+  }
+}

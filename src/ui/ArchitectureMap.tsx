@@ -12,6 +12,7 @@ import { FAMILY } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
+import { LayerArtifact } from './LayerArtifact';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
 const WIDE = '(min-width: 1240px)';
@@ -371,6 +372,7 @@ export function ArchitectureMap({
         </h2>
       )}
       <p className="arch-what">{layer.what[locale]}</p>
+      <LayerArtifact layerId={layer.id} />
       <div className="arch-blocks">
         {[first, ...BLOCKS.filter((b) => b !== first)].map((b) => (
           <div key={b} className="arch-block">
