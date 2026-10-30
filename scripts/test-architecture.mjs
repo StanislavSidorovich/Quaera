@@ -140,6 +140,20 @@ arch.trace.steps.forEach((s, i) => {
     fail(`шаг ${i + 1}.sql`, e.message);
   }
 });
+// График: значения в architecture.json должны совпасть с запросом шага «split» построчно.
+{
+  const fig = arch.trace.figure;
+  const split = arch.trace.steps.find((s) => s.figure === 'split');
+  check('график: у маршрута есть шаги line и split', !!split && arch.trace.steps.some((s) => s.figure === 'line'), 'нет шага с figure line или split');
+  for (const k of ['units', 'outlets', 'perOutlet']) checkText(`figure.names.${k}`, fig.names?.[k]);
+  if (split?.sql) {
+    const rows = db.exec(split.sql)[0]?.values ?? [];
+    const want = JSON.stringify(rows.map((r) => [r[0], r[1], r[2]]));
+    const have = JSON.stringify(fig.months.map((m, i) => [m, fig.outlets[i], fig.units[i]]));
+    check('график: месяцы, точки и штуки совпадают с запросом шага', want === have, `запрос: ${want}
+  файл:   ${have}`);
+  }
+}
 check('запросы: у маршрута есть хотя бы один', queries > 0, 'ни одного sql в маршруте');
 
 console.log(failed ? `\n${failed} проверок не прошло.` : '\nКарта данных согласована.');

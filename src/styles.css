@@ -9524,6 +9524,17 @@ details.story-known > summary small {
   white-space: pre;
 }
 
+/* График шага маршрута: тот же Chart, что у результата запроса; разложение идёт тремя столбиками в ряд, на узком экране друг под другом. */
+.arch-figure {
+  margin: 0 0 10px;
+}
+
+.arch-figure-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 12px 20px;
+}
+
 .arch-nav {
   display: flex;
   flex-wrap: wrap;

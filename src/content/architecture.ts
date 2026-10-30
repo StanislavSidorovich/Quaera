@@ -45,6 +45,16 @@ export interface ArchStep {
   who: Text;
   text: Text;
   sql?: string;
+  /** График под текстом шага: линия штук по месяцам или разложение «точки × штук на точку». */
+  figure?: 'line' | 'split';
+}
+
+/** Месячные значения Nettora за 2025: `test:architecture` сверяет их с запросом шага «split». */
+export interface ArchFigure {
+  months: string[];
+  outlets: number[];
+  units: number[];
+  names: Record<'units' | 'outlets' | 'perOutlet', Text>;
 }
 
 export interface Architecture {
@@ -54,7 +64,7 @@ export interface Architecture {
   /** Одна фраза «что это и кто им пользуется» на каждый инструмент из `layers[].tools`. */
   tools: Record<string, Text>;
   layers: ArchLayer[];
-  trace: { id: string; title: Text; steps: ArchStep[] };
+  trace: { id: string; title: Text; figure: ArchFigure; steps: ArchStep[] };
 }
 
 export const architecture = raw as unknown as Architecture;
