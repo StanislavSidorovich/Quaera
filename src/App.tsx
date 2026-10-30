@@ -290,16 +290,33 @@ const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
 function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | null {
   try {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has('roles')) return null;
+    if (!params.has('roles')) {
+      /*
+       * Первый заход со старой сборкой в service worker: воркер берёт страницу под
+       * контроль и main.tsx перезагружает её (флаг SW_RELOAD_KEY), а параметр к тому
+       * времени уже стёрт из адреса. Значение ждёт в sessionStorage ровно эту перезагрузку.
+       */
+      const pending = sessionStorage.getItem(ROLES_PENDING_KEY);
+      const reloaded = sessionStorage.getItem(SW_RELOAD_KEY);
+      sessionStorage.removeItem(ROLES_PENDING_KEY);
+      sessionStorage.removeItem(SW_RELOAD_KEY);
+      return pending && reloaded ? rolesTarget(pending) : null;
+    }
     const value = params.get('roles');
+    sessionStorage.setItem(ROLES_PENDING_KEY, value ?? '');
     params.delete('roles');
     const rest = params.toString();
     window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
-    if (value === '0') return null;
-    return value === 'map' || value === 'project' ? value : 'path';
+    return rolesTarget(value);
   } catch {
     return null;
   }
+}
+const ROLES_PENDING_KEY = 'quaera-roles-pending';
+const SW_RELOAD_KEY = 'quaera-sw-reload';
+function rolesTarget(value: string | null): 'path' | 'map' | 'project' | null {
+  if (value === '0') return null;
+  return value === 'map' || value === 'project' ? value : 'path';
 }
 const ROLES_OPEN_ON_BOOT = readRolesOpenOnBoot();
 

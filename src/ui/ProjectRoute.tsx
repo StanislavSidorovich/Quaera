@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { architecture } from '../content/architecture';
 import type { ProjectExternal, ProjectQuery, ProjectStation } from '../content/architecture';
 import { careerRole } from '../content/career';
@@ -21,6 +22,19 @@ function Rich({ text }: { text: string }) {
     <>
       {text.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <Fragment key={i}>{part}</Fragment>))}
     </>
+  );
+}
+
+/** Свёрнутый по умолчанию блок с числом пунктов в заголовке, как блок большого файла. */
+function Fold({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="arch-block arch-fold">
+      <button type="button" className="arch-link" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {open ? '▾' : '▸'} {title} ({count})
+      </button>
+      {open && <div>{children}</div>}
+    </div>
   );
 }
 
@@ -183,7 +197,7 @@ export function ProjectStationCard({
     <>
       <h2>{project.title[locale]}</h2>
       <p className="muted arch-step-n">
-        {p.stationOf(index + 1, stations.length)} · {layer?.title[locale]} · {p.minutes(project.minutes)}
+        {p.stationOf(index + 1, stations.length)} · {layer?.title[locale]}{index === 0 && ` · ${p.minutes(project.minutes)}`}
       </p>
       <div className="arch-dots" role="group" aria-label={p.dots}>
         {stations.map((st, i) => (
@@ -198,17 +212,20 @@ export function ProjectStationCard({
         ))}
       </div>
 
-      <div className="arch-case">
-        <p className="arch-case-who muted">
-          {project.case.who[locale]} {p.question}:
-        </p>
-        <p className="arch-case-q">{project.case.question[locale]}</p>
-      </div>
-      {index === 0 && <p>{project.intro[locale]}</p>}
+      {index === 0 && (
+        <>
+          <div className="arch-case">
+            <p className="arch-case-who muted">
+              {project.case.who[locale]} {p.question}:
+            </p>
+            <p className="arch-case-q">{project.case.question[locale]}</p>
+          </div>
+          <p>{project.intro[locale]}</p>
+        </>
+      )}
 
       <h3 className="career-h3 arch-station-title">
         {s.title[locale]}
-        {s.optional && <span className="arch-here">{p.optional}</span>}
       </h3>
 
       <span className={`arch-label arch-label-${s.label}`} title={label.note[locale]}>
@@ -233,7 +250,7 @@ export function ProjectStationCard({
             </>
           )}
         </dd>
-        <dt>{s.receives.from ? p.receivedFrom(roleName(s.receives.from)) : p.receivedBusiness}</dt>
+        <dt>{!s.receives.from ? p.receivedBusiness : s.receives.from === s.role ? p.continues : p.receivedFrom(roleName(s.receives.from))}</dt>
         <dd>
           <Rich text={s.receives.text[locale]} />
         </dd>
@@ -263,7 +280,7 @@ export function ProjectStationCard({
             </p>
           )}
         </dd>
-        <dt>{s.hands.to ? p.handedTo(roleName(s.hands.to)) : p.handedBusiness}</dt>
+        <dt>{!s.hands.to ? p.handedBusiness : s.hands.to === s.role ? p.carriesOn : p.handedTo(roleName(s.hands.to))}</dt>
         <dd>
           <Rich text={s.hands.text[locale]} />
         </dd>
@@ -327,18 +344,16 @@ export function ProjectStationCard({
           </div>
         )}
         {s.label === 'outside' && externals.length > 0 && (
-          <div className="arch-externals">
-            <h4 className="arch-h4">{p.conditions}</h4>
+          <Fold title={p.conditions} count={externals.length}>
             {externals.map((e) => (
               <ExternalBlock key={e.id} ext={e} />
             ))}
-          </div>
+          </Fold>
         )}
       </div>
 
       {s.lessons && s.lessons.length > 0 && (
-        <div className="arch-block">
-          <h3 className="career-h3">{p.lessonsTitle}</h3>
+        <Fold title={p.lessonsTitle} count={s.lessons.length}>
           <ul className="arch-lessons">
             {s.lessons.map((ls, i) => {
               const src = ls.source ? project.external.find((e) => e.id === ls.source) : undefined;
@@ -357,7 +372,7 @@ export function ProjectStationCard({
               );
             })}
           </ul>
-        </div>
+        </Fold>
       )}
 
       {s.bigFile && (

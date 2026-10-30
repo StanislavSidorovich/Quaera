@@ -603,15 +603,7 @@
             "dom-metric-definition",
             "dom-sellin-sellout"
           ]
-        },
-        "lessons": [
-          {
-            "text": {
-              "ru": "Описывая организацию, опирайтесь на её отчёты и регламенты, а не на новостные пересказы.",
-              "en": "To describe an organisation, rely on its own reports and rules, not on news retellings."
-            }
-          }
-        ]
+        }
       },
       {
         "id": "connect",
@@ -1530,8 +1522,8 @@
         "en": "Which stations did you enjoy?"
       },
       "text": {
-        "ru": "Такая роль вам и ближе. Отметьте станции, и экран покажет подходящие роли; дальше откроется «Путь к роли».",
-        "en": "That is the role closest to you. Mark the stations, and the screen shows the matching roles; from there the Path to a role screen opens."
+        "ru": "Отметьте станции, которые понравились: экран покажет близкие роли.",
+        "en": "Tick the stations you liked: the screen shows the roles closest to them."
       },
       "roles": [
         {

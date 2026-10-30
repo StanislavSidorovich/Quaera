@@ -43,6 +43,13 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
    * и смена — это всегда реальный апдейт.
    */
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (hadController) window.location.reload();
+    if (!hadController) return;
+    /* Перезагрузка стирает адрес, App уже убрал из него `?roles=`: флаг даёт ему вернуть экран. */
+    try {
+      sessionStorage.setItem('quaera-sw-reload', '1');
+    } catch {
+      // без sessionStorage адрес-ссылка просто не переживёт перезагрузку
+    }
+    window.location.reload();
   });
 }
