@@ -335,13 +335,19 @@ export function ArchitectureMap({
   };
   const first = FIRST_BLOCK[lens];
 
-  /* Заголовок и «что происходит» держат карточку на месте, линза переставляет блоки под ними. */
+  /*
+   * Заголовок и «что происходит» держат карточку на месте, линза переставляет блоки под ними.
+   * На узкой раскладке карточка стоит прямо под кнопкой своего слоя с тем же названием и
+   * меткой, поэтому заголовок там не повторяется; имя для чтения с экрана берёт aria-label.
+   */
   const layerCard = (
     <>
-      <h2>
-        {layer.title[locale]}
-        {layer.here && <span className="arch-here">{m.hereBadge}</span>}
-      </h2>
+      {wide && (
+        <h2>
+          {layer.title[locale]}
+          {layer.here && <span className="arch-here">{m.hereBadge}</span>}
+        </h2>
+      )}
       <p className="arch-what">{layer.what[locale]}</p>
       <div className="arch-blocks">
         {[first, ...BLOCKS.filter((b) => b !== first)].map((b) => (
@@ -432,7 +438,7 @@ export function ArchitectureMap({
   );
 
   const detail = (
-    <section ref={detailRef} className={`card arch-card${tierClass(layer)}${current ? ' arch-trace' : ''}`} aria-live="polite">
+    <section ref={detailRef} className={`card arch-card${tierClass(layer)}${current ? ' arch-trace' : ''}`} aria-live="polite" aria-label={!current && !wide ? layer.title[locale] : undefined}>
       {traceCard || layerCard}
     </section>
   );

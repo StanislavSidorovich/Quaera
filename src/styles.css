@@ -9431,6 +9431,11 @@ details.story-known > summary small {
   max-width: 72ch;
 }
 
+/* На узкой раскладке заголовка в карточке нет, абзац стоит первым. */
+.arch-what:first-child {
+  margin-top: 0;
+}
+
 /* Блоки разведены сильнее, чем строки внутри них; верх колонок на одной линии. */
 .arch-block {
   padding-bottom: 18px;
