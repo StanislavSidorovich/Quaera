@@ -44,7 +44,11 @@
     "Python": { "ru": "Язык общего назначения. Аналитик берёт его с pandas для того, что неудобно в SQL: сложной чистки, статистики, прогнозов.", "en": "A general-purpose language. Analysts use it with pandas for what is awkward in SQL: messy cleaning, statistics, forecasts." },
     "Jupyter": { "ru": "Тетрадь, где код, результат и пояснения идут ячейками подряд. Так работают аналитики и data scientists; Google Colab тоже тетрадь Jupyter.", "en": "A notebook where code, output and notes alternate in cells. Analysts and data scientists work this way; Google Colab is a Jupyter notebook too." },
     "PowerPoint": { "ru": "Слайды. Вывод аналитика чаще доходит до руководства именно так, а не дашбордом.", "en": "Slides. An analyst's conclusion reaches management this way more often than as a dashboard." },
-    "Teams": { "ru": "Чат и встречи Microsoft: здесь обсуждают цифры, сюда же можно встроить отчёт Power BI.", "en": "Microsoft's chat and meetings: the numbers are discussed here, and a Power BI report can be embedded right in it." }
+    "Teams": { "ru": "Чат и встречи Microsoft: здесь обсуждают цифры, сюда же можно встроить отчёт Power BI.", "en": "Microsoft's chat and meetings: the numbers are discussed here, and a Power BI report can be embedded right in it." },
+    "DuckDB": { "ru": "Бесплатный движок SQL, который ставится на компьютер и читает CSV и Parquet прямо с диска. Большой файл можно осмотреть, не загружая его целиком в память. На нём работает Quaera Lab.", "en": "A free SQL engine you install on your own computer. It reads CSV and Parquet straight from disk, so a big file can be inspected without loading it all into memory. Quaera Lab runs on it." },
+    "Dataflow Gen2": { "ru": "Загрузка и чистка мышью внутри Microsoft Fabric, тот же Power Query. Им пользуются аналитики и инженеры данных, когда код не нужен.", "en": "Point-and-click loading and cleaning inside Microsoft Fabric, the same Power Query. Used by analysts and data engineers when no code is needed." },
+    "Fabric Notebook": { "ru": "Тетрадь с кодом Spark внутри Microsoft Fabric. Её берут, когда нужно самому задать типы колонок или обработать большой объём.", "en": "A notebook with Spark code inside Microsoft Fabric. It is the choice when you need to set column types yourself or process a large volume." },
+    "SQL analytics endpoint": { "ru": "SQL только для чтения поверх таблиц Lakehouse в Fabric. Видит только таблицы Delta, а CSV из папки Files не видит.", "en": "Read-only SQL on top of Lakehouse tables in Fabric. It sees Delta tables only, not a CSV in the Files area." }
   },
 
   "layers": [
@@ -335,5 +339,1339 @@
         }
       }
     ]
+  },
+
+  "project": {
+    "id": "end-to-end",
+    "title": {
+      "ru": "Проект от и до",
+      "en": "A project from start to finish"
+    },
+    "intro": {
+      "ru": "Один вопрос директора проходит весь путь: от данных до ответа. На каждой станции видно, кто работает, что получил, что сделал и кому передал. Что можно сделать в браузере, сделаете сами; что нельзя, честно отправим наружу.",
+      "en": "One question from the director travels the whole way, from data to answer. At each station you see who works there, what they received, what they did and who they handed it to. What a browser can do, you do yourself; what it cannot, we honestly send you elsewhere for."
+    },
+    "minutes": 15,
+    "case": {
+      "question": {
+        "ru": "Выполнили ли мы план продаж за 2025 год, и где недобор?",
+        "en": "Did we hit the 2025 sales target, and where is the shortfall?"
+      },
+      "who": {
+        "ru": "Коммерческий директор Kaiyo",
+        "en": "Kaiyo sales director"
+      }
+    },
+    "labels": [
+      {
+        "id": "here",
+        "title": {
+          "ru": "Сделать здесь",
+          "en": "Do it here"
+        },
+        "note": {
+          "ru": "Хватает браузера: тренажёр, Lab или Model.",
+          "en": "A browser is enough: the trainer, Lab or Model."
+        }
+      },
+      {
+        "id": "watch",
+        "title": {
+          "ru": "Посмотреть",
+          "en": "Watch"
+        },
+        "note": {
+          "ru": "Руками здесь не сделать, читаем как устроено.",
+          "en": "Cannot be done by hand here, so read how it works."
+        }
+      },
+      {
+        "id": "outside",
+        "title": {
+          "ru": "Попробовать снаружи",
+          "en": "Try it elsewhere"
+        },
+        "note": {
+          "ru": "Нужна чужая программа или облако, условия указаны с датой проверки.",
+          "en": "Takes someone else's software or cloud; the conditions are listed with the date they were checked."
+        }
+      }
+    ],
+    "external": [
+      {
+        "id": "fabric-trial",
+        "kind": "try",
+        "name": "Microsoft Fabric trial",
+        "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial",
+        "checked": "2026-10-30",
+        "also": [
+          "https://learn.microsoft.com/en-us/power-bi/fundamentals/service-self-service-signup-purchase-for-power-bi"
+        ],
+        "terms": {
+          "ru": "60 дней бесплатно, ёмкость F4 или F64, до 1 ТБ в OneLake. Нужна рабочая или учебная почта: Gmail и Hotmail Microsoft не принимает. Без такой почты путь один: пробная версия Microsoft 365, для неё нужна банковская карта. Администратор организации может отключить пробные версии, повторная не гарантирована.",
+          "en": "60 days free, F4 or F64 capacity, up to 1 TB in OneLake. It takes a work or school email: Microsoft does not accept Gmail or Hotmail. Without one, the only route is a Microsoft 365 trial, which needs a bank card. An organisation's admin can turn trials off, and a second trial is not guaranteed."
+        },
+        "unconfirmed": {
+          "ru": "Страница пробной версии Fabric про почту сама не пишет: условие взято со страницы регистрации Power BI, на которую опирается лицензия Fabric (Free).",
+          "en": "The Fabric trial page itself says nothing about email: the condition comes from the Power BI sign-up page, which the Fabric (Free) licence relies on."
+        }
+      },
+      {
+        "id": "powerbi-desktop",
+        "kind": "try",
+        "name": "Power BI Desktop",
+        "url": "https://learn.microsoft.com/en-us/power-bi/fundamentals/desktop-get-the-desktop",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Скачивается бесплатно, только Windows 10 и новее, от 2 ГБ свободной памяти. Чтобы опубликовать отчёт в облако, нужна рабочая или учебная почта.",
+          "en": "A free download, Windows 10 or later only, at least 2 GB of free memory. Publishing a report to the cloud takes a work or school email."
+        },
+        "unconfirmed": {
+          "ru": "Нужен ли вход в аккаунт для работы с локальным файлом, страница не говорит.",
+          "en": "The page does not say whether signing in is needed to work with a local file."
+        }
+      },
+      {
+        "id": "bigquery-sandbox",
+        "kind": "try",
+        "name": "BigQuery sandbox",
+        "url": "https://docs.cloud.google.com/bigquery/docs/sandbox",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Без банковской карты, нужен аккаунт Google. 1 ТиБ обработанных запросами данных в месяц, 10 ГиБ хранения на всё время, таблицы удаляются сами через 60 дней.",
+          "en": "No bank card, a Google account is required. 1 TiB of query processing a month, 10 GiB of storage in total, tables expire on their own after 60 days."
+        }
+      },
+      {
+        "id": "databricks-free",
+        "kind": "try",
+        "name": "Databricks Free Edition",
+        "url": "https://docs.databricks.com/aws/en/getting-started/free-edition-limitations",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Бесплатно, только не для коммерческого использования. Один SQL-склад размера 2X-Small; при превышении квоты вычисления останавливаются до конца дня.",
+          "en": "Free, but not for commercial use. One SQL warehouse of size 2X-Small; going over quota stops compute for the rest of the day."
+        },
+        "unconfirmed": {
+          "ru": "Нужна ли банковская карта, официальные страницы не говорят.",
+          "en": "The official pages do not say whether a bank card is needed."
+        }
+      },
+      {
+        "id": "duckdb-csv",
+        "kind": "doc",
+        "name": "DuckDB: CSV",
+        "url": "https://duckdb.org/docs/2.0/data/csv/overview.html",
+        "checked": "2026-10-30",
+        "also": [
+          "https://duckdb.org/docs/2.0/guides/performance/how_to_tune_workloads.html",
+          "https://duckdb.org/docs/2.0/sql/query_syntax/samples.html"
+        ],
+        "terms": {
+          "ru": "`read_csv` с параметром `all_varchar` читает все колонки текстом. Запросы больше памяти движок выгружает на диск.",
+          "en": "`read_csv` with `all_varchar` reads every column as text. Workloads larger than memory spill to disk."
+        }
+      },
+      {
+        "id": "pandas-read-csv",
+        "kind": "doc",
+        "name": "pandas.read_csv",
+        "url": "https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Параметры `nrows`, `usecols`, `dtype` и `chunksize` читают часть файла, нужные колонки, текстом и кусками.",
+          "en": "The `nrows`, `usecols`, `dtype` and `chunksize` parameters read part of a file, chosen columns, text types and chunks."
+        }
+      },
+      {
+        "id": "fabric-dataflow",
+        "kind": "doc",
+        "name": "Dataflow Gen2",
+        "url": "https://learn.microsoft.com/en-us/fabric/data-factory/dataflows-gen2-overview",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Работает только на ёмкости Fabric, пробной ёмкости или Power BI Premium.",
+          "en": "Runs only on a Fabric capacity, a trial capacity or Power BI Premium."
+        }
+      },
+      {
+        "id": "fabric-load-tables",
+        "kind": "doc",
+        "name": "Fabric: Load to Tables",
+        "url": "https://learn.microsoft.com/en-us/fabric/data-engineering/load-to-tables",
+        "checked": "2026-10-30",
+        "also": [
+          "https://learn.microsoft.com/en-us/fabric/onelake/quickstart-get-data",
+          "https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-overview"
+        ],
+        "terms": {
+          "ru": "Превращает CSV или Parquet в таблицу Delta, задать свои типы колонок здесь нельзя: для этого нужен ноутбук. Исходный файл в Files не меняется.",
+          "en": "Turns a CSV or Parquet file into a Delta table; you cannot set your own column types here, that takes a notebook. The source file in Files stays unchanged."
+        }
+      },
+      {
+        "id": "fabric-cold-start",
+        "kind": "doc",
+        "name": "Fabric: cold start",
+        "url": "https://learn.microsoft.com/en-us/fabric/data-warehouse/guidelines-warehouse-performance",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "Первый запуск запроса может идти заметно дольше следующих: данные и статистика ещё не в кеше.",
+          "en": "The first run of a query can be noticeably slower than later runs: the data and statistics are not cached yet."
+        }
+      },
+      {
+        "id": "excel-zeros",
+        "kind": "doc",
+        "name": "Excel: leading zeros and dates",
+        "url": "https://support.microsoft.com/en-us/excel/keeping-leading-zeros-and-large-numbers",
+        "checked": "2026-10-30",
+        "also": [
+          "https://support.microsoft.com/en-us/excel/stop-automatically-changing-numbers-to-dates",
+          "https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3"
+        ],
+        "terms": {
+          "ru": "Excel сам убирает ведущие нули и превращает похожие строки в даты. Предел листа 1 048 576 строк.",
+          "en": "Excel removes leading zeros on its own and turns date-like strings into dates. A sheet holds at most 1,048,576 rows."
+        }
+      },
+      {
+        "id": "hf-viewer",
+        "kind": "doc",
+        "name": "Hugging Face: Data Studio",
+        "url": "https://huggingface.co/docs/hub/datasets-viewer",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "На странице набора данных есть просмотр, фильтры, поиск и консоль SQL в браузере. Фильтры работают на первых 5 ГБ.",
+          "en": "A dataset page offers a viewer, filters, search and a SQL console in the browser. Filters work on the first 5 GB."
+        }
+      },
+      {
+        "id": "ckan-datastore",
+        "kind": "doc",
+        "name": "CKAN DataStore",
+        "url": "https://docs.ckan.org/en/latest/maintaining/datastore.html",
+        "checked": "2026-10-30",
+        "terms": {
+          "ru": "На порталах открытых данных на CKAN, где включён DataStore, можно скачать выгрузку сразу с фильтром.",
+          "en": "On CKAN open data portals with DataStore switched on, you can download an export with a filter already applied."
+        }
+      }
+    ],
+    "stations": [
+      {
+        "id": "question",
+        "layer": "meeting",
+        "role": "ba",
+        "also": [
+          "gov"
+        ],
+        "title": {
+          "ru": "Вопрос и задача",
+          "en": "Question and brief"
+        },
+        "receives": {
+          "from": null,
+          "text": {
+            "ru": "Вопрос директора одной фразой: выполнили ли план за 2025 год.",
+            "en": "The director's question in one sentence: did we hit the 2025 target."
+          }
+        },
+        "does": {
+          "ru": "Уточняет, что считать ответом: план в штуках, продажи в точках (sell-out), весь 2025 год. Смотрит зерно плана: месяц, представитель, дивизион. Плана по брендам нет, и об этом говорит сразу.",
+          "en": "Pins down what counts as an answer: the target in units, sales at outlets (sell-out), all of 2025. Checks the grain of the target: month, rep, division. There is no target by brand, and they say so right away."
+        },
+        "tools": [
+          "Excel",
+          "Teams"
+        ],
+        "hands": {
+          "to": "de",
+          "text": {
+            "ru": "Короткое задание: определение метрики и список нужных таблиц.",
+            "en": "A short brief: the metric definition and the list of tables needed."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Определить метрику и задачу в навыках трека «Профессия».",
+            "en": "Define the metric and the brief in the skills of the Profession track."
+          },
+          "skills": [
+            "dom-requirements",
+            "dom-metric-definition",
+            "dom-sellin-sellout"
+          ]
+        },
+        "lessons": [
+          {
+            "text": {
+              "ru": "Описывая организацию, опирайтесь на её отчёты и регламенты, а не на новостные пересказы.",
+              "en": "To describe an organisation, rely on its own reports and rules, not on news retellings."
+            }
+          }
+        ]
+      },
+      {
+        "id": "connect",
+        "layer": "sources",
+        "role": "de",
+        "title": {
+          "ru": "Подключение данных",
+          "en": "Connecting the data"
+        },
+        "receives": {
+          "from": "ba",
+          "text": {
+            "ru": "Список таблиц и определение метрики.",
+            "en": "The list of tables and the metric definition."
+          }
+        },
+        "does": {
+          "ru": "Настраивает копирование выгрузок в хранилище по расписанию. Складывает файлы как есть, таблицы создаёт уже из них. У Kaiyo это 30 месячных файлов, 3 110 строк.",
+          "en": "Sets up scheduled copying of the exports into storage. Lands the files as they are and builds the tables from them. At Kaiyo that is 30 monthly files, 3,110 rows."
+        },
+        "tools": [
+          "Fabric Data Factory",
+          "Dataflow Gen2",
+          "OneLake",
+          "SQL analytics endpoint"
+        ],
+        "hands": {
+          "to": "de",
+          "text": {
+            "ru": "Файлы на месте и проверенное число строк.",
+            "en": "The files in place and a checked row count."
+          }
+        },
+        "label": "outside",
+        "action": {
+          "text": {
+            "ru": "Пайплайн в браузере не построить. Его можно собрать в пробной версии Fabric; без рабочей почты подойдут песочница BigQuery или бесплатный Databricks.",
+            "en": "A pipeline cannot be built in a browser. You can build one in a Fabric trial; without a work email, the BigQuery sandbox or free Databricks will do."
+          },
+          "skills": [],
+          "externals": [
+            "fabric-trial",
+            "bigquery-sandbox",
+            "databricks-free"
+          ]
+        },
+        "queries": [
+          {
+            "id": "files",
+            "title": {
+              "ru": "Сколько файлов и строк дошло",
+              "en": "How many files and rows arrived"
+            },
+            "sql": "SELECT COUNT(DISTINCT source_file) AS files,\n       COUNT(*) AS raw_rows\nFROM staging_raw_sellout;",
+            "expect": [
+              [
+                30,
+                3110
+              ]
+            ]
+          }
+        ],
+        "lessons": [
+          {
+            "text": {
+              "ru": "Сначала найдите требования к именам и структуре, потом стройте: переделка дорога.",
+              "en": "Find the naming and structure rules first, then build: redoing it is expensive."
+            }
+          },
+          {
+            "text": {
+              "ru": "Перед удалением проверьте, что рядом нет чужих объектов.",
+              "en": "Before deleting anything, check that nothing nearby belongs to someone else."
+            }
+          },
+          {
+            "text": {
+              "ru": "Оригиналы кладут без изменений, а фильтры и развороты делают в ETL; staging часто отдельная база.",
+              "en": "Originals land unchanged, while filters and unpivots happen in ETL; staging is often a separate database."
+            }
+          },
+          {
+            "text": {
+              "ru": "В Lakehouse файлы (Files) и таблицы (Tables) разные вещи: таблица строится из файла, файл остаётся, поэтому удаляются они отдельно.",
+              "en": "In a Lakehouse, Files and Tables are different things: a table is built from a file and the file stays, so they are deleted separately."
+            },
+            "source": "fabric-load-tables"
+          },
+          {
+            "text": {
+              "ru": "Создали таблицу из файла: проверьте `COUNT(*)` через SQL endpoint и сравните с файлом.",
+              "en": "Built a table from a file: check `COUNT(*)` through the SQL endpoint and compare it with the file."
+            },
+            "source": "fabric-load-tables"
+          },
+          {
+            "text": {
+              "ru": "Первый запрос к SQL endpoint может идти долго из-за холодного старта, это не ошибка.",
+              "en": "The first query to a SQL endpoint can take a long time because of a cold start. That is not an error."
+            },
+            "source": "fabric-cold-start"
+          }
+        ]
+      },
+      {
+        "id": "raw",
+        "layer": "bronze",
+        "role": "de",
+        "title": {
+          "ru": "Сырьё",
+          "en": "Raw data"
+        },
+        "receives": {
+          "from": "de",
+          "text": {
+            "ru": "Файлы в приёмнике, ещё никем не открытые.",
+            "en": "Files in the landing zone that nobody has opened yet."
+          }
+        },
+        "does": {
+          "ru": "Осматривает сырьё, не исправляя его: все поля текстом, профиль качества по годам. В `staging_raw_sellout` даты идут минимум в трёх форматах, у 1 091 строки код товара в нижнем регистре, 110 пар полных дублей, возвраты записаны с минусом.",
+          "en": "Inspects the raw data without fixing it: every field as text, a quality profile by year. In `staging_raw_sellout` dates come in at least three formats, 1,091 rows have a lower-case product code, there are 110 pairs of exact duplicates, and returns are written with a minus."
+        },
+        "tools": [
+          "DuckDB",
+          "Python",
+          "Fabric Notebook",
+          "SQL"
+        ],
+        "hands": {
+          "to": "ae",
+          "text": {
+            "ru": "Сырая таблица и список найденной грязи с числами.",
+            "en": "The raw table and a list of the dirt found, with counts."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Открыть `staging_raw_sellout` в Lab и выполнить запросы станции. Свой CSV тоже можно: предел ниже.",
+            "en": "Open `staging_raw_sellout` in Lab and run the station's queries. Your own CSV works too: the limit is below."
+          },
+          "app": "lab",
+          "skills": [
+            "sql-data-quality",
+            "py-explore"
+          ]
+        },
+        "queries": [
+          {
+            "id": "profile",
+            "title": {
+              "ru": "Профиль качества по годам",
+              "en": "Quality profile by year"
+            },
+            "sql": "SELECT substr(source_file, 8, 4) AS year,\n       COUNT(*) AS raw_rows,\n       SUM(units IS NULL) AS no_units,\n       SUM(revenue IS NULL) AS no_revenue,\n       SUM(units LIKE '-%') AS returns\nFROM staging_raw_sellout\nGROUP BY year\nORDER BY year;",
+            "expect": [
+              [
+                "2024",
+                1288,
+                33,
+                80,
+                49
+              ],
+              [
+                "2025",
+                1204,
+                32,
+                74,
+                44
+              ],
+              [
+                "2026",
+                618,
+                19,
+                25,
+                17
+              ]
+            ]
+          },
+          {
+            "id": "dirt",
+            "title": {
+              "ru": "Грязь в тексте",
+              "en": "Dirt in the text"
+            },
+            "sql": "SELECT SUM(sale_date LIKE '____-__-__') AS iso_dates,\n       SUM(sale_date LIKE '__.__.____') AS dotted_dates,\n       SUM(customer_name <> TRIM(customer_name)) AS padded_names,\n       SUM(sku_code <> UPPER(sku_code)) AS lower_sku,\n       SUM(revenue LIKE '%,%') AS comma_revenue\nFROM staging_raw_sellout;",
+            "expect": [
+              [
+                893,
+                803,
+                919,
+                1091,
+                1465
+              ]
+            ]
+          },
+          {
+            "id": "sampleRows",
+            "title": {
+              "ru": "Выборка строк и выборка точек против всех данных",
+              "en": "A sample of rows and a sample of outlets against all data"
+            },
+            "sql": "WITH m AS (\n  SELECT 'all rows' AS sample, customer_id, substr(week_start, 1, 7) AS month, SUM(units) AS units\n  FROM fact_sellout WHERE week_start >= '2025-01-01' AND week_start < '2026-01-01'\n  GROUP BY customer_id, month\n  UNION ALL\n  SELECT '10% of rows', customer_id, substr(week_start, 1, 7), SUM(units)\n  FROM fact_sellout WHERE week_start >= '2025-01-01' AND week_start < '2026-01-01' AND sellout_id % 10 = 0\n  GROUP BY customer_id, substr(week_start, 1, 7)\n  UNION ALL\n  SELECT '10% of outlets', customer_id, substr(week_start, 1, 7), SUM(units)\n  FROM fact_sellout WHERE week_start >= '2025-01-01' AND week_start < '2026-01-01' AND customer_id % 10 = 0\n  GROUP BY customer_id, substr(week_start, 1, 7)\n)\nSELECT sample,\n       COUNT(DISTINCT customer_id) AS outlets,\n       ROUND(1.0 * SUM(units) / COUNT(*), 1) AS units_per_outlet_month\nFROM m\nGROUP BY sample\nORDER BY outlets DESC, units_per_outlet_month DESC;",
+            "expect": [
+              [
+                "all rows",
+                132,
+                280.3
+              ],
+              [
+                "10% of rows",
+                132,
+                31.8
+              ],
+              [
+                "10% of outlets",
+                13,
+                362.5
+              ]
+            ]
+          },
+          {
+            "id": "sampleDup",
+            "title": {
+              "ru": "Что выборка делает с дублями",
+              "en": "What a sample does to duplicates"
+            },
+            "sql": "WITH pairs AS (\n  SELECT raw_id % 10 = 0 AS in_sample, sale_date, customer_name, sku_code, units, revenue, source_file\n  FROM staging_raw_sellout\n)\nSELECT (SELECT COUNT(*) FROM (\n          SELECT 1 FROM pairs\n          GROUP BY sale_date, customer_name, sku_code, units, revenue, source_file\n          HAVING COUNT(*) > 1) a) AS pairs_all,\n       (SELECT COUNT(*) FROM (\n          SELECT 1 FROM pairs WHERE in_sample\n          GROUP BY sale_date, customer_name, sku_code, units, revenue, source_file\n          HAVING COUNT(*) > 1) b) AS pairs_in_sample;",
+            "expect": [
+              [
+                110,
+                0
+              ]
+            ]
+          }
+        ],
+        "bigFile": {
+          "title": {
+            "ru": "Как осмотреть и уменьшить большой файл",
+            "en": "How to inspect and shrink a big file"
+          },
+          "methods": [
+            {
+              "id": "duckdb",
+              "name": "DuckDB",
+              "when": {
+                "ru": "Файл лежит у вас на компьютере: один запрос к нему покажет строки и профиль, а `COPY` сохранит нужную часть.",
+                "en": "The file is on your computer: one query shows the rows and the profile, and `COPY` saves the part you need."
+              },
+              "source": "duckdb-csv"
+            },
+            {
+              "id": "python",
+              "name": "Python (pandas)",
+              "when": {
+                "ru": "Нужна нестандартная логика: читаете кусками через `chunksize` и берёте только нужные колонки через `usecols`.",
+                "en": "You need custom logic: read in pieces with `chunksize` and take only the columns you need with `usecols`."
+              },
+              "source": "pandas-read-csv"
+            },
+            {
+              "id": "platform",
+              "name": "Dataflow Gen2, Fabric Notebook",
+              "when": {
+                "ru": "Файл уже на платформе и там же останется: Dataflow Gen2, если хватает мыши; ноутбук, если нужны свои типы колонок или объём большой.",
+                "en": "The file is already on the platform and will stay there: Dataflow Gen2 if the mouse is enough; a notebook if you need your own column types or the volume is large."
+              },
+              "source": "fabric-dataflow"
+            },
+            {
+              "id": "catalog",
+              "name": "Hugging Face, CKAN",
+              "when": {
+                "ru": "Данные из открытого каталога: сначала отфильтруйте на его сайте и скачайте только нужное.",
+                "en": "The data comes from an open catalogue: filter it on the site first and download only what you need."
+              },
+              "source": "hf-viewer"
+            },
+            {
+              "id": "lab",
+              "name": "Quaera Lab",
+              "when": {
+                "ru": "Файл до 400 МБ и нужно быстро посмотреть его без установки. Lab сам определяет типы, поэтому прочитать всё текстом здесь нельзя.",
+                "en": "The file is up to 400 MB and you want a quick look with nothing to install. Lab detects types itself, so reading everything as text is not possible here."
+              }
+            }
+          ],
+          "labLimit": {
+            "ok_mb": 400,
+            "fail_mb": 600,
+            "checked": "2026-10-30",
+            "text": {
+              "ru": "Замер от 2026-10-30, Chromium на 64-битной Windows, 16 ГБ памяти: CSV на 400 МБ (10,7 млн строк) открылся примерно за минуту и стал таблицей. CSV на 600 МБ открывается как пустая таблица, 0 строк и без ошибки. Выше 400 МБ берите DuckDB; на других компьютерах предел может быть ниже. Всегда сверяйте число строк.",
+              "en": "Measured on 2026-10-30, Chromium on 64-bit Windows, 16 GB of memory: a 400 MB CSV (10.7 million rows) opened in about a minute and became a table. A 600 MB CSV opens as an empty table, 0 rows with no error. Above 400 MB use DuckDB; on other computers the limit may be lower. Always check the row count."
+            }
+          }
+        },
+        "lessons": [
+          {
+            "text": {
+              "ru": "Большой файл не открывайте сразу в BI-инструменте: он может зависнуть. Сначала осмотрите движком, читающим файл с диска.",
+              "en": "Do not open a big file straight in a BI tool: it may freeze. First inspect it with an engine that reads from disk."
+            }
+          },
+          {
+            "text": {
+              "ru": "Сырьё читайте как текст, чтобы не потерять грязь: ведущие нули, смешанные форматы.",
+              "en": "Read raw data as text so you keep the dirt: leading zeros, mixed formats."
+            },
+            "source": "duckdb-csv"
+          },
+          {
+            "text": {
+              "ru": "Сначала профиль качества по периодам: строки, дубли, пустые значения, возвраты с минусом.",
+              "en": "Start with a quality profile by period: rows, duplicates, empty values, returns with a minus."
+            }
+          },
+          {
+            "text": {
+              "ru": "Случайные строки разрывают счета и дубли и делают точки разреженными: из 110 пар дублей в 10% строк не осталось ни одной, а на точку в месяц вышло 31,8 штуки вместо 280,3.",
+              "en": "Random rows break up invoices and duplicates and thin out outlets: of 110 duplicate pairs, none survive in 10% of rows, and an outlet month shows 31.8 units instead of 280.3."
+            }
+          },
+          {
+            "text": {
+              "ru": "Иногда лучше взять целые группы, но и их надо сверять: 10% целых точек дали 13 точек и 362,5 штуки, то есть структура цела, а среднее завышено на 29%. Сравнив с полными данными, честно скажите, какие выводы допустимы.",
+              "en": "Sometimes whole groups are better, but check those too: 10% of whole outlets gives 13 outlets and 362.5 units, so the structure holds but the average is 29% too high. Compare with the full data and say honestly which conclusions are allowed."
+            }
+          },
+          {
+            "text": {
+              "ru": "Excel тихо переписывает даты и ведущие нули: исходный CSV через него не пересохраняйте.",
+              "en": "Excel quietly rewrites dates and leading zeros: do not re-save the source CSV through it."
+            },
+            "source": "excel-zeros"
+          }
+        ]
+      },
+      {
+        "id": "clean",
+        "layer": "silver",
+        "role": "ae",
+        "also": [
+          "gov"
+        ],
+        "title": {
+          "ru": "Чистка",
+          "en": "Cleaning"
+        },
+        "receives": {
+          "from": "de",
+          "text": {
+            "ru": "Сырая таблица и список грязи.",
+            "en": "The raw table and the list of dirt."
+          }
+        },
+        "does": {
+          "ru": "Убирает пробелы, приводит коды к одному регистру, даты и числа к типам, снимает дубли и сверяет итог: 3 110 строк минус 110 дублей дают 3 000. Названий стало 52 вместо 104, кодов 29 вместо 58.",
+          "en": "Trims spaces, puts codes in one case, casts dates and numbers, removes duplicates and checks the total: 3,110 rows minus 110 duplicates gives 3,000. Names drop from 104 to 52, codes from 58 to 29."
+        },
+        "tools": [
+          "SQL",
+          "dbt",
+          "Power Query"
+        ],
+        "hands": {
+          "to": "ae",
+          "text": {
+            "ru": "Чистая таблица и правила, по которым она получена.",
+            "en": "A clean table and the rules that produced it."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Те же запросы в Lab, задания на качество данных и дубли в тренажёре. В Kaiyo сырая таблица учебная, из 52 названий, поэтому с `fact_sellout` её построчно не сверить.",
+            "en": "The same queries in Lab, plus data quality and duplicate tasks in the trainer. The raw Kaiyo table is a teaching set of 52 names, so it cannot be matched row by row with `fact_sellout`."
+          },
+          "app": "lab",
+          "skills": [
+            "sql-data-quality",
+            "py-duplicates",
+            "model-power-query"
+          ]
+        },
+        "queries": [
+          {
+            "id": "clean",
+            "title": {
+              "ru": "Названия и коды до и после",
+              "en": "Names and codes before and after"
+            },
+            "sql": "SELECT COUNT(DISTINCT customer_name) AS raw_names,\n       COUNT(DISTINCT TRIM(customer_name)) AS trimmed_names,\n       COUNT(DISTINCT sku_code) AS raw_sku,\n       COUNT(DISTINCT UPPER(sku_code)) AS upper_sku,\n       SUM(sku_code = 'NETT005') AS exact_filter,\n       SUM(UPPER(sku_code) = 'NETT005') AS honest_filter\nFROM staging_raw_sellout;",
+            "expect": [
+              [
+                104,
+                52,
+                58,
+                29,
+                31,
+                47
+              ]
+            ]
+          },
+          {
+            "id": "join",
+            "title": {
+              "ru": "Соединение по названию и по коду",
+              "en": "Joining by name and by code"
+            },
+            "sql": "SELECT SUM(TRIM(r.customer_name) NOT IN (SELECT customer_name FROM dim_customer)) AS names_unmatched,\n       COUNT(DISTINCT CASE WHEN TRIM(r.customer_name) NOT IN (SELECT customer_name FROM dim_customer) THEN TRIM(r.customer_name) END) AS spellings,\n       SUM(UPPER(r.sku_code) NOT IN (SELECT sku_code FROM dim_product)) AS codes_unmatched\nFROM staging_raw_sellout r;",
+            "expect": [
+              [
+                261,
+                7,
+                0
+              ]
+            ]
+          },
+          {
+            "id": "dedup",
+            "title": {
+              "ru": "Сверка итога",
+              "en": "Checking the total"
+            },
+            "sql": "SELECT COUNT(*) AS after_dedup\nFROM (SELECT DISTINCT sale_date, customer_name, sku_code, units, revenue, source_file\n      FROM staging_raw_sellout) t;",
+            "expect": [
+              [
+                3000
+              ]
+            ]
+          }
+        ],
+        "lessons": [
+          {
+            "text": {
+              "ru": "Опечатка в фильтре молча даёт меньше строк: `sku_code = 'NETT005'` находит 31 строку вместо 47. Сверяйте итог с ожидаемым числом.",
+              "en": "A typo in a filter quietly returns fewer rows: `sku_code = 'NETT005'` finds 31 rows instead of 47. Check the total against the number you expect."
+            }
+          },
+          {
+            "text": {
+              "ru": "Разные источники объединяйте по коду, а не по названию: по названию не нашлась 261 строка (сеть записана как Itiba), по коду после `UPPER` не потерялось ни одной.",
+              "en": "Join different sources by code, not by name: by name 261 rows find no match (the chain is written Itiba), by code after `UPPER` none are lost."
+            }
+          },
+          {
+            "text": {
+              "ru": "Коды храните как текст: числовой тип съедает ведущие нули.",
+              "en": "Store codes as text: a numeric type eats leading zeros."
+            },
+            "source": "fabric-load-tables"
+          }
+        ]
+      },
+      {
+        "id": "model",
+        "layer": "gold",
+        "role": "ae",
+        "also": [
+          "gov"
+        ],
+        "title": {
+          "ru": "Модель данных",
+          "en": "Data model"
+        },
+        "receives": {
+          "from": "ae",
+          "text": {
+            "ru": "Чистые таблицы и правила чистки.",
+            "en": "Clean tables and the cleaning rules."
+          }
+        },
+        "does": {
+          "ru": "Собирает звезду. Продажи идут с зерном неделя, точка, товар; план с зерном месяц, представитель, дивизион. Зёрна разные, поэтому связывать их можно только через справочники: представитель через точку, дивизион через товар.",
+          "en": "Builds the star schema. Sales have the grain week, outlet, product; the target has month, rep, division. The grains differ, so they can only meet through the dimensions: the rep through the outlet, the division through the product."
+        },
+        "tools": [
+          "PowerDesigner",
+          "dbt",
+          "Fabric Warehouse"
+        ],
+        "hands": {
+          "to": "da",
+          "text": {
+            "ru": "Звезда: 118 449 строк продаж, 144 клиента, 47 товаров, 750 строк плана.",
+            "en": "The star schema: 118,449 sales rows, 144 customers, 47 products, 750 target rows."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Открыть звезду Kaiyo в Quaera Model и разобрать зерно в треке «Модель и BI».",
+            "en": "Open the Kaiyo star schema in Quaera Model and work through the grain in the Model and BI track."
+          },
+          "app": "model",
+          "href": "https://model.quaera.app/?example=quaera",
+          "skills": [
+            "model-star",
+            "model-grain",
+            "model-relationships"
+          ]
+        },
+        "queries": [
+          {
+            "id": "star",
+            "title": {
+              "ru": "Размер звезды",
+              "en": "Size of the star schema"
+            },
+            "sql": "SELECT (SELECT COUNT(*) FROM fact_sellout) AS sellout_rows,\n       (SELECT COUNT(*) FROM dim_customer) AS customers,\n       (SELECT COUNT(*) FROM dim_product) AS products,\n       (SELECT COUNT(*) FROM fact_target) AS target_rows;",
+            "expect": [
+              [
+                118449,
+                144,
+                47,
+                750
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "queries",
+        "layer": "serve",
+        "role": "da",
+        "title": {
+          "ru": "Запросы и метрики",
+          "en": "Queries and metrics"
+        },
+        "receives": {
+          "from": "ae",
+          "text": {
+            "ru": "Готовая звезда.",
+            "en": "The finished star schema."
+          }
+        },
+        "does": {
+          "ru": "Считает: FMCG продал 409 266 штук при плане 428 240, это 95,6%, недобор 18 974. Pharma 95,1%. Ищет виновника и не находит: 16 представителей FMCG дают от 93,5% до 99,3%. Зато из пяти брендов FMCG только Nettora ниже 2024 года, на 3 566 штук.",
+          "en": "Does the numbers: FMCG sold 409,266 units against a target of 428,240, which is 95.6%, a shortfall of 18,974. Pharma is at 95.1%. Looks for a culprit and finds none: the 16 FMCG reps range from 93.5% to 99.3%. But of the five FMCG brands, only Nettora is below 2024, by 3,566 units."
+        },
+        "tools": [
+          "SQL",
+          "Python",
+          "Jupyter"
+        ],
+        "hands": {
+          "to": "bi",
+          "text": {
+            "ru": "Проверенные определения мер и числа, с которыми отчёт должен сойтись.",
+            "en": "Checked measure definitions and the numbers the report must match."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Выполнить запросы в Lab и изменить их: другой год, другой дивизион.",
+            "en": "Run the queries in Lab and change them: another year, another division."
+          },
+          "app": "lab",
+          "skills": [
+            "sql-group-by",
+            "sql-join-left",
+            "sql-fanout",
+            "py-groupby"
+          ]
+        },
+        "queries": [
+          {
+            "id": "plan",
+            "title": {
+              "ru": "План и факт по дивизионам",
+              "en": "Target and actual by division"
+            },
+            "sql": "WITH fact AS (\n  SELECT p.division, SUM(s.units) AS units\n  FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE s.week_start >= '2025-01-01' AND s.week_start < '2026-01-01'\n  GROUP BY p.division\n), plan AS (\n  SELECT division, SUM(target_units) AS units\n  FROM fact_target\n  WHERE month_start >= '2025-01-01' AND month_start < '2026-01-01'\n  GROUP BY division\n)\nSELECT f.division, f.units AS fact_units, t.units AS plan_units,\n       t.units - f.units AS gap,\n       ROUND(100.0 * f.units / t.units, 1) AS pct\nFROM fact f\nJOIN plan t ON t.division = f.division\nORDER BY f.division;",
+            "expect": [
+              [
+                "FMCG",
+                409266,
+                428240,
+                18974,
+                95.6
+              ],
+              [
+                "Pharma",
+                34734,
+                36513,
+                1779,
+                95.1
+              ]
+            ]
+          },
+          {
+            "id": "reps",
+            "title": {
+              "ru": "Разброс по представителям FMCG",
+              "en": "Spread across FMCG reps"
+            },
+            "sql": "WITH fact AS (\n  SELECT c.rep_id, SUM(s.units) AS units\n  FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  JOIN dim_customer c ON c.customer_id = s.customer_id\n  WHERE p.division = 'FMCG' AND s.week_start >= '2025-01-01' AND s.week_start < '2026-01-01'\n  GROUP BY c.rep_id\n), plan AS (\n  SELECT rep_id, SUM(target_units) AS units\n  FROM fact_target\n  WHERE division = 'FMCG' AND month_start >= '2025-01-01' AND month_start < '2026-01-01'\n  GROUP BY rep_id\n), pct AS (\n  SELECT 100.0 * f.units / t.units AS pct FROM plan t JOIN fact f ON f.rep_id = t.rep_id\n)\nSELECT COUNT(*) AS reps, ROUND(MIN(pct), 1) AS worst, ROUND(MAX(pct), 1) AS best FROM pct;",
+            "expect": [
+              [
+                16,
+                93.5,
+                99.3
+              ]
+            ]
+          },
+          {
+            "id": "brands",
+            "title": {
+              "ru": "Бренды FMCG к прошлому году",
+              "en": "FMCG brands against last year"
+            },
+            "sql": "SELECT p.brand,\n       SUM(CASE WHEN s.week_start < '2025-01-01' THEN s.units END) AS units_2024,\n       SUM(CASE WHEN s.week_start >= '2025-01-01' THEN s.units END) AS units_2025\nFROM fact_sellout s\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE p.division = 'FMCG' AND s.week_start < '2026-01-01'\nGROUP BY p.brand\nORDER BY p.brand;",
+            "expect": [
+              [
+                "Aqualis",
+                119932,
+                134486
+              ],
+              [
+                "Fruvia",
+                81756,
+                88132
+              ],
+              [
+                "Krosti",
+                66506,
+                74004
+              ],
+              [
+                "Milvara",
+                77284,
+                77797
+              ],
+              [
+                "Nettora",
+                38413,
+                34847
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "report",
+        "layer": "serve",
+        "role": "bi",
+        "title": {
+          "ru": "Отчёт",
+          "en": "Report"
+        },
+        "receives": {
+          "from": "da",
+          "text": {
+            "ru": "Определения мер и контрольные числа.",
+            "en": "Measure definitions and control numbers."
+          }
+        },
+        "does": {
+          "ru": "Подключает модель, пишет меры на DAX и строит страницу: факт против плана по месяцам. FMCG каждый месяц ниже плана, от 93,9% до 97,2%. Значит, недобор ровный, а не провал одного месяца. Сверяет итог отчёта с запросом.",
+          "en": "Connects the model, writes DAX measures and builds a page: actual against target by month. FMCG is below target every month, from 93.9% to 97.2%. So the shortfall is even, not one bad month. Checks the report total against the query."
+        },
+        "tools": [
+          "Power BI",
+          "DAX"
+        ],
+        "hands": {
+          "to": "da",
+          "text": {
+            "ru": "Отчёт, в котором директор сам видит факт и план.",
+            "en": "A report where the director can see actual and target directly."
+          }
+        },
+        "label": "outside",
+        "action": {
+          "text": {
+            "ru": "Меры DAX разобрать в тренажёре, а отчёт собрать в Power BI Desktop на таблицах Kaiyo в CSV.",
+            "en": "Work through DAX measures in the trainer, then build the report in Power BI Desktop from the Kaiyo tables as CSV."
+          },
+          "href": "/downloads/kaiyo-trading-csv.zip",
+          "skills": [
+            "model-measure-vs-column",
+            "model-calculate",
+            "model-filter-context",
+            "dom-chart-choice"
+          ],
+          "externals": [
+            "powerbi-desktop"
+          ]
+        },
+        "queries": [
+          {
+            "id": "months",
+            "title": {
+              "ru": "Факт и план FMCG по месяцам",
+              "en": "FMCG actual and target by month"
+            },
+            "sql": "WITH fact AS (\n  SELECT substr(s.week_start, 1, 7) AS month, SUM(s.units) AS units\n  FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.division = 'FMCG' AND s.week_start >= '2025-01-01' AND s.week_start < '2026-01-01'\n  GROUP BY month\n), plan AS (\n  SELECT substr(month_start, 1, 7) AS month, SUM(target_units) AS units\n  FROM fact_target\n  WHERE division = 'FMCG' AND month_start >= '2025-01-01' AND month_start < '2026-01-01'\n  GROUP BY month\n)\nSELECT f.month, f.units AS fact_units, t.units AS plan_units,\n       ROUND(100.0 * f.units / t.units, 1) AS pct\nFROM fact f\nJOIN plan t ON t.month = f.month\nORDER BY f.month;",
+            "expect": [
+              [
+                "2025-01",
+                24256,
+                25097,
+                96.6
+              ],
+              [
+                "2025-02",
+                27483,
+                28890,
+                95.1
+              ],
+              [
+                "2025-03",
+                33508,
+                35335,
+                94.8
+              ],
+              [
+                "2025-04",
+                41149,
+                42325,
+                97.2
+              ],
+              [
+                "2025-05",
+                34177,
+                35618,
+                96
+              ],
+              [
+                "2025-06",
+                47667,
+                50621,
+                94.2
+              ],
+              [
+                "2025-07",
+                37555,
+                39684,
+                94.6
+              ],
+              [
+                "2025-08",
+                40493,
+                42345,
+                95.6
+              ],
+              [
+                "2025-09",
+                42795,
+                44137,
+                97
+              ],
+              [
+                "2025-10",
+                29347,
+                30820,
+                95.2
+              ],
+              [
+                "2025-11",
+                22393,
+                23853,
+                93.9
+              ],
+              [
+                "2025-12",
+                28443,
+                29515,
+                96.4
+              ]
+            ]
+          }
+        ],
+        "figure": "planVsFact"
+      },
+      {
+        "id": "forecast",
+        "layer": "serve",
+        "role": "ds",
+        "optional": true,
+        "title": {
+          "ru": "Прогноз (по желанию)",
+          "en": "Forecast (optional)"
+        },
+        "receives": {
+          "from": "bi",
+          "text": {
+            "ru": "Месячный факт и вопрос, можно ли верить плану на следующий период.",
+            "en": "Monthly actuals and the question of whether the next target can be trusted."
+          }
+        },
+        "does": {
+          "ru": "Сравнивает прошлые прогнозы с фактом 2025 года. За месяц вперёд ошибка (WMAPE) 15,3%, за три месяца 31,0%, и там же прогноз занижен на 7,9%. По Nettora прогноз за месяц завышен на 10,4%: он не поспевал за падением бренда.",
+          "en": "Compares past forecasts with 2025 actuals. One month ahead the error (WMAPE) is 15.3%, three months ahead it is 31.0%, and there the forecast runs 7.9% low. For Nettora the one-month forecast is 10.4% too high: it did not keep up with the brand's decline."
+        },
+        "tools": [
+          "Python",
+          "Jupyter",
+          "SQL"
+        ],
+        "hands": {
+          "to": "da",
+          "text": {
+            "ru": "Насколько можно верить прогнозу и на каком горизонте.",
+            "en": "How far the forecast can be trusted, and at which horizon."
+          }
+        },
+        "label": "here",
+        "action": {
+          "text": {
+            "ru": "Оценить точность прогноза в задании трека SQL. Сама модель прогноза в браузере тренажёра не строится, для неё есть тетрадь Quaera Pandas.",
+            "en": "Measure forecast accuracy in a SQL track task. The trainer does not build the forecast model itself; Quaera Pandas has a notebook for that."
+          },
+          "app": "pandas",
+          "skills": [
+            "sql-forecast-accuracy",
+            "dom-planning",
+            "py-timeseries"
+          ]
+        },
+        "queries": [
+          {
+            "id": "forecast",
+            "title": {
+              "ru": "Точность прогноза по горизонтам",
+              "en": "Forecast accuracy by horizon"
+            },
+            "sql": "WITH fact AS (\n  SELECT substr(week_start, 1, 7) AS month, product_id, SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY month, product_id\n)\nSELECT f.lag_months,\n       ROUND(100.0 * SUM(ABS(f.forecast_units - a.units)) / SUM(a.units), 1) AS wmape,\n       ROUND(100.0 * SUM(f.forecast_units - a.units) / SUM(a.units), 1) AS bias\nFROM fact_forecast_snapshot f\nJOIN fact a ON a.month = substr(f.month_start, 1, 7) AND a.product_id = f.product_id\nWHERE f.month_start >= '2025-01-01' AND f.month_start < '2026-01-01'\nGROUP BY f.lag_months\nORDER BY f.lag_months;",
+            "expect": [
+              [
+                1,
+                15.3,
+                0.1
+              ],
+              [
+                2,
+                24.1,
+                -1
+              ],
+              [
+                3,
+                31,
+                -7.9
+              ]
+            ]
+          },
+          {
+            "id": "forecastNettora",
+            "title": {
+              "ru": "Смещение прогноза Nettora",
+              "en": "Nettora forecast bias"
+            },
+            "sql": "WITH fact AS (\n  SELECT substr(week_start, 1, 7) AS month, product_id, SUM(units) AS units\n  FROM fact_sellout\n  GROUP BY month, product_id\n)\nSELECT ROUND(100.0 * SUM(f.forecast_units - a.units) / SUM(a.units), 1) AS nettora_bias\nFROM fact_forecast_snapshot f\nJOIN fact a ON a.month = substr(f.month_start, 1, 7) AND a.product_id = f.product_id\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE p.brand = 'Nettora' AND f.lag_months = 1\n  AND f.month_start >= '2025-01-01' AND f.month_start < '2026-01-01';",
+            "expect": [
+              [
+                10.4
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "answer",
+        "layer": "meeting",
+        "role": "da",
+        "also": [
+          "ba"
+        ],
+        "title": {
+          "ru": "Ответ бизнесу",
+          "en": "Answer to the business"
+        },
+        "receives": {
+          "from": "bi",
+          "text": {
+            "ru": "Отчёт и, если считали, оценка прогноза.",
+            "en": "The report and, if it was done, the forecast assessment."
+          }
+        },
+        "does": {
+          "ru": "Отвечает одной фразой: «План 2025 выполнен на 95,6% по FMCG и на 95,1% по Pharma; недобор ровный по месяцам и представителям, поэтому дело не в одном месяце и не в одном человеке. Первый вопрос к Nettora: единственный бренд FMCG ниже 2024 года». Падение Nettora равно примерно пятой части недобора по размеру, но плана по брендам нет, поэтому причиной его не называет.",
+          "en": "Answers in one sentence: \"The 2025 target was 95.6% met in FMCG and 95.1% in Pharma; the shortfall is even across months and reps, so it is not down to one month or one person. The first question is Nettora: the only FMCG brand below 2024.\" The Nettora drop is about a fifth of the shortfall in size, but there is no target by brand, so the analyst does not call it the cause."
+        },
+        "tools": [
+          "PowerPoint",
+          "Teams",
+          "Power BI"
+        ],
+        "hands": {
+          "to": null,
+          "text": {
+            "ru": "Директору: вывод и следующий вопрос. Решение остаётся за директором.",
+            "en": "To the director: the conclusion and the next question. The decision stays with the director."
+          }
+        },
+        "label": "watch",
+        "action": {
+          "text": {
+            "ru": "Встречу в браузере не провести. Отточить вывод можно в навыках «Сторителлинг» и «Проверка на здравый смысл».",
+            "en": "A meeting cannot happen in a browser. You can sharpen the conclusion in the Storytelling and Sanity check skills."
+          },
+          "skills": [
+            "dom-storytelling",
+            "dom-sanity-check",
+            "sql-business-case"
+          ]
+        }
+      }
+    ],
+    "finish": {
+      "title": {
+        "ru": "Какие станции понравились?",
+        "en": "Which stations did you enjoy?"
+      },
+      "text": {
+        "ru": "Такая роль вам и ближе. Отметьте станции, и экран покажет подходящие роли; дальше откроется «Путь к роли».",
+        "en": "That is the role closest to you. Mark the stations, and the screen shows the matching roles; from there the Path to a role screen opens."
+      },
+      "roles": [
+        {
+          "role": "ba",
+          "stations": [
+            "question",
+            "answer"
+          ],
+          "why": {
+            "ru": "Вам нравится понимать, о чём на самом деле спрашивают.",
+            "en": "You like working out what is really being asked."
+          }
+        },
+        {
+          "role": "de",
+          "stations": [
+            "connect",
+            "raw"
+          ],
+          "why": {
+            "ru": "Вам нравится, когда данные надёжно доезжают сами.",
+            "en": "You like data arriving reliably on its own."
+          }
+        },
+        {
+          "role": "ae",
+          "stations": [
+            "clean",
+            "model"
+          ],
+          "why": {
+            "ru": "Вам нравится наводить порядок и строить то, чем пользуются другие.",
+            "en": "You like creating order and building what others rely on."
+          }
+        },
+        {
+          "role": "gov",
+          "stations": [
+            "question",
+            "clean",
+            "model"
+          ],
+          "why": {
+            "ru": "Вам важно, чтобы все понимали одно и то же слово одинаково.",
+            "en": "You care that everyone means the same thing by the same word."
+          }
+        },
+        {
+          "role": "da",
+          "stations": [
+            "queries",
+            "answer"
+          ],
+          "why": {
+            "ru": "Вам нравится находить причину и защищать вывод.",
+            "en": "You like finding the cause and defending the conclusion."
+          }
+        },
+        {
+          "role": "bi",
+          "stations": [
+            "report"
+          ],
+          "why": {
+            "ru": "Вам нравится, когда человек сам видит ответ на странице.",
+            "en": "You like people seeing the answer on the page for themselves."
+          }
+        },
+        {
+          "role": "ds",
+          "stations": [
+            "forecast"
+          ],
+          "why": {
+            "ru": "Вам интересно, что будет дальше и насколько этому верить.",
+            "en": "You want to know what comes next and how far to trust it."
+          }
+        }
+      ],
+      "next": {
+        "trace": "nettora",
+        "text": {
+          "ru": "Директор спросит следующее: почему Nettora? Это отдельный разбор, он идёт от вопроса назад к данным.",
+          "en": "The director's next question: why Nettora? That is a separate analysis, going from the question back to the data."
+        }
+      }
+    },
+    "figure": {
+      "months": [
+        "2025-01",
+        "2025-02",
+        "2025-03",
+        "2025-04",
+        "2025-05",
+        "2025-06",
+        "2025-07",
+        "2025-08",
+        "2025-09",
+        "2025-10",
+        "2025-11",
+        "2025-12"
+      ],
+      "fact": [
+        24256,
+        27483,
+        33508,
+        41149,
+        34177,
+        47667,
+        37555,
+        40493,
+        42795,
+        29347,
+        22393,
+        28443
+      ],
+      "plan": [
+        25097,
+        28890,
+        35335,
+        42325,
+        35618,
+        50621,
+        39684,
+        42345,
+        44137,
+        30820,
+        23853,
+        29515
+      ],
+      "names": {
+        "fact": {
+          "ru": "Факт, шт",
+          "en": "Actual, units"
+        },
+        "plan": {
+          "ru": "План, шт",
+          "en": "Target, units"
+        }
+      }
+    }
   }
 }

@@ -19,7 +19,7 @@
  * Запуск: npm run test:architecture (входит в npm run verify).
  */
 import initSqlJs from 'sql.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,7 +73,7 @@ checkText('trace.title', arch.trace.title);
 
 {
   // Подсказка без инструмента на карте никому не видна: значит, опечатка в имени.
-  const onMap = new Set(arch.layers.flatMap((l) => l.tools));
+  const onMap = new Set([...arch.layers.flatMap((l) => l.tools), ...arch.project.stations.flatMap((s) => s.tools)]);
   for (const [name, v] of Object.entries(arch.tools ?? {})) {
     checkText(`инструмент ${name}`, v);
     if (!onMap.has(name)) fail(`инструмент ${name}`, 'подсказка есть, а на карте инструмента нет');
@@ -155,6 +155,122 @@ arch.trace.steps.forEach((s, i) => {
   }
 }
 check('запросы: у маршрута есть хотя бы один', queries > 0, 'ни одного sql в маршруте');
+
+// ── Проект от и до ─────────────────────────────────────────────────────────
+// Сценарий пишется заранее, экран его только показывает, поэтому гейт держит то,
+// что сломается молча: разрыв цепочки передач, метку вне трёх, внешнюю ссылку без
+// даты проверки и число в тексте, разошедшееся с запросом (`expect`).
+{
+  const p = arch.project;
+  const STATIONS = ['question', 'connect', 'raw', 'clean', 'model', 'queries', 'report', 'forecast', 'answer'];
+  const LABELS = ['here', 'watch', 'outside'];
+  check('проект: девять станций по порядку', JSON.stringify(p.stations.map((s) => s.id)) === JSON.stringify(STATIONS), `порядок: ${p.stations.map((s) => s.id).join(', ')}`);
+  check('проект: метки ровно три', JSON.stringify(p.labels.map((l) => l.id)) === JSON.stringify(LABELS), 'состав меток');
+  check('проект: около 15 минут', p.minutes === 15, `minutes = ${p.minutes}`);
+  check('проект: необязательна только станция прогноза', JSON.stringify(p.stations.filter((s) => s.optional).map((s) => s.id)) === '["forecast"]', 'optional не у forecast');
+  check('проект: продолжение ведёт в существующий маршрут', p.finish.next.trace === arch.trace.id, `нет маршрута ${p.finish.next.trace}`);
+  checkText('проект.title', p.title);
+  checkText('проект.intro', p.intro);
+  checkText('проект.case.question', p.case.question);
+  checkText('проект.case.who', p.case.who);
+  checkText('проект.finish.title', p.finish.title);
+  checkText('проект.finish.text', p.finish.text);
+  checkText('проект.finish.next.text', p.finish.next.text);
+  for (const l of p.labels) {
+    checkText(`метка ${l.id}.title`, l.title);
+    checkText(`метка ${l.id}.note`, l.note);
+  }
+
+  const DATE = /^\d{4}-\d{2}-\d{2}$/;
+  const extIds = new Set();
+  for (const e of p.external) {
+    const w = `внешняя ${e.id}`;
+    if (extIds.has(e.id)) fail(w, 'id повторён');
+    extIds.add(e.id);
+    if (!['try', 'doc'].includes(e.kind)) fail(w, `вид ${e.kind}`);
+    if (!e.name) fail(w, 'нет названия');
+    for (const u of [e.url, ...(e.also ?? [])]) if (!/^https:\/\//.test(u ?? '')) fail(w, `адрес не https: ${u}`);
+    if (!DATE.test(e.checked ?? '')) fail(w, 'нет даты проверки');
+    checkText(`${w}.terms`, e.terms);
+    if (e.unconfirmed) checkText(`${w}.unconfirmed`, e.unconfirmed);
+  }
+  const usedExt = new Set();
+  const useExt = (w, id) => {
+    usedExt.add(id);
+    if (!extIds.has(id)) fail(w, `внешней страницы ${id} нет в external`);
+  };
+
+  p.stations.forEach((s, i) => {
+    const w = `станция ${s.id}`;
+    for (const k of ['title', 'does']) checkText(`${w}.${k}`, s[k]);
+    checkText(`${w}.receives.text`, s.receives?.text);
+    checkText(`${w}.hands.text`, s.hands?.text);
+    checkText(`${w}.action.text`, s.action?.text);
+    if (!layerIds.includes(s.layer)) fail(w, `слой ${s.layer} не существует`);
+    if (!roleIds.has(s.role)) fail(w, `роль ${s.role} не существует в career.json`);
+    for (const r of s.also ?? []) if (!roleIds.has(r)) fail(w, `роль ${r} не существует в career.json`);
+    if (s.receives.from !== null && !roleIds.has(s.receives.from)) fail(w, `роль ${s.receives.from} не существует`);
+    if (s.hands.to !== null && !roleIds.has(s.hands.to)) fail(w, `роль ${s.hands.to} не существует`);
+    if (!LABELS.includes(s.label)) fail(w, `метка ${s.label}`);
+    if (!s.tools?.length) fail(w, 'нет инструментов');
+    for (const t of s.tools ?? []) if (!arch.tools?.[t]) fail(w, `у инструмента ${t} нет подсказки в tools`);
+    for (const sk of s.action.skills) if (!skillIds.has(sk)) fail(w, `навык ${sk} не существует в паках`);
+    if (new Set(s.action.skills).size !== s.action.skills.length) fail(w, 'навык повторён');
+    if (s.action.app && (!appIds.has(s.action.app) || s.action.app === 'quaera')) fail(w, `приложение ${s.action.app} не существует в family.json`);
+    for (const id of s.action.externals ?? []) useExt(w, id);
+    if (s.label === 'outside' && !s.action.externals?.some((id) => p.external.find((e) => e.id === id)?.kind === 'try')) fail(w, 'метка «снаружи», но нет страницы, где попробовать');
+    if (s.label === 'here' && !s.action.skills.length && !s.action.app) fail(w, 'метка «здесь», но нет ни навыка, ни приложения');
+    if (s.action.href?.startsWith('/') && !existsSync(path.join(root, 'public', s.action.href))) fail(w, `файла ${s.action.href} нет в public`);
+    for (const [j, l] of (s.lessons ?? []).entries()) {
+      checkText(`${w}.lessons[${j}]`, l.text);
+      if (l.source) useExt(w, l.source);
+    }
+    // Цепочка: следующая обязательная станция принимает от того, кто работал на этой, и у него же адресат.
+    const next = p.stations.slice(i + 1).find((n) => !n.optional);
+    if (!s.optional && next) {
+      if (next.receives.from !== s.role) fail(w, `следующая станция ${next.id} принимает от ${next.receives.from}, а работал ${s.role}`);
+      if (s.hands.to !== next.role) fail(w, `передаёт ${s.hands.to}, а следующая станция ${next.id} у роли ${next.role}`);
+    }
+    for (const qr of s.queries ?? []) {
+      checkText(`${w}.${qr.id}.title`, qr.title);
+      try {
+        const got = db.exec(qr.sql)[0]?.values ?? [];
+        check(`${w}.${qr.id}: результат совпал с expect`, JSON.stringify(got) === JSON.stringify(qr.expect), `запрос: ${JSON.stringify(got)}\n  файл:   ${JSON.stringify(qr.expect)}`);
+      } catch (e) {
+        fail(`${w}.${qr.id}`, e.message);
+      }
+    }
+  });
+  check('проект: цепочка начинается и кончается бизнесом', p.stations[0].receives.from === null && p.stations.at(-1).hands.to === null, 'первая принимает не от бизнеса или последняя передаёт не бизнесу');
+  check('проект: каждый слой встречается', layerIds.every((id) => p.stations.some((s) => s.layer === id)), 'есть слой без станции');
+  for (const e of p.external) if (e.kind === 'try' && !usedExt.has(e.id)) fail(`внешняя ${e.id}`, 'страница «попробовать» не привязана к станции');
+
+  const raw = p.stations.find((s) => s.id === 'raw');
+  check('проект: большой файл показан в сырье', raw.bigFile?.methods?.length >= 4, 'нет bigFile у станции raw');
+  for (const m of raw.bigFile?.methods ?? []) {
+    checkText(`способ ${m.id}.when`, m.when);
+    if (m.source) useExt(`способ ${m.id}`, m.source);
+  }
+  checkText('способы.title', raw.bigFile?.title);
+  checkText('предел Lab', raw.bigFile?.labLimit?.text);
+  check('предел Lab: дата и числа замера', DATE.test(raw.bigFile?.labLimit?.checked ?? '') && raw.bigFile.labLimit.ok_mb < raw.bigFile.labLimit.fail_mb, 'нет даты или ok_mb не меньше fail_mb');
+
+  // Выбор роли: все семь ролей, у каждой существующие станции, каждая станция хоть куда-то ведёт.
+  check('проект: выбор охватывает все роли', JSON.stringify([...new Set(p.finish.roles.map((r) => r.role))].sort()) === JSON.stringify([...roleIds].sort()), 'не все роли career.json в finish.roles');
+  for (const r of p.finish.roles) {
+    checkText(`выбор ${r.role}.why`, r.why);
+    for (const st of r.stations) if (!STATIONS.includes(st)) fail(`выбор ${r.role}`, `станции ${st} нет`);
+  }
+  for (const st of STATIONS) if (!p.finish.roles.some((r) => r.stations.includes(st))) fail('проект: выбор роли', `станция ${st} не ведёт ни к одной роли`);
+
+  // График станции «Отчёт» совпадает с её запросом построчно.
+  const rep = p.stations.find((s) => s.figure === 'planVsFact');
+  const fig = p.figure;
+  for (const k of ['fact', 'plan']) checkText(`project.figure.names.${k}`, fig?.names?.[k]);
+  const months = rep?.queries?.find((qr) => qr.id === 'months');
+  check('проект: график совпадает с запросом', !!months && JSON.stringify(months.expect.map((r) => [r[0], r[1], r[2]])) === JSON.stringify(fig.months.map((m, i) => [m, fig.fact[i], fig.plan[i]])), 'месяцы, факт или план расходятся');
+  ok('проект', `${p.stations.length} станций, ${p.external.length} внешних страниц`);
+}
 
 console.log(failed ? `\n${failed} проверок не прошло.` : '\nКарта данных согласована.');
 process.exit(failed ? 1 : 0);
