@@ -23,6 +23,7 @@ import { withQuizAttempt } from '../career/store';
 import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
 import { quizBank } from '../content/careerQuiz';
 import { ArchitectureMap } from './ArchitectureMap';
+import { RoleCompare } from './RoleCompare';
 
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
@@ -265,6 +266,7 @@ export function CareerPage({
           ))}
         </div>
         <p className="career-does">{role.does[locale]}</p>
+        <RoleCompare roleId={role.id} levels={levels} />
 
         <div className="career-band" role="img" aria-label={c.bandAria(c.bands[readiness.band], bandStep)}>
           {BANDS.map((b, i) => (

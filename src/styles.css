@@ -8686,6 +8686,116 @@ details.story-known > summary small {
   font-weight: 600;
 }
 
+/* Сравнение ролей: свёрнуто под выбором цели, чтобы «Что добрать» не уезжало. Метки различаются формой и текстом, цвет вторичен. */
+.career-compare {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 12px;
+}
+
+.career-compare summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.career-compare[open] summary {
+  margin-bottom: 4px;
+}
+
+.career-compare-lead,
+.career-compare-foot {
+  margin: 0 0 8px;
+  font-size: var(--fs-small);
+}
+
+.career-compare-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.career-compare-pick select {
+  min-height: 36px;
+  max-width: 100%;
+}
+
+.career-compare-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.career-mark {
+  display: inline-block;
+  min-width: 1em;
+  text-align: center;
+  line-height: 1;
+}
+
+.career-mark-you {
+  color: var(--accent);
+  font-size: 1.3em;
+}
+
+.career-mark-target,
+.career-mark-other {
+  color: var(--text);
+}
+
+.career-compare-grid {
+  margin-bottom: 8px;
+}
+
+.career-compare-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+
+.career-compare-head {
+  border-top: 0;
+  font-size: var(--fs-small);
+}
+
+.career-compare-level,
+.career-compare-cell {
+  text-align: center;
+}
+
+.career-compare-cell {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  min-height: 1.4em;
+  border-left: 1px dashed var(--line);
+}
+
+.career-compare-axis {
+  position: relative;
+}
+
+.career-compare-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .career-does {
   margin: 0 0 14px;
 }
