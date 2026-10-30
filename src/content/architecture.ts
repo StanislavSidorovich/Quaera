@@ -123,8 +123,8 @@ export interface ProjectStation {
   bigFile?: {
     title: Text;
     methods: { id: string; name: string; when: Text; source?: string }[];
-    /** Замер предела Quaera Lab: `ok_mb` открылся, `fail_mb` дал пустую таблицу без ошибки. */
-    labLimit: { ok_mb: number; fail_mb: number; checked: string; text: Text };
+    /** Замер предела Quaera Lab: `ok_mb` стал таблицей, `fail_mb` не открылся (null: предел не найден). */
+    labLimit: { ok_mb: number; fail_mb: number | null; checked: string; text: Text };
   };
 }
 

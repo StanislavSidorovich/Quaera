@@ -895,18 +895,18 @@
               "id": "lab",
               "name": "Quaera Lab",
               "when": {
-                "ru": "Файл до 400 МБ и нужно быстро посмотреть его без установки. Lab сам определяет типы, поэтому прочитать всё текстом здесь нельзя.",
-                "en": "The file is up to 400 MB and you want a quick look with nothing to install. Lab detects types itself, so reading everything as text is not possible here."
+                "ru": "Файл до 600 МБ и нужно быстро посмотреть его без установки. Lab сам определяет типы, поэтому прочитать всё текстом здесь нельзя.",
+                "en": "The file is up to 600 MB and you want a quick look with nothing to install. Lab detects types itself, so reading everything as text is not possible here."
               }
             }
           ],
           "labLimit": {
-            "ok_mb": 400,
-            "fail_mb": 600,
+            "ok_mb": 600,
+            "fail_mb": null,
             "checked": "2026-10-30",
             "text": {
-              "ru": "Замер от 2026-10-30, Chromium на 64-битной Windows, 16 ГБ памяти: CSV на 400 МБ (10,7 млн строк) открылся примерно за минуту и стал таблицей. CSV на 600 МБ открывается как пустая таблица, 0 строк и без ошибки. Выше 400 МБ берите DuckDB; на других компьютерах предел может быть ниже. Всегда сверяйте число строк.",
-              "en": "Measured on 2026-10-30, Chromium on 64-bit Windows, 16 GB of memory: a 400 MB CSV (10.7 million rows) opened in about a minute and became a table. A 600 MB CSV opens as an empty table, 0 rows with no error. Above 400 MB use DuckDB; on other computers the limit may be lower. Always check the row count."
+              "ru": "Замер от 2026-10-30, Chromium на 64-битной Windows, 16 ГБ памяти, после исправления импорта: CSV на 600 МБ (13,7 млн строк) стал таблицей примерно за минуту. Файлы на 1,8 и 3 ГБ открываются для просмотра (3 ГБ около шести минут), таблицу из них мы не делали. Раньше файл больше 512 МБ открывался как пустая таблица, теперь такой файл читается напрямую, а пустой результат из большого файла Lab объявляет ошибкой. На других компьютерах предел памяти может быть ниже; число строк всё равно сверяйте.",
+              "en": "Measured on 2026-10-30, Chromium on 64-bit Windows, 16 GB of memory, after the import fix: a 600 MB CSV (13.7 million rows) became a table in about a minute. Files of 1.8 and 3 GB open for preview (3 GB takes about six minutes); we did not make a table from them. A file above 512 MB used to open as an empty table; now it is read directly, and an empty result from a big file is reported as an error. On other computers the memory limit may be lower; check the row count anyway."
             }
           }
         },

@@ -253,7 +253,7 @@ check('запросы: у маршрута есть хотя бы один', que
   }
   checkText('способы.title', raw.bigFile?.title);
   checkText('предел Lab', raw.bigFile?.labLimit?.text);
-  check('предел Lab: дата и числа замера', DATE.test(raw.bigFile?.labLimit?.checked ?? '') && raw.bigFile.labLimit.ok_mb < raw.bigFile.labLimit.fail_mb, 'нет даты или ok_mb не меньше fail_mb');
+  check('предел Lab: дата и числа замера', DATE.test(raw.bigFile?.labLimit?.checked ?? '') && (raw.bigFile.labLimit.fail_mb === null || raw.bigFile.labLimit.ok_mb < raw.bigFile.labLimit.fail_mb), 'нет даты или ok_mb не меньше fail_mb');
 
   // Выбор роли: все семь ролей, у каждой существующие станции, каждая станция хоть куда-то ведёт.
   check('проект: выбор охватывает все роли', JSON.stringify([...new Set(p.finish.roles.map((r) => r.role))].sort()) === JSON.stringify([...roleIds].sort()), 'не все роли career.json в finish.roles');
