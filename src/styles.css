@@ -9642,6 +9642,7 @@ details.story-known > summary small {
 /* График шага маршрута: тот же Chart, что у результата запроса; разложение идёт тремя столбиками в ряд, на узком экране друг под другом. */
 .arch-figure {
   margin: 0 0 10px;
+  max-width: 640px;
 }
 
 .arch-figure-split {
