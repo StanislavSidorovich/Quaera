@@ -272,5 +272,117 @@ check('запросы: у маршрута есть хотя бы один', que
   ok('проект', `${p.stations.length} станций, ${p.external.length} внешних страниц`);
 }
 
+// ── Артефакты слоёв ────────────────────────────────────────────────────────
+// Всё, что карточка слоя показывает как «лежит в слое», снято запросом: строки
+// источников и bronze, все восемь комбинаций переключателей silver, зерно gold.
+// Гейт выполняет те же запросы и сверяет построчно; мера DAX проверяется по
+// именам таблиц и колонок схемы (движка DAX в браузере нет), а число, которое
+// она считает, уже держит гейт проекта выше (график и запрос `months`).
+{
+  const a = arch.artifacts;
+  const schema = readJson('public/data/schema.json');
+  const rowsOf = (sql) => db.exec(sql)[0]?.values ?? [];
+  const same = (w, sql, expect) => {
+    try {
+      const got = JSON.stringify(rowsOf(sql));
+      check(w, got === JSON.stringify(expect), `запрос: ${got}\n  файл:   ${JSON.stringify(expect)}`);
+    } catch (e) {
+      fail(w, e.message);
+    }
+  };
+  for (const k of Object.keys(a.ui)) checkText(`artifacts.ui.${k}`, a.ui[k]);
+
+  // Источники: строка в карточке совпадает с настоящей строкой, а текст события говорит о ней же.
+  checkText('artifacts.sources.title', a.sources.title);
+  for (const k of ['sellin', 'sellout']) {
+    const s = a.sources[k];
+    checkText(`источник ${k}.event`, s.event);
+    same(`источник ${k}: строка совпала с запросом`, s.sql, s.expect);
+    check(`источник ${k}: колонок столько же, сколько значений`, s.columns.length === s.expect[0].length, 'число колонок и значений разное');
+    check(`источник ${k}: таблица есть в схеме и в запросе`, schema.tables.some((t) => t.table === s.table) && new RegExp(`FROM ${s.table}\\b`).test(s.sql), `нет ${s.table} в схеме или в запросе`);
+    const units = s.expect[0][s.columns.indexOf('units')];
+    const name = s.expect[0][s.columns.indexOf('product_name')];
+    for (const loc of ['ru', 'en']) check(`источник ${k}.event.${loc}: штуки и товар из строки`, s.event[loc].includes(String(units)) && s.event[loc].includes(name), `в тексте нет ${units} или ${name}`);
+  }
+
+  // Bronze: пять настоящих строк с разными видами даты, регистром кода и пробелами.
+  checkText('artifacts.bronze.title', a.bronze.title);
+  checkText('artifacts.bronze.caption', a.bronze.caption);
+  same('bronze: строки совпали с запросом', a.bronze.sql, a.bronze.expect);
+  check('bronze: 4–5 строк', a.bronze.expect.length >= 4 && a.bronze.expect.length <= 5, `строк ${a.bronze.expect.length}`);
+  {
+    const shape = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? 'iso' : /^\d{4}-\d{1,2}-\d{1,2}$/.test(d) ? 'short' : d.includes('.') ? 'dot' : 'slash');
+    const col = (name) => a.bronze.expect.map((r) => r[a.bronze.columns.indexOf(name)]);
+    check('bronze: все четыре вида даты', new Set(col('sale_date').map(shape)).size === 4, 'видов даты меньше четырёх');
+    check('bronze: код и строчными, и прописными', col('sku_code').some((c) => c !== c.toUpperCase()) && col('sku_code').some((c) => c === c.toUpperCase()), 'регистр кода не разный');
+    check('bronze: название с пробелами и без', col('customer_name').some((c) => c !== c.trim()) && col('customer_name').some((c) => c === c.trim()), 'пробелов в названиях нет или они везде');
+    check('bronze: у каждой строки source_file', col('source_file').every((f) => /^export_\d{4}-\d{2}\.csv$/.test(f)), 'нет source_file');
+  }
+
+  // Silver: все комбинации, опорные числа и честность переключателей.
+  checkText('artifacts.silver.title', a.silver.title);
+  checkText('artifacts.silver.caption', a.silver.caption);
+  checkText('artifacts.silver.note', a.silver.note);
+  for (const k of Object.keys(a.silver.toggles)) checkText(`silver.toggles.${k}`, a.silver.toggles[k]);
+  for (const k of Object.keys(a.silver.metrics)) checkText(`silver.metrics.${k}`, a.silver.metrics[k]);
+  const keys = ['000', '001', '010', '011', '100', '101', '110', '111'];
+  check('silver: восемь комбинаций', JSON.stringify(Object.keys(a.silver.combos).sort()) === JSON.stringify(keys), 'состав ключей');
+  for (const key of keys) {
+    const c = a.silver.combos[key];
+    same(`silver ${key}: числа совпали с запросом`, c?.sql ?? '', [[c?.names, c?.codes, c?.rows, c?.dates]]);
+  }
+  const V = (key) => a.silver.combos[key];
+  check('silver: опорные числа 104 → 52, 58 → 29, 3110 → 3000', V('000').names === 104 && V('100').names === 52 && V('000').codes === 58 && V('100').codes === 29 && V('000').rows === 3110 && V('001').rows === 3000, 'опорные значения разошлись');
+  {
+    // Каждый переключатель в любой комбинации остальных меняет хоть одно показанное число.
+    const metricsOf = (c) => JSON.stringify([c.names, c.codes, c.rows, c.dates]);
+    for (const [i, name] of ['trim', 'types', 'dedup'].entries()) {
+      for (const key of keys.filter((k) => k[i] === '0')) {
+        const on = key.slice(0, i) + '1' + key.slice(i + 1);
+        check(`silver: «${name}» меняет число при ${key}`, metricsOf(V(key)) !== metricsOf(V(on)), `${key} и ${on} дали одно и то же`);
+      }
+    }
+    // Текст запроса содержит ровно включённые шаги.
+    for (const key of keys) {
+      const sql = V(key).sql;
+      const has = [/TRIM\(/.test(sql) && /UPPER\(/.test(sql), /WHEN sale_date LIKE '__\.__\.____'/.test(sql), /SELECT DISTINCT/.test(sql)];
+      check(`silver ${key}: запрос содержит ровно включённые шаги`, has.every((h, i) => h === (key[i] === '1')), `шаги в запросе: ${has}`);
+    }
+  }
+
+  // Gold: зерно из схемы и уникальность по нему.
+  checkText('artifacts.gold.title', a.gold.title);
+  checkText('artifacts.gold.grain', a.gold.grain);
+  checkText('artifacts.gold.rowsLabel', a.gold.rowsLabel);
+  same('gold: строк и различных зёрен поровну', a.gold.sql, a.gold.expect);
+  const fact = schema.tables.find((t) => t.table === a.gold.table);
+  check('gold: у факта в схеме есть зерно на обе локали', !!fact?.grain?.ru && !!fact?.grain?.en, 'нет grain в schema.json');
+  check('gold: зерно запроса совпадает со связями факта', /week_start/.test(a.gold.sql) && /customer_id/.test(a.gold.sql) && /product_id/.test(a.gold.sql) && ['dim_date', 'dim_customer', 'dim_product'].every((t) => fact.columns.some((c) => c.references?.table === t)), 'колонки зерна и связи факта расходятся');
+
+  // Serve: мера DAX ссылается на настоящие таблицы и колонки, скобки сходятся, фильтр тот же, что у запроса графика.
+  checkText('artifacts.serve.title', a.serve.title);
+  checkText('artifacts.serve.caption', a.serve.caption);
+  checkText('artifacts.serve.chart', a.serve.chart);
+  {
+    const dax = a.serve.dax;
+    const refs = [...dax.matchAll(/([a-z_]+)\[([a-z_]+)\]/g)].map((m) => [m[1], m[2]]);
+    check('serve: меры DAX ссылаются на колонки схемы', refs.length >= 2 && refs.every(([t, c]) => schema.tables.find((x) => x.table === t)?.columns.some((x) => x.name === c)), `ссылки: ${JSON.stringify(refs)}`);
+    check('serve: refs совпадают со ссылками в мере', JSON.stringify(refs) === JSON.stringify(a.serve.refs), 'refs и текст меры разошлись');
+    const depth = [...dax].reduce((n, ch) => (n < 0 ? n : n + (ch === '(' ? 1 : ch === ')' ? -1 : 0)), 0);
+    check('serve: скобки меры сходятся', depth === 0, `баланс скобок ${depth}`);
+    check('serve: мера в форме «Имя = CALCULATE ( SUM (…»', new RegExp(`^${a.serve.measure} =\\s*CALCULATE \\(\\s*SUM \\(`).test(dax), 'мера не в форме Имя = CALCULATE ( SUM (…');
+    const rep = arch.project.stations.find((s) => s.figure === 'planVsFact').queries.find((q) => q.id === 'months');
+    check('serve: фильтр меры совпал с запросом графика', /\[division\] = "FMCG"/.test(dax) && /division = 'FMCG'/.test(rep.sql) && /SUM\(s\.units\)/.test(rep.sql), 'мера считает не то, что график');
+  }
+
+  // Встреча: фраза слайда уже записана в слое.
+  checkText('artifacts.meeting.title', a.meeting.title);
+  checkText('artifacts.meeting.kicker', a.meeting.kicker);
+  checkText('artifacts.meeting.phrase', a.meeting.phrase);
+  const meetingSteps = arch.trace.steps.filter((s) => s.layer === 'meeting');
+  for (const loc of ['ru', 'en']) check(`встреча.phrase.${loc}: фраза записана в слое`, meetingSteps.some((s) => s.text[loc].includes(a.meeting.phrase[loc])) && arch.layers.find((l) => l.id === 'meeting').kaiyo[loc].includes(a.meeting.phrase[loc]), 'фразы нет в шаге маршрута или в слое');
+  ok('артефакты', '6 слоёв, 8 комбинаций silver');
+}
+
 console.log(failed ? `\n${failed} проверок не прошло.` : '\nКарта данных согласована.');
 process.exit(failed ? 1 : 0);

@@ -1665,5 +1665,320 @@
         }
       }
     }
+  },
+  "artifacts": {
+    "ui": {
+      "query": {
+        "ru": "Запрос",
+        "en": "Query"
+      },
+      "hideQuery": {
+        "ru": "Скрыть запрос",
+        "en": "Hide query"
+      },
+      "openLab": {
+        "ru": "Открыть в Lab",
+        "en": "Open in Lab"
+      },
+      "table": {
+        "ru": "Строка таблицы",
+        "en": "Table row"
+      },
+      "sourceNote": {
+        "ru": "Выдумывать нечего: обе строки лежат в датасете Kaiyo.",
+        "en": "Both rows are real, they sit in the Kaiyo dataset."
+      }
+    },
+    "sources": {
+      "title": {
+        "ru": "Как событие становится строкой",
+        "en": "How an event becomes a row"
+      },
+      "sellin": {
+        "event": {
+          "ru": "Заказ. 12 января 2024 дистрибьютор заказал 68 шт Nettora Bath 750 ml, склад отгрузил заказ 17 января.",
+          "en": "Order. On 12 January 2024 a distributor ordered 68 units of Nettora Bath 750 ml, and the warehouse shipped it on 17 January."
+        },
+        "table": "fact_sellin",
+        "columns": [
+          "sellin_id",
+          "order_date",
+          "ship_date",
+          "product_name",
+          "units",
+          "net_amount"
+        ],
+        "sql": "SELECT i.sellin_id, i.order_date, i.ship_date, p.product_name, i.units, i.net_amount\nFROM fact_sellin i\nJOIN dim_product p ON p.product_id = i.product_id\nWHERE i.sellin_id = 1;",
+        "expect": [
+          [
+            1,
+            "2024-01-12",
+            "2024-01-17",
+            "Nettora Bath 750 ml",
+            68,
+            8348.55
+          ]
+        ]
+      },
+      "sellout": {
+        "event": {
+          "ru": "Отчёт дистрибьютора. За неделю с 1 января 2024 в точке Minori #1013 продано 2 шт Nettora Bath 750 ml.",
+          "en": "Distributor report. In the week of 1 January 2024 the outlet Minori #1013 sold 2 units of Nettora Bath 750 ml."
+        },
+        "table": "fact_sellout",
+        "columns": [
+          "sellout_id",
+          "week_start",
+          "customer_name",
+          "product_name",
+          "units",
+          "revenue"
+        ],
+        "sql": "SELECT s.sellout_id, s.week_start, c.customer_name, p.product_name, s.units, s.revenue\nFROM fact_sellout s\nJOIN dim_customer c ON c.customer_id = s.customer_id\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE s.sellout_id = 1;",
+        "expect": [
+          [
+            1,
+            "2024-01-01",
+            "Minori #1013",
+            "Nettora Bath 750 ml",
+            2,
+            398.31
+          ]
+        ]
+      }
+    },
+    "bronze": {
+      "title": {
+        "ru": "Что лежит в bronze",
+        "en": "What sits in bronze"
+      },
+      "caption": {
+        "ru": "Пять настоящих строк `staging_raw_sellout`, ничего не исправлено. Четыре вида даты, код то строчными, то прописными, пробелы вокруг названия, число то с запятой, то с точкой. У каждой строки есть файл выгрузки.",
+        "en": "Five real rows of `staging_raw_sellout`, nothing fixed. Four date shapes, the code now lower case and now upper case, spaces around the name, a number with a comma or with a dot. Every row names its export file."
+      },
+      "columns": [
+        "raw_id",
+        "sale_date",
+        "customer_name",
+        "sku_code",
+        "units",
+        "revenue",
+        "source_file"
+      ],
+      "sql": "SELECT raw_id, sale_date, customer_name, sku_code, units, revenue, source_file\nFROM staging_raw_sellout\nWHERE raw_id IN (1, 2, 4, 21, 34)\nORDER BY raw_id;",
+      "expect": [
+        [
+          1,
+          "2024-02-19",
+          "  Minori #1013 ",
+          "nett005",
+          "2",
+          "392,44",
+          "export_2024-02.csv"
+        ],
+        [
+          2,
+          "11.03.2024",
+          "  Minori #1013 ",
+          "nett005",
+          "6",
+          "781,35",
+          "export_2024-03.csv"
+        ],
+        [
+          4,
+          "2024-5-20",
+          "Minori #1013",
+          "KROS006",
+          "2",
+          "112.19",
+          "export_2024-05.csv"
+        ],
+        [
+          21,
+          "03/11/2025",
+          "  Minori #1013 ",
+          "AQUA005",
+          "4",
+          "521.02",
+          "export_2025-11.csv"
+        ],
+        [
+          34,
+          "01/04/2024",
+          "  Minori #1013 ",
+          "NETT002",
+          "4,0",
+          "693,97",
+          "export_2024-04.csv"
+        ]
+      ]
+    },
+    "silver": {
+      "title": {
+        "ru": "Чистка на настоящих данных",
+        "en": "Cleaning on real data"
+      },
+      "caption": {
+        "ru": "Включайте шаги и смотрите на числа: каждый раз считается настоящий запрос к `staging_raw_sellout`.",
+        "en": "Switch the steps on and watch the numbers: each time a real query runs against `staging_raw_sellout`."
+      },
+      "toggles": {
+        "trim": {
+          "ru": "TRIM и регистр: убрать пробелы в названии, коды прописными",
+          "en": "TRIM and case: strip spaces from names, upper-case the codes"
+        },
+        "types": {
+          "ru": "Даты в один вид: ГГГГ-ММ-ДД",
+          "en": "Dates in one form: YYYY-MM-DD"
+        },
+        "dedup": {
+          "ru": "Снять дубли: DISTINCT",
+          "en": "Remove duplicates: DISTINCT"
+        }
+      },
+      "metrics": {
+        "names": {
+          "ru": "названий",
+          "en": "names"
+        },
+        "codes": {
+          "ru": "кодов",
+          "en": "codes"
+        },
+        "rows": {
+          "ru": "строк",
+          "en": "rows"
+        },
+        "dates": {
+          "ru": "дат вида ГГГГ-ММ-ДД",
+          "en": "dates as YYYY-MM-DD"
+        }
+      },
+      "note": {
+        "ru": "Дубли здесь точные копии строк, поэтому названия и коды они не меняют. Числа в тексте (`units`, `revenue`) этот набор не трогает.",
+        "en": "The duplicates here are exact copies of rows, so they do not change names or codes. The numbers stored as text (`units`, `revenue`) are not touched by this set."
+      },
+      "combos": {
+        "100": {
+          "sql": "WITH s AS (\n  SELECT sale_date,\n         TRIM(customer_name) AS customer_name,\n         UPPER(sku_code) AS sku_code,\n         units, revenue, source_file\n  FROM staging_raw_sellout\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM s;",
+          "names": 52,
+          "codes": 29,
+          "rows": 3110,
+          "dates": 893
+        },
+        "101": {
+          "sql": "WITH s AS (\n  SELECT sale_date,\n         TRIM(customer_name) AS customer_name,\n         UPPER(sku_code) AS sku_code,\n         units, revenue, source_file\n  FROM staging_raw_sellout\n),\nd AS (\n  SELECT DISTINCT sale_date, customer_name, sku_code, units, revenue, source_file\n  FROM s\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM d;",
+          "names": 52,
+          "codes": 29,
+          "rows": 3000,
+          "dates": 856
+        },
+        "110": {
+          "sql": "WITH s AS (\n  SELECT sale_date,\n         TRIM(customer_name) AS customer_name,\n         UPPER(sku_code) AS sku_code,\n         units, revenue, source_file\n  FROM staging_raw_sellout\n),\nt AS (\n  SELECT CASE\n           WHEN sale_date LIKE '__.__.____' OR sale_date LIKE '__/__/____'\n             THEN substr(sale_date, 7, 4) || '-' || substr(sale_date, 4, 2) || '-' || substr(sale_date, 1, 2)\n           WHEN sale_date LIKE '____-_-_'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-0' || substr(sale_date, 8, 1)\n           WHEN sale_date LIKE '____-_-__'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-' || substr(sale_date, 8, 2)\n           WHEN sale_date LIKE '____-__-_'\n             THEN substr(sale_date, 1, 8) || '0' || substr(sale_date, 9, 1)\n           ELSE sale_date\n         END AS sale_date,\n         customer_name, sku_code, units, revenue, source_file\n  FROM s\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM t;",
+          "names": 52,
+          "codes": 29,
+          "rows": 3110,
+          "dates": 3110
+        },
+        "111": {
+          "sql": "WITH s AS (\n  SELECT sale_date,\n         TRIM(customer_name) AS customer_name,\n         UPPER(sku_code) AS sku_code,\n         units, revenue, source_file\n  FROM staging_raw_sellout\n),\nt AS (\n  SELECT CASE\n           WHEN sale_date LIKE '__.__.____' OR sale_date LIKE '__/__/____'\n             THEN substr(sale_date, 7, 4) || '-' || substr(sale_date, 4, 2) || '-' || substr(sale_date, 1, 2)\n           WHEN sale_date LIKE '____-_-_'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-0' || substr(sale_date, 8, 1)\n           WHEN sale_date LIKE '____-_-__'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-' || substr(sale_date, 8, 2)\n           WHEN sale_date LIKE '____-__-_'\n             THEN substr(sale_date, 1, 8) || '0' || substr(sale_date, 9, 1)\n           ELSE sale_date\n         END AS sale_date,\n         customer_name, sku_code, units, revenue, source_file\n  FROM s\n),\nd AS (\n  SELECT DISTINCT sale_date, customer_name, sku_code, units, revenue, source_file\n  FROM t\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM d;",
+          "names": 52,
+          "codes": 29,
+          "rows": 3000,
+          "dates": 3000
+        },
+        "000": {
+          "sql": "SELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM staging_raw_sellout;",
+          "names": 104,
+          "codes": 58,
+          "rows": 3110,
+          "dates": 893
+        },
+        "001": {
+          "sql": "WITH d AS (\n  SELECT DISTINCT sale_date, customer_name, sku_code, units, revenue, source_file\n  FROM staging_raw_sellout\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM d;",
+          "names": 104,
+          "codes": 58,
+          "rows": 3000,
+          "dates": 856
+        },
+        "010": {
+          "sql": "WITH t AS (\n  SELECT CASE\n           WHEN sale_date LIKE '__.__.____' OR sale_date LIKE '__/__/____'\n             THEN substr(sale_date, 7, 4) || '-' || substr(sale_date, 4, 2) || '-' || substr(sale_date, 1, 2)\n           WHEN sale_date LIKE '____-_-_'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-0' || substr(sale_date, 8, 1)\n           WHEN sale_date LIKE '____-_-__'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-' || substr(sale_date, 8, 2)\n           WHEN sale_date LIKE '____-__-_'\n             THEN substr(sale_date, 1, 8) || '0' || substr(sale_date, 9, 1)\n           ELSE sale_date\n         END AS sale_date,\n         customer_name, sku_code, units, revenue, source_file\n  FROM staging_raw_sellout\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM t;",
+          "names": 104,
+          "codes": 58,
+          "rows": 3110,
+          "dates": 3110
+        },
+        "011": {
+          "sql": "WITH t AS (\n  SELECT CASE\n           WHEN sale_date LIKE '__.__.____' OR sale_date LIKE '__/__/____'\n             THEN substr(sale_date, 7, 4) || '-' || substr(sale_date, 4, 2) || '-' || substr(sale_date, 1, 2)\n           WHEN sale_date LIKE '____-_-_'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-0' || substr(sale_date, 8, 1)\n           WHEN sale_date LIKE '____-_-__'\n             THEN substr(sale_date, 1, 5) || '0' || substr(sale_date, 6, 1) || '-' || substr(sale_date, 8, 2)\n           WHEN sale_date LIKE '____-__-_'\n             THEN substr(sale_date, 1, 8) || '0' || substr(sale_date, 9, 1)\n           ELSE sale_date\n         END AS sale_date,\n         customer_name, sku_code, units, revenue, source_file\n  FROM staging_raw_sellout\n),\nd AS (\n  SELECT DISTINCT sale_date, customer_name, sku_code, units, revenue, source_file\n  FROM t\n)\nSELECT COUNT(DISTINCT customer_name) AS names,\n       COUNT(DISTINCT sku_code) AS codes,\n       COUNT(*) AS row_count,\n       SUM(CASE WHEN sale_date LIKE '____-__-__' THEN 1 ELSE 0 END) AS iso_dates\nFROM d;",
+          "names": 104,
+          "codes": 58,
+          "rows": 3000,
+          "dates": 3000
+        }
+      }
+    },
+    "gold": {
+      "title": {
+        "ru": "Звезда Kaiyo",
+        "en": "The Kaiyo star"
+      },
+      "grain": {
+        "ru": "Зерно",
+        "en": "Grain"
+      },
+      "rowsLabel": {
+        "ru": "строк, каждое сочетание встречается один раз",
+        "en": "rows, every combination appears once"
+      },
+      "table": "fact_sellout",
+      "sql": "SELECT COUNT(*) AS row_count,\n       COUNT(DISTINCT week_start || '|' || customer_id || '|' || product_id) AS distinct_grain\nFROM fact_sellout;",
+      "expect": [
+        [
+          118449,
+          118449
+        ]
+      ]
+    },
+    "serve": {
+      "title": {
+        "ru": "Мера и её результат",
+        "en": "A measure and its result"
+      },
+      "caption": {
+        "ru": "Мера в семантической модели Power BI. Отчёт показывает её по месяцам 2025 года для FMCG.",
+        "en": "A measure in the Power BI semantic model. The report shows it by month of 2025 for FMCG."
+      },
+      "measure": "Sell-out FMCG",
+      "dax": "Sell-out FMCG =\nCALCULATE (\n    SUM ( fact_sellout[units] ),\n    dim_product[division] = \"FMCG\"\n)",
+      "chart": {
+        "ru": "Sell-out FMCG, шт по месяцам 2025",
+        "en": "Sell-out FMCG, units by month, 2025"
+      },
+      "refs": [
+        [
+          "fact_sellout",
+          "units"
+        ],
+        [
+          "dim_product",
+          "division"
+        ]
+      ]
+    },
+    "meeting": {
+      "title": {
+        "ru": "Слайд встречи",
+        "en": "The meeting slide"
+      },
+      "kicker": {
+        "ru": "Продажи, разбор",
+        "en": "Sales review"
+      },
+      "phrase": {
+        "ru": "Nettora ушла с полок 37 точек, хотя продажи на точку выросли",
+        "en": "Nettora left the shelves of 37 outlets, although sales per outlet grew"
+      }
+    }
   }
 }

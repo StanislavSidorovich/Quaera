@@ -147,6 +147,46 @@ export interface ArchProject {
   };
 }
 
+/** Запрос артефакта: `expect` — ровно то, что он возвращает на датасете; сверяет `test:architecture`. */
+export interface ArtifactQuery {
+  sql: string;
+  expect: (string | number | null)[][];
+}
+
+export interface SilverCombo {
+  sql: string;
+  names: number;
+  codes: number;
+  rows: number;
+  dates: number;
+}
+
+/**
+ * Артефакты слоёв: то, что в слое реально лежит, на данных Kaiyo. Все значения
+ * сняты запросом и сверяются гейтом; ключ комбинации silver — три цифры
+ * «TRIM и регистр, даты, дубли» (`101`: первый и третий шаги включены).
+ */
+export interface ArchArtifacts {
+  ui: Record<'query' | 'hideQuery' | 'openLab' | 'table' | 'sourceNote', Text>;
+  sources: {
+    title: Text;
+    sellin: { event: Text; table: string; columns: string[] } & ArtifactQuery;
+    sellout: { event: Text; table: string; columns: string[] } & ArtifactQuery;
+  };
+  bronze: { title: Text; caption: Text; columns: string[] } & ArtifactQuery;
+  silver: {
+    title: Text;
+    caption: Text;
+    note: Text;
+    toggles: Record<'trim' | 'types' | 'dedup', Text>;
+    metrics: Record<'names' | 'codes' | 'rows' | 'dates', Text>;
+    combos: Record<string, SilverCombo>;
+  };
+  gold: { title: Text; grain: Text; rowsLabel: Text; table: string } & ArtifactQuery;
+  serve: { title: Text; caption: Text; measure: string; dax: string; chart: Text; refs: [string, string][] };
+  meeting: { title: Text; kicker: Text; phrase: Text };
+}
+
 export interface Architecture {
   lake: { title: Text; note: Text };
   lenses: { id: LensId; title: Text }[];
@@ -156,6 +196,7 @@ export interface Architecture {
   layers: ArchLayer[];
   trace: { id: string; title: Text; figure: ArchFigure; steps: ArchStep[] };
   project: ArchProject;
+  artifacts: ArchArtifacts;
 }
 
 export const architecture = raw as unknown as Architecture;
