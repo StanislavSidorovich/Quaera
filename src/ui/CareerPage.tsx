@@ -51,6 +51,7 @@ export function CareerPage({
   onStartSkill,
   onOpenSkill,
   openMap,
+  restore,
 }: {
   progress: Progress;
   /** Правка состояния экрана; функция получает текущее и возвращает новое (или то же, если менять нечего). */
@@ -61,6 +62,8 @@ export function CareerPage({
   onOpenSkill: (skillId: string) => void;
   /** Открыться на вкладке карты: с главной или по адресу `?roles=map`. */
   openMap?: { layer?: string; trace?: boolean; project?: boolean };
+  /** Возврат из занятия: та же вкладка и то же место карты, откуда ушли. */
+  restore?: boolean;
 }) {
   const { t, locale } = useI18n();
   const c = t.career;
@@ -236,6 +239,7 @@ export function CareerPage({
           initialLayer={openMap?.layer}
           startTrace={openMap?.trace}
           startProject={openMap?.project}
+          restore={restore}
           skills={progress.skills}
           skillTitle={skillTitle}
           onStartSkill={onStartSkill}

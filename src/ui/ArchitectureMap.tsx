@@ -8,7 +8,7 @@ import type { Progress } from '../srs/store';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
 import { useI18n } from '../i18n/context';
-import { FAMILY } from '../links';
+import { FAMILY, familyKaiyoLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
@@ -27,6 +27,13 @@ const FIRST_BLOCK: Record<LensId, BlockId> = { roles: 'work', quaera: 'practice'
  * а возврат ставит экран заново. Тот же приём, что у `lastTab` в CareerPage.
  */
 let lastLens: LensId = 'roles';
+
+/**
+ * Где карта стояла в последний раз: слой, шаг маршрута «одного вопроса», станция
+ * «Проекта от и до» и отметки финиша. Читается только при возврате из занятия
+ * (`restore`), обычный вход на карту открывается с начала.
+ */
+let lastPos: { picked: string; step: number | null; pstep: number | null; marks: Set<string> } | null = null;
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -114,6 +121,7 @@ export function ArchitectureMap({
   initialLayer,
   startTrace = false,
   startProject = false,
+  restore = false,
 }: {
   /** Прогресс по навыкам: тот же `progress.skills`, что считает вкладка «Путь к роли». */
   skills: Progress['skills'];
@@ -127,23 +135,27 @@ export function ArchitectureMap({
   startTrace?: boolean;
   /** Открыться сразу на первой станции маршрута «Проект от и до». */
   startProject?: boolean;
+  /** Вернуться на то место карты, откуда человек ушёл в занятие. */
+  restore?: boolean;
 }) {
   const { t, locale } = useI18n();
   const m = t.career.map;
   const schema = useSchema();
 
+  const back = restore ? lastPos : null;
   const [picked, setPicked] = useState(() =>
-    initialLayer && architecture.layers.some((l) => l.id === initialLayer) ? initialLayer : DEFAULT_LAYER
+    back?.picked ?? (initialLayer && architecture.layers.some((l) => l.id === initialLayer) ? initialLayer : DEFAULT_LAYER)
   );
   const [lens, setLensState] = useState<LensId>(lastLens);
   const setLens = (next: LensId) => {
     lastLens = next;
     setLensState(next);
   };
-  const [step, setStep] = useState<number | null>(startTrace ? 0 : null);
+  const [step, setStep] = useState<number | null>(back ? back.step : startTrace ? 0 : null);
   /* Станция «Проекта от и до»: индекс; на единицу больше последней станции стоит финиш. Отметки финиша только в состоянии экрана. */
-  const [pstep, setPstep] = useState<number | null>(startProject ? 0 : null);
-  const [marks, setMarks] = useState<Set<string>>(() => new Set());
+  const [pstep, setPstep] = useState<number | null>(back ? back.pstep : startProject ? 0 : null);
+  const [marks, setMarks] = useState<Set<string>>(() => new Set(back?.marks));
+  lastPos = { picked, step, pstep, marks };
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
   const [tool, setTool] = useState<string | null>(null);
@@ -343,12 +355,12 @@ export function ArchitectureMap({
             {apps.map((f) => (
               <a
                 key={f.key}
-                href={f.url}
+                href={familyKaiyoLink(f.key, f.url).url}
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
               >
-                {appName(f.key)} ↗
+                {f.key === 'lab' ? t.nav.familyLabKaiyo : f.key === 'model' ? t.nav.familyModelKaiyo : appName(f.key)} ↗
               </a>
             ))}
           </div>

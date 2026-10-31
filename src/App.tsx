@@ -500,7 +500,7 @@ type Screen =
    * сам вычислит, где человек теперь, из решённых заданий, — а хранить
    * здесь номер значило бы завести вторую правду о прогрессе.
    */
-  | { name: 'done'; solved: number; fromStory?: boolean }
+  | { name: 'done'; solved: number; fromStory?: boolean; fromCareer?: boolean }
   | { name: 'story' }
   /**
    * `phase` — где человек внутри дня (бриф → подводки и задания → суждение
@@ -534,7 +534,7 @@ type Screen =
    */
   | { name: 'overview' }
   /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
-  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean } }
+  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean }; restore?: boolean }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -584,7 +584,7 @@ function backTarget(current: Screen, locale: Locale): Screen {
       const lessonIndex = lessonStepIndex(current.queue, step.task.skill);
       if (lessonIndex >= 0 && lessonIndex < current.index) return { ...current, index: lessonIndex };
       // Занятие открыто с «Пути к роли»: выходим туда, а не на главную или в справочник.
-      if (current.fromCareer) return { name: 'career' };
+      if (current.fromCareer) return { name: 'career', restore: true };
       // Занятие без карточки в очереди — обычное дело для повторения:
       // приём уже показывали в прошлый раз, и в эту очередь его не кладут.
       // «Назад» тогда ведёт на карточку приёма из справочника, а не на
@@ -592,7 +592,7 @@ function backTarget(current: Screen, locale: Locale): Screen {
       // для session выше и разбор в ROADMAP, «Кнопка "назад"...»).
       return { name: 'lesson', skill: step.task.skill };
     }
-    if (current.fromCareer) return { name: 'career' };
+    if (current.fromCareer) return { name: 'career', restore: true };
   }
   return { name: 'home' };
 }
@@ -1697,6 +1697,7 @@ export default function App() {
            */
           solved: recordedTasksRef.current.size,
           fromStory: queueMission(s.queue) !== null,
+          ...(s.fromCareer ? { fromCareer: true } : {}),
         };
       }
       return { ...s, index: next, maxIndex: Math.max(s.maxIndex, next) };
@@ -2545,8 +2546,9 @@ export default function App() {
           {screen.name === 'career' && (
             <CareerPage
               /* Новый вход на карту (другой слой, маршрут) ставит экран заново. */
-              key={JSON.stringify(screen.map ?? null)}
+              key={JSON.stringify([screen.map ?? null, screen.restore ?? false])}
               openMap={screen.map}
+              restore={screen.restore}
               progress={progress}
               onCareerChange={updateCareer}
               onStartSkill={(skill) => startSkillSession(skill, true)}
@@ -2865,11 +2867,11 @@ export default function App() {
                 className="btn secondary"
                 style={{ marginTop: 8 }}
                 onClick={() => {
-                  setScreen(screen.fromStory ? { name: 'story' } : { name: 'home' });
+                  setScreen(screen.fromStory ? { name: 'story' } : screen.fromCareer ? { name: 'career', restore: true } : { name: 'home' });
                   window.scrollTo({ top: 0 });
                 }}
               >
-                {screen.fromStory ? t.session.lineBtn : t.session.homeBtn}
+                {screen.fromStory ? t.session.lineBtn : screen.fromCareer ? t.session.careerBtn : t.session.homeBtn}
               </button>
             </div>
           )}

@@ -59,6 +59,17 @@ export const FAMILY = (family.apps as { id: string; url: string }[])
   .map((a) => ({ key: a.id as 'model' | 'flow' | 'pandas' | 'lab', url: a.url }));
 
 /**
+ * Ссылки карты данных и «Проекта от и до»: Lab и Model открываются сразу на
+ * данных Kaiyo, а не на своей главной. Для Flow и Pandas примера Kaiyo нет,
+ * они остаются на адресе из FAMILY.
+ */
+export function familyKaiyoLink(key: 'model' | 'flow' | 'pandas' | 'lab', fallback: string): { url: string; kaiyo: boolean } {
+  if (key === 'lab') return { url: LAB_QUAERA, kaiyo: true };
+  if (key === 'model') return { url: STRATASQL_MODEL, kaiyo: true };
+  return { url: fallback, kaiyo: false };
+}
+
+/**
  * Имя правообладателя — латиницей на обеих локалях, ровно той строкой, что
  * стоит в LICENSE и LICENSE-CONTENT («Copyright 2026 Stanislav Sidorovich»).
  * Русская форма имени в прозе «О тренажёре» этому не противоречит: там текст

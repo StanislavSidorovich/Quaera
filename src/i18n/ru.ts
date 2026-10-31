@@ -197,6 +197,9 @@ export const ru = {
     familyFlow: 'Flow: процессы BPMN',
     familyPandas: 'Pandas: тетрадь в Colab',
     familyLab: 'Lab: SQL на своих файлах',
+    /** Те же приложения со ссылкой сразу на данные Kaiyo (карта данных, «Проект от и до»). */
+    familyLabKaiyo: 'Lab: таблицы Kaiyo',
+    familyModelKaiyo: 'Model: звезда Kaiyo',
   },
   tracks: {
     ariaLabel: 'Треки',
@@ -1269,6 +1272,7 @@ export const ru = {
      * ровно в той точке, где он ждёт следующего шага пути.
      */
     lineBtn: 'Вернуться к линии',
+    careerBtn: 'Вернуться к пути',
   },
   story: {
     title: 'Сюжетная линия',

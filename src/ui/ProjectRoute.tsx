@@ -8,7 +8,7 @@ import type { Progress } from '../srs/store';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
 import { useI18n } from '../i18n/context';
-import { FAMILY } from '../links';
+import { FAMILY, familyKaiyoLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 
@@ -189,6 +189,8 @@ export function ProjectStationCard({
   const app = s.action.app ? FAMILY.find((f) => f.key === s.action.app) : undefined;
   const href = s.action.href;
   const hrefIsApp = !!(app && href && href.startsWith(app.url));
+  const appLink = app ? familyKaiyoLink(app.key, app.url) : undefined;
+  const appLabel = app && appLink ? (app.key === 'lab' ? t.nav.familyLabKaiyo : app.key === 'model' ? t.nav.familyModelKaiyo : p.openApp(appName(app.key))) : '';
   const externals = (s.action.externals ?? [])
     .map((id) => project.external.find((e) => e.id === id))
     .filter((e): e is ProjectExternal => !!e);
@@ -323,12 +325,12 @@ export function ProjectStationCard({
           <div className="career-apps">
             {app && (
               <a
-                href={hrefIsApp ? href : app.url}
+                href={appLink!.kaiyo ? appLink!.url : hrefIsApp ? href : app.url}
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, app.key)}
               >
-                {p.openApp(appName(app.key))}
+                {appLink!.kaiyo ? `${appLabel} ↗` : appLabel}
               </a>
             )}
             {href && !hrefIsApp &&

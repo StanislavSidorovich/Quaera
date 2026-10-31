@@ -94,6 +94,8 @@ export const en = {
     familyFlow: 'Flow: BPMN processes',
     familyPandas: 'Pandas: a Colab notebook',
     familyLab: 'Lab: SQL on your own files',
+    familyLabKaiyo: 'Lab: Kaiyo tables',
+    familyModelKaiyo: 'Model: Kaiyo star schema',
   },
   tracks: {
     ariaLabel: 'Tracks',
@@ -621,6 +623,7 @@ export const en = {
     skipAria: 'Skip',
     /** См. комментарий в ru.ts: возврат на линию вместо главной, когда занятие было миссией. */
     lineBtn: 'Back to the line',
+    careerBtn: 'Back to the path',
   },
   story: {
     title: 'Story line',
