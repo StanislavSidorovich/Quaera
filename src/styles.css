@@ -9533,6 +9533,12 @@ details.story-known > summary small {
   text-align: left;
 }
 
+/* Открытая роль среди соседних ссылок: подсказка стоит под списком, без метки не ясно, чья она. */
+.arch-link[aria-expanded='true'] {
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+
 /* Название инструмента: нажатие открывает одну фразу «что это» под списком. */
 .arch-tool {
   padding: 0;
