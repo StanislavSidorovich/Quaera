@@ -13,6 +13,7 @@ import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
 import { LayerArtifact } from './LayerArtifact';
+import { ToolNote } from './ToolNote';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
 const WIDE = '(min-width: 1240px)';
@@ -309,11 +310,7 @@ export function ArchitectureMap({
               </button>
             </Fragment>
           ))}
-          {openTool && (
-            <p className="arch-tool-note" role="note">
-              <strong>{openTool}.</strong> {architecture.tools[openTool][locale]}
-            </p>
-          )}
+          {openTool && <ToolNote name={openTool} />}
         </dd>
       </dl>
     ),

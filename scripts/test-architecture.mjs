@@ -80,6 +80,47 @@ checkText('trace.title', arch.trace.title);
   }
 }
 
+// ── Как освоить инструмент ─────────────────────────────────────────────────
+{
+  const learning = readJson('src/content/tool-learning.json');
+  // Только официальные сайты: ссылка на чужой курс сюда попасть не должна.
+  const OFFICIAL = /^https:\/\/([a-z0-9-]+\.)*(microsoft\.com|sap\.com|1c\.ru|salesforce\.com|fivetran\.com|apache\.org|amazon\.com|postgresql\.org|getdbt\.com|snowflake\.com|databricks\.com|google\.com|duckdb\.org|python\.org|pydata\.org|jupyter\.org)\//;
+  const TARGETS = new Set(['labSql', 'labPython', 'labData', 'model', 'pandas', 'csv']);
+  check('освоение: дата проверки', /^\d{4}-\d{2}-\d{2}$/.test(learning.checked ?? ''), 'нет checked в виде ГГГГ-ММ-ДД');
+  for (const [id, f] of Object.entries(learning.families)) {
+    checkText(`семейство ${id}.title`, f.title);
+    checkText(`семейство ${id}.carries`, f.carries);
+    checkText(`семейство ${id}.relearn`, f.relearn);
+  }
+  for (const [id, s] of Object.entries(learning.sources)) {
+    if (!s.title?.trim()) fail(`ссылка ${id}`, 'нет названия');
+    if (!OFFICIAL.test(s.url ?? '')) fail(`ссылка ${id}`, `не официальный адрес: ${s.url}`);
+    checkText(`ссылка ${id}.access`, s.access);
+  }
+  const used = new Set();
+  for (const name of Object.keys(arch.tools)) {
+    const e = learning.tools[name];
+    if (!e) {
+      fail(`освоение ${name}`, 'нет записи');
+      continue;
+    }
+    if (!learning.families[e.family]) fail(`освоение ${name}`, `нет семейства ${e.family}`);
+    if (!e.try && !e.learn?.length && !e.note && !e.quaera) fail(`освоение ${name}`, 'нет ни одного шага');
+    for (const id of [e.try, ...(e.learn ?? [])].filter(Boolean)) {
+      used.add(id);
+      if (!learning.sources[id]) fail(`освоение ${name}`, `нет ссылки ${id}`);
+    }
+    if (e.note) checkText(`освоение ${name}.note`, e.note);
+    if (e.quaera) {
+      checkText(`освоение ${name}.quaera`, e.quaera.text);
+      if (e.quaera.to && !TARGETS.has(e.quaera.to)) fail(`освоение ${name}`, `неизвестный переход ${e.quaera.to}`);
+    }
+  }
+  for (const name of Object.keys(learning.tools)) if (!arch.tools[name]) fail(`освоение ${name}`, 'запись есть, а инструмента на карте нет');
+  for (const id of Object.keys(learning.sources)) if (!used.has(id)) fail(`ссылка ${id}`, 'никто на неё не ссылается');
+  ok('освоение', `${Object.keys(learning.tools).length} инструментов, ${Object.keys(learning.sources).length} ссылок`);
+}
+
 // ── Линзы и виды затрат ────────────────────────────────────────────────────
 check('линзы: ровно roles, quaera, money', JSON.stringify(arch.lenses.map((l) => l.id)) === JSON.stringify(LENSES), 'порядок или состав линз');
 check('слои: id уникальны', new Set(layerIds).size === layerIds.length, 'повтор id слоя');

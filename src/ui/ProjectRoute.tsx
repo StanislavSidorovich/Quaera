@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/context';
 import { FAMILY, familyKaiyoLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
+import { ToolNote } from './ToolNote';
 
 const project = architecture.project;
 
@@ -276,11 +277,7 @@ export function ProjectStationCard({
               </button>
             </Fragment>
           ))}
-          {tool && s.tools.includes(tool) && architecture.tools[tool] && (
-            <p className="arch-tool-note" role="note">
-              <strong>{tool}.</strong> {architecture.tools[tool][locale]}
-            </p>
-          )}
+          {tool && s.tools.includes(tool) && architecture.tools[tool] && <ToolNote name={tool} />}
         </dd>
         <dt>{!s.hands.to ? p.handedBusiness : s.hands.to === s.role ? p.carriesOn : p.handedTo(roleName(s.hands.to))}</dt>
         <dd>

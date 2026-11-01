@@ -40,6 +40,10 @@ export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
  */
 export const LAB_QUAERA = 'https://lab.quaera.app/#ds=quaera';
 
+/** Страницы практики на Kaiyo в Quaera Lab (src/core/sqlPractice.ts там), см. таблицу переходов в корневом CLAUDE.md. */
+export const LAB_PRACTICE_SQL = 'https://lab.quaera.app/#practice=sql';
+export const LAB_PRACTICE_PYTHON = 'https://lab.quaera.app/#practice=python';
+
 /**
  * Заказ дистрибьютора Kaiyo в Quaera Flow: все основные элементы BPMN и шаг, на
  * котором рождается строка `fact_sellin`. `?example=kaiyo` принимает Flow

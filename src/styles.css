@@ -9558,6 +9558,42 @@ details.story-known > summary small {
   color: var(--text);
 }
 
+.arch-tool-note p {
+  max-width: none;
+  margin: 0;
+}
+
+.arch-tool-note a {
+  color: var(--accent);
+}
+
+.arch-learn {
+  margin: 10px 0 0;
+}
+
+.arch-learn dt {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.arch-learn dd {
+  margin: 2px 0 0;
+}
+
+.arch-learn-line {
+  display: block;
+}
+
+.arch-learn-line + .arch-learn-line {
+  margin-top: 4px;
+}
+
+.arch-tool-note .arch-learn-checked {
+  margin-top: 10px;
+  color: var(--text-dim);
+  font-size: 0.875em;
+}
+
 .arch-trace-start {
   margin-bottom: 14px;
   min-height: var(--tap);

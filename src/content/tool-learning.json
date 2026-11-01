@@ -1,0 +1,283 @@
+{
+  "checked": "2026-11-01",
+
+  "families": {
+    "work": {
+      "title": { "ru": "рабочие системы", "en": "workplace systems" },
+      "carries": { "ru": "Понимание, какой документ рождает какую строку данных, и привычка спрашивать, что значит поле.", "en": "Knowing which document creates which data row, and the habit of asking what a field means." },
+      "relearn": { "ru": "экраны и названия полей: у каждой компании своя настройка.", "en": "screens and field names: every company sets them up its own way." }
+    },
+    "load": {
+      "peers": true,
+      "title": { "ru": "загрузка данных", "en": "loading data" },
+      "carries": { "ru": "Источник и приёмник, расписание, полная или частичная загрузка, повтор после сбоя.", "en": "Source and destination, schedules, full or incremental loads, retry after a failure." },
+      "relearn": { "ru": "интерфейс и способ задания шагов: мышью, настройкой коннектора или кодом на Python.", "en": "the interface and how steps are defined: by mouse, by connector settings or in Python code." }
+    },
+    "storage": {
+      "peers": true,
+      "title": { "ru": "хранение файлов", "en": "file storage" },
+      "carries": { "ru": "Папки по слоям, форматы Parquet и Delta, разделение на части, права доступа.", "en": "Folders by layer, Parquet and Delta formats, partitioning, access rights." },
+      "relearn": { "ru": "адреса путей, настройка прав и тарифы конкретного облака.", "en": "path addresses, permission setup and the pricing of the particular cloud." }
+    },
+    "transform": {
+      "peers": true,
+      "title": { "ru": "преобразование данных", "en": "transforming data" },
+      "carries": { "ru": "Логика SQL и таблиц: соединения, группировка, зерно, проверки результата.", "en": "SQL and table logic: joins, grouping, grain, checks on the result." },
+      "relearn": { "ru": "как запускается код: распределённые вычисления Spark или порядок моделей dbt.", "en": "how the code runs: Spark's distributed computing or dbt's model order." }
+    },
+    "warehouse": {
+      "peers": true,
+      "title": { "ru": "склады и SQL-движки", "en": "warehouses and SQL engines" },
+      "carries": { "ru": "SQL почти целиком, звезда, мысль о том, сколько данных читает запрос.", "en": "Nearly all of SQL, the star schema, the habit of thinking how much data a query reads." },
+      "relearn": { "ru": "отличия диалекта, способ оплаты вычислений и настройка производительности.", "en": "dialect differences, how compute is paid for and performance tuning." }
+    },
+    "report": {
+      "title": { "ru": "отчёты", "en": "reporting" },
+      "carries": { "ru": "На другие BI-инструменты: звезда, связи, выбор визуала, вопрос, на который отвечает страница.", "en": "To other BI tools: the star schema, relationships, choice of visual, the question a page answers." },
+      "relearn": { "ru": "DAX (в других инструментах свой язык мер) и сам интерфейс.", "en": "DAX (other tools have their own measure language) and the interface itself." }
+    },
+    "language": {
+      "title": { "ru": "языки и тетради", "en": "languages and notebooks" },
+      "carries": { "ru": "Почти всё: язык один в любой компании и на любой платформе.", "en": "Nearly everything: the language is the same at any company and on any platform." },
+      "relearn": { "ru": "диалект SQL и то, как среда подключается к данным.", "en": "the SQL dialect and how the environment connects to data." }
+    },
+    "model": {
+      "title": { "ru": "моделирование", "en": "data modelling" },
+      "carries": { "ru": "Сущности и связи, нормальные формы, путь от концептуальной модели к таблицам.", "en": "Entities and relationships, normal forms, the path from a conceptual model to tables." },
+      "relearn": { "ru": "нотация и кнопки конкретной программы.", "en": "the notation and the buttons of the particular program." }
+    }
+  },
+
+  "sources": {
+    "sapLearning": {
+      "title": "SAP Learning",
+      "url": "https://learning.sap.com/",
+      "access": { "ru": "Есть бесплатные курсы и практика, премиальные материалы по подписке.", "en": "Free courses and practice are available; premium material needs a subscription." }
+    },
+    "oneCStudy": {
+      "title": "Учебные версии 1С",
+      "url": "https://v8.1c.ru/podderzhka-i-obuchenie/uchebnye-versii/",
+      "access": { "ru": "Бесплатно: анкета на сайте 1С, ссылка приходит на почту. Один компьютер, вести настоящий учёт нельзя.", "en": "Free: a form on the 1C site, the link arrives by email. One computer, no real bookkeeping. The site is in Russian." }
+    },
+    "trailhead": {
+      "title": "Trailhead",
+      "url": "https://trailhead.salesforce.com/",
+      "access": { "ru": "Обучение Salesforce бесплатно.", "en": "Salesforce's training is free." }
+    },
+    "excelTraining": {
+      "title": "Excel video training",
+      "url": "https://support.microsoft.com/en-us/office/excel-video-training-9bc05390-e94c-46af-a5b3-d7c22f6990bb",
+      "access": { "ru": "Видео открыты в браузере. Сам Excel нужен отдельно.", "en": "The videos are open in the browser. Excel itself is separate." }
+    },
+    "fabricTrial": {
+      "title": "Fabric trial",
+      "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial",
+      "access": { "ru": "60 дней бесплатно, до 1 ТБ. Нужна рабочая или учебная почта, Gmail не подойдёт. Завести такую почту через пробный Microsoft 365 можно только с банковской картой. Повторный срок не обещан, а через 7 дней после конца элементы Fabric могут удалить.", "en": "Free for 60 days, up to 1 TB. Needs a work or school email; Gmail will not do. Getting one through a Microsoft 365 trial requires a bank card. A second trial is not promised, and Fabric items may be deleted 7 days after the end." }
+    },
+    "fabricPath": {
+      "title": "Get started with Microsoft Fabric",
+      "url": "https://learn.microsoft.com/en-us/training/paths/get-started-fabric/",
+      "access": { "ru": "Бесплатно, 8 модулей, читается без Fabric. Повторить шаги руками можно только с доступом к Fabric.", "en": "Free, 8 modules, readable without Fabric. Repeating the steps by hand needs access to Fabric." }
+    },
+    "fabricDataflow": {
+      "title": "Create your first dataflow",
+      "url": "https://learn.microsoft.com/en-us/fabric/data-factory/create-first-dataflow-gen2",
+      "access": { "ru": "Читается бесплатно, для шагов нужен доступ к Fabric.", "en": "Free to read; the steps need access to Fabric." }
+    },
+    "fabricPipeline": {
+      "title": "Load into a lakehouse and transform",
+      "url": "https://learn.microsoft.com/en-us/fabric/data-factory/tutorial-load-data-lakehouse-transform",
+      "access": { "ru": "Читается бесплатно, для шагов нужен доступ к Fabric.", "en": "Free to read; the steps need access to Fabric." }
+    },
+    "fabricLakehouse": {
+      "title": "Get started with lakehouses",
+      "url": "https://learn.microsoft.com/en-us/training/modules/get-started-lakehouses/",
+      "access": { "ru": "Читается бесплатно, для шагов нужен доступ к Fabric.", "en": "Free to read; the steps need access to Fabric." }
+    },
+    "fabricWarehouse": {
+      "title": "Get started with data warehouses",
+      "url": "https://learn.microsoft.com/en-us/training/modules/get-started-data-warehouse/",
+      "access": { "ru": "Читается бесплатно, для шагов нужен доступ к Fabric.", "en": "Free to read; the steps need access to Fabric." }
+    },
+    "azureFree": {
+      "title": "Azure free account",
+      "url": "https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account",
+      "access": { "ru": "$200 на 30 дней. Нужна карта, не предоплаченная; при регистрации возможна временная блокировка $1.", "en": "$200 for 30 days. Needs a card that is not prepaid; a temporary $1 hold is possible at signup." }
+    },
+    "adfQuickstart": {
+      "title": "Your first Data Factory pipeline",
+      "url": "https://learn.microsoft.com/en-us/azure/data-factory/quickstart-get-started",
+      "access": { "ru": "Читается бесплатно, для шагов нужна подписка Azure.", "en": "Free to read; the steps need an Azure subscription." }
+    },
+    "adfPath": {
+      "title": "Data integration at scale with Azure Data Factory",
+      "url": "https://learn.microsoft.com/en-us/training/paths/data-integration-scale-azure-data-factory/",
+      "access": { "ru": "Читается бесплатно, средний уровень.", "en": "Free to read, intermediate level." }
+    },
+    "adlsOverview": {
+      "title": "Azure Data Lake Storage overview",
+      "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction",
+      "access": { "ru": "Читается бесплатно, регистрация не нужна.", "en": "Free to read, no signup." }
+    },
+    "fivetranFree": {
+      "title": "Fivetran Free plan",
+      "url": "https://www.fivetran.com/pricing/free-plan",
+      "access": { "ru": "Бесплатно до 500 000 активных строк в месяц, новым учётным записям ещё пробный период на 14 дней. Нужен свой склад как приёмник. Про банковскую карту страница не говорит.", "en": "Free up to 500,000 monthly active rows, plus a 14-day trial for new accounts. Needs your own warehouse as the destination. The page does not mention a bank card." }
+    },
+    "fivetranStart": {
+      "title": "Get started with Fivetran",
+      "url": "https://fivetran.com/docs/getting-started/quickstart",
+      "access": { "ru": "Документация открыта.", "en": "The documentation is open." }
+    },
+    "airflowStart": {
+      "title": "Airflow Quick Start",
+      "url": "https://airflow.apache.org/docs/apache-airflow/stable/start.html",
+      "access": { "ru": "Бесплатно, ставится на свой компьютер. На Windows только через WSL2.", "en": "Free, installed on your own computer. On Windows, only through WSL2." }
+    },
+    "airflowTutorial": {
+      "title": "Airflow tutorials",
+      "url": "https://airflow.apache.org/docs/apache-airflow/stable/tutorial/index.html",
+      "access": { "ru": "Документация открыта, Airflow должен быть уже запущен.", "en": "The documentation is open; Airflow must already be running." }
+    },
+    "s3Start": {
+      "title": "Getting started with Amazon S3",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html",
+      "access": { "ru": "Читается бесплатно, для шагов нужна учётная запись AWS. В конце удалите данные, иначе хранение начнут считать.", "en": "Free to read; the steps need an AWS account. Delete the data at the end, or storage charges start." }
+    },
+    "awsFree": {
+      "title": "AWS Free Tier",
+      "url": "https://aws.amazon.com/free/free-tier-faqs/",
+      "access": { "ru": "Новым клиентам до $200 кредитов, план действует до 6 месяцев. Карта большинству не нужна, но AWS может её запросить для проверки.", "en": "Up to $200 in credits for new customers; the plan lasts up to 6 months. Most people need no card, but AWS may ask for one to verify identity." }
+    },
+    "postgresTutorial": {
+      "title": "PostgreSQL Tutorial",
+      "url": "https://www.postgresql.org/docs/current/tutorial.html",
+      "access": { "ru": "Бесплатно, регистрация не нужна. Для шагов PostgreSQL ставится на компьютер, тоже бесплатно.", "en": "Free, no signup. For the steps, PostgreSQL is installed on your computer, also free." }
+    },
+    "pysparkQuickstart": {
+      "title": "PySpark Quickstart: DataFrame",
+      "url": "https://spark.apache.org/docs/latest/api/python/getting_started/quickstart_df.html",
+      "access": { "ru": "Бесплатно, регистрация не нужна. Со страницы руководства тетрадь запускается в браузере через Binder.", "en": "Free, no signup. From the guide's page, the notebook runs in the browser through Binder." }
+    },
+    "dbtDuckdb": {
+      "title": "Quickstart for dbt with DuckDB",
+      "url": "https://docs.getdbt.com/guides/duckdb",
+      "access": { "ru": "На своём компьютере, учётная запись платформы dbt не нужна.", "en": "On your own computer; no dbt platform account is needed." }
+    },
+    "dbtLearn": {
+      "title": "dbt Learn",
+      "url": "https://www.getdbt.com/dbt-learn",
+      "access": { "ru": "Начальные курсы бесплатны. Курс dbt Fundamentals идёт около 5 часов, для него нужны пробная платформа dbt на 14 дней и доступ к складу.", "en": "Starter courses are free. dbt Fundamentals takes about 5 hours and needs a 14-day dbt platform trial plus access to a warehouse." }
+    },
+    "powerQueryDocs": {
+      "title": "What is Power Query?",
+      "url": "https://learn.microsoft.com/en-us/power-query/power-query-what-is-power-query",
+      "access": { "ru": "Читается бесплатно, регистрация не нужна.", "en": "Free to read, no signup." }
+    },
+    "snowflakeTrial": {
+      "title": "Snowflake trial",
+      "url": "https://www.snowflake.com/en/snowflake-trial/",
+      "access": { "ru": "30 дней и $400 кредитов. Про карту при регистрации страница не говорит, часть функций ограничена, пока её не добавить.", "en": "30 days and $400 in credits. The page does not say whether signup needs a card; some features are capped until one is added." }
+    },
+    "snowflakeTutorials": {
+      "title": "Snowflake tutorials",
+      "url": "https://docs.snowflake.com/en/learn-tutorials",
+      "access": { "ru": "Документация открыта, для шагов нужна учётная запись Snowflake.", "en": "The documentation is open; the steps need a Snowflake account." }
+    },
+    "databricksFree": {
+      "title": "Databricks Free Edition",
+      "url": "https://docs.databricks.com/aws/en/getting-started/free-edition",
+      "access": { "ru": "Бесплатно, только некоммерческое использование. Один маленький SQL-склад; при превышении квоты вычисления останавливаются до сброса лимита. Про карту страница не говорит.", "en": "Free, non-commercial use only. One small SQL warehouse; over quota, compute stops until the limit resets. The page does not mention a card." }
+    },
+    "bigquerySandbox": {
+      "title": "BigQuery sandbox",
+      "url": "https://docs.cloud.google.com/bigquery/docs/sandbox",
+      "access": { "ru": "Бесплатно с аккаунтом Google, без карты. 10 ГиБ за всё время, 1 ТиБ запросов в месяц, таблицы живут 60 дней.", "en": "Free with a Google account, no card. 10 GiB over its lifetime, 1 TiB of queries a month, tables last 60 days." }
+    },
+    "duckdbInstall": {
+      "title": "DuckDB installation",
+      "url": "https://duckdb.org/docs/stable/installation/",
+      "access": { "ru": "Бесплатно, ставится на компьютер без учётной записи.", "en": "Free, installed on your computer with no account." }
+    },
+    "powerDesignerDownload": {
+      "title": "Downloading PowerDesigner",
+      "url": "https://help.sap.com/docs/SAP_POWERDESIGNER/97a5266acf8a4e55bec7f1bdef054ff8/0b349a5174dc4fbaa276070281d97b76.html",
+      "access": { "ru": "Платная программа. Условия проверьте у SAP: руководство обещает пробные 30 дней, а на форуме SAP пишут о 15 днях и ошибках скачивания.", "en": "A paid program. Check the terms with SAP: the guide promises a 30-day trial, while the SAP forum reports 15 days and download errors." }
+    },
+    "pbiDesktop": {
+      "title": "Power BI Desktop",
+      "url": "https://learn.microsoft.com/en-us/power-bi/fundamentals/desktop-get-the-desktop",
+      "access": { "ru": "Бесплатно, только Windows. Для публикации в облако нужна рабочая или учебная почта.", "en": "Free, Windows only. Publishing to the cloud needs a work or school email." }
+    },
+    "pbiPath": {
+      "title": "Get started with Microsoft data analytics",
+      "url": "https://learn.microsoft.com/en-us/training/paths/data-analytics-microsoft/",
+      "access": { "ru": "Бесплатно, 4 модуля, предварительных требований нет.", "en": "Free, 4 modules, no prerequisites." }
+    },
+    "pbiModelPath": {
+      "title": "Model data with Power BI",
+      "url": "https://learn.microsoft.com/en-us/training/paths/model-data-power-bi/",
+      "access": { "ru": "Читается бесплатно. Для шагов нужен Power BI Desktop.", "en": "Free to read. The steps need Power BI Desktop." }
+    },
+    "daxOverview": {
+      "title": "DAX overview",
+      "url": "https://learn.microsoft.com/en-us/dax/dax-overview",
+      "access": { "ru": "Читается бесплатно, регистрация не нужна.", "en": "Free to read, no signup." }
+    },
+    "pythonTutorial": {
+      "title": "The Python Tutorial",
+      "url": "https://docs.python.org/3/tutorial/",
+      "access": { "ru": "Бесплатно, регистрация не нужна.", "en": "Free, no signup." }
+    },
+    "pandasStart": {
+      "title": "pandas: Getting started",
+      "url": "https://pandas.pydata.org/docs/getting_started/index.html",
+      "access": { "ru": "Бесплатно, регистрация не нужна. Ставится через pip.", "en": "Free, no signup. Installed through pip." }
+    },
+    "jupyterTry": {
+      "title": "Try Jupyter",
+      "url": "https://jupyter.org/try",
+      "access": { "ru": "Бесплатно, без установки: работает прямо в браузере.", "en": "Free, nothing to install: it runs right in the browser." }
+    }
+  },
+
+  "tools": {
+    "SAP": { "family": "work", "learn": ["sapLearning"], "note": { "ru": "Обычно осваивают на работе: личного доступа к настоящей системе чаще всего нет.", "en": "Usually learned on the job: a personal way into a real system is rarely available." } },
+    "1C": { "family": "work", "try": "oneCStudy", "note": { "ru": "Обычно осваивают на работе, аналитику достаточно понимать выгрузки.", "en": "Usually learned on the job; an analyst mostly needs to understand the extracts." } },
+    "Salesforce": { "family": "work", "learn": ["trailhead"] },
+    "Excel": { "family": "work", "learn": ["excelTraining"] },
+    "PowerPoint": { "family": "work", "note": { "ru": "Курс не нужен, важнее вывод на слайде. В тренажёре это навык Storytelling.", "en": "No course needed; the conclusion on the slide matters more. In the trainer, that is the Storytelling skill." } },
+    "Teams": { "family": "work", "note": { "ru": "Курс не нужен: это рабочий чат и встречи.", "en": "No course needed: it is the workplace chat and meetings." } },
+
+    "Fabric Data Factory": { "family": "load", "try": "fabricTrial", "learn": ["fabricPipeline"] },
+    "Dataflow Gen2": { "family": "load", "try": "fabricTrial", "learn": ["fabricDataflow"] },
+    "Azure Data Factory": { "family": "load", "try": "azureFree", "learn": ["adfQuickstart", "adfPath"] },
+    "Fivetran": { "family": "load", "try": "fivetranFree", "learn": ["fivetranStart"] },
+    "Airflow": { "family": "load", "try": "airflowStart", "learn": ["airflowTutorial"] },
+    "Power Query": { "family": "load", "try": "pbiDesktop", "learn": ["powerQueryDocs"] },
+
+    "S3": { "family": "storage", "try": "awsFree", "learn": ["s3Start"] },
+    "ADLS": { "family": "storage", "try": "azureFree", "learn": ["adlsOverview"] },
+    "OneLake": { "family": "storage", "try": "fabricTrial", "learn": ["fabricPath"] },
+
+    "PySpark": { "family": "transform", "try": "pysparkQuickstart" },
+    "Fabric Notebook": { "family": "transform", "try": "fabricTrial", "learn": ["fabricLakehouse"] },
+    "dbt": { "family": "transform", "try": "dbtDuckdb", "learn": ["dbtLearn"], "quaera": { "to": "labData", "text": { "ru": "Напишите SELECT с соединением на данных Kaiyo: модель dbt это такой же запрос в файле.", "en": "Write a SELECT with a join on the Kaiyo data: a dbt model is the same kind of query in a file." } } },
+
+    "Snowflake": { "family": "warehouse", "try": "snowflakeTrial", "learn": ["snowflakeTutorials"] },
+    "Fabric Warehouse": { "family": "warehouse", "try": "fabricTrial", "learn": ["fabricWarehouse"], "note": { "ru": "Экзамен DP-600 платный, для практики он не нужен.", "en": "The DP-600 exam is paid and is not needed for practice." } },
+    "SQL analytics endpoint": { "family": "warehouse", "try": "fabricTrial", "learn": ["fabricLakehouse"] },
+    "Databricks SQL": { "family": "warehouse", "try": "databricksFree" },
+    "BigQuery": { "family": "warehouse", "try": "bigquerySandbox" },
+    "DuckDB": { "family": "warehouse", "try": "duckdbInstall", "quaera": { "to": "labData", "text": { "ru": "Quaera Lab работает на этом движке: запросы можно писать сразу в браузере.", "en": "Quaera Lab runs on this engine: you can write queries right in the browser." } } },
+
+    "Power BI": { "family": "report", "try": "pbiDesktop", "learn": ["pbiPath", "pbiModelPath"], "note": { "ru": "Экзамен PL-300 платный, для практики он не нужен.", "en": "The PL-300 exam is paid and is not needed for practice." }, "quaera": { "to": "csv", "text": { "ru": "Те же таблицы Kaiyo можно скачать архивом CSV и загрузить в Power BI Desktop.", "en": "The same Kaiyo tables can be downloaded as a CSV archive and loaded into Power BI Desktop." } } },
+    "DAX": { "family": "report", "try": "pbiDesktop", "learn": ["daxOverview", "pbiModelPath"], "quaera": { "text": { "ru": "В тренажёре есть трек DAX и BI: меры на той же звезде Kaiyo.", "en": "The trainer has a DAX and BI track: measures on the same Kaiyo star." } } },
+
+    "SQL": { "family": "language", "learn": ["postgresTutorial"], "quaera": { "to": "labSql", "text": { "ru": "Трек SQL в тренажёре и практика на данных Kaiyo в Quaera Lab, ничего ставить не нужно.", "en": "The SQL track in the trainer and practice on the Kaiyo data in Quaera Lab, with nothing to install." } } },
+    "Python": { "family": "language", "learn": ["pythonTutorial", "pandasStart"], "quaera": { "to": "labPython", "text": { "ru": "Трек pandas в тренажёре и практика на данных Kaiyo в Quaera Lab, ничего ставить не нужно.", "en": "The pandas track in the trainer and practice on the Kaiyo data in Quaera Lab, with nothing to install." } } },
+    "Jupyter": { "family": "language", "try": "jupyterTry", "quaera": { "to": "pandas", "text": { "ru": "Quaera Pandas: тетрадь в Colab с заданиями, для неё нужен аккаунт Google.", "en": "Quaera Pandas: a Colab notebook with exercises; it needs a Google account." } } },
+
+    "PowerDesigner": { "family": "model", "try": "powerDesignerDownload", "quaera": { "to": "model", "text": { "ru": "Бесплатная замена для учёбы: Quaera Model, тот же путь от концептуальной модели к таблицам, сразу на звезде Kaiyo.", "en": "A free stand-in for study: Quaera Model, the same path from a conceptual model to tables, opening on the Kaiyo star." } } }
+  }
+}
