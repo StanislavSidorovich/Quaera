@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/context';
 import { FAMILY, familyKaiyoLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
+import { RoleNote } from './RoleNote';
 import { ToolNote } from './ToolNote';
 
 const project = architecture.project;
@@ -169,7 +170,9 @@ export function ProjectStationCard({
   const m = t.career.map;
   const p = m.project;
   const date = useDate();
-  const [tool, setTool] = useState<string | null>(null);
+  /* Открыта одна подсказка: инструмент или роль. */
+  const [note, setNote] = useState<{ kind: 'tool' | 'role'; id: string } | null>(null);
+  const tool = note?.kind === 'tool' ? note.id : null;
   const [bigOpen, setBigOpen] = useState(false);
 
   const stations = project.stations;
@@ -180,7 +183,13 @@ export function ProjectStationCard({
   const appName = (key: 'model' | 'flow' | 'pandas' | 'lab') =>
     ({ model: t.nav.familyModel, flow: t.nav.familyFlow, pandas: t.nav.familyPandas, lab: t.nav.familyLab })[key];
   const roleButton = (id: string) => (
-    <button type="button" className="arch-link" onClick={() => onOpenRole(id)} title={m.roleLink(roleName(id))}>
+    <button
+      type="button"
+      className="arch-link"
+      aria-expanded={note?.kind === 'role' && note.id === id}
+      onClick={() => setNote(note?.kind === 'role' && note.id === id ? null : { kind: 'role', id })}
+      title={m.roleLink(roleName(id))}
+    >
       {roleName(id)}
     </button>
   );
@@ -252,6 +261,7 @@ export function ProjectStationCard({
               ))}
             </>
           )}
+          {note?.kind === 'role' && [s.role, ...(s.also ?? [])].includes(note.id) && <RoleNote id={note.id} onMore={() => onOpenRole(note.id)} />}
         </dd>
         <dt>{!s.receives.from ? p.receivedBusiness : s.receives.from === s.role ? p.continues : p.receivedFrom(roleName(s.receives.from))}</dt>
         <dd>
@@ -271,7 +281,7 @@ export function ProjectStationCard({
                 className="arch-tool"
                 aria-expanded={tool === name}
                 title={m.toolAbout(name)}
-                onClick={() => setTool(tool === name ? null : name)}
+                onClick={() => setNote(tool === name ? null : { kind: 'tool', id: name })}
               >
                 {name}
               </button>
@@ -449,6 +459,7 @@ export function ProjectFinishCard({
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count);
   const nextTrace = architecture.trace;
+  const [openRole, setOpenRole] = useState<string | null>(null);
 
   return (
     <>
@@ -476,10 +487,17 @@ export function ProjectFinishCard({
             <ul className="arch-roles">
               {hits.map((r) => (
                 <li key={r.role}>
-                  <button type="button" className="arch-link" onClick={() => onOpenRole(r.role)} title={p.finishOpen(roleName(r.role))}>
+                  <button
+                    type="button"
+                    className="arch-link"
+                    aria-expanded={openRole === r.role}
+                    onClick={() => setOpenRole(openRole === r.role ? null : r.role)}
+                    title={p.finishOpen(roleName(r.role))}
+                  >
                     {roleName(r.role)}
                   </button>
                   . {r.why[locale]}
+                  {openRole === r.role && <RoleNote id={r.role} onMore={() => onOpenRole(r.role)} />}
                 </li>
               ))}
             </ul>

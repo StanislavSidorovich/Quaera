@@ -9567,6 +9567,17 @@ details.story-known > summary small {
   color: var(--accent);
 }
 
+.arch-note-more {
+  margin-top: 10px;
+  min-height: var(--tap);
+}
+
+.career-back-map {
+  width: 100%;
+  margin-bottom: 14px;
+  min-height: var(--tap);
+}
+
 .arch-learn {
   margin: 10px 0 0;
 }

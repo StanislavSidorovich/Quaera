@@ -13,6 +13,7 @@ import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
 import { LayerArtifact } from './LayerArtifact';
+import { RoleNote } from './RoleNote';
 import { ToolNote } from './ToolNote';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
@@ -159,7 +160,8 @@ export function ArchitectureMap({
   lastPos = { picked, step, pstep, marks };
   const [sqlOpen, setSqlOpen] = useState(false);
   const [labHref, setLabHref] = useState<string | null>(null);
-  const [tool, setTool] = useState<string | null>(null);
+  /* Открыта одна подсказка: инструмент или роль. */
+  const [note, setNote] = useState<{ kind: 'tool' | 'role'; id: string } | null>(null);
   const wide = useWide();
   const detailRef = useRef<HTMLElement>(null);
   const touched = useRef(false);
@@ -172,7 +174,9 @@ export function ArchitectureMap({
   const layer = layers.find((l) => l.id === selectedId) ?? layers[0];
 
   /* Подсказка открыта, только пока инструмент есть в выбранном слое. */
-  const openTool = tool && layer.tools.includes(tool) ? tool : null;
+  const openTool = note?.kind === 'tool' && layer.tools.includes(note.id) ? note.id : null;
+  const toggleRole = (id: string) => setNote(note?.kind === 'role' && note.id === id ? null : { kind: 'role', id });
+  const isRoleOpen = (id: string) => note?.kind === 'role' && note.id === id;
 
   const roleName = (id: string) => careerRole(id)?.title[locale] ?? id;
   const moneyTitle = (kind: string) => architecture.money.find((x) => x.id === kind)?.title[locale] ?? kind;
@@ -286,11 +290,12 @@ export function ArchitectureMap({
           {layer.roles.map((id, i) => (
             <Fragment key={id}>
               {i > 0 && ', '}
-              <button type="button" className="arch-link" onClick={() => onOpenRole(id)} title={m.roleLink(roleName(id))}>
+              <button type="button" className="arch-link" aria-expanded={isRoleOpen(id)} onClick={() => toggleRole(id)} title={m.roleLink(roleName(id))}>
                 {roleName(id)}
               </button>
             </Fragment>
           ))}
+          {note?.kind === 'role' && layer.roles.includes(note.id) && <RoleNote id={note.id} onMore={() => onOpenRole(note.id)} />}
         </dd>
         <dt>{m.stagesTitle}</dt>
         <dd>{stages.map((s) => s.title[locale]).join(', ')}</dd>
@@ -304,7 +309,7 @@ export function ArchitectureMap({
                 className="arch-tool"
                 aria-expanded={openTool === name}
                 title={m.toolAbout(name)}
-                onClick={() => setTool(openTool === name ? null : name)}
+                onClick={() => setNote(openTool === name ? null : { kind: 'tool', id: name })}
               >
                 {name}
               </button>
@@ -414,13 +419,14 @@ export function ArchitectureMap({
       </div>
       <p className="arch-who">
         {current.role ? (
-          <button type="button" className="arch-link" onClick={() => onOpenRole(current.role!)} title={m.roleLink(roleName(current.role))}>
+          <button type="button" className="arch-link" aria-expanded={isRoleOpen(current.role)} onClick={() => toggleRole(current.role!)} title={m.roleLink(roleName(current.role))}>
             {current.who[locale]}
           </button>
         ) : (
           <strong>{current.who[locale]}</strong>
         )}
       </p>
+      {current.role && isRoleOpen(current.role) && <RoleNote id={current.role} onMore={() => onOpenRole(current.role!)} />}
       <p>
         <Rich text={current.text[locale]} />
       </p>

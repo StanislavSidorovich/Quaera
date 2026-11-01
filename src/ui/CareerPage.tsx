@@ -5,6 +5,7 @@ import { lessonBySkill, packForTrack } from '../content';
 import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
 import { FAMILY } from '../links';
+import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
 import { AXES, roleReadiness, skillLevel } from '../career/readiness';
 import type { AxisId, Band, Level } from '../career/readiness';
@@ -43,7 +44,16 @@ const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
  * и возврат «назад» снова ставят экран заново, и без этого человек
  * возвращался бы на «Путь к роли», потеряв карту.
  */
-let lastTab: 'path' | 'map' = 'path';
+const TAB_KEY = 'quaera-career-tab';
+function readTab(): 'path' | 'map' {
+  try {
+    return appStorage().getItem(TAB_KEY) === 'path' ? 'path' : 'map';
+  } catch {
+    return 'map';
+  }
+}
+/* Первый вход открывает карту данных; дальше та вкладка, где человек был, и между запусками. */
+let lastTab: 'path' | 'map' = readTab();
 
 export function CareerPage({
   progress,
@@ -52,6 +62,10 @@ export function CareerPage({
   onOpenSkill,
   openMap,
   restore,
+  fromMap,
+  onFromMap,
+  onBackToMap,
+  forcePath,
 }: {
   progress: Progress;
   /** Правка состояния экрана; функция получает текущее и возвращает новое (или то же, если менять нечего). */
@@ -64,6 +78,13 @@ export function CareerPage({
   openMap?: { layer?: string; trace?: boolean; project?: boolean };
   /** Возврат из занятия: та же вкладка и то же место карты, откуда ушли. */
   restore?: boolean;
+  /** Роль открыта с карты: на вкладке «Путь к роли» стоит кнопка возврата. */
+  fromMap?: boolean;
+  onFromMap: (on: boolean) => void;
+  /** Вернуться на карту ровно туда, откуда ушли. */
+  onBackToMap: () => void;
+  /** Адрес `?roles=path`: перебивает запомненную вкладку. */
+  forcePath?: boolean;
 }) {
   const { t, locale } = useI18n();
   const c = t.career;
@@ -71,9 +92,15 @@ export function CareerPage({
   const state = progress.career ?? emptyCareerState();
   const [openStage, setOpenStage] = useState<string | null>(null);
   const [quizAxis, setQuizAxis] = useState<AxisId | null>(null);
-  const [tab, setTabState] = useState<'path' | 'map'>(() => (openMap ? (lastTab = 'map') : lastTab));
+  const [tab, setTabState] = useState<'path' | 'map'>(() => (openMap ? (lastTab = 'map') : forcePath ? (lastTab = 'path') : lastTab));
   const setTab = (next: 'path' | 'map') => {
     lastTab = next;
+    try {
+      appStorage().setItem(TAB_KEY, next);
+    } catch {
+      // хранилище недоступно — вкладка запомнится только до перезагрузки
+    }
+    if (fromMap) onFromMap(false);
     setTabState(next);
   };
   /* Роль, на которую повела ссылка с карты: после смены вкладки к её карточке прокручивается экран. */
@@ -226,13 +253,19 @@ export function CareerPage({
   return (
     <div className={`settings-column career-page${tab === 'map' ? ' career-wide' : ''}`}>
       <div className="tabs career-tabs" role="group" aria-label={c.tabsAria}>
-        <button type="button" aria-pressed={tab === 'path'} onClick={() => setTab('path')}>
-          {c.tabPath}
-        </button>
         <button type="button" aria-pressed={tab === 'map'} onClick={() => setTab('map')}>
           {c.tabMap}
         </button>
+        <button type="button" aria-pressed={tab === 'path'} onClick={() => setTab('path')}>
+          {c.tabPath}
+        </button>
       </div>
+
+      {tab === 'path' && fromMap && (
+        <button type="button" className="btn secondary career-back-map" onClick={onBackToMap}>
+          ← {c.map.backToMap}
+        </button>
+      )}
 
       {tab === 'map' && (
         <ArchitectureMap
@@ -245,7 +278,9 @@ export function CareerPage({
           onStartSkill={onStartSkill}
           onOpenRole={(id) => {
             setRoleJump(id);
-            setTab('path');
+            lastTab = 'path';
+            setTabState('path');
+            onFromMap(true);
           }}
         />
       )}

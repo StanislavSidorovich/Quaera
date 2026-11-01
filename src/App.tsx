@@ -287,7 +287,7 @@ const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
  * «Проект от и до» (для ссылок в постах и сообщениях).
  * Параметр стирается из адреса по той же причине, что у `?intro`.
  */
-function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | null {
+function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | 'last' | null {
   try {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('roles')) {
@@ -314,9 +314,11 @@ function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | null {
 }
 const ROLES_PENDING_KEY = 'quaera-roles-pending';
 const SW_RELOAD_KEY = 'quaera-sw-reload';
-function rolesTarget(value: string | null): 'path' | 'map' | 'project' | null {
+/* Голый `?roles` открывает ту вкладку, где человек был (при первом входе карту); `?roles=path` ставит путь к роли явно. */
+function rolesTarget(value: string | null): 'path' | 'map' | 'project' | 'last' | null {
   if (value === '0') return null;
-  return value === 'map' || value === 'project' ? value : 'path';
+  if (value === 'map' || value === 'project' || value === 'path') return value;
+  return 'last';
 }
 const ROLES_OPEN_ON_BOOT = readRolesOpenOnBoot();
 
@@ -534,7 +536,7 @@ type Screen =
    */
   | { name: 'overview' }
   /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
-  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean }; restore?: boolean }
+  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean }; restore?: boolean; fromMap?: boolean; path?: boolean; nonce?: number }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -555,6 +557,8 @@ function lessonStepIndex(queue: Step[], skillId: string): number {
  * переставал за теорией ходить вовсе.
  */
 function backTarget(current: Screen, locale: Locale): Screen {
+  // Роль открыта с карты: «назад» возвращает на карту, а не на главную.
+  if (current.name === 'career' && current.fromMap) return { name: 'career', map: {}, restore: true, nonce: Date.now() };
   // Из карточки возвращаемся в список приёмов, а не на главную:
   // в справочнике их обычно листают подряд.
   if (current.name === 'lesson') return { name: 'reference' };
@@ -731,8 +735,10 @@ function initialBoot(locale: Locale): Boot {
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
   if (ROLES_OPEN_ON_BOOT)
     return { screen:
-        ROLES_OPEN_ON_BOOT === 'path'
+        ROLES_OPEN_ON_BOOT === 'last'
           ? { name: 'career' }
+          : ROLES_OPEN_ON_BOOT === 'path'
+          ? { name: 'career', path: true }
           : { name: 'career', map: ROLES_OPEN_ON_BOOT === 'project' ? { project: true } : {} }, ...empty };
   if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
@@ -2546,9 +2552,16 @@ export default function App() {
           {screen.name === 'career' && (
             <CareerPage
               /* Новый вход на карту (другой слой, маршрут) ставит экран заново. */
-              key={JSON.stringify([screen.map ?? null, screen.restore ?? false])}
+              key={JSON.stringify([screen.map ?? null, screen.restore ?? false, screen.nonce ?? 0])}
               openMap={screen.map}
               restore={screen.restore}
+              forcePath={screen.path}
+              fromMap={screen.fromMap}
+              onFromMap={(on) => setScreen((cur) => (cur.name === 'career' ? { ...cur, fromMap: on } : cur))}
+              onBackToMap={() => {
+                setScreen({ name: 'career', map: {}, restore: true, nonce: Date.now() });
+                window.scrollTo({ top: 0 });
+              }}
               progress={progress}
               onCareerChange={updateCareer}
               onStartSkill={(skill) => startSkillSession(skill, true)}
