@@ -10110,6 +10110,240 @@ figure.arch-figure {
   }
 }
 
+/*
+ * Схема процесса «заказ дистрибьютора» (ui/ProcessFigure.tsx): рукописный SVG, цвета только
+ * токены темы. Обёртка прокручивается вбок внутри рамки, у страницы прокрутки нет;
+ * min-width оставляет подписям около 11px (viewBox 920 ровно в 920px).
+ */
+.pf {
+  margin: 14px 0 0;
+  min-width: 0;
+  container: pf / inline-size;
+}
+
+.pf-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+
+/* Подсказка видна, только когда колонка уже схемы: узкой бывает и карточка на ноутбуке, поэтому условие на контейнер, а не на экран. */
+.pf-hint {
+  display: none;
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+
+@container pf (max-width: 921px) {
+  .pf-hint {
+    display: block;
+  }
+}
+
+.pf-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.pf-svg {
+  display: block;
+  width: 100%;
+  min-width: 920px;
+  height: auto;
+}
+
+.pf-t {
+  fill: var(--text);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+.pf-pool-t {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.pf-lane-t {
+  fill: var(--text-dim);
+  font-weight: 600;
+}
+
+.pf-erp {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+}
+
+.pf-pool {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+}
+
+.pf-lane {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.2;
+}
+
+.pf-shape {
+  fill: var(--bg-raised);
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+}
+
+.pf-end {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.pf-dashed {
+  stroke-dasharray: 3 2.5;
+}
+
+.pf-inner {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+}
+
+.pf-clock {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.pf-mark {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.2;
+}
+
+.pf-seq,
+.pf-msg,
+.pf-assoc {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.pf-seq-dashed {
+  stroke-dasharray: none;
+}
+
+.pf-msg {
+  stroke: var(--text-dim);
+  stroke-dasharray: 5 4;
+}
+
+.pf-assoc {
+  stroke: var(--text-dim);
+  stroke-dasharray: 2 3;
+}
+
+.pf-assoc.pf-arc {
+  stroke-dasharray: none;
+}
+
+.pf-arr {
+  fill: var(--text);
+  stroke: none;
+}
+
+.pf-open {
+  fill: var(--bg-raised);
+  stroke: var(--text-dim);
+  stroke-width: 1.2;
+  stroke-dasharray: none;
+}
+
+.pf-env {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.pf-env polyline {
+  fill: none;
+}
+
+.pf-env-solid rect {
+  fill: var(--text);
+  stroke: var(--text);
+}
+
+.pf-env-solid polyline {
+  stroke: var(--bg-raised);
+}
+
+.pf-icon {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pf-badge {
+  fill: var(--accent);
+}
+
+.pf-badge-t {
+  fill: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.pf-notes {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--fs-small);
+}
+
+.pf-notes li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.pf-notes li > span:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.pf-caption {
+  margin: 8px 0 0;
+  font-size: var(--fs-small);
+}
+
+.pf-open-flow {
+  display: inline-block;
+  width: auto;
+  margin-top: 6px;
+}
+
 /* Своё меню по правому клику (ui/ContextMenu.tsx): одно на приложение, над страницей и шторками. */
 .ctx-menu {
   position: fixed;

@@ -346,6 +346,27 @@ check('запросы: у маршрута есть хотя бы один', que
     for (const loc of ['ru', 'en']) check(`источник ${k}.event.${loc}: штуки и товар из строки`, s.event[loc].includes(String(units)) && s.event[loc].includes(name), `в тексте нет ${units} или ${name}`);
   }
 
+  // Схема процесса: числа в пометках (15 362 строки, 2–11 дней) сняты запросом, а не написаны на глаз.
+  {
+    const pr = a.process;
+    for (const k of ['title', 'aria', 'caption', 'openFlow']) checkText(`process.${k}`, pr[k]);
+    for (const k of Object.keys(pr.lanes)) checkText(`process.lanes.${k}`, pr.lanes[k]);
+    for (const k of Object.keys(pr.labels)) checkText(`process.labels.${k}`, pr.labels[k]);
+    pr.notes.forEach((n, i) => checkText(`process.notes[${i}]`, n));
+    same('process: числа совпали с запросом', pr.sql, pr.expect);
+    const [rows, noShip, minDays, maxDays] = pr.expect[0];
+    check('process: у каждой строки есть отгрузка', noShip === 0, `строк без ship_date: ${noShip}`);
+    // Тысячи: в русском тексте неразрывный пробел, в английском запятая.
+    const thousands = { ru: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1 '), en: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1,') };
+    check('process.notes[0]: границы срока из запроса', pr.notes[0].ru.includes(`${minDays}–${maxDays} дней`) && pr.notes[0].en.includes(`${minDays} to ${maxDays} days`), `нет ${minDays} и ${maxDays} в пометке 1`);
+    check('process.notes[1]: число строк из запроса', pr.notes[1].ru.includes(thousands.ru) && pr.notes[1].en.includes(thousands.en), `нет ${thousands.ru} / ${thousands.en} в пометке 2`);
+    check('process: пометки называют fact_sellin', pr.notes.every((n) => n.ru.includes('`fact_sellin`') && n.en.includes('`fact_sellin`')), 'нет fact_sellin');
+    check('process: запрос идёт к fact_sellin', /FROM fact_sellin\b/.test(pr.sql), 'нет FROM fact_sellin');
+    const sample = arch.artifacts.sources.sellin.expect[0];
+    const days = (Date.parse(sample[2]) - Date.parse(sample[1])) / 864e5;
+    check('process: строка источников укладывается в срок', days >= minDays && days <= maxDays, `${days} вне ${minDays}–${maxDays}`);
+  }
+
   // Bronze: пять настоящих строк с разными видами даты, регистром кода и пробелами.
   checkText('artifacts.bronze.title', a.bronze.title);
   checkText('artifacts.bronze.caption', a.bronze.caption);

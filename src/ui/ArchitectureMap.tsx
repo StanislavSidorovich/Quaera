@@ -295,7 +295,7 @@ export function ArchitectureMap({
               </button>
             </Fragment>
           ))}
-          {note?.kind === 'role' && layer.roles.includes(note.id) && <RoleNote id={note.id} onMore={() => onOpenRole(note.id)} />}
+          {note?.kind === 'role' && layer.roles.includes(note.id) && <RoleNote id={note.id} onMore={() => onOpenRole(note.id)} hideProcess={layer.id === 'sources'} />}
         </dd>
         <dt>{m.stagesTitle}</dt>
         <dd>{stages.map((s) => s.title[locale]).join(', ')}</dd>
@@ -426,7 +426,7 @@ export function ArchitectureMap({
           <strong>{current.who[locale]}</strong>
         )}
       </p>
-      {current.role && isRoleOpen(current.role) && <RoleNote id={current.role} onMore={() => onOpenRole(current.role!)} />}
+      {current.role && isRoleOpen(current.role) && <RoleNote id={current.role} onMore={() => onOpenRole(current.role!)} hideProcess={layer.id === 'sources'} />}
       <p>
         <Rich text={current.text[locale]} />
       </p>

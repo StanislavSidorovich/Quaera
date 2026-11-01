@@ -168,6 +168,17 @@ export interface SilverCombo {
  */
 export interface ArchArtifacts {
   ui: Record<'query' | 'hideQuery' | 'openLab' | 'table' | 'sourceNote', Text>;
+  /** Схема заказа дистрибьютора (ProcessFigure): подписи, две пометки и числа из запроса. */
+  process: {
+    title: Text;
+    aria: Text;
+    lanes: Record<'sales' | 'warehouse' | 'finance' | 'distributor', Text>;
+    labels: Record<'start' | 'post' | 'stock' | 'yes' | 'no' | 'declined' | 'pack' | 'ship' | 'invoice' | 'pay' | 'paid' | 'overdue' | 'reminder', Text>;
+    notes: [Text, Text];
+    caption: Text;
+    scrollHint: Text;
+    openFlow: Text;
+  } & ArtifactQuery;
   sources: {
     title: Text;
     sellin: { event: Text; table: string; columns: string[] } & ArtifactQuery;

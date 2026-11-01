@@ -1689,6 +1689,61 @@
         "en": "Both rows are real, they sit in the Kaiyo dataset."
       }
     },
+    "process": {
+      "title": {
+        "ru": "Заказ дистрибьютора Kaiyo Trading: схема процесса",
+        "en": "A distributor order at Kaiyo Trading: the process"
+      },
+      "scrollHint": {
+        "ru": "Схема шире экрана: прокрутите её вбок, пометка 1 правее.",
+        "en": "The diagram is wider than the screen: scroll it sideways, note 1 is further right."
+      },
+      "aria": {
+        "ru": "Схема процесса в нотации BPMN. Пул Kaiyo Trading с дорожками Продажи, Склад и Финансы и пул Дистрибьютор снизу. Дистрибьютор присылает заказ, продажи проводят его в ERP и проверяют наличие товара. Если товара нет, заказ отклоняется. Иначе одновременно склад упаковывает и отгружает товар, а финансы выставляют счёт, затем ждут оплату; при просрочке уходит напоминание, а ожидание продолжается.",
+        "en": "A process diagram in BPMN notation. The pool Kaiyo Trading with the lanes Sales, Warehouse and Finance, and the pool Distributor below it. The distributor sends an order, sales posts it in the ERP and checks the stock. If the stock does not cover the order, it is declined. Otherwise, at the same time, the warehouse packs and ships the goods and finance sends the invoice, then waits for the payment; when it is overdue, a reminder goes out and the wait goes on."
+      },
+      "lanes": {
+        "sales": { "ru": "Продажи", "en": "Sales" },
+        "warehouse": { "ru": "Склад", "en": "Warehouse" },
+        "finance": { "ru": "Финансы", "en": "Finance" },
+        "distributor": { "ru": "Дистрибьютор", "en": "Distributor" }
+      },
+      "labels": {
+        "start": { "ru": "Заказ\nполучен", "en": "Order\nreceived" },
+        "post": { "ru": "Провести\nзаказ в ERP", "en": "Post order\nin ERP" },
+        "stock": { "ru": "Товар в наличии?", "en": "Stock available?" },
+        "yes": { "ru": "Да", "en": "Yes" },
+        "no": { "ru": "Нет", "en": "No" },
+        "declined": { "ru": "Заказ\nотклонён", "en": "Order\ndeclined" },
+        "pack": { "ru": "Упаковать\nтовар", "en": "Pack\ngoods" },
+        "ship": { "ru": "Отгрузить\nтовар", "en": "Ship\ngoods" },
+        "invoice": { "ru": "Выставить\nсчёт", "en": "Send\ninvoice" },
+        "pay": { "ru": "Получить\nоплату", "en": "Receive\npayment" },
+        "paid": { "ru": "Заказ\nоплачен", "en": "Order\npaid" },
+        "overdue": { "ru": "Просрочка\nоплаты", "en": "Payment\noverdue" },
+        "reminder": { "ru": "Напоминание\nотправлено", "en": "Reminder\nsent" }
+      },
+      "notes": [
+        {
+          "ru": "Здесь строка `fact_sellin` становится полной: дата заказа записана при проведении, `ship_date` и штуки при отгрузке, через 2–11 дней.",
+          "en": "This is where the `fact_sellin` row becomes complete: the order date is written when the order is posted, `ship_date` and units at shipment, 2 to 11 days later."
+        },
+        {
+          "ru": "Строки не будет: у всех 15 362 строк `fact_sellin` есть отгрузка. Чего не отгрузили, данные не видят.",
+          "en": "No row here: all 15,362 rows of `fact_sellin` have a shipment. What was not shipped, the data cannot see."
+        }
+      ],
+      "caption": {
+        "ru": "Порядок шагов условный: данные хранят только результат.",
+        "en": "The order of the steps is illustrative: the data keeps only the result."
+      },
+      "openFlow": {
+        "ru": "Открыть схему во Flow",
+        "en": "Open the diagram in Flow"
+      },
+      "sql": "SELECT COUNT(*), SUM(ship_date IS NULL), MIN(julianday(ship_date) - julianday(order_date)), MAX(julianday(ship_date) - julianday(order_date)) FROM fact_sellin;",
+      "expect": [[15362, 0, 2, 11]]
+    },
     "sources": {
       "title": {
         "ru": "Как событие становится строкой",

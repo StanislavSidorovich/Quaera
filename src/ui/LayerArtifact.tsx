@@ -5,6 +5,7 @@ import { labShare, labUrl, openLab } from '../labLink';
 import type { SchemaDoc } from '../engine/types';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
+import { ProcessFigure } from './ProcessFigure';
 import { SchemaMap } from './SchemaMap';
 import { useSchema } from './SchemaSheet';
 
@@ -97,6 +98,7 @@ function SourcesArtifact() {
           </div>
         ))}
       </div>
+      <ProcessFigure />
     </>
   );
 }
