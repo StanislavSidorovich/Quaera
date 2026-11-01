@@ -1,4 +1,6 @@
 import type { CSSProperties } from 'react';
+import { useI18n } from '../i18n/context';
+import { copyText, useContextMenu } from './ContextMenu';
 
 /** На сколько знаков продолжение перенесённой строки уходит правее её начала. */
 const HANG = 3;
@@ -34,8 +36,10 @@ export function CodeBlock({
   className?: string;
   style?: CSSProperties;
 }) {
+  const { t } = useI18n();
+  const menu = useContextMenu(() => [{ label: t.ctx.copyCode, run: () => copyText(code) }]);
   return (
-    <pre className={className ? `sql-block ${className}` : 'sql-block'} style={style}>
+    <pre className={className ? `sql-block ${className}` : 'sql-block'} style={style} {...menu}>
       {code.split('\n').map((line, i) => {
         return (
           <span key={i} className="code-line" style={hangStyle(hangLead(line))}>

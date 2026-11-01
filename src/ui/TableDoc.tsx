@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { labShare, labUrl, openLab } from '../labLink';
+import { copyText, useContextMenu } from './ContextMenu';
 import { insertViaTarget } from './insertTarget';
 
 /**
@@ -66,6 +68,29 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links, key
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
+  // Над строкой колонки меню про колонку и ниже про таблицу, над заголовком только про таблицу.
+  const menu = useContextMenu((target) => {
+    const column = target?.closest('.col-doc')?.querySelector('.col-name code')?.textContent ?? null;
+    const select = `SELECT * FROM ${table.table} LIMIT 100;`;
+    return [
+      ...(column
+        ? [
+            { label: t.ctx.copyName(column), run: () => copyText(column) },
+            { label: t.ctx.copyName(`${table.table}.${column}`), run: () => copyText(`${table.table}.${column}`) },
+            'separator' as const,
+          ]
+        : []),
+      { label: t.ctx.copyName(table.table), run: () => copyText(table.table) },
+      { label: t.ctx.copySelectAll, run: () => copyText(select) },
+      {
+        label: t.ctx.openInLab,
+        run: () => {
+          labUrl(labShare(table.table, select, 'sql', [table.table])).then((url) => openLab(url) || window.open(url, '_blank', 'noopener'));
+        },
+      },
+    ];
+  });
+
   function pickColumn(name: string) {
     const key = `${table.table}.${name}`;
     if (insertViaTarget(name)) {
@@ -79,7 +104,7 @@ export function TableDoc({ table, open, detailsRef, highlightColumns, links, key
   }
 
   return (
-    <details ref={detailsRef} open={open || undefined} className="table-doc">
+    <details ref={detailsRef} open={open || undefined} className="table-doc" {...menu}>
       <summary>
         <code style={{ color: 'var(--code)' }}>{table.table}</code> — {table.title[locale]}
         <small>{t.schema.grainLabel(table.grain[locale], table.row_count)}</small>

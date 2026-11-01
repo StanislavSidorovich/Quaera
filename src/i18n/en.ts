@@ -908,6 +908,16 @@ export const en = {
     tableTab: 'Table',
     chartTab: 'Chart',
   },
+  ctx: {
+    copySelection: 'Copy selection',
+    copyCode: 'Copy code',
+    copyTable: 'Copy table (TSV, for Excel)',
+    copyMarkdown: 'Copy as Markdown',
+    copyCell: 'Copy value',
+    copyName: (name: string) => `Copy ${name}`,
+    copySelectAll: 'Copy SELECT * … LIMIT 100',
+    openInLab: 'Open in Lab',
+  },
   editor: {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} symbols`,
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `${langGenitive(track)} keywords`,

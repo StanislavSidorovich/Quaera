@@ -3,6 +3,7 @@ import type { Preview, SqlValue } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { chartSpec } from './chartSpec';
 import { Chart } from './Chart';
+import { copyText, useContextMenu } from './ContextMenu';
 
 /** Меньше трёх строк — сравнивать нечего, полоса только зашумит две цифры. */
 const MIN_ROWS_FOR_BARS = 3;
@@ -48,6 +49,11 @@ function barScales(columns: string[], rows: SqlValue[][]): (number | null)[] {
   });
 }
 
+/** Значение для буфера обмена: пустая ячейка остаётся пустой, чтобы Excel не получил слово NULL. */
+function plain(v: SqlValue): string {
+  return v === null ? '' : String(v);
+}
+
 /**
  * Таблица результата. Горизонтальный скролл живёт внутри контейнера:
  * страница целиком ездить вбок не должна, иначе на телефоне теряется навигация.
@@ -58,6 +64,25 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
   const scales = useMemo(() => barScales(data.columns, data.rows), [data.columns, data.rows]);
   const spec = useMemo(() => chartSpec(data), [data]);
   const [view, setView] = useState<'table' | 'chart'>('table');
+  const menu = useContextMenu((target) => {
+    const cell = target?.closest('td');
+    const row = cell?.parentElement;
+    const ci = cell && row ? Array.from(row.children).indexOf(cell) : -1;
+    const ri = row?.parentElement ? Array.from(row.parentElement.children).indexOf(row) : -1;
+    const value = ci >= 0 && ri >= 0 ? data.rows[ri]?.[ci] : undefined;
+    const flat = (v: unknown) => plain(v as SqlValue).replace(/[\t\r\n]+/g, ' ');
+    const tsv = [data.columns, ...data.rows].map((r) => r.map(flat).join('\t')).join('\n');
+    const md = [
+      `| ${data.columns.join(' | ')} |`,
+      `| ${data.columns.map(() => '---').join(' | ')} |`,
+      ...data.rows.map((r) => `| ${r.map((v) => flat(v).replace(/\|/g, '\\|')).join(' | ')} |`),
+    ].join('\n');
+    return [
+      ...(value !== undefined ? [{ label: t.ctx.copyCell, run: () => copyText(plain(value)) }, 'separator' as const] : []),
+      { label: t.ctx.copyTable, run: () => copyText(tsv) },
+      { label: t.ctx.copyMarkdown, run: () => copyText(md) },
+    ];
+  });
   const effectiveView = spec ? view : 'table';
   /**
    * Вывод print() показывается до таблицы и отдельно от неё: это не результат,
@@ -97,7 +122,7 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
       {effectiveView === 'chart' && spec ? (
         <Chart spec={spec} numberLocale={numberLocale} />
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap" {...menu}>
           <table>
             <thead>
               <tr>

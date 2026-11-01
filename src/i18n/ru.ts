@@ -1748,6 +1748,16 @@ export const ru = {
     tableTab: 'Таблица',
     chartTab: 'График',
   },
+  ctx: {
+    copySelection: 'Скопировать выделенное',
+    copyCode: 'Скопировать код',
+    copyTable: 'Скопировать таблицу (TSV, для Excel)',
+    copyMarkdown: 'Скопировать как Markdown',
+    copyCell: 'Скопировать значение',
+    copyName: (name: string) => `Скопировать ${name}`,
+    copySelectAll: 'Скопировать SELECT * … LIMIT 100',
+    openInLab: 'Открыть в Lab',
+  },
   editor: {
     symbolsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Символы ${langGenitive(track)}`,
     keywordsAria: (track: 'sql' | 'model' | 'python' | 'domain') => `Ключевые слова ${langGenitive(track)}`,

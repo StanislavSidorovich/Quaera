@@ -10092,3 +10092,44 @@ figure.arch-figure {
     color: var(--text-dim);
   }
 }
+
+/* Своё меню по правому клику (ui/ContextMenu.tsx): одно на приложение, над страницей и шторками. */
+.ctx-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 220px;
+  max-width: calc(100vw - 8px);
+  padding: 4px;
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  font-size: 14px;
+}
+.ctx-menu button {
+  display: block;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ctx-menu button:hover:not(:disabled),
+.ctx-menu button:focus-visible {
+  background: var(--bg-sunken);
+}
+.ctx-menu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ctx-menu .ctx-sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--line);
+}
