@@ -200,6 +200,7 @@ export const ru = {
     /** Те же приложения со ссылкой сразу на данные Kaiyo (карта данных, «Проект от и до»). */
     familyLabKaiyo: 'Lab: таблицы Kaiyo',
     familyModelKaiyo: 'Model: звезда Kaiyo',
+    familyFlowKaiyo: 'Flow: заказ в Kaiyo',
   },
   tracks: {
     ariaLabel: 'Треки',

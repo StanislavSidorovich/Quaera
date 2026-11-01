@@ -190,7 +190,7 @@ export function ProjectStationCard({
   const href = s.action.href;
   const hrefIsApp = !!(app && href && href.startsWith(app.url));
   const appLink = app ? familyKaiyoLink(app.key, app.url) : undefined;
-  const appLabel = app && appLink ? (app.key === 'lab' ? t.nav.familyLabKaiyo : app.key === 'model' ? t.nav.familyModelKaiyo : p.openApp(appName(app.key))) : '';
+  const appLabel = app && appLink ? (app.key === 'lab' ? t.nav.familyLabKaiyo : app.key === 'model' ? t.nav.familyModelKaiyo : app.key === 'flow' ? t.nav.familyFlowKaiyo : p.openApp(appName(app.key))) : '';
   const externals = (s.action.externals ?? [])
     .map((id) => project.external.find((e) => e.id === id))
     .filter((e): e is ProjectExternal => !!e);
@@ -328,7 +328,8 @@ export function ProjectStationCard({
                 href={appLink!.kaiyo ? appLink!.url : hrefIsApp ? href : app.url}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, app.key)}
+                // Уже открытый Flow получил бы только фокус, и пример бы не открылся.
+                onClick={(e) => app.key !== 'flow' && window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, app.key)}
               >
                 {appLink!.kaiyo ? `${appLabel} ↗` : appLabel}
               </a>

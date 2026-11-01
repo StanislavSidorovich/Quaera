@@ -79,8 +79,8 @@
         "apps": ["flow"],
         "skills": ["dom-value-chain", "dom-order-to-cash"],
         "text": {
-          "ru": "Нарисовать процесс в Flow и найти, на каком шаге рождается строка таблицы фактов.",
-          "en": "Draw the process in Flow and find the step where a fact table row is born."
+          "ru": "Посмотреть заказ Kaiyo в Flow и найти шаг, на котором рождается строка таблицы фактов. Потом нарисовать свой процесс.",
+          "en": "Open the Kaiyo order in Flow and find the step where a fact table row is born. Then draw a process of your own."
         }
       }
     },

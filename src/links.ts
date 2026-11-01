@@ -41,6 +41,13 @@ export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
 export const LAB_QUAERA = 'https://lab.quaera.app/#ds=quaera';
 
 /**
+ * Заказ дистрибьютора Kaiyo в Quaera Flow: все основные элементы BPMN и шаг, на
+ * котором рождается строка `fact_sellin`. `?example=kaiyo` принимает Flow
+ * (src/ui/exampleLink.ts там), см. таблицу переходов в корневом CLAUDE.md.
+ */
+export const FLOW_KAIYO = 'https://flow.quaera.app/?example=kaiyo';
+
+/**
  * Те же 13 таблиц CSV-архивом. Файл собирает scripts/build-dataset.mjs
  * (gen:data) и кладёт в public/downloads/: путь постоянный, на него ссылаются
  * README и гид по Power BI, не переименовывать.
@@ -60,12 +67,13 @@ export const FAMILY = (family.apps as { id: string; url: string }[])
 
 /**
  * Ссылки карты данных и «Проекта от и до»: Lab и Model открываются сразу на
- * данных Kaiyo, а не на своей главной. Для Flow и Pandas примера Kaiyo нет,
- * они остаются на адресе из FAMILY.
+ * данных Kaiyo, а Flow на заказе дистрибьютора Kaiyo, а не на своей главной.
+ * Для Pandas примера Kaiyo нет, он остаётся на адресе из FAMILY.
  */
 export function familyKaiyoLink(key: 'model' | 'flow' | 'pandas' | 'lab', fallback: string): { url: string; kaiyo: boolean } {
   if (key === 'lab') return { url: LAB_QUAERA, kaiyo: true };
   if (key === 'model') return { url: STRATASQL_MODEL, kaiyo: true };
+  if (key === 'flow') return { url: FLOW_KAIYO, kaiyo: true };
   return { url: fallback, kaiyo: false };
 }
 

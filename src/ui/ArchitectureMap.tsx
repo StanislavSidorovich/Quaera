@@ -358,9 +358,10 @@ export function ArchitectureMap({
                 href={familyKaiyoLink(f.key, f.url).url}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
+                // Уже открытый Flow получил бы только фокус, и пример бы не открылся.
+                onClick={(e) => f.key !== 'flow' && window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
               >
-                {f.key === 'lab' ? t.nav.familyLabKaiyo : f.key === 'model' ? t.nav.familyModelKaiyo : appName(f.key)} ↗
+                {f.key === 'lab' ? t.nav.familyLabKaiyo : f.key === 'model' ? t.nav.familyModelKaiyo : f.key === 'flow' ? t.nav.familyFlowKaiyo : appName(f.key)} ↗
               </a>
             ))}
           </div>

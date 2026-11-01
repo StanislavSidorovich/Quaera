@@ -96,6 +96,7 @@ export const en = {
     familyLab: 'Lab: SQL on your own files',
     familyLabKaiyo: 'Lab: Kaiyo tables',
     familyModelKaiyo: 'Model: Kaiyo star schema',
+    familyFlowKaiyo: 'Flow: an order at Kaiyo',
   },
   tracks: {
     ariaLabel: 'Tracks',
