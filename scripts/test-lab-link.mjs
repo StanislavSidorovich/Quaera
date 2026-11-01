@@ -33,7 +33,7 @@ try {
     { cwd: root, stdio: 'inherit' }
   );
   writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
-  const { labSql, labPython, labShare, labUrl, tablesInCode, needsDatePrelude, LAB_URL } = await import(
+  const { labSql, labPython, labShare, labUrl, tablesInCode, needsDatePrelude, LAB_URL, openInApp, openLab } = await import(
     pathToFileURL(path.join(outDir, 'labLink.js')).href
   );
 
@@ -156,6 +156,60 @@ try {
       b.t.length <= 30 &&
       b.t.every((x) => typeof x.q === 'string' && typeof x.n === 'string' && (x.l === undefined || ['duckdb', 'tsql', 'postgres', 'python'].includes(x.l)));
     assertEq(`${name}: ссылка проходит проверку parseShare в Lab`, ok, true);
+  }
+
+  // --- Клик «Открыть в Lab» / ссылка на Model: окно по имени и режим установленного приложения
+  {
+    const fakeWindows = new Map();
+    let opened = 0;
+    const setup = (standalone) => {
+      fakeWindows.clear();
+      opened = 0;
+      Object.defineProperty(globalThis, 'navigator', { value: { standalone: false }, configurable: true });
+      globalThis.window = {
+        matchMedia: (q) => ({ matches: standalone && q.includes('standalone') }),
+        open: (_u, name) => {
+          if (!fakeWindows.has(name)) {
+            opened++;
+            // Первое обращение: пустое окно; после перехода адрес чужого origin читать нельзя.
+            const w = { _href: 'about:blank', hrefs: [], focused: 0, opener: {} };
+            w.location = {
+              get href() {
+                if (w.hrefs.length) throw new Error('cross-origin');
+                return w._href;
+              },
+              set href(v) {
+                w.hrefs.push(v);
+              },
+            };
+            w.focus = () => w.focused++;
+            fakeWindows.set(name, w);
+          }
+          return fakeWindows.get(name);
+        },
+      };
+    };
+    const click = () => {
+      const ev = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false, altKey: false, prevented: false, preventDefault() { this.prevented = true; } };
+      return { ev, handled: openLab('https://lab.quaera.app/#s=x', ev) };
+    };
+
+    setup(false);
+    const a = click();
+    const b = click();
+    assertEq('браузер: два клика, одно окно quaera-lab', opened, 1);
+    assertEq('браузер: оба клика перехвачены', [a.handled, b.handled, a.ev.prevented, b.ev.prevented], [true, true, true, true]);
+    assertEq('браузер: второй клик меняет адрес открытого окна', fakeWindows.get('quaera-lab').hrefs.length, 2);
+    assertEq('браузер: Model идёт в своё окно', openInApp('https://model.quaera.app/#example=quaera', 'model', undefined), true);
+    assertEq('браузер: окон два (lab и model)', [...fakeWindows.keys()].sort(), ['quaera-lab', 'quaera-model']);
+    assertEq('браузер: Ctrl+клик не перехватывается', openLab('u', { button: 0, ctrlKey: true, metaKey: false, shiftKey: false, altKey: false, preventDefault() {} }), false);
+
+    setup(true);
+    const c = click();
+    assertEq('установленное приложение: клик не перехватывается, window.open не вызван', [c.handled, c.ev.prevented, opened], [false, false, 0]);
+
+    delete globalThis.window;
+    delete globalThis.navigator;
   }
 
   if (failed) {

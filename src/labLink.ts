@@ -178,24 +178,41 @@ export async function labUrl(share: LabShare): Promise<string> {
   return `${LAB_URL}#s=${base64Url(await deflateRaw(JSON.stringify(share)))}`;
 }
 
+/** Окно установленного приложения (PWA): своего окна по имени там не найти, ссылка открывается самим браузером. */
+function installedApp(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Открыть ссылку в окне `quaera-lab`. Схема та же, что у переключателя семьи
- * (family/switcher.js, window.quaeraOpenApp), с одной разницей: уже открытое
- * окно Lab не только получает фокус, но и переходит на новый адрес. Меняется
- * лишь фрагмент `#s=`, страница не перезагружается: Lab ловит hashchange
- * и добавляет вкладку рядом с открытыми, ничего не теряя.
+ * Открыть ссылку в окне приложения семьи с именем `quaera-<id>`. Схема та же,
+ * что у переключателя семьи (family/switcher.js, window.quaeraOpenApp), с одной
+ * разницей: уже открытое окно не только получает фокус, но и переходит на новый
+ * адрес. Меняется лишь фрагмент `#…`, страница не перезагружается: Lab и Model
+ * ловят hashchange и открывают присланное рядом с открытым, ничего не теряя.
+ *
+ * Из окна установленного Quaera не перехватываем (опыт 2026-11-01, Chrome 139):
+ * `window.open` по имени уходит оттуда во вкладку браузера, где у Lab нет
+ * сохранённой базы, а обычная ссылка попадает в установленное приложение, и
+ * `launch_handler: navigate-existing` в его манифесте берёт то же окно.
  *
  * true — клик обработан (preventDefault вызван); false — пусть сработает
- * обычная ссылка с target=_blank (модификаторы, средняя кнопка, окно не дали).
+ * обычная ссылка с target=_blank (модификаторы, средняя кнопка, standalone,
+ * окно не дали).
  */
-export function openLab(
+export function openInApp(
   url: string,
+  appId: string,
   event?: Pick<MouseEvent, 'button' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'preventDefault'>
 ): boolean {
   if (event && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return false;
+  if (installedApp()) return false;
   let w: Window | null = null;
   try {
-    w = window.open('', LAB_WINDOW);
+    w = window.open('', `quaera-${appId}`);
   } catch {
     w = null;
   }
@@ -219,4 +236,9 @@ export function openLab(
   }
   event?.preventDefault();
   return true;
+}
+
+/** «Открыть в Lab»: код задания в окне `quaera-lab`. */
+export function openLab(url: string, event?: Parameters<typeof openInApp>[2]): boolean {
+  return openInApp(url, 'lab', event);
 }

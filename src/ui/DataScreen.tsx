@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GROUP_ORDER, groupTables, keyColumns, type GroupedTables } from '../engine/schemaGroups';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
-import { DATASET_CSV_ZIP, LAB_QUAERA, STRATASQL_MODEL } from '../links';
+import { DATASET_CSV_ZIP, LAB_QUAERA, STRATASQL_MODEL, openFamilyLink } from '../links';
 import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 
@@ -204,7 +204,7 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
            * которую печатают, и ссылка на бумаге никуда не ведёт.
            */}
           <p className="data-map-design">
-            <a href={STRATASQL_MODEL} target="_blank" rel="noreferrer">
+            <a href={STRATASQL_MODEL} target="_blank" rel="noreferrer" onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, 'model')}>
               {t.data.mapDesign} ↗
             </a>
           </p>
@@ -213,7 +213,7 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
            * инструменты). Рядом со схемой по той же причине, что и ссылка на модель.
            */}
           <p className="data-export">
-            <a href={LAB_QUAERA} target="_blank" rel="noreferrer">
+            <a href={LAB_QUAERA} target="_blank" rel="noreferrer" onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, 'lab')}>
               {t.data.openInLab} ↗
             </a>
             <a href={DATASET_CSV_ZIP} download>

@@ -8,7 +8,7 @@ import type { Progress } from '../srs/store';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
 import { useI18n } from '../i18n/context';
-import { FAMILY, familyKaiyoLink } from '../links';
+import { FAMILY, familyKaiyoLink, openFamilyLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { RoleNote } from './RoleNote';
@@ -336,7 +336,7 @@ export function ProjectStationCard({
                 target="_blank"
                 rel="noreferrer"
                 // Уже открытый Flow получил бы только фокус, и пример бы не открылся.
-                onClick={(e) => app.key !== 'flow' && window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, app.key)}
+                onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, app.key)}
               >
                 {appLink!.kaiyo ? `${appLabel} ↗` : appLabel}
               </a>

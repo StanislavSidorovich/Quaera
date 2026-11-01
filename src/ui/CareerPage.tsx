@@ -4,7 +4,7 @@ import type { CareerStage } from '../content/career';
 import { lessonBySkill, packForTrack } from '../content';
 import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
-import { FAMILY } from '../links';
+import { FAMILY, openFamilyLink } from '../links';
 import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
 import { AXES, roleReadiness, skillLevel } from '../career/readiness';
@@ -224,7 +224,7 @@ export function CareerPage({
                 href={f.url}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
+                onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, f.key)}
               >
                 {{ model: t.nav.familyModel, flow: t.nav.familyFlow, pandas: t.nav.familyPandas, lab: t.nav.familyLab }[f.key]} ↗
               </a>

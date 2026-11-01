@@ -8,7 +8,7 @@ import type { Progress } from '../srs/store';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
 import { useI18n } from '../i18n/context';
-import { FAMILY, familyKaiyoLink } from '../links';
+import { FAMILY, familyKaiyoLink, openFamilyLink } from '../links';
 import { labShare, labUrl, openLab } from '../labLink';
 import { useSchema } from './SchemaSheet';
 import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
@@ -361,7 +361,7 @@ export function ArchitectureMap({
                 target="_blank"
                 rel="noreferrer"
                 // Уже открытый Flow получил бы только фокус, и пример бы не открылся.
-                onClick={(e) => f.key !== 'flow' && window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
+                onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, f.key)}
               >
                 {f.key === 'lab' ? t.nav.familyLabKaiyo : f.key === 'model' ? t.nav.familyModelKaiyo : f.key === 'flow' ? t.nav.familyFlowKaiyo : appName(f.key)} ↗
               </a>

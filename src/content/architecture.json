@@ -1101,7 +1101,7 @@
             "en": "Open the Kaiyo star schema in Quaera Model and work through the grain in the Model and BI track."
           },
           "app": "model",
-          "href": "https://model.quaera.app/?example=quaera",
+          "href": "https://model.quaera.app/#example=quaera",
           "skills": [
             "model-star",
             "model-grain",

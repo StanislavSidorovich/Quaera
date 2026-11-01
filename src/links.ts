@@ -18,6 +18,7 @@
  * App сам импортирует Sidebar.
  */
 import family from '../family/family.json';
+import { openInApp } from './labLink';
 
 export const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/stanislavsidorovich';
 export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
@@ -25,12 +26,12 @@ export const AUTHOR_REPO = 'https://github.com/StanislavSidorovich/Quaera';
 /**
  * Эта же база в StrataSQL — редакторе моделей данных того же автора
  * (model.quaera.app): концептуальная модель, из неё таблицы и DDL.
- * `?example=quaera` открывает готовую модель сразу, минуя приветствие;
+ * `#example=quaera` открывает готовую модель сразу, минуя приветствие (фрагментом, а не `?example=`: открытое окно Model принимает его без перезагрузки);
  * сама модель и разбор, чем она отличается от таблиц здесь, — в репозитории
  * StrataSQL (cases/quaera.md). Ссылка ведёт на чужой поддомен, а не
  * в приложение, поэтому, как и ссылки выше, с `rel="noreferrer"`.
  */
-export const STRATASQL_MODEL = 'https://model.quaera.app/?example=quaera';
+export const STRATASQL_MODEL = 'https://model.quaera.app/#example=quaera';
 
 /**
  * Эта же база в Quaera Lab (lab.quaera.app): датасет открывается как учебный,
@@ -79,6 +80,22 @@ export function familyKaiyoLink(key: 'model' | 'flow' | 'pandas' | 'lab', fallba
   if (key === 'model') return { url: STRATASQL_MODEL, kaiyo: true };
   if (key === 'flow') return { url: FLOW_KAIYO, kaiyo: true };
   return { url: fallback, kaiyo: false };
+}
+
+/**
+ * Клик по ссылке на другое приложение семьи с карты данных, из «Проекта от и до»
+ * и подсказок инструментов. Lab и Model берут присланное в уже открытое окно
+ * (адрес не теряется, новая вкладка Lab не плодится: базу держит одна вкладка),
+ * из окна установленного приложения клик остаётся обычной ссылкой. Flow всегда
+ * новая вкладка: открытый Flow получил бы только фокус и не открыл пример.
+ * Остальным и ссылкам без фрагмента (корень приложения) даётся прежний
+ * переключатель семьи: только фокус окна. true — клик перехвачен.
+ */
+export function openFamilyLink(anchor: HTMLAnchorElement, event: MouseEvent, key: string): boolean {
+  // Только ссылки с адресом во фрагменте: переход к корню без `#` перезагрузил бы открытое окно.
+  if ((key === 'lab' || key === 'model') && new URL(anchor.href).hash) return openInApp(anchor.href, key, event);
+  if (key === 'flow') return false;
+  return window.quaeraOpenApp?.(anchor, event, key) ?? false;
 }
 
 /**

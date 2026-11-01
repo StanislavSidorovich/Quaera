@@ -2,7 +2,7 @@ import { architecture } from '../content/architecture';
 import { familyPeers, toolLearning } from '../content/tool-learning';
 import type { LearnSource, QuaeraTarget } from '../content/tool-learning';
 import { useI18n } from '../i18n/context';
-import { DATASET_CSV_ZIP, FAMILY, LAB_PRACTICE_PYTHON, LAB_PRACTICE_SQL, LAB_QUAERA, STRATASQL_MODEL } from '../links';
+import { DATASET_CSV_ZIP, FAMILY, LAB_PRACTICE_PYTHON, LAB_PRACTICE_SQL, LAB_QUAERA, STRATASQL_MODEL, openFamilyLink } from '../links';
 
 const pandasUrl = FAMILY.find((a) => a.key === 'pandas')?.url ?? '';
 
@@ -54,7 +54,12 @@ export function ToolNote({ name }: { name: string }) {
                       {m.download}
                     </a>
                   ) : (
-                    <a href={TARGETS[entry.quaera.to]} target="_blank" rel="noreferrer">
+                    <a
+                      href={TARGETS[entry.quaera.to]}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, entry.quaera?.to?.startsWith('lab') ? 'lab' : (entry.quaera?.to ?? ''))}
+                    >
                       {m.open}
                     </a>
                   )}
