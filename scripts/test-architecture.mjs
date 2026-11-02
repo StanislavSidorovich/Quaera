@@ -393,14 +393,20 @@ check('запросы: у маршрута есть хотя бы один', que
   // Схема «Системы-источники»: все названные таблицы есть в датасете, у каждой одна система, а факты и справочники не потеряны.
   {
     const sm = a.sourceMap;
-    for (const k of ['title', 'aria', 'caption', 'scrollHint']) checkText(`sourceMap.${k}`, sm[k]);
-    checkText('sourceMap.head', sm.head);
+    for (const k of ['title', 'aria', 'sub']) checkText(`sourceMap.${k}`, sm[k]);
+    checkText('sourceMap.ui.more', sm.ui?.more);
     sm.notes.forEach((n, i) => checkText(`sourceMap.notes[${i}]`, n));
     const names = new Set(schema.tables.map((x) => x.table));
     const all = sm.systems.flatMap((s) => s.tables);
     for (const s of sm.systems) {
       checkText(`sourceMap.${s.id}.name`, s.name);
       checkText(`sourceMap.${s.id}.desc`, s.desc);
+      checkText(`sourceMap.${s.id}.kind`, s.kind);
+      checkText(`sourceMap.${s.id}.preview.caption`, s.preview.caption);
+      if (s.preview.after) checkText(`sourceMap.${s.id}.preview.after`, s.preview.after);
+      for (const k of Object.keys(s.preview.labels)) checkText(`sourceMap.${s.id}.preview.labels.${k}`, s.preview.labels[k]);
+      same(`sourceMap ${s.id}: макет совпал с запросом`, s.preview.sql, s.preview.expect);
+      check(`sourceMap ${s.id}: запрос макета идёт к таблице системы`, s.tables.some((tb) => new RegExp(`FROM ${tb}(?![a-z_])`).test(s.preview.sql)), 'нет FROM таблицы этой системы');
       check(`sourceMap ${s.id}: таблицы есть в датасете`, s.tables.every((x) => names.has(x)), `нет в schema.json: ${s.tables.filter((x) => !names.has(x))}`);
     }
     check('sourceMap: ровно четыре системы', JSON.stringify(sm.systems.map((s) => s.id)) === JSON.stringify(['erp', 'crm', 'dist', 'plan']), 'состав систем');
@@ -408,22 +414,30 @@ check('запросы: у маршрута есть хотя бы один', que
     const dist = sm.systems.find((s) => s.id === 'dist').tables;
     check('sourceMap: у дистрибьюторов сырая выгрузка идёт перед фактом', dist[0] === 'staging_raw_sellout' && dist[1] === 'fact_sellout', 'порядок staging_raw_sellout, fact_sellout');
     check('sourceMap.notes[0]: sell-in из ERP, sell-out из отчёта', sm.systems.find((s) => s.id === 'erp').tables.includes('fact_sellin') && !sm.systems.find((s) => s.id === 'erp').tables.includes('fact_sellout') && sm.notes[0].ru.includes('`fact_sellin`') && sm.notes[0].ru.includes('`fact_sellout`') && sm.notes[0].en.includes('`fact_sellin`') && sm.notes[0].en.includes('`fact_sellout`'), 'раскладка или пометка 1 расходятся');
-    check('sourceMap.notes[1]: честная пометка о типичной раскладке', /не факт о Kaiyo/.test(sm.notes[1].ru) && /not a fact about Kaiyo/.test(sm.notes[1].en), 'нет оговорки, что раскладка типичная');
+    check('sourceMap.sub: честная оговорка о типичной раскладке', /не факт о Kaiyo/.test(sm.sub.ru) && /not a fact about Kaiyo/.test(sm.sub.en), 'нет оговорки, что раскладка типичная');
+    check('sourceMap.notes[1]: fact_stock назван в пометке про склады дистрибьюторов', sm.notes[1].ru.includes('`fact_stock`') && sm.notes[1].en.includes('`fact_stock`'), 'нет fact_stock');
     for (const tb of ['fact_stock', 'fact_price', 'fact_target', 'dim_customer', 'dim_rep']) check(`sourceMap: ${tb} назван на схеме`, all.includes(tb), `нет ${tb}`);
   }
 
   // Схема загрузки (bronze): файлы и строки сняты запросом, оговорка о примере на месте, инструменты есть на карте.
   {
     const ig = a.ingest;
-    for (const k of ['title', 'aria', 'caption', 'scrollHint']) checkText(`ingest.${k}`, ig[k]);
-    for (const k of Object.keys(ig.labels)) checkText(`ingest.labels.${k}`, ig.labels[k]);
+    for (const k of ['title', 'aria', 'caption']) checkText(`ingest.${k}`, ig[k]);
+    for (const k of Object.keys(ig.labels)) {
+      if (k === 'cleanTags') continue;
+      checkText(`ingest.labels.${k}`, ig.labels[k]);
+    }
+    for (const loc of ['ru', 'en']) {
+      const tags = ig.labels.cleanTags?.[loc];
+      check(`ingest.labels.cleanTags.${loc}: три метки`, Array.isArray(tags) && tags.length === 3 && tags.every((x) => typeof x === 'string' && x.trim() && !/—/.test(x) && (loc === 'ru' || !CYRILLIC.test(x))), 'нужны три непустые строки');
+    }
     ig.notes.forEach((n, i) => checkText(`ingest.notes[${i}]`, n));
     same('ingest: файлы и строки совпали с запросом', ig.sql, ig.expect);
     const [count, first, last, rows] = ig.expect[0];
     check('ingest: числа файлов в схеме', ig.files.count === count && ig.files.first === first && ig.files.last === last, `files: ${JSON.stringify(ig.files)}`);
     const thousands = { ru: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1 '), en: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1,') };
     for (const loc of ['ru', 'en']) {
-      check(`ingest.labels.files.${loc}: файлы и строки из запроса`, ig.labels.files[loc].includes(String(count)) && ig.labels.files[loc].includes(thousands[loc]), `нет ${count} и ${thousands[loc]}`);
+      check(`ingest.labels.bronzeCount.${loc}: файлы и строки из запроса`, ig.labels.bronzeCount[loc].includes(String(count)) && ig.labels.bronzeCount[loc].includes(thousands[loc]), `нет ${count} и ${thousands[loc]}`);
       check(`ingest.aria.${loc}: файлы и строки из запроса`, ig.aria[loc].includes(String(count)) && ig.aria[loc].includes(thousands[loc]), `нет ${count} и ${thousands[loc]}`);
     }
     check('ingest: по одному файлу на месяц', /^export_\d{4}-\d{2}\.csv$/.test(first) && /^export_\d{4}-\d{2}\.csv$/.test(last), 'имя файла не вида export_ГГГГ-ММ.csv');

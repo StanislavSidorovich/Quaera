@@ -185,25 +185,38 @@ export interface ArchArtifacts {
     /** Подпись над схемой на экране роли бизнес-аналитика (вкладка «Путь к роли»). */
     careerLead: Text;
   } & ArtifactQuery;
-  /** Схема «Системы-источники и что в них лежит» (SourceMapFigure): системы, их таблицы и две пометки. */
+  /** Схема «Системы-источники и что в них лежит» (SourceMapFigure): четыре карточки систем с таблицами и раскрывающимся макетом строки. */
   sourceMap: {
     title: Text;
     aria: Text;
-    head: Text;
-    systems: { id: 'erp' | 'crm' | 'dist' | 'plan'; name: Text; desc: Text; tables: string[] }[];
+    /** Оговорка под заголовком: раскладка типичная, а не факт о Kaiyo. */
+    sub: Text;
+    ui: { more: Text };
+    systems: {
+      id: 'erp' | 'crm' | 'dist' | 'plan';
+      name: Text;
+      kind: Text;
+      desc: Text;
+      tables: string[];
+      /** Макет раскрытой карточки: запрос к датасету, его строки и подписи полей. */
+      preview: {
+        caption: Text;
+        labels: Record<string, Text>;
+        after?: Text;
+      } & ArtifactQuery;
+    }[];
     notes: [Text, Text];
-    caption: Text;
-    scrollHint: Text;
   };
-  /** Схема загрузки в lakehouse (IngestFigure): подписи, число файлов bronze и две пометки. */
+  /** Схема загрузки в lakehouse (IngestFigure): пять шагов, число файлов bronze и две пометки. */
   ingest: {
     title: Text;
     aria: Text;
-    labels: Record<'sources' | 'sourcesSub' | 'schedule' | 'lake' | 'bronze' | 'files' | 'clean' | 'silver' | 'silverSub' | 'model' | 'gold' | 'goldSub' | 'next', Text>;
+    labels: Record<'lake' | 'files' | 'filesSub' | 'bronze' | 'bronzeSub' | 'bronzeCount' | 'silver' | 'silverSub' | 'gold' | 'goldSub2' | 'goldSub' | 'next' | 'nextSub', Text> & {
+      cleanTags: Record<Locale, string[]>;
+    };
     files: { first: string; last: string; count: number };
     notes: [Text, Text];
     caption: Text;
-    scrollHint: Text;
     /** Подпись над схемой на экране роли инженера данных. */
     careerLead: Text;
   } & ArtifactQuery;

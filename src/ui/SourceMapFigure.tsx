@@ -1,110 +1,216 @@
+import { Fragment, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { architecture } from '../content/architecture';
 import { useI18n } from '../i18n/context';
-import { Badge, Label, LH, Notes, rich } from './figureParts';
+import type { Locale } from '../i18n/context';
+import { Notes, rich } from './figureParts';
 
 const sm = architecture.artifacts.sourceMap;
 
-const W = 216;
-const BOX_X = 4;
-const BOX_W = W - 8;
-const PILL_H = 20;
-const ARROW = 16;
-const GAP = 14;
+type System = (typeof sm.systems)[number];
+type Value = string | number | null;
 
-/** Ширина и левый край таблицы в ряду: два столбца под системой, а у дистрибьюторов сырая выгрузка шире. */
-const COL = { left: { x: 8, w: 100 }, right: { x: 112, w: 100 }, rawLeft: { x: 8, w: 124 }, rawRight: { x: 140, w: 72 } };
+const tag = (locale: Locale) => (locale === 'ru' ? 'ru-RU' : 'en-US');
+const int = (n: number, locale: Locale) => n.toLocaleString(tag(locale));
+const money = (n: number, locale: Locale) =>
+  n.toLocaleString(tag(locale), {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-interface Pill {
-  name: string;
-  x: number;
-  w: number;
-  row: number;
-  /** Откуда идёт стрелка: к системе (`box`) или от соседней таблицы выше (`up`). */
-  from: 'box' | 'up';
+/** Имена колонок из SELECT запроса: без префикса таблицы, как их увидел бы человек в результате. */
+const columnsOf = (sql: string) =>
+  sql
+    .replace(/^\s*SELECT\s+/i, '')
+    .split(/\s+FROM\s+/i)[0]
+    .split(',')
+    .map((c) => c.trim().split('.').pop() as string);
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="sm-field">
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
 }
 
-/** Раскладка таблиц системы: два столбца; у дистрибьюторов `fact_sellout` стоит под сырой выгрузкой и получает стрелку от неё. */
-function pillsOf(id: string, tables: string[]): Pill[] {
-  if (id === 'dist') {
-    return [
-      { name: tables[0], ...COL.rawLeft, row: 0, from: 'box' },
-      { name: tables[2], ...COL.rawRight, row: 0, from: 'box' },
-      { name: tables[1], ...COL.rawLeft, row: 1, from: 'up' },
-    ];
+/** ERP: строка отгрузки как документ. Значения только из `preview.expect`, подписи из `preview.labels`. */
+function ErpDoc({ s, locale }: { s: System; locale: Locale }) {
+  const L = (k: string) => s.preview.labels[k][locale];
+  const [id, orderDate, shipDate, distributor, sku, product, units, gross, discount, net] = s.preview.expect[0];
+  return (
+    <dl className="sm-doc">
+      <Field label={L('ship')}>{String(id)}</Field>
+      <Field label={L('dates')}>
+        {String(orderDate)} → {String(shipDate)}
+      </Field>
+      <Field label={L('dist')}>{String(distributor)}</Field>
+      <Field label={L('item')}>
+        <code>{String(sku)}</code> {String(product)}
+      </Field>
+      <Field label={L('qty')}>
+        {int(Number(units), locale)} {L('unit')}
+      </Field>
+      <Field label={L('sum')}>
+        {money(Number(gross), locale)} {L('less')} {money(Number(discount), locale)} = <mark className="sm-mark">{money(Number(net), locale)}</mark>
+      </Field>
+    </dl>
+  );
+}
+
+/** CRM: карточка клиента. */
+function CrmCard({ s, locale }: { s: System; locale: Locale }) {
+  const L = (k: string) => s.preview.labels[k][locale];
+  const [name, chain, channel, city, opened, active, rep, team] = s.preview.expect[0];
+  return (
+    <div className="sm-card">
+      <div className="sm-card-head">
+        <span className="sm-avatar" aria-hidden="true">
+          {String(name).charAt(0)}
+        </span>
+        <strong>{String(name)}</strong>
+      </div>
+      <dl className="sm-doc">
+        <Field label={L('chain')}>
+          {String(chain)} · <code>{String(channel)}</code>
+        </Field>
+        <Field label={L('city')}>{String(city)}</Field>
+        <Field label={L('since')}>
+          {String(opened)}
+          {active === 1 ? ` · ${L('active')}` : ''}
+        </Field>
+        <Field label={L('rep')}>
+          <mark className="sm-mark">{String(rep)}</mark> · {String(team)}
+        </Field>
+      </dl>
+    </div>
+  );
+}
+
+/** Лист Excel: заголовки и строки; `mark` называет колонку, которую нужно выделить. */
+function Sheet({ heads, rows, mark, show }: { heads: string[]; rows: Value[][]; mark: number; show: (v: Value, i: number) => string }) {
+  return (
+    <div className="sm-sheet">
+      <table>
+        <thead>
+          <tr>
+            <td aria-hidden="true" />
+            {heads.map((h, i) => (
+              <th key={h} scope="col" className={i === mark ? 'is-mark' : undefined}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, ri) => (
+            <tr key={ri}>
+              <th scope="row" className="sm-rown">
+                {ri + 1}
+              </th>
+              {r.map((v, i) => (
+                <td key={i} className={i === mark ? 'is-mark' : undefined}>
+                  {show(v, i)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Peek({ s, i, locale }: { s: System; i: number; locale: Locale }) {
+  const p = s.preview;
+  let mock: ReactNode;
+  if (s.id === 'erp') mock = <ErpDoc s={s} locale={locale} />;
+  else if (s.id === 'crm') mock = <CrmCard s={s} locale={locale} />;
+  else if (s.id === 'dist') {
+    const heads = columnsOf(p.sql);
+    const show = (v: Value, i: number) => (v === null ? 'NULL' : typeof v === 'string' && i > 0 && heads[i] !== 'source_file' ? `"${v}"` : String(v));
+    mock = <Sheet heads={heads} rows={p.expect} mark={0} show={show} />;
+  } else {
+    const L = (k: string) => p.labels[k][locale];
+    const heads = [L('month'), L('rep'), L('division'), L('units'), L('revenue')];
+    const show = (v: Value, i: number) => (typeof v === 'number' ? (i === 4 ? money(v, locale) : int(v, locale)) : String(v));
+    mock = <Sheet heads={heads} rows={p.expect} mark={1} show={show} />;
   }
-  if (tables.length === 1) return [{ name: tables[0], x: 8, w: 124, row: 0, from: 'box' }];
-  return tables.map((name, i) => ({ name, ...(i === 0 ? COL.left : COL.right), row: 0, from: 'box' as const }));
+  return (
+    <div className={`sm-peek sm-sys--${s.id}`} id={`sm-peek-${s.id}`} style={order(i, true)}>
+      <p className="sm-peek-cap">{rich(p.caption[locale])}</p>
+      <div className="sm-mock">{mock}</div>
+      {p.after && <p className="sm-peek-cap">{p.after[locale]}</p>}
+    </div>
+  );
 }
-
-/** Высота рамки системы: имя и до трёх строк описания. */
-const boxH = (desc: string) => 43 + (desc.split('\n').length - 1) * LH;
 
 /**
- * Схема «Системы-источники и что в них лежит»: сверху вниз, у каждой системы рамка с одной строкой
- * «что это» и под ней таблицы датасета Kaiyo, к которым такая система обычно ведёт. Узкий viewBox
- * (216), чтобы в карточке на телефоне подписи оставались около 11px без прокрутки вбок.
- * Раскладка таблиц по системам типичная, а не записанная в данных: об этом пометка 2.
+ * Место в сетке через `order`: карточки стоят 10, 20, 30, 40. Макет в одну колонку идёт сразу
+ * за своей карточкой (+5), в две колонки полосой под её рядом (25 или 45), чтобы сетка 2×2
+ * не разъезжалась.
+ */
+const order = (i: number, peek: boolean) =>
+  ({
+    '--o-n': (i + 1) * 10 + (peek ? 5 : 0),
+    '--o-w': peek ? (i < 2 ? 25 : 45) : (i + 1) * 10,
+  }) as CSSProperties;
+
+/**
+ * Слой «Источники»: четыре карточки систем, у каждой её таблицы Kaiyo. Шапка карточки — кнопка,
+ * она раскрывает под рядом макет настоящей строки датасета (значения из `preview.expect`, их сверяет
+ * `test:architecture`). Раскрыта одна карточка за раз. Раскладка по системам типичная, а не
+ * записанная в данных: об этом подзаголовок. Колонки решает контейнер (`.pf`), не окно.
  */
 export function SourceMapFigure() {
   const { locale } = useI18n();
-  let top = 28;
-  const blocks = sm.systems.map((s) => {
-    const desc = s.desc[locale];
-    const h = boxH(desc);
-    const pills = pillsOf(s.id, s.tables);
-    const rowsN = Math.max(...pills.map((p) => p.row)) + 1;
-    const pillsTop = top + h + ARROW;
-    const b = { s, desc, top, h, pills, pillsTop };
-    top = pillsTop + rowsN * PILL_H + (rowsN - 1) * ARROW + GAP;
-    return b;
-  });
-  const height = top - GAP + 6;
+  const [open, setOpen] = useState<System['id'] | null>(null);
 
   return (
-    <figure className="pf">
+    <figure className="pf sm">
       <figcaption className="pf-title">{sm.title[locale]}</figcaption>
-      <p className="muted pf-hint-n">{sm.scrollHint[locale]}</p>
-      <div className="pf-scroll" tabIndex={0}>
-        <svg className="pf-svg pf-svg-n" viewBox={`0 0 ${W} ${height}`} role="img" aria-label={sm.aria[locale]} focusable="false">
-          <defs>
-            <marker id="sm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
-              <path className="pf-arr" d="M0 1 L10 5 L0 9 z" />
-            </marker>
-          </defs>
-
-          <text className="pf-t pf-lane-t" x={BOX_X + 4} y={14}>
-            {sm.head[locale]}
-          </text>
-          <Badge x={W - 14} y={10} n={2} />
-
-          {blocks.map(({ s, desc, top: y, h, pills, pillsTop }) => (
-            <g key={s.id}>
-              <rect className="pf-shape" x={BOX_X} y={y} width={BOX_W} height={h} rx={8} />
-              <text className="pf-t pf-sys-t" x={BOX_X + 10} y={y + 17}>
-                {s.name[locale]}
-              </text>
-              <Label x={BOX_X + 10} y={y + 33} text={desc} anchor="start" />
-              {pills.map((p) => {
-                const py = pillsTop + p.row * (PILL_H + ARROW);
-                const cx = p.x + p.w / 2;
-                const fromY = p.from === 'box' ? y + h : py - ARROW;
-                return (
-                  <g key={p.name}>
-                    <path className="pf-seq" d={`M${cx} ${fromY} V${py - 2}`} markerEnd="url(#sm-arr)" />
-                    <rect className="pf-shape" x={p.x} y={py} width={p.w} height={PILL_H} rx={6} />
-                    <text className="pf-t pf-mono" x={cx} y={py + 14} textAnchor="middle">
-                      {p.name}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          ))}
-          <Badge x={BOX_X + BOX_W - 16} y={blocks[0].top + 16} n={1} />
-        </svg>
+      <p className="muted sm-sub">{sm.sub[locale]}</p>
+      <div className={`sm-grid${open ? ' has-open' : ''}`} role="group" aria-label={sm.aria[locale]}>
+        {sm.systems.map((s, i) => {
+          const isOpen = open === s.id;
+          return (
+            <Fragment key={s.id}>
+              <div className={`sm-sys sm-sys--${s.id}${isOpen ? ' is-open' : ''}`} style={order(i, false)}>
+                <button type="button" className="sm-head" aria-expanded={isOpen} aria-controls={`sm-peek-${s.id}`} onClick={() => setOpen(isOpen ? null : s.id)}>
+                  <span className="sm-title">
+                    <span className="sm-name">{s.name[locale]}</span>
+                    <span className="sm-kind">{s.kind[locale]}</span>
+                  </span>
+                  <span className="sm-desc">{s.desc[locale]}</span>
+                  <span className="sm-chips">
+                    {s.tables.map((t, i) =>
+                      s.id === 'dist' && i === 1 ? (
+                        /* Стрелка держится за свой чип, чтобы при переносе не повиснуть в конце строки. */
+                        <span key={t} className="sm-pair">
+                          <span className="sm-then" aria-hidden="true">
+                            →
+                          </span>
+                          <span className="sm-chip">{t}</span>
+                        </span>
+                      ) : (
+                        <span key={t} className="sm-chip">
+                          {t}
+                        </span>
+                      ),
+                    )}
+                  </span>
+                  <span className="sm-more">
+                    {sm.ui.more[locale]} <span aria-hidden="true">{isOpen ? '▴' : '▾'}</span>
+                  </span>
+                </button>
+              </div>
+              {isOpen && <Peek s={s} i={i} locale={locale} />}
+            </Fragment>
+          );
+        })}
       </div>
       <Notes notes={sm.notes} locale={locale} />
-      <p className="muted pf-caption">{rich(sm.caption[locale])}</p>
     </figure>
   );
 }

@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 
-/** Общие части рукописных SVG-схем (ProcessFigure, SourceMapFigure, IngestFigure); цвета в классах `.pf-*` из styles.css. */
+/** Общие части схем: SVG-часть (Badge, Label, LH) нужна ProcessFigure, Notes и rich ещё SourceMapFigure и IngestFigure; цвета в классах `.pf-*` из styles.css. */
 
 /** Текст с `кодом` в обратных кавычках: тот же разбор, что у подписей артефактов слоёв. */
 export const rich = (s: string): ReactNode => s.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <Fragment key={i}>{part}</Fragment>));

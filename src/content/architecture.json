@@ -1824,43 +1824,153 @@
         "en": "Source systems and what sits in them"
       },
       "aria": {
-        "ru": "Схема. Слева четыре источника данных, справа таблицы датасета Kaiyo, которые они обычно питают. ERP: таблицы fact_sellin и fact_price. CRM: dim_customer и dim_rep. Excel от дистрибьюторов: сырая выгрузка staging_raw_sellout, из неё fact_sellout, и отдельно fact_stock. Excel с планом: fact_target.",
-        "en": "A diagram. On the left four data sources, on the right the tables of the Kaiyo dataset that they usually feed. ERP: the tables fact_sellin and fact_price. CRM: dim_customer and dim_rep. Excel from distributors: the raw export staging_raw_sellout, from it fact_sellout, and separately fact_stock. Excel with the plan: fact_target."
+        "ru": "Четыре системы-источника карточками, у каждой её таблицы Kaiyo. ERP: таблицы fact_sellin и fact_price. CRM: dim_customer и dim_rep. Excel от дистрибьюторов: сырая выгрузка staging_raw_sellout, из неё fact_sellout, и отдельно fact_stock. Excel с планом: fact_target. Карточку можно раскрыть и увидеть, как выглядит её строка.",
+        "en": "Four source systems as cards, each with its Kaiyo tables. ERP: the tables fact_sellin and fact_price. CRM: dim_customer and dim_rep. Excel from distributors: the raw export staging_raw_sellout, from it fact_sellout, and separately fact_stock. Excel with the plan: fact_target. A card can be opened to see what its row looks like."
       },
-      "head": {
-        "ru": "Система и её таблицы Kaiyo",
-        "en": "A system and its Kaiyo tables"
+      "sub": {
+        "ru": "Это типичная раскладка, а не факт о Kaiyo: в датасете не записано, из какой системы пришла каждая таблица.",
+        "en": "This is a typical layout, not a fact about Kaiyo: the dataset does not record which system each table came from."
+      },
+      "ui": {
+        "more": {
+          "ru": "Как это выглядит",
+          "en": "What it looks like"
+        }
       },
       "systems": [
         {
           "id": "erp",
           "name": {
-            "ru": "ERP (SAP, 1C)",
-            "en": "ERP (SAP, 1C)"
+            "ru": "ERP",
+            "en": "ERP"
+          },
+          "kind": {
+            "ru": "учётная система · SAP, 1C",
+            "en": "accounting system · SAP, 1C"
           },
           "desc": {
-            "ru": "Учётная система\nкомпании: заказы,\nотгрузки, деньги",
-            "en": "The company's books:\norders, shipments,\nmoney"
+            "ru": "Заказы, отгрузки, деньги. Знает только отгрузку дистрибьютору.",
+            "en": "Orders, shipments, money. Knows only what was shipped to the distributor."
           },
           "tables": [
             "fact_sellin",
             "fact_price"
-          ]
+          ],
+          "preview": {
+            "caption": {
+              "ru": "Строка `fact_sellin` №1 как документ отгрузки",
+              "en": "Row 1 of `fact_sellin` as a shipping document"
+            },
+            "labels": {
+              "ship": {
+                "ru": "Отгрузка №",
+                "en": "Shipment no."
+              },
+              "dates": {
+                "ru": "Заказ → отгрузка",
+                "en": "Order → shipment"
+              },
+              "dist": {
+                "ru": "Дистрибьютор",
+                "en": "Distributor"
+              },
+              "item": {
+                "ru": "Товар",
+                "en": "Product"
+              },
+              "qty": {
+                "ru": "Количество",
+                "en": "Quantity"
+              },
+              "unit": {
+                "ru": "шт",
+                "en": "units"
+              },
+              "sum": {
+                "ru": "Сумма",
+                "en": "Amount"
+              },
+              "less": {
+                "ru": "минус скидка",
+                "en": "less discount"
+              }
+            },
+            "sql": "SELECT i.sellin_id, i.order_date, i.ship_date, d.customer_name, p.sku_code, p.product_name, i.units, i.gross_amount, i.discount_amount, i.net_amount FROM fact_sellin i JOIN dim_customer d ON d.customer_id = i.distributor_id JOIN dim_product p ON p.product_id = i.product_id WHERE i.sellin_id = 1;",
+            "expect": [
+              [
+                1,
+                "2024-01-12",
+                "2024-01-17",
+                "Kanto Logistics Co.",
+                "NETT005",
+                "Nettora Bath 750 ml",
+                68,
+                9694.08,
+                1345.53,
+                8348.55
+              ]
+            ]
+          }
         },
         {
           "id": "crm",
           "name": {
-            "ru": "CRM (Salesforce)",
-            "en": "CRM (Salesforce)"
+            "ru": "CRM",
+            "en": "CRM"
+          },
+          "kind": {
+            "ru": "клиенты · Salesforce",
+            "en": "customers · Salesforce"
           },
           "desc": {
-            "ru": "Клиенты и торговые\nпредставители",
-            "en": "Customers and\nsales reps"
+            "ru": "Клиенты и торговые представители: кто кого ведёт.",
+            "en": "Customers and sales reps: who looks after whom."
           },
           "tables": [
             "dim_customer",
             "dim_rep"
-          ]
+          ],
+          "preview": {
+            "caption": {
+              "ru": "Карточка клиента из `dim_customer` с представителем из `dim_rep`",
+              "en": "A customer card from `dim_customer` with the rep from `dim_rep`"
+            },
+            "labels": {
+              "chain": {
+                "ru": "Сеть / канал",
+                "en": "Chain / channel"
+              },
+              "city": {
+                "ru": "Город",
+                "en": "City"
+              },
+              "since": {
+                "ru": "Клиент с",
+                "en": "Customer since"
+              },
+              "active": {
+                "ru": "активен",
+                "en": "active"
+              },
+              "rep": {
+                "ru": "Представитель",
+                "en": "Rep"
+              }
+            },
+            "sql": "SELECT c.customer_name, c.chain_name, c.channel, c.city, c.opened_date, c.is_active, r.rep_name, r.team FROM dim_customer c JOIN dim_rep r ON r.rep_id = c.rep_id WHERE c.customer_id = 13;",
+            "expect": [
+              [
+                "Minori #1013",
+                "Minori",
+                "modern_trade",
+                "Tsukuba",
+                "2017-01-19",
+                1,
+                "Emi Kobayashi",
+                "FMCG Kansai"
+              ]
+            ]
+          }
         },
         {
           "id": "dist",
@@ -1868,15 +1978,57 @@
             "ru": "Excel от дистрибьюторов",
             "en": "Excel from distributors"
           },
+          "kind": {
+            "ru": "файл раз в месяц, для примера",
+            "en": "a file a month, as an example"
+          },
           "desc": {
-            "ru": "Отчёты о продажах\nв магазины и остатки",
-            "en": "Reports of sales\nto shops and stock"
+            "ru": "Что продали в магазины и сколько осталось на складах.",
+            "en": "What was sold to shops and how much stock is left in warehouses."
           },
           "tables": [
             "staging_raw_sellout",
             "fact_sellout",
             "fact_stock"
-          ]
+          ],
+          "preview": {
+            "caption": {
+              "ru": "Три строки `staging_raw_sellout` как пришли: у каждого файла свой формат даты, пробелы и регистр",
+              "en": "Three rows of `staging_raw_sellout` as they arrived: each file has its own date format, spaces and letter case"
+            },
+            "labels": {},
+            "sql": "SELECT sale_date, customer_name, sku_code, units, revenue, source_file FROM staging_raw_sellout WHERE raw_id IN (1, 2, 4) ORDER BY raw_id;",
+            "expect": [
+              [
+                "2024-02-19",
+                "  Minori #1013 ",
+                "nett005",
+                "2",
+                "392,44",
+                "export_2024-02.csv"
+              ],
+              [
+                "11.03.2024",
+                "  Minori #1013 ",
+                "nett005",
+                "6",
+                "781,35",
+                "export_2024-03.csv"
+              ],
+              [
+                "2024-5-20",
+                "Minori #1013",
+                "KROS006",
+                "2",
+                "112.19",
+                "export_2024-05.csv"
+              ]
+            ],
+            "after": {
+              "ru": "Поэтому дальше нужен silver: привести даты, пробелы и коды к одному виду.",
+              "en": "That is why silver comes next: bring dates, spaces and codes to one form."
+            }
+          }
         },
         {
           "id": "plan",
@@ -1884,13 +2036,55 @@
             "ru": "Excel с планом",
             "en": "Excel with the plan"
           },
+          "kind": {
+            "ru": "план продаж",
+            "en": "sales targets"
+          },
           "desc": {
-            "ru": "Планы продаж\nпо представителям",
-            "en": "Sales targets\nby rep"
+            "ru": "Планы по представителям на каждый месяц.",
+            "en": "Targets by rep for every month."
           },
           "tables": [
             "fact_target"
-          ]
+          ],
+          "preview": {
+            "caption": {
+              "ru": "Строка `fact_target` №1",
+              "en": "Row 1 of `fact_target`"
+            },
+            "labels": {
+              "month": {
+                "ru": "Месяц",
+                "en": "Month"
+              },
+              "rep": {
+                "ru": "Представитель",
+                "en": "Rep"
+              },
+              "division": {
+                "ru": "Дивизион",
+                "en": "Division"
+              },
+              "units": {
+                "ru": "План, шт",
+                "en": "Target units"
+              },
+              "revenue": {
+                "ru": "План, выручка",
+                "en": "Target revenue"
+              }
+            },
+            "sql": "SELECT t.month_start, r.rep_name, t.division, t.target_units, t.target_revenue FROM fact_target t JOIN dim_rep r ON r.rep_id = t.rep_id WHERE t.target_id = 1;",
+            "expect": [
+              [
+                "2024-01-01",
+                "Emi Kobayashi",
+                "FMCG",
+                534,
+                56914.87
+              ]
+            ]
+          }
         }
       ],
       "notes": [
@@ -1899,18 +2093,10 @@
           "en": "The ERP knows only what Kaiyo shipped to the distributor (`fact_sellin`). What was sold in the shops (`fact_sellout`) arrives only as the distributor's report."
         },
         {
-          "ru": "Это типичная раскладка, а не факт о Kaiyo: в датасете не записано, из какой системы пришла каждая таблица.",
-          "en": "This is a typical layout, not a fact about Kaiyo: the dataset does not record which system each table came from."
+          "ru": "`fact_stock` показывает остатки на складах дистрибьюторов, а не Kaiyo, поэтому его тоже обычно присылают отчётом.",
+          "en": "`fact_stock` shows the stock in the distributors' warehouses, not Kaiyo's own, so it too usually arrives as a report."
         }
-      ],
-      "caption": {
-        "ru": "`fact_stock` показывает остатки на складах дистрибьюторов, а не Kaiyo, поэтому его тоже обычно присылают отчётом.",
-        "en": "`fact_stock` shows the stock in the distributors' warehouses, not Kaiyo's own, so it too usually arrives as a report."
-      },
-      "scrollHint": {
-        "ru": "Схема шире колонки: прокрутите её вбок.",
-        "en": "The diagram is wider than the column: scroll it sideways."
-      }
+      ]
     },
     "ingest": {
       "careerLead": {
@@ -1922,61 +2108,73 @@
         "en": "How data travels into the lakehouse"
       },
       "aria": {
-        "ru": "Схема загрузки. Источники по расписанию отдают файлы. Они попадают в bronze как есть: это 30 файлов export за месяц, по одному на месяц, 3 110 строк таблицы staging_raw_sellout. Затем очистка в silver, затем справочники и модель в gold: fact_sellout и справочники. Дальше идёт отчёт.",
-        "en": "A loading diagram. Sources hand over files on a schedule. They land in bronze as they are: 30 monthly export files, one per month, 3,110 rows of the table staging_raw_sellout. Then cleaning in silver, then the dimensions and the model in gold: fact_sellout and the dimensions. A report comes after that."
+        "ru": "Схема загрузки в пяти шагах. Файлы по расписанию, например раз в месяц. Затем внутри lakehouse: bronze, где они лежат как есть: это 30 файлов export за месяц, по одному на месяц, 3 110 строк таблицы staging_raw_sellout; затем silver, очищено: пробелы, форматы дат, дубли; затем gold, готово к отчётам: fact_sellout и справочники. Дальше идёт отчёт.",
+        "en": "A loading diagram in five steps. Files on a schedule, for example monthly. Then inside the lakehouse: bronze, where they lie as they are: 30 monthly export files, one per month, 3,110 rows of the table staging_raw_sellout; then silver, cleaned: spaces, date formats, duplicates; then gold, ready for reports: fact_sellout and the dimensions. A report comes after that."
       },
       "labels": {
-        "sources": {
-          "ru": "Источники",
-          "en": "Sources"
-        },
-        "sourcesSub": {
-          "ru": "ERP, CRM, Excel дистрибьюторов",
-          "en": "ERP, CRM, distributor Excel"
-        },
-        "schedule": {
-          "ru": "Файлы по расписанию,\nнапример раз в месяц",
-          "en": "Files on a schedule,\nfor example once a month"
-        },
         "lake": {
           "ru": "lakehouse",
           "en": "lakehouse"
         },
-        "bronze": {
-          "ru": "bronze: как есть",
-          "en": "bronze: as it is"
-        },
         "files": {
+          "ru": "Файлы",
+          "en": "Files"
+        },
+        "filesSub": {
+          "ru": "по расписанию, например раз в месяц",
+          "en": "on a schedule, for example monthly"
+        },
+        "bronze": {
+          "ru": "bronze",
+          "en": "bronze"
+        },
+        "bronzeSub": {
+          "ru": "как есть, с `source_file`",
+          "en": "as it is, with `source_file`"
+        },
+        "bronzeCount": {
           "ru": "30 файлов, 3 110 строк",
           "en": "30 files, 3,110 rows"
         },
-        "clean": {
-          "ru": "Очистка",
-          "en": "Cleaning"
-        },
         "silver": {
-          "ru": "silver: очищено",
-          "en": "silver: cleaned"
+          "ru": "silver",
+          "en": "silver"
         },
         "silverSub": {
-          "ru": "пробелы, форматы дат, дубли",
-          "en": "spaces, date formats, duplicates"
+          "ru": "очищено",
+          "en": "cleaned"
         },
-        "model": {
-          "ru": "Справочники и модель",
-          "en": "Dimensions and model"
+        "cleanTags": {
+          "ru": [
+            "пробелы",
+            "форматы дат",
+            "дубли"
+          ],
+          "en": [
+            "spaces",
+            "date formats",
+            "duplicates"
+          ]
         },
         "gold": {
-          "ru": "gold: готово к отчётам",
-          "en": "gold: ready for reports"
+          "ru": "gold",
+          "en": "gold"
+        },
+        "goldSub2": {
+          "ru": "готово к отчётам",
+          "en": "ready for reports"
         },
         "goldSub": {
           "ru": "и справочники",
           "en": "and the dimensions"
         },
         "next": {
-          "ru": "дальше: отчёт",
-          "en": "next: the report"
+          "ru": "Отчёт",
+          "en": "Report"
+        },
+        "nextSub": {
+          "ru": "следующий слой карты",
+          "en": "the next layer of the map"
         }
       },
       "files": {
@@ -1997,10 +2195,6 @@
       "caption": {
         "ru": "Чем это делают обычно: Fabric Data Factory, Azure Data Factory, Fivetran, Airflow; хранят в S3, ADLS или OneLake. Это примеры, а не список инструментов Kaiyo.",
         "en": "What is usually used: Fabric Data Factory, Azure Data Factory, Fivetran, Airflow; storage in S3, ADLS or OneLake. These are examples, not Kaiyo's toolset."
-      },
-      "scrollHint": {
-        "ru": "Схема шире колонки: прокрутите её вбок.",
-        "en": "The diagram is wider than the column: scroll it sideways."
       },
       "sql": "SELECT COUNT(DISTINCT source_file), MIN(source_file), MAX(source_file), COUNT(*) FROM staging_raw_sellout;",
       "expect": [

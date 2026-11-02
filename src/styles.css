@@ -103,6 +103,93 @@
 }
 
 /*
+ * Цвета систем-источников на карте данных (SourceMapFigure), палитра «Теги», приглушённая:
+ * полоса, фон и текст чипа, тон карточки. Тёмные и светлые значения заведены по той же схеме,
+ * что и тема выше (системная настройка, потом ручной выбор поверх неё). Полоски слоёв lakehouse
+ * (IngestFigure) одинаковы в обеих темах: это тонкая метка, а не заливка.
+ */
+:root {
+  --layer-bronze: #a8754a;
+  --layer-silver: #8d97a8;
+  --layer-gold: #b3912f;
+  --src-erp: #7ea6e8;
+  --src-erp-bg: #26324a;
+  --src-erp-ink: #c2d5f5;
+  --src-erp-tint: #1d222c;
+  --src-crm: #d49ab0;
+  --src-crm-bg: #3a2a33;
+  --src-crm-ink: #ecc9d6;
+  --src-crm-tint: #211d22;
+  --src-dist: #7cc79c;
+  --src-dist-bg: #233a2e;
+  --src-dist-ink: #bfe2cd;
+  --src-dist-tint: #1c2420;
+  --src-plan: #ddb57a;
+  --src-plan-bg: #3b3222;
+  --src-plan-ink: #eed7b0;
+  --src-plan-tint: #23211c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --src-erp: #5b8ad6;
+    --src-erp-bg: #e3ecfa;
+    --src-erp-ink: #24508f;
+    --src-erp-tint: #f8fafe;
+    --src-crm: #c27a95;
+    --src-crm-bg: #f4e4ea;
+    --src-crm-ink: #7f3653;
+    --src-crm-tint: #fdf8fa;
+    --src-dist: #5aa57a;
+    --src-dist-bg: #e0f0e6;
+    --src-dist-ink: #24603f;
+    --src-dist-tint: #f7fbf8;
+    --src-plan: #c99a4f;
+    --src-plan-bg: #f5ead6;
+    --src-plan-ink: #6f4a12;
+    --src-plan-tint: #fdfaf4;
+  }
+}
+
+:root.theme-light {
+  --src-erp: #5b8ad6;
+  --src-erp-bg: #e3ecfa;
+  --src-erp-ink: #24508f;
+  --src-erp-tint: #f8fafe;
+  --src-crm: #c27a95;
+  --src-crm-bg: #f4e4ea;
+  --src-crm-ink: #7f3653;
+  --src-crm-tint: #fdf8fa;
+  --src-dist: #5aa57a;
+  --src-dist-bg: #e0f0e6;
+  --src-dist-ink: #24603f;
+  --src-dist-tint: #f7fbf8;
+  --src-plan: #c99a4f;
+  --src-plan-bg: #f5ead6;
+  --src-plan-ink: #6f4a12;
+  --src-plan-tint: #fdfaf4;
+}
+
+:root.theme-dark {
+  --src-erp: #7ea6e8;
+  --src-erp-bg: #26324a;
+  --src-erp-ink: #c2d5f5;
+  --src-erp-tint: #1d222c;
+  --src-crm: #d49ab0;
+  --src-crm-bg: #3a2a33;
+  --src-crm-ink: #ecc9d6;
+  --src-crm-tint: #211d22;
+  --src-dist: #7cc79c;
+  --src-dist-bg: #233a2e;
+  --src-dist-ink: #bfe2cd;
+  --src-dist-tint: #1c2420;
+  --src-plan: #ddb57a;
+  --src-plan-bg: #3b3222;
+  --src-plan-ink: #eed7b0;
+  --src-plan-tint: #23211c;
+}
+
+/*
  * Шкала заголовков (2026-10-11). До неё заголовок главной и заголовки
  * карточек были 15px — того же кегля, что текст под ними (.brief 15px),
  * и иерархию держал только вес. Каждая ступень на ~1.2 крупнее соседней,
@@ -10472,47 +10559,491 @@ figure.arch-figure {
 }
 
 /*
- * Узкие схемы (SourceMapFigure, IngestFigure): вертикальная раскладка, viewBox
- * 216 (в карточке на телефоне колонка около 200px), поэтому подписи остаются около 11px без
- * прокрутки. Шире 320px схема не растёт; уже 160px прокрутка вбок внутри рамки и та же подсказка.
+ * Карта источников (SourceMapFigure) и загрузка в lakehouse (IngestFigure): HTML вместо SVG.
+ * Раскладку решает ширина самой схемы (контейнер pf), а не окна: те же схемы стоят и в карточке
+ * слоя, и на экране роли. Размеры шрифта только через токены --fs-*.
  */
-.pf-hint-n {
-  display: none;
-  margin: 0 0 6px;
+.sm-sub {
+  margin: 0 0 10px;
   font-size: var(--fs-small);
 }
 
-@container pf (max-width: 161px) {
-  .pf-hint-n {
-    display: block;
+.sm-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@container pf (min-width: 600px) {
+  .sm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sm-grid > .sm-sys,
+  .sm-grid > .sm-peek {
+    order: var(--o-w);
   }
 }
 
-.pf-svg-n {
-  min-width: 160px;
-  max-width: 320px;
-  margin: 0 auto;
+/* Цвет системы: карточка и её макет берут одни и те же --s/--cb/--cf/--tint. */
+.sm-sys,
+.sm-peek {
+  --s: var(--src-erp);
+  --cb: var(--src-erp-bg);
+  --cf: var(--src-erp-ink);
+  --tint: var(--src-erp-tint);
+  order: var(--o-n);
 }
 
-.pf-sys-t {
-  font-size: 11px;
+.sm-sys {
+  position: relative;
+  min-width: 0;
+  background: var(--tint);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius: 12px;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.sm-sys--crm {
+  --s: var(--src-crm);
+  --cb: var(--src-crm-bg);
+  --cf: var(--src-crm-ink);
+  --tint: var(--src-crm-tint);
+}
+
+.sm-sys--dist {
+  --s: var(--src-dist);
+  --cb: var(--src-dist-bg);
+  --cf: var(--src-dist-ink);
+  --tint: var(--src-dist-tint);
+}
+
+.sm-sys--plan {
+  --s: var(--src-plan);
+  --cb: var(--src-plan-bg);
+  --cf: var(--src-plan-ink);
+  --tint: var(--src-plan-tint);
+}
+
+.sm-sys::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--s);
+}
+
+.sm-sys:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.sm-sys.is-open {
+  box-shadow: 0 0 0 1px var(--s);
+}
+
+.sm-grid.has-open .sm-sys:not(.is-open) {
+  opacity: 0.55;
+}
+
+.sm-head {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px 14px 20px;
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sm-head:focus-visible {
+  outline: 2px solid var(--s);
+  outline-offset: 2px;
+}
+
+.sm-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.sm-name {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+
+.sm-kind {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.sm-desc {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.sm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.sm-chip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--cb);
+  color: var(--cf);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}
+
+.sm-then {
+  color: var(--text-dim);
+}
+
+.sm-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sm-more {
+  color: var(--cf);
+  font-size: var(--fs-small);
   font-weight: 600;
 }
 
-.pf-mono {
+.sm-peek {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px 14px;
+  border: 1px solid var(--s);
+  border-radius: 12px;
+  background: var(--tint);
+  min-width: 0;
+}
+
+.sm-peek-cap {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.sm-mock {
+  padding: 10px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+  min-width: 0;
+  font-size: var(--fs-text);
+}
+
+.sm-mock code {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-small);
 }
 
-.pf-dim {
-  fill: var(--text-dim);
+.sm-doc {
+  display: grid;
+  gap: 6px;
+  margin: 0;
 }
 
-.pf-lake {
-  fill: none;
-  stroke: var(--text-dim);
-  stroke-width: 1.2;
-  stroke-dasharray: 5 4;
+.sm-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+.sm-field dt {
+  color: var(--text-dim);
+}
+
+.sm-field dd {
+  margin: 0;
+  min-width: 0;
+}
+
+@container pf (min-width: 480px) {
+  .sm-field {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+}
+
+.sm-mark {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--cb);
+  color: var(--cf);
+  font-weight: 600;
+}
+
+.sm-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sm-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cb);
+  color: var(--cf);
+  font-weight: 700;
+  font-size: var(--fs-h3);
+}
+
+.sm-sheet table {
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  white-space: pre;
+}
+
+.sm-sheet th,
+.sm-sheet td {
+  padding: 4px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.sm-sheet thead th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.sm-sheet tbody tr:last-child td,
+.sm-sheet tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.sm-sheet .sm-rown {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.sm-sheet .is-mark {
+  background: var(--cb);
+  color: var(--cf);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-sys {
+    transition: none;
+  }
+}
+
+/* Загрузка в lakehouse: шаги списком, три слоя внутри рамки lakehouse как вложенного контейнера. */
+.ig {
+  --ig-bg: var(--bg-sunken);
+}
+
+.ig-steps,
+.ig-lake-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.ig-arrow {
+  display: block;
+  padding: 4px 0;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: var(--fs-h3);
+  line-height: 1;
+}
+
+.ig-arrow-right {
+  display: none;
+}
+
+.ig-lake {
+  position: relative;
+  margin-top: 0.7em;
+  padding: 18px 8px 8px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.ig-lake-label {
+  position: absolute;
+  top: -0.7em;
+  left: 12px;
+  padding: 0 6px;
+  background: var(--ig-bg);
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ig-step {
+  --lc: var(--line);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: start;
+  min-width: 0;
+  padding: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.ig-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--lc);
+}
+
+.ig-step--files {
+  --lc: var(--text-dim);
+}
+
+.ig-step--bronze {
+  --lc: var(--layer-bronze);
+}
+
+.ig-step--silver {
+  --lc: var(--layer-silver);
+}
+
+.ig-step--gold {
+  --lc: var(--layer-gold);
+}
+
+.ig-step--report {
+  background: none;
+  border-style: dashed;
+}
+
+.ig-h {
+  font-size: var(--fs-text);
+  font-weight: 700;
+}
+
+.ig-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.ig-sub {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.ig-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ig-chip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+}
+
+.ig-chip--tag {
+  font-family: var(--font-sans);
+}
+
+.ig-dots {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+/* Заголовок слева от подписей, когда в правой колонке помещается самый длинный чип; уже — заголовок над ними. */
+@container pf (min-width: 440px) {
+  .ig-step {
+    grid-template-columns: 6em minmax(0, 1fr);
+  }
+}
+
+/* Строка: порог выше арифметики по самому длинному имени (staging_raw_sellout, около 19 знаков моно). */
+@container pf (min-width: 980px) {
+  .ig-steps {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 3.3fr) auto minmax(0, 0.8fr);
+    align-items: stretch;
+  }
+
+  .ig-lake-steps {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .ig-lake {
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ig-lake-steps {
+    flex: 1;
+  }
+
+  .ig-arrow {
+    align-self: center;
+    padding: 0 8px;
+  }
+
+  .ig-arrow-down {
+    display: none;
+  }
+
+  .ig-arrow-right {
+    display: inline;
+  }
+
+  .ig-step {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .ig-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .career-process-lead {
