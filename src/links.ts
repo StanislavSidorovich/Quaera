@@ -47,10 +47,10 @@ export const LAB_PRACTICE_PYTHON = 'https://lab.quaera.app/#practice=python';
 
 /**
  * Заказ дистрибьютора Kaiyo в Quaera Flow: все основные элементы BPMN и шаг, на
- * котором рождается строка `fact_sellin`. `?example=kaiyo` принимает Flow
- * (src/ui/exampleLink.ts там), см. таблицу переходов в корневом CLAUDE.md.
+ * котором рождается строка `fact_sellin`. `#example=kaiyo` принимает Flow
+ * (src/ui/exampleLink.ts там; фрагмент, чтобы открытое окно приняло ссылку без перезагрузки, старый `?example=` тоже работает), см. таблицу переходов в корневом CLAUDE.md.
  */
-export const FLOW_KAIYO = 'https://flow.quaera.app/?example=kaiyo';
+export const FLOW_KAIYO = 'https://flow.quaera.app/#example=kaiyo';
 
 /**
  * Те же 13 таблиц CSV-архивом. Файл собирает scripts/build-dataset.mjs
@@ -84,17 +84,15 @@ export function familyKaiyoLink(key: 'model' | 'flow' | 'pandas' | 'lab', fallba
 
 /**
  * Клик по ссылке на другое приложение семьи с карты данных, из «Проекта от и до»
- * и подсказок инструментов. Lab и Model берут присланное в уже открытое окно
+ * и подсказок инструментов. Lab, Model и Flow берут присланное в уже открытое окно
  * (адрес не теряется, новая вкладка Lab не плодится: базу держит одна вкладка),
- * из окна установленного приложения клик остаётся обычной ссылкой. Flow всегда
- * новая вкладка: открытый Flow получил бы только фокус и не открыл пример.
+ * из окна установленного приложения клик остаётся обычной ссылкой.
  * Остальным и ссылкам без фрагмента (корень приложения) даётся прежний
  * переключатель семьи: только фокус окна. true — клик перехвачен.
  */
 export function openFamilyLink(anchor: HTMLAnchorElement, event: MouseEvent, key: string): boolean {
   // Только ссылки с адресом во фрагменте: переход к корню без `#` перезагрузил бы открытое окно.
-  if ((key === 'lab' || key === 'model') && new URL(anchor.href).hash) return openInApp(anchor.href, key, event);
-  if (key === 'flow') return false;
+  if ((key === 'lab' || key === 'model' || key === 'flow') && new URL(anchor.href).hash) return openInApp(anchor.href, key, event);
   return window.quaeraOpenApp?.(anchor, event, key) ?? false;
 }
 

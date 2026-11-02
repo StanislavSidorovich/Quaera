@@ -201,7 +201,8 @@ try {
     assertEq('браузер: оба клика перехвачены', [a.handled, b.handled, a.ev.prevented, b.ev.prevented], [true, true, true, true]);
     assertEq('браузер: второй клик меняет адрес открытого окна', fakeWindows.get('quaera-lab').hrefs.length, 2);
     assertEq('браузер: Model идёт в своё окно', openInApp('https://model.quaera.app/#example=quaera', 'model', undefined), true);
-    assertEq('браузер: окон два (lab и model)', [...fakeWindows.keys()].sort(), ['quaera-lab', 'quaera-model']);
+    assertEq('браузер: Flow идёт в своё окно', openInApp('https://flow.quaera.app/#example=kaiyo', 'flow', undefined), true);
+    assertEq('браузер: окон три (lab, model и flow)', [...fakeWindows.keys()].sort(), ['quaera-flow', 'quaera-lab', 'quaera-model']);
     assertEq('браузер: Ctrl+клик не перехватывается', openLab('u', { button: 0, ctrlKey: true, metaKey: false, shiftKey: false, altKey: false, preventDefault() {} }), false);
 
     setup(true);
