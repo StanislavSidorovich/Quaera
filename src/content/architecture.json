@@ -1699,8 +1699,16 @@
         "en": "A distributor order at Kaiyo Trading: the process"
       },
       "scrollHint": {
-        "ru": "Схема шире экрана: прокрутите её вбок, пометка 1 правее.",
-        "en": "The diagram is wider than the screen: scroll it sideways, note 1 is further right."
+        "ru": "Схема уменьшена, чтобы поместиться в колонку. Подписи читаются в крупном виде.",
+        "en": "The diagram is shrunk to fit the column. The labels are readable in the large view."
+      },
+      "enlarge": {
+        "ru": "Открыть схему крупно",
+        "en": "Open the diagram large"
+      },
+      "close": {
+        "ru": "Закрыть",
+        "en": "Close"
       },
       "aria": {
         "ru": "Схема процесса в нотации BPMN. Пул Kaiyo Trading с дорожками Продажи, Склад и Финансы и пул Дистрибьютор снизу. Дистрибьютор присылает заказ, продажи проводят его в ERP и проверяют наличие товара. Если товара нет, заказ отклоняется. Иначе одновременно склад упаковывает и отгружает товар, а финансы выставляют счёт, затем ждут оплату; при просрочке уходит напоминание, а ожидание продолжается.",

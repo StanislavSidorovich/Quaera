@@ -10162,9 +10162,17 @@ figure.arch-figure {
   color: var(--text);
 }
 
-/* Подсказка видна, только когда колонка уже схемы: узкой бывает и карточка на ноутбуке, поэтому условие на контейнер, а не на экран. */
-.pf-hint {
+/*
+ * Два вида одной схемы по ширине колонки (контейнер pf): от 921px схема целиком в рамке,
+ * уже: миниатюра по ширине колонки (подписи мелкие, поэтому подсказка и кнопка) и крупный вид в окне.
+ */
+.pf-hint,
+.pf-thumb,
+.pf-enlarge {
   display: none;
+}
+
+.pf-hint {
   margin: 0 0 6px;
   font-size: var(--fs-small);
 }
@@ -10173,6 +10181,37 @@ figure.arch-figure {
   .pf-hint {
     display: block;
   }
+
+  .pf-thumb {
+    display: block;
+  }
+
+  .pf-enlarge {
+    display: inline-flex;
+    width: auto;
+    min-height: 0;
+    margin-top: 8px;
+    padding: 8px 14px;
+  }
+
+  .pf-wide {
+    display: none;
+  }
+}
+
+.pf-thumb {
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  cursor: zoom-in;
+}
+
+.pf-svg-thumb {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .pf-scroll {
@@ -10186,6 +10225,49 @@ figure.arch-figure {
   display: block;
   width: 100%;
   min-width: 920px;
+  height: auto;
+}
+
+/* Крупный вид: схема в натуральную ширину, окно прокручивается в обе стороны; zoom крупного шрифта учтён делением. */
+.pf-dialog {
+  width: min(960px, calc((100vw - 16px) / var(--zoom)));
+  max-width: none;
+  max-height: calc((100vh - 16px) / var(--zoom));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.pf-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.pf-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pf-dialog-bar .btn {
+  flex: none;
+  width: auto;
+  min-height: 0;
+  padding: 8px 14px;
+}
+
+.pf-dialog-scroll {
+  overflow: auto;
+  max-height: calc((100vh - 110px) / var(--zoom));
+}
+
+.pf-svg-big {
+  display: block;
+  width: 920px;
+  max-width: none;
   height: auto;
 }
 

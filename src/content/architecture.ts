@@ -179,6 +179,8 @@ export interface ArchArtifacts {
     notes: [Text, Text];
     caption: Text;
     scrollHint: Text;
+    enlarge: Text;
+    close: Text;
     openFlow: Text;
     /** Подпись над схемой на экране роли бизнес-аналитика (вкладка «Путь к роли»). */
     careerLead: Text;
