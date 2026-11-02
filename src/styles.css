@@ -7068,6 +7068,13 @@ details.story-known > summary small {
   font-weight: 600;
 }
 
+/* Главная дверь хвоста (карта): рамка акцентом, остальные остаются строками. */
+.intro-door-main {
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius, 8px);
+}
+
 .intro-door-note {
   display: block;
   color: var(--text-dim);
@@ -8583,9 +8590,13 @@ details.story-known > summary small {
   text-decoration: underline;
 }
 
-/* Вход на карту данных над семьёй Quaera (см. DataMapTeaser). */
+/* Вход на карту данных (см. DataMapTeaser): над картой навыков, в колонке с её зазором. */
 .home-map {
   margin-top: 16px;
+}
+
+.dash-side > .home-map {
+  margin-top: 0;
 }
 
 .home-map h2 {

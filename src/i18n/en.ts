@@ -381,6 +381,9 @@ export const en = {
   onboarding: {
     title: 'Where to start',
     entryLink: 'First time here? Where to start →',
+    mapHint:
+      'Not sure which role suits you, or how work with data fits together? Start with the data map: it shows the path from source files to the meeting where the decision is made.',
+    mapLink: 'Open the data map →',
     intro:
       "The trainer doesn't march you down a single road: the tracks are independent, a session assembles itself, and the order is yours to pick. But freedom only helps once it's clear what you're choosing between. This page is about that choice: how the four tools differ and when each one is cheaper, what pace to work at, and what isn't here even though the job will ask for it.",
 

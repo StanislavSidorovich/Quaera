@@ -74,6 +74,11 @@ export function IntroPage({
           <p>{page.closing.question}</p>
 
           <div className="intro-doors">
+            {/* Карта первой и заметнее остальных: картина целиком раньше кампании (аудит docs/audit-start-here-2026-11.md, D). */}
+            <button type="button" className="link-row intro-door intro-door-main" onClick={onOpenMap}>
+              <span className="intro-door-label">{page.closing.mapLabel} →</span>
+              <span className="intro-door-note">{page.closing.mapNote}</span>
+            </button>
             {onOpenStoryMode && (
               <button type="button" className="link-row intro-door" onClick={onOpenStoryMode}>
                 <span className="intro-door-label">{page.closing.storyLabel} →</span>
@@ -83,10 +88,6 @@ export function IntroPage({
             <button type="button" className="link-row intro-door" onClick={onOpenData}>
               <span className="intro-door-label">{page.closing.dataLabel} →</span>
               <span className="intro-door-note">{page.closing.dataNote}</span>
-            </button>
-            <button type="button" className="link-row intro-door" onClick={onOpenMap}>
-              <span className="intro-door-label">{page.closing.mapLabel} →</span>
-              <span className="intro-door-note">{page.closing.mapNote}</span>
             </button>
           </div>
 

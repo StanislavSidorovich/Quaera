@@ -165,7 +165,7 @@ const RU: IntroPageContent = {
         { label: 'Дашборды и отчёты', note: 'чтобы ответ видели без аналитика' },
         { label: 'Решение', note: 'ради чего всё и делалось' },
       ],
-      caption: 'Восемь частей одной работы. Дальше — каждая по порядку, на примере одной компании.',
+      caption: 'Восемь частей одной работы. Дальше — каждая по порядку, на примере одной компании. На карте данных та же работа показана шестью слоями: источники, bronze, silver, gold, отчёт, встреча.',
     },
     scale: 'Каждая клетка — одна запись о продаже. Здесь их две сотни, в компании — миллионы. Три из них те самые, которые вы ищете.',
     pipeline: {
@@ -410,7 +410,7 @@ const EN: IntroPageContent = {
         { label: 'Dashboards and reports', note: 'so the answer is visible without an analyst' },
         { label: 'The decision', note: 'the reason all of this was done' },
       ],
-      caption: 'Eight parts of one job. Below you will find each of them in turn, on the example of a single company.',
+      caption: 'Eight parts of one job. Below you will find each of them in turn, on the example of a single company. On the data map the same work is shown as six layers: sources, bronze, silver, gold, report and meeting.',
     },
     scale: 'Every cell is one sales record. There are two hundred here; a company has millions. Three of them are the ones you are looking for.',
     pipeline: {

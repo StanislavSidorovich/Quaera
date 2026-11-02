@@ -2616,7 +2616,13 @@ export default function App() {
           )}
 
           {screen.name === 'onboarding' && (
-            <Onboarding onFinish={() => setScreen({ name: 'home' })} />
+            <Onboarding
+              onFinish={() => setScreen({ name: 'home' })}
+              onOpenMap={() => {
+                setScreen({ name: 'career', map: {} });
+                window.scrollTo({ top: 0 });
+              }}
+            />
           )}
 
           {screen.name === 'trackIntro' && (
@@ -4193,6 +4199,13 @@ function Home({
         </div>
 
         <div className="dash-side">
+          {/*
+           * Карта данных стоит выше карты навыков: аудит docs/audit-start-here-2026-11.md,
+           * раздел D. Блок отвечает на вопрос «как данные становятся решением» и нужен
+           * новичку раньше, чем перечень из двадцати навыков; внизу страницы (2150px
+           * из 2550) до него не доходили.
+           */}
+          {ready && <DataMapTeaser onOpen={onOpenMap} />}
           <div className="card">
             <h2>{t.home.skillMapTitle}</h2>
             {/*
@@ -4391,8 +4404,6 @@ function Home({
        * Sidebar: меню видно от 1024px, и на телефоне без этого блока
        * о семействе не узнать вовсе. Адреса и подписи общие с Sidebar.
        */}
-      {ready && <DataMapTeaser onOpen={onOpenMap} />}
-
       <nav className="card home-family" aria-label={t.nav.familyTitle}>
         <h2>{t.nav.familyTitle}</h2>
         <div className="home-family-links">
@@ -5378,7 +5389,7 @@ function AccountScreen({
  * ни в четырёх intro.what/limits каждого пака. Подробное обоснование текста —
  * в i18n/ru.ts у блока onboarding.
  */
-function Onboarding({ onFinish }: { onFinish: () => void }) {
+function Onboarding({ onFinish, onOpenMap }: { onFinish: () => void; onOpenMap: () => void }) {
   const { t, locale } = useI18n();
 
   /*
@@ -5405,6 +5416,10 @@ function Onboarding({ onFinish }: { onFinish: () => void }) {
          * как .brief у WelcomeHero, потому что читают его первым.
          */}
         <div className="card">
+          <p style={{ margin: '0 0 6px' }}>{t.onboarding.mapHint}</p>
+          <button type="button" className="link-row" onClick={onOpenMap} style={{ margin: '0 0 14px' }}>
+            {t.onboarding.mapLink}
+          </button>
           <p className="brief" style={{ margin: 0 }}>{t.onboarding.intro}</p>
         </div>
 

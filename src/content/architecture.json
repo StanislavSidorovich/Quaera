@@ -290,8 +290,8 @@
         "figure": "split",
         "who": { "ru": "Аналитик данных", "en": "Data analyst" },
         "text": {
-          "ru": "Раскладывает: штуки = точки × штук на точку. Точек было 74, стало 40. На одну точку продажи выросли с 29,7 до 42,5 штуки. Цена ни при чём: бренд теряет полки.",
-          "en": "Breaks it down: units = outlets × units per outlet. Outlets went from 74 to 40. Sales per outlet grew from 29.7 to 42.5 units. Price is not the cause: the brand is losing shelves."
+          "ru": "Раскладывает: штуки = точки × штук на точку. Точек было 74 в январе 2025, стало 40 в декабре. На одну точку продажи выросли с 29,7 до 42,5 штуки. Цена ни при чём: бренд теряет полки.",
+          "en": "Breaks it down: units = outlets × units per outlet. Outlets went from 74 in January 2025 to 40 in December. Sales per outlet grew from 29.7 to 42.5 units. Price is not the cause: the brand is losing shelves."
         },
         "sql": "SELECT substr(s.week_start, 1, 7) AS month,\n       COUNT(DISTINCT s.customer_id) AS outlets,\n       SUM(s.units) AS units\nFROM fact_sellout s\nJOIN dim_product p ON p.product_id = s.product_id\nWHERE p.brand = 'Nettora'\n  AND s.week_start >= '2025-01-01'\n  AND s.week_start <  '2026-01-01'\nGROUP BY month\nORDER BY month;"
       },
