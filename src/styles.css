@@ -9972,6 +9972,7 @@ figure.arch-figure {
 
 .arch-metric-note {
   display: block;
+  margin-top: 4px;
 }
 
 @media (min-width: 640px) {
