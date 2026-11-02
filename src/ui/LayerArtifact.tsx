@@ -5,8 +5,9 @@ import { labShare, labUrl, openLab } from '../labLink';
 import type { SchemaDoc } from '../engine/types';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
-import { ProcessFigure } from './ProcessFigure';
+import { IngestFigure } from './IngestFigure';
 import { SchemaMap } from './SchemaMap';
+import { SourceMapFigure } from './SourceMapFigure';
 import { useSchema } from './SchemaSheet';
 
 const { artifacts: art, project } = architecture;
@@ -98,7 +99,7 @@ function SourcesArtifact() {
           </div>
         ))}
       </div>
-      <ProcessFigure />
+      <SourceMapFigure />
     </>
   );
 }
@@ -134,6 +135,7 @@ function BronzeArtifact() {
         </table>
       </div>
       <QueryBlock sql={b.sql} title={b.title[locale]} />
+      <IngestFigure />
     </>
   );
 }

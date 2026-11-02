@@ -1,28 +1,9 @@
-import { Fragment } from 'react';
-import type { ReactNode } from 'react';
 import { architecture } from '../content/architecture';
 import { useI18n } from '../i18n/context';
 import { FLOW_KAIYO, openFamilyLink } from '../links';
+import { Badge, Label, LH, Notes } from './figureParts';
 
 const p = architecture.artifacts.process;
-
-/** Текст с `кодом` в обратных кавычках: тот же разбор, что у подписей артефактов слоёв. */
-const rich = (s: string): ReactNode => s.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <Fragment key={i}>{part}</Fragment>));
-
-const LH = 12.5;
-
-/** Подпись в несколько строк: `\n` в тексте — перенос; `y` — базовая линия первой строки. */
-function Label({ x, y, text, anchor = 'middle', cls = 'pf-t' }: { x: number; y: number; text: string; anchor?: 'start' | 'middle' | 'end'; cls?: string }) {
-  return (
-    <text className={cls} textAnchor={anchor}>
-      {text.split('\n').map((line, i) => (
-        <tspan key={i} x={x} y={y + i * LH}>
-          {line}
-        </tspan>
-      ))}
-    </text>
-  );
-}
 
 /** Текст внутри фигуры: по центру (cx, cy) независимо от числа строк. */
 function Inside({ cx, cy, text }: { cx: number; cy: number; text: string }) {
@@ -79,17 +60,6 @@ function Envelope({ cx, cy, solid }: { cx: number; cy: number; solid?: boolean }
     <g transform={`translate(${cx - 6} ${cy - 4})`} className={solid ? 'pf-env pf-env-solid' : 'pf-env'}>
       <rect width={12} height={8} rx={1} />
       <polyline points="0,0 6,5 12,0" />
-    </g>
-  );
-}
-
-function Badge({ x, y, n }: { x: number; y: number; n: number }) {
-  return (
-    <g>
-      <circle className="pf-badge" cx={x} cy={y} r={9.5} />
-      <text className="pf-badge-t" x={x} y={y + 4} textAnchor="middle">
-        {n}
-      </text>
     </g>
   );
 }
@@ -216,16 +186,7 @@ export function ProcessFigure() {
           <Label x={842} y={420} text={L('reminder')} anchor="end" />
         </svg>
       </div>
-      <ol className="pf-notes">
-        {p.notes.map((n, i) => (
-          <li key={i}>
-            <span className="pf-num" aria-hidden="true">
-              {i + 1}
-            </span>
-            <span>{rich(n[locale])}</span>
-          </li>
-        ))}
-      </ol>
+      <Notes notes={p.notes} locale={locale} />
       <p className="muted pf-caption">{p.caption[locale]}</p>
       <a
         className="link-row pf-open-flow"

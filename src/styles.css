@@ -620,7 +620,8 @@ textarea.sql {
   right: 0;
   top: calc(100% + 8px);
   z-index: 40;
-  width: min(19rem, calc(100vw - 24px));
+  /* vw не знает про zoom крупного шрифта (см. --zoom): без деления при A++ окно уходит за левый край */
+  width: min(19rem, calc((100vw - 32px) / var(--zoom)));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -10342,6 +10343,54 @@ figure.arch-figure {
   display: inline-block;
   width: auto;
   margin-top: 6px;
+}
+
+/*
+ * Узкие схемы (SourceMapFigure, IngestFigure): вертикальная раскладка, viewBox
+ * 216 (в карточке на телефоне колонка около 200px), поэтому подписи остаются около 11px без
+ * прокрутки. Шире 320px схема не растёт; уже 160px прокрутка вбок внутри рамки и та же подсказка.
+ */
+.pf-hint-n {
+  display: none;
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+
+@container pf (max-width: 161px) {
+  .pf-hint-n {
+    display: block;
+  }
+}
+
+.pf-svg-n {
+  min-width: 160px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.pf-sys-t {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pf-mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.pf-dim {
+  fill: var(--text-dim);
+}
+
+.pf-lake {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+
+.career-process-lead {
+  margin: 10px 0 0;
 }
 
 /* Своё меню по правому клику (ui/ContextMenu.tsx): одно на приложение, над страницей и шторками. */

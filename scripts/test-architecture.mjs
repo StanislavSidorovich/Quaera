@@ -367,6 +367,58 @@ check('запросы: у маршрута есть хотя бы один', que
     check('process: строка источников укладывается в срок', days >= minDays && days <= maxDays, `${days} вне ${minDays}–${maxDays}`);
   }
 
+  // Схема процесса на экране роли: подпись есть на обе локали.
+  checkText('process.careerLead', a.process.careerLead);
+
+  // Схема «Системы-источники»: все названные таблицы есть в датасете, у каждой одна система, а факты и справочники не потеряны.
+  {
+    const sm = a.sourceMap;
+    for (const k of ['title', 'aria', 'caption', 'scrollHint']) checkText(`sourceMap.${k}`, sm[k]);
+    checkText('sourceMap.head', sm.head);
+    sm.notes.forEach((n, i) => checkText(`sourceMap.notes[${i}]`, n));
+    const names = new Set(schema.tables.map((x) => x.table));
+    const all = sm.systems.flatMap((s) => s.tables);
+    for (const s of sm.systems) {
+      checkText(`sourceMap.${s.id}.name`, s.name);
+      checkText(`sourceMap.${s.id}.desc`, s.desc);
+      check(`sourceMap ${s.id}: таблицы есть в датасете`, s.tables.every((x) => names.has(x)), `нет в schema.json: ${s.tables.filter((x) => !names.has(x))}`);
+    }
+    check('sourceMap: ровно четыре системы', JSON.stringify(sm.systems.map((s) => s.id)) === JSON.stringify(['erp', 'crm', 'dist', 'plan']), 'состав систем');
+    check('sourceMap: таблица не повторяется', new Set(all).size === all.length, 'таблица у двух систем');
+    const dist = sm.systems.find((s) => s.id === 'dist').tables;
+    check('sourceMap: у дистрибьюторов сырая выгрузка идёт перед фактом', dist[0] === 'staging_raw_sellout' && dist[1] === 'fact_sellout', 'порядок staging_raw_sellout, fact_sellout');
+    check('sourceMap.notes[0]: sell-in из ERP, sell-out из отчёта', sm.systems.find((s) => s.id === 'erp').tables.includes('fact_sellin') && !sm.systems.find((s) => s.id === 'erp').tables.includes('fact_sellout') && sm.notes[0].ru.includes('`fact_sellin`') && sm.notes[0].ru.includes('`fact_sellout`') && sm.notes[0].en.includes('`fact_sellin`') && sm.notes[0].en.includes('`fact_sellout`'), 'раскладка или пометка 1 расходятся');
+    check('sourceMap.notes[1]: честная пометка о типичной раскладке', /не факт о Kaiyo/.test(sm.notes[1].ru) && /not a fact about Kaiyo/.test(sm.notes[1].en), 'нет оговорки, что раскладка типичная');
+    for (const tb of ['fact_stock', 'fact_price', 'fact_target', 'dim_customer', 'dim_rep']) check(`sourceMap: ${tb} назван на схеме`, all.includes(tb), `нет ${tb}`);
+  }
+
+  // Схема загрузки (bronze): файлы и строки сняты запросом, оговорка о примере на месте, инструменты есть на карте.
+  {
+    const ig = a.ingest;
+    for (const k of ['title', 'aria', 'caption', 'scrollHint']) checkText(`ingest.${k}`, ig[k]);
+    for (const k of Object.keys(ig.labels)) checkText(`ingest.labels.${k}`, ig.labels[k]);
+    ig.notes.forEach((n, i) => checkText(`ingest.notes[${i}]`, n));
+    same('ingest: файлы и строки совпали с запросом', ig.sql, ig.expect);
+    const [count, first, last, rows] = ig.expect[0];
+    check('ingest: числа файлов в схеме', ig.files.count === count && ig.files.first === first && ig.files.last === last, `files: ${JSON.stringify(ig.files)}`);
+    const thousands = { ru: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1 '), en: String(rows).replace(/(\d)(?=(\d{3})$)/, '$1,') };
+    for (const loc of ['ru', 'en']) {
+      check(`ingest.labels.files.${loc}: файлы и строки из запроса`, ig.labels.files[loc].includes(String(count)) && ig.labels.files[loc].includes(thousands[loc]), `нет ${count} и ${thousands[loc]}`);
+      check(`ingest.aria.${loc}: файлы и строки из запроса`, ig.aria[loc].includes(String(count)) && ig.aria[loc].includes(thousands[loc]), `нет ${count} и ${thousands[loc]}`);
+    }
+    check('ingest: по одному файлу на месяц', /^export_\d{4}-\d{2}\.csv$/.test(first) && /^export_\d{4}-\d{2}\.csv$/.test(last), 'имя файла не вида export_ГГГГ-ММ.csv');
+    const ym = (f) => f.slice(7, 14).split('-').map(Number);
+    const [y1, m1] = ym(first);
+    const [y2, m2] = ym(last);
+    check('ingest: месяцев столько же, сколько файлов', (y2 - y1) * 12 + (m2 - m1) + 1 === count, `между ${first} и ${last} не ${count} месяцев`);
+    check('ingest.notes[0]: пометка про source_file', ig.notes[0].ru.includes('`source_file`') && ig.notes[0].en.includes('`source_file`'), 'нет source_file');
+    check('ingest.notes[1]: оговорка, что это пример', /нет, это не настоящий пайплайн Kaiyo/.test(ig.notes[1].ru) && /not Kaiyo's real pipeline/.test(ig.notes[1].en), 'нет оговорки про пример');
+    check('ingest: запрос идёт к staging_raw_sellout', /FROM staging_raw_sellout(?![a-z_])/.test(ig.sql), 'нет FROM staging_raw_sellout');
+    const bronzeTools = arch.layers.find((l) => l.id === 'bronze').tools;
+    check('ingest.caption: названные инструменты есть в слое bronze', bronzeTools.filter((x) => ig.caption.en.includes(x)).length >= 4 && ['S3', 'ADLS', 'OneLake'].every((x) => bronzeTools.includes(x) && ig.caption.en.includes(x)), 'инструменты схемы и слоя расходятся');
+    check('ingest.caption: оговорка, что это не набор Kaiyo', /не список инструментов Kaiyo/.test(ig.caption.ru) && /not Kaiyo's toolset/.test(ig.caption.en), 'нет оговорки');
+  }
+
   // Bronze: пять настоящих строк с разными видами даты, регистром кода и пробелами.
   checkText('artifacts.bronze.title', a.bronze.title);
   checkText('artifacts.bronze.caption', a.bronze.caption);

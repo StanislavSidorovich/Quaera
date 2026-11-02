@@ -178,6 +178,28 @@ export interface ArchArtifacts {
     caption: Text;
     scrollHint: Text;
     openFlow: Text;
+    /** Подпись над схемой на экране роли бизнес-аналитика (вкладка «Путь к роли»). */
+    careerLead: Text;
+  } & ArtifactQuery;
+  /** Схема «Системы-источники и что в них лежит» (SourceMapFigure): системы, их таблицы и две пометки. */
+  sourceMap: {
+    title: Text;
+    aria: Text;
+    head: Text;
+    systems: { id: 'erp' | 'crm' | 'dist' | 'plan'; name: Text; desc: Text; tables: string[] }[];
+    notes: [Text, Text];
+    caption: Text;
+    scrollHint: Text;
+  };
+  /** Схема загрузки в lakehouse (IngestFigure): подписи, число файлов bronze и две пометки. */
+  ingest: {
+    title: Text;
+    aria: Text;
+    labels: Record<'sources' | 'sourcesSub' | 'schedule' | 'lake' | 'bronze' | 'files' | 'clean' | 'silver' | 'silverSub' | 'model' | 'gold' | 'goldSub' | 'next', Text>;
+    files: { first: string; last: string; count: number };
+    notes: [Text, Text];
+    caption: Text;
+    scrollHint: Text;
   } & ArtifactQuery;
   sources: {
     title: Text;

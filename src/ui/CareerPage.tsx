@@ -25,6 +25,8 @@ import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
 import { quizBank } from '../content/careerQuiz';
 import { ArchitectureMap } from './ArchitectureMap';
 import { RoleCompare } from './RoleCompare';
+import { ProcessFigure } from './ProcessFigure';
+import { architecture } from '../content/architecture';
 
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
@@ -307,6 +309,12 @@ export function CareerPage({
         </div>
         <p className="career-does">{role.does[locale]}</p>
         <RoleCompare roleId={role.id} levels={levels} />
+        {role.id === 'ba' && (
+          <>
+            <p className="muted career-process-lead">{architecture.artifacts.process.careerLead[locale]}</p>
+            <ProcessFigure />
+          </>
+        )}
 
         <div className="career-band" role="img" aria-label={c.bandAria(c.bands[readiness.band], bandStep)}>
           {BANDS.map((b, i) => (

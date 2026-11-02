@@ -1737,6 +1737,10 @@
         "ru": "Порядок шагов условный: данные хранят только результат.",
         "en": "The order of the steps is illustrative: the data keeps only the result."
       },
+      "careerLead": {
+        "ru": "Бизнес-аналитик чаще всего работает со схемами процессов. Вот одна: заказ дистрибьютора Kaiyo Trading и шаги, на которых рождается строка в данных.",
+        "en": "A business analyst works with process diagrams most of the time. Here is one: a Kaiyo Trading distributor order and the steps where a row in the data is born."
+      },
       "openFlow": {
         "ru": "Открыть схему во Flow",
         "en": "Open the diagram in Flow"
@@ -1801,6 +1805,196 @@
           ]
         ]
       }
+    },
+    "sourceMap": {
+      "title": {
+        "ru": "Системы-источники и что в них лежит",
+        "en": "Source systems and what sits in them"
+      },
+      "aria": {
+        "ru": "Схема. Слева четыре источника данных, справа таблицы датасета Kaiyo, которые они обычно питают. ERP: таблицы fact_sellin и fact_price. CRM: dim_customer и dim_rep. Excel от дистрибьюторов: сырая выгрузка staging_raw_sellout, из неё fact_sellout, и отдельно fact_stock. Excel с планом: fact_target.",
+        "en": "A diagram. On the left four data sources, on the right the tables of the Kaiyo dataset that they usually feed. ERP: the tables fact_sellin and fact_price. CRM: dim_customer and dim_rep. Excel from distributors: the raw export staging_raw_sellout, from it fact_sellout, and separately fact_stock. Excel with the plan: fact_target."
+      },
+      "head": {
+        "ru": "Система и её таблицы Kaiyo",
+        "en": "A system and its Kaiyo tables"
+      },
+      "systems": [
+        {
+          "id": "erp",
+          "name": {
+            "ru": "ERP (SAP, 1C)",
+            "en": "ERP (SAP, 1C)"
+          },
+          "desc": {
+            "ru": "Учётная система\nкомпании: заказы,\nотгрузки, деньги",
+            "en": "The company's books:\norders, shipments,\nmoney"
+          },
+          "tables": [
+            "fact_sellin",
+            "fact_price"
+          ]
+        },
+        {
+          "id": "crm",
+          "name": {
+            "ru": "CRM (Salesforce)",
+            "en": "CRM (Salesforce)"
+          },
+          "desc": {
+            "ru": "Клиенты и торговые\nпредставители",
+            "en": "Customers and\nsales reps"
+          },
+          "tables": [
+            "dim_customer",
+            "dim_rep"
+          ]
+        },
+        {
+          "id": "dist",
+          "name": {
+            "ru": "Excel от дистрибьюторов",
+            "en": "Excel from distributors"
+          },
+          "desc": {
+            "ru": "Отчёты о продажах\nв магазины и остатки",
+            "en": "Reports of sales\nto shops and stock"
+          },
+          "tables": [
+            "staging_raw_sellout",
+            "fact_sellout",
+            "fact_stock"
+          ]
+        },
+        {
+          "id": "plan",
+          "name": {
+            "ru": "Excel с планом",
+            "en": "Excel with the plan"
+          },
+          "desc": {
+            "ru": "Планы продаж\nпо представителям",
+            "en": "Sales targets\nby rep"
+          },
+          "tables": [
+            "fact_target"
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "ru": "ERP знает только отгрузку дистрибьютору (`fact_sellin`). Что продали в магазинах (`fact_sellout`), приходит только отчётом дистрибьютора.",
+          "en": "The ERP knows only what Kaiyo shipped to the distributor (`fact_sellin`). What was sold in the shops (`fact_sellout`) arrives only as the distributor's report."
+        },
+        {
+          "ru": "Это типичная раскладка, а не факт о Kaiyo: в датасете не записано, из какой системы пришла каждая таблица.",
+          "en": "This is a typical layout, not a fact about Kaiyo: the dataset does not record which system each table came from."
+        }
+      ],
+      "caption": {
+        "ru": "`fact_stock` показывает остатки на складах дистрибьюторов, а не Kaiyo, поэтому его тоже обычно присылают отчётом.",
+        "en": "`fact_stock` shows the stock in the distributors' warehouses, not Kaiyo's own, so it too usually arrives as a report."
+      },
+      "scrollHint": {
+        "ru": "Схема шире колонки: прокрутите её вбок.",
+        "en": "The diagram is wider than the column: scroll it sideways."
+      }
+    },
+    "ingest": {
+      "title": {
+        "ru": "Как данные доезжают до lakehouse",
+        "en": "How data travels into the lakehouse"
+      },
+      "aria": {
+        "ru": "Схема загрузки. Источники по расписанию отдают файлы. Они попадают в bronze как есть: это 30 файлов export за месяц, по одному на месяц, 3 110 строк таблицы staging_raw_sellout. Затем очистка в silver, затем справочники и модель в gold: fact_sellout и справочники. Дальше идёт отчёт.",
+        "en": "A loading diagram. Sources hand over files on a schedule. They land in bronze as they are: 30 monthly export files, one per month, 3,110 rows of the table staging_raw_sellout. Then cleaning in silver, then the dimensions and the model in gold: fact_sellout and the dimensions. A report comes after that."
+      },
+      "labels": {
+        "sources": {
+          "ru": "Источники",
+          "en": "Sources"
+        },
+        "sourcesSub": {
+          "ru": "ERP, CRM, Excel дистрибьюторов",
+          "en": "ERP, CRM, distributor Excel"
+        },
+        "schedule": {
+          "ru": "Файлы по расписанию,\nнапример раз в месяц",
+          "en": "Files on a schedule,\nfor example once a month"
+        },
+        "lake": {
+          "ru": "lakehouse",
+          "en": "lakehouse"
+        },
+        "bronze": {
+          "ru": "bronze: как есть",
+          "en": "bronze: as it is"
+        },
+        "files": {
+          "ru": "30 файлов, 3 110 строк",
+          "en": "30 files, 3,110 rows"
+        },
+        "clean": {
+          "ru": "Очистка",
+          "en": "Cleaning"
+        },
+        "silver": {
+          "ru": "silver: очищено",
+          "en": "silver: cleaned"
+        },
+        "silverSub": {
+          "ru": "пробелы, форматы дат, дубли",
+          "en": "spaces, date formats, duplicates"
+        },
+        "model": {
+          "ru": "Справочники и модель",
+          "en": "Dimensions and model"
+        },
+        "gold": {
+          "ru": "gold: готово к отчётам",
+          "en": "gold: ready for reports"
+        },
+        "goldSub": {
+          "ru": "и справочники",
+          "en": "and the dimensions"
+        },
+        "next": {
+          "ru": "дальше: отчёт",
+          "en": "next: the report"
+        }
+      },
+      "files": {
+        "first": "export_2024-01.csv",
+        "last": "export_2026-06.csv",
+        "count": 30
+      },
+      "notes": [
+        {
+          "ru": "`source_file` хранит, какой файл принёс строку, поэтому плохой месяц перезагружают отдельно, не трогая остальные.",
+          "en": "`source_file` keeps which file brought each row, so a bad month is reloaded on its own, without touching the others."
+        },
+        {
+          "ru": "Расписание и подключение нарисованы для примера: в датасете их нет, это не настоящий пайплайн Kaiyo.",
+          "en": "The schedule and the connection are drawn as an example: the dataset has neither, this is not Kaiyo's real pipeline."
+        }
+      ],
+      "caption": {
+        "ru": "Чем это делают обычно: Fabric Data Factory, Azure Data Factory, Fivetran, Airflow; хранят в S3, ADLS или OneLake. Это примеры, а не список инструментов Kaiyo.",
+        "en": "What is usually used: Fabric Data Factory, Azure Data Factory, Fivetran, Airflow; storage in S3, ADLS or OneLake. These are examples, not Kaiyo's toolset."
+      },
+      "scrollHint": {
+        "ru": "Схема шире колонки: прокрутите её вбок.",
+        "en": "The diagram is wider than the column: scroll it sideways."
+      },
+      "sql": "SELECT COUNT(DISTINCT source_file), MIN(source_file), MAX(source_file), COUNT(*) FROM staging_raw_sellout;",
+      "expect": [
+        [
+          30,
+          "export_2024-01.csv",
+          "export_2026-06.csv",
+          3110
+        ]
+      ]
     },
     "bronze": {
       "title": {

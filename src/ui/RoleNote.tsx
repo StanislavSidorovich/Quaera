@@ -6,10 +6,9 @@ import { ProcessFigure } from './ProcessFigure';
  * Подсказка роли на карте данных и в «Проекте от и до»: кто это, чем занят,
  * на каких этапах и с какими инструментами. Всё из career.json, своих текстов нет.
  * Подробности (оси, разрыв, отметки) остаются на вкладке «Путь к роли».
- * У бизнес-аналитика под списком схема заказа дистрибьютора; `hideProcess` убирает её там,
- * где та же схема уже стоит на экране (артефакт слоя «Источники»).
+ * У бизнес-аналитика под списком схема заказа дистрибьютора.
  */
-export function RoleNote({ id, onMore, hideProcess }: { id: string; onMore: () => void; hideProcess?: boolean }) {
+export function RoleNote({ id, onMore }: { id: string; onMore: () => void }) {
   const { t, locale } = useI18n();
   const m = t.career.map.roleNote;
   const role = careerRole(id);
@@ -38,7 +37,7 @@ export function RoleNote({ id, onMore, hideProcess }: { id: string; onMore: () =
         <dt>{m.small}</dt>
         <dd>{role.hybrid[locale]}</dd>
       </dl>
-      {id === 'ba' && !hideProcess && <ProcessFigure />}
+      {id === 'ba' && <ProcessFigure />}
       <button type="button" className="btn secondary arch-note-more" onClick={onMore}>
         {m.more}
       </button>
