@@ -251,6 +251,10 @@
     "id": "nettora",
     "title": { "ru": "Проследить вопрос: Nettora", "en": "Follow a question: Nettora" },
     "figure": {
+      "careerLead": {
+        "ru": "Аналитик данных разбирает изменение показателя на части: здесь штуки Nettora за 2025 год распадаются на число точек и штуки на точку.",
+        "en": "A data analyst splits a change in a metric into parts: here the 2025 units of Nettora break down into the number of outlets and units per outlet."
+      },
       "months": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"],
       "outlets": [74, 74, 72, 69, 69, 64, 57, 53, 50, 50, 43, 40],
       "units": [2200, 2331, 3627, 3027, 4363, 4702, 2875, 2657, 2883, 2656, 1825, 1701],
@@ -1901,6 +1905,10 @@
       }
     },
     "ingest": {
+      "careerLead": {
+        "ru": "Инженер данных отвечает за то, чтобы данные доезжали до lakehouse: по расписанию, файл за файлом. Схема показывает типичный путь, а не настройки Kaiyo.",
+        "en": "A data engineer makes sure data reaches the lakehouse on a schedule, file by file. The diagram shows a typical path, not Kaiyo's own setup."
+      },
       "title": {
         "ru": "Как данные доезжают до lakehouse",
         "en": "How data travels into the lakehouse"
@@ -2172,6 +2180,10 @@
         "ru": "Звезда Kaiyo",
         "en": "The Kaiyo star"
       },
+      "careerLead": {
+        "ru": "Аналитик-инженер строит такую звезду: факт в центре, справочники вокруг и чётко названное зерно.",
+        "en": "An analytics engineer builds a star like this: a fact in the centre, dimensions around it and a clearly stated grain."
+      },
       "grain": {
         "ru": "Зерно",
         "en": "Grain"
@@ -2194,6 +2206,10 @@
         "ru": "Мера и её результат",
         "en": "A measure and its result"
       },
+      "careerLead": {
+        "ru": "BI-разработчик делает из звезды меру и отчёт, который бизнес открывает сам.",
+        "en": "A BI developer turns the star into a measure and a report the business opens on its own."
+      },
       "caption": {
         "ru": "Мера в семантической модели Power BI. Отчёт показывает её по месяцам 2025 года для FMCG.",
         "en": "A measure in the Power BI semantic model. The report shows it by month of 2025 for FMCG."
@@ -2214,6 +2230,90 @@
           "division"
         ]
       ]
+    },
+    "forecastAccuracy": {
+      "careerLead": {
+        "ru": "Специалист по данным проверяет прогноз так: сравнивает прошлые прогнозы с фактом по горизонтам.",
+        "en": "A data scientist checks a forecast like this: past forecasts are compared with actuals by horizon."
+      },
+      "title": {
+        "ru": "Ошибка прогноза растёт с горизонтом",
+        "en": "Forecast error grows with the horizon"
+      },
+      "chart": {
+        "ru": "Ошибка прогноза WMAPE, %",
+        "en": "Forecast error WMAPE, %"
+      },
+      "horizon": {
+        "ru": "{n} мес. вперёд",
+        "en": "{n} mo ahead"
+      },
+      "caption": {
+        "ru": "Прошлые прогнозы из таблицы `fact_forecast_snapshot` сравнены с фактом 2025 года: чем дальше горизонт, тем больше ошибка. Саму модель прогноза в браузере тренажёра не строят.",
+        "en": "Past forecasts from the `fact_forecast_snapshot` table are compared with the 2025 actuals: the longer the horizon, the larger the error. The forecasting model itself is not built in the trainer's browser."
+      }
+    },
+    "metricCard": {
+      "careerLead": {
+        "ru": "Специалист по управлению данными фиксирует метрику в словаре данных: определение, формула, откуда берётся, кто отвечает.",
+        "en": "A data governance specialist records a metric in the data dictionary: definition, formula, source and owner."
+      },
+      "title": {
+        "ru": "Карточка метрики",
+        "en": "Metric card"
+      },
+      "labels": {
+        "metric": {
+          "ru": "Метрика",
+          "en": "Metric"
+        },
+        "definition": {
+          "ru": "Определение",
+          "en": "Definition"
+        },
+        "formula": {
+          "ru": "Формула",
+          "en": "Formula"
+        },
+        "grain": {
+          "ru": "Зерно",
+          "en": "Grain"
+        },
+        "source": {
+          "ru": "Откуда",
+          "en": "Source"
+        },
+        "quality": {
+          "ru": "Проверка качества",
+          "en": "Quality check"
+        },
+        "owner": {
+          "ru": "Владелец",
+          "en": "Owner"
+        }
+      },
+      "metric": {
+        "ru": "Sell-out, шт",
+        "en": "Sell-out, units"
+      },
+      "definition": {
+        "ru": "Штуки, проданные покупателям в точках, по отчётам дистрибьюторов.",
+        "en": "Units sold to shoppers at outlets, as reported by the distributors."
+      },
+      "formula": "SUM(fact_sellout[units])",
+      "source": "staging_raw_sellout → fact_sellout",
+      "quality": {
+        "ru": "строк {rows} = уникальных сочетаний зерна {rows}",
+        "en": "rows {rows} = unique grain combinations {rows}"
+      },
+      "owner": {
+        "ru": "например, коммерческий отдел",
+        "en": "for example, the commercial department"
+      },
+      "ownerNote": {
+        "ru": "В датасете Kaiyo нет владельцев и прав доступа, в реальной компании они обычно записаны. Здесь это пример.",
+        "en": "The Kaiyo dataset has no owners or access rights; in a real company they are usually recorded. This is an example."
+      }
     },
     "meeting": {
       "title": {

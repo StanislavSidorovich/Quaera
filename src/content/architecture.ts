@@ -56,6 +56,8 @@ export interface ArchFigure {
   outlets: number[];
   units: number[];
   names: Record<'units' | 'outlets' | 'perOutlet', Text>;
+  /** Подпись над разложением на экране роли аналитика данных. */
+  careerLead: Text;
 }
 
 /** Метка станции: сделать в браузере, только прочитать или пойти во внешний инструмент. */
@@ -200,6 +202,8 @@ export interface ArchArtifacts {
     notes: [Text, Text];
     caption: Text;
     scrollHint: Text;
+    /** Подпись над схемой на экране роли инженера данных. */
+    careerLead: Text;
   } & ArtifactQuery;
   sources: {
     title: Text;
@@ -215,8 +219,23 @@ export interface ArchArtifacts {
     metrics: Record<'names' | 'codes' | 'rows' | 'dates', Text>;
     combos: Record<string, SilverCombo>;
   };
-  gold: { title: Text; grain: Text; rowsLabel: Text; table: string } & ArtifactQuery;
-  serve: { title: Text; caption: Text; measure: string; dax: string; chart: Text; refs: [string, string][] };
+  gold: { title: Text; grain: Text; rowsLabel: Text; table: string; careerLead: Text } & ArtifactQuery;
+  serve: { title: Text; careerLead: Text; caption: Text; measure: string; dax: string; chart: Text; refs: [string, string][] };
+  /** Ошибка прогноза по горизонтам (ForecastFigure): числа берутся из запроса станции `forecast`, здесь только подписи. */
+  forecastAccuracy: { careerLead: Text; title: Text; chart: Text; horizon: Text; caption: Text };
+  /** Карточка метрики из словаря данных (MetricCard); число строк берётся из `gold.expect`. */
+  metricCard: {
+    careerLead: Text;
+    title: Text;
+    labels: Record<'metric' | 'definition' | 'formula' | 'grain' | 'source' | 'quality' | 'owner', Text>;
+    metric: Text;
+    definition: Text;
+    formula: string;
+    source: string;
+    quality: Text;
+    owner: Text;
+    ownerNote: Text;
+  };
   meeting: { title: Text; kicker: Text; phrase: Text };
 }
 

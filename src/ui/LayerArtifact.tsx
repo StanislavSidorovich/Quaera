@@ -203,7 +203,7 @@ function starDoc(doc: SchemaDoc, factName: string): { doc: SchemaDoc; names: str
 }
 
 /** Gold: компактная звезда и подпись зерна из schema.json. */
-function GoldArtifact() {
+export function GoldArtifact() {
   const { locale } = useI18n();
   const schema = useSchema();
   const g = art.gold;
@@ -231,7 +231,7 @@ function GoldArtifact() {
 }
 
 /** Serve: мера DAX слева направо с результатом, тот же Chart, что у результата запроса в задании. */
-function ServeArtifact() {
+export function ServeArtifact() {
   const { locale } = useI18n();
   const v = art.serve;
   const { months, fact } = project.figure;

@@ -9953,6 +9953,38 @@ figure.arch-figure {
   overflow-wrap: anywhere;
 }
 
+/* Врезка «с чем работает роль» на экране роли: отступ до полосы готовности. */
+.career-inset {
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+/* Карточка метрики (экран роли gov): подписи словами, не именами колонок; на узком экране подпись над значением. */
+.arch-metric dl {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.arch-metric dt {
+  font-family: inherit;
+  margin-top: 6px;
+}
+
+.arch-metric-note {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .arch-metric dl {
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 12px;
+  }
+
+  .arch-metric dt {
+    margin-top: 0;
+  }
+}
+
 .arch-art-scroll {
   overflow-x: auto;
   margin-bottom: 8px;

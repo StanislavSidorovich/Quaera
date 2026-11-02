@@ -369,6 +369,26 @@ check('запросы: у маршрута есть хотя бы один', que
 
   // Схема процесса на экране роли: подпись есть на обе локали.
   checkText('process.careerLead', a.process.careerLead);
+  // Подписи над врезками остальных ролей: ingest, gold, serve, разложение (da), forecastAccuracy, metricCard.
+  checkText('ingest.careerLead', a.ingest.careerLead);
+  checkText('gold.careerLead', a.gold.careerLead);
+  checkText('serve.careerLead', a.serve.careerLead);
+  checkText('trace.figure.careerLead', arch.trace.figure.careerLead);
+  checkText('forecastAccuracy.careerLead', a.forecastAccuracy.careerLead);
+  checkText('metricCard.careerLead', a.metricCard.careerLead);
+  {
+    const fa = a.forecastAccuracy;
+    for (const k of ['title', 'chart', 'horizon', 'caption']) checkText(`forecastAccuracy.${k}`, fa[k]);
+    for (const loc of ['ru', 'en']) check(`forecastAccuracy.horizon.${loc}: есть {n}`, fa.horizon[loc].includes('{n}'), 'нет шаблона {n}');
+    const exp = arch.project.stations.find((s) => s.id === 'forecast').queries.find((q) => q.id === 'forecast').expect;
+    check('forecastAccuracy: горизонты по числу и порядку совпадают с expect запроса forecast', exp.length === 3 && exp.every((r, i) => r[0] === i + 1), `expect: ${JSON.stringify(exp)}`);
+    const mc = a.metricCard;
+    for (const k of ['title', 'metric', 'definition', 'quality', 'owner', 'ownerNote']) checkText(`metricCard.${k}`, mc[k]);
+    for (const k of Object.keys(mc.labels)) checkText(`metricCard.labels.${k}`, mc.labels[k]);
+    for (const loc of ['ru', 'en']) check(`metricCard.quality.${loc}: есть {rows}`, mc.quality[loc].includes('{rows}'), 'нет шаблона {rows}');
+    check('metricCard: формула и источник ссылаются на таблицы схемы', /fact_sellout\[units\]/.test(mc.formula) && /staging_raw_sellout/.test(mc.source) && /fact_sellout/.test(mc.source), 'формула или источник');
+    check('metricCard: число строк берётся из gold.expect и сходится', a.gold.expect[0][0] === a.gold.expect[0][1], 'строки и зёрна разошлись');
+  }
 
   // Схема «Системы-источники»: все названные таблицы есть в датасете, у каждой одна система, а факты и справочники не потеряны.
   {

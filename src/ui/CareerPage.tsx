@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { careerAxes, careerEvidence, careerRole, careerRoles, careerStages, stagesOfRole } from '../content/career';
 import type { CareerStage } from '../content/career';
 import { lessonBySkill, packForTrack } from '../content';
@@ -26,10 +27,46 @@ import { quizBank } from '../content/careerQuiz';
 import { ArchitectureMap } from './ArchitectureMap';
 import { RoleCompare } from './RoleCompare';
 import { ProcessFigure } from './ProcessFigure';
+import { IngestFigure } from './IngestFigure';
+import { GoldArtifact, ServeArtifact } from './LayerArtifact';
+import { TraceFigure } from './TraceFigure';
+import { ForecastFigure } from './ForecastFigure';
+import { MetricCard } from './MetricCard';
 import { architecture } from '../content/architecture';
+import type { Locale } from '../i18n/context';
 
+type Text = Record<Locale, string>;
 const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
 const BANDS: Band[] = ['start', 'prejunior', 'nearly', 'ready'];
+
+/**
+ * Статичная врезка «с чем работает роль» под описанием роли: подпись и рисунок.
+ * Новой интерактивности здесь нет, рисунки те же, что на карте данных.
+ */
+const A = architecture.artifacts;
+const ROLE_INSET: Record<string, { lead: Text; figure: ReactNode }> = {
+  ba: { lead: A.process.careerLead, figure: <ProcessFigure /> },
+  de: { lead: A.ingest.careerLead, figure: <IngestFigure /> },
+  ae: {
+    lead: A.gold.careerLead,
+    figure: (
+      <div className="arch-art">
+        <GoldArtifact />
+      </div>
+    ),
+  },
+  bi: {
+    lead: A.serve.careerLead,
+    figure: (
+      <div className="arch-art">
+        <ServeArtifact />
+      </div>
+    ),
+  },
+  da: { lead: architecture.trace.figure.careerLead, figure: <TraceFigure kind="split" /> },
+  ds: { lead: A.forecastAccuracy.careerLead, figure: <ForecastFigure /> },
+  gov: { lead: A.metricCard.careerLead, figure: <MetricCard /> },
+};
 
 /**
  * «Путь к роли»: куда целишься, чего не хватает и где в задаче живёт каждая роль.
@@ -309,11 +346,11 @@ export function CareerPage({
         </div>
         <p className="career-does">{role.does[locale]}</p>
         <RoleCompare roleId={role.id} levels={levels} />
-        {role.id === 'ba' && (
-          <>
-            <p className="muted career-process-lead">{architecture.artifacts.process.careerLead[locale]}</p>
-            <ProcessFigure />
-          </>
+        {ROLE_INSET[role.id] && (
+          <div className="career-inset">
+            <p className="muted career-process-lead">{ROLE_INSET[role.id].lead[locale]}</p>
+            {ROLE_INSET[role.id].figure}
+          </div>
         )}
 
         <div className="career-band" role="img" aria-label={c.bandAria(c.bands[readiness.band], bandStep)}>
