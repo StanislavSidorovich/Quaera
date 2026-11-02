@@ -29,7 +29,7 @@ import type { Locale } from '../i18n/context';
  *    поймал бы страницу на вранье. Проценты в блоке 3 иллюстрируют механику
  *    и ничего не обещают про конкретные данные. Числа девятого блока —
  *    настоящие, снятые запросом (13 таблиц, ~155 тыс. строк фактов,
- *    132 точки, 47 товаров, 12 оптовиков, 79 → 38 точек у марки).
+ *    132 точки, 47 товаров, 12 оптовиков, 79 → 37 точек у марки, первое полугодие 2024 и 2026).
  *
  * **Гейта у этой прозы нет и быть не может** — проверять тут нечего, кроме
  * смысла. Действует то же правило, что у прозы приватности: читать вслух
@@ -375,7 +375,7 @@ const RU: IntroPageContent = {
         'Quaera — это место, где такую работу можно попробовать руками. Не почитать про SQL, а получить рабочий вопрос и ответить на него так, как отвечают на работе.',
         'Внутри лежит Kaiyo Trading — выдуманная компания, которая возит бытовую химию, напитки и лекарства в магазины и аптеки. Компания выдумана, данные — нет: они устроены так же, как настоящие, и запросы к ним исполняются по-настоящему, прямо в браузере, без интернета.',
         'Тринадцать таблиц, больше ста пятидесяти тысяч строк за два с половиной года, 132 торговые точки, 47 товаров, двенадцать оптовиков.',
-        'Один живой пример из них. У марки бытовой химии продажи за два года упали больше чем вдвое. Точек, которые её вообще брали, было 79 — стало 38. А сколько берёт одна точка из тех, что не бросили: было 128 штук, стало 122. Спрос не изменился. Марка просто исчезла с полок сорока магазинов, по одному, тихо, за полтора года. По общей сумме продаж заметить это невозможно.',
+        'Один живой пример из них. У марки бытовой химии продажи за два года упали больше чем вдвое: первое полугодие 2026-го против первого полугодия 2024-го. Точек, которые её вообще брали, было 79, стало 37. А сколько берёт одна точка из тех, что не бросили: было 262 штуки за полгода, стало 266. Спрос не изменился. Марка просто исчезла с полок сорока двух точек, по одной, тихо, за полтора года. По общей сумме продаж заметить это невозможно.',
         'Товары повседневного спроса здесь — просто рабочая среда. Предмет практики — сама аналитическая работа, а она переносится и в аптеки, и в банк, и в логистику.',
       ],
     },
@@ -620,7 +620,7 @@ const EN: IntroPageContent = {
         'Quaera is a place to try that work with your own hands. Not to read about SQL, but to receive a real question and answer it the way it gets answered at work.',
         'Inside it sits Kaiyo Trading, an invented company that delivers home care products, drinks and medicines to shops and pharmacies. The company is invented; the data is not. It is built the way real data is built, and queries against it really execute, right in the browser, with no internet needed.',
         'Thirteen tables, more than a hundred and fifty thousand rows over two and a half years, 132 outlets, 47 products, twelve wholesalers.',
-        'One live example from them. A home care brand lost more than half its sales in two years. The number of outlets that stocked it went from 79 to 38. Meanwhile the outlets that kept it went from 128 units each to 122. Demand did not change. The brand simply disappeared from the shelves of forty shops, one at a time, quietly, over eighteen months. Watching the sales total, you could not possibly see it.',
+        'One live example from them. A home care brand lost more than half its sales in two years, comparing the first half of 2026 with the first half of 2024. The number of outlets that stocked it went from 79 to 37. Meanwhile the outlets that kept it went from 262 units each per half year to 266. Demand did not change. The brand simply disappeared from the shelves of forty-two outlets, one at a time, quietly, over eighteen months. Watching the sales total, you could not possibly see it.',
         'Consumer goods here are just the working environment. The subject of practice is the analytical work itself, and that carries over to pharmacies, to a bank, to logistics.',
       ],
     },
