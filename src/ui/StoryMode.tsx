@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import { CodeBlock } from './CodeBlock';
@@ -23,6 +23,8 @@ import type { PushState } from '../push/client';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
+import { storyCampaign } from '../content/storymode';
+import { speakLines, stopSpeaking, useEnglishVoice, voiceFlagOn } from '../voice';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -224,6 +226,43 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
         );
       })}
     </>
+  );
+}
+
+/**
+ * Проба озвучки (?voice=1): три момента дня читает голос браузера, всегда
+ * по-английски. Без флага, без API или без английского голоса не рисуется.
+ * Речь обрывается при уходе с экрана (смена фазы/дня размонтирует кнопку).
+ */
+function VoiceButton({ lines }: { lines: string[] }) {
+  const { t } = useI18n();
+  const on = useMemo(() => voiceFlagOn(), []);
+  const voice = useEnglishVoice(on);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => stopSpeaking(), []);
+  const key = lines.join('|');
+  useEffect(() => {
+    stopSpeaking();
+    setPlaying(false);
+  }, [key]);
+  if (!on || !voice || lines.length === 0) return null;
+  return (
+    <button
+      type="button"
+      className="btn secondary"
+      style={{ marginBottom: 12 }}
+      onClick={() => {
+        if (playing) {
+          stopSpeaking();
+          setPlaying(false);
+        } else {
+          setPlaying(true);
+          speakLines(lines, voice, () => setPlaying(false));
+        }
+      }}
+    >
+      {playing ? t.storyMode.voiceStop : t.storyMode.voiceListen}
+    </button>
   );
 }
 
@@ -499,6 +538,18 @@ export function StoryMode({
       ? inPart.part.recap
       : null;
 
+  /* Английская версия реплик той же миссии (проба озвучки). */
+  const enMission = storyCampaign('en').missions.find((m) => m.id === mission.id);
+  const stripCode = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ');
+  const voiceLines =
+    phase.kind === 'brief'
+      ? (enMission?.messages.map((m) => stripCode(m.text)) ?? [])
+      : phase.kind === 'interlude'
+        ? (enMission?.steps[phase.step]?.interlude?.messages.map((m) => stripCode(m.text)) ?? [])
+        : phase.kind === 'reflection'
+          ? (enMission?.reflection.map(stripCode) ?? [])
+          : [];
+
   return (
     <div className="story-column">
       <StoryProgress
@@ -618,6 +669,7 @@ export function StoryMode({
                 )}
               </details>
             )}
+            <VoiceButton lines={voiceLines} />
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
                 <div className="story-mode-msg" key={i}>
@@ -639,6 +691,7 @@ export function StoryMode({
           */}
         {phase.kind === 'interlude' && interlude && (
           <>
+            <VoiceButton lines={voiceLines} />
             <div className="story-mode-thread">
               {interlude.messages.map((m, i) => (
                 <div className="story-mode-msg" key={i}>
@@ -668,6 +721,7 @@ export function StoryMode({
         {phase.kind === 'reflection' && (
           <>
             <h2>{t.storyMode.reflectionTitle}</h2>
+            <VoiceButton lines={voiceLines} />
             {mission.reflection.map((p, i) => (
               <p className="story-mode-para" key={i}>
                 {glossaryRendered[i] ?? p}

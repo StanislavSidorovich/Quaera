@@ -690,6 +690,9 @@ export const en = {
     whereStepWrap: 'Verdict',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
+    /** Voice trial (?voice=1): the browser voice reads the English lines. */
+    voiceListen: '▶ Listen',
+    voiceStop: '■ Stop',
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */
