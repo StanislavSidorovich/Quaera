@@ -2102,12 +2102,12 @@
       "explain": "The write mode decides what a load does with what is already in the table. Append only adds, so a second run over the same source doubles the table, and a green status does not undo that: it reports on steps, not on contents. That gives the main property of a good load: it can be run again without harm. There are several ways to get there. A full export replaces the table every time, a batch is appended only after checking the table does not hold it yet, or the rows of a rerun batch are deleted before it is reloaded. Doubling shows up in the row count, and a \"source against table\" reconciliation after every run catches it the same day.",
       "options": [
         {
-          "label": "Append does not know these rows are already loaded: the second run put the same 3,110 rows on top of the old ones. A load must survive being run twice: replace the export as a whole, or append only what the table does not hold yet",
+          "label": "Append does not know the rows are already loaded and put the same 3,110 in again; a load must survive being rerun",
           "correct": true,
-          "why": "Append only checks that rows can be added, not that they are new. Running the same source twice therefore doubles the table exactly: 3,110 + 3,110 = 6,220. A safe load gives the same result however many times it runs."
+          "why": "Append only checks that rows can be added, not that they are new. Running the same source twice therefore doubles the table exactly: 3,110 + 3,110 = 6,220. A safe load gives the same result however many times it runs. There are two fixes: replace the export as a whole, or append only what the table does not hold yet."
         },
         {
-          "label": "The source returned 6,220 rows in the second run and the load wrote them faithfully",
+          "label": "The source returned 6,220 rows in the second run, and the load faithfully wrote all of them into the table",
           "why": "The second run added exactly 3,110 rows, the same as the first: the source did not change. Had it returned 6,220, the table would hold 9,330, not 6,220."
         },
         {
@@ -2115,7 +2115,7 @@
           "why": "Succeeded means \"the steps ran\", not \"the data is right\". Append never compares new rows with old ones, so it has nothing to report. A duplicates error only appears where a key is enforced, and that is a separate safeguard."
         },
         {
-          "label": "Fix the measure in the report to count distinct rows only, and the doubling goes away",
+          "label": "Fix the measure in the report so it counts distinct rows only, and then the doubling goes away",
           "why": "A measure hides the symptom in one report while 6,220 rows stay in the table: every other consumer, from a pivot to a file export, keeps reading the doubled data. The fix belongs where the rows appeared."
         }
       ]
@@ -2134,20 +2134,20 @@
       "explain": "Choose the write mode by the nature of the source. If a full snapshot arrives (\"here is everything that exists now\"), replacing is right: the old copy is stale. If a batch arrives (\"here is the new month\"), replacing is wrong: whatever is not in the batch is lost, like the 2,994 rows here. Batches leave two safe paths: append but never let the same month land twice, or replace only that month's partition and leave the rest alone. The trouble is visible in the numbers before and after: if the table got smaller after a run and now matches the file in size, a batch replaced the whole.",
       "options": [
         {
-          "label": "Replace wipes the table and writes only what this run read, which is the 116 June rows. For monthly batches use append with protection against loading the same month twice, or replace only that month's partition",
+          "label": "Replace wipes the table and writes only the 116 June rows; monthly batches need append with repeat protection",
           "correct": true,
-          "why": "Replace clears the destination entirely and writes the contents of the current run: the 2,994 rows wiped (3,110 minus 116) were not lost by mistake but replaced as instructed. A batch that continues the data cannot replace the whole; only the slice that arrives afresh can be replaced."
+          "why": "Replace clears the destination entirely and writes the contents of the current run: the 2,994 rows wiped (3,110 minus 116) were not lost by mistake but replaced as instructed. A batch that continues the data cannot replace the whole; only the slice that arrives afresh can be replaced. Only the slice that arrives afresh can be replaced, for example that month's partition."
         },
         {
-          "label": "The load failed to read 29 files because of a read error, so the folder permissions need checking",
+          "label": "The load failed to read 29 files because of a read error, so permissions on the export folder need checking",
           "why": "The run read one file and read it fully: the 116 rows in the table match the file. There is no error, the status is green, and the mode did exactly what it was set to do."
         },
         {
-          "label": "Switch to append and change nothing else, and the history stays",
+          "label": "Switch to append and change nothing else, and then the whole history stays right where it was",
           "why": "The history would survive but the trap from the previous case opens: rerunning the June run would put June in twice. Append without protection against repeats swaps one loss for another."
         },
         {
-          "label": "Restore the table from a backup and carry on as before",
+          "label": "Restore the table from a backup and carry on as before, without changing any settings of the load",
           "why": "The backup brings back 3,110 rows once, and the next monthly file wipes everything except itself again. The write mode is unchanged, so the cause is too."
         }
       ]
@@ -2157,11 +2157,11 @@
       "title": "Facts arrived before the lookup table",
       "brief": "The load has three steps and the sales facts load first: while loading a fact row, the customer is looked up in the customer table and gets its key. After the run every sale in the model has an empty customer. All steps are green.",
       "goal": "Find the ordering mistake in the chain.",
-      "scenario": "Load facts\n  │ on success\nLoad customer table\n  │ on success\nBuild model\n\nResult (customer table was empty):\n  fact rows               3,110\n  customer key found      0",
+      "scenario": "Load facts\n  │ on success\nLoad customer table\n  │ on success\nBuild model\n\nResult:\n  fact rows               3,110\n  customer key found      0",
       "predictQuestion": "What should change in the chain?",
       "hints": [
         "What does a fact row refer to when its customer key is looked up: something that exists, or something loaded later?",
-        "Look at the last two lines: the table was empty at the moment of the lookup."
+        "Look at the last two lines: what did the key lookup find, and why?"
       ],
       "explain": "Load order follows references: the tables the facts point at must be in place before the first fact arrives. That is a dependency, not a matter of taste: a key lookup in an empty table does not fail, it returns empty, and loads accept empty values without complaint. So the mistake only shows in the outcome, like here: every fact row is present and none found its customer. The condition on the arrow both expresses the dependency and protects it: the next step starts only when the previous one has really finished. The best check here is simple: after a run, count how many fact rows kept an empty key. The right number is zero.",
       "options": [
@@ -2198,21 +2198,21 @@
       "explain": "The condition on an arrow between steps is not decoration but a stopping rule. \"On success\" lets only a good outcome pass; \"on completion\" lets any outcome pass, which suits cleanup steps that must run even after a failure but not steps that depend on the previous result. Here \"on completion\" turned a customer-table failure into empty customers in the report: the failure happened and the chain did not notice. The log has one telltale: a red step followed by a green step that depends on it. If a dependent step did not stop, look at its condition.",
       "options": [
         {
-          "label": "The \"on completion\" condition on the Facts step: it fires after any outcome of the previous step, success or failure. A dependent step needs \"on success\"",
+          "label": "The \"on completion\" condition on Facts: it fires after a failure too, and a dependent step needs \"on success\"",
           "correct": true,
           "why": "\"On completion\" means \"when the step ended, however it ended\". Customers ended in failure, the condition was met, and the facts ran. \"On success\" would have stopped the chain at the first failure, and the Model row shows that such a condition already works correctly."
         },
         {
-          "label": "The Facts step does not check that the customer table is loaded itself: add a check inside the step and the chain is configured correctly",
+          "label": "The Facts step does not check by itself that the customer table is loaded: add a check inside it, keep the condition",
           "why": "A check inside the step is useful as a second safeguard but does not explain why the step started at all. The cause is the arrow: while it lets failure through, every later step needs defending separately."
         },
         {
-          "label": "The Customers step should run with automatic retries until it succeeds",
+          "label": "The Customers step should run with automatic retries until it succeeds, and the condition can stay as it is",
           "why": "Retries help with random failures but do not answer what the log shows: when the retries run out and the table still has not loaded, the facts still go ahead \"on completion\". The condition needs fixing either way."
         },
         {
-          "label": "Run Customers and Facts in parallel, so one step cannot hold up the other",
-          "why": "Parallel running removes the dependency too: the facts start looking up keys without waiting for the table, and the mistake from the previous case becomes routine. Steps where one relies on another go in a queue."
+          "label": "Rerun the whole load after fixing the customer table, and leave the condition on the Facts step alone",
+          "why": "A rerun fixes this run but not the cause: next time the customer table fails again and the facts again go ahead \"on completion\". And in append mode a full rerun would also double the rows."
         }
       ]
     },
@@ -2230,20 +2230,20 @@
       "explain": "A column's type is inferred from its values, and if the first data row holds the column name, every column turns to text. So reading a file has an order of steps: first say that the first row holds headers (names appear and the row leaves the data), and only then set types. Note that the mistake is silent: the load ran, the columns are there, and what breaks is sums and date filters, in the report. The reverse also happens: if the file has no headers and they are switched on, the first real data row is lost. One check covers both: look at the first three rows and at the types after reading.",
       "options": [
         {
-          "label": "\"First row as headers\" is not switched on: the names are read as the first data row, which is why every column became Text. Switch headers on, then set the column types explicitly",
+          "label": "The \"first row as headers\" option is off: names are read as data, so all is Text. Switch it on, then set the types",
           "correct": true,
           "why": "While the names sit in the data, every column holds a text cell and type detection rightly picks Text. Without headers there are also no column names: Column1…Column7 appear automatically. The fix belongs in the file read, before the types."
         },
         {
-          "label": "Rename Column1…Column7 by hand to the proper names; the types will work themselves out at load",
+          "label": "Rename Column1…Column7 by hand to the proper names, and the type will work itself out at load",
           "why": "The names would be fine but the row of names stays in the data, and the columns stay Text: its first value, such as sale_date, will not turn into a number or a date."
         },
         {
-          "label": "Turn on type detection from the first rows of the file and revenue becomes a number",
+          "label": "Turn on type detection from the first rows of the file, and then revenue becomes a number",
           "why": "The row of names is still the first row. While it holds text, detection from it gives Text. Detection is reliable when the data is clean, and here the data starts with a dirty row."
         },
         {
-          "label": "Leave it all and convert revenue to a number inside the measure with VALUE",
+          "label": "Leave it all as it is and convert revenue to a number inside every measure with VALUE",
           "why": "A type conversion in a measure repeats in every measure and does not take the header row out of the data: it stays, and the sum either fails or drops a row. Types are set during preparation, not in calculations."
         }
       ]
@@ -2262,20 +2262,20 @@
       "explain": "The names of the duplicate operations look alike but the actions are opposite: \"remove repeats\" keeps one copy of each record, \"keep repeats\" throws away everything that does not repeat. The check is simple and needs no tool knowledge: count rows before and after and compare with the number of unique records, which a query gives you (the SQL track task on duplicates in the raw export: 3,110 rows, 3,000 unique, 110 extra). If the step leaves neither 3,000 nor 3,110 but 220, it did something you did not ask for. This reconciliation takes one line of SQL and catches the mistake before it reaches the model.",
       "options": [
         {
-          "label": "The operation chosen is \"keep repeated rows\": it drops every row that has no twin and keeps only the 220 that appear twice (110 pairs). It should be \"remove repeats\": 3,110 − 110 = 3,000",
+          "label": "The chosen operation is \"keep repeated rows\": it holds only rows with a copy, 220 (110 pairs). Use \"remove repeats\"",
           "correct": true,
           "why": "The two duplicate operations mirror each other: \"remove\" keeps one copy of each row, \"keep\" holds only the rows that repeat. 220 rows are 110 pairs, which is also what the duplicates check in the SQL track shows on the same 3,110 rows."
         },
         {
-          "label": "The step did not read all 30 files, and 2,890 rows are missing",
+          "label": "The step did not read all 30 files, so only 220 of the 3,110 rows came out of it at the end",
           "why": "The first row of the log shows all 3,110 rows were read. The rows vanished in the cleaning step itself, not during reading."
         },
         {
-          "label": "Repeats are also determined by raw_id, so the step compared too much and removed extra rows. Exclude raw_id from the comparison",
-          "why": "Comparing with raw_id would have found nothing at all: the row number is unique, so all 3,110 rows would count as different. For duplicates the technical key is left out of the comparison, but the result with it is the opposite: 3,110, not 220."
+          "label": "Repeats were searched together with raw_id: leave it out of the comparison and the step will return 3,000 rows",
+          "why": "With raw_id there would be no repeats at all: the row number is unique, and \"keep repeated rows\" would return 0 rows, not 220. raw_id is indeed left out of the comparison, but the 220 came from a different cause: the wrong operation was chosen."
         },
         {
-          "label": "Compare on customer_name alone and the number will match what was expected",
+          "label": "Compare on customer_name alone, and then the row count after the step will match what was expected",
           "why": "Comparing one column would merge all of a customer's sales into one row, leaving one row per customer. A repeat is a row where every column matches except the technical number."
         }
       ]
@@ -2294,20 +2294,20 @@
       "explain": "A key in a warehouse comes in two states: checked and merely descriptive. A descriptive key is useful: the model picks the relationship type by it and the optimizer builds its plan on it. But it does not protect: a repeat gets through, and the model, seeing it, switches cardinality to many-to-many and slices start counting the customer twice. So for a key without enforcement the uniqueness check goes into the load itself: the same query with GROUP BY and HAVING COUNT(*) > 1 that finds duplicates in the raw export in the SQL track runs after the customer table and must return nothing. The mistake also shows in the model: a relationship that should be one-to-many and turned into something else almost always means a repeat in the lookup key.",
       "options": [
         {
-          "label": "With a repeats query: SELECT customer_id, COUNT(*) FROM dim_customer GROUP BY customer_id HAVING COUNT(*) > 1. It names the customer that landed in the table twice. A key without enforcement only describes the table, so uniqueness has to be checked by hand",
+          "label": "With a repeats query: GROUP BY customer_id HAVING COUNT(*) > 1 names the customer that landed in the table twice",
           "correct": true,
-          "why": "NOT ENFORCED means \"the key is written in the description but the warehouse does not check it\". The duplicate loaded without an error, and the relationship, seeing a repeat, stopped being one-to-many. Grouping with HAVING shows exactly those rows, as in the SQL track task on duplicates in the raw export."
+          "why": "The full query: SELECT customer_id, COUNT(*) FROM dim_customer GROUP BY customer_id HAVING COUNT(*) > 1. A key without enforcement only describes the table, so uniqueness is checked by hand. NOT ENFORCED means \"the key is written in the description but the warehouse does not check it\". The duplicate loaded without an error, and the relationship, seeing a repeat, stopped being one-to-many. Grouping with HAVING shows exactly those rows, as in the SQL track task on duplicates in the raw export."
         },
         {
-          "label": "Declare the key again as ENFORCED, and the warehouse will remove the repeated row itself",
+          "label": "Declare the key again as ENFORCED, and the warehouse will remove the repeated row from the table itself",
           "why": "An enforced key does not clean data; it refuses the load: a repeat causes an error and the run stops. The duplicate still has to be removed by hand, but at least the run does not pass silently."
         },
         {
-          "label": "Set the relationship cardinality to one-to-many by hand, and the repeat will no longer matter",
+          "label": "Set the relationship cardinality to one-to-many by hand, and then the repeat in the table will not matter",
           "why": "Cardinality describes the data, it does not change it. The repeated customer stays in the table twice and its sales are counted twice, as before. The model would simply stop reporting the problem."
         },
         {
-          "label": "Compare the fact row count before and after the load: if unchanged, there are no duplicates in the customer table",
+          "label": "Compare the fact row count before and after the load: if it is unchanged, there are no duplicates in the table",
           "why": "The fact has as many rows as before: a duplicate in the customer table creates no new fact rows. The customer's revenue doubles in the join, on the fly, and the fact row count will not show it."
         }
       ]
