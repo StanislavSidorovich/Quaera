@@ -533,41 +533,77 @@ export function ArchitectureMap({
   );
 }
 
+/** Цвет слоя в мини-пути на главной: палитра «Теги» (источники) и полоски lakehouse, как в схемах карты. */
+const TEASER_TONE: Record<string, string> = {
+  sources: 'erp',
+  bronze: 'bronze',
+  silver: 'silver',
+  gold: 'gold',
+  serve: 'crm',
+  meeting: 'dist',
+};
+
 /**
- * Вход на карту с главной: цепочка слоёв одной строкой, gold помечен «вы здесь».
- * Стоит на главной выше карты навыков (аудит docs/audit-start-here-2026-11.md, D):
- * верх главной держит кнопку занятия на первом экране, а картина «как данные
- * становятся решением» нужна раньше перечня навыков. Слой в цепочке открывает карту
- * сразу на нём, так что цепочка работает оглавлением.
+ * Вход на карту с главной: мини-путь из шести слоёв, под каждым кружки ролей, gold помечен
+ * «вы здесь». Стоит в основной колонке под карточкой занятия (аудит docs/audit-start-here-2026-11.md, D):
+ * картина «как данные становятся решением» нужна раньше перечня навыков, а кнопка занятия
+ * остаётся на первом экране. Наведение или фокус на слое показывает одной фразой, кто там работает;
+ * клик открывает карту сразу на этом слое, так что путь работает оглавлением.
+ * `hereLayer` позволяет снаружи сказать, где человек сейчас; по умолчанию слой с `here` из данных.
  */
-export function DataMapTeaser({ onOpen }: { onOpen: (target: { layer?: string; trace?: boolean }) => void }) {
+export function DataMapTeaser({
+  onOpen,
+  hereLayer,
+}: {
+  onOpen: (target: { layer?: string; trace?: boolean }) => void;
+  hereLayer?: string;
+}) {
   const { t, locale } = useI18n();
   const m = t.career.map;
+  const [hot, setHot] = useState<string | null>(null);
+  const here = hereLayer ?? architecture.layers.find((l) => l.here)?.id;
+  const roleName = (id: string) => careerRole(id)?.title[locale] ?? id;
+  const hotLayer = architecture.layers.find((l) => l.id === hot);
   return (
     <section className="card home-map" aria-labelledby="home-map-title">
       <h2 id="home-map-title">{m.teaserTitle}</h2>
       <p className="muted">{m.teaserLead}</p>
       <ol className="home-map-chain">
         {architecture.layers.map((l) => (
-          <li key={l.id}>
+          <li key={l.id} className={`tone-${TEASER_TONE[l.id] ?? 'erp'}${hot === l.id ? ' hot' : ''}`}>
             <button
               type="button"
-              className={l.here ? 'here' : undefined}
+              className={l.id === here ? 'here' : undefined}
               aria-label={m.teaserLayer(l.title[locale])}
               onClick={() => onOpen({ layer: l.id })}
+              onMouseEnter={() => setHot(l.id)}
+              onMouseLeave={() => setHot(null)}
+              onFocus={() => setHot(l.id)}
+              onBlur={() => setHot(null)}
             >
-              {l.title[locale]}
-              {l.here && <span className="arch-here">{m.hereBadge}</span>}
+              <span className="home-map-name">{l.title[locale]}</span>
+              {l.id === here && <span className="arch-here">{m.hereBadge}</span>}
+              <span className="home-map-roles" aria-hidden="true">
+                {l.roles.map((id) => (
+                  <span key={id} className="home-map-role" title={roleName(id)}>
+                    {id.toUpperCase()}
+                  </span>
+                ))}
+                <span className="home-map-roles-text">{l.roles.map(roleName).join(', ')}</span>
+              </span>
             </button>
           </li>
         ))}
       </ol>
-      <div className="row">
-        <button type="button" className="btn secondary" onClick={() => onOpen({})}>
-          {m.teaserOpen}
+      <p className="home-map-who" aria-live="polite">
+        {hotLayer ? m.teaserWho(hotLayer.roles.map(roleName).join(', ')) : m.teaserHint}
+      </p>
+      <div className="home-map-actions">
+        <button type="button" className="btn primary" onClick={() => onOpen({ trace: true })}>
+          {m.teaserTrace}
         </button>
-        <button type="button" className="btn secondary" onClick={() => onOpen({ trace: true })}>
-          {architecture.trace.title[locale]}
+        <button type="button" className="link-row" onClick={() => onOpen({})}>
+          {m.teaserOpen}
         </button>
       </div>
     </section>

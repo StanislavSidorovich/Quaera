@@ -4145,6 +4145,14 @@ function Home({
             </div>
           )}
 
+          {/*
+           * Карта данных стоит в основной колонке прямо под карточкой занятия, а не в боковой над
+           * картой навыков: аудит docs/audit-start-here-2026-11.md, раздел D. Блок отвечает на вопрос
+           * «как данные становятся решением» и нужен новичку раньше перечня из двадцати навыков, а
+           * кнопка занятия при этом остаётся на первом экране (замер в сообщении коммита).
+           */}
+          {ready && <DataMapTeaser onOpen={onOpenMap} />}
+
           {!ready && (
             <div className="card">
               <p className="brief" style={{ marginBottom: 6 }}>{activePack.description}</p>
@@ -4199,13 +4207,6 @@ function Home({
         </div>
 
         <div className="dash-side">
-          {/*
-           * Карта данных стоит выше карты навыков: аудит docs/audit-start-here-2026-11.md,
-           * раздел D. Блок отвечает на вопрос «как данные становятся решением» и нужен
-           * новичку раньше, чем перечень из двадцати навыков; внизу страницы (2150px
-           * из 2550) до него не доходили.
-           */}
-          {ready && <DataMapTeaser onOpen={onOpenMap} />}
           <div className="card">
             <h2>{t.home.skillMapTitle}</h2>
             {/*

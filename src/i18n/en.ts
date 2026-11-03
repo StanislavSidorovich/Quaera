@@ -1078,6 +1078,9 @@ export const en = {
       backToMap: 'Back to the data map',
       teaserTitle: 'How data becomes a decision',
       teaserLead: 'The path data takes through a company, from an order in the ERP to the management meeting. The trainer teaches you to work on one of these layers.',
+      teaserWho: (roles: string) => `Who works here: ${roles}`,
+      teaserHint: 'Point at a layer to see who works on it',
+      teaserTrace: 'Walk the data path, 10 min',
       teaserOpen: 'Open the map',
       teaserLayer: (layer: string) => `Open the map on the ${layer} layer`,
       project: {

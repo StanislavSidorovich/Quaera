@@ -1936,6 +1936,9 @@ export const ru = {
       backToMap: 'К карте данных',
       teaserTitle: 'Как данные становятся решением',
       teaserLead: 'Путь данных в компании от заказа в ERP до встречи руководства. Тренажёр учит работать на одном из этих слоёв.',
+      teaserWho: (roles: string) => `Здесь работают: ${roles}`,
+      teaserHint: 'Наведите на слой, чтобы увидеть, кто на нём работает',
+      teaserTrace: 'Пройти путь данных, 10 минут',
       teaserOpen: 'Открыть карту',
       teaserLayer: (layer: string) => `Открыть карту на слое «${layer}»`,
       project: {

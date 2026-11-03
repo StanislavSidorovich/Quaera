@@ -8677,12 +8677,11 @@ details.story-known > summary small {
   text-decoration: underline;
 }
 
-/* Вход на карту данных (см. DataMapTeaser): над картой навыков, в колонке с её зазором. */
+/*
+ * Вход на карту данных (см. DataMapTeaser): мини-путь из шести слоёв под карточкой занятия.
+ * Цвет даёт сам путь (палитра «Теги» и полоски слоёв из схем карты), заливки всего блока нет.
+ */
 .home-map {
-  margin-top: 16px;
-}
-
-.dash-side > .home-map {
   margin-top: 0;
 }
 
@@ -8696,58 +8695,195 @@ details.story-known > summary small {
   font-size: var(--fs-small);
 }
 
-/* Цепочка слоёв: стрелка между звеньями, при переносе строка начинается со звена. */
 .home-map-chain {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 4px;
-  margin: 0 0 12px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 8px;
   padding: 0;
   list-style: none;
 }
 
 .home-map-chain li {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  --tone: var(--src-erp);
+  --tone-bg: var(--src-erp-bg);
+  --tone-ink: var(--src-erp-ink);
 }
 
+.home-map-chain li.tone-crm {
+  --tone: var(--src-crm);
+  --tone-bg: var(--src-crm-bg);
+  --tone-ink: var(--src-crm-ink);
+}
+
+.home-map-chain li.tone-dist {
+  --tone: var(--src-dist);
+  --tone-bg: var(--src-dist-bg);
+  --tone-ink: var(--src-dist-ink);
+}
+
+.home-map-chain li.tone-bronze {
+  --tone: var(--layer-bronze);
+  --tone-bg: color-mix(in srgb, var(--layer-bronze) 20%, var(--bg-raised));
+  --tone-ink: var(--text);
+}
+
+.home-map-chain li.tone-silver {
+  --tone: var(--layer-silver);
+  --tone-bg: color-mix(in srgb, var(--layer-silver) 20%, var(--bg-raised));
+  --tone-ink: var(--text);
+}
+
+.home-map-chain li.tone-gold {
+  --tone: var(--layer-gold);
+  --tone-bg: color-mix(in srgb, var(--layer-gold) 20%, var(--bg-raised));
+  --tone-ink: var(--text);
+}
+
+/* Стрелка между звеньями в зазоре сетки. */
 .home-map-chain li:not(:last-child)::after {
-  content: '→';
+  content: '›';
+  position: absolute;
+  right: -8px;
+  top: 12px;
+  width: 8px;
+  text-align: center;
   color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .home-map-chain button {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  min-height: 32px;
-  padding: 2px 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 4px 7px 7px;
   border-radius: 8px;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--tone);
   background: var(--bg-raised);
   color: var(--text);
   font: inherit;
-  font-size: var(--fs-small);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: left;
   cursor: pointer;
 }
 
-.home-map-chain button:hover {
-  border-color: var(--accent);
+.home-map-chain li.hot button,
+.home-map-chain button:hover,
+.home-map-chain button:focus-visible {
+  background: var(--tone-bg);
+  border-color: var(--tone);
 }
 
 .home-map-chain button.here {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+  border-color: var(--tone);
+  box-shadow: 0 0 0 1px var(--tone);
+}
+
+.home-map-name {
+  font-weight: 600;
+  overflow-wrap: break-word;
 }
 
 .home-map-chain .arch-here {
   margin-left: 0;
+  padding: 1px 5px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.home-map-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: auto;
+}
+
+.home-map-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 2px;
+  border-radius: 10px;
+  background: var(--tone-bg);
+  border: 1px solid var(--tone);
+  color: var(--tone-ink);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.home-map-roles-text {
+  display: none;
+}
+
+.home-map-who {
+  min-height: 1.4em;
+  margin: 0 0 12px;
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+
+.home-map-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.home-map-actions .link-row {
+  width: auto;
 }
 
 @media (max-width: 600px) {
   .home-family-links {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Мини-путь лесенкой: слой на всю ширину, роли строкой текста под названием. */
+  .home-map-chain {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .home-map-chain li:not(:last-child)::after {
+    display: none;
+  }
+
+  .home-map-chain button {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    font-size: 13px;
+  }
+
+  .home-map-roles {
+    flex-basis: 100%;
+    margin-top: 0;
+  }
+
+  .home-map-role {
+    display: none;
+  }
+
+  .home-map-roles-text {
+    display: inline;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  .home-map-who {
+    display: none;
   }
 }
 
