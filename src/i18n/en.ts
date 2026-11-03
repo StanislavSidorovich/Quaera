@@ -105,7 +105,7 @@ export const en = {
     names: {
       sql: 'SQL for analysts',
       domain: 'Analytics as a profession',
-      python: 'pandas for analysts',
+      python: 'Python for analysts (pandas)',
       model: 'Data model and BI',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
     chainStage: {

@@ -214,7 +214,7 @@ export const ru = {
     names: {
       sql: 'SQL для аналитика',
       domain: 'Аналитика как профессия',
-      python: 'pandas для аналитика',
+      python: 'Python для аналитика (pandas)',
       model: 'Модель данных и BI',
     } as Record<'sql' | 'model' | 'python' | 'domain', string>,
     /**

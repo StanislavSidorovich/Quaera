@@ -58,13 +58,13 @@ const TRACK_LABELS = {
     sql: 'SQL for analysts',
     domain: 'Analytics as a profession',
     model: 'Data model and BI',
-    python: 'pandas for analysts',
+    python: 'Python for analysts (pandas)',
   },
   ru: {
     sql: 'SQL для аналитика',
     domain: 'Аналитика как профессия',
     model: 'Модель данных и BI',
-    python: 'pandas для аналитика',
+    python: 'Python для аналитика (pandas)',
   },
 };
 

@@ -253,7 +253,7 @@ const EN: OverviewPageContent = {
       note: 'How flat exports become a model a report can be trusted on. Star schema, grain, filter context, DAX.',
     },
     {
-      name: 'pandas for analysts',
+      name: 'Python for analysts (pandas)',
       count: tasksLabel(tasksIn('python')),
       note: 'The slice of Python that handles data, each technique placed next to its SQL equivalent. Your code runs.',
     },

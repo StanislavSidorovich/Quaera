@@ -36,7 +36,7 @@ and translated to English: interface, tasks, technique cards.
 | SQL for analysts | 121 | 20 | The query runs against SQLite (sql.js) |
 | Analytics as a profession | 79 | 20 | Multiple choice with a full explanation (`predict`) plus arranging the steps of an argument (`order`) |
 | Data model and BI | 77 | 19 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) |
-| pandas for analysts | 102 | 19 | The code runs in Python (Pyodide) |
+| Python for analysts (pandas) | 102 | 19 | The code runs in Python (Pyodide) |
 
 **Story mode — an analyst's work week.** Seven six-day weeks, forty-two
 days, in three parts: an intern's first two weeks (SELECT, filters, joins),
