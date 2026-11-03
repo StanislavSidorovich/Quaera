@@ -33,6 +33,7 @@ import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
 import { StoryWhereYouAre } from './ui/StoryWhereYouAre';
+import { StoryWeekArt } from './ui/StoryWeekArt';
 import { DayOnePreview } from './ui/DayOnePreview';
 import { ToolsCompare } from './ui/ToolsCompare';
 import { DataMap } from './ui/DataMap';
@@ -3856,8 +3857,13 @@ function Home({
           <div className="home-top-wrap">
             <div className={`home-top${ready ? '' : ' home-top-solo'}`}>
             <div className="card story-invite home-top-story">
-              <p className="story-invite-badge">{t.storyMode.badge}</p>
-              <h2>{t.storyMode.homeTitle}</h2>
+              <div className="story-invite-head">
+                <div>
+                  <p className="story-invite-badge">{t.storyMode.badge}</p>
+                  <h2>{t.storyMode.homeTitle}</h2>
+                </div>
+                <StoryWeekArt reachedId={storyReachedId} />
+              </div>
               <p className="brief">{t.storyMode.homeBody}</p>
               <button className="btn" onClick={onOpenStoryMode}>
                 {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}

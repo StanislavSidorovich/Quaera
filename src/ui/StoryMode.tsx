@@ -16,6 +16,7 @@ import {
   storyWeeksLeftInPart,
   storyWeekOf,
   type StoryCampaign,
+  type StoryMessage,
   type StoryMission,
 } from '../content/storymode';
 import type { Progress } from '../srs/store';
@@ -24,7 +25,7 @@ import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
 import { storyCampaign } from '../content/storymode';
-import { speakLines, stopSpeaking, useEnglishVoice, voiceFlagOn } from '../voice';
+import { speakLines, stopSpeaking, useVoicePair, voiceFlagOn, type SpokenLine } from '../voice';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -234,18 +235,26 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
  * по-английски. Без флага, без API или без английского голоса не рисуется.
  * Речь обрывается при уходе с экрана (смена фазы/дня размонтирует кнопку).
  */
-function VoiceButton({ lines }: { lines: string[] }) {
+function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: number | null) => void }) {
   const { t } = useI18n();
   const on = useMemo(() => voiceFlagOn(), []);
-  const voice = useEnglishVoice(on);
+  const pair = useVoicePair(on);
   const [playing, setPlaying] = useState(false);
-  useEffect(() => () => stopSpeaking(), []);
-  const key = lines.join('|');
+  const key = lines.map((l) => l.speaker + l.text).join('|');
   useEffect(() => {
     stopSpeaking();
     setPlaying(false);
-  }, [key]);
-  if (!on || !voice || lines.length === 0) return null;
+    onActive(null);
+    return () => {
+      stopSpeaking();
+      onActive(null);
+    };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!on || !pair || lines.length === 0) return null;
+  const end = () => {
+    setPlaying(false);
+    onActive(null);
+  };
   return (
     <button
       type="button"
@@ -254,10 +263,10 @@ function VoiceButton({ lines }: { lines: string[] }) {
       onClick={() => {
         if (playing) {
           stopSpeaking();
-          setPlaying(false);
+          end();
         } else {
           setPlaying(true);
-          speakLines(lines, voice, () => setPlaying(false));
+          speakLines(lines, pair, onActive, end);
         }
       }}
     >
@@ -412,6 +421,8 @@ export function StoryMode({
    * и прошёл его снова.
    */
   const recorded = useRef(new Set<string>());
+  /** Реплика, которая звучит сейчас (проба озвучки), для подсветки. */
+  const [voiceIdx, setVoiceIdx] = useState<number | null>(null);
 
   const after = storyPhaseAfter(campaign, mission, phase);
 
@@ -541,13 +552,20 @@ export function StoryMode({
   /* Английская версия реплик той же миссии (проба озвучки). */
   const enMission = storyCampaign('en').missions.find((m) => m.id === mission.id);
   const stripCode = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ');
-  const voiceLines =
+  const asLines = (msgs: StoryMessage[] | undefined): SpokenLine[] => {
+    const who: string[] = [];
+    return (msgs ?? []).map((m) => {
+      if (!who.includes(m.from)) who.push(m.from);
+      return { text: stripCode(m.text), speaker: who.indexOf(m.from) };
+    });
+  };
+  const voiceLines: SpokenLine[] =
     phase.kind === 'brief'
-      ? (enMission?.messages.map((m) => stripCode(m.text)) ?? [])
+      ? asLines(enMission?.messages)
       : phase.kind === 'interlude'
-        ? (enMission?.steps[phase.step]?.interlude?.messages.map((m) => stripCode(m.text)) ?? [])
+        ? asLines(enMission?.steps[phase.step]?.interlude?.messages)
         : phase.kind === 'reflection'
-          ? (enMission?.reflection.map(stripCode) ?? [])
+          ? (enMission?.reflection ?? []).map((p) => ({ text: stripCode(p), speaker: 0 }))
           : [];
 
   return (
@@ -669,10 +687,10 @@ export function StoryMode({
                 )}
               </details>
             )}
-            <VoiceButton lines={voiceLines} />
+            <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
-                <div className="story-mode-msg" key={i}>
+                <div className={'story-mode-msg' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
                   <p className="story-mode-from">{m.from}</p>
                   <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                 </div>
@@ -691,10 +709,10 @@ export function StoryMode({
           */}
         {phase.kind === 'interlude' && interlude && (
           <>
-            <VoiceButton lines={voiceLines} />
+            <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {interlude.messages.map((m, i) => (
-                <div className="story-mode-msg" key={i}>
+                <div className={'story-mode-msg' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
                   <p className="story-mode-from">{m.from}</p>
                   <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                 </div>
@@ -721,7 +739,7 @@ export function StoryMode({
         {phase.kind === 'reflection' && (
           <>
             <h2>{t.storyMode.reflectionTitle}</h2>
-            <VoiceButton lines={voiceLines} />
+            <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             {mission.reflection.map((p, i) => (
               <p className="story-mode-para" key={i}>
                 {glossaryRendered[i] ?? p}

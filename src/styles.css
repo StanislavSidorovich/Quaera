@@ -5701,6 +5701,12 @@ table.sample td.null {
   border-left: 2px solid color-mix(in srgb, var(--accent) 55%, var(--text));
 }
 
+.story-mode-msg--speaking {
+  border-left-width: 4px;
+  padding-left: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 .story-mode-from {
   margin: 0 0 2px;
   font-size: var(--fs-micro);

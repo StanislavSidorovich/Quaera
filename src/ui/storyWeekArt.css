@@ -1,0 +1,88 @@
+/*
+ * Шапка карточки кампании: заголовок слева, неделя рисунком справа
+ * (ui/StoryWeekArt.tsx). Рисунок стоит в строке с заголовком, а не отдельным
+ * блоком, чтобы не прибавлять карточке высоты: слева у неё и так больше, чем
+ * справа у карты данных. Не помещается рядом (узкая колонка, телефон) —
+ * переносится под заголовок.
+ *
+ * Отдельный файл, а не styles.css: тот правят параллельные сессии.
+ */
+.story-invite-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0 0 6px;
+}
+
+.story-invite-head > div {
+  min-width: 0;
+}
+
+.story-invite-head h2 {
+  margin-bottom: 0;
+}
+
+.week-art {
+  flex: 0 0 auto;
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 200 / 56;
+  color: var(--text-dim);
+}
+
+.week-art-panel {
+  fill: var(--bg-sunken);
+  stroke: var(--line);
+}
+
+.week-art-num {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: currentColor;
+}
+
+.week-art-fill rect {
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+.week-art-line path,
+.week-art-line polyline,
+.week-art-line rect,
+.week-art-line circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.week-art-line .week-art-base {
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.week-art-decision {
+  color: var(--ok);
+}
+
+/* Пройденные приглушены, текущий день выделен акцентом (только при начатой кампании). */
+.week-art-day.done {
+  opacity: 0.55;
+}
+
+.week-art-day.now {
+  color: var(--accent);
+}
+
+.week-art-day.now .week-art-panel {
+  stroke: var(--accent);
+  fill: color-mix(in srgb, var(--accent) 12%, var(--bg-sunken));
+}
+
+.week-art-day.now .week-art-decision {
+  color: var(--accent);
+}
