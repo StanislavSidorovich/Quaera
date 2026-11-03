@@ -32,6 +32,7 @@ import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
+import { DayOnePreview } from './ui/DayOnePreview';
 import { ToolsCompare } from './ui/ToolsCompare';
 import { DataMap } from './ui/DataMap';
 import { Sandbox } from './ui/Sandbox';
@@ -3846,6 +3847,8 @@ function Home({
                 <button className="btn" onClick={onOpenStoryMode}>
                   {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
                 </button>
+                {/* Что ждёт за кнопкой; только в две колонки и до первого шага, довод в ui/DayOnePreview.tsx. */}
+                {!storyStarted && <DayOnePreview />}
                 {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
                 {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} />}
               </div>

@@ -669,6 +669,13 @@ export const en = {
     weekShort: (n: number) => `Week ${n}`,
     homeStartBtn: 'Start day one',
     homeResumeBtn: 'Resume the case',
+    /** См. комментарий в ru.ts. */
+    dayOneTitle: 'Your first day',
+    dayOneDay: 'day',
+    dayOneEvening: 'evening',
+    dayOneTasks: (n: number) =>
+      `${n} task${n === 1 ? '' : 's'} on the data: first you read someone else's query, then you write your own`,
+    dayOneFound: 'Finding of the day',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
     toTask: 'Take on the task',

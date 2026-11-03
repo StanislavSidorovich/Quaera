@@ -5430,6 +5430,10 @@ table.sample td.null {
     margin: 0;
   }
 
+  .story-invite-body .day-one {
+    display: block;
+  }
+
   .story-invite-body .story-entry-btn {
     padding: 10px 14px;
     background: var(--bg-sunken);
@@ -5440,6 +5444,93 @@ table.sample td.null {
   .story-invite-body .story-entry-btn:hover {
     border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
   }
+}
+
+/*
+ * Первый день кампании (ui/DayOnePreview.tsx): только в две колонки, где
+ * под кнопкой есть место; в столбик карточка и так едва влезает на экран.
+ * Тихо, без акцента: строка времени и тонкая линия слева, чтобы блок
+ * не спорил ни с кнопкой над ним, ни с окном задания рядом.
+ */
+.day-one {
+  display: none;
+  margin: 28px 0 0;
+}
+
+.day-one-title {
+  margin: 0 0 10px;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.day-one-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-one-steps li {
+  position: relative;
+  display: grid;
+  /* 76px: «вечером» и «evening» моноширинным без вылета за край. */
+  grid-template-columns: min(76px, 100%) minmax(0, 1fr);
+  column-gap: 14px;
+  padding: 0 0 14px;
+}
+
+.day-one-steps li:last-child {
+  padding-bottom: 0;
+}
+
+/* Линия дня между строками: точка у каждой, черта до следующей. */
+.day-one-steps li::before {
+  content: '';
+  position: absolute;
+  left: 83px;
+  top: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.day-one-steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 87px;
+  top: 16px;
+  /* До точки следующей строки (её top 7px), а не до низа своей. */
+  bottom: -7px;
+  border-left: 1px solid var(--line);
+}
+
+.day-one-time {
+  grid-row: span 2;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  text-align: right;
+  padding-right: 12px;
+}
+
+.day-one-who,
+.day-one-text {
+  grid-column: 2;
+  padding-left: 12px;
+}
+
+.day-one-who {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+.day-one-text {
+  font-size: var(--fs-small);
+  color: var(--text);
 }
 
 .story-entry-title {
