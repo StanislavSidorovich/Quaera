@@ -8678,7 +8678,7 @@ details.story-known > summary small {
 }
 
 /*
- * Вход на карту данных (см. DataMapTeaser): мини-путь из шести слоёв под карточкой занятия.
+ * Вход на карту данных (см. DataMapTeaser): мини-путь из шести слоёв, сеткой 3×2 в боковой колонке.
  * Цвет даёт сам путь (палитра «Теги» и полоски слоёв из схем карты), заливки всего блока нет.
  */
 .home-map {
@@ -8697,7 +8697,7 @@ details.story-known > summary small {
 
 .home-map-chain {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 0 0 8px;
   padding: 0;
@@ -8742,20 +8742,6 @@ details.story-known > summary small {
   --tone-ink: var(--text);
 }
 
-/* Стрелка между звеньями в зазоре сетки. */
-.home-map-chain li:not(:last-child)::after {
-  content: '›';
-  position: absolute;
-  right: -8px;
-  top: 12px;
-  width: 8px;
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 14px;
-  line-height: 1;
-  pointer-events: none;
-}
-
 .home-map-chain button {
   display: flex;
   flex-direction: column;
@@ -8763,14 +8749,14 @@ details.story-known > summary small {
   gap: 6px;
   width: 100%;
   min-width: 0;
-  padding: 7px 4px 7px 7px;
+  padding: 8px 8px 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
   border-left: 4px solid var(--tone);
   background: var(--bg-raised);
   color: var(--text);
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.25;
   text-align: left;
   cursor: pointer;
@@ -8795,8 +8781,8 @@ details.story-known > summary small {
 
 .home-map-chain .arch-here {
   margin-left: 0;
-  padding: 1px 5px;
-  font-size: 9px;
+  padding: 1px 6px;
+  font-size: 10px;
   white-space: nowrap;
 }
 
@@ -8811,14 +8797,14 @@ details.story-known > summary small {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 2px;
-  border-radius: 10px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 3px;
+  border-radius: 12px;
   background: var(--tone-bg);
   border: 1px solid var(--tone);
   color: var(--tone-ink);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -8853,10 +8839,6 @@ details.story-known > summary small {
   .home-map-chain {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
-  }
-
-  .home-map-chain li:not(:last-child)::after {
-    display: none;
   }
 
   .home-map-chain button {
