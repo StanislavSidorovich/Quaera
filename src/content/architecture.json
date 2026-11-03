@@ -310,9 +310,46 @@
         "role": "ae",
         "who": { "ru": "Analytics engineer", "en": "Analytics engineer" },
         "text": {
-          "ru": "Число точек честное, потому что при чистке одна сеть, записанная двумя способами, стала одной точкой.",
-          "en": "The outlet count is honest because cleaning turned one chain spelled two ways into one outlet."
-        }
+          "ru": "Можно ли верить числу 37? В сырой выгрузке Nettora 41 точка записана под 47 названиями: одна и та же точка бывает «Ichiba #1026» и «Itiba #1026». Без склейки по ключу смена написания выглядела бы как «одна точка ушла, другая пришла», а после склейки все 37 ушедших остаются настоящими магазинами.",
+          "en": "Can we trust the 37? In the raw Nettora rows 41 outlets appear under 47 names: the same outlet can be \"Ichiba #1026\" and \"Itiba #1026\". Without joining on the key, a changed spelling would look like one outlet leaving and another arriving; after the join, all 37 that left are real shops."
+        },
+        "example": {
+          "caption": {
+            "ru": "Две сырые строки `staging_raw_sellout` и результат чистки. Из шести точек с двойным написанием три входят в ушедшие 37.",
+            "en": "Two raw rows of `staging_raw_sellout` and the cleaned result. Of the six outlets with a double spelling, three are among the 37 that left."
+          },
+          "labels": {
+            "before": {
+              "ru": "Как пришло",
+              "en": "As it arrived"
+            },
+            "after": {
+              "ru": "После чистки",
+              "en": "After cleaning"
+            },
+            "key": {
+              "ru": "Ключ точки",
+              "en": "Outlet key"
+            }
+          },
+          "sql": "SELECT r.raw_id, r.customer_name, r.source_file, c.customer_id\nFROM staging_raw_sellout r\nLEFT JOIN dim_customer c\n  ON c.customer_name = REPLACE(TRIM(r.customer_name), 'Itiba', 'Ichiba')\nWHERE r.raw_id IN (1022, 1023)\nORDER BY r.raw_id;",
+          "expect": [
+            [
+              1022,
+              "Ichiba #1026",
+              "export_2024-02.csv",
+              26
+            ],
+            [
+              1023,
+              "Itiba #1026",
+              "export_2024-07.csv",
+              26
+            ]
+          ]
+        },
+        "sql": "WITH raw AS (\n  SELECT DISTINCT TRIM(r.customer_name) AS name, c.customer_id\n  FROM staging_raw_sellout r\n  JOIN dim_customer c\n    ON c.customer_name = REPLACE(TRIM(r.customer_name), 'Itiba', 'Ichiba')\n  WHERE UPPER(r.sku_code) LIKE 'NETT%'\n), doubled AS (\n  SELECT customer_id FROM raw GROUP BY customer_id HAVING COUNT(*) > 1\n), jan AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-01%'\n), dec AS (\n  SELECT DISTINCT s.customer_id FROM fact_sellout s\n  JOIN dim_product p ON p.product_id = s.product_id\n  WHERE p.brand = 'Nettora' AND s.week_start LIKE '2025-12%'\n), lost AS (\n  SELECT customer_id FROM jan EXCEPT SELECT customer_id FROM dec\n)\nSELECT (SELECT COUNT(*) FROM raw) AS names,\n       (SELECT COUNT(DISTINCT customer_id) FROM raw) AS outlets,\n       (SELECT COUNT(*) FROM doubled) AS doubled,\n       (SELECT COUNT(*) FROM doubled WHERE customer_id IN (SELECT customer_id FROM lost)) AS doubled_lost,\n       (SELECT COUNT(*) FROM lost) AS lost;",
+        "expect": [[47, 41, 6, 3, 37]]
       },
       {
         "layer": "bronze",

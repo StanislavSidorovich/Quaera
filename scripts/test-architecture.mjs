@@ -177,6 +177,8 @@ arch.trace.steps.forEach((s, i) => {
     const res = db.exec(s.sql);
     if (!res.length || !res[0].values.length) fail(`шаг ${i + 1}.sql`, 'запрос выполнился, но вернул пустой результат');
     else ok(`шаг ${i + 1}.sql`, `${res[0].values.length} строк: ${JSON.stringify(res[0].values[0])}`);
+    if (s.expect && JSON.stringify(res[0]?.values) !== JSON.stringify(s.expect)) fail(`шаг ${i + 1}.expect`, `запрос: ${JSON.stringify(res[0]?.values)}
+  файл:   ${JSON.stringify(s.expect)}`);
   } catch (e) {
     fail(`шаг ${i + 1}.sql`, e.message);
   }
@@ -195,6 +197,28 @@ arch.trace.steps.forEach((s, i) => {
   файл:   ${have}`);
   }
 }
+// Мини-пример шага: строки совпадают с запросом, ключ один на обе записи, а числа в тексте взяты из expect шага.
+arch.trace.steps.forEach((s, i) => {
+  if (!s.example) return;
+  const w = `шаг ${i + 1}.example`;
+  const ex = s.example;
+  checkText(`${w}.caption`, ex.caption);
+  for (const k of ['before', 'after', 'key']) checkText(`${w}.labels.${k}`, ex.labels?.[k]);
+  const got = db.exec(ex.sql)[0]?.values ?? [];
+  check(`${w}: строки совпали с запросом`, JSON.stringify(got) === JSON.stringify(ex.expect), `запрос: ${JSON.stringify(got)}
+  файл:   ${JSON.stringify(ex.expect)}`);
+  check(`${w}: у двух написаний один ключ`, ex.expect.length === 2 && ex.expect[0][3] !== null && ex.expect[0][3] === ex.expect[1][3] && ex.expect[0][1] !== ex.expect[1][1], 'написания совпали или ключи разные');
+  if (!s.expect) return fail(w, 'у шага с примером нет expect с числами текста');
+  const [names, outlets, doubled, doubledLost, lost] = s.expect[0];
+  for (const loc of ['ru', 'en']) {
+    for (const v of [names, outlets, lost]) check(`${w}.text.${loc}: число ${v} из запроса`, s.text[loc].includes(String(v)), `нет ${v} в тексте`);
+    for (const n of ex.expect.map((r) => r[1])) check(`${w}.text.${loc}: написание ${n}`, s.text[loc].includes(n), `нет ${n} в тексте`);
+    // Подпись называет числа словами: шесть и три; слова привязаны к значениям из запроса.
+    const words = { ru: ['шести', 'три'], en: ['six', 'three'] }[loc];
+    check(`${w}.caption.${loc}: числа ${doubled} и ${doubledLost} из запроса`, doubled === 6 && doubledLost === 3 && words.every((x) => ex.caption[loc].includes(x)), 'подпись и expect разошлись');
+  }
+  check(`${w}: ушедших столько же, сколько в шаге 4`, lost === 37 && arch.trace.steps.some((x) => x.text.ru.includes(`Ушли ${lost}`)), 'число ушедших разошлось с шагом 4');
+});
 check('запросы: у маршрута есть хотя бы один', queries > 0, 'ни одного sql в маршруте');
 
 // ── Проект от и до ─────────────────────────────────────────────────────────

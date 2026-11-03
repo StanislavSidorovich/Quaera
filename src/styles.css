@@ -10230,7 +10230,8 @@ figure.arch-figure {
   font-weight: 600;
 }
 
-.arch-art-table tr:last-child td {
+.arch-art-table tr:last-child td,
+.arch-art-table tr:last-child th[scope='row'] {
   border-bottom: 0;
 }
 
@@ -10322,6 +10323,22 @@ figure.arch-figure {
   height: auto;
 }
 
+/* Мини-пример шага маршрута: первая колонка называет стадию, строка «после чистки» выделена. */
+.arch-example {
+  margin: 10px 0 12px;
+}
+
+.arch-art-table th[scope='row'] {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.arch-example-after td,
+.arch-example-after th {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* Узкий экран: строка bronze разворачивается в пары «колонка: значение», иначе пробелы, регистр и файл уезжают за край таблицы. */
 @media (max-width: 759px) {
   .arch-art-table,
@@ -10357,6 +10374,16 @@ figure.arch-figure {
   .arch-art-table td::before {
     content: attr(data-label);
     color: var(--text-dim);
+  }
+
+  .arch-art-table th[scope='row'] {
+    display: block;
+    padding: 1px 10px;
+    border: 0;
+  }
+
+  .arch-art-table td.arch-example-empty {
+    display: none;
   }
 }
 

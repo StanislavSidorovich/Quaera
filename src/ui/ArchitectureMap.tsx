@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { architecture } from '../content/architecture';
-import type { ArchLayer, LensId } from '../content/architecture';
+import type { ArchLayer, ArchStepExample, LensId } from '../content/architecture';
 import { careerRole, careerStages } from '../content/career';
 import { skillLevel } from '../career/readiness';
 import type { Progress } from '../srs/store';
@@ -56,6 +56,51 @@ function Rich({ text }: { text: string }) {
     <>
       {text.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <Fragment key={i}>{part}</Fragment>))}
     </>
+  );
+}
+
+/** Мини-пример шага: две сырые строки как пришли и одна после чистки с ключом точки. */
+function StepExample({ ex }: { ex: ArchStepExample }) {
+  const { locale } = useI18n();
+  const L = ex.labels;
+  const cols = ['raw_id', 'customer_name', 'source_file', 'customer_id'];
+  const [first] = ex.expect;
+  const rows: { stage: string; cells: (string | number | null)[] }[] = [
+    ...ex.expect.map((r) => ({ stage: L.before[locale], cells: [r[0], r[1], r[2], null] })),
+    { stage: L.after[locale], cells: [null, first[1], null, first[3]] },
+  ];
+  return (
+    <div className="arch-example">
+      <p className="muted arch-art-caption">
+        <Rich text={ex.caption[locale]} />
+      </p>
+      <div className="arch-art-scroll">
+        <table className="arch-art-table">
+          <thead>
+            <tr>
+              <th scope="col" />
+              {cols.map((c) => (
+                <th key={c} scope="col">
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className={i === rows.length - 1 ? 'arch-example-after' : undefined}>
+                <th scope="row">{r.stage}</th>
+                {r.cells.map((v, j) => (
+                  <td key={j} data-label={cols[j]} className={v === null ? 'arch-example-empty' : undefined}>
+                    {v === null ? '' : typeof v === 'string' ? v : String(v)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -382,6 +427,7 @@ export function ArchitectureMap({
       <p>
         <Rich text={current.text[locale]} />
       </p>
+      {current.example && <StepExample ex={current.example} />}
       {current.figure && <TraceFigure kind={current.figure} />}
       {current.sql && (
         <>

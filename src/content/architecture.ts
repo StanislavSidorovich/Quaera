@@ -40,12 +40,24 @@ export interface ArchLayer {
   };
 }
 
+/** Две сырые строки и ключ, который их склеивает; колонки: raw_id, название, файл, ключ. */
+export interface ArchStepExample {
+  caption: Text;
+  labels: Record<'before' | 'after' | 'key', Text>;
+  sql: string;
+  expect: [number, string, string, number][];
+}
+
 export interface ArchStep {
   layer: string;
   role: string | null;
   who: Text;
   text: Text;
   sql?: string;
+  /** Ожидаемый результат `sql`: если задан, `test:architecture` сверяет его построчно (число в тексте шага не расходится с базой). */
+  expect?: (string | number | null)[][];
+  /** Мини-пример «до → после»: сырые строки как пришли и ключ точки после чистки. */
+  example?: ArchStepExample;
   /** График под текстом шага: линия штук по месяцам или разложение «точки × штук на точку». */
   figure?: 'line' | 'split';
 }
