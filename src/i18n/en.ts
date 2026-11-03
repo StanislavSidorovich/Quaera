@@ -668,9 +668,6 @@ export const en = {
     homeTitle: 'An analyst work week',
     homeBody:
       'One case a week: the client comes in with a question, you answer with data.',
-    /** См. довод в ru.ts: хвост абзаца показывается только там, где рядом с прозой есть место. */
-    homeBodyMore:
-      'A technique arrives exactly where the case runs into it, with a brief in the morning and a look at the finding in the evening. There are four cases, and by the last one you work in both SQL and pandas.',
     /** См. комментарий в ru.ts. */
     weekShort: (n: number) => `Week ${n}`,
     homeStartBtn: 'Start day one',
@@ -682,6 +679,15 @@ export const en = {
     dayOneTasks: (n: number) =>
       `${n} task${n === 1 ? '' : 's'} on the data: first you read someone else's query, then you write your own`,
     dayOneFound: 'Finding of the day',
+    /** См. комментарий в ru.ts. */
+    whereTitle: 'Where you are now',
+    whereWeekAria: (n: number, state: 'done' | 'now' | 'ahead') =>
+      `Week ${n}, ${state === 'done' ? 'done' : state === 'now' ? 'current' : 'ahead'}`,
+    whereNow: (week: number, day: number, days: number) => `Week ${week}, day ${day} of ${days}`,
+    whereStepsAria: 'Steps of the day',
+    whereStepBrief: 'Brief',
+    whereStepTasks: (n: number) => `${n} task${n === 1 ? '' : 's'}`,
+    whereStepWrap: 'Verdict',
     /** См. комментарий в ru.ts: подпись выводится из следующего экрана. */
     next: 'Next',
     toTask: 'Take on the task',

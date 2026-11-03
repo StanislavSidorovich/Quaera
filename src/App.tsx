@@ -32,6 +32,7 @@ import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
+import { StoryWhereYouAre } from './ui/StoryWhereYouAre';
 import { DayOnePreview } from './ui/DayOnePreview';
 import { ToolsCompare } from './ui/ToolsCompare';
 import { DataMap } from './ui/DataMap';
@@ -2510,6 +2511,7 @@ export default function App() {
               /* Вход в кампанию — только когда её миссия разрешается в задания. */
               onOpenStoryMode={storyMissionTrack ? openStoryMode : null}
               storyStarted={storyReachedId !== null}
+              storyReachedId={storyReachedId}
               onOpenStoryPart={storyMissionTrack ? openStoryAtPart : null}
               /*
                * Незаконченное занятие показываем только на главной его же
@@ -3421,6 +3423,7 @@ function Home({
   storyAt,
   onOpenStoryMode,
   storyStarted,
+  storyReachedId,
   onOpenStoryPart,
   resume,
   onResume,
@@ -3478,6 +3481,7 @@ function Home({
    * человек не начинал.
    */
   storyStarted: boolean;
+  storyReachedId: string | null;
   /** Вход сразу в часть кампании (id части); null — как у onOpenStoryMode. */
   onOpenStoryPart: ((partId: string) => void) | null;
   /** Где человек на линии: `at` — индекс текущей миссии, равен `total` у пройденной. null — линии нет. */
@@ -3834,31 +3838,45 @@ function Home({
        */}
       {onOpenStoryMode &&
         (isNewUser ? (
-          <div className="card story-invite">
-            <p className="story-invite-badge">{t.storyMode.badge}</p>
-            <h2>{t.storyMode.homeTitle}</h2>
-            <div className="story-invite-body">
-              <div>
-                <p className="brief">
-                  {t.storyMode.homeBody}
-                  {/* Хвост абзаца — только там, где рядом с прозой стоит карта; довод и замер в ru.ts. */}
-                  <span className="story-invite-more"> {t.storyMode.homeBodyMore}</span>
-                </p>
-                <button className="btn" onClick={onOpenStoryMode}>
-                  {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
-                </button>
-                {/* Что ждёт за кнопкой; только в две колонки и до первого шага, довод в ui/DayOnePreview.tsx. */}
-                {!storyStarted && <DayOnePreview />}
-                {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
-                {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} />}
+          /*
+           * Верх главной в две колонки (2026-11-03): слева компактная карточка
+           * кампании, справа карта данных. Две двери рядом закрывают вопрос
+           * «на чистом профиле ни блок карты, ни кнопка занятия не в первом
+           * экране»: карта стояла в .dash-side на y≈1300, на два экрана ниже
+           * сгиба 1366×768.
+           *
+           * Пример проверки (окно sql-006) переехал из карточки в полосу под
+           * колонками и показывается только до первого шага: он доказывает
+           * заголовок «ответ сверяется с данными» тому, кто ещё ничего не
+           * решал, а вернувшемуся занимает высоту.
+           *
+           * В столбик (ниже ~780px контейнера) кампания идёт первой, карта второй:
+           * довод у `.home-top-wrap` в styles.css.
+           */
+          <div className="home-top-wrap">
+            <div className={`home-top${ready ? '' : ' home-top-solo'}`}>
+            <div className="card story-invite home-top-story">
+              <p className="story-invite-badge">{t.storyMode.badge}</p>
+              <h2>{t.storyMode.homeTitle}</h2>
+              <p className="brief">{t.storyMode.homeBody}</p>
+              <button className="btn" onClick={onOpenStoryMode}>
+                {storyStarted ? t.storyMode.homeResumeBtn : t.storyMode.homeStartBtn}
+              </button>
+              {/* Что ждёт за кнопкой или где человек остановился; только в две колонки, довод в ui/DayOnePreview.tsx. */}
+              {storyStarted && storyReachedId ? <StoryWhereYouAre reachedId={storyReachedId} /> : <DayOnePreview />}
+              {/* Тише основной кнопки и только до первого шага: знающему SELECT и JOIN не нужны две недели азов. */}
+              {!storyStarted && onOpenStoryPart && <StoryEntry onOpenPart={onOpenStoryPart} row />}
+            </div>
+            {ready && (
+              <div className="home-top-map">
+                <DataMapTeaser onOpen={onOpenMap} />
               </div>
-              {/*
-               * Справа — окно с настоящим заданием, а не карта недель кампании
-               * (была здесь до 2026-10-11): новичку сетка «Неделя 1…7» ничего
-               * не говорит, а разбор ошибки показывает, чем тренажёр отличается.
-               * Довод целиком в ui/TaskShowcase.tsx.
-               */}
-              <TaskShowcase />
+            )}
+            {!storyStarted && (
+              <div className="home-top-proof">
+                <TaskShowcase />
+              </div>
+            )}
             </div>
           </div>
         ) : (
@@ -4209,7 +4227,7 @@ function Home({
            * колонке на чистом профиле он уходил на 1773 px вниз, а здесь стоит вровень с карточкой
            * занятия и виден рядом с ней.
            */}
-          {ready && <DataMapTeaser onOpen={onOpenMap} />}
+          {ready && !(isNewUser && onOpenStoryMode) && <DataMapTeaser onOpen={onOpenMap} />}
           <div className="card">
             <h2>{t.home.skillMapTitle}</h2>
             {/*

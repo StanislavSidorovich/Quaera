@@ -5173,46 +5173,155 @@ table.sample td.null {
 }
 
 /*
- * Проза и окно задания рядом, когда карточке хватает места, в столбик ниже.
+ * Верх главной в две колонки (App.tsx, `.home-top`): слева компактная карточка
+ * кампании, справа карта данных, под ними полоса с примером проверки (только
+ * на чистом профиле). Порог 780px контейнера = 2 × 380 + gap 20, тот же, что у
+ * `.dashboard` ниже: ниже него колонки друг под другом.
  *
- * Порог 820px контейнера, а не прежние 640 (так было при карте недель
- * шириной ~400px, у которой текст ничего не терял): окну задания нужно
- * не меньше 340px, чтобы строка кода в 36 знаков не переносилась, и при
- * 640 абзацу оставалось бы ~250px — три слова в строку. Вторая колонка
- * ограничена сверху 420px: шире окно только растягивает пустоту справа
- * от коротких строк кода, а ширину отдаёт абзацу, у которого её и так мало.
+ * Контейнерный запрос, а не медиазапрос: колонке нужно место, которое
+ * съедает боковое меню и zoom крупного шрифта (довод в scripts/test-css-width.mjs).
+ * В столбик первой идёт кампания и на чистом профиле тоже: карта данных первой
+ * (так предлагал аудит) уводила кнопку «Начать» на y=1091 при сгибе 812 на 375×812,
+ * а правило «низ кнопки кампании выше сгиба» держится с 2026-08-20. Вернуть карту
+ * наверх в столбике: `order: -1` у `.home-top-map` на чистом профиле (и сброс
+ * в контейнерном запросе), цена названа выше.
  */
-.story-invite-body {
-  display: grid;
-  gap: 20px;
+.home-top-wrap {
+  container: top / inline-size;
 }
 
-@container (min-width: 820px) {
-  .story-invite-body {
-    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
-    /* start, а не center: окно выше прозы, и по центру абзац отрывался
-       от заголовка карточки над сеткой (проверено на 1440, 2026-10-11). */
-    align-items: start;
-    gap: 32px;
+.home-top {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.home-top > .card,
+.home-top-map > .card {
+  margin: 0;
+}
+
+@container top (min-width: 780px) {
+  .home-top:not(.home-top-solo) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
   }
+
+  .home-top-map {
+    display: flex;
+  }
+
+  .home-top-map > .card {
+    flex: 1;
+  }
+
+  .home-top-proof {
+    grid-column: 1 / -1;
+  }
+
+  .home-top .story-where,
+  .home-top .day-one {
+    display: block;
+  }
+
+  /* Вход в части 2 и 3 свёрнут и прижат к низу карточки: развёрнутый, он был выше самого дня (176px против 188). */
+  .home-top-story .story-entry-row {
+    margin: auto 0 0;
+    padding-top: 12px;
+  }
+}
+
+/* Правило ниже по файлу прячет .story-entry-row на десктопе (там он жил под строкой кампании); в карточке он нужен всегда. */
+.home-top-story .story-entry-row {
+  display: block;
+  margin: 12px 0 0;
+}
+
+/* Окно примера занимает всю полосу, но не растягивает строки кода шире 560px. */
+.home-top-proof .task-showcase {
+  max-width: 560px;
 }
 
 /*
- * Хвост абзаца живёт ровно там же, где вторая колонка: рядом с окном
- * место есть, в столбик его нет. В столбик карточка целиком не влезала
- * на первый экран при крупном шрифте — замер и выбор «резать текст»
- * описаны в i18n/ru.ts у homeBodyMore. Сам хвост рассказывает про
- * устройство кампании, а выбор «начать или пролистать» на телефоне
- * решает первое предложение.
+ * «Где вы сейчас» (ui/StoryWhereYouAre.tsx): тихий блок под кнопкой начатой
+ * кампании, как первый день у новичка. Только в две колонки; в столбик
+ * карточка и так едва влезает на экран, а кнопка «Продолжить» сама
+ * говорит, куда идти.
  */
-.story-invite-more {
+.story-where {
   display: none;
+  margin: 24px 0 0;
 }
 
-@container (min-width: 820px) {
-  .story-invite-more {
-    display: inline;
-  }
+.story-where-title {
+  margin: 0 0 10px;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.story-where-weeks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.story-where-week {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.story-where-week.done {
+  background: var(--bg-sunken);
+  color: var(--text);
+}
+
+.story-where-week.now {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.story-where-now {
+  margin: 0 0 2px;
+  font-size: var(--fs-text);
+  font-weight: 600;
+}
+
+.story-where-q {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.story-where-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+
+.story-where-steps li + li::before {
+  content: '→';
+  margin: 0 8px;
+  color: var(--text-dim);
 }
 
 /*
@@ -5405,56 +5514,14 @@ table.sample td.null {
 }
 
 /*
- * В карточке новичка рядом с окном задания (ширина контейнера от 820px) левая
- * колонка вдвое ниже правой, и под ссылками оставалась пустота. Колонка
- * растягивается на высоту окна, а блок входа прижат к её низу и набран
- * двумя карточками: пустое место оказывается между главной кнопкой и
- * входом, то есть читается разделителем, а не недосмотром. Абзац с кнопкой
- * остаётся вверху (по центру он отрывался от заголовка, см. выше).
- */
-@container (min-width: 820px) {
-  .story-invite-body > div:first-child {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .story-invite-body .story-entry {
-    margin-top: auto;
-    padding-top: 24px;
-    display: grid;
-    gap: 8px;
-  }
-
-  .story-invite-body .story-entry-title {
-    margin: 0;
-  }
-
-  .story-invite-body .day-one {
-    display: block;
-  }
-
-  .story-invite-body .story-entry-btn {
-    padding: 10px 14px;
-    background: var(--bg-sunken);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-  }
-
-  .story-invite-body .story-entry-btn:hover {
-    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
-  }
-}
-
-/*
- * Первый день кампании (ui/DayOnePreview.tsx): только в две колонки, где
+ * Первый день кампании (ui/DayOnePreview.tsx): только в две колонки (`.home-top`), где
  * под кнопкой есть место; в столбик карточка и так едва влезает на экран.
  * Тихо, без акцента: строка времени и тонкая линия слева, чтобы блок
  * не спорил ни с кнопкой над ним, ни с окном задания рядом.
  */
 .day-one {
   display: none;
-  margin: 28px 0 0;
+  margin: 20px 0 0;
 }
 
 .day-one-title {
@@ -5478,7 +5545,7 @@ table.sample td.null {
   /* 76px: «вечером» и «evening» моноширинным без вылета за край. */
   grid-template-columns: min(76px, 100%) minmax(0, 1fr);
   column-gap: 14px;
-  padding: 0 0 14px;
+  padding: 0 0 10px;
 }
 
 .day-one-steps li:last-child {

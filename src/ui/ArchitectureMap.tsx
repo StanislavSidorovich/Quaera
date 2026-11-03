@@ -162,6 +162,8 @@ export function ArchitectureMap({
   const wide = useWide();
   const detailRef = useRef<HTMLElement>(null);
   const touched = useRef(false);
+  /* Узкий экран: второе нажатие на открытый слой сворачивает его карточку. На широком карточка всегда рядом. */
+  const [collapsed, setCollapsed] = useState(false);
 
   const { trace, layers, project } = architecture;
   const current = step === null ? null : trace.steps[step];
@@ -235,21 +237,28 @@ export function ArchitectureMap({
     /* На узком экране к верху встаёт сам слой, под ним карточка: видно, где шаг. */
     const target = wide ? detailRef.current : detailRef.current?.previousElementSibling;
     target?.scrollIntoView({ block: wide ? 'nearest' : 'start', behavior: 'smooth' });
-  }, [selectedId, step, pstep, wide]);
+  }, [selectedId, step, pstep, wide, collapsed]);
 
   const pickLayer = (id: string) => {
     touched.current = true;
+    if (!wide && !routing && id === picked && !collapsed) {
+      setCollapsed(true);
+      return;
+    }
+    setCollapsed(false);
     setStep(null);
     setPstep(null);
     setPicked(id);
   };
   const goStep = (i: number | null) => {
     touched.current = true;
+    setCollapsed(false);
     setPstep(null);
     setStep(i);
   };
   const goProject = (i: number | null) => {
     touched.current = true;
+    setCollapsed(false);
     setStep(null);
     setPstep(i);
   };
@@ -509,7 +518,7 @@ export function ArchitectureMap({
 
   /* На узком экране карточка раскрывается прямо под выбранным слоем. */
   const layerButton = (l: ArchLayer, i: number) => {
-    const on = l.id === layer.id;
+    const on = l.id === layer.id && (wide || routing || !collapsed);
     const dim = routing && !on;
     return (
       <Fragment key={l.id}>
