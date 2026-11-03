@@ -95,7 +95,7 @@
       ]
     },
     "model": {
-      "opening": "Same company, but the person asking has changed. They no longer want a number, they want a dashboard: something people slice for themselves, each in their own way, with the figure adding up in every slice and no new query written for any of them.\n\nSeven missions build such a report from nothing: first what it is made of, then why measures return something other than what was expected. You run no code here. DAX lives inside a model and a browser has nothing to execute it with, so the tasks are readings of other people's decisions and formulas completed from a pattern.",
+      "opening": "Same company, but the person asking has changed. They no longer want a number, they want a dashboard: something people slice for themselves, each in their own way, with the figure adding up in every slice and no new query written for any of them.\n\nEight missions build such a report from nothing: first what it is made of, then why measures return something other than what was expected. You run no code here. DAX lives inside a model and a browser has nothing to execute it with, so the tasks are readings of other people's decisions and formulas completed from a pattern.",
       "ending": "The base is covered. You split data into facts and dimensions, you explain why a measure under a slicer returns something other than expected, and you can name the price of every spare column. The finale is short by design rather than by oversight: time intelligence is not a new topic but a test of whether the previous one has settled. While CALCULATE reads as WHERE, a year to date total looks like a set of incantations; after it, like one and the same act on a date filter.\n\nThe other half of the track is still there, and it is the practice. A session picks what is due for review from it, and adds what the line never touched.",
       "missions": [
         {
@@ -105,8 +105,8 @@
         },
         {
           "title": "Roads between tables",
-          "hook": "The tables are connected, and now what matters is not what they hold but which way a filter travels along a relationship. Two things surface here: sometimes more than one road leads to the same dimension, and the model does not pick the better one, it refuses to decide for you. And the mess that makes a single outlet appear as four rows is cleaned earlier, in the preparation layer, not in a measure.",
-          "outcome": "You set relationships with the cardinality and filter direction you meant, you recognise ambiguity before it multiplies revenue, and you clean data where cleaning is cheapest."
+          "hook": "The tables are connected, and now what matters is not what they hold but which way a filter travels along a relationship. Two things surface here: sometimes more than one road leads to the same dimension, and the model does not pick the better one, it refuses to decide for you.",
+          "outcome": "You set relationships with the cardinality and filter direction you meant and you recognise ambiguity before it multiplies revenue."
         },
         {
           "title": "What a measure sees",
@@ -117,6 +117,11 @@
           "title": "A row, a total and two dates",
           "hook": "The same conversation from the other side: SUM in a calculated column returns the total over the whole table rather than the value of its own row. Then comes what does not add up across every slice: stock on hand for a quarter as a single sum means nothing. And a calendar that has to answer two questions at once, by order date and by shipping date.",
           "outcome": "You tell row context from filter context, you refuse to add up what cannot be added, and you attach one calendar to two dates without a second copy of it."
+        },
+        {
+          "title": "From file to model",
+          "hook": "The core of the model is in place, and what matters now is what goes into it. The mess that makes a single outlet appear as four rows is cleaned in the preparation layer, not in a measure. But even after cleaning, a load does not fail in red when the data is wrong: a second run doubled the sales, a monthly file wiped the history, the lookup table failed and the facts carried on. The statuses are green, and the mistake shows only in the log, in the numbers before and after, and in the order of the steps.",
+          "outcome": "You clean data where cleaning is cheapest, read a load log like a diagnostician, and put the steps in an order where a rerun is safe."
         },
         {
           "title": "What the model costs",

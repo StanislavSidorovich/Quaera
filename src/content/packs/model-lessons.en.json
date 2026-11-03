@@ -199,6 +199,17 @@
       "selfCheck": "Before switching incremental refresh on, ask the business: is anything corrected retroactively, and how far back? The depth of corrections is what sets the boundary the partitions must refresh to."
     },
     {
+      "skill": "model-data-loading",
+      "title": "How data gets to the model",
+      "why": "A load rarely fails in red when the data is wrong. The steps ran, the statuses are green, and the model holds double the sales, one month instead of thirty, or sales with no customers. You can only find where it broke by knowing what each step does and in what order they run.",
+      "form": "The order of a safe load, each step starting only after the previous one succeeds:\n\n1  clear the staging layer\n   │ on success\n2  copy the files\n   │ on success\n3  lookup tables\n   │ on success\n4  facts (keys from lookups)\n   │ on success\n5  reconcile row counts",
+      "example": "staging_raw_sellout holds 3,110 rows from 30 files, export_2024-01 to export_2026-06; 110 of them are repeats and 3,000 are unique. Running in \"append\" mode twice gives 6,220 rows and two green statuses. Running in \"replace\" mode with the single June file leaves 116 rows instead of 3,110. A key declared NOT ENFORCED will not stop a duplicate: a query finds it, as in the SQL track task on duplicates in the raw export.",
+      "reads": "A green status means \"the steps ran\", not \"the data is right\". Only a reconciliation of the numbers after the run confirms it.",
+      "wrong": "Keep \"append\" and, after every failure, just rerun the load until every step is green.",
+      "wrongWhy": "A rerun without clearing and without protection against repeats adds the same rows again, and the green status hides it. And a status is rarely red anyway: \"replace\" on a batch, \"on completion\" instead of \"on success\", and an empty lookup table usually give a successful run with wrong data.",
+      "selfCheck": "For each step ask: what happens if it runs twice? What happens if the previous step failed? And how, after the run, will you check that the row count matches the source?"
+    },
+    {
       "skill": "model-performance",
       "title": "Model size and speed",
       "why": "The model has bloated, the report takes half a minute to open, and the first instinct is usually to start deleting rows. That is almost always beside the point: the engine stores data by column and compresses it by the number of distinct values, not by the number of rows.",

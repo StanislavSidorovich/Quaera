@@ -40,7 +40,7 @@
       "title": { "ru": "Инженерия данных", "en": "Data engineering" },
       "note": { "ru": "Пайплайны, облако, git и dbt в браузере не живут. Тренажёр даёт здесь только единицу за качество данных и обновление.", "en": "Pipelines, cloud, git and dbt do not live in a browser. The trainer gives at most level 1 here, for data quality and refresh." },
       "trainerMax": 1,
-      "skills": ["sql-data-quality", "model-incremental-refresh", "model-power-query", "py-performance"]
+      "skills": ["sql-data-quality", "model-incremental-refresh", "model-power-query", "model-data-loading", "py-performance"]
     },
     {
       "id": "business",
@@ -160,7 +160,7 @@
       "title": { "ru": "Загрузка", "en": "Ingestion" },
       "who": ["de"],
       "tools": ["Fabric Data Factory", "Azure Data Factory", "Airflow", "Fivetran", "PySpark"],
-      "skills": ["sql-data-quality", "model-incremental-refresh"],
+      "skills": ["sql-data-quality", "model-incremental-refresh", "model-data-loading"],
       "apps": ["lab"],
       "courses": { "ru": "BI (Fabric)", "en": "BI (Fabric)" },
       "ai": { "ru": "Пишет шаблоны пайплайнов и разбирает ошибки загрузки. Доступы и ответственность за источник остаются на людях.", "en": "Writes pipeline templates and reads load errors. Access and owning the source stay with people." }

@@ -2741,6 +2741,38 @@ await checkLessons(readPack('python-core'), 'python-lessons');
   if (total - y24 !== 70058) fail('mdl-056', `в задании после удаления 2024 остаётся 70 058 строк, в базе ${total - y24}`);
 }
 
+// mdl-082…mdl-089 (навык model-data-loading): числа журналов загрузки взяты
+// из грязного слоя. 3 110 строк в 30 месячных файлах, июньский файл 2026 даёт
+// 116 строк, повторов 110 пар (220 строк), уникальных 3 000, семь колонок,
+// 144 клиента с разными ключами. Задание про «NOT ENFORCED» (mdl-088)
+// добавляет к 144 одну повторную строку: 145 строк при 144 ключах.
+{
+  const r = runSql(`
+    SELECT
+      (SELECT COUNT(*) FROM staging_raw_sellout) AS total,
+      (SELECT COUNT(DISTINCT source_file) FROM staging_raw_sellout) AS files,
+      (SELECT COUNT(*) FROM staging_raw_sellout WHERE source_file = 'export_2026-06.csv') AS june,
+      (SELECT MIN(source_file) FROM staging_raw_sellout) AS first_file,
+      (SELECT MAX(source_file) FROM staging_raw_sellout) AS last_file,
+      (SELECT COUNT(*) FROM pragma_table_info('staging_raw_sellout')) AS cols,
+      (SELECT COUNT(DISTINCT sale_date || '|' || customer_name || '|' || sku_code || '|' || COALESCE(units, '~') || '|' || COALESCE(revenue, '~')) FROM staging_raw_sellout) AS uniq,
+      (SELECT COUNT(*) FROM dim_customer) AS cust,
+      (SELECT COUNT(DISTINCT customer_id) FROM dim_customer) AS cust_keys,
+      (SELECT COUNT(*) FROM staging_raw_sellout WHERE customer_name GLOB '*[^ -~]*' OR sku_code GLOB '*[^ -~]*') AS non_ascii`);
+  const [total, files, june, firstFile, lastFile, cols, uniq, cust, custKeys, nonAscii] = r.rows[0];
+  const bad = [];
+  if (total !== 3110) bad.push(`строк ${total}, в заданиях 3 110`);
+  if (files !== 30 || firstFile !== 'export_2024-01.csv' || lastFile !== 'export_2026-06.csv') bad.push(`файлов ${files} (${firstFile}…${lastFile}), в заданиях 30 от 2024-01 до 2026-06`);
+  if (june !== 116) bad.push(`в июньском файле ${june}, в mdl-083 116`);
+  if (total - june !== 2994) bad.push(`после замены потеряно ${total - june}, в mdl-083 2 994`);
+  if (cols !== 7) bad.push(`колонок ${cols}, в mdl-086 семь`);
+  if (uniq !== 3000 || total - uniq !== 110) bad.push(`уникальных ${uniq}, повторов ${total - uniq}; в mdl-087 3 000 и 110`);
+  if (cust !== 144 || custKeys !== 144) bad.push(`клиентов ${cust}, ключей ${custKeys}; в mdl-088 144`);
+  if (nonAscii !== 0) bad.push(`в названиях клиентов и артикулах появилась не-латиница (${nonAscii}): пора добавлять задание про кодировку`);
+  if (bad.length) fail('mdl-082…089', bad.join('; '));
+  else console.log(`  ok   mdl-082…089: ${total} строк в ${files} файлах, июнь ${june}, уникальных ${uniq}, ${cols} колонок, ${cust} клиентов, не-латиницы нет`);
+}
+
 // mdl-055, mdl-057: кардинальность колонок факта. Весь разбор про размер
 // модели держится на том, что sellout_id уникален, а product_id — нет.
 {
