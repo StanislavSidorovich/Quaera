@@ -273,7 +273,13 @@ export const en = {
     /** См. довод в ru.ts: заголовок карточки называет пользу, а не механику. */
     syncTitle: 'Your progress on every device',
     syncBody:
-      'Signing in ties your progress to your Google account: sessions from your phone and your laptop merge into one, and clearing site data stops being the end of the story. You can keep practising without signing in, in which case everything stays on this device.',
+      'Signing in ties your progress to your Google account: sessions from your phone and your laptop merge into one, and clearing site data stops being the end of the story.',
+    /** Три факта у кнопки входа: каждый подтверждён кодом (sync/client.ts: только signInWithOAuth google; см. dataServerBody). */
+    signInFacts: [
+      'Signing in is optional: everything in the trainer works without it.',
+      'Without it your progress stays on this device. Signing in only carries it over to a second one.',
+      'Sign-in goes through Google only: you type your password on a Google page, and it never reaches the trainer. The server stores your progress and your email, and the code you write never leaves the tab.',
+    ],
     signInBtn: 'Sign in with Google',
     signOutBtn: 'Sign out',
     signedInAs: (email: string) => `Signed in as ${email}`,

@@ -5089,13 +5089,19 @@ function AccountScreen({
             </button>
           </>
         ) : (
-          /*
+          <>
+          <ul style={{ margin: '0 0 12px', paddingLeft: 18, fontSize: 13, lineHeight: 1.55, color: 'var(--text-dim)' }}>
+            {t.account.signInFacts.map((fact) => (
+              <li key={fact} style={{ marginBottom: 4 }}>{fact}</li>
+            ))}
+          </ul>
+          {/*
            * secondary, а не акцентная, и правило пережило переезд: на этом
            * экране акцентной кнопки нет вовсе. Синяя кнопка настаивала бы
            * ровно там, где текст двумя строками выше обещает, что вход
            * добровольный, — а заметности хватает и заголовка карточки,
            * которая теперь стоит первой на своём экране.
-           */
+           */}
           <button
             type="button"
             className="btn secondary"
@@ -5105,6 +5111,7 @@ function AccountScreen({
           >
             {t.account.signInBtn}
           </button>
+          </>
         )}
         {signInError && (
           <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--err)' }}>
