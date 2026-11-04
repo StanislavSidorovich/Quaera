@@ -95,6 +95,25 @@ function findTargets(d: { key: DoorKey; pair: string }): { main: HTMLElement | n
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
+/**
+ * Показать раздел с его верха, под липкой шапкой. `block: 'center'` у раздела выше экрана
+ * (карта данных, семья приложений на телефоне) открывал его с середины. Раздел, который
+ * целиком помещается над пузырём подсказки, по-прежнему ставится по центру.
+ */
+function revealSection(el: HTMLElement) {
+  const behavior = reduced() ? 'auto' : 'smooth';
+  const bar = document.querySelector('.topbar');
+  const headH = bar ? bar.getBoundingClientRect().bottom : 0;
+  const room = window.innerHeight - Math.max(headH, 0);
+  const wide = window.innerWidth >= 600;
+  if (wide && el.getBoundingClientRect().height <= room - 32) {
+    el.scrollIntoView({ block: 'center', behavior });
+    return;
+  }
+  const top = el.getBoundingClientRect().top + window.scrollY - Math.max(headH, 0) - 8;
+  window.scrollTo({ top: Math.max(top, 0), behavior });
+}
+
 function DoorIcon({ k }: { k: DoorKey }) {
   if (k === 'map') return <IconCompass />;
   if (k === 'story') return <IconStory />;
@@ -143,7 +162,7 @@ export function StartGuide({
   const shown = forced || (isNewUser && !storyStarted && !dismissed);
   const scrollTo = (k: DoorKey) => {
     const el = [...document.querySelectorAll(`[data-guide="${k}"]`)].find(visible);
-    el?.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
+    if (el) revealSection(el);
   };
   const go: Record<DoorKey, (() => void) | null> = {
     map: onOpenMap,
@@ -242,7 +261,7 @@ function GuideTour({ step, setStep, onFinish }: { step: number; setStep: (n: num
 
   useLayoutEffect(() => {
     const el = findTargets(d).main;
-    if (el) el.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
+    if (el) revealSection(el);
     measure();
     nextRef.current?.focus({ preventScroll: true });
     if (bubbleRef.current) setBh(bubbleRef.current.offsetHeight);

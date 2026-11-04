@@ -4646,7 +4646,10 @@ table.sample td.null {
       'streak streak streak';
     align-items: center;
     column-gap: 12px;
-    row-gap: 12px;
+    /* 2026-11-04: зазор между названием и полоской треков 12 → 6px,
+       шапка на телефоне компактнее (было 130px на 375). */
+    row-gap: 6px;
+    padding-bottom: 6px;
   }
 
   .topbar-home .topbar-mark {
@@ -4690,7 +4693,7 @@ table.sample td.null {
     display: grid;
     grid-template-columns: auto auto;
     grid-template-rows: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
   }
 
   /*
@@ -6510,7 +6513,7 @@ details.story-known > summary small {
   }
 
   .topbar-home-streak {
-    padding-bottom: 12px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--line);
   }
 
