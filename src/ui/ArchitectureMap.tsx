@@ -620,7 +620,7 @@ export function DataMapTeaser({
   const roleName = (id: string) => careerRole(id)?.title[locale] ?? id;
   const hotLayer = architecture.layers.find((l) => l.id === hot);
   return (
-    <section className="card home-map" data-pair="career" aria-labelledby="home-map-title">
+    <section className="card home-map" data-pair="career" data-guide="map" aria-labelledby="home-map-title">
       <h2 id="home-map-title">
         <span className="pair-ico" aria-hidden>
           <IconCompass />

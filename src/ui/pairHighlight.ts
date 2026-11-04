@@ -20,8 +20,8 @@ export function usePairHighlight() {
       current = null;
     };
     const onOver = (e: MouseEvent) => {
-      const el = e.target instanceof Element ? e.target.closest<HTMLElement>('[data-pair]') : null;
-      const key = el?.dataset.pair ?? null;
+      const el = e.target instanceof Element ? e.target.closest<HTMLElement>('[data-pair],[data-pair-door]') : null;
+      const key = el?.dataset.pair ?? el?.dataset.pairDoor ?? null;
       if (el === current) return;
       clear();
       if (!el || !key) return;
@@ -30,14 +30,21 @@ export function usePairHighlight() {
         if (p !== el && !p.contains(el) && !el.contains(p)) p.setAttribute('data-pair-lit', '');
       });
     };
+    const onFocus = (e: FocusEvent) => {
+      if (e.target instanceof Element && e.target.closest('[data-pair-door]')) onOver(e as unknown as MouseEvent);
+    };
     const onLeave = (e: MouseEvent) => {
       if (!e.relatedTarget) clear();
     };
     document.addEventListener('mouseover', onOver);
+    document.addEventListener('focusin', onFocus);
+    document.addEventListener('focusout', clear);
     document.addEventListener('mouseout', onLeave);
     return () => {
       document.removeEventListener('mouseover', onOver);
       document.removeEventListener('mouseout', onLeave);
+      document.removeEventListener('focusin', onFocus);
+      document.removeEventListener('focusout', clear);
       clear();
     };
   }, []);

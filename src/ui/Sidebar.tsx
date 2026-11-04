@@ -47,6 +47,7 @@ export function Sidebar({
   onData,
   onAbout,
   onIntro,
+  onGuide,
   onCareer,
   onAccount,
   onOnboarding,
@@ -78,6 +79,7 @@ export function Sidebar({
   onAbout: () => void;
   /** Экскурс в профессию — для того, кто не понял, о чём вообще сайт. */
   onIntro: () => void;
+  onGuide: () => void;
   /** «Путь к роли»: роли, этапы задачи и готовность по осям. */
   onCareer: () => void;
   onAccount: () => void;
@@ -119,7 +121,7 @@ export function Sidebar({
        */}
       <div className="sidebar-inner">
         {/* Переключатель семейства (набор family/): знак, имя и меню из пяти приложений. */}
-        <div className="sidebar-brand">
+        <div className="sidebar-brand" data-pair="family">
           <quaera-switcher app="quaera" lang={locale} />
           <small>{t.app.streakSuffix(streakDays)}</small>
         </div>
@@ -195,7 +197,7 @@ export function Sidebar({
           </button>
         </div>
 
-        <div className="side-group">
+        <div className="side-group" data-pair="tracks">
           <h2>{t.nav.tracksLabel}</h2>
           {tracks.map((track) => {
             const { solved, total } = stats.get(track) ?? { solved: 0, total: 0 };
@@ -251,6 +253,10 @@ export function Sidebar({
           >
             <IconQuestion />
             {t.nav.intro}
+          </button>
+          <button type="button" className="side-item" onClick={onGuide}>
+            <IconGuide />
+            {t.nav.guide}
           </button>
           <button
             type="button"
@@ -411,6 +417,16 @@ const IconQuestion = () => (
     <circle cx="8" cy="8" r="5.9" />
     <path d="M6.4 6.3c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6c0 1.1-1.6 1.2-1.6 2.4" />
     <path d="M8 10.9v.5" strokeWidth="1.8" />
+  </svg>
+);
+
+/* Четыре двери: плитка 2x2. */
+const IconGuide = () => (
+  <svg {...iconProps}>
+    <rect x="2.6" y="2.6" width="4.4" height="4.4" rx="1" />
+    <rect x="9" y="2.6" width="4.4" height="4.4" rx="1" />
+    <rect x="2.6" y="9" width="4.4" height="4.4" rx="1" />
+    <rect x="9" y="9" width="4.4" height="4.4" rx="1" />
   </svg>
 );
 

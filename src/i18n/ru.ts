@@ -192,6 +192,7 @@ export const ru = {
     /** Подпись под названием трека в меню: сколько заданий трека уже решено. */
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
     /** Подвал меню: остальные инструменты Quaera (адреса — FAMILY в links.ts). */
+    guide: 'Как здесь всё устроено',
     familyTitle: 'Ещё в Quaera',
     familyModel: 'Model: проектирование баз',
     familyFlow: 'Flow: процессы BPMN',
@@ -214,6 +215,39 @@ export const ru = {
     familyWhoModel: 'инженер данных, архитектор данных',
     familyWhoFlow: 'бизнес-аналитик',
     familyWhoPandas: 'аналитик данных',
+  },
+  guide: {
+    title: 'Как здесь всё устроено',
+    lead: 'Четыре двери: выберите ту, что про вас',
+    close: 'Закрыть',
+    tourBtn: 'Показать по шагам',
+    stepOf: (n: number, total: number) => `${n} из ${total}`,
+    next: 'Далее',
+    skip: 'Пропустить',
+    done: 'Готово',
+    soon: 'Скоро: конвейер в Lab, собрать загрузку данных от файла до дашборда своими руками',
+    doors: {
+      map: {
+        situation: 'Не понимаю, чем занимается аналитик',
+        where: 'Путь данных от источника до решения и семь ролей на нём',
+        btn: 'Открыть карту',
+      },
+      story: {
+        situation: 'Хочу живой кейс',
+        where: 'Пять дней в компании Kaiyo: бриф, задания, вывод для руководителя',
+        btn: 'Начать неделю',
+      },
+      tracks: {
+        situation: 'Хочу подтянуть теорию',
+        where: 'SQL, Python (pandas), модель данных и BI, профессия: короткие уроки и задания',
+        btn: 'К трекам',
+      },
+      family: {
+        situation: 'Хочу практику руками',
+        where: 'Lab, Model, Flow, Pandas: свои данные, схемы, процессы, Colab',
+        btn: 'К инструментам',
+      },
+    },
   },
   tracks: {
     ariaLabel: 'Треки',

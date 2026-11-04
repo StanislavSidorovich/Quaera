@@ -89,6 +89,7 @@ export const en = {
     /** См. комментарий в ru.ts: подпись называет состояние, а не требует действия. */
     accountSignedOut: 'On this device only',
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
+    guide: 'How this place works',
     familyTitle: 'More in Quaera',
     familyModel: 'Model: database design',
     familyFlow: 'Flow: BPMN processes',
@@ -109,6 +110,39 @@ export const en = {
     familyWhoModel: 'data engineer, data architect',
     familyWhoFlow: 'business analyst',
     familyWhoPandas: 'data analyst',
+  },
+  guide: {
+    title: 'How this place works',
+    lead: 'Four doors: pick the one that fits you',
+    close: 'Close',
+    tourBtn: 'Show me step by step',
+    stepOf: (n: number, total: number) => `${n} of ${total}`,
+    next: 'Next',
+    skip: 'Skip',
+    done: 'Done',
+    soon: 'Coming soon: a pipeline in Lab, so you build a load from file to dashboard yourself',
+    doors: {
+      map: {
+        situation: 'I do not get what an analyst does',
+        where: 'The data path from source to decision, and the seven roles on it',
+        btn: 'Open the map',
+      },
+      story: {
+        situation: 'I want a live case',
+        where: 'Five days at Kaiyo: brief, tasks, a takeaway for your manager',
+        btn: 'Start the week',
+      },
+      tracks: {
+        situation: 'I want to brush up on theory',
+        where: 'SQL, Python (pandas), data modeling and BI, the profession: short lessons and tasks',
+        btn: 'Go to tracks',
+      },
+      family: {
+        situation: 'I want hands-on practice',
+        where: 'Lab, Model, Flow, Pandas: your own data, schemas, processes, Colab',
+        btn: 'Go to tools',
+      },
+    },
   },
   tracks: {
     ariaLabel: 'Tracks',

@@ -42,6 +42,7 @@ import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
 import { Sidebar, IconAccount, IconStory, IconBook, IconFlask, IconTable, IconCompass, type SidebarSection } from './ui/Sidebar';
 import { usePairHighlight } from './ui/pairHighlight';
+import { StartGuide } from './ui/StartGuide';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
@@ -295,6 +296,22 @@ function readIntroOpenOnBoot(): boolean {
   }
 }
 const INTRO_OPEN_ON_BOOT = readIntroOpenOnBoot();
+
+/** `?guide=1`: главная с открытым гидом новичка и сразу запущенным показом по шагам (для демо). */
+function readGuideOnBoot(): boolean {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('guide')) return false;
+    const on = params.get('guide') !== '0';
+    params.delete('guide');
+    const rest = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    return on;
+  } catch {
+    return false;
+  }
+}
+const GUIDE_ON_BOOT = readGuideOnBoot();
 
 /**
  * `?roles` — прямая ссылка на экран «Путь к роли», `?roles=map` — сразу
@@ -747,6 +764,7 @@ function initialBoot(locale: Locale): Boot {
    * где вкладку закрыли в прошлый раз, и всё остальное. Ничего, кроме
    * локали, ему не нужно — контента вне пака у него нет.
    */
+  if (GUIDE_ON_BOOT) return { screen: { name: 'home' }, ...empty };
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
   if (ROLES_OPEN_ON_BOOT)
     return { screen:
@@ -831,6 +849,7 @@ function initialBoot(locale: Locale): Boot {
 export default function App() {
   const { t, locale, setLocale } = useI18n();
   usePairHighlight();
+  const [guide, setGuide] = useState({ n: GUIDE_ON_BOOT ? 1 : 0, tour: GUIDE_ON_BOOT });
   /* withLegacyCareer: одноразовый перенос «Пути к роли» из quaera.career.v1 в progress.career. */
   const [progress, setProgress] = useState<Progress>(() => withLegacyCareer(loadProgress()));
   /**
@@ -2122,6 +2141,11 @@ export default function App() {
         onData={() => setScreen({ name: 'data' })}
         onAbout={() => setScreen({ name: 'about' })}
         onIntro={() => setScreen({ name: 'intro' })}
+        onGuide={() => {
+          setScreen({ name: 'home' });
+          setGuide((g) => ({ n: g.n + 1, tour: false }));
+          window.scrollTo({ top: 0 });
+        }}
         onCareer={() => setScreen({ name: 'career' })}
         onAccount={() => setScreen({ name: 'account' })}
         accountEmail={session?.user.email ?? null}
@@ -2515,6 +2539,7 @@ export default function App() {
                 window.scrollTo({ top: 0 });
               }}
               onOpenAbout={() => setScreen({ name: 'about' })}
+              guide={guide}
               onOpenIntro={() => setScreen({ name: 'intro' })}
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onSwitchTrack={switchTrack}
@@ -2953,7 +2978,7 @@ function TrackSwitcher({
 }) {
   const { t } = useI18n();
   return (
-    <div className="tabs tracks" role="tablist" aria-label={t.tracks.ariaLabel}>
+    <div className="tabs tracks" data-guide="tracks" role="tablist" aria-label={t.tracks.ariaLabel}>
       {TRACK_ORDER.map((track) => {
         const p = packForTrack(track);
         if (!p) return null;
@@ -3016,7 +3041,7 @@ function TrackCards({
 }) {
   const { t, locale } = useI18n();
   return (
-    <div className="track-cards">
+    <div className="track-cards" data-pair="tracks" data-guide="tracks">
       {TRACK_ORDER.map((track) => {
         const pack = packForTrack(track, locale);
         if (!pack) return null;
@@ -3436,6 +3461,7 @@ function Home({
   onOpenStory,
   storyAt,
   onOpenStoryMode,
+  guide,
   storyStarted,
   storyReachedId,
   onOpenStoryPart,
@@ -3494,6 +3520,8 @@ function Home({
    * историю, и тогда главная предлагала бы «продолжить» дело, которого
    * человек не начинал.
    */
+  /** Сигнал гиду новичка: n растёт при каждом «открыть снова», tour запускает показ по шагам. */
+  guide: { n: number; tour: boolean };
   storyStarted: boolean;
   storyReachedId: string | null;
   /** Вход сразу в часть кампании (id части); null — как у onOpenStoryMode. */
@@ -3779,6 +3807,13 @@ function Home({
        * как и счётчики на плитках треков, а не пишутся в текст: задания
        * добавляются каждым заходом, и строка в прозе протухла бы первой.
        */}
+      <StartGuide
+        isNewUser={isNewUser}
+        storyStarted={storyStarted}
+        signal={guide}
+        onOpenMap={() => onOpenMap({})}
+        onOpenStoryMode={onOpenStoryMode}
+      />
       {isNewUser && (
         <p className="home-stats">
           {t.welcome.stats(
@@ -3869,7 +3904,7 @@ function Home({
            */
           <div className="home-top-wrap">
             <div className={`home-top${ready ? '' : ' home-top-solo'}`}>
-            <div className="card story-invite home-top-story" data-pair="storymode">
+            <div className="card story-invite home-top-story" data-pair="storymode" data-guide="story">
               <div className="story-invite-head">
                 <div>
                   <p className="story-invite-badge">{t.storyMode.badge}</p>
@@ -3905,7 +3940,7 @@ function Home({
           </div>
         ) : (
           <>
-            <button type="button" className="story-invite-row" data-pair="storymode" onClick={onOpenStoryMode}>
+            <button type="button" className="story-invite-row" data-pair="storymode" data-guide="story" onClick={onOpenStoryMode}>
               <span className="story-invite-row-head">
                 <span className="story-invite-row-title">
                   <span className="pair-ico" aria-hidden>
@@ -4467,7 +4502,7 @@ function Home({
        * Sidebar: меню видно от 1024px, и на телефоне без этого блока
        * о семействе не узнать вовсе. Адреса и подписи общие с Sidebar.
        */}
-      <nav className="card home-family" aria-label={t.nav.familyTitle}>
+      <nav className="card home-family" data-pair="family" data-guide="family" aria-label={t.nav.familyTitle}>
         <h2>{t.nav.familyTitle}</h2>
         <div className="home-family-links">
           {FAMILY.map((f) => (

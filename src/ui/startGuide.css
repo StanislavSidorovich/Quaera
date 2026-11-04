@@ -1,0 +1,213 @@
+.start-guide {
+  position: relative;
+  margin: 0 0 16px;
+}
+
+.start-guide h2 {
+  margin: 0 28px 2px 0;
+  font-size: 16px;
+}
+
+.start-guide-lead {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+}
+
+.start-guide-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-dim);
+  border-radius: 8px;
+}
+
+.start-guide-x:hover {
+  background: var(--bg-sunken);
+  color: var(--text);
+}
+
+.start-guide-doors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.start-guide-door {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 150ms ease;
+}
+
+.start-guide-door:hover,
+.start-guide-door:focus-within {
+  border-color: var(--accent);
+}
+
+.start-guide-num {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.start-guide-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.start-guide-where {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.start-guide .btn.start-guide-go {
+  grid-column: 2;
+  justify-self: start;
+  width: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.start-guide-soon {
+  margin: 10px 0 12px;
+  font-size: var(--fs-small);
+}
+
+.start-guide .btn.start-guide-tour {
+  width: auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 600px) {
+  .start-guide-doors {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .start-guide-door {
+    padding: 8px 10px;
+  }
+
+  /* На телефоне кнопка двери легче: текстовая ссылка, чтобы карточка не съедала экран. */
+  .start-guide .btn.start-guide-go {
+    min-height: 28px;
+    padding: 0;
+    margin-top: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+  }
+}
+
+/* Показ по шагам: затемнение с вырезом, подсказка рядом. */
+.sg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.sg-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.6);
+}
+
+.sg-frame {
+  position: fixed;
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(8, 12, 20, 0.6);
+  pointer-events: none;
+}
+
+.sg-bubble {
+  position: fixed;
+  width: 320px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  color: var(--text);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.sg-bubble-m {
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: auto;
+}
+
+.sg-bubble-c {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sg-bubble h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.sg-bubble p {
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.sg-bubble .sg-step {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.sg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sg-bubble .sg-actions .btn.btn {
+  width: auto;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-frame,
+  .start-guide-door {
+    transition: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .start-guide-door[data-pair-lit] {
+    outline-color: var(--accent);
+  }
+}
