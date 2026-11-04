@@ -187,6 +187,17 @@ const EXIT_HINT_MS = 2000;
  * что одним запросом неудобно → Power BI/DAX моделирует уже выгруженное
  * и приведённое в порядок. Пояснение для пользователя — в about.tracksWhy*.
  */
+import markLab from '../family/marks/lab.svg';
+import markModel from '../family/marks/model.svg';
+import markFlow from '../family/marks/flow.svg';
+import markPandas from '../family/marks/pandas.svg';
+
+/** Значки приложений семейства (общий пакет family/, не менять) и ключи подписей блока «Ещё в Quaera». */
+const FAMILY_MARKS = { lab: markLab, model: markModel, flow: markFlow, pandas: markPandas } as const;
+const FAMILY_NAME_KEY = { lab: 'familyNameLab', model: 'familyNameModel', flow: 'familyNameFlow', pandas: 'familyNamePandas' } as const;
+const FAMILY_DESC_KEY = { lab: 'familyDescLab', model: 'familyDescModel', flow: 'familyDescFlow', pandas: 'familyDescPandas' } as const;
+const FAMILY_WHO_KEY = { lab: 'familyWhoLab', model: 'familyWhoModel', flow: 'familyWhoFlow', pandas: 'familyWhoPandas' } as const;
+
 const TRACK_ORDER: Track[] = ['domain', 'sql', 'python', 'model'];
 
 /**
@@ -4438,20 +4449,20 @@ function Home({
           {FAMILY.map((f) => (
             <a
               key={f.key}
+              className="home-family-link"
               href={f.url}
               target="_blank"
               rel="noreferrer"
               onClick={(e) => window.quaeraOpenApp?.(e.currentTarget, e.nativeEvent, f.key)}
             >
-              {
-                {
-                  model: t.nav.familyModel,
-                  flow: t.nav.familyFlow,
-                  pandas: t.nav.familyPandas,
-                  lab: t.nav.familyLab,
-                }[f.key]
-              }{' '}
-              ↗
+              <img className="home-family-mark" src={FAMILY_MARKS[f.key]} alt="" width={36} height={36} />
+              <span className="home-family-text">
+                <span className="home-family-name">
+                  {t.nav[FAMILY_NAME_KEY[f.key]]} ↗
+                </span>
+                <span className="home-family-desc">{t.nav[FAMILY_DESC_KEY[f.key]]}</span>
+                <span className="home-family-who">{t.nav[FAMILY_WHO_KEY[f.key]]}</span>
+              </span>
             </a>
           ))}
         </div>
