@@ -29,6 +29,51 @@ function writeDismissed() {
   }
 }
 
+/**
+ * Приглашение в гид: окно по центру один раз получает каждый, кто гид не видел.
+ * «Не сейчас» молчит до конца вкладки (sessionStorage), всего не больше трёх показов
+ * (счётчик в localStorage); «Больше не показывать» и «Готово» в показе гасят насовсем.
+ */
+const INVITE_KEY = 'quaera.guide.invite.v1';
+const INVITE_COUNT_KEY = 'quaera.guide.invite.count.v1';
+const INVITE_SESSION_KEY = 'quaera.guide.invite.snoozed';
+const INVITE_MAX = 3;
+/* Глубокий адрес (?roles, ?intro, ?story, #...): читается до того, как App сотрёт параметры из строки. */
+const DEEP_LINK = (() => {
+  try {
+    return window.location.search !== '' || window.location.hash !== '';
+  } catch {
+    return false;
+  }
+})();
+
+function inviteAllowed(): boolean {
+  try {
+    if (DEEP_LINK) return false;
+    if (localStorage.getItem(INVITE_KEY) === '1') return false;
+    if (Number(localStorage.getItem(INVITE_COUNT_KEY) ?? '0') >= INVITE_MAX) return false;
+    if (sessionStorage.getItem(INVITE_SESSION_KEY) === '1') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+function inviteShown() {
+  try {
+    sessionStorage.setItem(INVITE_SESSION_KEY, '1');
+    localStorage.setItem(INVITE_COUNT_KEY, String(Number(localStorage.getItem(INVITE_COUNT_KEY) ?? '0') + 1));
+  } catch {
+    /* без хранилища приглашение просто может повториться */
+  }
+}
+function inviteDone() {
+  try {
+    localStorage.setItem(INVITE_KEY, '1');
+  } catch {
+    /* см. выше */
+  }
+}
+
 type DoorKey = 'map' | 'story' | 'tracks' | 'family';
 const DOORS: { key: DoorKey; pair: string }[] = [
   { key: 'map', pair: 'career' },
@@ -41,12 +86,11 @@ function visible(el: Element | null): el is HTMLElement {
   return !!el && (el as HTMLElement).getClientRects().length > 0;
 }
 
-/** Блок главной, а если его нет на экране, пункт бокового меню; иначе null. */
-function findTarget(d: { key: DoorKey; pair: string }): HTMLElement | null {
-  const main = [...document.querySelectorAll(`[data-guide="${d.key}"]`)].find(visible);
-  if (main) return main as HTMLElement;
-  const side = [...document.querySelectorAll(`.sidebar [data-pair="${d.pair}"]`)].find(visible);
-  return (side as HTMLElement) ?? null;
+/** Блок главной и парный пункт бокового меню (любой из двух может отсутствовать на экране). */
+function findTargets(d: { key: DoorKey; pair: string }): { main: HTMLElement | null; side: HTMLElement | null } {
+  const main = [...document.querySelectorAll(`[data-guide="${d.key}"]`)].find(visible) as HTMLElement | undefined;
+  const side = [...document.querySelectorAll(`.sidebar [data-pair="${d.pair}"]`)].find(visible) as HTMLElement | undefined;
+  return { main: main ?? null, side: side ?? null };
 }
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -76,6 +120,17 @@ export function StartGuide({
   const [dismissed, setDismissed] = useState(readDismissed);
   const [forced, setForced] = useState(signal.n > 0);
   const [step, setStep] = useState<number | null>(null);
+  const [invite, setInvite] = useState(false);
+
+  useEffect(() => {
+    if (signal.n > 0 || !inviteAllowed()) return;
+    const id = window.setTimeout(() => {
+      if (!inviteAllowed() || document.querySelector('[role="dialog"]')) return;
+      inviteShown();
+      setInvite(true);
+    }, 800);
+    return () => window.clearTimeout(id);
+  }, [signal.n]);
 
   useEffect(() => {
     if (signal.n === 0) return;
@@ -97,9 +152,22 @@ export function StartGuide({
     family: () => scrollTo('family'),
   };
 
-  if (!shown && step === null) return null;
+  if (!shown && step === null && !invite) return null;
   return (
     <>
+      {invite && (
+        <GuideInvite
+          onShow={() => {
+            setInvite(false);
+            setStep(0);
+          }}
+          onLater={() => setInvite(false)}
+          onNever={() => {
+            inviteDone();
+            setInvite(false);
+          }}
+        />
+      )}
       {shown && (
         <section className="card start-guide" aria-labelledby="start-guide-title">
           <button
@@ -149,16 +217,17 @@ export function StartGuide({
           </button>
         </section>
       )}
-      {step !== null && <GuideTour step={step} setStep={setStep} />}
+      {step !== null && <GuideTour step={step} setStep={setStep} onFinish={inviteDone} />}
     </>
   );
 }
 
-function GuideTour({ step, setStep }: { step: number; setStep: (n: number | null) => void }) {
+function GuideTour({ step, setStep, onFinish }: { step: number; setStep: (n: number | null) => void; onFinish: () => void }) {
   const { t } = useI18n();
   const g = t.guide;
   const d = DOORS[step];
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [rect2, setRect2] = useState<DOMRect | null>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const [bh, setBh] = useState(200);
@@ -166,13 +235,14 @@ function GuideTour({ step, setStep }: { step: number; setStep: (n: number | null
   const close = useCallback(() => setStep(null), [setStep]);
 
   const measure = useCallback(() => {
-    const el = findTarget(d);
-    setRect(el ? el.getBoundingClientRect() : null);
+    const { main, side } = findTargets(d);
+    setRect((main ?? side)?.getBoundingClientRect() ?? null);
+    setRect2(main && side ? side.getBoundingClientRect() : null);
   }, [d]);
 
   useLayoutEffect(() => {
-    const el = findTarget(d);
-    if (el && !el.closest('.sidebar')) el.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
+    const el = findTargets(d).main;
+    if (el) el.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
     measure();
     nextRef.current?.focus({ preventScroll: true });
     if (bubbleRef.current) setBh(bubbleRef.current.offsetHeight);
@@ -213,6 +283,12 @@ function GuideTour({ step, setStep }: { step: number; setStep: (n: number | null
       ) : (
         <div className="sg-dim" />
       )}
+      {rect2 && (
+        <div
+          className="sg-frame sg-frame-side"
+          style={{ left: rect2.left - 3, top: rect2.top - 3, width: rect2.width + 6, height: rect2.height + 6 }}
+        />
+      )}
       <div
         ref={bubbleRef}
         className={`sg-bubble${wide ? '' : ' sg-bubble-m'}${rect || !wide ? '' : ' sg-bubble-c'}`}
@@ -228,10 +304,69 @@ function GuideTour({ step, setStep }: { step: number; setStep: (n: number | null
           <button type="button" className="btn secondary" onClick={close}>
             {g.skip}
           </button>
-          <button ref={nextRef} type="button" className="btn" onClick={() => (last ? close() : setStep(step + 1))}>
+          <button ref={nextRef} type="button" className="btn" onClick={() => {
+              if (last) {
+                onFinish();
+                close();
+              } else setStep(step + 1);
+            }}>
             {last ? g.done : g.next}
           </button>
         </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function GuideInvite({ onShow, onLater, onNever }: { onShow: () => void; onLater: () => void; onNever: () => void }) {
+  const { t } = useI18n();
+  const g = t.guide;
+  const showRef = useRef<HTMLButtonElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    showRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onLater();
+      if (e.key !== 'Tab' || !boxRef.current) return;
+      const f = [...boxRef.current.querySelectorAll<HTMLElement>('button')];
+      const first = f[0];
+      const lastEl = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onLater]);
+  return createPortal(
+    <div className="sg-layer sg-invite-layer" onClick={onLater}>
+      <div className="sg-dim" />
+      <div
+        ref={boxRef}
+        className="sg-invite"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sg-invite-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="sg-invite-title">{g.title}</h2>
+        <p>{g.inviteLine}</p>
+        <div className="sg-actions">
+          <button type="button" className="btn secondary" onClick={onLater}>
+            {g.later}
+          </button>
+          <button ref={showRef} type="button" className="btn" onClick={onShow}>
+            {g.show}
+          </button>
+        </div>
+        <button type="button" className="sg-never" onClick={onNever}>
+          {g.never}
+        </button>
       </div>
     </div>,
     document.body,

@@ -211,3 +211,47 @@
     outline-color: var(--accent);
   }
 }
+
+/* Парный пункт меню на шаге показа: та же рамка, но без выреза и затемнения. */
+.sg-frame.sg-frame-side {
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.sg-invite-layer {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.sg-invite {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-raised);
+  color: var(--text);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.sg-invite h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.sg-invite p {
+  margin: 0;
+  font-size: var(--fs-text);
+}
+
+.sg-never {
+  display: block;
+  margin: 12px 0 0 auto;
+  padding: 4px 0;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  text-decoration: underline;
+}
