@@ -192,7 +192,7 @@ export const ru = {
     /** Подпись под названием трека в меню: сколько заданий трека уже решено. */
     trackProgress: (solved: number, total: number) => `${solved} / ${total}`,
     /** Подвал меню: остальные инструменты Quaera (адреса — FAMILY в links.ts). */
-    guide: 'Как здесь всё устроено',
+    guide: 'Как устроена Quaera',
     familyTitle: 'Ещё в Quaera',
     familyModel: 'Model: проектирование баз',
     familyFlow: 'Flow: процессы BPMN',
@@ -217,7 +217,7 @@ export const ru = {
     familyWhoPandas: 'аналитик данных',
   },
   guide: {
-    title: 'Как здесь всё устроено',
+    title: 'Как устроена Quaera',
     lead: 'Четыре двери: выберите ту, что про вас',
     close: 'Закрыть',
     show: 'Показать',
