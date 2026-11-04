@@ -14,6 +14,7 @@ import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
 import { LayerArtifact } from './LayerArtifact';
 import { RoleNote } from './RoleNote';
 import { ToolNote } from './ToolNote';
+import { PipelinePreview } from './PipelinePreview';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
 const WIDE = '(min-width: 1240px)';
@@ -584,6 +585,8 @@ export function ArchitectureMap({
 
         {wide && detail}
       </div>
+
+      {!routing && <PipelinePreview />}
     </div>
   );
 }
