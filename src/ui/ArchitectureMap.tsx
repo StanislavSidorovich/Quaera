@@ -14,6 +14,7 @@ import { ProjectFinishCard, ProjectStationCard } from './ProjectRoute';
 import { LayerArtifact } from './LayerArtifact';
 import { RoleNote } from './RoleNote';
 import { ToolNote } from './ToolNote';
+import { IconCompass } from './Sidebar';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
 const WIDE = '(min-width: 1240px)';
@@ -619,8 +620,13 @@ export function DataMapTeaser({
   const roleName = (id: string) => careerRole(id)?.title[locale] ?? id;
   const hotLayer = architecture.layers.find((l) => l.id === hot);
   return (
-    <section className="card home-map" aria-labelledby="home-map-title">
-      <h2 id="home-map-title">{m.teaserTitle}</h2>
+    <section className="card home-map" data-pair="career" aria-labelledby="home-map-title">
+      <h2 id="home-map-title">
+        <span className="pair-ico" aria-hidden>
+          <IconCompass />
+        </span>
+        {m.teaserTitle}
+      </h2>
       <p className="muted">{m.teaserLead}</p>
       <ol className="home-map-chain">
         {architecture.layers.map((l) => (

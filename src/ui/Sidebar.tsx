@@ -151,7 +151,8 @@ export function Sidebar({
               type="button"
               className="side-item"
               aria-current={section === 'storymode' ? 'page' : undefined}
-              onClick={onStoryMode}
+              data-pair="storymode"
+            onClick={onStoryMode}
             >
               <IconStory />
               {t.nav.storyMode}
@@ -161,6 +162,7 @@ export function Sidebar({
             type="button"
             className="side-item"
             aria-current={section === 'reference' ? 'page' : undefined}
+            data-pair="reference"
             onClick={onReference}
           >
             <IconBook />
@@ -170,6 +172,7 @@ export function Sidebar({
             type="button"
             className="side-item"
             aria-current={section === 'sandbox' ? 'page' : undefined}
+            data-pair="sandbox"
             onClick={onSandbox}
           >
             <IconFlask />
@@ -184,6 +187,7 @@ export function Sidebar({
             type="button"
             className="side-item"
             aria-current={section === 'data' ? 'page' : undefined}
+            data-pair="data"
             onClick={onData}
           >
             <IconTable />
@@ -242,6 +246,7 @@ export function Sidebar({
             type="button"
             className="side-item"
             aria-current={section === 'intro' ? 'page' : undefined}
+            data-pair="intro"
             onClick={onIntro}
           >
             <IconQuestion />
@@ -251,6 +256,7 @@ export function Sidebar({
             type="button"
             className="side-item"
             aria-current={section === 'career' ? 'page' : undefined}
+            data-pair="career"
             onClick={onCareer}
           >
             <IconCompass />
@@ -379,14 +385,14 @@ const IconRoute = () => (
  * а не списком тем. Отличается от IconRoute (линия) тем, что здесь
  * содержание — разговор, а не путь.
  */
-const IconStory = () => (
+export const IconStory = () => (
   <svg {...iconProps}>
     <path d="M13.4 3H2.6v7.4h2.2v2.8l3-2.8h5.6z" />
     <path d="M5.2 6h5.6M5.2 8.1h3.4" strokeWidth="1.2" />
   </svg>
 );
 
-const IconBook = () => (
+export const IconBook = () => (
   <svg {...iconProps}>
     <path d="M8 4.6v8.6" />
     <path d="M8 4.6C7.2 3.6 5.9 3 4.4 3H2.6v8.6h1.8c1.5 0 2.8.6 3.6 1.6" />
@@ -408,7 +414,7 @@ const IconQuestion = () => (
   </svg>
 );
 
-const IconCompass = () => (
+export const IconCompass = () => (
   <svg {...iconProps}>
     <circle cx="8" cy="8" r="5.6" />
     <path d="m10.1 5.9-1.5 3.5-3.5 1.5 1.5-3.5z" />
@@ -423,7 +429,7 @@ const IconInfo = () => (
   </svg>
 );
 
-const IconFlask = () => (
+export const IconFlask = () => (
   <svg {...iconProps}>
     <path d="M6.4 2.6h3.2" />
     <path d="M6.9 2.6v3.9L3.6 12c-.5.9.1 2 1.2 2h6.4c1.1 0 1.7-1.1 1.2-2L9.1 6.5V2.6" />
@@ -431,7 +437,7 @@ const IconFlask = () => (
   </svg>
 );
 
-const IconTable = () => (
+export const IconTable = () => (
   <svg {...iconProps}>
     <rect x="2.4" y="3" width="11.2" height="10" rx="1.2" />
     <path d="M2.4 6.4h11.2" />

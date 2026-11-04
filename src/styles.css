@@ -11435,3 +11435,61 @@ figure.arch-figure {
   margin: 4px 2px;
   background: var(--line);
 }
+
+/*
+ * Общие значки пунктов меню и блоков главной (data-pair, см. ui/pairHighlight.ts):
+ * тот же глиф 16px слева от заголовка блока, чтобы пункт меню и блок опознавались как одно.
+ */
+.pair-ico {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 6px;
+  color: var(--text-dim);
+}
+
+.pair-ico svg {
+  flex: none;
+}
+
+/* В кнопках нижнего ряда главной значок рядом с подписью, а не над ней. */
+.btn[data-pair] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn[data-pair] .pair-ico {
+  margin-right: 0;
+}
+
+.home-top-story h2,
+.home-map h2 {
+  display: block;
+}
+
+/*
+ * Подсветка пары только при настоящем наведении мышью. У блока главной рамка 2px акцентом
+ * (outline не сдвигает раскладку), у пункта меню фон, как у его собственного :hover.
+ */
+@media (hover: hover) and (pointer: fine) {
+  [data-pair]:not(.side-item):not(:focus-visible) {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 150ms ease;
+  }
+
+  [data-pair-lit]:not(.side-item):not(:focus-visible) {
+    outline-color: var(--accent);
+  }
+
+  .side-item[data-pair-lit] {
+    background: var(--bg-raised);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-pair]:not(.side-item):not(:focus-visible) {
+    transition: none;
+  }
+}

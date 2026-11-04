@@ -40,7 +40,8 @@ import { DataMap } from './ui/DataMap';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
-import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
+import { Sidebar, IconAccount, IconStory, IconBook, IconFlask, IconTable, IconCompass, type SidebarSection } from './ui/Sidebar';
+import { usePairHighlight } from './ui/pairHighlight';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
@@ -829,6 +830,7 @@ function initialBoot(locale: Locale): Boot {
 
 export default function App() {
   const { t, locale, setLocale } = useI18n();
+  usePairHighlight();
   /* withLegacyCareer: одноразовый перенос «Пути к роли» из quaera.career.v1 в progress.career. */
   const [progress, setProgress] = useState<Progress>(() => withLegacyCareer(loadProgress()));
   /**
@@ -3122,7 +3124,7 @@ function WelcomeProofBody({
        * только новичку, ровно до первой решённой задачи. Экран «О тренажёре»
        * при этом достижим с главной всегда — см. about.entryLink там же.
        */}
-      <button type="button" className="home-intro-link" onClick={onOpenIntro} style={{ marginBottom: 14 }}>
+      <button type="button" className="home-intro-link" data-pair="intro" onClick={onOpenIntro} style={{ marginBottom: 14 }}>
         <span className="home-intro-glyph" aria-hidden>
           ?
         </span>
@@ -3809,7 +3811,7 @@ function Home({
        * есть: пункт бокового меню на десктопе и прямая ссылка `?intro`.
        */}
       {isNewUser && (
-        <button type="button" className="home-intro-link" onClick={onOpenIntro}>
+        <button type="button" className="home-intro-link" data-pair="intro" onClick={onOpenIntro}>
           {/*
            * Знак вопроса — тот же, что у пункта этого раздела в боковом меню,
            * и он же делает строку опознаваемой без чтения: человек, который
@@ -3867,11 +3869,16 @@ function Home({
            */
           <div className="home-top-wrap">
             <div className={`home-top${ready ? '' : ' home-top-solo'}`}>
-            <div className="card story-invite home-top-story">
+            <div className="card story-invite home-top-story" data-pair="storymode">
               <div className="story-invite-head">
                 <div>
                   <p className="story-invite-badge">{t.storyMode.badge}</p>
-                  <h2>{t.storyMode.homeTitle}</h2>
+                  <h2>
+                    <span className="pair-ico" aria-hidden>
+                      <IconStory />
+                    </span>
+                    {t.storyMode.homeTitle}
+                  </h2>
                 </div>
                 <StoryWeekArt reachedId={storyReachedId} />
               </div>
@@ -3898,9 +3905,14 @@ function Home({
           </div>
         ) : (
           <>
-            <button type="button" className="story-invite-row" onClick={onOpenStoryMode}>
+            <button type="button" className="story-invite-row" data-pair="storymode" onClick={onOpenStoryMode}>
               <span className="story-invite-row-head">
-                <span className="story-invite-row-title">{t.storyMode.homeTitle}</span>
+                <span className="story-invite-row-title">
+                  <span className="pair-ico" aria-hidden>
+                    <IconStory />
+                  </span>
+                  {t.storyMode.homeTitle}
+                </span>
                 <span className="pill">{t.storyMode.badge}</span>
               </span>
               <span className="story-invite-row-action">
@@ -4362,7 +4374,10 @@ function Home({
 
           {ready && (
             <div className="row">
-              <button className="btn secondary" onClick={onOpenReference}>
+              <button className="btn secondary" data-pair="reference" onClick={onOpenReference}>
+                <span className="pair-ico" aria-hidden>
+                  <IconBook />
+                </span>
                 {t.home.referenceBtn}
               </button>
               {/*
@@ -4373,7 +4388,10 @@ function Home({
                * от 1024px, и без этой кнопки на телефоне до песочницы
                * не добраться вовсе.
                */}
-              <button className="btn secondary" onClick={onOpenSandbox}>
+              <button className="btn secondary" data-pair="sandbox" onClick={onOpenSandbox}>
+                <span className="pair-ico" aria-hidden>
+                  <IconFlask />
+                </span>
                 {t.home.sandboxBtn}
               </button>
               {/*
@@ -4386,7 +4404,10 @@ function Home({
                * данных состоит из звезды и гранулярности, а трек профессии
                * разбирает ситуации, собранные на этих же строках.
                */}
-              <button className="btn secondary" onClick={onOpenData}>
+              <button className="btn secondary" data-pair="data" onClick={onOpenData}>
+                <span className="pair-ico" aria-hidden>
+                  <IconTable />
+                </span>
                 {t.home.schemaBtn}
               </button>
               {/*
@@ -4394,7 +4415,10 @@ function Home({
                * стоит в боковом меню, а его видно только от 1024px, и на
                * телефоне и планшете экран открывался лишь адресом ?roles.
                */}
-              <button className="btn secondary" onClick={onOpenCareer}>
+              <button className="btn secondary" data-pair="career" onClick={onOpenCareer}>
+                <span className="pair-ico" aria-hidden>
+                  <IconCompass />
+                </span>
                 {t.nav.career}
               </button>
             </div>
