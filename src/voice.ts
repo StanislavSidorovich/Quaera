@@ -80,33 +80,61 @@ export interface VoiceSpec {
   pitch: number;
 }
 
-/**
- * Два голоса для двух собеседников. Первый — лучший из хороших; второй —
- * лучший другого пола, иначе любой другой хороший, иначе тот же голос с
- * другим pitch (0.9 и 1.1). null — хорошего голоса нет, кнопки не будет.
+export type Gender = 'm' | 'f';
+
+/** Мужской и женский голос для озвучки. */
+export interface VoiceSet {
+  m: VoiceSpec;
+  f: VoiceSpec;
+}
+
+/*
+ * ПОЛ ПЕРСОНАЖЕЙ КАМПАНИИ. Единственное место: в данных кампании
+ * (`StoryMessage.from`) пола нет, только строка «Имя, роль». Ключ ищется в
+ * подписи без учёта регистра. Из текста: Аоки (she), Мори (he), руководитель
+ * (мужчина, решение хозяина); Ито и Танака в тексте без местоимений, пол
+ * выбран здесь. Незнакомая подпись читается мужским голосом.
  */
-export function pickPair(voices: SpeechSynthesisVoice[]): [VoiceSpec, VoiceSpec] | null {
+const CHARACTER_GENDER: Array<[RegExp, Gender]> = [
+  [/aoki/i, 'f'],
+  [/mori/i, 'm'],
+  [/ito/i, 'm'],
+  [/tanaka/i, 'f'],
+  [/manager/i, 'm'],
+];
+
+/** Пол говорящего по подписи `from` (английской версии кампании). */
+export function genderOfSpeaker(from: string): Gender {
+  return CHARACTER_GENDER.find(([re]) => re.test(from))?.[1] ?? 'm';
+}
+
+/**
+ * Голоса по полу. Лучший хороший голос нужного пола; нет такого: лучший
+ * голос без определённого пола; нет и его: любой хороший голос с pitch 0.9
+ * (мужчина) или 1.1 (женщина). null: хорошего голоса нет, кнопки не будет.
+ */
+export function pickVoices(voices: SpeechSynthesisVoice[]): VoiceSet | null {
   const good = goodVoices(voices);
   if (good.length === 0) return null;
-  const a = good[0];
-  const rest = good.filter((v) => v.name !== a.name);
-  const b = rest.find((v) => gender(v) !== gender(a) && gender(v) !== '?') ?? rest[0];
-  if (b) return [{ voice: a, pitch: 1 }, { voice: b, pitch: 1 }];
-  return [{ voice: a, pitch: 0.9 }, { voice: a, pitch: 1.1 }];
+  const pick = (g: Gender): VoiceSpec => {
+    const exact = good.find((v) => gender(v) === g) ?? good.find((v) => gender(v) === '?');
+    return exact ? { voice: exact, pitch: 1 } : { voice: good[0], pitch: g === 'm' ? 0.9 : 1.1 };
+  };
+  return { m: pick('m'), f: pick('f') };
 }
 
 /** Голоса приходят асинхронно (`voiceschanged`); null — хорошего голоса или API нет. */
-export function useVoicePair(enabled: boolean): [VoiceSpec, VoiceSpec] | null {
-  const [pair, setPair] = useState<[VoiceSpec, VoiceSpec] | null>(null);
+export function useVoiceSet(enabled: boolean): VoiceSet | null {
+  const [set, setSet] = useState<VoiceSet | null>(null);
   useEffect(() => {
     const s = synth();
     if (!enabled || !s) return;
-    const update = () => setPair(pickPair(s.getVoices()));
+    const update = () => setSet(pickVoices(s.getVoices()));
     update();
     s.addEventListener?.('voiceschanged', update);
     return () => s.removeEventListener?.('voiceschanged', update);
   }, [enabled]);
-  return pair;
+  return set;
 }
 
 export function stopSpeaking(): void {
@@ -119,8 +147,8 @@ export function stopSpeaking(): void {
 
 export interface SpokenLine {
   text: string;
-  /** Номер собеседника: чётные и нечётные получают разные голоса. */
-  speaker: number;
+  /** Пол говорящего: определяет мужской или женский голос. */
+  gender: Gender;
 }
 
 /**
@@ -129,7 +157,7 @@ export interface SpokenLine {
  */
 export function speakLines(
   lines: SpokenLine[],
-  pair: [VoiceSpec, VoiceSpec],
+  voices: VoiceSet,
   onLine: (i: number) => void,
   onEnd: () => void,
 ): void {
@@ -141,7 +169,7 @@ export function speakLines(
     .filter((l) => l.text);
   if (clean.length === 0) return onEnd();
   clean.forEach((l, i) => {
-    const spec = pair[l.speaker % 2];
+    const spec = voices[l.gender];
     const u = new SpeechSynthesisUtterance(l.text);
     u.voice = spec.voice;
     u.lang = spec.voice.lang;

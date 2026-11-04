@@ -25,7 +25,7 @@ import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
 import { storyCampaign } from '../content/storymode';
-import { speakLines, stopSpeaking, useVoicePair, voiceFlagOn, type SpokenLine } from '../voice';
+import { genderOfSpeaker, speakLines, stopSpeaking, useVoiceSet, voiceFlagOn, type SpokenLine } from '../voice';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -238,9 +238,9 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
 function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: number | null) => void }) {
   const { t } = useI18n();
   const on = useMemo(() => voiceFlagOn(), []);
-  const pair = useVoicePair(on);
+  const voices = useVoiceSet(on);
   const [playing, setPlaying] = useState(false);
-  const key = lines.map((l) => l.speaker + l.text).join('|');
+  const key = lines.map((l) => l.gender + l.text).join('|');
   useEffect(() => {
     stopSpeaking();
     setPlaying(false);
@@ -250,7 +250,7 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
       onActive(null);
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!on || !pair || lines.length === 0) return null;
+  if (!on || !voices || lines.length === 0) return null;
   const end = () => {
     setPlaying(false);
     onActive(null);
@@ -266,7 +266,7 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
           end();
         } else {
           setPlaying(true);
-          speakLines(lines, pair, onActive, end);
+          speakLines(lines, voices, onActive, end);
         }
       }}
     >
@@ -553,11 +553,7 @@ export function StoryMode({
   const enMission = storyCampaign('en').missions.find((m) => m.id === mission.id);
   const stripCode = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ');
   const asLines = (msgs: StoryMessage[] | undefined): SpokenLine[] => {
-    const who: string[] = [];
-    return (msgs ?? []).map((m) => {
-      if (!who.includes(m.from)) who.push(m.from);
-      return { text: stripCode(m.text), speaker: who.indexOf(m.from) };
-    });
+    return (msgs ?? []).map((m) => ({ text: stripCode(m.text), gender: genderOfSpeaker(m.from) }));
   };
   const voiceLines: SpokenLine[] =
     phase.kind === 'brief'
@@ -565,7 +561,7 @@ export function StoryMode({
       : phase.kind === 'interlude'
         ? asLines(enMission?.steps[phase.step]?.interlude?.messages)
         : phase.kind === 'reflection'
-          ? (enMission?.reflection ?? []).map((p) => ({ text: stripCode(p), speaker: 0 }))
+          ? (enMission?.reflection ?? []).map((p) => ({ text: stripCode(p), gender: genderOfSpeaker('manager') })) /* вечернее суждение: голос руководителя */
           : [];
 
   return (
