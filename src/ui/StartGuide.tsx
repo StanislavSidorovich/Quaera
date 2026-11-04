@@ -106,12 +106,21 @@ function revealSection(el: HTMLElement) {
   const headH = bar ? bar.getBoundingClientRect().bottom : 0;
   const room = window.innerHeight - Math.max(headH, 0);
   const wide = window.innerWidth >= 600;
-  if (wide && el.getBoundingClientRect().height <= room - 32) {
-    el.scrollIntoView({ block: 'center', behavior });
-    return;
-  }
-  const top = el.getBoundingClientRect().top + window.scrollY - Math.max(headH, 0) - 8;
+  const h = el.getBoundingClientRect().height;
+  const base = el.getBoundingClientRect().top + window.scrollY - Math.max(headH, 0);
+  /* По центру области под шапкой, а не экрана: при A+ липкая шапка прикрывала верх раздела. */
+  const top = wide && h <= room - 32 ? base - (room - h) / 2 : base - 8;
   window.scrollTo({ top: Math.max(top, 0), behavior });
+}
+
+/** Пункт бокового меню при крупном шрифте может лежать ниже экрана: прокрутить само меню, не страницу. */
+function revealInSidebar(el: HTMLElement) {
+  const box = el.closest<HTMLElement>('.sidebar-inner');
+  if (!box || box.scrollHeight <= box.clientHeight) return;
+  const b = box.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  if (r.top >= b.top + 8 && r.bottom <= b.bottom - 8) return;
+  box.scrollTop += r.top - b.top - (b.height - r.height) / 2;
 }
 
 function DoorIcon({ k }: { k: DoorKey }) {
@@ -260,8 +269,9 @@ function GuideTour({ step, setStep, onFinish }: { step: number; setStep: (n: num
   }, [d]);
 
   useLayoutEffect(() => {
-    const el = findTargets(d).main;
+    const { main: el, side } = findTargets(d);
     if (el) revealSection(el);
+    if (side) revealInSidebar(side);
     measure();
     nextRef.current?.focus({ preventScroll: true });
     if (bubbleRef.current) setBh(bubbleRef.current.offsetHeight);
@@ -285,10 +295,11 @@ function GuideTour({ step, setStep, onFinish }: { step: number; setStep: (n: num
   let style: React.CSSProperties | undefined;
   if (wide) {
     const w = 320;
+    const headH = Math.max(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0, 0);
     const left = Math.min(Math.max(rect ? rect.left : 0, 16), window.innerWidth - w - 16);
     if (!rect) style = { left: (window.innerWidth - w) / 2 };
     else if (rect.bottom + 14 + bh <= window.innerHeight) style = { left, top: rect.bottom + 14 };
-    else if (rect.top - 14 - bh >= 8) style = { left, top: rect.top - 14 - bh };
+    else if (rect.top - 14 - bh >= headH + 8) style = { left, top: rect.top - 14 - bh };
     else style = { right: 16, bottom: 16 };
   }
   const door = g.doors[d.key];
