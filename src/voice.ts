@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { speakerId, type SpeakerId } from './speakers';
+
+export { speakerId };
+export type { SpeakerId };
 
 /**
  * Проба озвучки режима истории голосом браузера (Web Speech API).
@@ -89,23 +93,23 @@ export interface VoiceSet {
 }
 
 /*
- * ПОЛ ПЕРСОНАЖЕЙ КАМПАНИИ. Единственное место: в данных кампании
- * (`StoryMessage.from`) пола нет, только строка «Имя, роль». Ключ ищется в
- * подписи без учёта регистра. Из текста: Аоки (she), Мори (he), руководитель
- * (мужчина, решение хозяина); Ито и Танака в тексте без местоимений, пол
- * выбран здесь. Незнакомая подпись читается мужским голосом.
+ * ПОЛ ПЕРСОНАЖЕЙ КАМПАНИИ. Единственное место: в данных кампании пола нет,
+ * только id говорящего (src/speakers.ts). Из текста: Аоки (she), Мори (he),
+ * руководитель (мужчина, решение хозяина); Ито и Танака в тексте без
+ * местоимений, пол выбран здесь. Рассказчик и незнакомая подпись: мужской голос.
  */
-const CHARACTER_GENDER: Array<[RegExp, Gender]> = [
-  [/aoki/i, 'f'],
-  [/mori/i, 'm'],
-  [/ito/i, 'm'],
-  [/tanaka/i, 'f'],
-  [/manager/i, 'm'],
-];
+const SPEAKER_GENDER: Record<SpeakerId, Gender> = {
+  aoki: 'f',
+  mori: 'm',
+  ito: 'm',
+  tanaka: 'f',
+  manager: 'm',
+  narrator: 'm',
+};
 
 /** Пол говорящего по подписи `from` (английской версии кампании). */
 export function genderOfSpeaker(from: string): Gender {
-  return CHARACTER_GENDER.find(([re]) => re.test(from))?.[1] ?? 'm';
+  return SPEAKER_GENDER[speakerId(from)];
 }
 
 /**
@@ -149,6 +153,8 @@ export interface SpokenLine {
   text: string;
   /** Пол говорящего: определяет мужской или женский голос. */
   gender: Gender;
+  /** Ключ в манифесте записей («день/слот»); без него реплика читается только голосом браузера. */
+  id?: string;
 }
 
 /**
@@ -182,4 +188,103 @@ export function speakLines(
     };
     s.speak(u);
   });
+}
+
+/*
+ * ЗАПИСАННЫЕ ГОЛОСА (пилот). Реплика с записью играет файл, остальные читает
+ * speakLines. Файлы лежат в public/voice/ и не в precache: service worker
+ * кеширует их по одному при первом прослушивании (кеш quaera-voice-v1,
+ * public/sw.js). Генерация и состав манифеста: scripts/gen-voice.mjs,
+ * гейт test:voice-manifest, план в docs/voice-pilot-2026-11.md.
+ */
+export interface VoiceClip {
+  speaker: SpeakerId;
+  /** Путь относительно /voice/; хеш текста входит в имя, поэтому кеш вперёд безопасен. */
+  file: string;
+  duration?: number;
+}
+
+interface VoiceManifest {
+  clips: Record<string, VoiceClip>;
+}
+
+let manifestPromise: Promise<VoiceManifest> | null = null;
+
+/** Манифест грузится один раз; любой сбой (нет файла, офлайн, HTML вместо JSON) значит «записей нет». */
+export function loadVoiceManifest(): Promise<VoiceManifest> {
+  if (!manifestPromise) {
+    manifestPromise = fetch('/voice/manifest.json')
+      .then((r) => (r.ok ? r.json() : { clips: {} }))
+      .then((m) => (m && typeof m === 'object' && m.clips && typeof m.clips === 'object' ? (m as VoiceManifest) : { clips: {} }))
+      .catch(() => ({ clips: {} }));
+  }
+  return manifestPromise;
+}
+
+/** Записи для всех реплик или null: тогда вся очередь идёт голосом браузера (микс двух голосов в одной сцене хуже обоих). */
+export function clipsFor(lines: SpokenLine[], manifest: VoiceManifest | null): VoiceClip[] | null {
+  if (!manifest) return null;
+  const clips: VoiceClip[] = [];
+  for (const l of lines) {
+    if (!l.text.trim()) continue;
+    const clip = l.id ? manifest.clips[l.id] : undefined;
+    if (!clip) return null;
+    clips.push(clip);
+  }
+  return clips.length ? clips : null;
+}
+
+let current: HTMLAudioElement | null = null;
+
+export function stopClips(): void {
+  const a = current;
+  current = null;
+  if (a) {
+    a.onended = null;
+    a.onerror = null;
+    try {
+      a.pause();
+    } catch {
+      // нечего останавливать
+    }
+  }
+}
+
+/**
+ * Играет записи по очереди. Подсветка: onLine(i) на старте реплики i.
+ * Ошибка загрузки или воспроизведения обрывает очередь через onFail:
+ * вызывающий переходит на голос браузера.
+ */
+export function playClips(
+  lines: SpokenLine[],
+  clips: VoiceClip[],
+  onLine: (i: number) => void,
+  onEnd: () => void,
+  onFail: () => void,
+): void {
+  stopClips();
+  const idx = lines.map((l, i) => (l.text.trim() ? i : -1)).filter((i) => i >= 0);
+  const step = (n: number) => {
+    if (n >= clips.length) return onEnd();
+    const a = new Audio('/voice/' + clips[n].file);
+    current = a;
+    a.onended = () => {
+      if (current === a) step(n + 1);
+    };
+    a.onerror = () => {
+      if (current === a) {
+        stopClips();
+        onFail();
+      }
+    };
+    onLine(idx[n]);
+    a.play().catch(() => {
+      // автозапуск запрещён или файл не отдался: пробуем голос браузера
+      if (current === a) {
+        stopClips();
+        onFail();
+      }
+    });
+  };
+  step(0);
 }

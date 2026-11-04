@@ -1,5 +1,6 @@
 import type { Locale } from '../i18n/context';
 import type { Track } from './types';
+import type { SpeakerId } from '../speakers';
 
 /**
  * Режим истории — сквозная сюжетная кампания, а НЕ выведенная из графа линия.
@@ -163,6 +164,11 @@ export type StoryScene =
 export interface StoryMessage {
   /** Кто пишет: имя и роль. Живой заказчик — дешёвый и уместный источник эмоции. */
   from: string;
+  /**
+   * Id говорящего для озвучки. Задан у реплик пилота (дни 1 и 2, английская
+   * версия); у остальных id выводится из `from` функцией `speakerId`.
+   */
+  speaker?: SpeakerId;
   /** Текст сообщения. */
   text: string;
 }
@@ -3443,10 +3449,12 @@ const en: StoryCampaign = {
       messages: [
         {
           from: 'Aoki, Sales Director',
+          speaker: 'aoki',
           text: '"Heard we have a new analyst. Good, because I have a question that has been hanging for a week. Nettora sales are falling and nobody can tell me why. In two weeks, on a Friday at 11:00, I meet the brand, and I cannot walk in there saying things are bad. I need numbers and one clear explanation. And by the end of this week I want to hear one thing: did it really fall, or is it the season? The sales report says fourfold."',
         },
         {
           from: 'Your manager',
+          speaker: 'manager',
           text: '"Welcome to the team. Do not dive straight into Nettora; we will get there before the meeting and you will see why the detour was worth it. First learn to pull data at all: half the questions in this job are solved by being able to read the tables. We hold thirteen of them, and almost every name says what is inside: dim_ is a directory of what we have, fact_ is what happened. Four of them will carry these two weeks, the rest turn up when their turn comes, and if you forget a column there is a "Data schema" button inside the task. Start with the price list, dim_product. That is our assortment, one row per product."',
         },
       ],
@@ -3471,6 +3479,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Your manager',
+            speaker: 'manager',
             text: '"Forty-seven items, and our whole assortment fits on one screen. Remember that number: if a report ever shows more, you multiplied rows with a join, you did not find new products."',
           },
         },
@@ -3485,6 +3494,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
+            speaker: 'aoki',
             text: '"The whole top of the price list is pharma: Vitanor, Gastrivo, Pyrexan. Not one drink in the top ten. That is not a quirk of the sample, that is our price structure: we carry two different kinds of goods for two different buyers, the pharmacy and the shelf, and Nettora lives in a very different part of the list. What stands behind each brand name is in the Data schema, under dim_product."',
           },
         },
@@ -3580,10 +3590,12 @@ const en: StoryCampaign = {
       messages: [
         {
           from: 'Your manager',
+          speaker: 'manager',
           text: '"Yesterday you found the Nettora numbers. Today rows turn into numbers, and in this job the second skill matters more. Aoki will never ask you to show all Nettora products; she will ask how many there are and in how many outlets they sit."',
         },
         {
           from: 'Aoki, Sales Director',
+          speaker: 'aoki',
           text: '"The sales report says January 2026 was Nettora\'s worst month, four times below June 2025. I do not trust a number I have not seen in a breakdown, so check it yourself. And give me the scale while you are at it: how many items do we carry in FMCG and how many brands?"',
         },
       ],
@@ -3601,6 +3613,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Your manager',
+            speaker: 'manager',
             text: '"A hundred and forty-four outlets, half of them behind a chain, and only twelve chains in total. Twelve negotiations are what our shelf is actually made of."',
           },
         },
@@ -3617,6 +3630,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
+            speaker: 'aoki',
             text: '"Forty-seven items, nine brands. Thank you. At least now I know the scale of the argument: we are debating one brand out of nine, and not the largest one."',
           },
         },
@@ -3633,6 +3647,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Aoki-san, sales director',
+            speaker: 'aoki',
             text: '"One thousand two hundred sixteen units for January. By itself that number says nothing. What do we compare it with?"',
           },
         },
@@ -3645,6 +3660,7 @@ const en: StoryCampaign = {
           },
           after: {
             from: 'Your manager',
+            speaker: 'manager',
             text: '"Four thousand seven hundred two units against one thousand two hundred sixteen: the very fourfold. The number is honest and the comparison is not: summer against winter. The question is not whether you counted right but what exactly you compared."',
           },
         },

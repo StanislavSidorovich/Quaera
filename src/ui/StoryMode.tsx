@@ -25,7 +25,19 @@ import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
 import { storyCampaign } from '../content/storymode';
-import { genderOfSpeaker, speakLines, stopSpeaking, useVoiceSet, voiceFlagOn, type SpokenLine } from '../voice';
+import {
+  clipsFor,
+  loadVoiceManifest,
+  playClips,
+  speakLines,
+  stopClips,
+  stopSpeaking,
+  useVoiceSet,
+  voiceFlagOn,
+  genderOfSpeaker,
+  speakerId,
+  type SpokenLine,
+} from '../voice';
 
 /**
  * Экран режима истории — нарративная оболочка вокруг нескольких существующих
@@ -231,29 +243,42 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
 }
 
 /**
- * Проба озвучки (?voice=1): три момента дня читает голос браузера, всегда
- * по-английски. Без флага, без API или без английского голоса не рисуется.
+ * Проба озвучки (?voice=1), всегда по-английски. Реплика с записью в
+ * /voice/manifest.json играет файл (весь экран, только если записи есть у
+ * всех его реплик); иначе читает голос браузера, и тогда нужен хороший
+ * английский голос. Без флага или без обоих способов кнопка не рисуется.
  * Речь обрывается при уходе с экрана (смена фазы/дня размонтирует кнопку).
  */
 function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: number | null) => void }) {
   const { t } = useI18n();
   const on = useMemo(() => voiceFlagOn(), []);
   const voices = useVoiceSet(on);
+  const [manifest, setManifest] = useState<Awaited<ReturnType<typeof loadVoiceManifest>> | null>(null);
   const [playing, setPlaying] = useState(false);
-  const key = lines.map((l) => l.gender + l.text).join('|');
+  const key = lines.map((l) => (l.id ?? '') + l.gender + l.text).join('|');
+  useEffect(() => {
+    if (on) void loadVoiceManifest().then(setManifest);
+  }, [on]);
   useEffect(() => {
     stopSpeaking();
+    stopClips();
     setPlaying(false);
     onActive(null);
     return () => {
       stopSpeaking();
+      stopClips();
       onActive(null);
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!on || !voices || lines.length === 0) return null;
+  const clips = clipsFor(lines, manifest);
+  if (!on || (!clips && !voices) || lines.length === 0) return null;
   const end = () => {
     setPlaying(false);
     onActive(null);
+  };
+  const speak = () => {
+    if (voices) speakLines(lines, voices, onActive, end);
+    else end();
   };
   return (
     <button
@@ -263,10 +288,12 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
       onClick={() => {
         if (playing) {
           stopSpeaking();
+          stopClips();
           end();
         } else {
           setPlaying(true);
-          speakLines(lines, voices, onActive, end);
+          if (clips) playClips(lines, clips, onActive, end, speak);
+          else speak();
         }
       }}
     >
@@ -552,14 +579,19 @@ export function StoryMode({
   /* Английская версия реплик той же миссии (проба озвучки). */
   const enMission = storyCampaign('en').missions.find((m) => m.id === mission.id);
   const stripCode = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ');
-  const asLines = (msgs: StoryMessage[] | undefined): SpokenLine[] => {
-    return (msgs ?? []).map((m) => ({ text: stripCode(m.text), gender: genderOfSpeaker(m.from) }));
+  /* `slot` — префикс слота в манифесте: «m» для брифа, «i<шаг>.» для разговора между делом. */
+  const asLines = (msgs: StoryMessage[] | undefined, slot: string): SpokenLine[] => {
+    return (msgs ?? []).map((m, i) => ({
+      text: stripCode(m.text),
+      gender: genderOfSpeaker(m.speaker ?? speakerId(m.from)),
+      id: `${mission.id}/${slot}${i}`,
+    }));
   };
   const voiceLines: SpokenLine[] =
     phase.kind === 'brief'
-      ? asLines(enMission?.messages)
+      ? asLines(enMission?.messages, 'm')
       : phase.kind === 'interlude'
-        ? asLines(enMission?.steps[phase.step]?.interlude?.messages)
+        ? asLines(enMission?.steps[phase.step]?.interlude?.messages, `i${phase.step}.`)
         : phase.kind === 'reflection'
           ? (enMission?.reflection ?? []).map((p) => ({ text: stripCode(p), gender: genderOfSpeaker('manager') })) /* вечернее суждение: голос руководителя */
           : [];

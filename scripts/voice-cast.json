@@ -1,0 +1,24 @@
+{
+  "_comment": "Id голосов по поставщикам. Значения TODO-... заглушки: хозяин подставляет свои после прослушивания в песочнице поставщика. Реальный запуск отказывается работать, пока у нужных ролей остались заглушки. Ключей и секретов здесь нет и быть не должно: ключ только в QUAERA_TTS_KEY.",
+  "elevenlabs": {
+    "model": "eleven_multilingual_v2",
+    "voices": {
+      "aoki": "TODO-elevenlabs-voice-id-aoki",
+      "manager": "TODO-elevenlabs-voice-id-manager",
+      "ito": "TODO-elevenlabs-voice-id-ito",
+      "mori": "TODO-elevenlabs-voice-id-mori",
+      "tanaka": "TODO-elevenlabs-voice-id-tanaka",
+      "narrator": "TODO-elevenlabs-voice-id-narrator"
+    }
+  },
+  "azure": {
+    "voices": {
+      "aoki": "TODO-azure-voice-name-aoki",
+      "manager": "TODO-azure-voice-name-manager",
+      "ito": "TODO-azure-voice-name-ito",
+      "mori": "TODO-azure-voice-name-mori",
+      "tanaka": "TODO-azure-voice-name-tanaka",
+      "narrator": "TODO-azure-voice-name-narrator"
+    }
+  }
+}

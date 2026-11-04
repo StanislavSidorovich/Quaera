@@ -49,6 +49,58 @@ const VENDOR = `quaera-pyodide-__VENDOR_ID__`;
  */
 const LEGACY_VENDOR = `querium-pyodide-__VENDOR_ID__`;
 
+/**
+ * Озвучка сюжетного режима (public/voice/, пилот) — третий кеш вне версии сборки.
+ *
+ * Записи не в precache: каждая грузится один раз, когда человек нажал «слушать»,
+ * и дальше лежит здесь. Имя файла содержит хеш текста реплики
+ * (scripts/gen-voice.mjs), поэтому «кеш вперёд» не устаревает: правка реплики
+ * даёт новый файл, а старый просто перестаёт запрашиваться. Номер версии
+ * меняют только при смене самой схемы хранения; `activate` этот кеш не трогает,
+ * иначе каждый деплой стирал бы то, что человек уже скачал. Манифест
+ * (/voice/manifest.json) идёт «сеть вперёд»: он меняется при каждой генерации.
+ */
+const VOICE = 'quaera-voice-v1';
+const isVoice = (url) => url.pathname.startsWith('/voice/');
+const isVoiceManifest = (url) => url.pathname === '/voice/manifest.json';
+
+/**
+ * Ответ на запрос диапазона из целого файла. Элемент <audio> просит файл с
+ * заголовком Range, Safari без 206 в ответ отказывается играть, а в кеш
+ * 206 положить нельзя. Поэтому файл кладётся целиком, а диапазон нарезается здесь.
+ */
+async function rangeFromWhole(request, whole) {
+  const m = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') ?? '');
+  if (!m) return whole;
+  const buf = await whole.arrayBuffer();
+  const size = buf.byteLength;
+  const start = m[1] === '' ? Math.max(0, size - Number(m[2])) : Number(m[1]);
+  const end = m[1] === '' || m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+  if (start > end || start >= size) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': whole.headers.get('content-type') ?? 'audio/ogg',
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
+
+/** Запись озвучки: кеш вперёд; промах — одна загрузка целиком (без Range) в кеш. */
+async function voiceClip(request, url) {
+  const cache = await caches.open(VOICE);
+  let whole = await cache.match(url.pathname);
+  if (!whole) {
+    const res = await fetchVerified(new Request(url.pathname));
+    if (!usable(url, res)) return res;
+    await cache.put(url.pathname, res.clone());
+    whole = res;
+  }
+  return rangeFromWhole(request, whole);
+}
+
 /** Что живёт в кеше без версии сборки: содержимое задано пином в scripts/sync-pyodide.mjs. */
 const isVendor = (url) => url.pathname.startsWith('/pyodide/');
 
@@ -212,7 +264,7 @@ async function cleanupSupersededCaches() {
   const keys = await caches.keys();
   await Promise.all(
     keys
-      .filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR)
+      .filter((k) => k !== SHELL && k !== ASSETS && k !== VENDOR && k !== VOICE)
       .filter((k) => adopted || k !== LEGACY_VENDOR)
       .map((k) => caches.delete(k))
   );
@@ -332,6 +384,27 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => (await fromCache(request)) ?? Response.error())
     );
+    return;
+  }
+
+  // Озвучка: манифест сеть вперёд, записи кеш вперёд (см. VOICE). Не через
+  // ensurePrecache: этих файлов в предзагрузке нет и быть не должно.
+  if (isVoiceManifest(url)) {
+    event.respondWith(
+      fetch(revalidating(request))
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(VOICE).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(async () => (await (await caches.open(VOICE)).match(request)) ?? Response.error())
+    );
+    return;
+  }
+  if (isVoice(url)) {
+    event.respondWith(voiceClip(request, url).catch(() => Response.error()));
     return;
   }
 
