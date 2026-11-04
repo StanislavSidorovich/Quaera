@@ -15,6 +15,12 @@
     "3": "Shape of data",
     "4": "Working habits"
   },
+  "tierMilestones": {
+    "1": { "title": "You open and inspect data", "text": "Filters, column types, a first look at a table. A Colab notebook no longer feels scary." },
+    "2": { "title": "You do in pandas what you did in SQL", "text": "groupby, merge, missing values, duplicates, bins. You work in code, not in Excel." },
+    "3": { "title": "You prepare data for a chart or a model", "text": "Dates and series, pivot and melt, RFM segments. These are the tasks analysts learn Python for." },
+    "4": { "title": "You write code you are not ashamed to hand over", "text": "Chains without SettingWithCopyWarning, vectorization instead of loops. Colleagues can read it, and it does not break on new data." }
+  },
   "skills": [
     {
       "id": "py-dataframe",

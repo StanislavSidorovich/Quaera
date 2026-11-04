@@ -13,7 +13,15 @@
     "1": "Foundation",
     "2": "Aggregation and joins",
     "3": "Real-world data",
-    "4": "Advanced"
+    "4": "Advanced",
+    "5": "Beyond the syllabus"
+  },
+  "tierMilestones": {
+    "1": { "title": "You can read any table", "text": "Pick rows and columns, sort, take the top N. Almost every query at work starts this way." },
+    "2": { "title": "Ready for daily extracts", "text": "Sums by group, lookup tables joined to facts, NULL without surprises. Roughly an intern level." },
+    "3": { "title": "You count on messy data", "text": "Missing rows, row multiplication in joins, conditional sums, CTEs. Roughly a junior level: nobody rechecks such a report after you." },
+    "4": { "title": "You answer a business question end to end", "text": "Window functions, promo and price, forecast accuracy, a walk from question to conclusion. This is what separates an analyst from someone who pulls extracts." },
+    "5": { "title": "Interview tasks and rare cases", "text": "Weeks of stock, share of revenue, a missed plan: tasks that have no ready query template." }
   },
   "skills": [
     {

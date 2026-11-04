@@ -453,6 +453,7 @@ function checkGraph(pack) {
   for (const t of new Set(pack.skills.map((s) => s.tier))) {
     if (!pack.tierNames?.[t]) fail(pack.id, `у уровня ${t} нет названия в tierNames`);
   }
+  checkMilestones(pack, pack.tierMilestones, pack.tierNames, pack.id);
 }
 
 /**
@@ -461,6 +462,29 @@ function checkGraph(pack) {
  * поле хуже отсутствия карточки: человек открывает «О треке» и утыкается
  * в заглушку на первом же экране трека.
  */
+/**
+ * Вехи уровней (`tierMilestones`, src/content/milestones.ts): у каждого этапа с заданиями —
+ * уровень графа и «сверх программы» (level 5) — есть веха в обеих локалях, заголовок до 50 знаков,
+ * строка до 160. `ms` и `names` — поля пака или его перевода.
+ */
+function checkMilestones(pack, ms, names, label) {
+  const stages = new Set();
+  for (const t of pack.tasks) {
+    const sk = pack.skills.find((x) => x.id === t.skill);
+    stages.add(t.level === 5 ? 5 : sk?.tier);
+  }
+  for (const st of [...stages].filter(Boolean).sort()) {
+    const m = ms?.[st];
+    if (!m?.title || !m?.text) {
+      fail(label, `у этапа ${st} нет вехи в tierMilestones`);
+      continue;
+    }
+    if (m.title.length > 50) fail(label, `заголовок вехи ${st} длиннее 50 знаков (${m.title.length})`);
+    if (m.text.length > 160) fail(label, `строка вехи ${st} длиннее 160 знаков (${m.text.length})`);
+    if (st === 5 && !names?.[5]) fail(label, 'у этапа 5 нет имени в tierNames');
+  }
+}
+
 function checkIntro(pack) {
   if (!pack.intro) return;
   const fields = ['what', 'where', 'idea', 'limits', 'bridge'];
@@ -4145,6 +4169,7 @@ function translationPairs(orig, tr) {
     const skillIds = new Set(pack.skills.map((s) => s.id));
     const taskById = new Map(pack.tasks.map((t) => [t.id, t]));
     let ok = true;
+    checkMilestones(pack, tr.tierMilestones, tr.tierNames, `${packId}.en`);
     for (const s of tr.skills ?? []) {
       if (!skillIds.has(s.id)) {
         fail(`${packId}.en`, `скилл перевода ${s.id} не существует в паке ${packId}`);

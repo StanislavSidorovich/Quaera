@@ -207,6 +207,9 @@ export const en = {
     overallProgressHint:
       'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it. A low number early on is by design.',
     skillMapTitle: 'Skill map',
+    /** См. комментарий в ru.ts: пройденные вехи целиком, из будущих только следующая. */
+    milestoneNext: (title: string, n: number) => `Next: ${title}, ${n} ${n === 1 ? 'task' : 'tasks'} to go`,
+    milestoneTag: 'Milestone',
     /** См. комментарий в ru.ts: подпись свёрнутой группы уровня. */
     tierSummary: (started: number, total: number) =>
       `${total} ${total === 1 ? 'topic' : 'topics'} · ${started} started`,
@@ -673,6 +676,7 @@ export const en = {
     taskProgressOf: (i: number, total: number) => `Task ${i} of ${total}`,
     lessonStep: 'Theory',
     doneTitle: 'Session done',
+    milestoneNew: 'New milestone',
     doneBody: (n: number) =>
       `Tasks completed: ${n}. The skills they touched will come back for review, and the interval depends on how confidently you got them.`,
     moreBtn: 'Another session',

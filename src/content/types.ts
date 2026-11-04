@@ -338,6 +338,12 @@ export interface Pack {
   version: number;
   /** Подписи уровней графа для карты навыков. Ключ — Skill.tier, приведённый к строке. */
   tierNames?: Record<number, string>;
+  /**
+   * Веха уровня: что человек умеет для работы, когда прошёл уровень. Ключ — Skill.tier;
+   * ключ 5 — «сверх программы»: задания level 5 лежат внутри навыков tier 4, а не в своём
+   * уровне графа, и считаются отдельным этапом (src/content/milestones.ts).
+   */
+  tierMilestones?: Record<number, TierMilestone>;
   skills: Skill[];
   tasks: Task[];
 }
@@ -411,11 +417,18 @@ export interface TaskTranslation {
   steps?: TaskStepTranslation[];
 }
 
+/** Заголовок до 50 знаков и одна-две строки до 160 (гейт verify-content). */
+export interface TierMilestone {
+  title: string;
+  text: string;
+}
+
 export interface PackTranslation {
   id: string;
   title?: string;
   description?: string;
   tierNames?: Record<number, string>;
+  tierMilestones?: Record<number, TierMilestone>;
   intro?: TrackIntro;
   skills?: SkillTranslation[];
   tasks?: TaskTranslation[];

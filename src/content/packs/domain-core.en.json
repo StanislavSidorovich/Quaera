@@ -6,7 +6,15 @@
     "1": "What people actually want",
     "2": "How the business works",
     "3": "Market metrics",
-    "4": "Judgment and influence"
+    "4": "Judgment and influence",
+    "5": "Beyond the syllabus"
+  },
+  "tierMilestones": {
+    "1": { "title": "You turn a request into a task", "text": "\"Make a dashboard\" becomes a question, a metric and a check before sending. This is where beginners go wrong most often." },
+    "2": { "title": "You talk to the business in its own language", "text": "The chain from order to payment, sell-in and sell-out, forecast, seasonality. It is clear where the data comes from." },
+    "3": { "title": "You explain why it dropped", "text": "Distribution, promo, market share, the \"why\" breakdown, ABC-XYZ. This is the work of a commercial analyst in FMCG and pharma." },
+    "4": { "title": "Your conclusion can go to your manager", "text": "Cause or coincidence, conclusion first, the right chart, responsibility for data. You get invited to the meeting, not only asked for numbers." },
+    "5": { "title": "Hard situations and disputed requests", "text": "An error in a report already sent, a request to show a different number, a metric under someone else's report. There is no single right move here." }
   },
   "intro": {
     "what": "This track is about what's left once the tools are stripped away: whose question you're answering, what a computed number actually means, and why the business works the way it does rather than some other way. This isn't \"soft skills\"; there's no less specificity here than in SQL, it's just that the checker isn't an engine, it's the consequences.\n\nThe domain is FMCG and OTC-pharma distribution: how a product travels from factory to shelf, and what metrics measure that journey. The way of reasoning carries over to any industry; the specific set of metrics doesn't, and wherever that boundary falls, the tasks call it out directly.",

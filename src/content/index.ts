@@ -132,6 +132,7 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
     title: tr.title ?? pack.title,
     description: tr.description ?? pack.description,
     tierNames: tr.tierNames ?? pack.tierNames,
+    tierMilestones: tr.tierMilestones ?? pack.tierMilestones,
     intro: tr.intro ?? pack.intro,
     skills: pack.skills.map((s) => {
       const t = skillTrById.get(s.id);

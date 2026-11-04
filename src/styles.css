@@ -11496,3 +11496,29 @@ figure.arch-figure {
     transition: none;
   }
 }
+
+/*
+ * Веха уровня (src/content/milestones.ts): под шапкой группы на карте навыков и на экране
+ * «Занятие закончено». Взятая — заголовок и строка, следующая — одна тусклая строка.
+ */
+.milestone-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 2px;
+  font-size: var(--fs-small, 13px);
+  line-height: 1.45;
+}
+.milestone-note.reached {
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent, currentColor);
+  background: var(--bg-sunken);
+  border-radius: 0 8px 8px 0;
+}
+.milestone-tag {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}

@@ -8,6 +8,12 @@
     "3": "CALCULATE, relationships and time",
     "4": "Production model"
   },
+  "tierMilestones": {
+    "1": { "title": "You read someone else's model", "text": "Fact and dimensions, the star, relationship cardinality. You can open a finished Power BI report and see where the numbers come from." },
+    "2": { "title": "You understand why a number is what it is", "text": "Measure or column, filter and row context, a date table. The usual cause of a wrong total in a report is now clear." },
+    "3": { "title": "You write the measures the business asks for", "text": "CALCULATE, many-to-many, year over year. This is what a BI analyst interview asks about." },
+    "4": { "title": "You know how a model lives at work", "text": "Data preparation, dimension history, refresh, loading, size. You and a data engineer speak the same language." }
+  },
   "intro": {
     "what": "A data model isn't a report file; it's a layer between raw tables and what a person sees on a dashboard: facts and dimensions laid out so the same measure computes correctly under any slice someone asks for. DAX is the language that measure is written in; it exists only inside a model and means nothing outside one, unlike SQL or Python code, which work on their own.\n\nThe main difference from SQL and pandas: there, you write a new query for every new question. Here, you build the model and its measures once, and after that any slice (by region, by month, by brand), the report computes on its own, with no new query.",
     "where": "A dashboard that different people open every day and slice differently (today by region, tomorrow by product group), and the number has to agree both times without hand-editing the query for each slice. A report built on a single flat extract, where joining the fact to a lookup table multiplied rows and quietly doubled revenue: a model with correctly set relationships and cardinality keeps that from happening structurally, not because whoever built the extract was careful enough.\n\nAt a BI-analyst interview this doesn't come up as DAX syntax trivia; it comes up as walking through an actual model: why did this double, why does a measure give the wrong thing under a slice, where should this column have lived. The same style of reasoning underlies the PL-300 exam, which this track uses as its anchor for topic coverage.",

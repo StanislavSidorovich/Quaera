@@ -3,6 +3,7 @@ import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs
 import { panelWordsIn } from './content/panelKeywords';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
 import { compareTaskOrder } from './content/taskOrder';
+import { EXTRA_STAGE, nextStage, stageStates, type StageState } from './content/milestones';
 import { getExecutor } from './engine/executors';
 import { workerCodeText } from './engine/diagnose';
 import { WORKER_FAILURE } from './engine/types';
@@ -1159,8 +1160,27 @@ export default function App() {
    * (пустая) успела бы перезаписать серверную до того, как их свели, —
    * то есть ровно та потеря данных, против которой писалась фаза 1.
    */
+  /**
+   * Вехи, взятые до начала занятия: пока человек не в занятии, снимок обновляется, внутри
+   * занятия замирает, и на экране «Занятие закончено» видно, что стало новым. После перезагрузки
+   * посреди занятия снимка нет (null), и тогда ничего не показываем, чем ошибаемся.
+   */
+  const milestonesBeforeRef = useRef<Set<string> | null>(null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
+  const reachedMilestones = (): Set<string> => {
+    const out = new Set<string>();
+    for (const tr of TRACK_ORDER) {
+      const pk = packForTrack(tr, locale);
+      if (!pk) continue;
+      for (const st of stageStates(pk, (id) => !!progress.taskRecords[id]?.solved)) if (st.reached) out.add(`${tr}:${st.stage}`);
+    }
+    return out;
+  };
+  useEffect(() => {
+    if (screen.name !== 'session' && screen.name !== 'done') milestonesBeforeRef.current = reachedMilestones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen.name, progress, locale]);
   /*
    * Для кого первое слияние **состоялось**, а не просто было начато.
    *
@@ -2907,6 +2927,26 @@ export default function App() {
             <div className="card">
               <h2>{t.session.doneTitle}</h2>
               <p className="muted">{t.session.doneBody(screen.solved)}</p>
+              {(() => {
+                const before = milestonesBeforeRef.current;
+                if (!before) return null;
+                const fresh: Array<{ key: string; st: StageState }> = [];
+                for (const tr of TRACK_ORDER) {
+                  const pk = packForTrack(tr, locale);
+                  if (!pk) continue;
+                  for (const st of stageStates(pk, (id) => !!progress.taskRecords[id]?.solved)) {
+                    if (st.reached && !before.has(`${tr}:${st.stage}`)) fresh.push({ key: `${tr}:${st.stage}`, st });
+                  }
+                }
+                if (!fresh.length) return null;
+                return fresh.map(({ key, st }) => (
+                  <div key={key} className="milestone-note reached">
+                    <span className="milestone-tag">{t.session.milestoneNew}</span>
+                    <strong>{st.milestone.title}</strong>
+                    <span className="muted">{st.milestone.text}</span>
+                  </div>
+                ));
+              })()}
               {/*
                * Раньше здесь стояла одна кнопка «На главную» — тупик для
                * самого частого намерения в этой точке (продолжить, а не
@@ -3432,6 +3472,25 @@ function StoryEntry({ onOpenPart, row = false }: { onOpenPart: (partId: string) 
   );
 }
 
+/** Веха уровня под шапкой группы на карте навыков: взятая целиком, следующая одной строкой, остальные скрыты. */
+function MilestoneNote({ stage, isNext }: { stage?: StageState; isNext: boolean }) {
+  const { t } = useI18n();
+  if (!stage || (!stage.reached && !isNext)) return null;
+  return (
+    <div className={`milestone-note${stage.reached ? ' reached' : ''}`}>
+      {stage.reached ? (
+        <>
+          <span className="milestone-tag">{t.home.milestoneTag}</span>
+          <strong>{stage.milestone.title}</strong>
+          <span className="muted">{stage.milestone.text}</span>
+        </>
+      ) : (
+        <span className="muted">{t.home.milestoneNext(stage.milestone.title, stage.remaining)}</span>
+      )}
+    </div>
+  );
+}
+
 function Home({
   activeTrack,
   activePack,
@@ -3651,6 +3710,13 @@ function Home({
       }),
     [byTier, progress]
   );
+
+  /** Вехи уровней: пройденные показываем, из будущих только следующую (src/content/milestones.ts). */
+  const stages = useMemo(
+    () => stageStates(activePack, (id) => !!progress.taskRecords[id]?.solved),
+    [activePack, progress]
+  );
+  const nextMilestone = nextStage(stages);
 
   const [openTiers, setOpenTiers] = useState<Set<number>>(() => new Set());
 
@@ -4341,6 +4407,7 @@ function Home({
                     {open ? '▾' : '▸'}
                   </span>
                 </button>
+                <MilestoneNote stage={stages.find((x) => x.stage === tier)} isNext={nextMilestone?.stage === tier} />
                 {open && (
                 <div id={groupId}>
                 {list.map((s) => {
@@ -4404,6 +4471,7 @@ function Home({
               </div>
               );
             })}
+            <MilestoneNote stage={stages.find((x) => x.stage === EXTRA_STAGE)} isNext={nextMilestone?.stage === EXTRA_STAGE} />
             </div>
           </div>
 
