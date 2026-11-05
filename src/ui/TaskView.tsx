@@ -251,6 +251,9 @@ interface Props {
    * из семи экранов восьмой ради одной фразы читался бы как заминка.
    */
   afterNote?: { from: string; text: string };
+  /** Кнопка озвучки реплики после задания (проба ?voice=1) и подсветка, пока она звучит. */
+  afterVoice?: ReactNode;
+  afterSpeaking?: boolean;
   /**
    * Не показывать метку уровня. В кампании ступень задаёт день, а не уровень
    * трека: L5 на пятнице новичка пугает, L2 на субботе после него читается
@@ -295,6 +298,8 @@ export function TaskView({
   onOpenSchema,
   onOpenLesson,
   afterNote,
+  afterVoice,
+  afterSpeaking,
   hideLevel,
   panelWords,
   isRest,
@@ -590,7 +595,8 @@ export function TaskView({
             </div>
           )}
           {last && afterNote && (
-            <div className="card story-after">
+            <div className={'card story-after' + (afterSpeaking ? ' story-after--speaking' : '')}>
+              {afterVoice}
               <p className="story-mode-from">{afterNote.from}</p>
               <p className="story-mode-text">{afterNote.text}</p>
             </div>

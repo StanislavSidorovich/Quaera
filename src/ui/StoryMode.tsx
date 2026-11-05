@@ -34,7 +34,6 @@ import {
   stopSpeaking,
   useVoiceSet,
   voiceFlagOn,
-  genderOfSpeaker,
   speakerId,
   type SpokenLine,
 } from '../voice';
@@ -255,7 +254,7 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
   const voices = useVoiceSet(on);
   const [manifest, setManifest] = useState<Awaited<ReturnType<typeof loadVoiceManifest>> | null>(null);
   const [playing, setPlaying] = useState(false);
-  const key = lines.map((l) => (l.id ?? '') + l.gender + l.text).join('|');
+  const key = lines.map((l) => (l.id ?? '') + l.speaker + l.text).join('|');
   useEffect(() => {
     if (on) void loadVoiceManifest().then(setManifest);
   }, [on]);
@@ -468,6 +467,11 @@ export function StoryMode({
   if (phase.kind === 'task') {
     const step = steps[phase.step];
     if (!step) return null;
+    /* Реплика после задания по-английски (проба озвучки): слот «a<шаг>» в манифесте. */
+    const enAfter = storyCampaign('en').missions.find((m) => m.id === mission.id)?.steps[phase.step]?.after;
+    const afterLines: SpokenLine[] = enAfter
+      ? [{ text: enAfter.text.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' '), speaker: enAfter.speaker ?? speakerId(enAfter.from), id: `${mission.id}/a${phase.step}` }]
+      : [];
     /*
      * Карточка приёма поверх задания, а не отдельным экраном: полоса дня
      * остаётся, фаза не меняется, и возврат попадает ровно в то задание,
@@ -520,6 +524,8 @@ export function StoryMode({
           onOpenSchema={onOpenSchema}
           notReadyNote={runtimeNotReadyNote}
           afterNote={mission.steps[phase.step]?.after}
+          afterVoice={<VoiceButton lines={afterLines} onActive={setVoiceIdx} />}
+          afterSpeaking={voiceIdx === 0}
           hideLevel
           panelWords={step.panelWords}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}
@@ -583,7 +589,7 @@ export function StoryMode({
   const asLines = (msgs: StoryMessage[] | undefined, slot: string): SpokenLine[] => {
     return (msgs ?? []).map((m, i) => ({
       text: stripCode(m.text),
-      gender: genderOfSpeaker(m.speaker ?? speakerId(m.from)),
+      speaker: m.speaker ?? speakerId(m.from),
       id: `${mission.id}/${slot}${i}`,
     }));
   };
@@ -592,9 +598,7 @@ export function StoryMode({
       ? asLines(enMission?.messages, 'm')
       : phase.kind === 'interlude'
         ? asLines(enMission?.steps[phase.step]?.interlude?.messages, `i${phase.step}.`)
-        : phase.kind === 'reflection'
-          ? (enMission?.reflection ?? []).map((p) => ({ text: stripCode(p), gender: genderOfSpeaker('manager') })) /* вечернее суждение: голос руководителя */
-          : [];
+        : []; /* вечернее суждение и крючок: мысли самого человека, остаются текстом */
 
   return (
     <div className="story-column">
@@ -767,7 +771,6 @@ export function StoryMode({
         {phase.kind === 'reflection' && (
           <>
             <h2>{t.storyMode.reflectionTitle}</h2>
-            <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             {mission.reflection.map((p, i) => (
               <p className="story-mode-para" key={i}>
                 {glossaryRendered[i] ?? p}

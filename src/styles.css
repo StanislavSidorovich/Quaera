@@ -5733,6 +5733,11 @@ table.sample td.null {
   border-left: 2px solid color-mix(in srgb, var(--accent) 55%, var(--text));
 }
 
+.story-after--speaking {
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-raised));
+}
+
 .story-mode-para {
   margin: 12px 0 0;
   font-size: var(--fs-body);
