@@ -3,8 +3,8 @@
   "elevenlabs": {
     "model": "eleven_multilingual_v2",
     "voices": {
-      "aoki": "TODO-elevenlabs-voice-id-aoki",
-      "manager": "TODO-elevenlabs-voice-id-manager",
+      "aoki": "R1LhBz1HkGC0EKSMHe1z",
+      "manager": "UznIBkKIQe3ZG2tGydre",
       "ito": "TODO-elevenlabs-voice-id-ito",
       "mori": "TODO-elevenlabs-voice-id-mori",
       "tanaka": "TODO-elevenlabs-voice-id-tanaka",
