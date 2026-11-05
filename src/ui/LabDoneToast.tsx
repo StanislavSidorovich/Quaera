@@ -30,15 +30,30 @@ export function useLabDone(): Record<string, string> {
  * Принимает `#lab-done=…` (при загрузке и на hashchange) и коротко говорит спасибо.
  * Монтируется один раз в App; сам ничего не рисует, пока отметки нет.
  */
+const PENDING_KEY = 'quaera-lab-done-toast';
+const pendingToast = () => {
+  try {
+    return sessionStorage.getItem(PENDING_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 export function LabDoneToast() {
   const { t } = useI18n();
-  const [shown, setShown] = useState(false);
+  /* Флаг в sessionStorage переживает перезагрузку, которую делает первый заход со старой сборкой в service worker: иначе тост пропадает вместе со страницей (замер на живом quaera.app, 2026-11-05). */
+  const [shown, setShown] = useState(pendingToast);
 
   useEffect(() => {
     const take = () => {
       const key = acceptLabDone(appStorage(), window.location, (url) => window.history.replaceState(null, '', url));
       if (!key) return;
       window.dispatchEvent(new Event(LAB_DONE_EVENT));
+      try {
+        sessionStorage.setItem(PENDING_KEY, '1');
+      } catch {
+        /* без флага тост просто не переживёт перезагрузку */
+      }
       setShown(true);
     };
     take();
@@ -48,7 +63,14 @@ export function LabDoneToast() {
 
   useEffect(() => {
     if (!shown) return;
-    const id = window.setTimeout(() => setShown(false), 7000);
+    const id = window.setTimeout(() => {
+      try {
+        sessionStorage.removeItem(PENDING_KEY);
+      } catch {
+        /* нечего убирать */
+      }
+      setShown(false);
+    }, 7000);
     return () => window.clearTimeout(id);
   }, [shown]);
 
