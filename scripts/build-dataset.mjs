@@ -1043,7 +1043,7 @@ const SCHEMA = [
       units INTEGER, revenue REAL, avg_price REAL, promo_id INTEGER)`,
     cols: {
       sellout_id: { ru: 'Ключ строки', en: 'Row key' },
-      week_start: { ru: 'Понедельник недели — FK → dim_date.week_start', en: 'Monday of the week — FK → dim_date.week_start' },
+      week_start: { ru: 'Понедельник недели — FK → dim_date.date_id', en: 'Monday of the week — FK → dim_date.date_id' },
       customer_id: { ru: 'FK → dim_customer', en: 'FK → dim_customer' },
       product_id: { ru: 'FK → dim_product', en: 'FK → dim_product' },
       units: { ru: 'Продано штук', en: 'Units sold' },
