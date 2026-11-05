@@ -2139,6 +2139,11 @@ export const ru = {
       statusToday: (date: string) => `Сегодня подход уже был, следующий с ${date}`,
     },
   },
+  /* Возврат из Lab (#lab-done=…): тост и отметка на карточке конвейера. */
+  labDone: {
+    toast: 'Конвейер собран в Lab.',
+    mark: 'Собран в Lab ✓',
+  },
   trackShort: {
     domain: 'Профессия',
     sql: 'SQL',

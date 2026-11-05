@@ -44,6 +44,7 @@ import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
 import { Sidebar, IconAccount, IconStory, IconBook, IconFlask, IconTable, IconCompass, type SidebarSection } from './ui/Sidebar';
 import { usePairHighlight } from './ui/pairHighlight';
 import { StartGuide } from './ui/StartGuide';
+import { LabDoneToast } from './ui/LabDoneToast';
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
@@ -2138,6 +2139,8 @@ export default function App() {
 
   return (
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
+      {/* Возврат из Lab (#lab-done=…): принимается на любом экране, не только на главной. */}
+      <LabDoneToast />
       {/*
        * Постоянная боковая навигация — только от 1024px, на телефоне её нет
        * вовсе (см. Sidebar.tsx). Рендерится всегда: скрывает её CSS, а не

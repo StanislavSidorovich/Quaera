@@ -1284,6 +1284,11 @@ export const en = {
       statusToday: (date: string) => `You already did a round today, the next one is from ${date}`,
     },
   },
+  /* Return from Lab (#lab-done=...): a toast and a mark on the pipeline card. */
+  labDone: {
+    toast: 'Pipeline built in Lab.',
+    mark: 'Built in Lab ✓',
+  },
   trackShort: {
     domain: 'Career',
     sql: 'SQL',

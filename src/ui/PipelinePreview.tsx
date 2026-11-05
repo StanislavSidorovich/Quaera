@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n/context';
+import { useLabDone } from './LabDoneToast';
 import './pipelinePreview.css';
 
 /**
@@ -13,6 +14,7 @@ const DOTS = ['ok', 'run', 'wait'] as const;
 export function PipelinePreview() {
   const { t } = useI18n();
   const p = t.career.map.pipeline;
+  const done = Boolean(useLabDone()['pipeline:kaiyo-sellout']);
   const rows = [
     { name: 'stg', time: '0:04' },
     { name: 'silver', time: '0:09' },
@@ -28,6 +30,7 @@ export function PipelinePreview() {
   return (
     <section className="card pp" aria-labelledby="pp-title">
       <span className="pp-badge">{p.badge}</span>
+      {done && <span className="pp-badge pp-done">{t.labDone.mark}</span>}
       <h2 id="pp-title">{p.title}</h2>
       <p className="pp-lead">{p.lead}</p>
 

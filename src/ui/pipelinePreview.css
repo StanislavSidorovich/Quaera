@@ -105,3 +105,10 @@
   color: var(--text-dim);
   font-size: var(--fs-small);
 }
+
+/* Отметка «собран в Lab» (возврат по #lab-done=…) рядом со статусом. */
+.pp-done {
+  margin-left: 8px;
+  border-color: var(--ok);
+  color: var(--ok);
+}
