@@ -106,6 +106,26 @@ npm run dev
 Открыть `http://localhost:5173/?voice=1`, режим истории, дни 1 и 2: кнопка «Listen» на брифе играет файл (во вкладке Network виден запрос `/voice/en/...`). Реплики после задания (`after`) генерируются, но в интерфейсе пока не воспроизводятся: кнопки на них нет.
 7. **Закоммитить результат:** `public/voice/` и `scripts/voice-cast.json` (id голосов не секрет). Ключ нигде не сохранять. Дальше телефон, Edge, показ однокурсникам и Ignite (шаг 7 плана).
 
+## Как запустить генерацию для всей кампании (диалоги, EN)
+
+Решение 2026-11-05: озвучиваем диалоги (брифы, реплики после задания, разговоры между делом), рассказчика (`reflection`, `hook`) нет. Сначала прослушка встроенным голосом: `http://localhost:5173/?voice=audition` (по реплике на персонажа, «все реплики подряд», выбор голоса, сохраняется в браузере), потом `?voice=1` и режим истории.
+
+```powershell
+cd "D:\docs. study\Claude . Claude code. Quaera\quaera"
+node scripts/gen-voice.mjs --scope dialogs --dry-run
+```
+
+`--dry-run` печатает знаки по персонажам, неделям и видам и нарастающий итог по неделям. Сейчас: 167 реплик, 36 036 знаков; в Starter (30 000 кредитов) целиком не влезает. Варианты: `--kinds brief,interlude` (86 реплик, 20 719 знаков), либо неделями по `--only <id миссии>`, либо Creator.
+
+Подставьте id голосов вместо `TODO-...` в `scripts/voice-cast.json` для `aoki`, `manager`, `mori`, `ito`, `tanaka` (рассказчик не нужен), задайте `QUAERA_TTS_KEY` в окне PowerShell и запускайте:
+
+```powershell
+node scripts/gen-voice.mjs --scope dialogs --provider elevenlabs --kinds brief,interlude
+node scripts/gen-voice.mjs --scope dialogs --provider elevenlabs   # докачать остальное, готовые записи пропускаются
+```
+
+Затем `npm run test:voice-manifest` и коммит `public/voice/` и `scripts/voice-cast.json`. Если манифест частичный, реплики без записи идут голосом браузера; очередь экрана играет файлы, только если записи есть у всех его реплик.
+
 ## Что не проверено
 
 - Страница цен OpenAI (в выдаче не было TTS-строк), цены Google и Azure Neural только по вторичным источникам; русский в Chirp 3 HD; список ru-RU голосов Azure; условия вывода Google, Azure, OpenAI; лицензии голосов Piper; условия Coqui (404); права на голоса общей библиотеки ElevenLabs.
