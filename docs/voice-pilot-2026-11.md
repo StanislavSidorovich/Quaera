@@ -111,7 +111,7 @@ npm run dev
 Решение 2026-11-05: озвучиваем диалоги (брифы, реплики после задания, разговоры между делом), рассказчика (`reflection`, `hook`) нет. Сначала прослушка встроенным голосом: `http://localhost:5173/?voice=audition` (по реплике на персонажа, «все реплики подряд», выбор голоса, сохраняется в браузере), потом `?voice=1` и режим истории.
 
 ```powershell
-cd "D:\docs. study\Claude . Claude code. Quaera\quaera"
+cd "D:\docs\2. study\Claude\0. Claude code\22. Quaera\quaera"
 node scripts/gen-voice.mjs --scope dialogs --dry-run
 ```
 
