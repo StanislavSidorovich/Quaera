@@ -186,8 +186,10 @@ export function englishVoices(voices: SpeechSynthesisVoice[]): Array<{ voice: Sp
   return voices.filter(isEnglish).map((voice) => ({ voice, good: quality(voice) !== null, gender: gender(voice) }));
 }
 
-export function pickCast(voices: SpeechSynthesisVoice[], choices: VoiceChoices = {}): VoiceCast | null {
-  const good = goodVoices(voices);
+/** `lenient`: страница прослушки берёт любые английские голоса, если хороших нет (ученикам так не бывает). */
+export function pickCast(voices: SpeechSynthesisVoice[], choices: VoiceChoices = {}, lenient = false): VoiceCast | null {
+  let good = goodVoices(voices);
+  if (good.length === 0 && lenient) good = voices.filter(isEnglish);
   if (good.length === 0) return null;
   const cast = {} as VoiceCast;
   for (const g of ['f', 'm'] as Gender[]) {
