@@ -1230,7 +1230,7 @@ export const en = {
       },
       /* Teaser for the Lab pipeline: an honest sketch of what is planned, not a working feature. */
       pipeline: {
-        badge: 'Planned',
+        badge: 'Available in Lab',
         title: 'Pipeline in Lab: load data with your own hands',
         lead: 'Build the path of data from a file to a decision: connect a source, set the processing steps, run it and check the log.',
         aria: 'Pipeline diagram: a source of monthly CSV files, cleaning into stg, processing steps, silver and gold layers, a run with a log, a dashboard and a decision.',
@@ -1288,6 +1288,9 @@ export const en = {
   labDone: {
     toast: 'Pipeline built in Lab.',
     mark: 'Built in Lab ✓',
+    build: 'Build it in Lab',
+    buildNote: 'The same scenario by hand: blocks, a run, a journal and three checks.',
+    open: 'Open the pipeline in Lab',
   },
   trackShort: {
     domain: 'Career',

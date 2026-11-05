@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n/context';
 import { useLabDone } from './LabDoneToast';
+import { LAB_PIPELINE, openFamilyLink } from '../links';
 import './pipelinePreview.css';
 
 /**
@@ -33,6 +34,11 @@ export function PipelinePreview() {
       {done && <span className="pp-badge pp-done">{t.labDone.mark}</span>}
       <h2 id="pp-title">{p.title}</h2>
       <p className="pp-lead">{p.lead}</p>
+      <p>
+        <a className="link-row" href={LAB_PIPELINE} target="_blank" rel="noreferrer" onClick={(ev) => openFamilyLink(ev.currentTarget, ev.nativeEvent, 'lab')}>
+          {t.labDone.open} ↗
+        </a>
+      </p>
 
       <div className="pp-fig">
         <svg className="pp-svg" viewBox="0 0 860 320" role="img" aria-label={p.aria}>

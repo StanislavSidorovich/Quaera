@@ -5,6 +5,7 @@ import type { Executor, GradeResult, Preview, SchemaDoc } from '../engine/types'
 import { gradeBlanks } from '../engine/textGrade';
 import { useI18n } from '../i18n/context';
 import { labShare, labUrl, openLab, tablesInCode } from '../labLink';
+import { LAB_PIPELINE, openFamilyLink } from '../links';
 import { CodeEditor } from './CodeEditor';
 import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
@@ -1051,6 +1052,14 @@ function StepView({
         </ul>
       )}
       {feedback.style && <div className="style-note">{feedback.style}</div>}
+      {task.id === 'mdl-082' && (
+        <p>
+          <a className="link-row" href={LAB_PIPELINE} target="_blank" rel="noreferrer" onClick={(ev) => openFamilyLink(ev.currentTarget, ev.nativeEvent, 'lab')}>
+            {t.labDone.build} ↗
+          </a>{' '}
+          <span className="muted">{t.labDone.buildNote}</span>
+        </p>
+      )}
     </div>
   );
 
