@@ -12,6 +12,7 @@ import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
+import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
 
 /**
  * Экран задания.
@@ -69,6 +70,8 @@ export interface StepDraft {
    * версия хранилища не двигается и старое незаконченное занятие не теряется.
    */
   arrangement: number[];
+  /** Раскладка шага `waves`: карточки по колонкам, условия стрелок, запущен ли журнал. */
+  waves?: WavesState;
   preview: Preview | null;
   expected: Preview | null;
   feedback: FeedbackSource | null;
@@ -119,6 +122,18 @@ export function resolveSteps(task: Task): TaskStep[] {
         items: task.items ?? [],
         scenario: task.scenario,
         figure: task.figure,
+        hints: task.hints,
+      },
+    ];
+  }
+  if (task.mode === 'waves') {
+    return [
+      {
+        kind: 'waves',
+        question: task.orderQuestion ?? '',
+        items: task.waveItems ?? [],
+        waves: task.waves ?? 3,
+        scenario: task.scenario,
         hints: task.hints,
       },
     ];
@@ -488,14 +503,16 @@ export function TaskView({
               ? t.task.modePredict
               : step.kind === 'order'
                 ? t.task.modeOrder
-                : step.mode === 'fill'
+                : step.kind === 'waves'
+                  ? t.task.modeWaves
+                  : step.mode === 'fill'
                   ? t.task.modeFill
                   : t.task.modeWrite}
           </span>
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && !task.figure && step.kind !== 'order' && (
+          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -715,6 +732,13 @@ function StepView({
       : step.kind === 'order'
         ? shuffledOrder(task.id, step.items.length)
         : [];
+  /** Раскладка волн: своя, если сошлась с карточками шага, иначе чистая (тот же довод, что у `arrangement`). */
+  const wavesState: WavesState | undefined =
+    step.kind === 'waves'
+      ? draft.waves && step.items.every((i) => i.id in draft.waves!.placement) && draft.waves.gates.length === step.waves - 1
+        ? draft.waves
+        : blankWavesState(step)
+      : undefined;
   const runsCode = executor.runsCode !== false;
   /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
   const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
@@ -730,7 +754,7 @@ function StepView({
    * проверка ждёт, пока заполнены все поля.
    */
   const canSubmit =
-    step.kind === 'order'
+    step.kind === 'order' || step.kind === 'waves'
       ? true
       : step.kind === 'interpret'
         ? draft.chosen !== null
@@ -898,6 +922,8 @@ function StepView({
   }
 
   async function handleCheck() {
+    // Волны проверяются запуском журнала (WavesStep.onResult), а не кнопкой «Проверить».
+    if (step.kind === 'waves') return;
     if (step.kind === 'order') {
       /*
        * Всё или ничего, и без указания, какие пункты уже на местах.
@@ -1126,6 +1152,42 @@ function StepView({
                   {t.task.checkBtn}
                 </button>
               )}
+            </div>
+            {feedbackBlock}
+          </div>
+        </div>
+      ) : step.kind === 'waves' ? (
+        <div className="task-work">
+          {step.scenario && (
+            <div className="task-situation">
+              <div className="card">
+                <pre className="scenario">{step.scenario}</pre>
+              </div>
+            </div>
+          )}
+          <div className="task-answer">
+            <div className="card">
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{step.question}</p>
+              {!draft.solved && (
+                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12 }}>
+                  {t.task.wavesNote}
+                </p>
+              )}
+              <WavesStep
+                step={step}
+                order={shuffledOrder(task.id, step.items.length)}
+                state={wavesState!}
+                solved={draft.solved}
+                onState={(waves) => patch({ waves })}
+                onResult={(r) =>
+                  patch((d) => ({
+                    solved: r.correct,
+                    wasCorrect: r.correct,
+                    wrongAttempts: d.wrongAttempts + (r.correct ? 0 : 1),
+                    feedback: r.correct ? { kind: 'correct' } : { kind: 'wavesWrong', early: r.early, extra: r.extra, gate: r.gate },
+                  }))
+                }
+              />
             </div>
             {feedbackBlock}
           </div>

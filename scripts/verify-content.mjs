@@ -818,6 +818,40 @@ for (const packId of packs) {
       continue;
     }
 
+    if (t.mode === 'waves') {
+      /*
+       * «Волны»: верность задаёт только dependsOn, эталонной раскладки нет.
+       * Здесь проверяется содержание карточек; свойства движка (верная раскладка
+       * существует и принимается, ошибочные падают) держит test:waves.
+       */
+      if (!t.orderQuestion) fail(t.id, 'нет вопроса для режима waves');
+      const items = t.waveItems ?? [];
+      if (!(t.waves >= 3 && t.waves <= 5)) fail(t.id, `волн ${t.waves}: допустимо 3...5`);
+      if (items.length < 4 || items.length > 7) fail(t.id, `карточек ${items.length}: допустимо 4...7`);
+      const ids = new Set(items.map((i) => i.id));
+      if (ids.size !== items.length || [...ids].some((i) => !i)) fail(t.id, 'у карточек нет id или они повторяются');
+      const stagingRows = db.exec('SELECT COUNT(*) FROM staging_raw_sellout')[0].values[0][0];
+      const allowed = new Set([0, stagingRows, stagingRows * 2]);
+      const numbersIn = (str) => [...(str ?? '').matchAll(/\d[\d , ]*/g)].map((m) => Number(m[0].replace(/[ , ]/g, ''))).filter((n) => n > 9);
+      for (const it of items) {
+        if (!it.label?.trim()) fail(t.id, 'у карточки нет подписи');
+        if (!it.why || it.why.length < 40) fail(t.id, `у карточки «${it.label}» нет содержательного разбора`);
+        for (const d of it.dependsOn ?? []) {
+          if (!ids.has(d)) fail(t.id, `карточка «${it.label}» зависит от неизвестного «${d}»`);
+          else if (items.find((x) => x.id === d).extra) fail(t.id, `карточка «${it.label}» зависит от лишней`);
+        }
+        if (it.extra && (it.dependsOn?.length || it.rows !== undefined)) fail(t.id, `лишняя карточка «${it.label}» не должна иметь dependsOn и rows`);
+        if (it.dependsOn?.length && !it.earlyText) fail(t.id, `у карточки «${it.label}» с зависимостями нет earlyText: что будет, если поставить её рано`);
+        if (it.dependsOn?.length && it.earlyStatus && !['failed', 'succeeded'].includes(it.earlyStatus)) fail(t.id, `earlyStatus «${it.earlyStatus}» вне failed/succeeded`);
+        if (it.rows !== undefined && !allowed.has(it.rows)) fail(t.id, `rows ${it.rows} у «${it.label}» не из набора датасета ${[...allowed].join(', ')}`);
+        for (const n of [...numbersIn(it.earlyText), ...numbersIn(it.orphanText)]) {
+          if (!allowed.has(n)) fail(t.id, `число ${n} в исходе «${it.label}» не из набора датасета ${[...allowed].join(', ')}`);
+        }
+      }
+      if (!items.some((i) => i.extra)) console.log(`  note ${t.id}: лишних карточек нет (допустимо, но ловушка «Wait» не отработана)`);
+      continue;
+    }
+
     if (t.mode === 'order') {
       /*
        * Проверяется только содержание, не раскладка на экране.
@@ -4186,6 +4220,10 @@ function translationPairs(orig, tr) {
       }
       if (t.options && (orig.options ?? []).length !== t.options.length) {
         fail(`${packId}.en`, `у задания ${t.id} ${t.options.length} переведённых вариантов вместо ${(orig.options ?? []).length}`);
+        ok = false;
+      }
+      if (t.waveItems && (orig.waveItems ?? []).length !== t.waveItems.length) {
+        fail(`${packId}.en`, `у задания ${t.id} ${t.waveItems.length} переведённых карточек вместо ${(orig.waveItems ?? []).length}`);
         ok = false;
       }
       if (t.items && (orig.items ?? []).length !== t.items.length) {

@@ -50,6 +50,8 @@ function validate(pack: Pack): Pack {
           if (!step.solution) throw new Error(`Пак ${pack.id}: у задания ${at} нет эталонного решения`);
         } else if (step.kind === 'order') {
           if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх пунктов`);
+        } else if (step.kind === 'waves') {
+          if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх карточек`);
         } else if (step.options.filter((o) => o.correct).length !== 1) {
           throw new Error(`Пак ${pack.id}: у задания ${at} должен быть ровно один верный вариант`);
         }
@@ -62,6 +64,11 @@ function validate(pack: Pack): Pack {
       // Эталон здесь — сам порядок пунктов, отдельного решения не бывает.
       if ((t.items ?? []).length < 3) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше трёх пунктов для упорядочивания`);
+      }
+    } else if (t.mode === 'waves') {
+      // Верность задаёт dependsOn; здесь только то, без чего экран упадёт.
+      if ((t.waveItems ?? []).length < 3 || !t.waves) {
+        throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше трёх карточек или не задано число волн`);
       }
     } else if (!t.solution) {
       throw new Error(`Пак ${pack.id}: у задания ${t.id} нет эталонного решения`);
@@ -155,6 +162,7 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         explain: tt.explain ?? t.explain,
         options: tt.options && t.options ? t.options.map((o, i) => ({ ...o, ...tt.options![i] })) : t.options,
         items: tt.items && t.items ? t.items.map((o, i) => ({ ...o, ...tt.items![i] })) : t.items,
+        waveItems: tt.waveItems && t.waveItems ? t.waveItems.map((o, i) => ({ ...o, ...tt.waveItems![i] })) : t.waveItems,
         traps: tt.traps && t.traps ? t.traps.map((o, i) => ({ ...o, ...tt.traps![i] })) : t.traps,
         steps:
           tt.steps && t.steps
@@ -174,6 +182,13 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
                     question: st.question ?? s.question,
                     hints: st.hints ?? s.hints,
                     items: st.items ? s.items.map((o, j) => ({ ...o, ...st.items![j] })) : s.items,
+                  };
+                if (s.kind === 'waves')
+                  return {
+                    ...s,
+                    question: st.question ?? s.question,
+                    hints: st.hints ?? s.hints,
+                    items: st.waveItems ? s.items.map((o, j) => ({ ...o, ...st.waveItems![j] })) : s.items,
                   };
                 return {
                   ...s,

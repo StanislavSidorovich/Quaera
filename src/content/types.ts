@@ -35,7 +35,9 @@ export type TaskMode =
   /** Полный ввод с нуля. */
   | 'write'
   /** Расставить шаги рассуждения по порядку. Единственный режим, работающий без исполнителя. */
-  | 'order';
+  | 'order'
+  /** Разложить шаги по волнам зависимости и запустить: порядок, где внутри волны он неважен. */
+  | 'waves';
 
 /**
  * Пункт задания на упорядочивание.
@@ -55,6 +57,29 @@ export interface OrderItem {
   label: string;
   /** Почему он стоит именно здесь. Показывается после решения — как `PredictOption.why`. */
   why: string;
+}
+
+/**
+ * Карточка шага в задании `waves`. Единственный источник правды ответа это `dependsOn`:
+ * эталонной раскладки нет, верна любая, где шаг стоит строго позже зависимостей
+ * (см. engine/waves.ts).
+ */
+export interface WaveItem {
+  id: string;
+  label: string;
+  /** Разбор после зачёта: почему шаг стоит в этой волне и почему не раньше. */
+  why: string;
+  /** Шаги, которые обязаны завершиться раньше (строго в более ранней волне). */
+  dependsOn?: string[];
+  /** Лишняя карточка: в верной сборке остаётся на столе. */
+  extra?: boolean;
+  /** Строк, записанных шагом при успехе (для столбца журнала). */
+  rows?: number;
+  /** Что происходит, если шаг стоит не позже своей зависимости. По умолчанию Failed. */
+  earlyStatus?: 'failed' | 'succeeded';
+  earlyText?: string;
+  /** Что происходит, если шаг идёт после упавшей зависимости (стрелка «после завершения»). */
+  orphanText?: string;
 }
 
 export interface PredictOption {
@@ -153,6 +178,23 @@ export type TaskStep =
       figure?: TaskFigure;
       hints: string[];
       /** Постановка шага в многошаговом задании. У поднятого одношагового — `Task.goal`. */
+      goal?: string;
+    }
+  | {
+      /**
+       * Разложить карточки шагов по волнам и запустить журнал. Как `order`,
+       * поднимается из одношагового задания (`Task.mode === 'waves'`).
+       * Проверка по свойству (engine/waves.ts): любая раскладка, где каждый шаг
+       * строго позже своих зависимостей, лишние карточки на столе и у каждой
+       * стрелки «после успеха». «Запустить» разыгрывает журнал, а не говорит «неверно».
+       */
+      kind: 'waves';
+      question: string;
+      items: WaveItem[];
+      /** Сколько колонок-волн (3...5). */
+      waves: number;
+      scenario?: string;
+      hints: string[];
       goal?: string;
     }
   | {
@@ -283,6 +325,9 @@ export interface Task {
   orderQuestion?: string;
   /** Пункты режима `order` — в правильном порядке (см. `TaskStep` kind `order`). */
   items?: OrderItem[];
+  /** Карточки режима `waves` (вопрос в `orderQuestion`, колонок `waves`). См. WaveItem. */
+  waveItems?: WaveItem[];
+  waves?: number;
   /** Раскрываются по одной. Первая — направление, последняя — почти решение. */
   hints: string[];
   /** Разбор после решения: не пересказ ответа, а идея, которая переносится на другие задачи. */
@@ -453,6 +498,14 @@ export interface TaskStepTranslation {
   options?: TaskOptionTranslation[];
   /** Пункты шага на упорядочивание. Порядок обязан совпадать с оригиналом — сопоставление позиционное. */
   items?: TaskOptionTranslation[];
+  waveItems?: WaveItemTranslation[];
+}
+
+export interface WaveItemTranslation {
+  label?: string;
+  why?: string;
+  earlyText?: string;
+  orphanText?: string;
 }
 
 export interface TaskTranslation {
@@ -474,6 +527,8 @@ export interface TaskTranslation {
   options?: TaskOptionTranslation[];
   /** Порядок обязан совпадать с Task.items — тоже позиционно. */
   items?: TaskOptionTranslation[];
+  /** Карточки `waves`: позиционно к Task.waveItems; переводятся подписи и тексты исходов. */
+  waveItems?: WaveItemTranslation[];
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */
   traps?: { message: string }[];
   /** Порядок обязан совпадать с Task.steps — тоже позиционно. */

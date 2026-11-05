@@ -1,0 +1,165 @@
+/* «Карточки в колонки» (CardColumns.tsx). Только токены темы. Узко: всё столбцом; широко: стол сверху, колонки в ряд. */
+
+.cc {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cc-pool,
+.cc-col {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+
+.cc-pool {
+  border-style: dashed;
+}
+
+.cc-h {
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+.cc-hint {
+  margin: -2px 0 6px;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+.cc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cc-empty {
+  padding: 8px;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+.cc-card {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-small);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.cc-card:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.cc-card.is-picked {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cc-label {
+  font-weight: 600;
+}
+
+.cc-sub {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  font-family: var(--font-mono);
+}
+
+.cc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.cc-note {
+  margin: 4px 2px 0;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  line-height: 1.45;
+}
+
+.cc-drop {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cc-drop:disabled {
+  color: var(--text-dim);
+  border-color: var(--line);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.cc-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.cc-col-wrap {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cc-between {
+  display: flex;
+  justify-content: center;
+}
+
+.cc-between:empty {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .cc-cols {
+    grid-template-columns: repeat(var(--cc-n), minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .cc-col-wrap {
+    grid-template-rows: auto 1fr;
+  }
+
+  .cc-between {
+    min-height: 36px;
+    align-items: end;
+  }
+
+  .cc-between:empty {
+    display: block;
+  }
+}

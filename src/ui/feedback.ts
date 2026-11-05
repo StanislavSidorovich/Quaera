@@ -30,6 +30,8 @@ export type FeedbackSource =
   /** Зачёт. `expectedCols` — имена колонок эталона, если свои названы иначе. */
   | { kind: 'correct'; expectedCols?: string[] }
   | { kind: 'orderWrong' }
+  /** Запуск волн показал, что сборка не годится: какие классы нарушены, без названий карточек. */
+  | { kind: 'wavesWrong'; early: boolean; extra: boolean; gate: boolean }
   | { kind: 'wrongOption' }
   | { kind: 'blanksWrong'; wrongIndexes: number[] }
   | { kind: 'giveUp' }
@@ -96,6 +98,20 @@ export function renderFeedback(src: FeedbackSource, ctx: FeedbackContext): Feedb
       };
     case 'orderWrong':
       return { tone: 'warn', title: t.task.orderWrongTitle, body: t.task.orderWrongBody, nudges: [] };
+    case 'wavesWrong':
+      return {
+        tone: 'warn',
+        title: t.task.wavesWrongTitle,
+        body: [
+          src.early && t.task.wavesWrongEarly,
+          src.extra && t.task.wavesWrongExtra,
+          src.gate && t.task.wavesWrongGate,
+          t.task.wavesWrongTail,
+        ]
+          .filter(Boolean)
+          .join(' '),
+        nudges: [],
+      };
     case 'wrongOption':
       return { tone: 'warn', title: t.task.wrongOptionTitle, body: t.task.wrongOptionBody, nudges: [] };
     case 'blanksWrong':

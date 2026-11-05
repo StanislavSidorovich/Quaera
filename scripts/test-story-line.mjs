@@ -45,7 +45,7 @@ const MIN_MINUTES = 6;
  * до конца навыка. Проверка затухания при этом не падает, а молча перестаёт
  * смотреть — ровно то, что случилось после пачки `order` в domain.
  */
-const MODE_RANK = { predict: 0, order: 1, fill: 2, write: 3 };
+const MODE_RANK = { predict: 0, order: 1, waves: 1, fill: 2, write: 3 };
 
 /**
  * Числительные, которыми проза называет длину линии.

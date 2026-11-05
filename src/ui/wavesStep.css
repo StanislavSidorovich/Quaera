@@ -1,0 +1,84 @@
+/* Шаг «волны» (WavesStep.tsx): переключатель у стрелки, запуск и журнал. Только токены темы. */
+
+.ws {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ws-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 6px;
+  font-size: var(--fs-micro);
+}
+
+.ws-gate-label {
+  color: var(--text-dim);
+}
+
+.ws-gate-btn {
+  min-height: 32px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ws-gate-btn.is-on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ws-gate-btn:disabled {
+  cursor: default;
+}
+
+.ws-run {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.ws-run-note {
+  margin: 0;
+  font-size: var(--fs-micro);
+}
+
+.ws-logbox {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  min-width: 0;
+}
+
+.ws-log {
+  font-size: var(--fs-small);
+}
+
+.ws-bad {
+  color: color-mix(in srgb, var(--err) 70%, var(--text));
+  font-weight: 600;
+}
+
+.ws-stress {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.ws-stress-h {
+  margin: 0 0 2px;
+  font-weight: 700;
+  font-size: var(--fs-small);
+}

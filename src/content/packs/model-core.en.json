@@ -2598,6 +2598,130 @@
           "why": "Last: only what has been loaded can be reconciled. Whether row counts match between layers and whether any keys are empty is something green statuses do not say, so the check ends the run instead of being left to whoever opens the report."
         }
       ]
+    },
+    {
+      "id": "mdl-090",
+      "title": "Three dimensions and a fact: what loads together",
+      "brief": "The sales report needs product, customer and date dimensions, the sales fact and a model refresh. Loading everything one by one is slow, but loading everything at once is not possible: the fact needs the dimensions.",
+      "goal": "Arrange the five steps into three waves so that everything independent runs together and everything dependent comes after.",
+      "orderQuestion": "What goes in the first wave, what in the second, what in the third?",
+      "waveItems": [
+        {
+          "label": "Load dim_product",
+          "why": "First wave: nothing waits for the product dimension and it waits for nothing. It loads in parallel with the other two dimensions, so the run is faster.",
+          "earlyText": "dim_product: the source is still empty, the dimension stayed without rows"
+        },
+        {
+          "label": "Load dim_customer",
+          "why": "Also the first wave: customers can load at the same time as products, the order between dimensions is imaginary. All that matters is that both are ready before the fact."
+        },
+        {
+          "label": "Load dim_date",
+          "why": "The calendar depends on nobody either, so it belongs next to the other dimensions. It cannot go after the fact: the fact looks up the sale week in it."
+        },
+        {
+          "label": "Load fact_sellout",
+          "earlyText": "3,110 rows without a product key",
+          "orphanText": "3,110 rows loaded, the product key is empty",
+          "why": "Second wave, strictly after the dimensions: the fact looks keys up in them. Earlier it gives a full table of empty keys or fails on the first row without a match."
+        },
+        {
+          "label": "Refresh the model",
+          "earlyText": "model refreshed without the new sales",
+          "orphanText": "model refreshed on empty keys",
+          "why": "Last wave: the model reads a fact that is already ready. Refreshing it earlier publishes yesterday's numbers as today's."
+        }
+      ],
+      "hints": [
+        "Ask of every step: what must already be loaded for it to give a correct result?",
+        "The three dimensions do not wait for each other. How many waves are left for the fact and the model?"
+      ],
+      "explain": "Waves answer the question of what depends on what, not what comes after what. The dimensions are independent, so they load together and the order between them is imaginary. The fact depends on all three, so it goes in the next wave, and the model in the last. An \"on success\" arrow between waves does not let the run go on if something failed: otherwise the fact would load against an empty dimension with a green status."
+    },
+    {
+      "id": "mdl-091",
+      "title": "The nightly load: clean, copy, dimensions, fact",
+      "brief": "The nightly load in \"append\" mode copies the export files into the staging layer stg, fills the product and customer dimensions, then the fact, and finally refreshes the model. This run used to either double the rows or leave sales with empty keys.",
+      "goal": "Arrange the six steps into five waves so that a rerun gives the same result and no empty keys appear.",
+      "orderQuestion": "How do you arrange the nightly load steps into waves?",
+      "waveItems": [
+        {
+          "label": "Clear stg",
+          "why": "First wave: everything else writes into stg, and the clean-up comes before the writing. It is what makes the load repeatable: the second run starts from an empty layer."
+        },
+        {
+          "label": "Copy the files into stg",
+          "earlyText": "stg has 6,220 rows, twice as many, the status is green",
+          "why": "Second wave: the layer is already clean and the 3,110 rows of the export land in it once. A copy that is not after the clean-up is a silent doubling, as with a repeated \"append\"."
+        },
+        {
+          "label": "Load dim_product",
+          "earlyText": "stg has no rows, the dimension is empty",
+          "why": "Third wave, together with customers: the dimension reads stg, not the files, so it waits for the copy but not for the neighbouring dimension."
+        },
+        {
+          "label": "Load dim_customer",
+          "earlyText": "stg has no rows, the dimension is empty",
+          "why": "Also the third wave: the order between products and customers is imaginary. It is enough that both are ready before the fact."
+        },
+        {
+          "label": "Load fact_sellout",
+          "earlyText": "3,110 rows without a product key",
+          "orphanText": "3,110 rows loaded, the product key is empty",
+          "why": "Fourth wave: the fact looks keys up in the dimensions, so it goes after both. Earlier the rows arrive and find no keys."
+        },
+        {
+          "label": "Refresh the model",
+          "earlyText": "model refreshed without the new sales",
+          "orphanText": "model refreshed on empty keys",
+          "why": "Fifth wave: the model reads a ready fact. Earlier it publishes yesterday's numbers as today's."
+        }
+      ],
+      "hints": [
+        "What must be empty before writing so that a rerun gives the same result?",
+        "The two dimensions do not wait for each other. How many waves are needed if everything is placed as early as possible?"
+      ],
+      "explain": "A load of five waves is built from two rules. The clean-up comes before the writing, so a rerun does not double the rows. The order follows the dependencies: dimensions from stg in parallel, the fact after both, the model after the fact. \"On success\" arrows leave a failed run red and keep the model from refreshing on half the data."
+    },
+    {
+      "id": "mdl-092",
+      "title": "The check before the model refresh, and a useless pause",
+      "brief": "After the fact loads a check is needed: are there facts without a customer. Until the check has passed, the model must not refresh. Someone proposed playing safe and adding a five minute pause between the steps.",
+      "goal": "Arrange the steps into four waves and decide which cards are needed. Not all of them.",
+      "orderQuestion": "Where does the check go and is the pause needed?",
+      "waveItems": [
+        {
+          "label": "Load dim_customer",
+          "why": "First wave: the customer dimension waits for nothing, and the fact needs its keys."
+        },
+        {
+          "label": "Load fact_sellout",
+          "earlyText": "3,110 rows without a customer key",
+          "orphanText": "3,110 rows loaded, the customer key is empty",
+          "why": "Second wave: the fact fills in the customer keys, so the dimension must already be loaded."
+        },
+        {
+          "label": "Check: every fact has a customer",
+          "earlyText": "0 rows checked, green because there is nothing to check",
+          "orphanText": "the check passed on an empty table",
+          "why": "Third wave: only what is loaded can be checked. Before the fact it returns a green \"0 rows checked\", which is worse than red: people start trusting it."
+        },
+        {
+          "label": "Refresh the model",
+          "earlyText": "model refreshed, the check has not run yet",
+          "orphanText": "model refreshed although the check failed",
+          "why": "Fourth wave: the model refreshes only after the check. With an \"on success\" arrow a failed check stops the refresh instead of just flashing in the log."
+        },
+        {
+          "label": "Wait 5 minutes",
+          "why": "Not needed. The order is set by the arrows between waves, not by a pause: after five minutes a dimension that failed does not become loaded, and a loaded one has no reason to wait. The pause only lengthens the run."
+        }
+      ],
+      "hints": [
+        "What does the check do: load data or judge what is already loaded?",
+        "How does a pause differ from an \"on success\" arrow? Does it guarantee that the previous step succeeded?"
+      ],
+      "explain": "The check sits between the fact and the model refresh, and only with an \"on success\" arrow does it protect anything. A pause does not set the order: waiting does not know whether the previous step succeeded. The dependency takes over its role, so in a correct setup the pause card stays on the table."
     }
   ]
 }
