@@ -15,6 +15,7 @@ import { AfterReply } from './AfterReply';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
 import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
+import { RelateStep, blankRelateState, type RelateState } from './RelateStep';
 
 /**
  * Экран задания.
@@ -74,6 +75,8 @@ export interface StepDraft {
   arrangement: number[];
   /** Раскладка шага `waves`: карточки по колонкам, условия стрелок, запущен ли журнал. */
   waves?: WavesState;
+  /** Связи шага `relate`: проведённые пары, выбранная колонка, результат последней проверки. */
+  relate?: RelateState;
   preview: Preview | null;
   expected: Preview | null;
   feedback: FeedbackSource | null;
@@ -135,6 +138,17 @@ export function resolveSteps(task: Task): TaskStep[] {
         question: task.orderQuestion ?? '',
         items: task.waveItems ?? [],
         waves: task.waves ?? 3,
+        scenario: task.scenario,
+        hints: task.hints,
+      },
+    ];
+  }
+  if (task.mode === 'relate') {
+    return [
+      {
+        kind: 'relate',
+        question: task.orderQuestion ?? '',
+        relate: task.relate ?? { tables: [], traps: [] },
         scenario: task.scenario,
         hints: task.hints,
       },
@@ -539,6 +553,8 @@ export function TaskView({
                 ? t.task.modeOrder
                 : step.kind === 'waves'
                   ? t.task.modeWaves
+                  : step.kind === 'relate'
+                  ? t.task.modeRelate
                   : step.mode === 'fill'
                   ? t.task.modeFill
                   : t.task.modeWrite}
@@ -546,7 +562,7 @@ export function TaskView({
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && (
+          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && step.kind !== 'relate' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -777,6 +793,7 @@ function StepView({
         ? draft.waves
         : blankWavesState(step)
       : undefined;
+  const relateState: RelateState | undefined = step.kind === 'relate' ? draft.relate ?? blankRelateState() : undefined;
   const runsCode = executor.runsCode !== false;
   /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
   const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
@@ -792,7 +809,7 @@ function StepView({
    * проверка ждёт, пока заполнены все поля.
    */
   const canSubmit =
-    step.kind === 'order' || step.kind === 'waves'
+    step.kind === 'order' || step.kind === 'waves' || step.kind === 'relate'
       ? true
       : step.kind === 'interpret'
         ? draft.chosen !== null
@@ -962,6 +979,8 @@ function StepView({
   async function handleCheck() {
     // Волны проверяются запуском журнала (WavesStep.onResult), а не кнопкой «Проверить».
     if (step.kind === 'waves') return;
+    // Связи проверяет кнопка внутри RelateStep (onResult), не общая «Проверить».
+    if (step.kind === 'relate') return;
     if (step.kind === 'order') {
       /*
        * Всё или ничего, и без указания, какие пункты уже на местах.
@@ -1198,6 +1217,37 @@ function StepView({
                   {t.task.checkBtn}
                 </button>
               )}
+            </div>
+            {feedbackBlock}
+          </div>
+        </div>
+      ) : step.kind === 'relate' ? (
+        <div className="task-work">
+          {step.scenario && (
+            <div className="task-situation">
+              <div className="card">
+                <pre className="scenario">{step.scenario}</pre>
+              </div>
+            </div>
+          )}
+          <div className="task-answer">
+            <div className="card">
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{step.question}</p>
+              <RelateStep
+                step={step}
+                schema={schema}
+                state={relateState!}
+                solved={draft.solved}
+                onState={(relate) => patch({ relate })}
+                onResult={(v) =>
+                  patch((d) => ({
+                    solved: v.correct,
+                    wasCorrect: v.correct,
+                    wrongAttempts: d.wrongAttempts + (v.correct ? 0 : 1),
+                    feedback: v.correct ? { kind: 'correct' } : { kind: 'relateWrong', missing: v.missing, extra: v.extra, cards: v.cards },
+                  }))
+                }
+              />
             </div>
             {feedbackBlock}
           </div>

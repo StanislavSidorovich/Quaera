@@ -56,7 +56,7 @@ export interface Mission {
  * и выбирается, `fill` дописывается в готовый скелет, `write` набирается
  * с нуля и почти всегда с одной неудачной попыткой.
  */
-const MINUTES = { lesson: 1.5, predict: 1.5, order: 2, waves: 2, fill: 2.5, write: 4, interpret: 1.5 } as const;
+const MINUTES = { lesson: 1.5, predict: 1.5, order: 2, waves: 2, relate: 2, fill: 2.5, write: 4, interpret: 1.5 } as const;
 
 /**
  * Заданий на навык в линии.
@@ -124,7 +124,7 @@ function taskMinutes(task: Task): number {
     return task.steps.reduce(
       (n, step) =>
         n +
-        (step.kind === 'interpret' ? MINUTES.interpret : step.kind === 'order' ? MINUTES.order : step.kind === 'waves' ? MINUTES.waves : MINUTES[step.mode]),
+        (step.kind === 'interpret' ? MINUTES.interpret : step.kind === 'order' ? MINUTES.order : step.kind === 'waves' ? MINUTES.waves : step.kind === 'relate' ? MINUTES.relate : MINUTES[step.mode]),
       0
     );
   }

@@ -52,6 +52,8 @@ function validate(pack: Pack): Pack {
           if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх пунктов`);
         } else if (step.kind === 'waves') {
           if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх карточек`);
+        } else if (step.kind === 'relate') {
+          if (step.relate.tables.length < 2) throw new Error(`Пак ${pack.id}: у задания ${at} меньше двух таблиц для связей`);
         } else if (step.options.filter((o) => o.correct).length !== 1) {
           throw new Error(`Пак ${pack.id}: у задания ${at} должен быть ровно один верный вариант`);
         }
@@ -64,6 +66,11 @@ function validate(pack: Pack): Pack {
       // Эталон здесь — сам порядок пунктов, отдельного решения не бывает.
       if ((t.items ?? []).length < 3) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше трёх пунктов для упорядочивания`);
+      }
+    } else if (t.mode === 'relate') {
+      // Эталон выводится из схемы; здесь только то, без чего экран упадёт.
+      if ((t.relate?.tables ?? []).length < 2) {
+        throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше двух таблиц для связей`);
       }
     } else if (t.mode === 'waves') {
       // Верность задаёт dependsOn; здесь только то, без чего экран упадёт.
@@ -104,6 +111,11 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
     if (t.traps && (orig.traps ?? []).length !== t.traps.length) {
       throw new Error(
         `Перевод ${tr.id}: у задания ${t.id} ${t.traps.length} переведённых ловушек вместо ${(orig.traps ?? []).length}`
+      );
+    }
+    if (t.relateTraps && (orig.relate?.traps ?? []).length !== t.relateTraps.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.relateTraps.length} переведённых разборов вместо ${(orig.relate?.traps ?? []).length}`
       );
     }
     if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
@@ -164,6 +176,10 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         items: tt.items && t.items ? t.items.map((o, i) => ({ ...o, ...tt.items![i] })) : t.items,
         waveItems: tt.waveItems && t.waveItems ? t.waveItems.map((o, i) => ({ ...o, ...tt.waveItems![i] })) : t.waveItems,
         traps: tt.traps && t.traps ? t.traps.map((o, i) => ({ ...o, ...tt.traps![i] })) : t.traps,
+        relate:
+          tt.relateTraps && t.relate
+            ? { ...t.relate, traps: t.relate.traps.map((o, i) => ({ ...o, ...tt.relateTraps![i] })) }
+            : t.relate,
         steps:
           tt.steps && t.steps
             ? t.steps.map((s, i) => {
@@ -189,6 +205,15 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
                     question: st.question ?? s.question,
                     hints: st.hints ?? s.hints,
                     items: st.waveItems ? s.items.map((o, j) => ({ ...o, ...st.waveItems![j] })) : s.items,
+                  };
+                if (s.kind === 'relate')
+                  return {
+                    ...s,
+                    question: st.question ?? s.question,
+                    hints: st.hints ?? s.hints,
+                    relate: st.relateTraps
+                      ? { ...s.relate, traps: s.relate.traps.map((o, j) => ({ ...o, ...st.relateTraps![j] })) }
+                      : s.relate,
                   };
                 return {
                   ...s,

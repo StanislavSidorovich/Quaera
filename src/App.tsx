@@ -3758,7 +3758,7 @@ function Home({
    * это ответ без единой строки кода, и обещание «код выполняется» от одного
    * такого задания в паке стало бы неправдой про весь трек.
    */
-  const writesCode = activePack.tasks.some((t) => t.mode !== 'predict' && t.mode !== 'order' && t.mode !== 'waves');
+  const writesCode = activePack.tasks.some((t) => t.mode !== 'predict' && t.mode !== 'order' && t.mode !== 'waves' && t.mode !== 'relate');
   // Показываем ровно один раз, до первой же решённой задачи или начатого навыка —
   // дальше это уже не «что это такое», а лишняя строчка над картой навыков.
   const isNewUser = Object.keys(progress.skills).length === 0 && progress.totalSolved === 0;
@@ -6053,7 +6053,7 @@ function Reference({
       {searchBox}
       <div className="card">
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
-          {visiblePack!.tasks.some((tk) => tk.mode !== 'predict' && tk.mode !== 'order' && tk.mode !== 'waves')
+          {visiblePack!.tasks.some((tk) => tk.mode !== 'predict' && tk.mode !== 'order' && tk.mode !== 'waves' && tk.mode !== 'relate')
             ? t.reference.intro
             : t.reference.introNoCode}
         </p>

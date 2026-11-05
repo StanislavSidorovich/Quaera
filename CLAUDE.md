@@ -44,7 +44,7 @@ npm run verify
 `test:chart`, `test:schema-layout`, `test:prose-en`, `test:text-grade`,
 `test:storage-migration`, `test:grade-compare`, `test:push-schedule`,
 `test:css-width`, `test:story-line`, `test:story-ladder`,
-`test:lesson-figure`, `test:readme-numbers`, `test:family`, `test:lab-link`, `test:career`, `test:architecture`, `test:voice-manifest`). Каждый уже ловил реальный
+`test:lesson-figure`, `test:readme-numbers`, `test:family`, `test:lab-link`, `test:career`, `test:architecture`, `test:waves`, `test:relate`, `test:voice-manifest`). Каждый уже ловил реальный
 дефект в первый прогон — не формальность.
 
 **Гейты статические: DOM, раскладку, контраст, обрезание текста они не видят

@@ -2722,6 +2722,84 @@
         "How does a pause differ from an \"on success\" arrow? Does it guarantee that the previous step succeeded?"
       ],
       "explain": "The check sits between the fact and the model refresh, and only with an \"on success\" arrow does it protect anything. A pause does not set the order: waiting does not know whether the previous step succeeded. The dependency takes over its role, so in a correct setup the pause card stays on the table."
+    },
+    {
+      "id": "mdl-093",
+      "title": "Model relationships: fact, product and customer",
+      "brief": "The Kanto sales lead expects a sell-out report by brand and customer on Monday. You are building the model between the gold layer and the report.",
+      "goal": "Draw the relationships between the fact and the dimensions and mark which end is \"1\" and which is \"many\".",
+      "orderQuestion": "Which relationships does the model need so brand and customer can filter sales?",
+      "relateTraps": [
+        {
+          "symptom": "The model gets a many to many relationship although the key has no repeats: dim_product has {n} rows and just as many distinct product_id values.",
+          "cause": "\"Many\" only exists where a key repeats: in the fact one product sits in thousands of rows. In the dimension each product_id has one row, so its end of the relationship is \"1\".",
+          "fix": "Dimension side \"1\", fact side \"many\": one product row, many sales rows.",
+          "business": "The report keeps calculating, but the guard against duplicate dimension rows is off: an accidental duplicate product would quietly double its sales."
+        },
+        {
+          "symptom": "Raw layer sales cannot find their product by sku_code: rows without a match: {n}.",
+          "cause": "staging_raw_sellout is the raw layer. Codes and names are stored as they came from the files (case, spaces), so the texts do not match dim_product. The raw layer is not part of the model; relationships use surrogate keys (product_id, customer_id).",
+          "fix": "Remove the relationship with the raw layer and link the fact to the dimensions through product_id and customer_id.",
+          "business": "Part of the sales would drop out of the report without a single error: the numbers would be smaller than real and nobody would notice."
+        },
+        {
+          "symptom": "Slicing by customer changes nothing: every customer in the report shows the same amount {n}, equal to the grand total.",
+          "cause": "A filter travels only along relationships. Until the fact is linked to dim_customer, picking a customer never reaches the sales.",
+          "fix": "Link fact_sellout.customer_id to dim_customer.customer_id: \"many\" at the fact, \"1\" at the dimension.",
+          "business": "The sales lead will see every customer selling the same and will only realise the report lies when they notice identical figures."
+        },
+        {
+          "symptom": "Slicing by brand changes nothing: every brand in the report shows the same amount {n}, equal to the grand total.",
+          "cause": "The brand sits in dim_product and the revenue in the fact. Until there is a relationship between them, the brand filter never reaches the sales.",
+          "fix": "Link fact_sellout.product_id to dim_product.product_id: \"many\" at the fact, \"1\" at the dimension.",
+          "business": "There is nothing to check the brand plan against: the report shows the same total under every brand."
+        }
+      ],
+      "hints": [
+        "Ask each dimension: which fact column should it answer to? Surrogate keys have the same name in both tables.",
+        "The brand and the customer name do not sit in the fact. What links a fact to a dimension: a text or a number?",
+        "On which end does the key never repeat? That end is \"1\". Where the same number appears in many rows, that is \"many\"."
+      ],
+      "explain": "A relationship joins the column you look up with the column where it appears exactly once. That is why \"1\" sits on the dimension side (the key is unique) and \"many\" on the fact side (one product or customer in thousands of rows). You link surrogate keys, not names: texts can be dirty, and the raw layer is not part of the model. Without a relationship a dimension filter never reaches the sales, and the report shows one total under any slice."
+    },
+    {
+      "id": "mdl-094",
+      "title": "Model relationships: region and calendar",
+      "brief": "The Kanto sales lead expects a sell-out report by region, brand and week on Monday. You are building the model between the gold layer and the report.",
+      "goal": "Draw all the relationships of the star and the snowflake, including the path to the region and the calendar, and mark the ends \"1\" and \"many\".",
+      "orderQuestion": "Which relationships does the model need so region, brand and week can filter sales?",
+      "relateTraps": [
+        {
+          "symptom": "Sales by calendar come out almost {n} times larger than real: each fact row finds all seven days of its week.",
+          "cause": "dim_date has one row per day, so week_start repeats seven times there. A relationship on it is many to many: a weekly sale multiplies across all its days.",
+          "fix": "Link the fact week_start to the calendar date_id. A date appears once, and a week finds exactly one row.",
+          "business": "Revenue is overstated several times over, and the report looks convincing until someone compares it with accounting."
+        },
+        {
+          "symptom": "Every region shows the same amount {n}, equal to the grand total.",
+          "cause": "The fact has no region: it is stored on the customer (region_id in dim_customer). Until dim_customer is linked to dim_region, the region filter never reaches the sales.",
+          "fix": "Draw dim_customer.region_id to dim_region.region_id: the region filters customers, and customers filter the fact. This is a snowflake: a dimension pointing to a dimension.",
+          "business": "The sales lead will see every region selling the same and may reallocate the budget based on an empty picture."
+        },
+        {
+          "symptom": "The regional report adds up to only {n} of the total: the other sales landed in no region at all.",
+          "cause": "A customer number and a region number are different numberings. A relationship on them matches only where the numbers happen to be equal. The path to the region goes through the customer.",
+          "fix": "Remove this relationship and draw the region from dim_customer.region_id.",
+          "business": "Regional totals would be random, and no regional manager would recognise their own figures."
+        },
+        {
+          "symptom": "The model gets a many to many relationship although the key has no repeats: dim_product has {n} rows and just as many distinct product_id values.",
+          "cause": "\"Many\" only exists where a key repeats. In a dimension and in the calendar each key has one row, so their end of the relationship is \"1\".",
+          "fix": "Dimension side \"1\", fact side \"many\".",
+          "business": "The report keeps calculating, but the guard against duplicate dimension rows is off: an accidental duplicate would quietly double sales."
+        }
+      ],
+      "hints": [
+        "The fact has no region. Where does it come from: which table knows the customer region?",
+        "The calendar has one row per day. Which of its columns repeats and which does not? Link the one that does not.",
+        "A dimension can point to a dimension. Where does region_id in dim_customer lead?"
+      ],
+      "explain": "A star model with one snowflake: the fact points to product, customer and date, and the customer points to the region. The region is not in the fact, the path goes through the customer, and a break on that path flattens the regional slice. The calendar is linked by date_id, not by week_start: a week has seven days, and a relationship on it would multiply the sales. \"1\" is always on the end of a key without repeats."
     }
   ]
 }

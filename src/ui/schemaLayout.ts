@@ -52,6 +52,10 @@ export const LAYOUT = {
   standaloneGap: 36,
   /** На столько стрелка не доходит до узла: ровно длина наконечника. */
   arrowGap: 8,
+  /** Раскрытый узел (задание «Проведите связи»): строка заголовка, строка колонки, нижний отступ. */
+  titleH: 32,
+  rowH: 30,
+  padBottom: 6,
 } as const;
 
 export interface LayoutNode {
@@ -70,6 +74,11 @@ export interface LayoutNode {
    * про собственную вложенность.
    */
   selfRef: boolean;
+  /**
+   * Раскрытые колонки узла с y центра строки. Есть только при `columns` в
+   * `buildSchemaLayout`: обычная схема рисует таблицы без колонок.
+   */
+  rows?: { name: string; y: number }[];
 }
 
 export interface LayoutEdge {
@@ -99,14 +108,29 @@ export interface SchemaLayout {
 const round = (n: number): number => Math.round(n * 10) / 10;
 
 /** Ширина колонки — по самому длинному имени в ней, чтобы узлы стояли ровно. */
-function columnWidth(tables: string[], selfRef: (t: string) => boolean): number {
+function columnWidth(tables: string[], selfRef: (t: string) => boolean, names: (t: string) => string[] = (t) => [t]): number {
   return tables.reduce((max, table) => {
-    const w = table.length * LAYOUT.charWidth + LAYOUT.padX * 2 + (selfRef(table) ? LAYOUT.selfBadge : 0);
+    const longest = Math.max(...names(table).map((s) => s.length));
+    const w = longest * LAYOUT.charWidth + LAYOUT.padX * 2 + (selfRef(table) ? LAYOUT.selfBadge : 0);
     return Math.max(max, w);
   }, 0);
 }
 
-export function buildSchemaLayout(doc: SchemaDoc): SchemaLayout {
+export interface LayoutOptions {
+  /**
+   * Раскрыть таблицы: имя таблицы → её колонки по порядку показа. Узел становится
+   * выше на строки колонок, порядок и положение колонок схемы остаются теми же
+   * (выводятся из внешних ключей), так что задание «Проведите связи» стоит на
+   * той же раскладке, а не на своей.
+   */
+  columns?: Record<string, string[]>;
+}
+
+export function buildSchemaLayout(doc: SchemaDoc, options: LayoutOptions = {}): SchemaLayout {
+  const expanded = options.columns;
+  const heightOf = (table: string): number =>
+    expanded?.[table] ? LAYOUT.titleH + expanded[table].length * LAYOUT.rowH + LAYOUT.padBottom : LAYOUT.nodeH;
+  const widthNames = (table: string): string[] => [table, ...(expanded?.[table] ?? []).map((c) => `${c}  `)];
   const { group, incoming, outgoing } = groupTables(doc);
 
   const selfRefs = new Set(
@@ -152,30 +176,38 @@ export function buildSchemaLayout(doc: SchemaDoc): SchemaLayout {
 
   const standalone = of('standalone').sort((a, b) => a.localeCompare(b));
 
-  const factW = columnWidth(facts, hasSelfRef);
-  const dimW = columnWidth(dims, hasSelfRef);
+  // Раскрытые колонки стоят одним столбцом с сырым слоем: одна ширина, иначе узлы разной ширины.
+  const factW = columnWidth(expanded ? [...facts, ...standalone] : facts, hasSelfRef, widthNames);
+  const dimW = columnWidth(dims, hasSelfRef, widthNames);
   const factX = 0;
   const dimX = factW + LAYOUT.colGap;
 
-  const columnHeight = (n: number) => (n ? n * LAYOUT.nodeH + (n - 1) * LAYOUT.gapY : 0);
-  const factsH = columnHeight(facts.length);
-  const dimsH = columnHeight(dims.length);
+  const columnHeight = (tables: string[]) =>
+    tables.length ? tables.reduce((sum, t) => sum + heightOf(t), 0) + (tables.length - 1) * LAYOUT.gapY : 0;
+  const factsH = columnHeight(facts);
+  const dimsH = columnHeight(dims);
   const bodyH = Math.max(factsH, dimsH);
 
   const nodes: LayoutNode[] = [];
   const place = (tables: string[], x: number, w: number, top: number) => {
-    tables.forEach((table, i) => {
+    let y = top;
+    for (const table of tables) {
+      const h = heightOf(table);
       nodes.push({
         table,
         group: group.get(table)!,
         x,
-        y: round(top + i * (LAYOUT.nodeH + LAYOUT.gapY)),
+        y: round(y),
         w: round(w),
-        h: LAYOUT.nodeH,
+        h,
         incoming: incoming.get(table) ?? 0,
         selfRef: hasSelfRef(table),
+        ...(expanded?.[table]
+          ? { rows: expanded[table].map((name, i) => ({ name, y: round(y + LAYOUT.titleH + i * LAYOUT.rowH + LAYOUT.rowH / 2) })) }
+          : {}),
       });
-    });
+      y += h + LAYOUT.gapY;
+    }
   };
 
   // Короткая колонка центрируется по длинной: иначе схема читается как
@@ -184,8 +216,8 @@ export function buildSchemaLayout(doc: SchemaDoc): SchemaLayout {
   place(dims, dimX, dimW, LAYOUT.headerH + (bodyH - dimsH) / 2);
 
   const standaloneY = LAYOUT.headerH + bodyH + LAYOUT.standaloneGap;
-  const standaloneW = columnWidth(standalone, hasSelfRef);
-  place(standalone, factX, standaloneW, standaloneY);
+  const standaloneW = columnWidth(standalone, hasSelfRef, widthNames);
+  place(standalone, factX, expanded ? factW : standaloneW, standaloneY);
 
   const at = new Map(nodes.map((n) => [n.table, n]));
 
@@ -249,7 +281,7 @@ export function buildSchemaLayout(doc: SchemaDoc): SchemaLayout {
 
   const maxBulge = snowPairs.length ? LAYOUT.snowBase + (snowPairs.length - 1) * LAYOUT.snowStep : 0;
   const width = Math.max(dimX + dimW + maxBulge, standaloneW);
-  const height = standalone.length ? standaloneY + LAYOUT.nodeH : LAYOUT.headerH + bodyH;
+  const height = standalone.length ? standaloneY + columnHeight(standalone) : LAYOUT.headerH + bodyH;
 
   return {
     nodes,

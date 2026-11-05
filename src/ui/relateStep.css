@@ -1,0 +1,265 @@
+/* Шаг «Проведите связи» (RelateStep.tsx): колонки на схеме, линии, плашки концов, список связей, разбор. Только токены темы. */
+
+.rel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rel-note,
+.rel-empty {
+  margin: 0;
+  font-size: var(--fs-micro);
+}
+
+.rel-picked {
+  margin: 0;
+  font-size: var(--fs-micro);
+  color: var(--accent);
+}
+
+.rel-map {
+  max-width: 100%;
+}
+
+.rel-title {
+  font-weight: 700;
+}
+
+.rel-sep {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.rel-row {
+  cursor: pointer;
+}
+
+.rel-row.is-static {
+  cursor: default;
+}
+
+.rel-row:focus {
+  outline: none;
+}
+
+.rel-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.5;
+}
+
+.rel-row:not(.is-static):hover .rel-hit {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.rel-row:focus-visible .rel-hit {
+  stroke: var(--accent);
+}
+
+.rel-row.is-picked .rel-hit {
+  fill: color-mix(in srgb, var(--accent) 24%, transparent);
+  stroke: var(--accent);
+}
+
+.rel-row.is-linked text {
+  font-weight: 700;
+  fill: var(--accent);
+}
+
+.rel-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 85%, transparent);
+  stroke-width: 2;
+}
+
+.rel-pill {
+  cursor: pointer;
+}
+
+.rel-pill.is-static {
+  cursor: default;
+  pointer-events: none;
+}
+
+.rel-pill:focus {
+  outline: none;
+}
+
+.rel-pill rect {
+  fill: var(--bg-raised);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.rel-pill text {
+  font-family: var(--font-sans, inherit);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--text);
+}
+
+.rel-pill:focus-visible rect {
+  stroke-width: 3;
+}
+
+.rel-pill:not(.is-static):hover rect {
+  fill: color-mix(in srgb, var(--accent) 14%, var(--bg-raised));
+}
+
+.rel-pick {
+  display: grid;
+  gap: 8px;
+}
+
+.rel-select {
+  display: grid;
+  gap: 4px;
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+.rel-select select {
+  min-height: var(--tap);
+  padding: 0 8px;
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.rel-h {
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+
+.rel-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rel-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.rel-ends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  min-width: 0;
+}
+
+.rel-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rel-end code {
+  overflow-wrap: anywhere;
+  font-size: var(--fs-micro);
+}
+
+.rel-seg {
+  display: inline-flex;
+  flex: none;
+}
+
+.rel-seg-btn {
+  min-height: 32px;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.rel-seg-btn:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.rel-seg-btn:last-child {
+  border-radius: 0 999px 999px 0;
+  border-left: 0;
+}
+
+.rel-seg-btn.is-on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.rel-seg-btn:disabled {
+  cursor: default;
+}
+
+.rel .rel-item .rel-remove {
+  width: auto;
+  flex: none;
+  min-height: 32px;
+  padding: 2px 12px;
+  font-size: var(--fs-micro);
+}
+
+.rel-run {
+  display: grid;
+  justify-items: start;
+}
+
+.rel-traps,
+.rel-alltraps {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--warn);
+  border-radius: 10px;
+}
+
+.rel-alltraps summary {
+  cursor: pointer;
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.rel-trap dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.rel-trap dt {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rel-trap dd {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+
+.rel-trap + .rel-trap {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}

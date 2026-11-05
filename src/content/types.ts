@@ -37,7 +37,9 @@ export type TaskMode =
   /** Расставить шаги рассуждения по порядку. Единственный режим, работающий без исполнителя. */
   | 'order'
   /** Разложить шаги по волнам зависимости и запустить: порядок, где внутри волны он неважен. */
-  | 'waves';
+  | 'waves'
+  /** Провести связи между колонками таблиц модели: эталон выводится из внешних ключей схемы. */
+  | 'relate';
 
 /**
  * Пункт задания на упорядочивание.
@@ -80,6 +82,60 @@ export interface WaveItem {
   earlyText?: string;
   /** Что происходит, если шаг идёт после упавшей зависимости (стрелка «после завершения»). */
   orphanText?: string;
+}
+
+/**
+ * Состав задания `relate`: какие таблицы схемы показаны и какие их колонки раскрыты.
+ * Ответа в задании нет: верные связи и их кардинальность выводятся из внешних
+ * ключей `schema.json` (engine/relate.ts), сторона «1» это сторона первичного ключа.
+ * В списке раскрытых колонок рядом с настоящими ключами стоят приманки.
+ */
+export interface RelateTable {
+  table: string;
+  /** Раскрытые колонки, 2...4 на таблицу, в порядке показа. */
+  columns: string[];
+}
+
+/**
+ * Типичная ошибка задания `relate` и её разбор: симптом в отчёте, причина,
+ * как починить, последствие для бизнеса. Число симптома не пишется в текст:
+ * там стоит `{n}`, а само число (`n`) считает запрос `sql` к Kaiyo, его
+ * сверяет и заполняет гейт test:relate.
+ */
+export interface RelateTrap {
+  id: string;
+  /**
+   * Что значит «человек попал в эту ловушку»:
+   * - `drew`: провёл связь между колонками `a` и `b` (порядок не важен), которой нет в эталоне;
+   * - `touch`: провёл любую связь с колонкой таблицы `table`;
+   * - `missing`: не провёл эталонную связь между `a` и `b`;
+   * - `keyMany`: у эталонной связи на стороне первичного ключа отмечено «много».
+   */
+  kind: 'drew' | 'touch' | 'missing' | 'keyMany';
+  a?: string;
+  b?: string;
+  table?: string;
+  /** Запрос SQLite к Kaiyo, первая ячейка первой строки которого есть число симптома. */
+  sql?: string;
+  /** Как показывать число: целое, деньги или число с запятой. */
+  fmt?: 'int' | 'money' | 'num';
+  n?: number;
+  symptom: string;
+  cause: string;
+  fix: string;
+  business: string;
+}
+
+export interface RelateSpec {
+  tables: RelateTable[];
+  traps: RelateTrap[];
+}
+
+export interface RelateTrapTranslation {
+  symptom?: string;
+  cause?: string;
+  fix?: string;
+  business?: string;
 }
 
 export interface PredictOption {
@@ -193,6 +249,20 @@ export type TaskStep =
       items: WaveItem[];
       /** Сколько колонок-волн (3...5). */
       waves: number;
+      scenario?: string;
+      hints: string[];
+      goal?: string;
+    }
+  | {
+      /**
+       * Провести связи между колонками таблиц Kaiyo и отметить «1»/«много» на концах.
+       * Как `order` и `waves`, поднимается из одношагового задания (`Task.mode === 'relate'`).
+       * Проверка «всё или ничего» против эталона, выведенного из внешних ключей схемы
+       * (engine/relate.ts); у каждой ловушки свой разбор.
+       */
+      kind: 'relate';
+      question: string;
+      relate: RelateSpec;
       scenario?: string;
       hints: string[];
       goal?: string;
@@ -328,6 +398,8 @@ export interface Task {
   /** Карточки режима `waves` (вопрос в `orderQuestion`, колонок `waves`). См. WaveItem. */
   waveItems?: WaveItem[];
   waves?: number;
+  /** Состав режима `relate` (вопрос в `orderQuestion`). См. RelateSpec. */
+  relate?: RelateSpec;
   /** Раскрываются по одной. Первая — направление, последняя — почти решение. */
   hints: string[];
   /** Разбор после решения: не пересказ ответа, а идея, которая переносится на другие задачи. */
@@ -499,6 +571,7 @@ export interface TaskStepTranslation {
   /** Пункты шага на упорядочивание. Порядок обязан совпадать с оригиналом — сопоставление позиционное. */
   items?: TaskOptionTranslation[];
   waveItems?: WaveItemTranslation[];
+  relateTraps?: RelateTrapTranslation[];
 }
 
 export interface WaveItemTranslation {
@@ -529,6 +602,8 @@ export interface TaskTranslation {
   items?: TaskOptionTranslation[];
   /** Карточки `waves`: позиционно к Task.waveItems; переводятся подписи и тексты исходов. */
   waveItems?: WaveItemTranslation[];
+  /** Разборы ловушек `relate`: позиционно к Task.relate.traps. */
+  relateTraps?: RelateTrapTranslation[];
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */
   traps?: { message: string }[];
   /** Порядок обязан совпадать с Task.steps — тоже позиционно. */

@@ -852,6 +852,19 @@ for (const packId of packs) {
       continue;
     }
 
+    if (t.mode === 'relate') {
+      /*
+       * «Проведите связи»: эталон выводится из внешних ключей schema.json, в задании только состав.
+       * Здесь проверяется то, что нужно экрану; эталон, ловушки, числа симптомов и перевод
+       * держит test:relate.
+       */
+      if (!t.orderQuestion) fail(t.id, 'нет вопроса для режима relate');
+      const rel = t.relate;
+      if (!rel || (rel.tables ?? []).length < 2) fail(t.id, 'у relate меньше двух таблиц');
+      if (t.options?.length || t.solution) fail(t.id, 'у relate заданы варианты ответа или решение: ответ выводится из схемы');
+      continue;
+    }
+
     if (t.mode === 'order') {
       /*
        * Проверяется только содержание, не раскладка на экране.
