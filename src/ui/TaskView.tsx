@@ -11,6 +11,7 @@ import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
 import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
+import { AfterReply } from './AfterReply';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
 import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
@@ -409,6 +410,33 @@ export function TaskView({
       });
   }, [step, carried, prevStep, index, executor]);
 
+  /**
+   * Результат, о котором говорит реплика after: последний шаг-расчёт, если он
+   * же последний шаг задания (у predict/order/waves таблицы нет, а у расчёта
+   * с интерпретацией таблица и так стоит слева). Свой, если сошёлся; иначе
+   * эталон. Таблица не хранится в черновике, поэтому после перезагрузки её
+   * догоняет эффект ниже, выполняя эталон один раз.
+   */
+  const schemaTableNames = useMemo(() => schema?.tables.map((s) => s.table) ?? [], [schema]);
+  const lastIdx = steps.length - 1;
+  const lastStep = steps[lastIdx];
+  const pinSrc = lastStep.kind === 'compute' ? draft.steps[lastIdx] : undefined;
+  const pinNeeded = Boolean(afterNote) && last && Boolean(pinSrc?.solved);
+  const pinned = pinNeeded && pinSrc ? (pinSrc.wasCorrect ? pinSrc.preview ?? pinSrc.expected : pinSrc.expected ?? pinSrc.preview) : null;
+  const pinFetching = useRef(false);
+  useEffect(() => {
+    if (!pinNeeded || pinned || pinFetching.current || notReadyNote !== undefined) return;
+    if (lastStep.kind !== 'compute' || !lastStep.solution) return;
+    pinFetching.current = true;
+    executor
+      .exec(lastStep.solution)
+      .then((r) => patchStep(lastIdx, { expected: r }))
+      .catch(() => undefined)
+      .finally(() => {
+        pinFetching.current = false;
+      });
+  }, [pinNeeded, pinned, lastStep, lastIdx, executor, notReadyNote]);
+
   /** Таблицы этого задания — для чипов над условием, см. taskTables. */
   const tables = useMemo(() => taskTables(task, schema), [task, schema]);
 
@@ -595,11 +623,14 @@ export function TaskView({
             </div>
           )}
           {last && afterNote && (
-            <div className={'card story-after' + (afterSpeaking ? ' story-after--speaking' : '')}>
-              {afterVoice}
-              <p className="story-mode-from">{afterNote.from}</p>
-              <p className="story-mode-text">{afterNote.text}</p>
-            </div>
+            <AfterReply
+              note={afterNote}
+              voice={afterVoice}
+              speaking={afterSpeaking}
+              result={pinned}
+              schemaTables={schemaTableNames}
+              onOpenSchema={onOpenSchema}
+            />
           )}
           {step.kind === 'compute' && (
             <details className="table-doc">

@@ -11598,3 +11598,75 @@ figure.arch-figure {
   font-size: var(--fs-micro);
   line-height: 1.7;
 }
+
+/*
+ * Реплика after и результат, о котором она. На ноутбуке результат стоит
+ * справа и липнет, пока читают и слушают; на узком экране он свёрнутой
+ * полосой над репликой (см. AfterReply.tsx). Подсветка названных строк
+ * держится не на цвете: ячейка жирная и подчёркнутая, а скрытая подпись
+ * (.echo-sr) читается экранным диктором.
+ */
+.story-after-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+.story-after-grid > .card {
+  margin-bottom: 0;
+}
+.story-after-result {
+  position: sticky;
+  top: 72px;
+}
+.story-after-fold > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+.story-after-fold[open] > summary {
+  margin-bottom: 10px;
+}
+tr.echo-row td {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+mark.echo-hit {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.echo-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+button.after-table {
+  display: inline;
+  margin: 0;
+  padding: 0 4px;
+  font: inherit;
+  color: color-mix(in srgb, var(--accent) 85%, var(--text));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 5px;
+  cursor: pointer;
+}
+button.after-table code {
+  font-size: 0.92em;
+}
+button.after-table:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.story-after-fold > summary .muted {
+  font-weight: 400;
+}

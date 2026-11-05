@@ -1849,6 +1849,9 @@ export const ru = {
   result: {
     stdoutLabel: 'Вывод print()',
     noColumns: 'Запрос не вернул колонок.',
+    /** Скрытая подпись к подсвеченному значению: смысл не должен держаться на цвете. */
+    namedInReply: 'названо в реплике',
+    namedRows: (n: number) => `Названо в реплике строк: ${n}`,
     rowsSuffix: (n: number) => rowCount(n),
     truncatedSuffix: (n: number) => ` · показаны первые ${n}`,
     tableTab: 'Таблица',

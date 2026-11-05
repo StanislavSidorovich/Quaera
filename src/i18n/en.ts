@@ -1011,6 +1011,9 @@ export const en = {
   result: {
     stdoutLabel: 'print() output',
     noColumns: 'The query returned no columns.',
+    /** Скрытая подпись к подсвеченному значению: смысл не должен держаться на цвете. */
+    namedInReply: 'named in the reply',
+    namedRows: (n: number) => (n === 1 ? '1 row is named in the reply' : `${n} rows are named in the reply`),
     rowsSuffix: (n: number) => rowCount(n),
     truncatedSuffix: (n: number) => ` · showing the first ${n}`,
     tableTab: 'Table',

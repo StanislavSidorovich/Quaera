@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/context';
 import { chartSpec } from './chartSpec';
 import { Chart } from './Chart';
 import { copyText, useContextMenu } from './ContextMenu';
+import type { EchoHits } from './afterEcho';
 
 /** Меньше трёх строк — сравнивать нечего, полоса только зашумит две цифры. */
 const MIN_ROWS_FOR_BARS = 3;
@@ -58,7 +59,7 @@ function plain(v: SqlValue): string {
  * Таблица результата. Горизонтальный скролл живёт внутри контейнера:
  * страница целиком ездить вбок не должна, иначе на телефоне теряется навигация.
  */
-export function ResultTable({ data, caption }: { data: Preview; caption?: string }) {
+export function ResultTable({ data, caption, echo }: { data: Preview; caption?: string; echo?: EchoHits }) {
   const { t, locale } = useI18n();
   const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
   const scales = useMemo(() => barScales(data.columns, data.rows), [data.columns, data.rows]);
@@ -133,7 +134,7 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
             </thead>
             <tbody>
               {data.rows.map((row, ri) => (
-                <tr key={ri}>
+                <tr key={ri} className={echo?.rows.includes(ri) ? 'echo-row' : undefined}>
                   {row.map((v, ci) => {
                     const scale = scales[ci];
                     const bar = scale !== null && typeof v === 'number' && Number.isFinite(v);
@@ -144,7 +145,12 @@ export function ResultTable({ data, caption }: { data: Preview; caption?: string
                         className={`${v === null ? 'null' : typeof v === 'number' ? 'num' : ''}${bar ? ' bar-cell' : ''}`}
                         style={bar ? ({ '--fill': `${((v as number) / scale!) * 100}%` } as CSSProperties) : undefined}
                       >
-                        {v === null ? 'NULL' : typeof v === 'number' ? v.toLocaleString(numberLocale, { maximumFractionDigits: 4 }) : String(v)}
+                        {echo?.cells.has(`${ri}:${ci}`) ? (
+                          <mark className="echo-hit">
+                            {typeof v === 'number' ? v.toLocaleString(numberLocale, { maximumFractionDigits: 4 }) : String(v)}
+                            <span className="echo-sr"> ({t.result.namedInReply})</span>
+                          </mark>
+                        ) : v === null ? 'NULL' : typeof v === 'number' ? v.toLocaleString(numberLocale, { maximumFractionDigits: 4 }) : String(v)}
                       </td>
                     );
                   })}
