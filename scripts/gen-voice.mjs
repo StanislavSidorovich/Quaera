@@ -3,7 +3,8 @@
  *
  * Запускает хозяин своим ключом; в репозитории ключа нет и быть не может.
  *
- *   node scripts/gen-voice.mjs --dry-run
+ *   node scripts/gen-voice.mjs --dry-run                  (пилот)
+ *   node scripts/gen-voice.mjs --scope dialogs --dry-run  (вся кампания)
  *   node scripts/gen-voice.mjs --provider elevenlabs
  *   node scripts/gen-voice.mjs --provider azure
  *
@@ -13,6 +14,12 @@
  * --dry-run    ничего не отправляет и ключа не требует: печатает реплики,
  *              знаки и оценку стоимости для обоих поставщиков.
  * --provider   elevenlabs | azure (для реального запуска обязателен).
+ * --scope     pilot (по умолчанию, дни 1 и 2) | dialogs (все диалоги кампании:
+ *              брифы, реплики после задания, разговоры между делом; рассказчик
+ *              reflection/hook не входит). --dry-run печатает знаки по
+ *              персонажам и неделям.
+ * --kinds a,b  только эти виды реплик (brief, after, interlude), например
+ *              --kinds brief,interlude: влезает ли в Starter без реплик after.
  * --only <id>  только одна миссия, например day-2-counting.
  * --force      пересоздать и те реплики, у которых запись уже есть.
  * --format mp3 запасной формат, если поставщик не отдал opus.
@@ -26,7 +33,7 @@
  */
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { MAX_CLIP_BYTES, LOCALE, clipFile, manifestPath, pilotLines, root, voiceDir } from './lib/voice-lines.mjs';
+import { MAX_CLIP_BYTES, LOCALE, clipFile, dialogLines, manifestPath, pilotLines, root, voiceDir } from './lib/voice-lines.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -40,6 +47,11 @@ const provider = opt('--provider');
 const only = opt('--only');
 const force = flag('--force');
 const format = opt('--format');
+const scope = opt('--scope') ?? 'pilot';
+if (!['pilot', 'dialogs'].includes(scope)) {
+  console.error('--scope: pilot | dialogs');
+  process.exit(1);
+}
 
 /* ---------- оценка стоимости (цены на 2026-11-04, см. docs/voice-pilot-2026-11.md) ---------- */
 
@@ -50,6 +62,13 @@ const EL_PLANS = [
 ];
 const AZURE_FREE = 500_000; // F0: знаков в месяц бесплатно
 const AZURE_PER_MILLION = 15; // Neural, USD за 1 млн знаков (по вторичным источникам, не проверено)
+
+/** Знаки по неделям в порядке кампании (w1, w1b, w2, ...). */
+function weekTotals(ls) {
+  const m = new Map();
+  for (const l of ls) m.set(l.week, (m.get(l.week) ?? 0) + l.chars);
+  return [...m];
+}
 
 function estimate(chars) {
   const el = EL_PLANS.find((p) => chars <= p.credits);
@@ -120,18 +139,45 @@ const estimateSeconds = (bytes, ext) => (bytes * 8) / (ext === 'mp3' ? 64_000 : 
 
 /* ---------- запуск ---------- */
 
-const all = await pilotLines();
-const lines = only ? all.filter((l) => l.mission === only) : all;
+const all = await (scope === 'dialogs' ? dialogLines() : pilotLines());
+const kinds = opt('--kinds')?.split(',');
+const lines = all.filter((l) => (!only || l.mission === only) && (!kinds || kinds.includes(l.kind)));
 if (!lines.length) {
   console.error(`Нет реплик для --only ${only}`);
   process.exit(1);
 }
 const totalChars = lines.reduce((a, l) => a + l.chars, 0);
 
-console.log(`Озвучка, пилот (${LOCALE}): ${lines.length} реплик, ${totalChars} знаков`);
-for (const l of lines) {
+console.log(`Озвучка, ${scope === 'dialogs' ? 'диалоги кампании' : 'пилот'} (${LOCALE}): ${lines.length} реплик, ${totalChars} знаков`);
+if (scope !== 'dialogs' || !dryRun) for (const l of lines) {
   const head = l.text.length > 64 ? l.text.slice(0, 61) + '...' : l.text;
   console.log(`  ${l.key.padEnd(24)} ${l.speaker.padEnd(8)} ${String(l.chars).padStart(4)}  ${l.hash}  ${head}`);
+}
+if (scope === 'dialogs') {
+  const table = (title, keyOf) => {
+    const m = new Map();
+    for (const l of lines) {
+      const k = keyOf(l);
+      const e = m.get(k) ?? { n: 0, chars: 0 };
+      e.n++;
+      e.chars += l.chars;
+      m.set(k, e);
+    }
+    console.log(title);
+    for (const [k, e] of [...m].sort(([a], [b]) => String(a).localeCompare(String(b), undefined, { numeric: true })))
+      console.log(`  ${String(k).padEnd(10)} ${String(e.n).padStart(4)} реплик ${String(e.chars).padStart(6)} знаков`);
+  };
+  table('По персонажам:', (l) => l.speaker);
+  table('По неделям:', (l) => 'неделя ' + l.week);
+  table('По видам:', (l) => l.kind);
+  let acc = 0;
+  console.log('Нарастающим итогом по неделям (Starter = 30000 кредитов):');
+  for (const [k, e] of weekTotals(lines)) {
+    acc += e;
+    console.log(`  до ${k.padEnd(4)} включительно ${String(acc).padStart(6)}  ${acc <= 30_000 ? 'влезает в Starter' : 'больше Starter'}`);
+  }
+  const longest = lines.reduce((a, l) => (l.chars > a.chars ? l : a));
+  console.log(`Самая длинная реплика: ${longest.key}, ${longest.chars} знаков`);
 }
 const est = estimate(totalChars);
 console.log('Оценка стоимости:');
