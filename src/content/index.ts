@@ -147,6 +147,7 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         brief: tt.brief ?? t.brief,
         goal: tt.goal ?? t.goal,
         scenario: tt.scenario ?? t.scenario,
+        figure: tt.figure ?? t.figure,
         predictQuestion: tt.predictQuestion ?? t.predictQuestion,
         orderQuestion: tt.orderQuestion ?? t.orderQuestion,
         hints: tt.hints ?? t.hints,

@@ -1,0 +1,227 @@
+/* Рисунок задания по данным (RunLogFigure.tsx). Только токены темы; статус значком и словом. */
+
+.rl {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.rl-title {
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: var(--fs-text);
+  overflow-wrap: anywhere;
+}
+
+.rl-facts {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+}
+
+.rl-fact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: baseline;
+}
+
+.rl-fact dt {
+  color: var(--text-dim);
+}
+
+.rl-fact dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.rl-tone--ok {
+  color: color-mix(in srgb, var(--ok) 70%, var(--text));
+}
+
+.rl-tone--warn {
+  color: color-mix(in srgb, var(--warn) 70%, var(--text));
+}
+
+.rl-tone--err {
+  color: color-mix(in srgb, var(--err) 70%, var(--text));
+}
+
+.rl-scroll {
+  overflow-x: auto;
+}
+
+.rl-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rl-table th,
+.rl-table td {
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.rl-table th {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.rl-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.rl-table--mono td {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+}
+
+/* Чип статуса: значок и слово. */
+.rl-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.rl-chip--ok {
+  color: color-mix(in srgb, var(--ok) 70%, var(--text));
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+  background: color-mix(in srgb, var(--ok) 10%, var(--bg-sunken));
+}
+
+.rl-chip--err {
+  color: color-mix(in srgb, var(--err) 70%, var(--text));
+  border-color: color-mix(in srgb, var(--err) 45%, var(--line));
+  background: color-mix(in srgb, var(--err) 10%, var(--bg-sunken));
+}
+
+.rl-chip--run {
+  color: color-mix(in srgb, var(--warn) 70%, var(--text));
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, var(--bg-sunken));
+}
+
+.rl-chip--skip,
+.rl-chip--wait {
+  color: var(--text-dim);
+  border-style: dashed;
+}
+
+/* Цепочка шагов со стрелками-условиями. */
+.rl-chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.rl-via {
+  display: block;
+  padding: 4px 0 4px 14px;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  overflow-wrap: anywhere;
+}
+
+.rl-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-raised);
+}
+
+.rl-step-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Полосы «до и после». */
+.rl-group + .rl-group {
+  margin-top: 12px;
+}
+
+.rl-group-label {
+  margin: 0 0 4px;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+.rl-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.rl-bar-label {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+.rl-bar-track {
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.rl-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.rl-bar-fill.rl-tone--warn {
+  background: var(--warn);
+}
+
+.rl-bar-fill.rl-tone--err {
+  background: var(--err);
+}
+
+.rl-bar-fill.rl-tone--ok {
+  background: var(--ok);
+}
+
+.rl-bar-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rl-note {
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+.rl-bar-track--cell {
+  display: block;
+  margin-top: 4px;
+  height: 8px;
+  min-width: 70px;
+}

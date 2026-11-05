@@ -11,6 +11,7 @@ import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTar
 import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
+import { RunLogFigure } from './RunLogFigure';
 
 /**
  * Экран задания.
@@ -117,6 +118,7 @@ export function resolveSteps(task: Task): TaskStep[] {
         question: task.orderQuestion ?? '',
         items: task.items ?? [],
         scenario: task.scenario,
+        figure: task.figure,
         hints: task.hints,
       },
     ];
@@ -130,6 +132,7 @@ export function resolveSteps(task: Task): TaskStep[] {
         hints: task.hints,
         predictSql: task.predictSql,
         scenario: task.scenario,
+        figure: task.figure,
       },
     ];
   }
@@ -492,7 +495,7 @@ export function TaskView({
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && step.kind !== 'order' && (
+          {!task.scenario && !task.figure && step.kind !== 'order' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -1074,7 +1077,9 @@ function StepView({
         <div className="task-work">
           <div className="task-situation">
             <div className="card">
-              {step.scenario ? (
+              {step.figure ? (
+                <RunLogFigure figure={step.figure} />
+              ) : step.scenario ? (
                 <pre className="scenario">{step.scenario}</pre>
               ) : step.predictSql ? (
                 <CodeBlock code={step.predictSql} />
@@ -1140,10 +1145,10 @@ function StepView({
            * колонки после правки не остаётся — auto-fit в .task-work
            * схлопывает пустой трек, и ответ занимает ширину целиком.
            */}
-          {step.scenario && (
+          {(step.scenario || step.figure) && (
             <div className="task-situation">
               <div className="card">
-                <pre className="scenario">{step.scenario}</pre>
+                {step.figure ? <RunLogFigure figure={step.figure} /> : <pre className="scenario">{step.scenario}</pre>}
               </div>
             </div>
           )}
@@ -1230,7 +1235,7 @@ function StepView({
                * (.work-tables в styles.css). Имён колонок здесь нет намеренно:
                * их человек берёт из схемы сам, иначе пропуск выдан готовым.
                */}
-              {!task.scenario && (
+              {!task.scenario && !task.figure && (
                 <div className="work-tables">
                   {tables.map((name) => (
                     <button key={name} className="table-chip" onClick={() => onOpenSchema(name)}>

@@ -856,8 +856,9 @@ for (const packId of packs) {
     if (t.mode === 'predict') {
       // Предсказывать можно результат кода (predictSql) или последствие
       // решения (scenario) — но не то и другое сразу: плеер рисует что-то одно.
-      if (!t.predictSql && !t.scenario) fail(t.id, 'нет ни запроса, ни ситуации для режима predict');
-      if (t.predictSql && t.scenario) fail(t.id, 'заданы и predictSql, и scenario — плеер покажет только одно');
+      if (!t.predictSql && !t.scenario && !t.figure) fail(t.id, 'нет ни запроса, ни ситуации, ни рисунка для режима predict');
+      if (t.predictSql && (t.scenario || t.figure)) fail(t.id, 'заданы и predictSql, и scenario или figure — плеер покажет только одно');
+      if (t.scenario && t.figure) fail(t.id, 'заданы и scenario, и figure — плеер покажет только рисунок');
       if (!t.predictQuestion) fail(t.id, 'нет вопроса для режима predict');
       // На экране 375 px в моноширинном .scenario помещается около 39 знаков;
       // white-space: pre-wrap переносит всё, что длиннее, и таблица, выровненная
@@ -4540,4 +4541,93 @@ function translationPairs(orig, tr) {
 }
 
 console.log(failed ? `\n${failed} проблем в контенте` : '\nКонтент в порядке');
+// --- Рисунки заданий (`figure`, см. TaskFigure в content/types.ts) ---------
+// Рисунок задан данными, поэтому проверяется как данные: допустимый вид, статус
+// из закрытого списка, номера колонок внутри таблицы, английский повторяет форму
+// русского (виды, длины списков, числа и тоны), а числа, снятые с Kaiyo, равны
+// числам базы. Без последнего «3 110 строк» в рисунке разъехалось бы с датасетом.
+{
+  const KINDS = new Set(['runlog', 'chain', 'bars', 'table']);
+  const STATUSES = new Set(['succeeded', 'failed', 'skipped', 'running', 'queued']);
+  const TONES = new Set(['ok', 'warn', 'err']);
+  const CYR = /[А-Яа-яЁё]/;
+  const strings = (v, out = []) => {
+    if (typeof v === 'string') out.push(v);
+    else if (Array.isArray(v)) v.forEach((x) => strings(x, out));
+    else if (v && typeof v === 'object') Object.values(v).forEach((x) => strings(x, out));
+    return out;
+  };
+  /** Форма без прозы: строки обнуляются, остаются виды, статусы, тоны, числа и длины списков. */
+  const shape = (v, key = '') => {
+    if (typeof v === 'string') return ['kind', 'status', 'tone'].includes(key) ? v : '';
+    if (Array.isArray(v)) return v.map((x) => shape(x, key));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shape(x, k)]));
+    return v;
+  };
+  const one = (q) => db.exec(q)[0].values[0][0];
+  const truth = {
+    stagingRows: one('SELECT COUNT(*) FROM staging_raw_sellout'),
+    stagingFiles: one('SELECT COUNT(DISTINCT source_file) FROM staging_raw_sellout'),
+  };
+  const checkFigure = (id, f, where) => {
+    const at = `${id} (${where})`;
+    if (!KINDS.has(f.kind)) return fail(at, `figure.kind «${f.kind}» не из ${[...KINDS].join(', ')}`);
+    for (const fact of f.facts ?? []) if (fact.tone && !TONES.has(fact.tone)) fail(at, `тон «${fact.tone}» вне ok/warn/err`);
+    if (f.kind === 'runlog') {
+      f.rows.forEach((r, i) => {
+        if (!STATUSES.has(r.status)) fail(at, `строка ${i + 1}: статус «${r.status}» вне списка`);
+        if (r.cells.length !== f.head.length) fail(at, `строка ${i + 1}: ${r.cells.length} ячеек при ${f.head.length} колонках`);
+      });
+      if (!(f.statusCol >= 0 && f.statusCol < f.head.length)) fail(at, 'statusCol вне таблицы');
+      if (f.valueCol !== undefined && !(f.valueCol >= 0 && f.valueCol < f.head.length)) fail(at, 'valueCol вне таблицы');
+    }
+    if (f.kind === 'table') {
+      f.rows.forEach((r, i) => {
+        if (r.length !== f.head.length) fail(at, `строка ${i + 1}: ${r.length} ячеек при ${f.head.length} колонках`);
+      });
+    }
+    if (f.kind === 'chain') {
+      f.steps.forEach((s, i) => {
+        if (s.status && !STATUSES.has(s.status)) fail(at, `шаг ${i + 1}: статус «${s.status}» вне списка`);
+        if (s.status && !s.statusLabel) fail(at, `шаг ${i + 1}: статус без подписи`);
+      });
+    }
+    if (f.kind === 'bars') {
+      for (const g of f.groups) for (const b of g.bars) if (!(b.value >= 0)) fail(at, `полоса «${b.label}»: значение не число`);
+    }
+    // Числа, снятые с датасета: число должно быть в рисунке цифрами (пробелы и запятые не считаются).
+    for (const [key, val] of Object.entries(f.dataset ?? {})) {
+      if (truth[key] === undefined) fail(at, `dataset.${key}: неизвестный ключ`);
+      else if (val !== truth[key]) fail(at, `dataset.${key} = ${val}, а в базе ${truth[key]}`);
+      else if (!strings(f).some((str) => str.replace(/[\s, ]/g, '') === String(val)) && !JSON.stringify(f).includes(`"value":${val}`)) {
+        fail(at, `dataset.${key} = ${val} объявлен, но в рисунке этого числа нет`);
+      }
+    }
+  };
+  let count = 0;
+  for (const packId of packs) {
+    const pack = readPack(packId);
+    const enPath = path.join(root, 'src', 'content', 'packs', `${packId}.en.json`);
+    const enTasks = new Map(existsSync(enPath) ? JSON.parse(readFileSync(enPath, 'utf8')).tasks.map((t) => [t.id, t]) : []);
+    for (const t of pack.tasks) {
+      if (!t.figure) continue;
+      count++;
+      checkFigure(t.id, t.figure, 'ru');
+      const en = enTasks.get(t.id)?.figure;
+      if (!en) {
+        fail(t.id, 'у рисунка нет английского перевода (figure в model-core.en.json)');
+        continue;
+      }
+      checkFigure(t.id, en, 'en');
+      if (JSON.stringify(shape(t.figure)) !== JSON.stringify(shape(en))) fail(t.id, 'английский рисунок не повторяет форму русского (виды, длины, числа, тоны)');
+      for (const str of strings(en)) {
+        if (CYR.test(str)) fail(t.id, `в английском рисунке кириллица: «${str}»`);
+        if (/—/.test(str)) fail(t.id, 'в английском рисунке тире');
+      }
+      for (const str of strings(t.figure)) if (/—/.test(str)) fail(t.id, 'в русском рисунке длинное тире');
+    }
+  }
+  console.log(`  ok   рисунки заданий: ${count} проверено (формы, статусы, числа Kaiyo)`);
+}
+
 process.exit(failed ? 1 : 0);

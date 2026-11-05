@@ -149,6 +149,8 @@ export type TaskStep =
       items: OrderItem[];
       /** Бизнес-ситуация рядом с вопросом. Кода у этого вида шага не бывает. */
       scenario?: string;
+      /** Рисунок вместо выкладки в `scenario` (см. TaskFigure). */
+      figure?: TaskFigure;
       hints: string[];
       /** Постановка шага в многошаговом задании. У поднятого одношагового — `Task.goal`. */
       goal?: string;
@@ -168,9 +170,67 @@ export type TaskStep =
        */
       predictSql?: string;
       scenario?: string;
+      figure?: TaskFigure;
       /** Постановка шага, если она нужна помимо вопроса. У поднятого `predict` — `Task.goal`. */
       goal?: string;
     };
+
+/**
+ * Рисунок задания: структурные данные вместо выкладки пробелами в `scenario`.
+ *
+ * Зачем. Журнал запуска, число строк до и после, превью таблицы набирались
+ * моноширинным текстом, и на 375 px выкладка держалась на 39 знаках в строке.
+ * Рисунок задаётся данными и рисуется компонентой `RunLogFigure`: статус чипом
+ * (значок и слово, не один цвет), число строк полосой, таблица таблицей.
+ * Одна и та же компонента проигрывает журнал в виде задания `waves`.
+ *
+ * Тексты внутри рисунка живут в самом паке: английский пак подменяет `figure`
+ * целиком (структура и числа обязаны совпасть, это держит verify-content).
+ * Числа, снятые с датасета, перечислены в `dataset`: гейт сверяет их с базой
+ * и требует, чтобы в рисунке стояла та же цифра.
+ */
+export type FigureTone = 'ok' | 'warn' | 'err';
+export type FigureStatus = 'succeeded' | 'failed' | 'skipped' | 'running' | 'queued';
+
+interface FigureBase {
+  title?: string;
+  /** Пары «подпись: значение» над основной частью (режим записи, разделитель). */
+  facts?: { label: string; value: string; tone?: FigureTone }[];
+  /** Пояснение под рисунком, одна строка. */
+  note?: string;
+  /** Какие числа рисунка сняты с Kaiyo: гейт сверяет с базой. */
+  dataset?: { stagingRows?: number; stagingFiles?: number };
+}
+
+export type TaskFigure = FigureBase &
+  (
+    | {
+        /** Таблица запуска. В колонке `statusCol` стоит слово статуса, оно же красится чипом. */
+        kind: 'runlog';
+        head: string[];
+        statusCol: number;
+        /** Колонка, под числом которой рисуется полоса; длина по `value` строки относительно наибольшего. */
+        valueCol?: number;
+        rows: { cells: string[]; status: FigureStatus; value?: number }[];
+      }
+    | {
+        /** Цепочка шагов; `via` у шага это условие стрелки, ведущей к нему. */
+        kind: 'chain';
+        steps: { label: string; via?: string; status?: FigureStatus; statusLabel?: string }[];
+      }
+    | {
+        /** Полосы: длина в пределах группы пропорциональна `value`. */
+        kind: 'bars';
+        groups: { label?: string; bars: { label: string; value: number; text: string; tone?: FigureTone }[] }[];
+      }
+    | {
+        kind: 'table';
+        head: string[];
+        rows: string[][];
+        /** Значения моноширинным (идентификаторы, как в превью). */
+        mono?: boolean;
+      }
+  );
 
 export interface Task {
   id: string;
@@ -215,6 +275,8 @@ export interface Task {
    * по-разному — код моноширинным блоком, ситуация как текст.
    */
   scenario?: string;
+  /** Рисунок вместо моноширинной выкладки в `scenario` (predict и order). См. TaskFigure. */
+  figure?: TaskFigure;
   predictQuestion?: string;
   options?: PredictOption[];
   /** Вопрос режима `order`. Отдельно от `predictQuestion`: у задания либо варианты, либо порядок. */
@@ -400,6 +462,7 @@ export interface TaskTranslation {
   goal?: string;
   /** Для domain-заданий без исполнимого кода — см. Task.scenario. */
   scenario?: string;
+  figure?: TaskFigure;
   predictQuestion?: string;
   /** Вопрос режима order. */
   orderQuestion?: string;

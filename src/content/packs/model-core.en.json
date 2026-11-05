@@ -2099,7 +2099,41 @@
       "title": "Both runs are green and sales are doubled",
       "brief": "The nightly load puts the sales export into the sellout_load table in \"append\" mode. It was rerun by hand yesterday because the first run looked doubtful. This morning the report shows twice the usual sales, yet the log shows both runs green.",
       "goal": "Work out where the doubling comes from and what to change in the load.",
-      "scenario": "sellout_load, append mode\n\nRun  Status     Rows in table\n1    Succeeded  3,110\n2    Succeeded  6,220\n\nThe source is the same in both runs.",
+      "figure": {
+        "kind": "runlog",
+        "title": "sellout_load, append mode",
+        "head": [
+          "Run",
+          "Status",
+          "Rows in table"
+        ],
+        "statusCol": 1,
+        "valueCol": 2,
+        "rows": [
+          {
+            "cells": [
+              "1",
+              "Succeeded",
+              "3,110"
+            ],
+            "status": "succeeded",
+            "value": 3110
+          },
+          {
+            "cells": [
+              "2",
+              "Succeeded",
+              "6,220"
+            ],
+            "status": "succeeded",
+            "value": 6220
+          }
+        ],
+        "note": "The source is the same in both runs.",
+        "dataset": {
+          "stagingRows": 3110
+        }
+      },
       "predictQuestion": "Why did the row count double and what should change?",
       "hints": [
         "How many rows did the second run add, and how many were in the source?",
@@ -2131,7 +2165,54 @@
       "title": "Replaced it and lost the history",
       "brief": "The load was switched to monthly files: one file arrives each month and the run puts it into sellout_load in \"replace\" mode. After the June run the report holds one month instead of thirty.",
       "goal": "Explain why the history vanished and pick the right fix.",
-      "scenario": "sellout_load, replace mode\nThe run read export_2026-06.csv\n\n            Before run  After\nRows        3,110       116\nMonths      30          1",
+      "figure": {
+        "kind": "bars",
+        "title": "sellout_load, replace mode",
+        "facts": [
+          {
+            "label": "The run read",
+            "value": "export_2026-06.csv"
+          }
+        ],
+        "groups": [
+          {
+            "label": "Rows",
+            "bars": [
+              {
+                "label": "Before the run",
+                "value": 3110,
+                "text": "3,110"
+              },
+              {
+                "label": "After",
+                "value": 116,
+                "text": "116",
+                "tone": "err"
+              }
+            ]
+          },
+          {
+            "label": "Months",
+            "bars": [
+              {
+                "label": "Before the run",
+                "value": 30,
+                "text": "30"
+              },
+              {
+                "label": "After",
+                "value": 1,
+                "text": "1",
+                "tone": "err"
+              }
+            ]
+          }
+        ],
+        "dataset": {
+          "stagingRows": 3110,
+          "stagingFiles": 30
+        }
+      },
       "predictQuestion": "What happened and how should monthly files be loaded?",
       "hints": [
         "How many rows are left in the table and how many were in the file the run read?",
@@ -2163,7 +2244,37 @@
       "title": "Facts arrived before the lookup table",
       "brief": "The load has three steps and the sales facts load first: while loading a fact row, the customer is looked up in the customer table and gets its key. After the run every sale in the model has an empty customer. All steps are green.",
       "goal": "Find the ordering mistake in the chain.",
-      "scenario": "Load facts\n  │ on success\nLoad customer table\n  │ on success\nBuild model\n\nResult:\n  fact rows               3,110\n  customer key found      0",
+      "figure": {
+        "kind": "chain",
+        "title": "Run",
+        "steps": [
+          {
+            "label": "Load facts"
+          },
+          {
+            "label": "Load customer table",
+            "via": "on success"
+          },
+          {
+            "label": "Build model",
+            "via": "on success"
+          }
+        ],
+        "facts": [
+          {
+            "label": "Run result: fact rows",
+            "value": "3,110"
+          },
+          {
+            "label": "Customer key found",
+            "value": "0",
+            "tone": "err"
+          }
+        ],
+        "dataset": {
+          "stagingRows": 3110
+        }
+      },
       "predictQuestion": "What should change in the chain?",
       "hints": [
         "What does a fact row refer to when its customer key is looked up: something that exists, or something loaded later?",
@@ -2195,7 +2306,41 @@
       "title": "The lookup table failed and the facts went ahead",
       "brief": "In the run log the customer-table step failed, yet the facts loaded after it anyway and the model was built. The report opened without errors and showed sales with no customers.",
       "goal": "Find the setting that let the chain carry on.",
-      "scenario": "Step        Condition      Status\nCustomers   start          Failed\nFacts       on completion  Succeeded\nModel       on success     Succeeded",
+      "figure": {
+        "kind": "runlog",
+        "head": [
+          "Step",
+          "Condition",
+          "Status"
+        ],
+        "statusCol": 2,
+        "rows": [
+          {
+            "cells": [
+              "Customers",
+              "start",
+              "Failed"
+            ],
+            "status": "failed"
+          },
+          {
+            "cells": [
+              "Facts",
+              "on completion",
+              "Succeeded"
+            ],
+            "status": "succeeded"
+          },
+          {
+            "cells": [
+              "Model",
+              "on success",
+              "Succeeded"
+            ],
+            "status": "succeeded"
+          }
+        ]
+      },
       "predictQuestion": "Which setting let the failure through?",
       "hints": [
         "Compare the condition on Facts with the condition on Model. How do they differ?",
@@ -2227,7 +2372,54 @@
       "title": "Column1, Column2 and everything as text",
       "brief": "The load reads export_2026-06.csv, whose first line holds the column names. After reading, the model's columns are called Column1…Column7 and revenue cannot be summed: every column has the type Text.",
       "goal": "Find the cause and choose the right fix.",
-      "scenario": "File read: delimiter \",\"\nFirst row as headers: no\n\nColumn   First value     Type\nColumn1  raw_id          Text\nColumn2  sale_date       Text\nColumn3  customer_name   Text\n...\nColumn7  source_file     Text",
+      "figure": {
+        "kind": "table",
+        "title": "File read",
+        "facts": [
+          {
+            "label": "Delimiter",
+            "value": "\",\""
+          },
+          {
+            "label": "First row as headers",
+            "value": "no",
+            "tone": "warn"
+          }
+        ],
+        "head": [
+          "Column",
+          "First value",
+          "Type"
+        ],
+        "mono": true,
+        "rows": [
+          [
+            "Column1",
+            "raw_id",
+            "Text"
+          ],
+          [
+            "Column2",
+            "sale_date",
+            "Text"
+          ],
+          [
+            "Column3",
+            "customer_name",
+            "Text"
+          ],
+          [
+            "…",
+            "…",
+            "…"
+          ],
+          [
+            "Column7",
+            "source_file",
+            "Text"
+          ]
+        ]
+      },
       "predictQuestion": "What is configured wrongly and what should be done?",
       "hints": [
         "What sits in the first data row of each column?",
@@ -2259,7 +2451,36 @@
       "title": "Duplicates: kept, not removed",
       "brief": "A cleaning step was meant to remove repeated rows from staging_raw_sellout. The row count checked before the load came out far lower than expected. The step ran without errors.",
       "goal": "Work out which operation was picked by mistake.",
-      "scenario": "Cleaning step         Rows\nRead from files       3,110\nExpected (unique)     3,000\nAfter the step        220",
+      "figure": {
+        "kind": "bars",
+        "title": "Cleaning step",
+        "groups": [
+          {
+            "bars": [
+              {
+                "label": "Read from files",
+                "value": 3110,
+                "text": "3,110"
+              },
+              {
+                "label": "Expected (unique)",
+                "value": 3000,
+                "text": "3,000",
+                "tone": "ok"
+              },
+              {
+                "label": "After the step",
+                "value": 220,
+                "text": "220",
+                "tone": "err"
+              }
+            ]
+          }
+        ],
+        "dataset": {
+          "stagingRows": 3110
+        }
+      },
       "predictQuestion": "What is wrong in the step?",
       "hints": [
         "How many rows were removed and how many remain: compare \"3,110 − 3,000\" with \"220\".",
@@ -2291,7 +2512,33 @@
       "title": "A key that is declared but stops no one",
       "brief": "In the customer table the key customer_id is declared but marked NOT ENFORCED: the warehouse does not check it. After the latest load the relationship to sales in the model suddenly became many-to-many and one customer's revenue doubled.",
       "goal": "Work out where to look for the cause and how to confirm it.",
-      "scenario": "dim_customer, after the load\n\nRows  Distinct customer_id\n145   144\n\nKey customer_id: NOT ENFORCED\nRelationship to sales: many-to-many",
+      "figure": {
+        "kind": "table",
+        "title": "dim_customer, after the load",
+        "head": [
+          "Rows",
+          "Distinct customer_id"
+        ],
+        "mono": true,
+        "rows": [
+          [
+            "145",
+            "144"
+          ]
+        ],
+        "facts": [
+          {
+            "label": "Key customer_id",
+            "value": "NOT ENFORCED",
+            "tone": "warn"
+          },
+          {
+            "label": "Relationship to sales",
+            "value": "many-to-many",
+            "tone": "warn"
+          }
+        ]
+      },
       "predictQuestion": "How do you find the cause and what will it show?",
       "hints": [
         "What does NOT ENFORCED mean: is the key written down, or checked?",
