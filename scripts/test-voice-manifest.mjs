@@ -18,7 +18,7 @@
  */
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { MAX_CLIP_BYTES, manifestPath, pilotLines, voiceDir } from './lib/voice-lines.mjs';
+import { MAX_CLIP_BYTES, dialogLines, manifestPath, pilotLines, voiceDir } from './lib/voice-lines.mjs';
 
 let failed = 0;
 const fail = (name, msg) => {
@@ -38,7 +38,14 @@ try {
 check('манифест: version 1, есть clips', manifest.version === 1 && manifest.clips && typeof manifest.clips === 'object', 'ожидается { version: 1, clips: {} }');
 
 const lines = await pilotLines();
-const byKey = new Map(lines.map((l) => [l.key, l]));
+const dialogs = await dialogLines();
+const byKey = new Map(dialogs.map((l) => [l.key, l]));
+const unknown = dialogs.filter((l) => l.speaker === 'narrator' || l.speaker !== l.speakerFromLabel);
+check(
+  `у всех ${dialogs.length} диалоговых реплик EN известный говорящий (не рассказчик, speaker совпадает с подписью)`,
+  dialogs.length > 0 && unknown.length === 0,
+  unknown.map((l) => `${l.key}: «${l.from}» -> ${l.speaker}`).join('; '),
+);
 check('реплики пилота найдены', lines.length > 0, 'pilotLines() вернул пустой список');
 check(
   'speaker реплик пилота совпадает с speakerId(from)',
@@ -54,7 +61,7 @@ const referenced = new Set();
 for (const [key, clip] of entries) {
   const line = byKey.get(key);
   if (!line) {
-    fail(`запись ${key}`, 'такой реплики нет среди реплик пилота (убрана или переименована)');
+    fail(`запись ${key}`, 'такой реплики нет среди диалогов кампании (убрана или переименована)');
     continue;
   }
   const problems = [];

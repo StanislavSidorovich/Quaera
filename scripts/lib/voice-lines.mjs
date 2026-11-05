@@ -56,25 +56,38 @@ export function spokenText(raw) {
 export const textHash = (text) => createHash('sha256').update(text).digest('hex').slice(0, 10);
 
 /**
- * Реплики пилота в порядке экрана. Слот: `m<n>` — бриф, `a<шаг>` — реплика
+ * Реплики в порядке экрана. Слот: `m<n>` — бриф, `a<шаг>` — реплика
  * после задания, `i<шаг>.<n>` — разговор между делом. Ключ = «миссия/слот».
- * `speaker` берётся из данных; его нет — ошибка (пилот помечается явно).
+ * `scope`: 'pilot' — миссии PILOT_MISSIONS, у реплик обязателен `speaker`
+ * в данных; 'dialogs' — все диалоги кампании (рассказчик, то есть
+ * `reflection` и `hook`, не входит), `speaker` берётся из данных, а если его
+ * нет, из подписи `from` функцией speakerId.
  */
-export async function pilotLines() {
+async function collectLines(scope) {
   const campaign = await loadCampaign();
   const { speakerId } = await loadSpeakers();
+  const pilot = scope === 'pilot';
   const out = [];
-  for (const id of PILOT_MISSIONS) {
-    const mission = campaign.missions.find((m) => m.id === id);
-    if (!mission) throw new Error(`Миссия пилота не найдена в storymode.ts: ${id}`);
+  const missions = pilot
+    ? PILOT_MISSIONS.map((id) => {
+        const m = campaign.missions.find((x) => x.id === id);
+        if (!m) throw new Error(`Миссия пилота не найдена в storymode.ts: ${id}`);
+        return m;
+      })
+    : campaign.missions;
+  for (const mission of missions) {
+    const id = mission.id;
     const push = (slot, msg) => {
-      if (!msg.speaker) throw new Error(`${id}/${slot}: у реплики нет speaker (from: «${msg.from}»)`);
+      if (pilot && !msg.speaker) throw new Error(`${id}/${slot}: у реплики нет speaker (from: «${msg.from}»)`);
       const text = spokenText(msg.text);
       out.push({
         key: `${id}/${slot}`,
         mission: id,
+        week: mission.week,
         slot,
-        speaker: msg.speaker,
+        kind: slot[0] === 'm' ? 'brief' : slot[0] === 'a' ? 'after' : 'interlude',
+        from: msg.from,
+        speaker: msg.speaker ?? speakerId(msg.from),
         speakerFromLabel: speakerId(msg.from),
         text,
         hash: textHash(text),
@@ -89,6 +102,9 @@ export async function pilotLines() {
   }
   return out;
 }
+
+export const pilotLines = () => collectLines('pilot');
+export const dialogLines = () => collectLines('dialogs');
 
 /** Файл записи: хеш текста в имени, поэтому кеш service worker'а вперёд не устаревает. */
 export const clipFile = (line, ext) => `${LOCALE}/${line.mission}/${line.slot}.${line.hash}.${ext}`;
