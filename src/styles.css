@@ -5493,6 +5493,34 @@ table.sample td.null {
   border-left: 3px solid color-mix(in srgb, var(--accent) 60%, var(--line));
 }
 
+.story-quiet-row {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  /* Ссылка-строка: без рамки и фона, тише кнопки и тише карточки. */
+  .story-quiet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 4px 2px;
+    min-height: 32px;
+    font-size: var(--fs-label);
+    color: var(--text-dim);
+    text-align: left;
+  }
+
+  .story-quiet-row .pair-ico {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .story-quiet-row:hover {
+    color: var(--accent);
+  }
+}
+
 .story-invite-skip {
   display: block;
   margin: 10px 0 0;
@@ -6430,6 +6458,10 @@ details.story-known > summary small {
    * занятия выше сгиба» (замер верха главной 2026-08-16). Карточки новичка
    * это не касается: у него наверху и должна стоять кампания, а кнопка
    * занятия — не то, ради чего он пришёл.
+   *
+   * Довод про сгиб остаётся, но сюжет с главной не пропал: вернувшемуся
+   * на десктопе его зовёт тихая строка `.story-quiet-row` ПОД кнопкой занятия
+   * (ui/StoryQuietRow.tsx), так что кнопка по-прежнему выше сгиба.
    */
   .story-invite-row,
   .story-invite-skip-row,

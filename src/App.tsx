@@ -34,6 +34,7 @@ import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
 import { StoryWhereYouAre } from './ui/StoryWhereYouAre';
+import { StoryQuietRow } from './ui/StoryQuietRow';
 import { StoryWeekArt } from './ui/StoryWeekArt';
 import { DayOnePreview } from './ui/DayOnePreview';
 import { ToolsCompare } from './ui/ToolsCompare';
@@ -4346,6 +4347,8 @@ function Home({
               <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
                 {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
               </p>
+              {/* Дорога в сюжет вернувшемуся на десктопе: строка под кнопкой, не над ней; довод в ui/StoryQuietRow.tsx. */}
+              {!isNewUser && onOpenStoryMode && <StoryQuietRow reachedId={storyReachedId} onOpen={onOpenStoryMode} />}
               {/*
                * Узко и намеренно: видна только тому, кто выбрал pandas
                * и ещё не тронул SQL (см. showPandasSqlHint выше) — тем,

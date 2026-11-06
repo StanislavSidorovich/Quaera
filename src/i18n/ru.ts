@@ -1426,6 +1426,8 @@ export const ru = {
     whereWeekAria: (n: number, state: 'done' | 'now' | 'ahead') =>
       `Неделя ${n}, ${state === 'done' ? 'пройдена' : state === 'now' ? 'текущая' : 'впереди'}`,
     whereNow: (week: number, day: number, days: number) => `Неделя ${week}, день ${day} из ${days}`,
+    quietStart: 'Режим истории: пять недель в роли аналитика',
+    quietResume: (week: number, day: number) => `Режим истории: неделя ${week}, день ${day} · Продолжить`,
     whereStepsAria: 'Шаги дня',
     whereStepBrief: 'Бриф',
     whereStepTasks: (n: number) => `${n} ${plural(n, 'задание', 'задания', 'заданий')}`,

@@ -738,6 +738,8 @@ export const en = {
     whereWeekAria: (n: number, state: 'done' | 'now' | 'ahead') =>
       `Week ${n}, ${state === 'done' ? 'done' : state === 'now' ? 'current' : 'ahead'}`,
     whereNow: (week: number, day: number, days: number) => `Week ${week}, day ${day} of ${days}`,
+    quietStart: 'Story mode: five weeks as an analyst',
+    quietResume: (week: number, day: number) => `Story mode: week ${week}, day ${day} · Continue`,
     whereStepsAria: 'Steps of the day',
     whereStepBrief: 'Brief',
     whereStepTasks: (n: number) => `${n} task${n === 1 ? '' : 's'}`,
