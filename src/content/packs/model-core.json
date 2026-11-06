@@ -3692,6 +3692,10 @@
               "region_name",
               "revenue"
             ],
+            "labels": {
+              "region_name": "Регион",
+              "revenue": "Выручка"
+            },
             "rows": [
               [
                 "Aichi",
@@ -3851,6 +3855,11 @@
               "report",
               "accounting"
             ],
+            "labels": {
+              "week_start": "Неделя с",
+              "report": "В отчёте",
+              "accounting": "В бухгалтерии"
+            },
             "rows": [
               [
                 "2024-01-01",

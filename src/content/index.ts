@@ -194,13 +194,21 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
         waveItems: tt.waveItems && t.waveItems ? t.waveItems.map((o, i) => ({ ...o, ...tt.waveItems![i] })) : t.waveItems,
         traps: tt.traps && t.traps ? t.traps.map((o, i) => ({ ...o, ...tt.traps![i] })) : t.traps,
         relate:
-          tt.relateTraps && t.relate
-            ? { ...t.relate, traps: t.relate.traps.map((o, i) => ({ ...o, ...tt.relateTraps![i] })) }
+          (tt.relateTraps || tt.labels) && t.relate
+            ? {
+                ...t.relate,
+                traps: tt.relateTraps ? t.relate.traps.map((o, i) => ({ ...o, ...tt.relateTraps![i] })) : t.relate.traps,
+                defect:
+                  tt.labels && t.relate.defect
+                    ? { ...t.relate.defect, report: { ...t.relate.defect.report, labels: tt.labels } }
+                    : t.relate.defect,
+              }
             : t.relate,
         spot:
-          (tt.spotMutate || tt.spotDecoys) && t.spot
+          (tt.spotMutate || tt.spotDecoys || tt.labels) && t.spot
             ? {
                 ...t.spot,
+                labels: tt.labels ?? t.spot.labels,
                 mutate: tt.spotMutate ? t.spot.mutate.map((o, i) => ({ ...o, ...tt.spotMutate![i] })) : t.spot.mutate,
                 decoys: tt.spotDecoys ? t.spot.decoys.map((o, i) => ({ ...o, ...tt.spotDecoys![i] })) : t.spot.decoys,
               }

@@ -94,6 +94,13 @@ try {
     if (!res) continue;
     check(`${at}: заголовки сходятся с запросом`, JSON.stringify(sp.head) === JSON.stringify(res.columns), `${JSON.stringify(sp.head)} вместо ${JSON.stringify(res.columns)}`);
     check(`${at}: строки сходятся с Kaiyo`, JSON.stringify(sp.rows) === JSON.stringify(res.values), `в задании ${JSON.stringify(sp.rows)}, а запрос даёт ${JSON.stringify(res.values)}`);
+    // 1а. Подписи колонок: ключи те же, что колонки результата; EN-пак с тем же набором ключей.
+    const labelKeys = Object.keys(sp.labels ?? {}).sort();
+    check(`${at}: labels есть, ключи совпадают с колонками результата`, JSON.stringify(labelKeys) === JSON.stringify([...res.columns].sort()), `ключи ${JSON.stringify(labelKeys)}, колонки ${JSON.stringify(res.columns)}`);
+    check(`${at}: подписи не пустые и не повторяют имя колонки`, labelKeys.every((k) => sp.labels[k].trim() && sp.labels[k] !== k), 'пустая подпись или имя колонки SQL');
+    const enLabels = en.tasks.find((x) => x.id === t.id)?.labels ?? {};
+    check(`${at}: EN labels с теми же ключами`, JSON.stringify(Object.keys(enLabels).sort()) === JSON.stringify(labelKeys), `EN ${JSON.stringify(Object.keys(enLabels).sort())}`);
+    check(`${at}: EN labels без тире и кириллицы`, Object.values(enLabels).every((v) => !DASH.test(v) && !/[а-яё]/i.test(v)), 'тире или кириллица в EN подписи');
     check(`${at}: строк не больше четырнадцати (таблица читается целиком)`, sp.rows.length <= 14, `${sp.rows.length}`);
     if (sp.footer?.total) {
       const ci = sp.head.indexOf(sp.footer.total);

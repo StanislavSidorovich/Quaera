@@ -2803,6 +2803,10 @@
     },
     {
       "id": "mdl-095",
+      "labels": {
+        "region_name": "Region",
+        "revenue": "Revenue"
+      },
       "title": "Model relationships: find what is wrong",
       "brief": "The Kanto sales lead opened the sell-out report by region and saw the same figure everywhere. You are checking the model between the gold layer and the report.",
       "goal": "Use the report to find which relationship is missing or extra, and fix the model.",
@@ -2848,6 +2852,11 @@
     },
     {
       "id": "mdl-097",
+      "labels": {
+        "week_start": "Week starting",
+        "report": "In the report",
+        "accounting": "In accounting"
+      },
       "title": "Model relationships: figures above the books",
       "brief": "The finance controller reconciles the weekly revenue of the report with accounting, and the report figures are seven times higher. You are checking the model between the gold layer and the report.",
       "goal": "Use the report to find the extra relationship, remove it and draw the right one.",

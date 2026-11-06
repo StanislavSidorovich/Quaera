@@ -149,6 +149,8 @@ export interface RelateDefect {
     /** Заголовки столбцов: алиасы запроса, не переводятся. */
     head?: string[];
     rows?: (string | number)[][];
+    /** Подписи колонок для человека: имя колонки SQL -> подпись. Нет подписи: показывается имя колонки. */
+    labels?: Record<string, string>;
   };
 }
 
@@ -209,6 +211,8 @@ export interface SpotSpec {
   head: string[];
   rows: (string | number)[][];
   footer?: { rows?: boolean; total?: string };
+  /** Подписи колонок для человека: имя колонки SQL -> подпись. Нет подписи: показывается имя колонки. */
+  labels?: Record<string, string>;
   mutate: SpotMutation[];
   decoys: SpotDecoy[];
 }
@@ -708,6 +712,8 @@ export interface TaskTranslation {
   spotMutate?: SpotWhyTranslation[];
   /** Разборы приманок `spot`: позиционно к Task.spot.decoys. */
   spotDecoys?: SpotWhyTranslation[];
+  /** Подписи колонок отчёта (`spot.labels` или `relate.defect.report.labels`): те же ключи, что в оригинале. */
+  labels?: Record<string, string>;
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */
   traps?: { message: string }[];
   /** Порядок обязан совпадать с Task.steps — тоже позиционно. */

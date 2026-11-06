@@ -83,9 +83,23 @@ function plain(v: SqlValue): string {
  * Таблица результата. Горизонтальный скролл живёт внутри контейнера:
  * страница целиком ездить вбок не должна, иначе на телефоне теряется навигация.
  */
-export function ResultTable({ data, caption, echo, pick }: { data: Preview; caption?: string; echo?: EchoHits; pick?: PickMode }) {
+export function ResultTable({
+  data,
+  caption,
+  echo,
+  pick,
+  labels,
+}: {
+  data: Preview;
+  caption?: string;
+  echo?: EchoHits;
+  pick?: PickMode;
+  /** Подписи колонок для человека; нет подписи: имя колонки. */
+  labels?: Record<string, string>;
+}) {
   const { t, locale } = useI18n();
   const numberLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
+  const head = (c: string) => labels?.[c] ?? c;
   const scales = useMemo(() => barScales(data.columns, data.rows), [data.columns, data.rows]);
   const spec = useMemo(() => (pick ? null : chartSpec(data)), [data, pick]);
   const [view, setView] = useState<'table' | 'chart'>('table');
@@ -170,7 +184,7 @@ export function ResultTable({ data, caption, echo, pick }: { data: Preview; capt
             <thead>
               <tr>
                 {data.columns.map((c, i) => (
-                  <th key={`${c}-${i}`}>{c}</th>
+                  <th key={`${c}-${i}`}>{head(c)}</th>
                 ))}
               </tr>
             </thead>
@@ -189,7 +203,7 @@ export function ResultTable({ data, caption, echo, pick }: { data: Preview; capt
                       return (
                         <td
                           key={ci}
-                          data-label={data.columns[ci]}
+                          data-label={head(data.columns[ci])}
                           className={`${typeof v === 'number' ? 'num' : ''}${bar ? ' bar-cell' : ''} spot-td`}
                           style={bar ? ({ '--fill': `${((v as number) / scale!) * 100}%` } as CSSProperties) : undefined}
                         >
@@ -201,7 +215,7 @@ export function ResultTable({ data, caption, echo, pick }: { data: Preview; capt
                             data-marked={marked || undefined}
                             data-state={state}
                             aria-pressed={marked}
-                            aria-label={pick.cellAria(data.columns[ci], shown, marked, state)}
+                            aria-label={pick.cellAria(head(data.columns[ci]), shown, marked, state)}
                             onClick={() => !pick.locked && pick.onToggle(key)}
                           >
                             {shown}
@@ -213,7 +227,7 @@ export function ResultTable({ data, caption, echo, pick }: { data: Preview; capt
                     return (
                       <td
                         key={ci}
-                        data-label={data.columns[ci]}
+                        data-label={head(data.columns[ci])}
                         className={`${v === null ? 'null' : typeof v === 'number' ? 'num' : ''}${bar ? ' bar-cell' : ''}`}
                         style={bar ? ({ '--fill': `${((v as number) / scale!) * 100}%` } as CSSProperties) : undefined}
                       >

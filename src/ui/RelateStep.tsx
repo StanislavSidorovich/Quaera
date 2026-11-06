@@ -545,7 +545,7 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
 /** Фрагмент отчёта с симптомом: строки посчитал запрос к Kaiyo, гейт сверяет их при каждом прогоне. */
 function ReportTable({ defect, title }: { defect: NonNullable<RelateStepDef['relate']['defect']>; title: string }) {
   const { locale } = useI18n();
-  const { head, rows } = defect.report;
+  const { head, rows, labels } = defect.report;
   if (!head || !rows) return null;
   const tag = locale === 'ru' ? 'ru-RU' : 'en-US';
   const cell = (v: string | number) => (typeof v === 'number' ? `¥${v.toLocaleString(tag)}` : v);
@@ -557,7 +557,7 @@ function ReportTable({ defect, title }: { defect: NonNullable<RelateStepDef['rel
           <tr>
             {head.map((h) => (
               <th key={h} scope="col">
-                {h}
+                {labels?.[h] ?? h}
               </th>
             ))}
           </tr>

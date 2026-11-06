@@ -2627,6 +2627,10 @@
     },
     {
       "id": "dom-080",
+      "labels": {
+        "month": "Month",
+        "net_k_yen": "Net revenue, ¥ thousand"
+      },
       "title": "Annual report by month",
       "brief": "The report goes to the director in 10 minutes. Distributor sales by month for 2025.",
       "goal": "Mark everything that must not be sent.",
@@ -2649,6 +2653,10 @@
     },
     {
       "id": "dom-081",
+      "labels": {
+        "region": "Region",
+        "net_k_yen": "Net revenue, ¥ thousand"
+      },
       "title": "Regions for December",
       "brief": "The report goes to the director in 10 minutes. Distributor sales by region for December 2025.",
       "goal": "Mark everything that must not be sent.",
@@ -2671,6 +2679,10 @@
     },
     {
       "id": "dom-082",
+      "labels": {
+        "region": "Region",
+        "net_k_yen": "Net revenue, ¥ thousand"
+      },
       "title": "Regions for the year",
       "brief": "The report goes to the director in 10 minutes. Distributor sales by region for 2025.",
       "goal": "Mark everything that must not be sent.",
@@ -2696,6 +2708,10 @@
     },
     {
       "id": "dom-083",
+      "labels": {
+        "month": "Month",
+        "net_k_yen": "Net revenue, ¥ thousand"
+      },
       "title": "Beverages by month",
       "brief": "The report goes to the director in 10 minutes. Distributor sales of beverages by month for 2025.",
       "goal": "Mark everything that must not be sent.",

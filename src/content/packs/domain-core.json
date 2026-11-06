@@ -3165,6 +3165,10 @@
           "month",
           "net_k_yen"
         ],
+        "labels": {
+          "month": "Месяц",
+          "net_k_yen": "Выручка нетто, тыс. ¥"
+        },
         "rows": [
           [
             "2025-01",
@@ -3267,6 +3271,10 @@
           "region",
           "net_k_yen"
         ],
+        "labels": {
+          "region": "Регион",
+          "net_k_yen": "Выручка нетто, тыс. ¥"
+        },
         "rows": [
           [
             "Fukuoka",
@@ -3358,6 +3366,10 @@
           "region",
           "net_k_yen"
         ],
+        "labels": {
+          "region": "Регион",
+          "net_k_yen": "Выручка нетто, тыс. ¥"
+        },
         "rows": [
           [
             "Fukuoka",
@@ -3453,6 +3465,10 @@
           "month",
           "net_k_yen"
         ],
+        "labels": {
+          "month": "Месяц",
+          "net_k_yen": "Выручка нетто, тыс. ¥"
+        },
         "rows": [
           [
             "2025-01",

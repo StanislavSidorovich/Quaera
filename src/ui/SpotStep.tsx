@@ -61,7 +61,7 @@ export function SpotStep({ step, state, solved, onState, onResult }: Props) {
   const footer = [
     ...(built.footerRows !== null ? [{ key: FOOTER_ROWS, text: T.spotFooterRows(num(built.footerRows)) }] : []),
     ...(built.footerTotal !== null && spec.footer?.total
-      ? [{ key: FOOTER_TOTAL, text: T.spotFooterTotal(spec.footer.total, num(built.footerTotal)) }]
+      ? [{ key: FOOTER_TOTAL, text: T.spotFooterTotal(spec.labels?.[spec.footer.total] ?? spec.footer.total, num(built.footerTotal)) }]
       : []),
   ];
 
@@ -97,7 +97,7 @@ export function SpotStep({ step, state, solved, onState, onResult }: Props) {
   return (
     <div className="spot">
       {!solved && <p className="muted spot-note">{T.spotNote}</p>}
-      <ResultTable data={data} pick={pick} />
+      <ResultTable data={data} pick={pick} labels={spec.labels} />
       {!solved && (
         <div className="spot-actions">
           <span className="muted spot-count" aria-live="polite">

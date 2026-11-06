@@ -248,6 +248,12 @@ try {
       if (res) {
         check(`${t.id}: заголовки отчёта сходятся с запросом`, JSON.stringify(d.report.head) === JSON.stringify(res.columns), `${JSON.stringify(d.report.head)} вместо ${JSON.stringify(res.columns)}`);
         check(`${t.id}: строки отчёта сходятся с Kaiyo`, JSON.stringify(d.report.rows) === JSON.stringify(res.values), `в задании ${JSON.stringify(d.report.rows)}, а запрос даёт ${JSON.stringify(res.values)}`);
+        const lk = Object.keys(d.report.labels ?? {}).sort();
+        check(`${t.id}: labels отчёта есть, ключи совпадают с колонками`, JSON.stringify(lk) === JSON.stringify([...res.columns].sort()), `ключи ${JSON.stringify(lk)}, колонки ${JSON.stringify(res.columns)}`);
+        check(`${t.id}: подписи не пустые и не повторяют имя колонки`, lk.every((k) => d.report.labels[k].trim() && d.report.labels[k] !== k), 'пустая подпись или имя колонки SQL');
+        const enLab = en.tasks.find((x) => x.id === t.id)?.labels ?? {};
+        check(`${t.id}: EN labels с теми же ключами`, JSON.stringify(Object.keys(enLab).sort()) === JSON.stringify(lk), `EN ${JSON.stringify(Object.keys(enLab).sort())}`);
+        check(`${t.id}: EN labels без тире и кириллицы`, Object.values(enLab).every((v) => !/[—–]/.test(v) && !/[а-яё]/i.test(v)), 'тире или кириллица в EN подписи');
       }
     }
 
