@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n/context';
 import { storyCampaign, storyWeekOf } from '../content/storymode';
 import { IconStory } from './Sidebar';
+import { StoryWeekArt } from './StoryWeekArt';
 
 /**
  * Тихая строка режима истории под кнопкой занятия у вернувшегося на десктопе.
@@ -26,11 +27,15 @@ export function StoryQuietRow({ reachedId, onOpen }: { reachedId: string | null;
   }
   return (
     <button type="button" className="story-quiet-row" onClick={onOpen}>
-      <span className="pair-ico" aria-hidden>
-        <IconStory />
+      {/* Рисунок недели из карточки новичка в малом виде: по выделенному дню видно, где человек в кампании. */}
+      <StoryWeekArt reachedId={reachedId} />
+      <span className="story-quiet-label">
+        <span className="pair-ico" aria-hidden>
+          <IconStory />
+        </span>
+        <span>{label}</span>
+        <span aria-hidden>→</span>
       </span>
-      <span>{label}</span>
-      <span aria-hidden>→</span>
     </button>
   );
 }

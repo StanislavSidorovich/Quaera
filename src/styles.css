@@ -5501,14 +5501,25 @@ table.sample td.null {
   /* Ссылка-строка: без рамки и фона, тише кнопки и тише карточки. */
   .story-quiet-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     margin: 12px 0 0;
     padding: 4px 2px;
     min-height: 32px;
     font-size: var(--fs-label);
     color: var(--text-dim);
     text-align: left;
+  }
+
+  .story-quiet-row .week-art {
+    width: 140px;
+  }
+
+  .story-quiet-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .story-quiet-row .pair-ico {
