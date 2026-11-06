@@ -2624,6 +2624,96 @@
         "Caveats about method are needed by whoever argues. There are fewer of those than of people who simply read."
       ],
       "explain": "An email is built by shrinking audience rather than by the course of the work, and that is the exact reverse of how the work went: you travelled from data to conclusion, the reader travels from conclusion to data. Hence the rule of putting the conclusion first: the last position in an email is the most expensive one, and giving it to your main claim means betting that people will get there. The second block explains why one number is enough: the conclusion line and the support line work together, and separating them with a breakdown leaves the claim without a foundation for the few seconds in which it is accepted or dropped. Caveats about method are neither hidden nor moved to the front: they are addressed to whoever argues, and their place is where such a reader looks for them. One trick tests the whole email: cover everything but the first two lines and ask whether that is enough to decide."
+    },
+    {
+      "id": "dom-080",
+      "title": "Annual report by month",
+      "brief": "The report goes to the director in 10 minutes. Distributor sales by month for 2025.",
+      "goal": "Mark everything that must not be sent.",
+      "orderQuestion": "What must not be sent here?",
+      "spotMutate": [
+        {
+          "why": "A year has {expected} months, but the footer says \"Rows: {rows}\". A month dropped out, so the total is understated even though it looks plausible. The director will ask where the month went."
+        }
+      ],
+      "spotDecoys": [
+        {
+          "why": "September is the highest month, but high does not mean wrong. Compare it with last September: it was {n} thousand yen then, also well above the neighbouring months."
+        }
+      ],
+      "hints": [
+        "How many rows should an annual report by month have?",
+        "Compare the counter in the footer with the number of months in a year."
+      ],
+      "explain": "A missing period is the quietest kind of error: the query does not break, no value is distorted, and the total looks reasonable. There is only one way to catch it: before sending, you say how many rows you expect and compare with the counter. A mismatch means either a filter mistake or a hole in the data, and it has to be sorted out before sending. A high month proves nothing by itself: it is checked against the same month of last year."
+    },
+    {
+      "id": "dom-081",
+      "title": "Regions for December",
+      "brief": "The report goes to the director in 10 minutes. Distributor sales by region for December 2025.",
+      "goal": "Mark everything that must not be sent.",
+      "orderQuestion": "What must not be sent here?",
+      "spotMutate": [
+        {
+          "why": "One region sold {value} thousand yen in a single month, while the whole company sold {n} thousand yen in a whole year. That cannot be: it is a sign of breakage, not an outlier. Rows may have multiplied in a join, or units may be mixed up. The director will ask where the figure comes from."
+        }
+      ],
+      "spotDecoys": [
+        {
+          "why": "Osaka is the smallest row, but small does not mean wrong: it is the smallest region over the whole year too, just {n} thousand yen."
+        }
+      ],
+      "hints": [
+        "Compare each figure not with its neighbours but with the scale of the whole business.",
+        "Think about whether one region can sell more in a month than the whole company in a year."
+      ],
+      "explain": "The order of magnitude check is the cheapest: it needs neither a recalculation nor access to the source, only knowing what units the business lives in. An analyst who remembers the company annual revenue notices an impossible figure in a fraction of a second. A rule without exceptions: a figure you cannot explain is not sent, with or without a caveat. A small figure alone is not a reason to worry either: check whether the size of the region explains it."
+    },
+    {
+      "id": "dom-082",
+      "title": "Regions for the year",
+      "brief": "The report goes to the director in 10 minutes. Distributor sales by region for 2025.",
+      "goal": "Mark everything that must not be sent.",
+      "orderQuestion": "What must not be sent here?",
+      "spotMutate": [
+        {
+          "why": "The region appears in the list twice. This happens when a join finds two records for a region and rows multiply. The director will ask why there are two identical rows."
+        },
+        {
+          "why": "The rows add up to {sum}, but the footer \"Total\" says {total}: a difference of {delta} thousand yen. A total is always recalculated separately from the rows, and it must match. The director will add it up as soon as a figure looks odd."
+        }
+      ],
+      "spotDecoys": [
+        {
+          "why": "Fukuoka is the largest row, and that is correct: it has {n} distributors, more than most regions. High does not mean wrong."
+        }
+      ],
+      "hints": [
+        "There are two defects. One is visible in the list, the other only after adding up.",
+        "Add the rows up, even roughly, and compare with the total."
+      ],
+      "explain": "A report can hold more than one error, and the second often hides behind the first. A duplicated row shows to the eye, a total that differs from the sum of the rows only after adding up. That is why the check goes down a list: the counter, the order of magnitude, the sum. Stopping at the first error found means sending the second. And the reverse: a correct large row is not a defect, the data explains it."
+    },
+    {
+      "id": "dom-083",
+      "title": "Beverages by month",
+      "brief": "The report goes to the director in 10 minutes. Distributor sales of beverages by month for 2025.",
+      "goal": "Mark everything that must not be sent.",
+      "orderQuestion": "What must not be sent here?",
+      "spotMutate": [],
+      "spotDecoys": [
+        {
+          "why": "June is higher than its neighbours, but beverages grow towards summer: last June was {n} thousand yen against {m} thousand yen in May. That is the season, not an error."
+        },
+        {
+          "why": "November is clearly below its neighbours, but it was weak a year ago too: {n} thousand yen then. Low does not mean wrong."
+        }
+      ],
+      "hints": [
+        "Check the row counter, the order of magnitude and the total. Does everything add up?",
+        "Not every unusual number is an error: compare with the same month of last year."
+      ],
+      "explain": "The skill of checking includes the skill of stopping when the check found nothing. A seasonal peak and a seasonal trough are not errors: they are compared with the same month of last year, not with the neighbours. Every extra mark is a question from the director and lost time, and holding back a correct report costs almost as much as sending a wrong one. Treat the check as finished when the counter, the scale and the total agree."
     }
   ]
 }

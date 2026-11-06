@@ -28,13 +28,13 @@ walkthrough written without a single professional term.
 
 ## What's inside
 
-**Four tracks — 395 tasks and 79 skills.** Fully populated, reviewed
+**Four tracks — 399 tasks and 79 skills.** Fully populated, reviewed
 and translated to English: interface, tasks, technique cards.
 
 | Track | Tasks | Skills | How the answer is checked |
 | --- | --- | --- | --- |
 | SQL for analysts | 121 | 20 | The query runs against SQLite (sql.js) |
-| Analytics as a profession | 79 | 20 | Multiple choice with a full explanation (`predict`) plus arranging the steps of an argument (`order`) |
+| Analytics as a profession | 83 | 20 | Multiple choice with a full explanation (`predict`), arranging the steps of an argument (`order`) and spotting what must not be sent in a finished report (`spot`) |
 | Data model and BI | 93 | 20 | Multiple choice with a full explanation (`predict`), completing a DAX formula checked as text (`fill`) and arranging steps in order (`order`) and in dependency waves with a run log (`waves`), and drawing model relationships with "1" and "many" ends (`relate`) |
 | Python for analysts (pandas) | 102 | 19 | The code runs in Python (Pyodide) |
 

@@ -16,6 +16,7 @@ import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
 import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
 import { RelateStep, blankRelateState, type RelateState, type RelateStepDef } from './RelateStep';
+import { SpotStep, blankSpotState, type SpotState } from './SpotStep';
 import { flowOf } from '../engine/relate';
 
 /**
@@ -78,6 +79,8 @@ export interface StepDraft {
   waves?: WavesState;
   /** Связи шага `relate`: проведённые пары, выбранная колонка, результат последней проверки. */
   relate?: RelateState;
+  /** Отметки шага `spot`: ключи клеток и «Всё в порядке». */
+  spot?: SpotState;
   preview: Preview | null;
   expected: Preview | null;
   feedback: FeedbackSource | null;
@@ -151,6 +154,16 @@ export function resolveSteps(task: Task): TaskStep[] {
         question: task.orderQuestion ?? '',
         relate: task.relate ?? { tables: [], traps: [] },
         scenario: task.scenario,
+        hints: task.hints,
+      },
+    ];
+  }
+  if (task.mode === 'spot') {
+    return [
+      {
+        kind: 'spot',
+        question: task.orderQuestion ?? '',
+        spot: task.spot ?? { sql: '', head: [], rows: [], mutate: [], decoys: [] },
         hints: task.hints,
       },
     ];
@@ -560,6 +573,8 @@ export function TaskView({
                   ? t.task.modeWaves
                   : step.kind === 'relate'
                   ? t.task.modeRelate
+                  : step.kind === 'spot'
+                  ? t.task.modeSpot
                   : step.mode === 'fill'
                   ? t.task.modeFill
                   : t.task.modeWrite}
@@ -567,7 +582,7 @@ export function TaskView({
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && step.kind !== 'relate' && prevStep?.kind !== 'relate' && (
+          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && step.kind !== 'relate' && step.kind !== 'spot' && prevStep?.kind !== 'relate' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -803,6 +818,7 @@ function StepView({
         : blankWavesState(step)
       : undefined;
   const relateState: RelateState | undefined = step.kind === 'relate' ? draft.relate ?? blankRelateState(step, schema) : undefined;
+  const spotState: SpotState | undefined = step.kind === 'spot' ? draft.spot ?? blankSpotState() : undefined;
   const runsCode = executor.runsCode !== false;
   /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
   const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
@@ -818,7 +834,7 @@ function StepView({
    * проверка ждёт, пока заполнены все поля.
    */
   const canSubmit =
-    step.kind === 'order' || step.kind === 'waves' || step.kind === 'relate'
+    step.kind === 'order' || step.kind === 'waves' || step.kind === 'relate' || step.kind === 'spot'
       ? true
       : step.kind === 'interpret'
         ? draft.chosen !== null
@@ -990,6 +1006,8 @@ function StepView({
     if (step.kind === 'waves') return;
     // Связи проверяет кнопка внутри RelateStep (onResult), не общая «Проверить».
     if (step.kind === 'relate') return;
+    // Отчёт проверяют кнопки внутри SpotStep (onResult).
+    if (step.kind === 'spot') return;
     if (step.kind === 'order') {
       /*
        * Всё или ничего, и без указания, какие пункты уже на местах.
@@ -1271,6 +1289,31 @@ function StepView({
                     wasCorrect: v.correct,
                     wrongAttempts: d.wrongAttempts + (v.correct ? 0 : 1),
                     feedback: v.correct ? { kind: 'correct' } : { kind: 'relateWrong', missing: v.missing, extra: v.extra, cards: v.cards, dirs: v.dirs },
+                  }))
+                }
+              />
+            </div>
+            {feedbackBlock}
+          </div>
+        </div>
+      ) : step.kind === 'spot' ? (
+        <div className="task-work">
+          <div className="task-answer">
+            <div className="card">
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{step.question}</p>
+              <SpotStep
+                step={step}
+                state={spotState!}
+                solved={draft.solved}
+                onState={(spot) => patch({ spot })}
+                onResult={(v) =>
+                  patch((d) => ({
+                    solved: true,
+                    wasCorrect: v.correct,
+                    wrongAttempts: d.wrongAttempts + (v.correct ? 0 : 1),
+                    feedback: v.correct
+                      ? { kind: 'correct' }
+                      : { kind: 'spotWrong', allOk: v.allOk, missed: v.missed.length > 0, extra: v.extra.length > 0 },
                   }))
                 }
               />

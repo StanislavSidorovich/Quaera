@@ -54,6 +54,8 @@ function validate(pack: Pack): Pack {
           if (step.items.length < 3) throw new Error(`Пак ${pack.id}: у задания ${at} меньше трёх карточек`);
         } else if (step.kind === 'relate') {
           if (step.relate.tables.length < 2) throw new Error(`Пак ${pack.id}: у задания ${at} меньше двух таблиц для связей`);
+        } else if (step.kind === 'spot') {
+          if (!step.spot.rows.length) throw new Error(`Пак ${pack.id}: у задания ${at} пустая таблица отчёта`);
         } else if (step.options.filter((o) => o.correct).length !== 1) {
           throw new Error(`Пак ${pack.id}: у задания ${at} должен быть ровно один верный вариант`);
         }
@@ -71,6 +73,11 @@ function validate(pack: Pack): Pack {
       // Эталон выводится из схемы; здесь только то, без чего экран упадёт.
       if ((t.relate?.tables ?? []).length < 2) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} меньше двух таблиц для связей`);
+      }
+    } else if (t.mode === 'spot') {
+      // Дефекты выводятся из mutate; здесь только то, без чего экран упадёт.
+      if (!t.spot || !t.spot.head?.length || !t.spot.rows?.length) {
+        throw new Error(`Пак ${pack.id}: у задания ${t.id} нет таблицы отчёта для поиска ошибок`);
       }
     } else if (t.mode === 'waves') {
       // Верность задаёт dependsOn; здесь только то, без чего экран упадёт.
@@ -116,6 +123,16 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
     if (t.relateTraps && (orig.relate?.traps ?? []).length !== t.relateTraps.length) {
       throw new Error(
         `Перевод ${tr.id}: у задания ${t.id} ${t.relateTraps.length} переведённых разборов вместо ${(orig.relate?.traps ?? []).length}`
+      );
+    }
+    if (t.spotMutate && (orig.spot?.mutate ?? []).length !== t.spotMutate.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.spotMutate.length} переведённых порч вместо ${(orig.spot?.mutate ?? []).length}`
+      );
+    }
+    if (t.spotDecoys && (orig.spot?.decoys ?? []).length !== t.spotDecoys.length) {
+      throw new Error(
+        `Перевод ${tr.id}: у задания ${t.id} ${t.spotDecoys.length} переведённых приманок вместо ${(orig.spot?.decoys ?? []).length}`
       );
     }
     if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
@@ -180,6 +197,14 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
           tt.relateTraps && t.relate
             ? { ...t.relate, traps: t.relate.traps.map((o, i) => ({ ...o, ...tt.relateTraps![i] })) }
             : t.relate,
+        spot:
+          (tt.spotMutate || tt.spotDecoys) && t.spot
+            ? {
+                ...t.spot,
+                mutate: tt.spotMutate ? t.spot.mutate.map((o, i) => ({ ...o, ...tt.spotMutate![i] })) : t.spot.mutate,
+                decoys: tt.spotDecoys ? t.spot.decoys.map((o, i) => ({ ...o, ...tt.spotDecoys![i] })) : t.spot.decoys,
+              }
+            : t.spot,
         steps:
           tt.steps && t.steps
             ? t.steps.map((s, i) => {
@@ -215,6 +240,8 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
                       ? { ...s.relate, traps: s.relate.traps.map((o, j) => ({ ...o, ...st.relateTraps![j] })) }
                       : s.relate,
                   };
+                if (s.kind === 'spot')
+                  return { ...s, question: st.question ?? s.question, hints: st.hints ?? s.hints };
                 return {
                   ...s,
                   question: st.question ?? s.question,

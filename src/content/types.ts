@@ -39,7 +39,9 @@ export type TaskMode =
   /** Разложить шаги по волнам зависимости и запустить: порядок, где внутри волны он неважен. */
   | 'waves'
   /** Провести связи между колонками таблиц модели: эталон выводится из внешних ключей схемы. */
-  | 'relate';
+  | 'relate'
+  /** Найти в готовом отчёте клетки, которые нельзя отправлять: дефекты вносятся поверх верной таблицы. */
+  | 'spot';
 
 /**
  * Пункт задания на упорядочивание.
@@ -157,6 +159,62 @@ export interface RelateSpec {
   defect?: RelateDefect;
   /** Показывать переключатель направления фильтра («одно» / «оба») на середине каждой связи. */
   directions?: boolean;
+}
+
+/**
+ * Порча верной таблицы в задании `spot` (`mutate`). Дефектные клетки движок выводит из порчи
+ * сам (engine/spot.ts), руками они не размечаются:
+ * - `drop`: строка выпала, дефектная клетка это «Строк: N» в подвале;
+ * - `scale`: клетка колонки `column` умножена на `factor`, дефектная клетка это она;
+ * - `dup`: строка задвоена (размножение при соединении), дефект это любая клетка любой из двух копий;
+ * - `total`: итог в подвале отличается от суммы строк на `delta`, дефектная клетка это «Итог».
+ * Числа разбора не набираются руками: в `why` стоят `{n}` и `{m}`, их считают запросы `sql` и `sql2`.
+ */
+export interface SpotMutation {
+  id: string;
+  kind: 'drop' | 'scale' | 'dup' | 'total';
+  /** Какая строка верной таблицы портится: значения колонок, ровно одна строка. Не нужно для `total`. */
+  where?: Record<string, string | number>;
+  column?: string;
+  factor?: number;
+  delta?: number;
+  /** Как заметить и что спросит директор. */
+  why: string;
+  fmt?: 'int' | 'money' | 'num';
+  sql?: string;
+  n?: number;
+  sql2?: string;
+  m?: number;
+}
+
+/** Приманка: клетка выглядит странно, но верна. Отметить её значит поднять лишний вопрос директора. */
+export interface SpotDecoy {
+  where: Record<string, string | number>;
+  column: string;
+  why: string;
+  fmt?: 'int' | 'money' | 'num';
+  sql?: string;
+  n?: number;
+  sql2?: string;
+  m?: number;
+}
+
+/**
+ * Состав задания `spot`. Верную таблицу даёт запрос `sql` к Kaiyo; `head` и `rows` хранятся в задании
+ * и сверяются с запросом гейтом test:spot (как `report` у relate). Подвал это клетки, которые тоже
+ * можно отметить: `rows` показывает «Строк: N», `total` («Итог: сумма колонки X»).
+ */
+export interface SpotSpec {
+  sql: string;
+  head: string[];
+  rows: (string | number)[][];
+  footer?: { rows?: boolean; total?: string };
+  mutate: SpotMutation[];
+  decoys: SpotDecoy[];
+}
+
+export interface SpotWhyTranslation {
+  why?: string;
 }
 
 export interface RelateTrapTranslation {
@@ -296,6 +354,18 @@ export type TaskStep =
       goal?: string;
     }
   | {
+      /**
+       * Найти в готовом отчёте клетки, которые нельзя отправлять (engine/spot.ts).
+       * Поднимается из одношагового задания (`Task.mode === 'spot'`). Проверка «всё или ничего»:
+       * множество отметок против множества дефектов, кнопка «Всё в порядке» есть всегда.
+       */
+      kind: 'spot';
+      question: string;
+      spot: SpotSpec;
+      hints: string[];
+      goal?: string;
+    }
+  | {
       kind: 'interpret';
       /** Вопрос к результату предыдущего шага. Он же и есть постановка — отдельного `goal` шагу не нужно. */
       question: string;
@@ -428,6 +498,8 @@ export interface Task {
   waves?: number;
   /** Состав режима `relate` (вопрос в `orderQuestion`). См. RelateSpec. */
   relate?: RelateSpec;
+  /** Состав режима `spot` (вопрос в `orderQuestion`). См. SpotSpec. */
+  spot?: SpotSpec;
   /** Раскрываются по одной. Первая — направление, последняя — почти решение. */
   hints: string[];
   /** Разбор после решения: не пересказ ответа, а идея, которая переносится на другие задачи. */
@@ -632,6 +704,10 @@ export interface TaskTranslation {
   waveItems?: WaveItemTranslation[];
   /** Разборы ловушек `relate`: позиционно к Task.relate.traps. */
   relateTraps?: RelateTrapTranslation[];
+  /** Разборы порч `spot`: позиционно к Task.spot.mutate. */
+  spotMutate?: SpotWhyTranslation[];
+  /** Разборы приманок `spot`: позиционно к Task.spot.decoys. */
+  spotDecoys?: SpotWhyTranslation[];
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */
   traps?: { message: string }[];
   /** Порядок обязан совпадать с Task.steps — тоже позиционно. */

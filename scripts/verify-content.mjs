@@ -880,6 +880,19 @@ for (const packId of packs) {
       continue;
     }
 
+    if (t.mode === 'spot') {
+      /*
+       * «Найдите, что не так»: верная таблица считается запросом к Kaiyo, дефекты выводятся из mutate.
+       * Здесь проверяется то, что нужно экрану; строки, дефектные клетки, приманки, числа разборов
+       * и перевод держит test:spot.
+       */
+      if (!t.orderQuestion) fail(t.id, 'нет вопроса для режима spot');
+      const sp = t.spot;
+      if (!sp || !sp.sql || !(sp.head ?? []).length || !(sp.rows ?? []).length) fail(t.id, 'у spot нет запроса или таблицы отчёта');
+      if (t.options?.length || t.solution) fail(t.id, 'у spot заданы варианты ответа или решение: ответ выводится из mutate');
+      continue;
+    }
+
     if (t.mode === 'order') {
       /*
        * Проверяется только содержание, не раскладка на экране.

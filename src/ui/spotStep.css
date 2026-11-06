@@ -1,0 +1,68 @@
+/* Шаг «Найдите, что не так» (SpotStep.tsx): подсказка, счётчик отметок, кнопки, разбор. Клетки таблицы живут в spotPick.css. Только токены темы. */
+
+.spot {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.spot-note,
+.spot-clean {
+  margin: 0;
+  font-size: var(--fs-micro);
+}
+
+.spot-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.spot-count {
+  font-size: var(--fs-micro);
+}
+
+.spot-actions .row {
+  flex-wrap: wrap;
+}
+
+.spot-h {
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+
+.spot-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spot-list li {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  font-size: var(--fs-small);
+}
+
+.spot-list li[data-state='hit'] {
+  border-left-color: var(--ok);
+}
+
+.spot-list li[data-state='miss'] {
+  border-left-color: var(--err);
+}
+
+.spot-list li[data-state='extra'] {
+  border-left-color: var(--warn);
+}
+
+.spot-badge {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--text-dim);
+}
