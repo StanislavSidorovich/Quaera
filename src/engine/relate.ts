@@ -15,11 +15,17 @@
  * все, каждая со своим разбором.
  */
 
-import type { RelateSpec, RelateTrap } from '../content/types';
+import type { RelateDefect, RelateSpec, RelateTrap } from '../content/types';
 import type { SchemaDoc } from './types';
 
 /** Конец связи: «1» (сторона первичного ключа) или «много» (сторона внешнего). */
 export type Card = 'one' | 'many';
+
+/**
+ * Направление фильтра связи: `one` идёт от стороны «1» к стороне «много» (обычное),
+ * `both` в обе стороны. Переключатель виден только в заданиях с `directions`.
+ */
+export type Dir = 'one' | 'both';
 
 /** Колонка записывается как `таблица.колонка`: одинаковые имена (`product_id`) есть в нескольких таблицах. */
 export interface Rel {
@@ -28,6 +34,8 @@ export interface Rel {
   /** Кардинальность конца у колонки `a` и у колонки `b`. */
   ca: Card;
   cb: Card;
+  /** Нет поля = `one`. */
+  dir?: Dir;
 }
 
 /** Эталонная связь: `fk` (много) → `pk` (1). */
@@ -97,7 +105,23 @@ export function toggleRel(rels: Rel[], x: string, y: string): Rel[] {
   const i = findRel(rels, x, y);
   if (i >= 0) return rels.filter((_, j) => j !== i);
   // Оба конца сначала «много»: человек сам решает, где «1».
-  return [...rels, { a: x, b: y, ca: 'many', cb: 'many' }];
+  return [...rels, { a: x, b: y, ca: 'many', cb: 'many', dir: 'one' }];
+}
+
+export const dirOf = (r: Rel): Dir => r.dir ?? 'one';
+
+export function setDir(rels: Rel[], index: number, dir: Dir): Rel[] {
+  return rels.map((r, i) => (i === index ? { ...r, dir } : r));
+}
+
+/**
+ * Куда течёт фильтр «одно»: от конца «1» к концу «много». Возвращает колонку-источник
+ * и колонку-приёмник, а если концы не «1»/«много» (ещё не решено), null.
+ */
+export function flowOf(r: Rel): { from: string; to: string } | null {
+  if (r.ca === 'one' && r.cb === 'many') return { from: r.a, to: r.b };
+  if (r.ca === 'many' && r.cb === 'one') return { from: r.b, to: r.a };
+  return null;
 }
 
 export function setCard(rels: Rel[], index: number, end: 'a' | 'b', card: Card): Rel[] {
@@ -112,6 +136,8 @@ export interface RelateVerdict {
   extra: boolean;
   /** Связь на месте, но «1»/«много» стоят не так. */
   cards: boolean;
+  /** У какой-то связи направление фильтра «оба», а нужно «одно». */
+  dirs: boolean;
   /** Id совпавших ловушек в порядке задания. */
   traps: string[];
 }
@@ -129,6 +155,8 @@ export function gradeRelate(rels: Rel[], reference: RefRel[], traps: RelateTrap[
     return ref ? cardAt(r, ref.fk) !== 'many' || cardAt(r, ref.pk) !== 'one' : false;
   });
 
+  const dirs = rels.some((r) => dirOf(r) === 'both');
+
   const hit = (t: RelateTrap): boolean => {
     switch (t.kind) {
       case 'drew':
@@ -144,30 +172,50 @@ export function gradeRelate(rels: Rel[], reference: RefRel[], traps: RelateTrap[
           return r ? cardAt(r, ref.pk) === 'many' : false;
         });
       }
+      case 'both':
+        return dirs;
     }
   };
 
   return {
-    correct: !missing && !extra && !cards,
+    correct: !missing && !extra && !cards && !dirs,
     missing,
     extra,
     cards,
+    dirs,
     traps: traps.filter(hit).map((t) => t.id),
   };
 }
 
-/** Число симптома в тексте: `{n}` заменяется отформатированным значением. */
+/** Числа симптома в тексте: `{n}` и `{m}` заменяются отформатированными значениями. */
 export function fillSymptom(text: string, trap: RelateTrap, locale: 'ru' | 'en'): string {
-  if (trap.n === undefined) return text;
   const tag = locale === 'ru' ? 'ru-RU' : 'en-US';
-  let shown: string;
-  if (trap.fmt === 'money') shown = `¥${Math.round(trap.n).toLocaleString(tag)}`;
-  else if (trap.fmt === 'num') shown = trap.n.toLocaleString(tag, { maximumFractionDigits: 1 });
-  else shown = Math.round(trap.n).toLocaleString(tag);
-  return text.split('{n}').join(shown);
+  let out = text;
+  if (trap.n !== undefined) {
+    let shown: string;
+    if (trap.fmt === 'money') shown = `¥${Math.round(trap.n).toLocaleString(tag)}`;
+    else if (trap.fmt === 'num') shown = trap.n.toLocaleString(tag, { maximumFractionDigits: 1 });
+    else shown = Math.round(trap.n).toLocaleString(tag);
+    out = out.split('{n}').join(shown);
+  }
+  // Второе число симптома всегда целое.
+  if (trap.m !== undefined) out = out.split('{m}').join(Math.round(trap.m).toLocaleString(tag));
+  return out;
 }
 
 /** Раскладка для гейта и для экрана: первая в порядке показа пара, из которой собирается эталон. */
 export function referenceAsRels(reference: RefRel[]): Rel[] {
   return reference.map((r) => ({ a: r.fk, b: r.pk, ca: 'many', cb: 'one' }));
+}
+
+/**
+ * Модель, с которой начинается задание «Найдите, что не так»: эталон без одной связи
+ * (`missing`) или с лишней вместо эталонной (`drew`). Ответ человека сравнивается с обычным эталоном.
+ */
+export function startModel(reference: RefRel[], defect: RelateDefect): Rel[] {
+  const rels = referenceAsRels(reference);
+  const same = (r: Rel, x: string, y: string) => pairKey(r.a, r.b) === pairKey(x, y);
+  if (defect.kind === 'missing') return rels.filter((r) => !same(r, defect.a, defect.b));
+  const base = defect.replaces ? rels.filter((r) => !same(r, defect.replaces!.a, defect.replaces!.b)) : rels;
+  return [...base, { a: defect.a, b: defect.b, ca: 'many', cb: 'many', dir: 'one' }];
 }

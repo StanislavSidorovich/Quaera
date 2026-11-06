@@ -14,7 +14,12 @@
  *  5. у разбора есть все четыре части; число симптома не набрано руками: в тексте только {n},
  *     а само число считает запрос \`sql\` к Kaiyo и сверяется с \`n\` в задании;
  *  6. английский перевод: столько же разборов, {n} там же, где в русском, без тире;
- *  7. раскладка: у каждой раскрытой колонки есть строка внутри своего узла, узлы не пересекаются.
+ *  7. раскладка: у каждой раскрытой колонки есть строка внутри своего узла, узлы не пересекаются;
+ *  8. задание с подложенным дефектом (`defect`): стартовая модель отличается от эталона и попадает в разбор,
+ *     строки отчёта (`report.rows`) совпадают с результатом запроса `report.sql` к Kaiyo;
+ *  9. задание с переключателем направления (`directions`): ответ «оба» не принимается и попадает в свою
+ *     ловушку, числа симптомов у ловушек различаются; второй шаг-выбор опирается на эталон
+ *     (дистрибьюторы в sell-in действительно лежат в dim_customer с регионом).
  *
  * \`node scripts/test-relate.mjs --write\` записывает посчитанные числа в \`n\` (текстом, формат файла
  * не трогается); без флага расхождение это провал. Входит в npm run verify.
@@ -41,19 +46,26 @@ const ok = (name) => console.log(` ok    ${name}`);
 const check = (name, cond, msg) => (cond ? ok(name) : fail(name, msg));
 
 /** Записывает `n` в ловушку, не трогая остальной текст файла. */
-function writeN(file, taskId, trapId, n) {
+function writeN(file, taskId, trapId, n, key = 'n') {
   const raw = readFileSync(file, 'utf8');
   const t = raw.indexOf(`"id": "${taskId}"`);
   const i = t < 0 ? -1 : raw.indexOf(`"id": "${trapId}"`, t);
   if (i < 0) throw new Error(`не найдена ловушка ${taskId}/${trapId}`);
   const next = raw.indexOf('"symptom"', i);
-  const head = raw.slice(i, next).replace(/\n\s*"n": [^\n]*,(?=\n)/, '');
+  const head = raw.slice(i, next).replace(new RegExp(`\\n\\s*"${key}": [^\\n]*,(?=\\n)`), '');
   const fmt = /(\n\s*"fmt": "[a-z]+",)/.exec(head);
   if (!fmt) throw new Error(`у ${trapId} нет fmt`);
   const indent = /\n(\s*)"fmt"/.exec(head)[1];
-  const patched = head.replace(fmt[1], `${fmt[1]}\n${indent}"n": ${n},`);
+  const patched = head.replace(fmt[1], `${fmt[1]}\n${indent}"${key}": ${n},`);
   writeFileSync(file, raw.slice(0, i) + patched + raw.slice(next));
 }
+
+/** Состав задания `relate`: у одношагового это поле задания, у многошагового первый шаг вида relate. */
+const relateOf = (t) => {
+  if (t.mode !== 'relate') return null;
+  const si = (t.steps ?? []).findIndex((s) => s.kind === 'relate');
+  return { spec: si >= 0 ? t.steps[si].relate : t.relate, stepIndex: si };
+};
 
 try {
   execSync(
@@ -89,7 +101,7 @@ try {
 
   for (const t of pack.tasks.filter((x) => x.mode === 'relate')) {
     tasks++;
-    const spec = t.relate;
+    const { spec, stepIndex } = relateOf(t);
     const shown = spec.tables.map((x) => x.table);
 
     // 1. Состав.
@@ -115,6 +127,7 @@ try {
     // 3. Эталон принимается и не попадает в ловушки.
     const good = E.referenceAsRels(ref);
     const vGood = E.gradeRelate(good, ref, spec.traps);
+    check(`${t.id}: эталон без «оба» (направление «одно» везде)`, !vGood.dirs, 'в эталоне есть «оба»');
     check(`${t.id}: эталон принимается`, vGood.correct, 'эталон не принят');
     check(`${t.id}: эталон не попадает в ловушки`, vGood.traps.length === 0, `попал в ${vGood.traps.join(', ')}`);
 
@@ -137,6 +150,9 @@ try {
         bad = good.filter((r) => E.pairKey(r.a, r.b) !== E.pairKey(tr.a, tr.b));
       } else if (tr.kind === 'keyMany') {
         bad = good.map((r, i) => (i === 0 ? { ...r, cb: 'many' } : r));
+      } else if (tr.kind === 'both') {
+        check(`${t.id}/${tr.id}: переключатель направления включён (directions)`, spec.directions === true, 'ловушка «оба» без directions: переключателя на экране нет');
+        bad = good.map((r) => ({ ...r, dir: 'both' }));
       }
       const v = E.gradeRelate(bad, ref, spec.traps);
       check(`${t.id}/${tr.id}: ответ с ошибкой не принимается и попадает в ловушку`, !v.correct && v.traps.includes(tr.id), `верно=${v.correct}, ловушки=${v.traps.join(',')}`);
@@ -155,20 +171,43 @@ try {
           pending.push([packFile, t.id, tr.id, val]);
           console.log(` write ${t.id}/${tr.id}: n ${tr.n} → ${val}`);
         } else fail(`${t.id}/${tr.id}`, `n = ${tr.n}, а Kaiyo даёт ${val} (npm run test:relate -- --write запишет число)`);
+        if (tr.sql2 || tr.symptom.includes('{m}')) {
+          check(`${t.id}/${tr.id}: {m} и sql2 заданы вместе`, !!tr.sql2 && tr.symptom.includes('{m}'), 'второе число задано не целиком');
+          const val2 = db.exec(tr.sql2)[0]?.values?.[0]?.[0];
+          check(`${t.id}/${tr.id}: sql2 даёт число`, typeof val2 === 'number' && Number.isFinite(val2) && val2 > 0, `результат ${val2}`);
+          if (tr.m === val2) ok(`${t.id}/${tr.id}: m = ${val2} сходится с Kaiyo`);
+          else if (WRITE) {
+            pending.push([packFile, t.id, tr.id, val2, 'm']);
+            console.log(` write ${t.id}/${tr.id}: m ${tr.m} → ${val2}`);
+          } else fail(`${t.id}/${tr.id}`, `m = ${tr.m}, а Kaiyo даёт ${val2} (npm run test:relate -- --write запишет число)`);
+        }
       } else {
         check(`${t.id}/${tr.id}: нет запроса, значит нет и {n}`, !tr.symptom.includes('{n}'), '{n} без запроса');
       }
+    }
+
+    // 5б. В заданиях с переключателем направления числа ловушек различаются: каждая ошибка даёт своё.
+    if (spec.directions) {
+      const ns = spec.traps.map((x) => x.n);
+      check(`${t.id}: числа симптомов ловушек различаются`, new Set(ns).size === ns.length, `повтор среди ${ns.join(', ')}`);
     }
 
     // 6. Перевод.
     const tr = en.tasks.find((x) => x.id === t.id);
     check(`${t.id}: английский перевод есть`, !!tr, 'нет перевода');
     if (tr) {
-      check(`${t.id}: разборов столько же`, (tr.relateTraps ?? []).length === spec.traps.length, `${(tr.relateTraps ?? []).length} вместо ${spec.traps.length}`);
+      const enTraps = stepIndex >= 0 ? tr.steps?.[stepIndex]?.relateTraps : tr.relateTraps;
+      check(`${t.id}: разборов столько же`, (enTraps ?? []).length === spec.traps.length, `${(enTraps ?? []).length} вместо ${spec.traps.length}`);
+      for (const st of tr.steps ?? []) {
+        for (const f of ['question']) check(`${t.id}: EN шаг ${f} без тире`, !/[—–]/.test(st[f] ?? ''), 'тире в английском тексте');
+        for (const o of st.options ?? []) check(`${t.id}: EN вариант без тире`, !/[—–]/.test(`${o.label ?? ''}${o.why ?? ''}`), 'тире в английском тексте');
+        for (const h of st.hints ?? []) check(`${t.id}: EN подсказка без тире`, !/[—–]/.test(h), 'тире в английском тексте');
+      }
       spec.traps.forEach((x, i) => {
-        const e = tr.relateTraps?.[i];
+        const e = enTraps?.[i];
         if (!e) return;
         check(`${t.id}/${x.id}: {n} в EN там же, где в RU`, e.symptom.includes('{n}') === x.symptom.includes('{n}'), 'расходятся');
+        check(`${t.id}/${x.id}: {m} в EN там же, где в RU`, e.symptom.includes('{m}') === x.symptom.includes('{m}'), 'расходятся');
         for (const f of ['symptom', 'cause', 'fix', 'business']) check(`${t.id}/${x.id}: EN ${f} без тире`, !/[—–]/.test(e[f] ?? ''), 'тире в английском тексте');
       });
       for (const f of ['title', 'brief', 'goal', 'orderQuestion', 'explain']) check(`${t.id}: EN ${f} без тире`, !/[—–]/.test(tr[f] ?? ''), 'тире в английском тексте');
@@ -184,9 +223,56 @@ try {
     let overlap = false;
     for (const a of lay.nodes) for (const b of lay.nodes) if (a !== b && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) overlap = true;
     check(`${t.id}: узлы схемы не пересекаются`, !overlap, 'узлы наезжают друг на друга');
+
+    // 8. Подложенный дефект.
+    if (spec.defect) {
+      const d = spec.defect;
+      check(`${t.id}: колонки дефекта раскрыты`, exposed.has(d.a) && exposed.has(d.b), 'колонка дефекта не раскрыта');
+      const inRef = (x, y) => ref.some((r) => E.pairKey(r.fk, r.pk) === E.pairKey(x, y));
+      if (d.kind === 'missing') check(`${t.id}: недостающая связь есть в эталоне`, inRef(d.a, d.b), 'дефект «не хватает» про связь, которой в эталоне нет');
+      else {
+        check(`${t.id}: лишней связи нет в эталоне`, !inRef(d.a, d.b), 'дефект «лишняя» совпадает с эталонной связью');
+        if (d.replaces) check(`${t.id}: заменяемая связь есть в эталоне`, inRef(d.replaces.a, d.replaces.b), 'replaces не из эталона');
+      }
+      const start = E.startModel(ref, d);
+      const vs = E.gradeRelate(start, ref, spec.traps);
+      check(`${t.id}: стартовая модель не принимается`, !vs.correct, 'в стартовой модели нет дефекта: задание решено до касания');
+      check(`${t.id}: стартовая модель попадает в разбор`, vs.traps.length > 0, 'нажатие «Проверить» без правки не получит разбора');
+      // Одна правка чинит дефект: модель отличается от эталона ровно одной связью (или заменой).
+      const keys = new Set(start.map((r) => E.pairKey(r.a, r.b)));
+      const diff = ref.filter((r) => !keys.has(E.pairKey(r.fk, r.pk))).length + start.filter((r) => !inRef(r.a, r.b)).length;
+      check(`${t.id}: стартовая модель отличается от эталона одной связью или заменой`, diff >= 1 && diff <= 2, `различий ${diff}`);
+
+      const res = db.exec(d.report.sql)[0];
+      check(`${t.id}: запрос отчёта выполняется`, !!res && res.values.length >= 2, 'пустой отчёт');
+      if (res) {
+        check(`${t.id}: заголовки отчёта сходятся с запросом`, JSON.stringify(d.report.head) === JSON.stringify(res.columns), `${JSON.stringify(d.report.head)} вместо ${JSON.stringify(res.columns)}`);
+        check(`${t.id}: строки отчёта сходятся с Kaiyo`, JSON.stringify(d.report.rows) === JSON.stringify(res.values), `в задании ${JSON.stringify(d.report.rows)}, а запрос даёт ${JSON.stringify(res.values)}`);
+      }
+    }
+
+    // 9. Второй шаг-выбор опирается на эталон.
+    if (t.steps?.some((s) => s.kind === 'interpret')) {
+      const viaDist = ref.some((r) => r.fk === 'fact_sellin.distributor_id' && r.pk === 'dim_customer.customer_id');
+      check(`${t.id}: в эталоне есть связь sell-in с дистрибьюторами`, viaDist, 'второй шаг говорит о регионе дистрибьютора, а связи в эталоне нет');
+      const loose = db.exec(
+        `SELECT COUNT(*) FROM fact_sellin s LEFT JOIN dim_customer c ON c.customer_id = s.distributor_id WHERE c.customer_id IS NULL OR c.customer_type <> 'distributor' OR c.region_id IS NULL`
+      )[0].values[0][0];
+      check(`${t.id}: каждый получатель sell-in это дистрибьютор с регионом`, loose === 0, `${loose} строк sell-in не сходятся`);
+      const sellinHasRegion = schema.tables.find((q) => q.table === 'fact_sellin').columns.some((c) => /region/.test(c.name));
+      check(`${t.id}: в fact_sellin своей колонки региона нет`, !sellinHasRegion, 'вариант «колонки региона нет» неверен');
+      const tr2 = (en.tasks.find((x) => x.id === t.id)?.steps ?? []).find((s) => s.options);
+      const ru2 = t.steps.find((s) => s.kind === 'interpret');
+      check(`${t.id}: EN вариантов столько же`, !!tr2 && tr2.options.length === ru2.options.length, 'варианты шага-выбора не переведены');
+    }
   }
 
   for (const p of pending) writeN(...p);
+  // 10. Переключатель направления не просачивается в задания, где он не задан.
+  for (const t of pack.tasks.filter((x) => x.mode === 'relate')) {
+    const { spec } = relateOf(t);
+    if (!spec.directions) check(`${t.id}: без directions нет ловушки «оба»`, !spec.traps.some((x) => x.kind === 'both'), 'ловушка «оба» без переключателя');
+  }
   console.log('');
   console.log(`Связи: ${tasks} заданий проверено на эталон, ловушки и числа симптомов.`);
 } finally {

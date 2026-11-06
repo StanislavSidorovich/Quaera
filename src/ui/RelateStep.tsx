@@ -2,15 +2,20 @@ import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent 
 import type { RelateTrap, TaskStep } from '../content/types';
 import {
   colKey,
+  dirOf,
   fillSymptom,
+  flowOf,
   findRel,
   gradeRelate,
   referenceRelations,
   setCard,
+  setDir,
+  startModel,
   subsetDoc,
   tableOf,
   toggleRel,
   type Card,
+  type Dir,
   type Rel,
   type RelateVerdict,
 } from '../engine/relate';
@@ -42,7 +47,16 @@ export interface RelateState {
   verdict: RelateVerdict | null;
 }
 
-export const blankRelateState = (): RelateState => ({ rels: [], pick: null, verdict: null });
+/**
+ * Начальное состояние шага: пусто, а у задания с подложенным дефектом это собранная
+ * модель с одной сломанной связью (нужна схема, чтобы вывести эталон).
+ */
+export function blankRelateState(step?: RelateStepDef, schema?: SchemaDoc | null): RelateState {
+  const defect = step?.relate.defect;
+  if (!defect || !schema) return { rels: [], pick: null, verdict: null };
+  const shown = step!.relate.tables.map((x) => x.table);
+  return { rels: startModel(referenceRelations(schema, shown), defect), pick: null, verdict: null };
+}
 
 const NARROW = '(max-width: 599px)';
 
@@ -62,6 +76,9 @@ function useNarrow(): boolean {
 /** Ширина плашки «1»/«много» на схеме по длине подписи. */
 const pillW = (label: string) => Math.round(label.length * 6.8 + 14);
 const PILL_H = 20;
+const MID_W = 30;
+const MID_H = PILL_H;
+type Pt = { x: number; y: number };
 /** Запас справа под дуги связей внутри одной колонки таблиц. */
 const ARC_ROOM = 72;
 
@@ -114,6 +131,12 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
   };
 
   const cardLabel = (c: Card) => (c === 'one' ? T.relateOne : T.relateMany);
+  const withDirs = !!spec.directions;
+  const dirLabel = (d: Dir) => (d === 'one' ? T.relateDirOne : T.relateDirBoth);
+  const flipDir = (index: number) => {
+    if (locked) return;
+    edit(setDir(state.rels, index, dirOf(state.rels[index]) === 'one' ? 'both' : 'one'));
+  };
 
   // Выбор двумя списками (узкий экран).
   const [from, setFrom] = useState('');
@@ -162,6 +185,12 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
           d: `M ${x} ${ya} C ${rnd(x + bulge)} ${ya}, ${rnd(x + bulge)} ${yb}, ${x} ${yb}`,
           a: { x, y: ya, side: 'right' as const },
           b: { x, y: yb, side: 'right' as const },
+          bez: [
+            { x, y: ya },
+            { x: x + bulge, y: ya },
+            { x: x + bulge, y: yb },
+            { x, y: yb },
+          ] as Pt[],
         };
       }
       const aLeft = na.x < nb.x;
@@ -169,9 +198,37 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
       const b = aLeft ? { x: nb.x, y: yb, side: 'left' as const } : { x: nb.x + nb.w, y: yb, side: 'right' as const };
       const c = Math.max(28, Math.abs(b.x - a.x) * 0.45);
       const dir = a.x < b.x ? 1 : -1;
-      return { d: `M ${a.x} ${a.y} C ${rnd(a.x + dir * c)} ${a.y}, ${rnd(b.x - dir * c)} ${b.y}, ${b.x} ${b.y}`, a, b };
+      const bez: Pt[] = [
+        { x: a.x, y: a.y },
+        { x: a.x + dir * c, y: a.y },
+        { x: b.x - dir * c, y: b.y },
+        { x: b.x, y: b.y },
+      ];
+      return { d: `M ${a.x} ${a.y} C ${rnd(a.x + dir * c)} ${a.y}, ${rnd(b.x - dir * c)} ${b.y}, ${b.x} ${b.y}`, a, b, bez };
     });
   }, [state.rels, nodeByTable]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /*
+   * Плашки направления стоят на середине линии (t = 0.5). Линии двух фактов к общему справочнику
+   * сходятся, и середины совпадают: тогда плашка сдвигается по своей же кривой (t = 0.58, 0.42, ...)
+   * до первого места, где она не наезжает на уже поставленные.
+   */
+  const mids = useMemo(() => {
+    const placed: Pt[] = [];
+    return geom.map((g) => {
+      if (!g) return null;
+      const at = (t: number): Pt => {
+        const [p0, c1, c2, p3] = g.bez;
+        const u = 1 - t;
+        const f = (k: 'x' | 'y') => u * u * u * p0[k] + 3 * u * u * t * c1[k] + 3 * u * t * t * c2[k] + t * t * t * p3[k];
+        return { x: Math.round(f('x') * 10) / 10, y: Math.round(f('y') * 10) / 10 };
+      };
+      const free = (p: Pt) => placed.every((q) => Math.abs(p.x - q.x) >= MID_W + 4 || Math.abs(p.y - q.y) >= MID_H + 4);
+      const p = [0.5, 0.58, 0.42, 0.64, 0.36].map(at).find(free) ?? at(0.5);
+      placed.push(p);
+      return p;
+    });
+  }, [geom]);
 
   const linkedCols = useMemo(() => new Set(state.rels.flatMap((r) => [r.a, r.b])), [state.rels]);
 
@@ -208,6 +265,61 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
         <rect x={x} y={p.y - PILL_H / 2} width={w} height={PILL_H} rx={PILL_H / 2} />
         <text x={x + w / 2} y={p.y} dominantBaseline="central" textAnchor="middle">
           {label}
+        </text>
+      </g>
+    );
+  };
+
+  /**
+   * Переключатель направления на середине связи. Показывает стрелку фильтра («одно»: от «1»
+   * к «много») или двойную («оба»). Нажимается и на узком экране: это единственный
+   * переключатель, который там остаётся на схеме, остальное делают списки.
+   */
+  const midPill = (rel: Rel, i: number) => {
+    const g = geom[i];
+    const mid = mids[i];
+    if (!g || !mid) return null;
+    const dir = dirOf(rel);
+    const flow = flowOf(rel);
+    let glyph = '·';
+    if (dir === 'both') glyph = '↔';
+    else if (flow) {
+      const pos = (k: string) => {
+        const nd = nodeByTable.get(tableOf(k));
+        const y = rowY(k);
+        return nd && y !== null ? { x: nd.x + nd.w / 2, y } : null;
+      };
+      const f = pos(flow.from);
+      const to = pos(flow.to);
+      if (f && to) glyph = Math.abs(to.x - f.x) > 8 ? (to.x > f.x ? '→' : '←') : to.y > f.y ? '↓' : '↑';
+    }
+    const label = dirLabel(dir);
+    const w = MID_W;
+    const press = () => flipDir(i);
+    return (
+      <g
+        key={`${i}-mid`}
+        className={`rel-pill rel-mid${dir === 'both' ? ' is-both' : ''}${locked ? ' is-static' : ''}`}
+        {...(!locked
+          ? {
+              role: 'button',
+              tabIndex: 0,
+              'aria-label': T.relateDirAria(rel.a, rel.b, label),
+              onClick: press,
+              onKeyDown: (e: ReactKeyboardEvent<SVGGElement>) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  press();
+                }
+              },
+            }
+          : { 'aria-hidden': true })}
+      >
+        {/* Прозрачная площадка 36 на 28: палец не промахивается мимо плашки в 20 px, соседи не перекрываются. */}
+        <rect className="rel-hit-pad" x={mid.x - 18} y={mid.y - 14} width={36} height={28} />
+        <rect x={mid.x - w / 2} y={mid.y - PILL_H / 2} width={w} height={PILL_H} rx={PILL_H / 2} />
+        <text x={mid.x} y={mid.y} dominantBaseline="central" textAnchor="middle">
+          {glyph}
         </text>
       </g>
     );
@@ -306,7 +418,14 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
 
   return (
     <div className="rel">
-      {!locked && <p className="muted rel-note">{narrow ? T.relateNoteNarrow : T.relateNote}</p>}
+      {spec.defect && <ReportTable defect={spec.defect} title={T.relateReportTitle} />}
+      {!locked && (
+        <p className="muted rel-note">
+          {spec.defect ? `${T.relateNoteDefect} ` : ''}
+          {narrow ? T.relateNoteNarrow : T.relateNote}
+          {withDirs ? ` ${T.relateNoteDir}` : ''}
+        </p>
+      )}
       {state.pick && !narrow && !locked && (
         <p className="rel-picked" aria-live="polite">
           {T.relatePicked(state.pick)}
@@ -332,6 +451,7 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
             {state.rels.map((r, i) => (geom[i] ? <path key={`${r.a}|${r.b}`} className="rel-line" d={geom[i]!.d} /> : null))}
             {layout.nodes.map(node)}
             {state.rels.map((r, i) => [pill(r, i, 'a'), pill(r, i, 'b')])}
+            {withDirs && state.rels.map((r, i) => midPill(r, i))}
           </svg>
         </div>
       )}
@@ -367,6 +487,25 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
                   {seg(r, i, 'a')}
                   {seg(r, i, 'b')}
                 </div>
+                {withDirs && (
+                  <div className="rel-end rel-dir">
+                    <span className="rel-dir-label">{T.relateDirLabel}</span>
+                    <div className="rel-seg" role="group" aria-label={T.relateDirGroup(r.a, r.b)}>
+                      {(['one', 'both'] as const).map((d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          className={`rel-seg-btn${dirOf(r) === d ? ' is-on' : ''}`}
+                          aria-pressed={dirOf(r) === d}
+                          disabled={locked}
+                          onClick={() => dirOf(r) !== d && flipDir(i)}
+                        >
+                          {dirLabel(d)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {!locked && (
                   <button type="button" className="btn secondary rel-remove" aria-label={T.relateRemoveAria(r.a, r.b)} onClick={() => edit(state.rels.filter((_, j) => j !== i))}>
                     {T.relateRemove}
@@ -400,5 +539,41 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
         </details>
       )}
     </div>
+  );
+}
+
+/** Фрагмент отчёта с симптомом: строки посчитал запрос к Kaiyo, гейт сверяет их при каждом прогоне. */
+function ReportTable({ defect, title }: { defect: NonNullable<RelateStepDef['relate']['defect']>; title: string }) {
+  const { locale } = useI18n();
+  const { head, rows } = defect.report;
+  if (!head || !rows) return null;
+  const tag = locale === 'ru' ? 'ru-RU' : 'en-US';
+  const cell = (v: string | number) => (typeof v === 'number' ? `¥${v.toLocaleString(tag)}` : v);
+  return (
+    <figure className="rel-report">
+      <figcaption>{title}</figcaption>
+      <table>
+        <thead>
+          <tr>
+            {head.map((h) => (
+              <th key={h} scope="col">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              {r.map((v, j) => (
+                <td key={j} className={typeof v === 'number' ? 'num' : undefined}>
+                  {cell(v)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
   );
 }

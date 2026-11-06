@@ -263,3 +263,88 @@
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
+
+/* Переключатель направления фильтра на середине связи: площадка под палец прозрачна, видна только плашка. */
+.rel-pill .rel-hit-pad {
+  fill: transparent;
+  stroke: none;
+}
+
+.rel-pill.rel-mid text {
+  font-size: 13px;
+}
+
+.rel-pill.rel-mid.is-both rect:not(.rel-hit-pad) {
+  fill: var(--accent);
+}
+
+.rel-pill.rel-mid.is-both text {
+  fill: var(--accent-ink);
+}
+
+.rel-dir {
+  flex-basis: 100%;
+}
+
+.rel-dir-label {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+/* Фрагмент отчёта с симптомом (задание «Найдите, что не так»). */
+.rel-report {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.rel-report figcaption {
+  margin: 0 0 6px;
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+.rel-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+}
+
+.rel-report th,
+.rel-report td {
+  padding: 3px 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.rel-report th {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.rel-report td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rel-report tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Собранная модель списком на шаге-выборе после сборки (TaskView, шаг interpret). */
+.rel-built {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-micro);
+}
+
+.rel-built code {
+  overflow-wrap: anywhere;
+}

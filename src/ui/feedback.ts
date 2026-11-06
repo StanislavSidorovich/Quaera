@@ -33,7 +33,7 @@ export type FeedbackSource =
   /** Запуск волн показал, что сборка не годится: какие классы нарушены, без названий карточек. */
   | { kind: 'wavesWrong'; early: boolean; extra: boolean; gate: boolean }
   /** Проверка связей не сошлась: какие классы нарушены, без названий колонок. */
-  | { kind: 'relateWrong'; missing: boolean; extra: boolean; cards: boolean }
+  | { kind: 'relateWrong'; missing: boolean; extra: boolean; cards: boolean; dirs?: boolean }
   | { kind: 'wrongOption' }
   | { kind: 'blanksWrong'; wrongIndexes: number[] }
   | { kind: 'giveUp' }
@@ -122,6 +122,7 @@ export function renderFeedback(src: FeedbackSource, ctx: FeedbackContext): Feedb
           src.missing && t.task.relateWrongMissing,
           src.extra && t.task.relateWrongExtra,
           src.cards && t.task.relateWrongCards,
+          src.dirs && t.task.relateWrongDirs,
           t.task.relateWrongTail,
         ]
           .filter(Boolean)

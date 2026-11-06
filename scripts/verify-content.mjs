@@ -637,16 +637,21 @@ function checkOptionPositions(pack) {
  * становится первым контентом, правильность которого не проверяет ничто.
  */
 async function checkSteps(pack, t) {
-  if (!runsCodeTrack(pack.track)) {
+  const steps = t.steps;
+  if (steps.some((s) => s.kind === 'compute') && !runsCodeTrack(pack.track)) {
     fail(t.id, `шаги есть, а исполнителя кода у трека «${pack.track}» нет — расчётный шаг некому выполнить`);
     return;
   }
-  const steps = t.steps;
   if (steps.length < 2) {
     fail(t.id, 'шагов меньше двух — одношаговое задание пишется без steps, иначе одно и то же записывается двумя способами');
     return;
   }
-  if (steps[0].kind !== 'compute') fail(t.id, 'первый шаг не расчётный — интерпретировать нечего');
+  /*
+   * «Собрать и объяснить»: первым шагом может быть `relate` (модель собирается руками, эталон выводится
+   * из внешних ключей, его держит test:relate). Интерпретация после него говорит об эталоне, а не о
+   * таблице результата, поэтому проверка чисел вопроса ниже к ней не применяется.
+   */
+  if (steps[0].kind !== 'compute' && steps[0].kind !== 'relate') fail(t.id, 'первый шаг не расчётный и не сборка модели — интерпретировать нечего');
   if (steps[steps.length - 1].kind !== 'interpret') {
     fail(t.id, 'последний шаг не интерпретация — задание заканчивается на числах, а не на их смысле');
   }
@@ -667,10 +672,20 @@ async function checkSteps(pack, t) {
 
   /** Результат последнего выполненного расчётного шага — то, о чём спрашивает интерпретация. */
   let lastResult = null;
+  let afterRelate = false;
 
   for (const [i, step] of steps.entries()) {
     const at = `${t.id} шаг ${i + 1}`;
     if (!step.hints?.length) fail(at, 'нет подсказок');
+
+    if (step.kind === 'relate') {
+      if (!step.question) fail(at, 'нет вопроса');
+      if ((step.relate?.tables ?? []).length < 2) fail(at, 'у relate меньше двух таблиц');
+      lastResult = null;
+      afterRelate = true;
+      console.log(`  ok   ${at} сборка модели (${step.relate.tables.length} таблиц, ${step.relate.traps.length} ловушек)`);
+      continue;
+    }
 
     if (step.kind === 'compute') {
       if (!step.goal) fail(at, 'нет формулировки результата (goal)');
@@ -736,7 +751,7 @@ async function checkSteps(pack, t) {
       if (!o.why || o.why.length < 40) fail(at, `у варианта «${o.label}» нет содержательного разбора`);
     }
     if (!lastResult) {
-      fail(at, 'нет результата предыдущего расчётного шага — интерпретировать нечего');
+      if (!afterRelate) fail(at, 'нет результата предыдущего расчётного шага — интерпретировать нечего');
       continue;
     }
     const strays = strayNumbers(step.question, lastResult);

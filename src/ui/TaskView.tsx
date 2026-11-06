@@ -15,7 +15,8 @@ import { AfterReply } from './AfterReply';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
 import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
-import { RelateStep, blankRelateState, type RelateState } from './RelateStep';
+import { RelateStep, blankRelateState, type RelateState, type RelateStepDef } from './RelateStep';
+import { flowOf } from '../engine/relate';
 
 /**
  * Экран задания.
@@ -402,6 +403,10 @@ export function TaskView({
    * прочитал бы под своими же числами «расчёт не сошёлся». Когда расчёт
    * сошёлся, обе таблицы совпадают по определению — на этом и стоит весь тип.
    */
+  const carriedModel =
+    step.kind === 'interpret' && prevStep?.kind === 'relate'
+      ? { step: prevStep, state: prevDraft?.relate ?? blankRelateState(prevStep, schema) }
+      : null;
   const carriedIsReference = step.kind === 'interpret' && prevDraft !== undefined && !prevDraft.wasCorrect;
 
   /**
@@ -562,7 +567,7 @@ export function TaskView({
           {steps.length > 1 && <span className="pill">{t.task.stepLabel(index + 1, steps.length)}</span>}
           {/* Схема таблиц не нужна там, где запрос не пишут: задание про
               разговор с заказчиком к dim_product отношения не имеет. */}
-          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && step.kind !== 'relate' && (
+          {!task.scenario && !task.figure && step.kind !== 'order' && step.kind !== 'waves' && step.kind !== 'relate' && prevStep?.kind !== 'relate' && (
             <button className="pill" onClick={() => onOpenSchema()} style={{ marginLeft: 'auto' }}>
               {t.task.schemaBtn}
             </button>
@@ -622,6 +627,7 @@ export function TaskView({
         executor={executor}
         schema={schema}
         carried={carried}
+        carriedModel={carriedModel}
         carriedIsReference={carriedIsReference}
         panelWords={panelWords}
         tables={tables}
@@ -692,6 +698,7 @@ function StepView({
   executor,
   schema,
   carried,
+  carriedModel,
   carriedIsReference,
   panelWords,
   tables,
@@ -708,6 +715,8 @@ function StepView({
   schema: SchemaDoc | null;
   /** Результат предыдущего расчётного шага — то, что интерпретируется. */
   carried: Preview | null;
+  /** Собранная на предыдущем шаге модель (шаг `relate`): её и интерпретирует следующий шаг. */
+  carriedModel: { step: RelateStepDef; state: RelateState } | null;
   /** Показанная таблица — эталон, а не результат человека (расчёт не сошёлся). */
   carriedIsReference: boolean;
   /** См. panelWords у TaskView. */
@@ -793,7 +802,7 @@ function StepView({
         ? draft.waves
         : blankWavesState(step)
       : undefined;
-  const relateState: RelateState | undefined = step.kind === 'relate' ? draft.relate ?? blankRelateState() : undefined;
+  const relateState: RelateState | undefined = step.kind === 'relate' ? draft.relate ?? blankRelateState(step, schema) : undefined;
   const runsCode = executor.runsCode !== false;
   /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
   const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
@@ -1174,6 +1183,23 @@ function StepView({
                 <pre className="scenario">{step.scenario}</pre>
               ) : step.predictSql ? (
                 <CodeBlock code={step.predictSql} />
+              ) : carriedModel ? (
+                /* После сборки модели интерпретируется сама модель: её связи списком, в колонку половинной ширины схема не помещается. */
+                <>
+                  <p className="muted" style={{ margin: '0 0 6px', fontSize: 12 }}>
+                    {t.task.relateBuilt}
+                  </p>
+                  <ul className="rel-built">
+                    {carriedModel.state.rels.map((r) => {
+                      const f = flowOf(r);
+                      return (
+                        <li key={`${r.a}|${r.b}`}>
+                          <code>{f ? f.to : r.a}</code> {'→'} <code>{f ? f.from : r.b}</code>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
               ) : carried ? (
                 <>
                   <ResultTable
@@ -1244,7 +1270,7 @@ function StepView({
                     solved: v.correct,
                     wasCorrect: v.correct,
                     wrongAttempts: d.wrongAttempts + (v.correct ? 0 : 1),
-                    feedback: v.correct ? { kind: 'correct' } : { kind: 'relateWrong', missing: v.missing, extra: v.extra, cards: v.cards },
+                    feedback: v.correct ? { kind: 'correct' } : { kind: 'relateWrong', missing: v.missing, extra: v.extra, cards: v.cards, dirs: v.dirs },
                   }))
                 }
               />

@@ -2800,6 +2800,108 @@
         "A dimension can point to a dimension. Where does region_id in dim_customer lead?"
       ],
       "explain": "A star model with one snowflake: the fact points to product, customer and date, and the customer points to the region. The region is not in the fact, the path goes through the customer, and a break on that path flattens the regional slice. The calendar is linked by date_id, not by week_start: a week has seven days, and a relationship on it would multiply the sales. \"1\" is always on the end of a key without repeats."
+    },
+    {
+      "id": "mdl-095",
+      "title": "Model relationships: find what is wrong",
+      "brief": "The Kanto sales lead opened the sell-out report by region and saw the same figure everywhere. You are checking the model between the gold layer and the report.",
+      "goal": "Use the report to find which relationship is missing or extra, and fix the model.",
+      "orderQuestion": "What is wrong in the model if every region shows the same amount?",
+      "relateTraps": [
+        {
+          "symptom": "Every region still shows the same amount {n}, equal to the grand total.",
+          "cause": "The defect is still there: dim_customer is not linked to dim_region, so the region filter never reaches the customers, and through them the sales. The fact has no region, it is stored on the customer.",
+          "fix": "Draw dim_customer.region_id to dim_region.region_id: \"1\" on the region, \"many\" on the customer.",
+          "business": "The sales lead still sees every region selling the same and does not trust the report."
+        },
+        {
+          "symptom": "The regions still show the same amount {n}: the region is linked to the customer, but the sales are not tied to customers.",
+          "cause": "A working relationship between the fact and the customer was removed. The region filter reaches dim_customer and stops there: the path to fact_sellout is broken.",
+          "fix": "Restore fact_sellout.customer_id to dim_customer.customer_id. The fix belongs where the region path breaks, not on a link that already worked.",
+          "business": "Time goes into repairing a healthy link while the report stays wrong."
+        },
+        {
+          "symptom": "Brands now show the same amount {n}: the brand slice stopped working.",
+          "cause": "The relationship between the fact and the product handled the brand. It was removed, so the brand filter no longer reaches the sales: fixing the region broke another slice.",
+          "fix": "Restore fact_sellout.product_id to dim_product.product_id. One defect gets one fix, and the rest stays untouched.",
+          "business": "A brand report that worked stops adding up, and the sales lead now has two problems instead of one."
+        },
+        {
+          "symptom": "The regional report adds up to only {n} of the total: the other sales landed in no region at all.",
+          "cause": "A customer number and a region number are different numberings. A relationship on them matches only where the numbers happen to be equal. The path to the region goes through the customer.",
+          "fix": "Remove this relationship and draw the region from dim_customer.region_id.",
+          "business": "Regional totals would be random, and no regional manager would recognise their own figures."
+        },
+        {
+          "symptom": "The model gets a many to many relationship although the key has no repeats: dim_region has {n} rows and just as many distinct region_id values.",
+          "cause": "\"Many\" only exists where a key repeats. In the region table each region_id has one row, so its end of the relationship is \"1\".",
+          "fix": "Region side \"1\", customer side \"many\".",
+          "business": "The report keeps calculating, but the guard against duplicate dimension rows is off: an accidental duplicate would quietly double sales."
+        }
+      ],
+      "hints": [
+        "Look at the report: what is odd about the figures, and how should regions differ?",
+        "Where is the customer region stored, and which table knows the region names?",
+        "Exactly one relationship needs fixing. Leave the working links alone."
+      ],
+      "explain": "A model error is found from the report, not from the diagram: the same amount in every region means the region filter never reached the sales. Follow the filter path from the slicer to the fact: region, customer, sales. A break on that path (here between dim_customer and dim_region) gives exactly this picture. Fix the relationship where the path breaks and nothing else: removing a working link breaks a neighbouring slice, and one error becomes two."
+    },
+    {
+      "id": "mdl-096",
+      "title": "Model relationships: sell-in and sell-out together",
+      "brief": "The Kanto sales lead wants one report showing how much stock the company shipped to distributors (sell-in) and how much the stores sold on (sell-out), by product and region. You are building the model between the gold layer and the report.",
+      "goal": "Build the relationships of two facts with shared dimensions, choose the filter direction, and explain whose region the slicer shows in sell-in.",
+      "explain": "Two facts with shared dimensions: sell-out and sell-in are not linked to each other, the shared dim_product joins them. Sell-in has no store: the receiver is a distributor stored in dim_customer, so the region in sell-in is the distributor region, not the store region. Direction \"one\" (from the dimension to the facts) is the default; \"both\" blurs the slicers and is switched on deliberately, when you can name the reason and the consequence.",
+      "steps": [
+        {
+          "question": "Which relationships do you need so product and region filter both facts, and which way should the filter go?",
+          "relateTraps": [
+            {
+              "symptom": "The sell-out total by product grew about {n} times: each sell-out row finds all the sell-in rows of the same product.",
+              "cause": "A relationship between two facts is many to many: the product repeats on both sides, so each row of one fact multiplies across all rows of the other. The shared dim_product dimension is the bridge.",
+              "fix": "Remove the fact to fact relationship. Both facts are linked to dim_product, and a product slicer acts on each of them separately.",
+              "business": "The report says the stores sold many times more than possible, and no check against accounting will ever match."
+            },
+            {
+              "symptom": "One brand is selected and the customer list keeps only {n} of {m}: the rest vanished from the slicer.",
+              "cause": "Direction \"both\" lets the filter travel from the fact back to the dimension: the brand narrows the fact, and the fact narrows the customer list. A dimension should show everyone, and the filter flows from it to the facts.",
+              "fix": "Put \"one\" back on the relationships between dimensions and facts. Use \"both\" only where you can name the reason and the consequence.",
+              "business": "The sales lead picks a brand and stops seeing the customers who never bought it, which are the most interesting ones for sales."
+            },
+            {
+              "symptom": "Every region shows the same sell-in amount {n}, equal to the grand total.",
+              "cause": "Sell-in has no store and no region: the receiver is stored in distributor_id, and distributors live in dim_customer. Without this relationship the region slicer never reaches sell-in.",
+              "fix": "Draw fact_sellin.distributor_id to dim_customer.customer_id: \"1\" on the dimension, \"many\" on the fact.",
+              "business": "The sales lead will conclude shipments are the same in every region and set quotas based on an empty picture."
+            }
+          ],
+          "hints": [
+            "Sell-in has no store. Who is the receiver of the goods there, and which dimension stores them?",
+            "The two facts are not linked to each other. Which table do they both share?",
+            "Direction \"both\" is only for places where you can name its reason. Here the filter flows from dimension to facts."
+          ]
+        },
+        {
+          "question": "A region slicer is applied to the sell-in report. Whose region does it show?",
+          "options": [
+            {
+              "label": "The region of the distributor that received the shipment: sell-in links to dim_customer through distributor_id, and the region comes from that row",
+              "why": "Distributors are stored in the same dim_customer table as stores, and each has a region_id. The slicer follows the distributor_id relationship and takes the distributor warehouse region, not the region of the store the goods reached later."
+            },
+            {
+              "label": "The region of the store that later sold the goods: sell-in knows the end stores",
+              "why": "Sell-in has no store: a row describes a shipment to a distributor. A store appears only in sell-out, and the facts are not linked, so the filter cannot travel from sell-in to a store."
+            },
+            {
+              "label": "None: sell-in cannot be sliced by region because it has no region column",
+              "why": "The fact really has no region column, but the slicer does not work through a fact column, it works through a path of relationships: distributor_id leads to dim_customer, which leads to dim_region. The path exists once the relationship is drawn."
+            }
+          ],
+          "hints": [
+            "Which sell-in column links to dim_customer, and who is stored in that column?"
+          ]
+        }
+      ]
     }
   ]
 }

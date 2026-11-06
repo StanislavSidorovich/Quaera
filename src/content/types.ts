@@ -109,9 +109,10 @@ export interface RelateTrap {
    * - `drew`: провёл связь между колонками `a` и `b` (порядок не важен), которой нет в эталоне;
    * - `touch`: провёл любую связь с колонкой таблицы `table`;
    * - `missing`: не провёл эталонную связь между `a` и `b`;
-   * - `keyMany`: у эталонной связи на стороне первичного ключа отмечено «много».
+   * - `keyMany`: у эталонной связи на стороне первичного ключа отмечено «много»;
+   * - `both`: у любой связи направление фильтра «оба» (только в заданиях с переключателем направления).
    */
-  kind: 'drew' | 'touch' | 'missing' | 'keyMany';
+  kind: 'drew' | 'touch' | 'missing' | 'keyMany' | 'both';
   a?: string;
   b?: string;
   table?: string;
@@ -120,15 +121,42 @@ export interface RelateTrap {
   /** Как показывать число: целое, деньги или число с запятой. */
   fmt?: 'int' | 'money' | 'num';
   n?: number;
+  /** Второе число симптома (`{m}` в тексте), например «до» при `n` «после»: считает `sql2`. */
+  sql2?: string;
+  m?: number;
   symptom: string;
   cause: string;
   fix: string;
   business: string;
 }
 
+/**
+ * Дефект задания «Найдите, что не так»: модель собрана по эталону, кроме одной связи.
+ * - `missing`: связи между `a` и `b` нет, а нужна;
+ * - `drew`: лишняя связь между `a` и `b` (вместо эталонной между `replaces.a` и `replaces.b`, если она задана).
+ * Рядом показан фрагмент отчёта с симптомом: его строки считает запрос `report.sql` к Kaiyo,
+ * гейт test:relate сверяет сохранённые `report.rows` с результатом запроса.
+ */
+export interface RelateDefect {
+  kind: 'missing' | 'drew';
+  a: string;
+  b: string;
+  replaces?: { a: string; b: string };
+  report: {
+    sql: string;
+    /** Заголовки столбцов: алиасы запроса, не переводятся. */
+    head?: string[];
+    rows?: (string | number)[][];
+  };
+}
+
 export interface RelateSpec {
   tables: RelateTable[];
   traps: RelateTrap[];
+  /** Подложенный дефект: модель уже собрана, человек чинит. */
+  defect?: RelateDefect;
+  /** Показывать переключатель направления фильтра («одно» / «оба») на середине каждой связи. */
+  directions?: boolean;
 }
 
 export interface RelateTrapTranslation {
