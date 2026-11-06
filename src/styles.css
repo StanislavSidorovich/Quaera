@@ -329,8 +329,8 @@ textarea.sql {
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 16px 12px 20px;
+  gap: 8px;
+  padding: 8px 12px 6px;
   /*
    * Высота в окно — ради одного: строке копирайта есть куда прижаться
    * (`margin-top: auto` ниже). Делится на `--zoom`, потому что `vh` про zoom
@@ -374,7 +374,7 @@ textarea.sql {
 }
 
 .side-group h2 {
-  margin: 0 0 6px;
+  margin: 0 0 2px;
   padding: 0 10px;
   font-size: 10.5px;
   font-weight: 600;
@@ -388,12 +388,12 @@ textarea.sql {
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 36px;
-  padding: 8px 10px;
+  min-height: 32px;
+  padding: 4px 10px;
   border-radius: 9px;
   text-align: left;
   font-size: var(--fs-text);
-  line-height: 1.35;
+  line-height: 1.25;
   color: var(--text);
 }
 
@@ -421,7 +421,8 @@ textarea.sql {
 .side-track {
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 3px;
+  padding-block: 4px;
 }
 
 .side-track[aria-pressed='true'] {
@@ -508,8 +509,8 @@ textarea.sql {
 }
 
 .side-foot {
-  margin-top: 2px;
-  padding-top: 12px;
+  margin-top: 0;
+  padding-top: 8px;
   border-top: 1px solid var(--line);
 }
 
@@ -526,9 +527,9 @@ textarea.sql {
  */
 .sidebar-legal {
   margin: auto 0 0;
-  padding: 16px 10px 0;
+  padding: 8px 10px 0;
   font-size: var(--fs-label);
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--text-dim);
 }
 
