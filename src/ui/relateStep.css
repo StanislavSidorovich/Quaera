@@ -294,6 +294,8 @@
 /* Фрагмент отчёта с симптомом (задание «Найдите, что не так»). */
 .rel-report {
   margin: 0;
+  min-width: 0;
+  overflow-x: auto;
   padding: 8px 10px;
   background: var(--bg-sunken);
   border: 1px solid var(--line);
@@ -320,9 +322,9 @@
 }
 
 .rel-report th {
-  font-family: var(--font-mono, monospace);
   font-size: var(--fs-micro);
   font-weight: 600;
+  vertical-align: bottom;
   color: var(--text-dim);
 }
 
