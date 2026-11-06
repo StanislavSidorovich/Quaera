@@ -380,6 +380,62 @@ function readOverviewOpenOnBoot(): boolean {
 const OVERVIEW_OPEN_ON_BOOT = readOverviewOpenOnBoot();
 
 /**
+ * `?task=mdl-093,mdl-095` — занятие ровно из этих заданий, в этом порядке.
+ * Нужно, чтобы показать конкретное задание на разговоре или в обзоре, не
+ * проходя трек. Гейтов прогресса не обходит: решение засчитывается как
+ * обычно, само ничего решённым не отмечает. Параметр стирается из адреса
+ * и переживает перезагрузку service worker тем же приёмом, что `?roles`.
+ */
+function readTaskLinkOnBoot(): string[] | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    let value: string | null;
+    if (!params.has('task')) {
+      const pending = sessionStorage.getItem(TASK_PENDING_KEY);
+      const reloaded = sessionStorage.getItem(SW_RELOAD_KEY);
+      sessionStorage.removeItem(TASK_PENDING_KEY);
+      if (!pending || !reloaded) return null;
+      value = pending;
+    } else {
+      value = params.get('task') ?? '';
+      sessionStorage.setItem(TASK_PENDING_KEY, value);
+      params.delete('task');
+      const rest = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    }
+    const ids = value.split(',').map((s) => s.trim()).filter(Boolean);
+    return ids.length ? ids : null;
+  } catch {
+    return null;
+  }
+}
+const TASK_PENDING_KEY = 'quaera-task-pending';
+const TASK_LINK_ON_BOOT = readTaskLinkOnBoot();
+
+/**
+ * Очередь по ссылке `?task=`. Трек занятия задаёт первое найденное задание:
+ * исполнитель и схема приходят из трека, и смешать в одном занятии SQL и
+ * pandas нельзя, поэтому задания чужого трека молча пропускаются, как и
+ * неизвестные id.
+ */
+function taskLinkQueue(ids: string[], locale: Locale): { track: Track; queue: Step[] } | null {
+  let track: Track | null = null;
+  const queue: Step[] = [];
+  for (const id of ids) {
+    for (const t of ALL_TRACKS) {
+      if (track && t !== track) continue;
+      const task = packForTrack(t, locale)?.tasks.find((x) => x.id === id);
+      if (task) {
+        track = t;
+        queue.push({ kind: 'task', task });
+        break;
+      }
+    }
+  }
+  return track && queue.length ? { track, queue } : null;
+}
+
+/**
  * Старая сюжетная линия (выведенная из графа) убрана из интерфейса на время
  * валидации режима истории: два «сюжетных» входа рядом путали пользователя.
  * Это флаг видимости, а не удаление — код и экран линии живы; когда решится
@@ -766,6 +822,10 @@ function initialBoot(locale: Locale): Boot {
    * где вкладку закрыли в прошлый раз, и всё остальное. Ничего, кроме
    * локали, ему не нужно — контента вне пака у него нет.
    */
+  if (TASK_LINK_ON_BOOT) {
+    const link = taskLinkQueue(TASK_LINK_ON_BOOT, locale);
+    if (link) return { screen: { name: 'session', queue: link.queue, index: 0, maxIndex: 0 }, ...empty, track: link.track };
+  }
   if (GUIDE_ON_BOOT) return { screen: { name: 'home' }, ...empty };
   if (INTRO_OPEN_ON_BOOT) return { screen: { name: 'intro' }, ...empty };
   if (ROLES_OPEN_ON_BOOT)
