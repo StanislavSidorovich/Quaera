@@ -324,12 +324,20 @@ textarea.sql {
  * страницы (иначе граница справа обрывается там, где кончились пункты),
  * а растянутому элементу некуда двигаться внутри собственной области.
  */
+/*
+ * Запас на высоких окнах: пункты разъезжаются на свободное место, а не
+ * оставляют пустоту внизу колонки. `--side-air` равен нулю на 720px и растёт
+ * до 10px к ~1000px (высота окна делится на --zoom, как у block-size ниже), так что
+ * на 1366×768 и 1280×720 плотность прежняя, а переполнения запас создать
+ * не может: начинается он с 760px, где меню помещается с запасом.
+ */
 .sidebar-inner {
+  --side-air: clamp(0px, calc((100vh / var(--zoom) - 760px) / 24), 10px);
   position: sticky;
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(8px + 2 * var(--side-air));
   padding: 8px 12px 6px;
   /*
    * Высота в окно — ради одного: строке копирайта есть куда прижаться
@@ -389,7 +397,7 @@ textarea.sql {
   gap: 10px;
   width: 100%;
   min-height: 32px;
-  padding: 4px 10px;
+  padding: calc(4px + var(--side-air)) 10px;
   border-radius: 9px;
   text-align: left;
   font-size: var(--fs-text);
@@ -422,7 +430,7 @@ textarea.sql {
   flex-direction: column;
   align-items: stretch;
   gap: 3px;
-  padding-block: 4px;
+  padding-block: calc(4px + var(--side-air) * 0.6);
 }
 
 .side-track[aria-pressed='true'] {
