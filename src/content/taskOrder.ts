@@ -12,7 +12,7 @@ import type { Task } from './types';
  * ровно та ступень строительных лесов, между которой и `fill` разницы почти
  * нет по усилию и есть по тому, что проверяется: порядок против фрагмента.
  */
-export const MODE_RANK: Record<Task['mode'], number> = { predict: 0, order: 1, waves: 1, relate: 1, spot: 1, fill: 2, write: 3 };
+export const MODE_RANK: Record<Task['mode'], number> = { predict: 0, order: 1, waves: 1, relate: 1, spot: -1, fill: 2, write: 3 };
 
 /**
  * Компаратор «образец → достраивание → с нуля»: уровень задаёт трудность
