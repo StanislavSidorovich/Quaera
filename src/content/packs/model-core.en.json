@@ -2847,6 +2847,45 @@
       "explain": "A model error is found from the report, not from the diagram: the same amount in every region means the region filter never reached the sales. Follow the filter path from the slicer to the fact: region, customer, sales. A break on that path (here between dim_customer and dim_region) gives exactly this picture. Fix the relationship where the path breaks and nothing else: removing a working link breaks a neighbouring slice, and one error becomes two."
     },
     {
+      "id": "mdl-097",
+      "title": "Model relationships: figures above the books",
+      "brief": "The finance controller reconciles the weekly revenue of the report with accounting, and the report figures are seven times higher. You are checking the model between the gold layer and the report.",
+      "goal": "Use the report to find the extra relationship, remove it and draw the right one.",
+      "orderQuestion": "Why is the weekly revenue in the report several times higher than in accounting?",
+      "relateTraps": [
+        {
+          "symptom": "Revenue in the report is still almost {n} times higher than in accounting: the relationship on week_start is still there.",
+          "cause": "dim_date has one row per day, so week_start repeats seven times there. A relationship on it is many to many: a weekly sale multiplies across all its days.",
+          "fix": "Remove the relationship on week_start and link the fact week_start to the calendar date_id: a date appears once, and a week finds exactly one row.",
+          "business": "The controller cannot reconcile the report with accounting, and every figure needs a caveat."
+        },
+        {
+          "symptom": "Every week and every month shows the same total {n}: the extra relationship was removed, but the right one is missing.",
+          "cause": "Without a relationship to the calendar, a week filter never reaches the sales. The figures stopped being inflated, but the time slicer does not work at all.",
+          "fix": "Draw fact_sellout.week_start to dim_date.date_id: \"1\" on the calendar, \"many\" on the fact.",
+          "business": "The report reconciles with accounting only as a whole, and by week the controller still cannot check anything."
+        },
+        {
+          "symptom": "Now every region shows the same amount {n}: the region slicer stopped working.",
+          "cause": "The relationship between the fact and the customer handled the region. It was removed, so the region filter no longer reaches the sales: fixing the weeks broke another slice.",
+          "fix": "Restore fact_sellout.customer_id to dim_customer.customer_id. The defect is in the calendar, and the customer link is correct.",
+          "business": "The calendar is not fixed, and a regional report that worked stopped adding up: there are two problems now."
+        },
+        {
+          "symptom": "The model gets a many to many relationship although the key has no repeats: dim_date has {n} rows and just as many distinct date_id values.",
+          "cause": "\"Many\" only exists where a key repeats. In the calendar each date has one row, so its end of the relationship is \"1\".",
+          "fix": "Calendar side \"1\", fact side \"many\".",
+          "business": "The report keeps calculating, but the guard against duplicate rows in the calendar is off: an accidental duplicate would quietly double sales."
+        }
+      ],
+      "hints": [
+        "Compare the two report columns: how many times do they differ, and what repeats that many times in the calendar?",
+        "The calendar has one row per day. Which of its columns repeats and which does not?",
+        "Only one spot needs fixing: remove the extra relationship and draw the right one. The other relationships work."
+      ],
+      "explain": "Figures inflated several times over almost always mean rows multiplied somewhere. Here it is the relationship from the fact to the calendar on week_start: in dim_date a week repeats for each of its seven days, and every sale finds seven rows. The calendar is linked on date_id, where each value appears once. The fix has two actions: remove the extra relationship and draw the right one. The first alone is not enough, because the time slicer disappears, and the working relationships should stay untouched."
+    },
+    {
       "id": "mdl-096",
       "title": "Model relationships: sell-in and sell-out together",
       "brief": "The Kanto sales lead wants one report showing how much stock the company shipped to distributors (sell-in) and how much the stores sold on (sell-out), by product and region. You are building the model between the gold layer and the report.",

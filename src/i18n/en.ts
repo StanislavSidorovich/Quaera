@@ -902,7 +902,7 @@ export const en = {
     relateDirLabel: 'Filter',
     relateDirGroup: (a: string, b: string) => `Filter direction of the relationship ${a} and ${b}`,
     relateDirAria: (a: string, b: string, dir: string) => `Filter of the relationship ${a} and ${b}: ${dir}. Press to switch`,
-    relateReportTitle: 'Report fragment as the sales lead sees it',
+    relateReportTitle: 'Report fragment',
     relateNoteDefect: 'The model is built, but it has one defect. Find it from the report and fix it: remove the extra relationship or draw the missing one.',
     relateNoteDir: 'In the middle of each relationship choose where the filter goes: "one" (from "1" to "many") or "both".',
     relateWrongDirs: 'The relationships are in place, but one of them filters both ways.',
