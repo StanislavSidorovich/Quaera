@@ -21,7 +21,7 @@ import {
 } from '../engine/relate';
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
-import { LAYOUT, buildSchemaLayout, type LayoutNode } from './schemaLayout';
+import { LAYOUT, buildSchemaLayout, type LayoutNode, type SchemaLayout } from './schemaLayout';
 import './relateStep.css';
 
 /**
@@ -82,6 +82,30 @@ type Pt = { x: number; y: number };
 /** Запас справа под дуги связей внутри одной колонки таблиц. */
 const ARC_ROOM = 72;
 
+/**
+ * Узкая раскладка столбцом: факты сверху, справочники под ними, все узлы одной ширины.
+ * Двух колонок рядом на 375 px нет, поэтому порядок узлов тот же (факты, справочники, сырой слой),
+ * а подписи групп стоят над своими блоками. Линий на узком экране нет: связи видны подсветкой строк
+ * и списком ниже.
+ */
+function stackLayout(layout: SchemaLayout): SchemaLayout & { dimLabelY: number | null } {
+  const width = Math.max(...layout.nodes.map((n) => n.w));
+  let y: number = LAYOUT.headerH;
+  let dimLabelY: number | null = null;
+  let seenDim = false;
+  const nodes = layout.nodes.map((n) => {
+    if (n.group === 'dimension' && !seenDim) {
+      seenDim = true;
+      if (layout.nodes.some((x) => x.group === 'fact')) y += LAYOUT.headerH;
+      dimLabelY = y - 12;
+    }
+    const dy = y - n.y;
+    y += n.h + LAYOUT.gapY;
+    return { ...n, x: 0, y: n.y + dy, w: width, rows: n.rows?.map((r) => ({ ...r, y: r.y + dy })) };
+  });
+  return { ...layout, nodes, edges: [], width, height: y - LAYOUT.gapY, dimLabelX: 0, dimLabelY };
+}
+
 interface Props {
   step: RelateStepDef;
   schema: SchemaDoc | null;
@@ -103,8 +127,9 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
   const layout = useMemo(() => {
     if (!schema) return null;
     const columns = Object.fromEntries(spec.tables.map((x) => [x.table, x.columns]));
-    return buildSchemaLayout(subsetDoc(schema, shown), { columns });
-  }, [schema, spec, shown]);
+    const wide = buildSchemaLayout(subsetDoc(schema, shown), { columns });
+    return narrow ? stackLayout(wide) : { ...wide, dimLabelY: null };
+  }, [schema, spec, shown, narrow]);
 
   const nodeByTable = useMemo(() => new Map((layout?.nodes ?? []).map((n) => [n.table, n])), [layout]);
   const rowY = (key: string): number | null => {
@@ -436,22 +461,23 @@ export function RelateStep({ step, schema, state, solved, onState, onResult }: P
         <div className="schema-map-wrap rel-map">
           <svg
             className="schema-map"
-            width={layout.width + ARC_ROOM + 4}
+            width={layout.width + (narrow ? 0 : ARC_ROOM) + 4}
             height={layout.height + 4}
-            viewBox={`-2 -2 ${layout.width + ARC_ROOM + 4} ${layout.height + 4}`}
+            viewBox={`-2 -2 ${layout.width + (narrow ? 0 : ARC_ROOM) + 4} ${layout.height + 4}`}
+            style={narrow ? { maxWidth: '100%', height: 'auto' } : undefined}
             role="group"
             aria-label={T.relateMapAria}
           >
             <text className="schema-map-caption" x={layout.factLabelX} y={layout.labelY}>
               {t.data.mapFactsLabel}
             </text>
-            <text className="schema-map-caption" x={layout.dimLabelX} y={layout.labelY}>
+            <text className="schema-map-caption" x={layout.dimLabelX} y={layout.dimLabelY ?? layout.labelY}>
               {t.data.mapDimsLabel}
             </text>
-            {state.rels.map((r, i) => (geom[i] ? <path key={`${r.a}|${r.b}`} className="rel-line" d={geom[i]!.d} /> : null))}
+            {!narrow && state.rels.map((r, i) => (geom[i] ? <path key={`${r.a}|${r.b}`} className="rel-line" d={geom[i]!.d} /> : null))}
             {layout.nodes.map(node)}
-            {state.rels.map((r, i) => [pill(r, i, 'a'), pill(r, i, 'b')])}
-            {withDirs && state.rels.map((r, i) => midPill(r, i))}
+            {!narrow && state.rels.map((r, i) => [pill(r, i, 'a'), pill(r, i, 'b')])}
+            {!narrow && withDirs && state.rels.map((r, i) => midPill(r, i))}
           </svg>
         </div>
       )}
