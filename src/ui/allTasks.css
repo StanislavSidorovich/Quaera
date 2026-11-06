@@ -1,0 +1,155 @@
+/* Шторка «Все задания» (AllTasksSheet.tsx). Каркас .sheet общий со шторкой схемы. */
+
+@media (min-width: 700px) {
+  .sheet.all-tasks {
+    left: 50%;
+    right: auto;
+    width: min(760px, 100%);
+    transform: translateX(-50%);
+  }
+}
+
+.all-tasks-count {
+  margin-left: 6px;
+  font-size: var(--fs-small, 13px);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.all-tasks-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.all-tasks-chip {
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.all-tasks-chip.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.all-tasks-group {
+  margin-top: 14px;
+}
+
+.all-tasks-group h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.all-tasks-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.all-tasks-tile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.all-tasks-tile:hover,
+.all-tasks-tile:focus-visible {
+  border-color: var(--accent);
+}
+
+.all-tasks-tile.is-solved {
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.all-tasks-glyph {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.all-tasks-check {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.all-tasks-legend {
+  margin: 16px 0 0;
+  font-size: 13px;
+}
+
+/* Кнопка в шапке занятия и на карте навыков. */
+.all-tasks-open {
+  font-size: 15px;
+}
+
+.skill-map-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.skill-map-title-row h2 {
+  margin: 0;
+}
+
+.btn-all-tasks {
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Телефон: в шапке занятия кнопка встаёт в ту же верхнюю строку, перед «⋯». */
+@media (max-width: 599px) {
+  .topbar.topbar-session.topbar-session {
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+    grid-template-areas:
+      'back . prev skip tasks more'
+      'title title title title title title'
+      'dots dots dots dots dots dots'
+      'tools tools tools tools tools tools';
+  }
+
+  .topbar-alltasks {
+    grid-area: tasks;
+  }
+}

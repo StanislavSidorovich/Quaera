@@ -1787,6 +1787,26 @@ export const ru = {
     expectedResult: (shown: number, total: string) => `Так выглядит эталон (первые ${shown} из ${total})`,
     blankAriaLabel: (n: number) => `Пропуск ${n}`,
   },
+  allTasks: {
+    open: 'Все задания',
+    title: 'Все задания',
+    closeBtn: 'Закрыть',
+    filterAria: 'Показать задания',
+    filterAll: 'Все',
+    filterInteractive: 'Интерактивные',
+    modes: {
+      predict: 'Предсказать',
+      fill: 'Достроить',
+      write: 'Написать',
+      order: 'Порядок',
+      waves: 'Волны',
+      relate: 'Связи',
+      spot: 'Найти ошибки',
+    },
+    tileAria: (n: number, title: string, mode: string, solved: boolean) =>
+      `${n}. ${title}. ${mode}${solved ? '. Решено' : ''}`,
+    legend: '✓ решено. Значки: ? предсказать, ↕ порядок, ≋ волны, ⇄ связи, ◎ найти ошибки. Выбранное задание откроется вместе с остальными заданиями навыка.',
+  },
   schema: {
     title: 'Схема данных',
     loading: 'Загружаю схему…',

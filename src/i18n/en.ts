@@ -999,6 +999,26 @@ export const en = {
     expectedResult: (shown: number, total: string) => `This is what the reference looks like (first ${shown} of ${total})`,
     blankAriaLabel: (n: number) => `Blank ${n}`,
   },
+  allTasks: {
+    open: 'All tasks',
+    title: 'All tasks',
+    closeBtn: 'Close',
+    filterAria: 'Show tasks',
+    filterAll: 'All',
+    filterInteractive: 'Interactive',
+    modes: {
+      predict: 'Predict',
+      fill: 'Complete',
+      write: 'Write',
+      order: 'Order',
+      waves: 'Waves',
+      relate: 'Relate',
+      spot: 'Spot errors',
+    },
+    tileAria: (n: number, title: string, mode: string, solved: boolean) =>
+      `${n}. ${title}. ${mode}${solved ? '. Solved' : ''}`,
+    legend: '✓ solved. Icons: ? predict, ↕ order, ≋ waves, ⇄ relate, ◎ spot errors. The task you pick opens together with the rest of its skill.',
+  },
   schema: {
     title: 'Data schema',
     loading: 'Loading schema…',

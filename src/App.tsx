@@ -40,6 +40,7 @@ import { ToolsCompare } from './ui/ToolsCompare';
 import { DataMap } from './ui/DataMap';
 import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
+import { AllTasksSheet, taskIdsFrom } from './ui/AllTasksSheet';
 import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
 import { Sidebar, IconAccount, IconStory, IconBook, IconFlask, IconTable, IconCompass, type SidebarSection } from './ui/Sidebar';
 import { usePairHighlight } from './ui/pairHighlight';
@@ -939,6 +940,8 @@ export default function App() {
    */
   const [pythonReady, setPythonReady] = useState(false);
   const [schemaOpen, setSchemaOpen] = useState(false);
+  /** Шторка «Все задания»: свободный переход к любому заданию трека. */
+  const [allTasksOpen, setAllTasksOpen] = useState(false);
   /** Какую таблицу раскрыть при открытии шторки — см. openSchema. null — общий вход, без фокуса. */
   const [schemaTable, setSchemaTable] = useState<string | null>(null);
   const [showExitHint, setShowExitHint] = useState(false);
@@ -1350,6 +1353,10 @@ export default function App() {
   useEffect(() => {
     schemaOpenRef.current = schemaOpen;
   }, [schemaOpen]);
+  const allTasksOpenRef = useRef(allTasksOpen);
+  useEffect(() => {
+    allTasksOpenRef.current = allTasksOpen;
+  }, [allTasksOpen]);
   // Текущий экран читаем через ref, а не из замыкания: обработчик popstate
   // сам вызывает setState (и side-effect'ы вроде pushState/таймера), а делать
   // это внутри функционального апдейтера setScreen нельзя — React вправе
@@ -1376,6 +1383,11 @@ export default function App() {
       // её, а не менять экран под ней (тот и не виден, пока шторка открыта).
       if (schemaOpenRef.current) {
         setSchemaOpen(false);
+        history.pushState(null, '');
+        return;
+      }
+      if (allTasksOpenRef.current) {
+        setAllTasksOpen(false);
         history.pushState(null, '');
         return;
       }
@@ -1742,6 +1754,20 @@ export default function App() {
     recordedTasksRef.current = new Set(stored.recorded);
     const maxIndex = Math.min(Math.max(stored.maxIndex, 0), queue.length - 1);
     setScreen({ name: 'session', queue, index: Math.min(Math.max(stored.index, 0), maxIndex), maxIndex });
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
+   * Переход к заданию из шторки «Все задания»: занятие начинается с выбранного
+   * задания и продолжается остальными заданиями его навыка. Очередь собирает
+   * та же функция, что и для ссылки `?task=`, поэтому гейты и учёт прогресса
+   * те же: сам переход ничего решённым не отмечает.
+   */
+  function openTaskFromPanel(taskId: string) {
+    const link = taskLinkQueue(taskIdsFrom(activePack, taskId), locale);
+    if (!link) return;
+    setAllTasksOpen(false);
+    startQueue(link.queue);
     window.scrollTo({ top: 0 });
   }
 
@@ -2476,6 +2502,17 @@ export default function App() {
            * точек прогресса.
            */}
           {screen.name === 'session' && (
+            <button
+              className="icon-btn topbar-alltasks all-tasks-open"
+              onClick={() => setAllTasksOpen(true)}
+              aria-label={t.allTasks.open}
+              title={t.allTasks.open}
+              aria-haspopup="dialog"
+            >
+              ▦
+            </button>
+          )}
+          {screen.name === 'session' && (
             <button className="icon-btn topbar-skip" onClick={() => advance()} aria-label={t.session.skipAria}>
               ⏭
             </button>
@@ -2627,6 +2664,7 @@ export default function App() {
               onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
+              onOpenAllTasks={() => setAllTasksOpen(true)}
               onOpenTrackIntro={activePack.intro ? () => openTrackIntro(activeTrack) : undefined}
               onOpenStory={() => setScreen({ name: 'story' })}
               storyAt={storyAt}
@@ -3050,6 +3088,15 @@ export default function App() {
             setSchemaOpen(false);
             setSchemaTable(null);
           }}
+        />
+      )}
+
+      {allTasksOpen && (
+        <AllTasksSheet
+          pack={activePack}
+          isSolved={(id) => progress.taskRecords[id]?.solved === true}
+          onPick={openTaskFromPanel}
+          onClose={() => setAllTasksOpen(false)}
         />
       )}
 
@@ -3579,6 +3626,7 @@ function Home({
   onOpenOnboarding,
   onSwitchTrack,
   onStartSkill,
+  onOpenAllTasks,
   onOpenTrackIntro,
   onOpenStory,
   storyAt,
@@ -3625,6 +3673,8 @@ function Home({
   onSwitchTrack: (track: Track) => void;
   /** Практика по одной теме прямо с карты навыков — не через подбор занятия. */
   onStartSkill: (skillId: string) => void;
+  /** Шторка «Все задания» трека. */
+  onOpenAllTasks: () => void;
   /** Вводная карточка трека. undefined — у трека intro ещё не написан, кнопку не показываем. */
   onOpenTrackIntro?: () => void;
   onOpenStory: () => void;
@@ -4422,7 +4472,12 @@ function Home({
            */}
           {ready && !(isNewUser && onOpenStoryMode) && <DataMapTeaser onOpen={onOpenMap} />}
           <div className="card">
-            <h2>{t.home.skillMapTitle}</h2>
+            <div className="skill-map-title-row">
+              <h2>{t.home.skillMapTitle}</h2>
+              <button type="button" className="btn-all-tasks" aria-haspopup="dialog" onClick={onOpenAllTasks}>
+                {t.allTasks.open}
+              </button>
+            </div>
             {/*
              * Прокрутка внутри блока, а не по всей странице — карта на 20
              * навыков (domain) иначе растягивает .dash-side втрое выше
