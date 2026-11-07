@@ -1,0 +1,47 @@
+/* Строка «до роли» на главной вернувшегося: одна строка, ссылка справа, на узком экране ссылка переносится. */
+.role-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 16px;
+  margin: 0 0 12px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+.role-strip-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+.role-strip-link:hover {
+  text-decoration: underline;
+}
+
+/*
+ * Ряд «ссылка на описание + до роли». Ссылка выше задумана во всю ширину
+ * (.link-row), здесь ей возвращена ширина по тексту, чтобы строка поместилась
+ * рядом; на узком экране обе части встают друг под другом, сгиб не страдает:
+ * ряд стоит ниже карточки занятия.
+ */
+.home-aux {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 24px;
+}
+.home-aux > .link-row {
+  width: auto;
+}
+.home-aux > .role-strip {
+  flex: 1 1 280px;
+  justify-content: flex-end;
+}
+.dashboard > .role-strip {
+  margin-top: 12px;
+}

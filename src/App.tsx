@@ -35,6 +35,7 @@ import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
 import { StoryWhereYouAre } from './ui/StoryWhereYouAre';
 import { ReturnStoryCard } from './ui/ReturnStoryCard';
+import { RoleStrip } from './ui/RoleStrip';
 import { useMinWidth } from './ui/useMinWidth';
 import { StoryWeekArt } from './ui/StoryWeekArt';
 import { DayOnePreview } from './ui/DayOnePreview';
@@ -4300,15 +4301,19 @@ function Home({
        * переключателем треков: это вопрос про тренажёр целиком, до выбора
        * конкретного трека, а не после.
        */}
-      <button
-        ref={chooserRef}
-        type="button"
-        className="link-row"
-        onClick={onOpenAbout}
-        style={{ margin: '0 0 12px' }}
-      >
-        {t.about.entryLink}
-      </button>
+      <div className={returnBand ? 'home-aux' : undefined}>
+        <button
+          ref={chooserRef}
+          type="button"
+          className="link-row"
+          onClick={onOpenAbout}
+          style={{ margin: '0 0 12px' }}
+        >
+          {t.about.entryLink}
+        </button>
+        {/* Вернувшемуся: «до роли» в той же строке, что и ссылка выше, чтобы не сдвигать карточки треков вниз (замер сгиба в roleStrip.css). */}
+        {returnBand && <RoleStrip progress={progress} onOpen={onOpenCareer} />}
+      </div>
 
       {/*
        * Довод «почему SQL» — над выбором, а не под карточками (было заведено
@@ -4414,6 +4419,8 @@ function Home({
           )}
 
           {!returnBand && heroBlock}
+          {/* Узкий экран и планшет: строка «до роли» идёт под занятием, а не над ним, чтобы кнопка занятия не уехала вниз. */}
+          {!returnBand && !isNewUser && heroBlock && <RoleStrip progress={progress} onOpen={onOpenCareer} />}
 
           {!ready && (
             <div className="card">
