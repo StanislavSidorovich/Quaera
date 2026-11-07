@@ -29,6 +29,8 @@ export interface CareerAxis extends AxisDef {
   title: Text;
   /** Чем тренажёр покрывает ось и чем нет, одной фразой. */
   note: Text;
+  /** Короткое имя для подписи на паутинке. */
+  short: Text;
 }
 
 export interface CareerRole extends RoleDef {
@@ -38,6 +40,16 @@ export interface CareerRole extends RoleDef {
   hybrid: Text;
   /** Что в роли уже берёт на себя ИИ и что остаётся человеку. */
   ai: Text;
+  /** Сколько вакансий выборки у роли (`vacancies.total` всего). */
+  ads: number;
+  /** Сколько из них называют Excel, английский и коммуникацию; у ролей с малой выборкой поля нет. */
+  outside?: Outside;
+}
+
+export interface Outside {
+  excel: number;
+  english: number;
+  comms: number;
 }
 
 export interface CareerStage {
@@ -64,6 +76,11 @@ export interface CareerEvidence extends EvidenceDef {
 }
 
 interface CareerData {
+  /**
+   * Выборка вакансий, на которой стоят цели ролей. Число одно: хаб обновляет
+   * его вместе с `ads` и `outside` ролей, когда разбирает новую партию.
+   */
+  vacancies: { total: number; outsideTotal: Outside; minRoleAds: number };
   axes: CareerAxis[];
   roles: CareerRole[];
   stages: CareerStage[];
@@ -72,6 +89,7 @@ interface CareerData {
 
 const data = raw as unknown as CareerData;
 
+export const vacancies = data.vacancies;
 export const careerAxes: CareerAxis[] = data.axes;
 export const careerRoles: CareerRole[] = data.roles;
 export const careerStages: CareerStage[] = data.stages;

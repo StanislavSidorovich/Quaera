@@ -44,6 +44,19 @@ export interface EvidenceMark {
   at: string;
 }
 
+/**
+ * Короткая запись с меткой правки: дата цели, «зачем мне это», «что может
+ * помешать». Пустой текст — не «нет записи», а стёртая запись со своей
+ * меткой, иначе стёртое на одном устройстве возвращалось бы с другого
+ * (та же ловушка, что у отметок). Побеждает более поздняя правка.
+ */
+export interface Note {
+  text: string;
+  at: string;
+}
+
+export const NOTE_MAX = 280;
+
 export interface CareerState {
   role: string;
   /** Когда роль выбрали руками; `null` — не выбирали, стоит роль по умолчанию. */
@@ -56,9 +69,40 @@ export interface CareerState {
    * можно поставить руками. В записях до фазы 4 поля нет, читается как [].
    */
   quiz: QuizAttempt[];
+  /** Дата «к какой хочу быть готов», ГГГГ-ММ-ДД. В записях до этой правки поля нет, читается как null. */
+  goal: Note | null;
+  /** «Зачем мне это». */
+  why: Note | null;
+  /** «Что может помешать и что я тогда сделаю». */
+  obstacle: Note | null;
 }
 
-export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [], quiz: [] });
+export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [], quiz: [], goal: null, why: null, obstacle: null });
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const withNote = (s: CareerState, field: 'goal' | 'why' | 'obstacle', text: string, now: Date): CareerState => {
+  const clean = field === 'goal' ? (DATE_RE.test(text) ? text : '') : text.slice(0, NOTE_MAX);
+  if ((s[field]?.text ?? '') === clean) return s;
+  return { ...s, [field]: { text: clean, at: now.toISOString() } };
+};
+
+/** Текст записи или пустая строка. */
+export const noteText = (n: Note | null): string => n?.text ?? '';
+
+function parseNote(v: unknown, kind: 'goal' | 'text'): Note | null {
+  if (!v || typeof v !== 'object') return null;
+  const { text, at } = v as Partial<Note>;
+  if (typeof text !== 'string' || typeof at !== 'string') return null;
+  if (kind === 'goal' && text !== '' && !DATE_RE.test(text)) return null;
+  return { text: text.slice(0, NOTE_MAX), at };
+}
+
+/** Более поздняя правка; при равных метках решает текст, чтобы порядок аргументов не влиял. */
+function laterNote(a: Note | null, b: Note | null): Note | null {
+  if (!a || !b) return a ?? b;
+  return a.at !== b.at ? (a.at > b.at ? a : b) : a.text >= b.text ? a : b;
+}
 
 /** Идентификаторы поставленных отметок — то, что нужно формуле готовности. */
 export const checkedIds = (s: CareerState): string[] =>
@@ -113,6 +157,9 @@ export function parseCareer(v: unknown): CareerState | undefined {
     checks,
     weekly: Array.isArray(p.weekly) ? p.weekly.filter(isSnapshot) : [],
     quiz: Array.isArray(p.quiz) ? p.quiz.filter(isQuizAttempt) : [],
+    goal: parseNote(p.goal, 'goal'),
+    why: parseNote(p.why, 'text'),
+    obstacle: parseNote(p.obstacle, 'text'),
   });
 }
 
@@ -129,7 +176,8 @@ export function parseCareer(v: unknown): CareerState | undefined {
  *   Обрезка оставляет самые новые, поэтому ассоциативна, как обрезка дней
  *   активности в прогрессе.
  * - *Подходы самопроверки* — объединение по (ось, время), не больше
- *   двадцати последних на ось (`normalizeQuiz`). Список только дописывается,
+ *   двадцати последних на ось (`normalizeQuiz`).
+ * - *Дата цели и два поля* — на каждое побеждает более поздняя правка (`laterNote`). Список только дописывается,
  *   удалять в нём нечего, поэтому меток «снято» ему не нужно.
  *
  * Сброс здесь не решается: копии разных эпох до этой функции не доходят,
@@ -158,6 +206,9 @@ export function mergeCareer(a: CareerState, b: CareerState): CareerState {
     checks,
     weekly: [...a.weekly, ...b.weekly],
     quiz: [...a.quiz, ...b.quiz],
+    goal: laterNote(a.goal, b.goal),
+    why: laterNote(a.why, b.why),
+    obstacle: laterNote(a.obstacle, b.obstacle),
   });
 }
 
@@ -182,7 +233,7 @@ function normalizeCareer(s: CareerState): CareerState {
   }
   const weekly = [...byDate.values()].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)).slice(-SNAPSHOT_LIMIT);
 
-  return { role: s.role, roleAt: s.roleAt, checks, weekly, quiz: normalizeQuiz(s.quiz) };
+  return { role: s.role, roleAt: s.roleAt, checks, weekly, quiz: normalizeQuiz(s.quiz), goal: s.goal, why: s.why, obstacle: s.obstacle };
 }
 
 /**

@@ -47,7 +47,7 @@ try {
   const { applyAttempt, emptyProgress, clearedProgress, withParsedCareer } = await import(
     pathToFileURL(path.join(outDir, 'srs', 'store.js')).href
   );
-  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, withQuizAttempt, checkedIds, weeklyChanges } = await import(
+  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, withQuizAttempt, withNote, noteText, checkedIds, weeklyChanges } = await import(
     pathToFileURL(path.join(outDir, 'career', 'store.js')).href
   );
   const { quizStatus } = await import(pathToFileURL(path.join(outDir, 'career', 'quiz.js')).href);
@@ -177,6 +177,10 @@ try {
       checks,
       weekly,
       quiz,
+      // Поля из пулов меток и текстов: совпадения по метке с разным текстом проверяют ничью.
+      goal: r() < 0.4 ? { text: r() < 0.5 ? '2027-03-01' : '', at: at() } : null,
+      why: r() < 0.5 ? { text: r() < 0.5 ? 'a' : 'b', at: at() } : null,
+      obstacle: r() < 0.5 ? { text: r() < 0.5 ? 'x' : 'y', at: at() } : null,
     });
   }
   const withCareer = (p, c) => (c ? { ...p, career: c } : p);
@@ -428,6 +432,35 @@ try {
       JSON.stringify(dates) === JSON.stringify(expected)
     );
     assertTrue('снимки: порядок аргументов не решает', same(w1, w2));
+
+    // Дата цели и два поля: на каждое побеждает более поздняя правка, стёртая
+    // запись (пустой текст) тоже правка, а запись без полей читается без ошибки.
+    {
+      const goalPhone = withNote(emptyCareerState(), 'goal', '2027-02-01', t(1));
+      const goalLaptop = withNote(emptyCareerState(), 'goal', '2027-04-01', t(3));
+      const [g1, g2] = both(withCareer(emptyProgress(), goalPhone), withCareer(emptyProgress(), goalLaptop));
+      assertTrue('дата цели: побеждает поздняя правка, в обе стороны', noteText(g1.career.goal) === '2027-04-01' && noteText(g2.career.goal) === '2027-04-01');
+
+      const whyPhone = withNote(emptyCareerState(), 'why', 'Хочу в аналитику', t(1));
+      const whyCleared = withNote(whyPhone, 'why', '', t(5));
+      const whyLaptop = withNote(emptyCareerState(), 'why', 'Другое', t(3));
+      const [y1, y2] = both(withCareer(emptyProgress(), whyCleared), withCareer(emptyProgress(), whyLaptop));
+      assertTrue('зачем: стёртое позже, чем написано на другом устройстве, остаётся стёртым', noteText(y1.career.why) === '' && noteText(y2.career.why) === '');
+
+      const obsPhone = withNote(emptyCareerState(), 'obstacle', 'Нет сил вечером: делаю утром', t(2));
+      const whyOnly = withNote(emptyCareerState(), 'why', 'Ради роли', t(2));
+      const [o1, o2] = both(withCareer(emptyProgress(), obsPhone), withCareer(emptyProgress(), whyOnly));
+      assertTrue(
+        'поля независимы: «помешать» с одного устройства и «зачем» с другого сохраняются оба',
+        [o1, o2].every((m) => noteText(m.career.obstacle).startsWith('Нет сил') && noteText(m.career.why) === 'Ради роли')
+      );
+
+      assertTrue('дата цели: не дата не сохраняется', noteText(withNote(emptyCareerState(), 'goal', 'завтра', t(1)).goal) === '');
+      const old = parseCareer({ role: 'bi', roleAt: null, checks: {}, weekly: [], quiz: [] });
+      assertTrue('старая запись без новых полей читается', old && old.goal === null && old.why === null && old.obstacle === null);
+      const junk = parseCareer({ role: 'bi', goal: { text: 'soon', at: t(1).toISOString() }, why: 5, obstacle: { text: 'ok' } });
+      assertTrue('мусор вместо полей отбрасывается', junk && junk.goal === null && junk.why === null && junk.obstacle === null);
+    }
 
     // Подходы самопроверки: первый сдан на телефоне, второй через неделю
     // на ноутбуке. После слияния зачёт виден на обоих — ради этого список

@@ -61,7 +61,7 @@ try {
       `--rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
   );
-  const { AXES, skillLevel, axisReading, roleReadiness, RETAINED_INTERVAL_DAYS } = await import(
+  const { AXES, skillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, RETAINED_INTERVAL_DAYS } = await import(
     pathToFileURL(path.join(outDir, 'career', 'readiness.js')).href
   );
 
@@ -115,6 +115,28 @@ try {
     for (const a of r.core) if (!(r.targets[a] > 0)) fail(`роль ${r.id}`, `ось ядра ${a} без цели`);
   }
   ok('роли: цели по восьми осям, ядро с целями, цели достижимы');
+
+  // Цели, принятые по вакансиям (ROLE-TARGETS, 2026-11-07): гейт держит именно эти числа,
+  // чтобы случайная правка career.json не откатила разбор молча.
+  const tg = (id) => career.roles.find((r) => r.id === id).targets;
+  assertEq('цели: DA bi 2, engineering 1', [tg('da').bi, tg('da').engineering], [2, 1]);
+  assertEq('цели: AE bi 2, business 2', [tg('ae').bi, tg('ae').business], [2, 2]);
+  assertEq('цели: BA process остаётся 2', tg('ba').process, 2);
+  assertEq('цели: sql у AE остаётся 3 (глубину вакансии не меряют)', tg('ae').sql, 3);
+
+  // Выборка вакансий: число одно, у роли доли, где выборки хватает.
+  const vac = career.vacancies;
+  assertTrue('вакансии: общее число и порог заданы', Number.isInteger(vac.total) && vac.total > 0 && Number.isInteger(vac.minRoleAds));
+  for (const r of career.roles) {
+    if (!Number.isInteger(r.ads) || r.ads < 0) fail(`роль ${r.id}`, `ads ${r.ads}`);
+    if (r.ads >= vac.minRoleAds && !r.outside) fail(`роль ${r.id}`, 'выборка есть, а долей «вне Quaera» нет');
+    for (const k of ['excel', 'english', 'comms']) {
+      if (r.outside && !(r.outside[k] >= 0 && r.outside[k] <= r.ads)) fail(`роль ${r.id}`, `outside.${k}=${r.outside[k]} вне 0..${r.ads}`);
+    }
+  }
+  assertTrue('вакансии: сумма по ролям не больше общего числа', career.roles.reduce((n, r) => n + r.ads, 0) <= vac.total);
+  for (const a of career.axes) if (!a.short?.ru || !a.short?.en) fail(`ось ${a.id}`, 'нет короткого имени для паутинки');
+  ok('вакансии и короткие имена осей');
 
   const stageIds = career.stages.map((s) => s.id);
   assertTrue('этапы: id уникальны', new Set(stageIds).size === stageIds.length);
@@ -218,6 +240,34 @@ try {
   const r4 = roleReadiness(role, axes2, all2, ev, new Set(['ab', 'proj']), tier);
   assertEq('роль: все цели и тройка → ready', r4.band, 'ready');
   assertEq('роль: 3 из 3', [r4.met, r4.total], [3, 3]);
+
+  // ── «Ждут повторения», разрыв в навыках, темп к дате ────────────────────
+  const NOW = new Date('2026-11-07T12:00:00Z');
+  const past = '2026-11-01T00:00:00Z';
+  const future = '2026-11-20T00:00:00Z';
+  const dueAxis = { id: 'sql', trainerMax: 2, skills: ['a', 'b', 'c', 'd'] };
+  const mk = (grade, interval, dueAt) => ({ ...sig(2, 0, grade, interval), dueAt });
+  const dueSignals = { a: mk(4, 13, past), b: mk(4, 13, future), c: mk(3, 13, past), d: undefined };
+  assertEq('повторение: просрочена только двойка, срок которой прошёл', overdueSkills(dueAxis, dueSignals, NOW), ['a']);
+  assertEq('повторение: единица с прошедшим сроком не считается', overdueSkills(dueAxis, { c: mk(3, 13, past) }, NOW), []);
+  assertEq('повторение: самая давняя первой', overdueSkills(dueAxis, { a: mk(4, 13, '2026-11-03T00:00:00Z'), b: mk(4, 13, '2026-10-01T00:00:00Z') }, NOW), ['b', 'a']);
+  assertEq(
+    'повторение: уровень по времени не снижается',
+    [axisReading(dueAxis, { a: mk(4, 13, past), b: mk(4, 13, past), c: mk(4, 13, past), d: mk(4, 13, past) }, [], none).level, overdueSkills(dueAxis, { a: mk(4, 13, past), b: mk(4, 13, past), c: mk(4, 13, past), d: mk(4, 13, past) }, NOW).length],
+    [2, 4]
+  );
+  const ax10 = [{ id: 'sql', trainerMax: 2, skills: ten }];
+  const roleSql = { id: 'q', targets: { sql: 2, modeling: 0, bi: 0, python: 0, stats: 0, engineering: 0, business: 0, process: 0 }, core: ['sql'] };
+  const gapOf = (n2, n1) => roleReadiness(roleSql, ax10, signals(n2, n1), [], none).gaps[0];
+  assertEq('разрыв: с нуля до двойки нужно 7 навыков (70% от 10)', gapOf(0, 0).skillsLeft, 7);
+  assertEq('разрыв: три уже на двойке, нужно ещё 4', gapOf(3, 0).skillsLeft, 4);
+  assertEq('разрыв: единицы до двойки не засчитываются', gapOf(3, 5).skillsLeft, 4);
+  const evOnly = roleReadiness({ ...roleSql, targets: { ...roleSql.targets, sql: 3 } }, ax10, signals(10, 0), [], none).gaps[0];
+  assertEq('разрыв: выше потолка тренажёра навыков не требуется', evOnly.skillsLeft, 0);
+  assertEq('темп: 13,5 дня и 7 навыков → 2 недели, 4 в неделю', pacePlan(7, '2026-11-20', NOW), { weeks: 2, perWeek: 4 });
+  assertEq('темп: меньше недели считается неделей', pacePlan(3, '2026-11-09', NOW), { weeks: 1, perWeek: 3 });
+  assertEq('темп: прошедшая дата → нет плана', pacePlan(3, '2026-11-01', NOW), null);
+  assertEq('темп: нечего закрывать → 0 в неделю', pacePlan(0, '2026-12-01', NOW).perWeek, 0);
 
   // Настоящие данные на пустом прогрессе: ни одна роль не готова.
   const real = career.roles.map((r) => roleReadiness(r, career.axes, {}, evidence, none).band);

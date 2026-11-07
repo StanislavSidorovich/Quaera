@@ -9452,6 +9452,158 @@ details.story-known > summary small {
   font-size: var(--fs-small);
 }
 
+/* Паутинка «цель против вас»: две серии, цель линией, вы заливкой, просрочка пунктиром. */
+.career-radar {
+  margin: 12px 0 8px;
+}
+.career-radar-svg {
+  display: block;
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  margin: 0 auto;
+}
+.career-radar-ring,
+.career-radar-spoke {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.career-radar-tick {
+  fill: var(--text-dim);
+  font-size: 10px;
+}
+.career-radar-you {
+  fill: var(--accent);
+  fill-opacity: 0.28;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.career-radar-goal {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.career-radar-due {
+  stroke: var(--warn);
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+}
+.career-radar-dot {
+  fill: var(--accent);
+  stroke: var(--bg-raised);
+  stroke-width: 2;
+}
+.career-radar-label {
+  fill: var(--text);
+  font-size: 15px;
+}
+.career-radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+.career-radar-legend i {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.career-radar-legend .sw-you {
+  height: 10px;
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  border-radius: 3px;
+}
+.career-radar-legend .sw-goal {
+  border-top: 2px solid var(--text);
+}
+.career-radar-legend .sw-due {
+  border-top: 3px dashed var(--warn);
+}
+
+.career-source {
+  margin: 4px 0 8px;
+  font-size: var(--fs-small);
+}
+.career-outside,
+.career-goal,
+.career-notes {
+  margin-top: 16px;
+}
+.career-outside-lead,
+.career-outside-basis {
+  margin: 4px 0;
+  font-size: var(--fs-small);
+}
+.career-outside-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.career-outside-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 4px 0;
+}
+.career-field-label {
+  display: block;
+  margin: 12px 0 4px;
+  font-weight: 600;
+}
+.career-goal .career-field-label {
+  margin-top: 0;
+}
+.career-goal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.career-date,
+.career-text {
+  font: inherit;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: var(--tap);
+}
+.career-text {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.career-pace {
+  margin: 8px 0 0;
+}
+.career-week-notes {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: var(--fs-small);
+}
+.career-axis-due {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 6px 0 0;
+  font-size: var(--fs-small);
+}
+
 .career-evidence {
   margin-top: 8px;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { careerAxes, careerEvidence, careerRole, careerRoles, careerStages, stagesOfRole } from '../content/career';
+import { careerAxes, careerEvidence, careerRole, careerRoles, careerStages, stagesOfRole, vacancies } from '../content/career';
 import type { CareerStage } from '../content/career';
 import { lessonBySkill, packForTrack } from '../content';
 import type { Track } from '../content/types';
@@ -8,13 +8,15 @@ import { useI18n } from '../i18n/context';
 import { FAMILY, openFamilyLink } from '../links';
 import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
-import { AXES, roleReadiness, skillLevel } from '../career/readiness';
+import { AXES, overdueSkills, pacePlan, roleReadiness, skillLevel } from '../career/readiness';
 import type { AxisId, Band, Level } from '../career/readiness';
 import {
   DEFAULT_ROLE,
   checkedIds,
   emptyCareerState,
   weeklyChanges,
+  noteText,
+  withNote,
   withRole,
   withToggledEvidence,
   withWeeklySnapshot,
@@ -23,6 +25,7 @@ import type { AxisLevels, CareerState } from '../career/store';
 import { passedQuizEvidence, quizStatus } from '../career/quiz';
 import { withQuizAttempt } from '../career/store';
 import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
+import { CareerRadar } from './CareerRadar';
 import { quizBank } from '../content/careerQuiz';
 import { ArchitectureMap } from './ArchitectureMap';
 import { RoleCompare } from './RoleCompare';
@@ -202,6 +205,21 @@ export function CareerPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const now = new Date();
+  /* Просроченные повторения по осям: уровень не трогаем, только сообщаем. */
+  const dueByAxis = useMemo(
+    () => Object.fromEntries(careerAxes.map((a) => [a.id, overdueSkills(a, progress.skills, new Date())])) as Record<AxisId, string[]>,
+    [progress.skills]
+  );
+  const skillsLeft = readiness.gaps.reduce((n, g) => n + g.skillsLeft, 0);
+  const goalDate = noteText(state.goal);
+  const pace = goalDate ? pacePlan(skillsLeft, goalDate, now) : null;
+  const ownOutside = role.outside !== undefined && role.ads >= vacancies.minRoleAds;
+  const outside = ownOutside ? role.outside! : vacancies.outsideTotal;
+  const outsideTotal = ownOutside ? role.ads : vacancies.total;
+  const setNote = (field: 'goal' | 'why' | 'obstacle', text: string) => onCareerChange((s) => withNote(s, field, text, new Date()));
+  const whyText = noteText(state.why);
+  const obstacleText = noteText(state.obstacle);
   const changes = weeklyChanges(state.weekly, levels);
   const axisTitle = (id: AxisId) => careerAxes.find((a) => a.id === id)!.title[locale];
   const levelName = (n: number) => c.levels[n];
@@ -330,6 +348,7 @@ export function CareerPage({
 
       <section className="card career-target">
         <h2 id="career-target-label">{c.targetLabel}</h2>
+        <p className="muted career-source">{c.sourceNote(vacancies.total)}</p>
         <div className="career-roles-pick" role="radiogroup" aria-labelledby="career-target-label">
           {careerRoles.map((r) => (
             <button
@@ -345,6 +364,9 @@ export function CareerPage({
           ))}
         </div>
         <p className="career-does">{role.does[locale]}</p>
+        <p className="muted career-source">
+          {c.roleTargets}: {c.sourceRole(role.ads)}.
+        </p>
         <RoleCompare roleId={role.id} levels={levels} />
         {ROLE_INSET[role.id] && (
           <div className="career-inset">
@@ -363,6 +385,68 @@ export function CareerPage({
           <span className="muted">{c.bandCaption(readiness.met, readiness.total)}</span>
         </p>
 
+        <div className="career-outside">
+          <h3 className="career-h3">{c.outsideTitle}</h3>
+          <p className="muted career-outside-lead">{c.outsideLead}</p>
+          <ul className="career-outside-list">
+            {(['excel', 'english', 'comms'] as const).map((k) => (
+              <li key={k}>
+                <span>{c.outsideItems[k]}</span>
+                <strong>{c.outsideShare(outside[k], outsideTotal)}</strong>
+              </li>
+            ))}
+          </ul>
+          <p className="muted career-outside-basis">{ownOutside ? c.outsideBasisRole(role.ads) : c.outsideBasisAll(vacancies.total)}</p>
+        </div>
+
+        <div className="career-goal">
+          <label className="career-field-label" htmlFor="career-goal-date">
+            {c.goalLabel} <span className="muted">({c.goalOptional})</span>
+          </label>
+          <div className="career-goal-row">
+            <input id="career-goal-date" type="date" className="career-date" value={goalDate} onChange={(e) => setNote('goal', e.target.value)} />
+            {goalDate && (
+              <button type="button" className="btn secondary" onClick={() => setNote('goal', '')}>
+                {c.goalClear}
+              </button>
+            )}
+          </div>
+          {goalDate && (
+            <p className="career-pace" aria-live="polite">
+              {!pace ? c.goalPast : skillsLeft === 0 ? c.goalNoSkills : c.goalPace(pace.weeks, pace.perWeek)}
+            </p>
+          )}
+        </div>
+
+        <div className="career-notes">
+          <label className="career-field-label" htmlFor="career-why">
+            {c.whyLabel} <span className="muted">({c.goalOptional})</span>
+          </label>
+          <textarea
+            key={state.why?.at ?? 'why'}
+            id="career-why"
+            className="career-text"
+            rows={2}
+            maxLength={280}
+            placeholder={c.whyHint}
+            defaultValue={whyText}
+            onBlur={(e) => setNote('why', e.target.value)}
+          />
+          <label className="career-field-label" htmlFor="career-obstacle">
+            {c.obstacleLabel} <span className="muted">({c.goalOptional})</span>
+          </label>
+          <textarea
+            key={state.obstacle?.at ?? 'obstacle'}
+            id="career-obstacle"
+            className="career-text"
+            rows={2}
+            maxLength={280}
+            placeholder={c.obstacleHint}
+            defaultValue={obstacleText}
+            onBlur={(e) => setNote('obstacle', e.target.value)}
+          />
+        </div>
+
         {changes && (
           <p className="career-week muted">
             <strong>{c.weekTitle}.</strong>{' '}
@@ -370,6 +454,20 @@ export function CareerPage({
               ? changes.map((ch) => c.weekChange(axisTitle(ch.axis), ch.from, ch.to)).join('; ')
               : c.weekNone}
           </p>
+        )}
+        {(whyText || obstacleText) && (
+          <ul className="career-week-notes" aria-label={c.notesTitle}>
+            {whyText && (
+              <li>
+                <strong>{c.whyLabel}.</strong> {whyText}
+              </li>
+            )}
+            {obstacleText && (
+              <li>
+                <strong>{c.obstacleLabel}.</strong> {obstacleText}
+              </li>
+            )}
+          </ul>
         )}
       </section>
 
@@ -422,6 +520,22 @@ export function CareerPage({
       <section className="card">
         <h2>{c.nowTitle}</h2>
         <p className="muted">{c.nowLead}</p>
+        <CareerRadar
+          axes={readiness.axes.map((a) => ({
+            id: a.axis,
+            label: careerAxes.find((x) => x.id === a.axis)!.short[locale],
+            have: a.level,
+            target: a.target,
+            due: dueByAxis[a.axis].length,
+          }))}
+          ariaLabel={c.radarAria(
+            role.title[locale],
+            readiness.axes
+              .map((a) => c.radarRow(axisTitle(a.axis), levelName(a.level), a.target > 0 ? String(a.target) : c.radarNoGoal, dueByAxis[a.axis].length))
+              .join(' ')
+          )}
+          legend={{ you: c.radarYou, goal: c.radarGoal, due: c.radarDue }}
+        />
         <ul className="career-axes">
           {readiness.axes.map((a) => {
             const def = careerAxes.find((x) => x.id === a.axis)!;
@@ -438,6 +552,14 @@ export function CareerPage({
                   ))}
                 </div>
                 <p className="muted career-axis-count">{c.axisCount(a.atLeast1, a.total, a.atLeast2)}</p>
+                {dueByAxis[a.axis].length > 0 && (
+                  <p className="career-axis-due">
+                    <span>{c.dueNote(dueByAxis[a.axis].length)}</span>
+                    <button type="button" className="btn secondary career-skill-btn" onClick={() => onStartSkill(dueByAxis[a.axis][0])}>
+                      {c.dueButton}
+                    </button>
+                  </p>
+                )}
                 <p className="muted career-axis-note">{def.note[locale]}</p>
                 {evs.length > 0 && (
                   <ul className="career-evidence">

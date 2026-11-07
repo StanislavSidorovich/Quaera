@@ -26,6 +26,8 @@ export interface SkillSignal {
   lapses: number;
   lastGrade: 1 | 2 | 3 | 4 | null;
   intervalDays: number;
+  /** Когда навык придёт на повторение; нужен только для пометки «ждёт повторения». */
+  dueAt?: string;
 }
 
 export interface AxisDef {
@@ -168,6 +170,8 @@ export interface Gap {
   skills: string[];
   /** Неотмеченные доказательства этой оси, которые закрыли бы разрыв. */
   evidence: string[];
+  /** Сколько навыков не хватает до нужного уровня: ceil(доля × число навыков) минус уже достигшие. 0, если нужный уровень выше потолка тренажёра. */
+  skillsLeft: number;
 }
 
 export interface RoleReadiness {
@@ -219,11 +223,43 @@ export function roleReadiness(
             .map((s) => s.id)
         : [];
     const ev = evidence.filter((e) => e.axis === r.axis && !checked.has(e.id) && e.level >= r.target).map((e) => e.id);
-    gaps.push({ axis: r.axis, have: r.level, need: r.target, skills, evidence: ev });
+    const skillsLeft =
+      r.trainerLevel < trainerNeed
+        ? Math.max(0, Math.ceil(def.skills.length * AXIS_SHARE) - def.skills.filter((id) => skillLevel(signals[id]) >= trainerNeed).length)
+        : 0;
+    gaps.push({ axis: r.axis, have: r.level, need: r.target, skills, evidence: ev, skillsLeft });
   }
   // Сначала ядро роли, потом остальное; внутри — по величине разрыва.
   const isCore = (a: AxisId) => (role.core.includes(a) ? 0 : 1);
   gaps.sort((a, b) => isCore(a.axis) - isCore(b.axis) || b.need - b.have - (a.need - a.have));
 
   return { role: role.id, axes: readings, met, total, band, gaps };
+}
+
+/**
+ * Навыки оси, которые держались на двойке, но пришли на повторение.
+ *
+ * Уровень оси от этого не меняется: подача «уровень трескается от времени»
+ * наказывает за паузу, а не за незнание, и Duolingo от неё отказался. Мы
+ * лишь сообщаем, какие навыки пора освежить. Самый просроченный первым.
+ */
+export function overdueSkills(def: AxisDef, signals: Record<string, SkillSignal | undefined>, now: Date): string[] {
+  return def.skills
+    .filter((id) => {
+      const s = signals[id];
+      return !!s && skillLevel(s) === 2 && !!s.dueAt && new Date(s.dueAt) <= now;
+    })
+    .sort((a, b) => new Date(signals[a]!.dueAt!).getTime() - new Date(signals[b]!.dueAt!).getTime());
+}
+
+/**
+ * Сколько навыков в неделю закрывают разрыв к дате цели. Прогноза
+ * «успеешь / не успеешь» нет намеренно: это арифметика, не обещание.
+ * Меньше недели считается неделей, чтобы не делить на ноль и не пугать.
+ */
+export function pacePlan(skillsLeft: number, goalDate: string, now: Date): { weeks: number; perWeek: number } | null {
+  const end = new Date(goalDate + 'T23:59:59');
+  if (Number.isNaN(end.getTime()) || end.getTime() < now.getTime()) return null;
+  const weeks = Math.max(1, Math.ceil((end.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+  return { weeks, perWeek: Math.ceil(skillsLeft / weeks) };
 }

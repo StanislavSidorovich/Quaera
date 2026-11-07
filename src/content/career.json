@@ -1,8 +1,10 @@
 {
+  "vacancies": { "total": 43, "outsideTotal": { "excel": 15, "english": 28, "comms": 38 }, "minRoleAds": 3 },
   "axes": [
     {
       "id": "sql",
       "title": { "ru": "SQL", "en": "SQL" },
+      "short": { "ru": "SQL", "en": "SQL" },
       "note": { "ru": "Трек SQL целиком.", "en": "The whole SQL track." },
       "trainerMax": 2,
       "skills": ["sql-schema", "sql-select", "sql-where", "sql-order-limit", "sql-null", "sql-aggregate", "sql-group-by", "sql-having", "sql-join-inner", "sql-join-left", "sql-fanout", "sql-case", "sql-cte", "sql-promo-lift", "sql-window-rank", "sql-window-frame", "sql-data-quality", "sql-price-realization", "sql-forecast-accuracy", "sql-business-case"]
@@ -10,6 +12,7 @@
     {
       "id": "modeling",
       "title": { "ru": "Модель данных", "en": "Data modelling" },
+      "short": { "ru": "Модель", "en": "Model" },
       "note": { "ru": "Звезда, зерно и связи из трека «Модель и BI». Проект в Quaera Model засчитывается отметкой.", "en": "Star schema, grain and relationships from the Model and BI track. A project in Quaera Model counts as a check mark." },
       "trainerMax": 2,
       "skills": ["model-oltp-olap", "model-grain", "model-star", "model-relationships", "model-ambiguity", "model-role-playing", "model-many-to-many", "model-scd2", "model-date-table"]
@@ -17,6 +20,7 @@
     {
       "id": "bi",
       "title": { "ru": "BI и DAX", "en": "BI and DAX" },
+      "short": { "ru": "BI и DAX", "en": "BI, DAX" },
       "note": { "ru": "Меры, контексты и CALCULATE из трека «Модель и BI», выбор графика.", "en": "Measures, contexts and CALCULATE from the Model and BI track, plus chart choice." },
       "trainerMax": 2,
       "skills": ["model-measure-vs-column", "model-filter-context", "model-row-context", "model-additivity", "model-calculate", "model-context-transition", "model-time-intelligence", "model-power-query", "model-performance", "model-incremental-refresh", "dom-chart-choice"]
@@ -24,6 +28,7 @@
     {
       "id": "python",
       "title": { "ru": "Python и pandas", "en": "Python and pandas" },
+      "short": { "ru": "Python", "en": "Python" },
       "note": { "ru": "Трек pandas целиком.", "en": "The whole pandas track." },
       "trainerMax": 2,
       "skills": ["py-dataframe", "py-select-filter", "py-dtypes", "py-explore", "py-index", "py-groupby", "py-tidy", "py-transform", "py-nan", "py-merge", "py-timeseries", "py-reshape", "py-chaining", "py-performance", "py-duplicates", "py-conditions", "py-binning", "py-outliers", "py-rfm"]
@@ -31,6 +36,7 @@
     {
       "id": "stats",
       "title": { "ru": "Статистика", "en": "Statistics" },
+      "short": { "ru": "Статистика", "en": "Stats" },
       "note": { "ru": "Тренажёр видит её краешком: сезонность, причинность, точность прогноза. Выше единицы ось поднимают только отметки.", "en": "The trainer sees only the edge of it: seasonality, causality, forecast accuracy. Above level 1 only check marks raise this axis." },
       "trainerMax": 1,
       "skills": ["dom-causality", "dom-seasonality", "sql-forecast-accuracy", "sql-promo-lift", "py-outliers", "py-binning"]
@@ -38,6 +44,7 @@
     {
       "id": "engineering",
       "title": { "ru": "Инженерия данных", "en": "Data engineering" },
+      "short": { "ru": "Инженерия", "en": "Engineering" },
       "note": { "ru": "Пайплайны, облако, git и dbt в браузере не живут. Тренажёр даёт здесь только единицу за качество данных и обновление.", "en": "Pipelines, cloud, git and dbt do not live in a browser. The trainer gives at most level 1 here, for data quality and refresh." },
       "trainerMax": 1,
       "skills": ["sql-data-quality", "model-incremental-refresh", "model-power-query", "model-data-loading", "py-performance"]
@@ -45,6 +52,7 @@
     {
       "id": "business",
       "title": { "ru": "Бизнес и коммуникация", "en": "Business and communication" },
+      "short": { "ru": "Бизнес", "en": "Business" },
       "note": { "ru": "Трек «Профессия»: постановка, метрики, домен, вывод вперёд.", "en": "The Profession track: framing, metrics, domain, conclusion first." },
       "trainerMax": 2,
       "skills": ["dom-roles", "dom-requirements", "dom-metric-definition", "dom-sanity-check", "dom-sellin-sellout", "dom-fmcg-distribution", "dom-fmcg-consumer", "dom-fmcg-promo", "dom-pharma-rx", "dom-pharma-data", "dom-decomposition", "dom-abc-xyz", "dom-storytelling", "dom-chart-choice", "sql-business-case"]
@@ -52,6 +60,7 @@
     {
       "id": "process",
       "title": { "ru": "Процессы и управление данными", "en": "Processes and data governance" },
+      "short": { "ru": "Процессы", "en": "Process" },
       "note": { "ru": "Цепочка стоимости, order-to-cash, владелец данных. Модель процесса в Quaera Flow засчитывается отметкой.", "en": "Value chain, order to cash, data ownership. A process model in Quaera Flow counts as a check mark." },
       "trainerMax": 1,
       "skills": ["dom-value-chain", "dom-order-to-cash", "dom-planning", "dom-governance", "sql-data-quality"]
@@ -61,15 +70,19 @@
   "roles": [
     {
       "id": "da",
+      "ads": 11,
+      "outside": { "excel": 5, "english": 9, "comms": 9 },
       "title": { "ru": "Data Analyst", "en": "Data Analyst" },
       "does": { "ru": "Превращает вопрос бизнеса в метрики, считает и защищает вывод.", "en": "Turns a business question into metrics, does the numbers and defends the conclusion." },
-      "targets": { "sql": 2, "modeling": 1, "bi": 1, "python": 2, "stats": 2, "engineering": 0, "business": 2, "process": 1 },
+      "targets": { "sql": 2, "modeling": 1, "bi": 2, "python": 2, "stats": 2, "engineering": 1, "business": 2, "process": 1 },
       "core": ["sql", "python", "stats", "business"],
       "hybrid": { "ru": "В небольшой компании аналитик сам собирает модель и отчёт, то есть совмещает DA, AE и BI.", "en": "In a small company the analyst also builds the model and the report, covering DA, AE and BI at once." },
       "ai": { "ru": "ИИ быстро пишет запросы и строит графики. Ценность смещается к выбору вопроса, проверке числа и выводу.", "en": "AI writes queries and charts quickly. The value moves to choosing the question, checking the number and the conclusion." }
     },
     {
       "id": "bi",
+      "ads": 10,
+      "outside": { "excel": 2, "english": 4, "comms": 8 },
       "title": { "ru": "BI Analyst / Developer", "en": "BI Analyst / Developer" },
       "does": { "ru": "Строит семантическую модель и отчёт, который обновляется сам и нужен не одному вопросу.", "en": "Builds the semantic model and a report that refreshes itself and serves more than one question." },
       "targets": { "sql": 2, "modeling": 2, "bi": 2, "python": 1, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
@@ -79,15 +92,19 @@
     },
     {
       "id": "ae",
+      "ads": 7,
+      "outside": { "excel": 1, "english": 5, "comms": 7 },
       "title": { "ru": "Analytics Engineer", "en": "Analytics Engineer" },
       "does": { "ru": "Чистит данные и собирает из них звезду с тестами, на которой работают аналитики и BI.", "en": "Cleans the data and builds a tested star schema that analysts and BI work on." },
-      "targets": { "sql": 3, "modeling": 2, "bi": 1, "python": 1, "stats": 0, "engineering": 2, "business": 1, "process": 1 },
+      "targets": { "sql": 3, "modeling": 2, "bi": 2, "python": 1, "stats": 0, "engineering": 2, "business": 2, "process": 1 },
       "core": ["sql", "modeling", "engineering"],
       "hybrid": { "ru": "Роль появилась между аналитиком и инженером данных; в технологичных компаниях её часто совмещают с аналитиком.", "en": "The role grew between analyst and data engineer; at tech companies it is often combined with the analyst." },
       "ai": { "ru": "SQL ИИ пишет хорошо. Гранулярность, тесты и то, что соединение не размножило строки, проверяет человек.", "en": "AI writes SQL well. Grain, tests and making sure a join did not multiply rows are on a person." }
     },
     {
       "id": "de",
+      "ads": 3,
+      "outside": { "excel": 0, "english": 2, "comms": 3 },
       "title": { "ru": "Data Engineer", "en": "Data Engineer" },
       "does": { "ru": "Подключает источники и держит регулярную загрузку данных.", "en": "Connects sources and keeps data loading on schedule." },
       "targets": { "sql": 2, "modeling": 2, "bi": 0, "python": 2, "stats": 0, "engineering": 3, "business": 0, "process": 1 },
@@ -97,6 +114,7 @@
     },
     {
       "id": "ds",
+      "ads": 0,
       "title": { "ru": "Data Scientist", "en": "Data Scientist" },
       "does": { "ru": "Строит модели прогноза и эффекта и называет их ограничения.", "en": "Builds forecast and effect models and states their limits." },
       "targets": { "sql": 2, "modeling": 0, "bi": 0, "python": 3, "stats": 3, "engineering": 1, "business": 1, "process": 0 },
@@ -106,6 +124,8 @@
     },
     {
       "id": "ba",
+      "ads": 8,
+      "outside": { "excel": 3, "english": 6, "comms": 7 },
       "title": { "ru": "Business / Process Analyst", "en": "Business / Process Analyst" },
       "does": { "ru": "Выясняет, как на самом деле идёт процесс и что нужно бизнесу, и записывает это в требования.", "en": "Finds out how the process really runs and what the business needs, and writes it down as requirements." },
       "targets": { "sql": 1, "modeling": 1, "bi": 1, "python": 0, "stats": 0, "engineering": 0, "business": 3, "process": 2 },
@@ -115,6 +135,7 @@
     },
     {
       "id": "gov",
+      "ads": 1,
       "title": { "ru": "Data Governance / Steward", "en": "Data Governance / Steward" },
       "does": { "ru": "Записывает определения метрик, назначает владельцев и следит за качеством и доступом.", "en": "Records metric definitions, assigns owners and looks after quality and access." },
       "targets": { "sql": 1, "modeling": 2, "bi": 0, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
