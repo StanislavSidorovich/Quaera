@@ -5215,6 +5215,12 @@ table.sample td.null {
 @container ret (min-width: 720px) {
   .home-return {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  /* Карта данных добирает высоту до низа карточки занятия: колонки кончаются на одной линии. */
+  .home-return-side > .home-map {
+    flex: 1;
   }
 }
 
@@ -5266,10 +5272,67 @@ table.sample td.null {
   margin: 0 0 10px;
 }
 
+.return-story h2 {
+  margin-bottom: 8px;
+}
+
+/* Рисунок недели слева, «неделя N, день M» и ссылка справа от него: одна строка, карточка ниже. */
+.return-story-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .return-story .week-art {
   display: block;
-  width: 100%;
-  max-width: 220px;
+  flex: none;
+  width: 176px;
+}
+
+.return-story-side {
+  min-width: 0;
+}
+
+.return-story-next {
+  margin: 8px 0 0;
+  font-size: var(--fs-small);
+}
+
+/*
+ * Карта данных в первой полосе ниже обычной: правая колонка не выше карточки занятия,
+ * чтобы под обеими виден верх карточек треков. Только здесь, в других местах карта прежняя.
+ */
+.home-return-side .home-map {
+  padding: 14px;
+}
+
+.home-return-side .home-map h2 {
+  margin-bottom: 2px;
+}
+
+.home-return-side .home-map > p {
+  margin-bottom: 8px;
+}
+
+.home-return-side .home-map-chain {
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.home-return-side .home-map-chain button {
+  gap: 4px;
+  padding: 6px 8px 6px 10px;
+}
+
+.home-return-side .home-map-who {
+  margin-bottom: 8px;
+}
+
+.home-return-side .home-map-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
 }
 
 /* Одна основная кнопка на экран: кнопка карты данных рядом с занятием набрана как вторичная. */
@@ -5280,14 +5343,15 @@ table.sample td.null {
 }
 
 .return-story-where {
-  margin: 8px 0 0;
+  margin: 0 0 2px;
   font-weight: 600;
 }
 
 .return-story-link {
   display: block;
-  margin-top: 10px;
   font-weight: 600;
+  /* Две строки поровну: стрелка не остаётся одна на второй. */
+  text-wrap: balance;
 }
 
 .return-story-link:hover {
@@ -9112,7 +9176,7 @@ details.story-known > summary small {
 }
 
 .home-map-chain .arch-here {
-  margin-left: 0;
+  margin-left: auto;
   padding: 1px 6px;
   font-size: 10px;
   white-space: nowrap;
@@ -9121,7 +9185,9 @@ details.story-known > summary small {
 .home-map-roles {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 3px;
+  width: 100%;
   margin-top: auto;
 }
 
@@ -9194,6 +9260,10 @@ details.story-known > summary small {
     display: inline;
     color: var(--text-dim);
     font-size: 12px;
+  }
+
+  .home-map-chain .arch-here {
+    margin-left: 4px;
   }
 
   .home-map-who {

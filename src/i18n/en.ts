@@ -745,6 +745,8 @@ export const en = {
     retWhere: (week: number, day: number) => `Week ${week}, day ${day}`,
     retContinue: 'Continue →',
     retStart: 'Five weeks as an analyst →',
+    retNext: (title: string | null, n: number) => `Next: ${title ? `"${title}" · ` : ''}${n} task${n === 1 ? '' : 's'}`,
+    retFirst: (title: string | null, n: number) => `Day one: ${title ? `"${title}" · ` : ''}${n} task${n === 1 ? '' : 's'}`,
     whereStepsAria: 'Steps of the day',
     whereStepBrief: 'Brief',
     whereStepTasks: (n: number) => `${n} task${n === 1 ? '' : 's'}`,
