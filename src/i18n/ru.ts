@@ -1434,6 +1434,11 @@ export const ru = {
     retWhere: (week: number, day: number) => `Неделя ${week}, день ${day}`,
     retContinue: 'Продолжить →',
     retStart: 'Пять недель в роли аналитика →',
+    /** Тихая строка о дне под рисунком недели: заголовок первого шага и число заданий берутся из кампании. */
+    retNext: (title: string | null, n: number) =>
+      `Дальше: ${title ? `«${title}» · ` : ''}${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
+    retFirst: (title: string | null, n: number) =>
+      `Первый день: ${title ? `«${title}» · ` : ''}${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
     whereStepsAria: 'Шаги дня',
     whereStepBrief: 'Бриф',
     whereStepTasks: (n: number) => `${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
