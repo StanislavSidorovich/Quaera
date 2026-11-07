@@ -2714,6 +2714,404 @@
           "message": "Получилось return_later: 46, active: 33, а сегмента return_first нет совсем. Широкое условие «ушла» стоит первым и забирает всех ушедших, включая девять самых ценных, так что узкое условие не срабатывает ни разу. Узкое условие нужно ставить раньше широкого."
         }
       ]
+    },
+    {
+      "id": "py-103",
+      "track": "python",
+      "skill": "py-merge",
+      "level": 3,
+      "mode": "spot",
+      "title": "Прогноз против факта: первые полгода",
+      "brief": "Планировщик спроса показывает директору по поставкам факт и прогноз на месяц вперёд за первые полгода снимков.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "WITH a AS (\n  SELECT substr(week_start, 1, 7) || '-01' AS month_start, product_id, SUM(units) AS units\n  FROM fact_sellout GROUP BY 1, 2\n)\nSELECT a.month_start, SUM(a.units) AS actual, SUM(f.forecast_units) AS forecast\nFROM a\nJOIN fact_forecast_snapshot f ON f.product_id = a.product_id AND f.month_start = a.month_start AND f.lag_months = 1\nWHERE a.month_start BETWEEN '2024-02-01' AND '2024-07-01'\nGROUP BY a.month_start ORDER BY a.month_start",
+        "head": [
+          "month_start",
+          "actual",
+          "forecast"
+        ],
+        "labels": {
+          "month_start": "Месяц",
+          "actual": "Факт, упаковок",
+          "forecast": "Прогноз на месяц вперёд, упаковок"
+        },
+        "rows": [
+          [
+            "2024-02-01",
+            26808,
+            27598
+          ],
+          [
+            "2024-03-01",
+            39865,
+            41621
+          ],
+          [
+            "2024-04-01",
+            35964,
+            37329
+          ],
+          [
+            "2024-05-01",
+            29868,
+            29801
+          ],
+          [
+            "2024-06-01",
+            35429,
+            36839
+          ],
+          [
+            "2024-07-01",
+            45636,
+            46843
+          ]
+        ],
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "month_start": "2024-02-01"
+            },
+            "column": "actual",
+            "why": "Февраль верен: это первый месяц истории прогнозов, и снимок на него один, сделанный за месяц. Копировать было нечего. Именно эта строка сбивает с толку: начало таблицы выглядит правильным."
+          }
+        ],
+        "source": {
+          "lang": "python",
+          "bad": "actual = (\n    fact_sellout.assign(month_start=fact_sellout['week_start'].str[:7] + '-01')\n    .groupby(['month_start', 'product_id'], as_index=False)\n    .agg(units=('units', 'sum'))\n)\npairs = actual.merge(\n    fact_forecast_snapshot[['month_start', 'product_id', 'forecast_units']],\n    on=['month_start', 'product_id'],\n)\nresult = (\n    pairs[pairs['month_start'].between('2024-02-01', '2024-07-01')]\n    .groupby('month_start', as_index=False)\n    .agg(actual=('units', 'sum'), forecast=('forecast_units', 'sum'))\n)",
+          "fix": "actual = (\n    fact_sellout.assign(month_start=fact_sellout['week_start'].str[:7] + '-01')\n    .groupby(['month_start', 'product_id'], as_index=False)\n    .agg(units=('units', 'sum'))\n)\npairs = actual.merge(\n    fact_forecast_snapshot.loc[\n        fact_forecast_snapshot['lag_months'] == 1,\n        ['month_start', 'product_id', 'forecast_units'],\n    ],\n    on=['month_start', 'product_id'],\n    validate='one_to_one',\n)\nresult = (\n    pairs[pairs['month_start'].between('2024-02-01', '2024-07-01')]\n    .groupby('month_start', as_index=False)\n    .agg(actual=('units', 'sum'), forecast=('forecast_units', 'sum'))\n)"
+        },
+        "key": [
+          "month_start"
+        ],
+        "badRows": [
+          [
+            "2024-02-01",
+            26808,
+            27598
+          ],
+          [
+            "2024-03-01",
+            79730,
+            65888
+          ],
+          [
+            "2024-04-01",
+            107892,
+            92375
+          ],
+          [
+            "2024-05-01",
+            89604,
+            66763
+          ],
+          [
+            "2024-06-01",
+            106287,
+            81320
+          ],
+          [
+            "2024-07-01",
+            136908,
+            110319
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT SUM(units) FROM fact_sellout WHERE week_start LIKE '2024-03%'",
+          "n": 39865,
+          "symptom": "С марта факт скачет: в марте он вдвое больше настоящего (на деле продано {n} упаковок), с апреля втрое, а прогноз отстаёт от него на десятки тысяч. Февраль при этом верен.",
+          "cause": "В fact_forecast_snapshot на один месяц и товар лежит несколько снимков: за месяц, за два и за три (lag_months). merge по месяцу и товару без выбора снимка нашёл каждой строке факта пару на каждый горизонт, и sum сложил копии факта и сложил прогнозы разных горизонтов. В феврале снимок был один, поэтому февраль цел.",
+          "fix": "До merge оставить один горизонт, lag_months == 1, и добавить validate='one_to_one': если ключ справа повторится, pandas остановит соединение ошибкой, а не размножит строки молча.",
+          "business": "Директор увидит, что факт вдвое-втрое выше прогноза, и решит, что планирование систематически занижает спрос: план производства поднимут, склад заполнится товаром, которого никто не ждал."
+        }
+      },
+      "hints": [
+        "Во сколько раз мартовский факт больше февральского, а апрельский?",
+        "Сколько строк лежит в fact_forecast_snapshot на один товар и один месяц?"
+      ],
+      "explain": "Таблица снимков хранит один и тот же месяц несколько раз, по разу на горизонт. Соединение по месяцу и товару без выбора горизонта размножает факт ровно во столько раз, сколько снимков, и поэтому ошибка неравномерна: там, где история короткая, строка верна. Проверка до отправки: validate в merge и число строк до и после."
+    },
+    {
+      "id": "py-104",
+      "track": "python",
+      "skill": "py-merge",
+      "alsoTrains": [
+        "py-nan"
+      ],
+      "level": 3,
+      "mode": "spot",
+      "title": "Охват акции Nettora 2+1",
+      "brief": "Трейд-маркетинг считает бонус сетям за акцию Nettora 2+1: магазины и продажи по акции в пяти регионах вне центра.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "SELECT r.region_name, COUNT(DISTINCT c.customer_id) AS outlets, COALESCE(SUM(f.units), 0) AS promo_units\nFROM dim_customer c\nJOIN dim_region r ON r.region_id = c.region_id\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id AND f.promo_id = 38\nWHERE c.channel = 'modern_trade' AND r.macro_region IN ('Kyushu', 'Chugoku', 'Tohoku', 'Hokkaido')\nGROUP BY r.region_name ORDER BY r.region_name",
+        "head": [
+          "region_name",
+          "outlets",
+          "promo_units"
+        ],
+        "labels": {
+          "region_name": "Регион",
+          "outlets": "Сетевых магазинов",
+          "promo_units": "Продано по акции, упаковок"
+        },
+        "rows": [
+          [
+            "Fukuoka",
+            3,
+            63
+          ],
+          [
+            "Hiroshima",
+            2,
+            43
+          ],
+          [
+            "Hokkaido",
+            2,
+            75
+          ],
+          [
+            "Miyagi",
+            3,
+            0
+          ],
+          [
+            "Okinawa",
+            5,
+            101
+          ]
+        ],
+        "footer": {
+          "rows": true
+        },
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "region_name": "Hokkaido"
+            },
+            "column": "outlets",
+            "why": "В Hokkaido по акции продали оба сетевых магазина: терять было некого, и строка верна."
+          },
+          {
+            "where": {
+              "region_name": "Okinawa"
+            },
+            "column": "promo_units",
+            "fmt": "int",
+            "sql": "SELECT SUM(f.units) FROM fact_sellout f JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region r ON r.region_id = c.region_id WHERE f.promo_id = 38 AND r.region_name = 'Okinawa'",
+            "n": 101,
+            "why": "Продажи по акции верны во всех показанных строках: фильтр выбросил магазины без продаж, а у них и так ноль. В Okinawa по акции продано {n} упаковок, столько и показано."
+          }
+        ],
+        "source": {
+          "lang": "python",
+          "bad": "outlets = dim_customer[dim_customer['channel'] == 'modern_trade'].merge(\n    dim_region[['region_id', 'region_name', 'macro_region']], on='region_id'\n)\noutlets = outlets[outlets['macro_region'].isin(['Kyushu', 'Chugoku', 'Tohoku', 'Hokkaido'])]\nsales = outlets.merge(\n    fact_sellout[['customer_id', 'promo_id', 'units']], on='customer_id', how='left'\n)\nsales = sales[sales['promo_id'] == 38]  # Nettora: 2+1\nresult = sales.groupby('region_name', as_index=False).agg(\n    outlets=('customer_id', 'nunique'), promo_units=('units', 'sum')\n)",
+          "fix": "outlets = dim_customer[dim_customer['channel'] == 'modern_trade'].merge(\n    dim_region[['region_id', 'region_name', 'macro_region']], on='region_id'\n)\noutlets = outlets[outlets['macro_region'].isin(['Kyushu', 'Chugoku', 'Tohoku', 'Hokkaido'])]\npromo = fact_sellout.loc[fact_sellout['promo_id'] == 38, ['customer_id', 'units']]  # Nettora: 2+1\nsales = outlets.merge(promo, on='customer_id', how='left')\nresult = sales.groupby('region_name', as_index=False).agg(\n    outlets=('customer_id', 'nunique'), promo_units=('units', 'sum')\n)\nresult['promo_units'] = result['promo_units'].astype(int)"
+        },
+        "key": [
+          "region_name"
+        ],
+        "badRows": [
+          [
+            "Fukuoka",
+            1,
+            63
+          ],
+          [
+            "Hiroshima",
+            1,
+            43
+          ],
+          [
+            "Hokkaido",
+            2,
+            75
+          ],
+          [
+            "Okinawa",
+            3,
+            101
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT COUNT(*) FROM dim_customer c JOIN dim_region r ON r.region_id = c.region_id WHERE c.channel = 'modern_trade' AND r.macro_region IN ('Kyushu', 'Chugoku', 'Tohoku', 'Hokkaido')",
+          "n": 15,
+          "sql2": "SELECT COUNT(DISTINCT f.customer_id) FROM fact_sellout f JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region r ON r.region_id = c.region_id WHERE f.promo_id = 38 AND c.channel = 'modern_trade' AND r.macro_region IN ('Kyushu', 'Chugoku', 'Tohoku', 'Hokkaido')",
+          "m": 7,
+          "symptom": "Регионов {rows} из {expected}, а магазинов в отчёте {m} из {n}: остались только те, что продали по акции. Miyagi, где сетевые магазины есть, пропал целиком.",
+          "cause": "how='left' сохранил все магазины, у не продававших по акции promo_id стал NaN. Следующая строка оставляет только акционные продажи, NaN под это условие не подходит, и магазины без акционных продаж выпали: левое соединение стало внутренним.",
+          "fix": "Отфильтровать продажи по акции до merge и только потом соединить с магазинами how='left'. Магазин без продаж останется строкой с NaN: nunique посчитает все магазины, а сумма пустых продаж даст ноль.",
+          "business": "Охват акции выйдет полным, бонус сетям посчитают от магазинов, которые и так продавали, а Miyagi, где акция не сработала нигде, не попадёт в разговор с сетью."
+        }
+      },
+      "hints": [
+        "Что делает фильтр по promo_id с магазинами, у которых после merge в promo_id пусто?",
+        "Сколько строк должно быть в отчёте по пяти регионам?"
+      ],
+      "explain": "how='left' сохраняет строки слева только до первого фильтра по колонке справа: у строки без пары там NaN, и сравнение её выбрасывает. Это тот же приём, что условие на правую таблицу в WHERE в SQL. Фильтр правой таблицы ставят до merge, а пропуски после merge заполняют осознанно."
+    },
+    {
+      "id": "py-105",
+      "track": "python",
+      "skill": "py-groupby",
+      "level": 2,
+      "mode": "spot",
+      "title": "Выручка на точку по макрорегионам",
+      "brief": "Директор по продажам решает, куда добавить представителя: выручка 2025 на одну точку по макрорегионам.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "SELECT r.macro_region, COUNT(DISTINCT r.region_id) AS regions, COUNT(DISTINCT c.customer_id) AS outlets,\n       ROUND(SUM(f.revenue) / COUNT(DISTINCT c.customer_id) / 1000.0) AS per_outlet_k\nFROM dim_customer c\nJOIN dim_region r ON r.region_id = c.region_id\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id AND f.week_start LIKE '2025%'\nWHERE c.channel <> 'distributor'\nGROUP BY r.macro_region ORDER BY r.macro_region",
+        "head": [
+          "macro_region",
+          "regions",
+          "outlets",
+          "per_outlet_k"
+        ],
+        "labels": {
+          "macro_region": "Макрорегион",
+          "regions": "Регионов",
+          "outlets": "Точек",
+          "per_outlet_k": "Выручка на точку, тыс. ¥"
+        },
+        "rows": [
+          [
+            "Chubu",
+            3,
+            29,
+            292
+          ],
+          [
+            "Chugoku",
+            1,
+            8,
+            566
+          ],
+          [
+            "Hokkaido",
+            1,
+            7,
+            612
+          ],
+          [
+            "Kansai",
+            3,
+            26,
+            213
+          ],
+          [
+            "Kanto",
+            5,
+            32,
+            622
+          ],
+          [
+            "Kyushu",
+            2,
+            17,
+            192
+          ],
+          [
+            "Tohoku",
+            1,
+            13,
+            428
+          ]
+        ],
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "macro_region": "Hokkaido"
+            },
+            "column": "per_outlet_k",
+            "why": "Hokkaido верен: регион в нём один, а среднее одного числа равно самому числу. Самая высокая выручка на точку здесь настоящая."
+          },
+          {
+            "where": {
+              "macro_region": "Kanto"
+            },
+            "column": "outlets",
+            "why": "Точки сложены верно: сумма по регионам и есть число точек макрорегиона. Ошибка не в том, что складывали, а в том, что усредняли."
+          }
+        ],
+        "source": {
+          "lang": "python",
+          "bad": "outlets = dim_customer[dim_customer['channel'] != 'distributor'].merge(\n    dim_region[['region_id', 'region_name', 'macro_region']], on='region_id'\n)\nyear = fact_sellout[fact_sellout['week_start'].str.startswith('2025')]\noutlets = outlets.merge(\n    year.groupby('customer_id', as_index=False).agg(revenue=('revenue', 'sum')),\n    on='customer_id', how='left',\n)\nby_region = outlets.groupby(['macro_region', 'region_name'], as_index=False).agg(\n    outlets=('customer_id', 'count'), revenue=('revenue', 'sum')\n)\nby_region['per_outlet'] = by_region['revenue'] / by_region['outlets']\nresult = by_region.groupby('macro_region', as_index=False).agg(\n    regions=('region_name', 'count'),\n    outlets=('outlets', 'sum'),\n    per_outlet_k=('per_outlet', 'mean'),\n)\nresult['per_outlet_k'] = (result['per_outlet_k'] / 1000).round().astype(int)",
+          "fix": "outlets = dim_customer[dim_customer['channel'] != 'distributor'].merge(\n    dim_region[['region_id', 'region_name', 'macro_region']], on='region_id'\n)\nyear = fact_sellout[fact_sellout['week_start'].str.startswith('2025')]\noutlets = outlets.merge(\n    year.groupby('customer_id', as_index=False).agg(revenue=('revenue', 'sum')),\n    on='customer_id', how='left',\n)\nby_region = outlets.groupby(['macro_region', 'region_name'], as_index=False).agg(\n    outlets=('customer_id', 'count'), revenue=('revenue', 'sum')\n)\nresult = by_region.groupby('macro_region', as_index=False).agg(\n    regions=('region_name', 'count'),\n    outlets=('outlets', 'sum'),\n    revenue=('revenue', 'sum'),\n)\nresult['per_outlet_k'] = (result['revenue'] / result['outlets'] / 1000).round().astype(int)\nresult = result.drop(columns='revenue')"
+        },
+        "key": [
+          "macro_region"
+        ],
+        "badRows": [
+          [
+            "Chubu",
+            3,
+            29,
+            275
+          ],
+          [
+            "Chugoku",
+            1,
+            8,
+            566
+          ],
+          [
+            "Hokkaido",
+            1,
+            7,
+            612
+          ],
+          [
+            "Kansai",
+            3,
+            26,
+            212
+          ],
+          [
+            "Kanto",
+            5,
+            32,
+            623
+          ],
+          [
+            "Kyushu",
+            2,
+            17,
+            193
+          ],
+          [
+            "Tohoku",
+            1,
+            13,
+            428
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT ROUND(SUM(f.revenue) / COUNT(DISTINCT c.customer_id) / 1000.0) FROM dim_customer c JOIN dim_region r ON r.region_id = c.region_id JOIN fact_sellout f ON f.customer_id = c.customer_id AND f.week_start LIKE '2025%' WHERE c.channel <> 'distributor' AND r.macro_region = 'Chubu'",
+          "n": 292,
+          "sql2": "WITH reg AS (SELECT r.region_id, SUM(f.revenue) AS rev, COUNT(DISTINCT c.customer_id) AS n FROM dim_customer c JOIN dim_region r ON r.region_id = c.region_id JOIN fact_sellout f ON f.customer_id = c.customer_id AND f.week_start LIKE '2025%' WHERE c.channel <> 'distributor' AND r.macro_region = 'Chubu' GROUP BY r.region_id) SELECT ROUND(SUM(rev) / SUM(n) / 1000.0) - ROUND(AVG(rev / n) / 1000.0) FROM reg",
+          "m": 17,
+          "symptom": "Там, где в макрорегионе несколько регионов, выручка на точку не равна выручке, делённой на точки. Сильнее всего в Chubu: на деле там {n} тыс. ¥ на точку, отчёт занизил на {m} тыс. ¥. В Kanto, Kansai и Kyushu расхождение меньше, но формула неверна и там.",
+          "cause": "Сначала посчитано среднее по каждому региону, потом среднее этих средних. У всех регионов вес стал одинаковым, хотя в Aichi одиннадцать точек, а в Niigata семь, и маленький регион с низкой выручкой на точку тянет Chubu вниз. Где регион один, усреднять нечего, и строка верна.",
+          "fix": "Сложить выручку и точки до макрорегиона и разделить сумму на сумму. Среднее из средних годится, только если группы одного размера.",
+          "business": "Директор сравнивает макрорегионы по этой цифре: Chubu выглядит слабее на {m} тыс. ¥ с каждой точки, и решение, куда добавить представителя, примут по числу, которого нет в данных."
+        }
+      },
+      "hints": [
+        "В каких строках среднее собирается из нескольких регионов?",
+        "Одинаковый ли вес у региона с одиннадцатью точками и у региона с семью?"
+      ],
+      "explain": "Среднее из средних даёт каждой группе одинаковый вес, сколько бы в ней ни было строк. Ошибка тихая: числа правдоподобны, а где группа одна, результат вообще верен. Проверка до отправки: метрика «на одну точку» должна совпадать с суммой, делённой на сумму. Отношение считают из сумм, а не из готовых отношений."
     }
   ]
 }

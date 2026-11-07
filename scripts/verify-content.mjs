@@ -9,9 +9,8 @@
  * Запуск: npm run verify:content
  */
 import initSqlJs from 'sql.js';
-import { loadPyodide } from 'pyodide';
+import { runCell } from './lib/pyodide.mjs';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,30 +74,6 @@ const PANEL_ORDER_NOISE = 3;
  * что читает браузерный воркер: гейт обязан видеть код так же, как его
  * увидит ученик (см. пояснение в самом файле).
  */
-let pyodidePromise = null;
-async function getPyodide() {
-  if (!pyodidePromise) {
-    pyodidePromise = (async () => {
-      const pyodide = await loadPyodide({ indexURL: path.join(root, 'public', 'pyodide') });
-      await pyodide.loadPackage(['pandas', 'sqlite3']);
-      let buf = readFileSync(path.join(root, 'public', 'data', 'quaera.dataset'));
-      if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
-      pyodide.FS.writeFile('/data.sqlite', new Uint8Array(buf));
-      await pyodide.runPythonAsync(`
-import pandas as pd
-import sqlite3
-_con = sqlite3.connect('/data.sqlite')
-_tables_list = [r[0] for r in _con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
-_TABLES = {name: pd.read_sql(f"SELECT * FROM {name}", _con) for name in _tables_list}
-_con.close()
-`);
-      await pyodide.runPythonAsync(readFileSync(path.join(root, 'public', 'python-bootstrap.py'), 'utf8'));
-      return pyodide;
-    })();
-  }
-  return pyodidePromise;
-}
-
 /**
  * Отказы обвязки приходят кодом, а не фразой (WORKER_CODE в src/engine/types.ts):
  * в приложении их переводит локаль показа, у гейта локали нет и не нужно —
@@ -177,14 +152,7 @@ async function checkTraps(t, expected, run) {
 
 /** Запускает код заданий ровно тем же путём, что и public/python-worker.js — контракт result=, чистая ошибка при провале. */
 async function runPython(code) {
-  const pyodide = await getPyodide();
-  const runCellFn = pyodide.globals.get('_run_cell');
-  let out;
-  try {
-    out = runCellFn(code).toJs({ dict_converter: Object.fromEntries });
-  } finally {
-    runCellFn.destroy();
-  }
+  const out = await runCell(root, code);
   if (!out.ok) throw new Error(workerCodeText(out.message));
   return { columns: out.table.columns, rows: out.table.rows };
 }
@@ -889,7 +857,8 @@ for (const packId of packs) {
       if (!t.orderQuestion) fail(t.id, 'нет вопроса для режима spot');
       const sp = t.spot;
       if (!sp || !sp.sql || !(sp.head ?? []).length || !(sp.rows ?? []).length) fail(t.id, 'у spot нет запроса или таблицы отчёта');
-      if (t.options?.length || t.solution) fail(t.id, 'у spot заданы варианты ответа или решение: ответ выводится из mutate');
+      if (t.options?.length || t.solution) fail(t.id, 'у spot заданы варианты ответа или решение: ответ выводится из mutate или source');
+      if (sp?.source && (!sp.trap || !sp.key?.length || !sp.badRows?.length)) fail(t.id, 'у spot с source нет trap, key или badRows');
       continue;
     }
 

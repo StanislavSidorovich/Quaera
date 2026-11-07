@@ -215,6 +215,39 @@ export interface SpotSpec {
   labels?: Record<string, string>;
   mutate: SpotMutation[];
   decoys: SpotDecoy[];
+  /**
+   * Режим «отчёт плюс код» (SQL и pandas): на экране код `source.bad` и его настоящий результат `badRows`,
+   * верная таблица `rows` это результат `source.fix`. Дефекты движок выводит сравнением по `key`;
+   * `mutate` при этом пустой. Гейт test:spot исполняет оба кода и сверяет с `badRows` и `rows`.
+   */
+  source?: SpotSource;
+  /** Колонки ключа, по которым строки показанной и верной таблиц сопоставляются. Обязателен при `source`. */
+  key?: string[];
+  /** Результат `source.bad`: таблица на экране. */
+  badRows?: (string | number)[][];
+  /** Разбор в четыре части (при `source`). */
+  trap?: SpotTrap;
+}
+
+export interface SpotSource {
+  lang: 'sql' | 'python';
+  /** Код с ошибкой: показывается, только чтение. */
+  bad: string;
+  /** Исправленный код: результат это `rows`, показывается после ответа. */
+  fix: string;
+}
+
+/** Разбор задания `spot` с `source`, как RelateTrap: симптом, причина, как починить, для бизнеса. */
+export interface SpotTrap {
+  symptom: string;
+  cause: string;
+  fix: string;
+  business: string;
+  fmt?: 'int' | 'money' | 'num';
+  sql?: string;
+  n?: number;
+  sql2?: string;
+  m?: number;
 }
 
 export interface SpotWhyTranslation {
@@ -712,6 +745,8 @@ export interface TaskTranslation {
   spotMutate?: SpotWhyTranslation[];
   /** Разборы приманок `spot`: позиционно к Task.spot.decoys. */
   spotDecoys?: SpotWhyTranslation[];
+  /** Разбор `spot.trap` (задание с `source`). */
+  spotTrap?: RelateTrapTranslation;
   /** Подписи колонок отчёта (`spot.labels` или `relate.defect.report.labels`): те же ключи, что в оригинале. */
   labels?: Record<string, string>;
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */

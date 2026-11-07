@@ -2,6 +2,7 @@
 
 .spot {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
 }
@@ -65,4 +66,44 @@
   font-size: var(--fs-micro);
   font-weight: 700;
   color: var(--text-dim);
+}
+
+/* Режим «отчёт плюс код»: код над таблицей и исправленный код после ответа. */
+.spot-code {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+}
+
+.spot-code > summary {
+  padding: 8px 10px;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.spot-code .sql-block {
+  max-height: 15em;
+  margin: 0;
+  overflow: auto;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+}
+
+.spot-fixed .sql-block {
+  max-height: none;
+}
+
+.spot-trap {
+  margin: 0;
+}
+
+/* Код отчёта читается как есть: строки не переносятся, на узком экране блок прокручивается вбок. */
+.spot-code .code-line {
+  padding-left: 0 !important;
+  text-indent: 0 !important;
+  white-space: pre;
 }

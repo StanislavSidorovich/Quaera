@@ -11,6 +11,7 @@ import {
 } from '../engine/spot';
 import type { Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { CodeBlock } from './CodeBlock';
 import { ResultTable, type PickMode } from './ResultTable';
 import './spotStep.css';
 
@@ -94,9 +95,21 @@ export function SpotStep({ step, state, solved, onState, onResult }: Props) {
   const decoyKeys = built.decoyCells;
   const generalExtra = verdict ? verdict.extra.some((c) => !decoyKeys.includes(c)) : false;
 
+  const source = spec.source;
+  const trap = spec.trap;
+  const py = source?.lang === 'python';
+  // Код открыт на широком экране; на узком свёрнут, чтобы таблица осталась на первом экране.
+  const wide = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 700px)').matches;
+
   return (
     <div className="spot">
       {!solved && <p className="muted spot-note">{T.spotNote}</p>}
+      {source && (
+        <details className="spot-code" open={wide || undefined}>
+          <summary>{py ? T.spotCodePy : T.spotCodeSql}</summary>
+          <CodeBlock code={source.bad} />
+        </details>
+      )}
       <ResultTable data={data} pick={pick} labels={spec.labels} />
       {!solved && (
         <div className="spot-actions">
@@ -116,7 +129,35 @@ export function SpotStep({ step, state, solved, onState, onResult }: Props) {
       {verdict && (
         <section className="spot-review" aria-label={T.spotReviewTitle}>
           <h4 className="spot-h">{T.spotReviewTitle}</h4>
-          {spec.mutate.length === 0 && <p className="muted spot-clean">{T.spotCleanNote}</p>}
+          {!source && spec.mutate.length === 0 && <p className="muted spot-clean">{T.spotCleanNote}</p>}
+          {source && trap && (
+            <article className="rel-trap spot-trap">
+              <dl>
+                <div>
+                  <dt>{T.relateSymptom}</dt>
+                  <dd>{fillWhy(trap.symptom, trap, built, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{T.relateCause}</dt>
+                  <dd>{fillWhy(trap.cause, trap, built, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{T.relateFix}</dt>
+                  <dd>{fillWhy(trap.fix, trap, built, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{T.relateBusiness}</dt>
+                  <dd>{fillWhy(trap.business, trap, built, locale)}</dd>
+                </div>
+              </dl>
+            </article>
+          )}
+          {source && (
+            <details className="spot-code spot-fixed" open>
+              <summary>{py ? T.spotFixedPy : T.spotFixedSql}</summary>
+              <CodeBlock code={source.fix} />
+            </details>
+          )}
           <ul className="spot-list">
             {spec.mutate.map((m) => {
               const found = verdict.found.includes(m.id);

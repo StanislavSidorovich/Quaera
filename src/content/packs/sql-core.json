@@ -3969,6 +3969,384 @@
         "Разрез тут один, бренд уже отобран в заготовке, поэтому PARTITION BY не нужен: окно идёт по всем месяцам подряд."
       ],
       "explain": "Ноябрь 2025-го — 1 825 штук после 2 656 в октябре, минус 31%; январь — 1 216, то самое число из отчёта. Но соседний месяц несёт и сезон: весь рынок с октября на ноябрь просел на 19%. Сдвиг на месяц показывает, где число изменилось, а не почему, — поэтому в деле Nettora сравнивали одинаковые месяцы разных лет."
+    },
+    {
+      "id": "sql-122",
+      "track": "sql",
+      "skill": "sql-fanout",
+      "alsoTrains": [
+        "sql-join-inner",
+        "sql-aggregate"
+      ],
+      "level": 3,
+      "mode": "spot",
+      "title": "Выручка Kanto и люди в регионах",
+      "brief": "Директор по продажам Kanto ждёт к планёрке выручку 2025 по регионам и число сотрудников продаж в каждом.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "WITH rev AS (\n  SELECT c.region_id, ROUND(SUM(f.revenue) / 1000.0) AS revenue_k_yen\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start LIKE '2025%'\n  GROUP BY c.region_id\n),\nstaff AS (\n  SELECT region_id, COUNT(*) AS staff FROM dim_rep GROUP BY region_id\n)\nSELECT r.region_name AS region, s.staff, v.revenue_k_yen\nFROM dim_region r\nJOIN rev v ON v.region_id = r.region_id\nJOIN staff s ON s.region_id = r.region_id\nWHERE r.macro_region = 'Kanto'\nORDER BY r.region_name",
+        "head": [
+          "region",
+          "staff",
+          "revenue_k_yen"
+        ],
+        "labels": {
+          "region": "Регион",
+          "staff": "Сотрудников продаж",
+          "revenue_k_yen": "Выручка 2025, тыс. ¥"
+        },
+        "rows": [
+          [
+            "Chiba",
+            2,
+            3701
+          ],
+          [
+            "Ibaraki",
+            1,
+            1746
+          ],
+          [
+            "Kanagawa",
+            4,
+            3949
+          ],
+          [
+            "Saitama",
+            4,
+            6784
+          ],
+          [
+            "Tokyo",
+            1,
+            3719
+          ]
+        ],
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "region": "Kanagawa"
+            },
+            "column": "staff",
+            "why": "Колонка сотрудников верна даже в задетых строках: COUNT(DISTINCT) схлопывает копии, которые наплодило соединение. Поэтому размножение и не видно по ней, а SUM копии складывает."
+          },
+          {
+            "where": {
+              "region": "Tokyo"
+            },
+            "column": "revenue_k_yen",
+            "fmt": "int",
+            "sql": "SELECT ROUND(SUM(f.revenue) / 1000.0) FROM fact_sellout f JOIN dim_customer c ON c.customer_id = f.customer_id JOIN dim_region r ON r.region_id = c.region_id WHERE f.week_start LIKE '2025%' AND r.region_name = 'Tokyo'",
+            "n": 3719,
+            "why": "В Tokyo один сотрудник, и каждая продажа соединилась с ним один раз. Выручка Tokyo без dim_rep та же: {n} тыс. ¥. Строка, где множитель равен единице, верна."
+          }
+        ],
+        "source": {
+          "lang": "sql",
+          "bad": "SELECT r.region_name AS region,\n       COUNT(DISTINCT p.rep_id) AS staff,\n       ROUND(SUM(f.revenue) / 1000.0) AS revenue_k_yen\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nJOIN dim_rep p ON p.region_id = r.region_id\nWHERE f.week_start LIKE '2025%'\n  AND r.macro_region = 'Kanto'\nGROUP BY r.region_name\nORDER BY r.region_name",
+          "fix": "WITH rev AS (\n  SELECT c.region_id, ROUND(SUM(f.revenue) / 1000.0) AS revenue_k_yen\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start LIKE '2025%'\n  GROUP BY c.region_id\n),\nstaff AS (\n  SELECT region_id, COUNT(*) AS staff FROM dim_rep GROUP BY region_id\n)\nSELECT r.region_name AS region, s.staff, v.revenue_k_yen\nFROM dim_region r\nJOIN rev v ON v.region_id = r.region_id\nJOIN staff s ON s.region_id = r.region_id\nWHERE r.macro_region = 'Kanto'\nORDER BY r.region_name"
+        },
+        "key": [
+          "region"
+        ],
+        "badRows": [
+          [
+            "Chiba",
+            2,
+            7402
+          ],
+          [
+            "Ibaraki",
+            1,
+            1746
+          ],
+          [
+            "Kanagawa",
+            4,
+            15796
+          ],
+          [
+            "Saitama",
+            4,
+            27137
+          ],
+          [
+            "Tokyo",
+            1,
+            3719
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT SUM(revenue_k_yen) FROM (SELECT r.region_name AS region,\n       COUNT(DISTINCT p.rep_id) AS staff,\n       ROUND(SUM(f.revenue) / 1000.0) AS revenue_k_yen\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nJOIN dim_rep p ON p.region_id = r.region_id\nWHERE f.week_start LIKE '2025%'\n  AND r.macro_region = 'Kanto'\nGROUP BY r.region_name)",
+          "n": 55800,
+          "sql2": "SELECT ROUND(SUM(revenue) / 1000.0) FROM fact_sellout WHERE week_start LIKE '2025%'",
+          "m": 51534,
+          "symptom": "Пять регионов Kanto вместе дают {n} тыс. ¥, больше годовой выручки всей компании ({m} тыс. ¥). Выручка Chiba, Kanagawa и Saitama выросла во столько раз, сколько в регионе сотрудников, а у регионов с одним сотрудником осталась прежней.",
+          "cause": "dim_rep присоединён по региону, а сотрудников в регионе несколько. Каждая продажа повторилась столько раз, сколько их в регионе, и SUM сложил все копии. COUNT(DISTINCT) копии схлопнул, поэтому соседняя колонка выглядит верной и маскирует ошибку.",
+          "fix": "Свести каждую сторону к зерну региона отдельно (выручку в одном CTE, сотрудников в другом) и только потом соединить: одна строка на регион с каждой стороны, множителю неоткуда взяться.",
+          "business": "Директор увидит, что в Saitama на сотрудника приходится вчетверо больше выручки, чем на деле, и поделит нагрузку и бонусы по цифрам, которых нет."
+        }
+      },
+      "hints": [
+        "Сравните сумму отчёта с годовой выручкой всей компании.",
+        "У каких регионов выручка выросла, а у каких нет? Посмотрите на соседнюю колонку."
+      ],
+      "explain": "Соединение со второй таблицей, у которой на ключе несколько строк, размножает строки факта. SUM складывает копии, COUNT(DISTINCT) их прячет, поэтому одна колонка отчёта врёт, а соседняя выглядит честной. Проверка до отправки: число строк факта до и после соединения должно совпасть. Правило: каждую сторону сначала свести к общему зерну, потом соединять."
+    },
+    {
+      "id": "sql-123",
+      "track": "sql",
+      "skill": "sql-join-left",
+      "alsoTrains": [
+        "sql-null"
+      ],
+      "level": 3,
+      "mode": "spot",
+      "title": "Где новинка на полке",
+      "brief": "Директор аптечного канала ждёт покрытие новинки Vitanor Forte в аптеках Kanto и Kansai с сентября по декабрь 2025.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "SELECT r.region_name AS region,\n       COUNT(DISTINCT c.customer_id) AS pharmacies,\n       COUNT(DISTINCT f.customer_id) AS bought\nFROM dim_region r\nJOIN dim_customer c ON c.region_id = r.region_id AND c.channel = 'pharmacy'\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id\n                        AND f.product_id = 43 -- Vitanor Forte x30\n                        AND f.week_start BETWEEN '2025-09-01' AND '2025-12-31'\nWHERE r.macro_region IN ('Kanto', 'Kansai')\nGROUP BY r.region_name\nORDER BY r.region_name",
+        "head": [
+          "region",
+          "pharmacies",
+          "bought"
+        ],
+        "labels": {
+          "region": "Регион",
+          "pharmacies": "Аптек в регионе",
+          "bought": "Из них брали новинку"
+        },
+        "rows": [
+          [
+            "Chiba",
+            2,
+            0
+          ],
+          [
+            "Hyogo",
+            3,
+            0
+          ],
+          [
+            "Ibaraki",
+            3,
+            1
+          ],
+          [
+            "Kanagawa",
+            2,
+            2
+          ],
+          [
+            "Kyoto",
+            2,
+            1
+          ],
+          [
+            "Osaka",
+            2,
+            1
+          ],
+          [
+            "Saitama",
+            4,
+            1
+          ],
+          [
+            "Tokyo",
+            2,
+            1
+          ]
+        ],
+        "footer": {
+          "rows": true
+        },
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "region": "Kanagawa"
+            },
+            "column": "pharmacies",
+            "why": "В Kanagawa новинку и правда взяли обе аптеки региона: терять было некого, и строка верна. Совпадение «аптек» и «брали» само по себе не ошибка; ошибка, когда оно во всех строках."
+          },
+          {
+            "where": {
+              "region": "Saitama"
+            },
+            "column": "bought",
+            "why": "Купивших фильтр не трогает: у них условие истинно, строки остались. Число брали верно во всех показанных регионах, неверно то, с чем его сравнивают."
+          }
+        ],
+        "source": {
+          "lang": "sql",
+          "bad": "SELECT r.region_name AS region,\n       COUNT(DISTINCT c.customer_id) AS pharmacies,\n       COUNT(DISTINCT f.customer_id) AS bought\nFROM dim_region r\nJOIN dim_customer c ON c.region_id = r.region_id AND c.channel = 'pharmacy'\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id\nWHERE r.macro_region IN ('Kanto', 'Kansai')\n  AND f.product_id = 43 -- Vitanor Forte x30\n  AND f.week_start BETWEEN '2025-09-01' AND '2025-12-31'\nGROUP BY r.region_name\nORDER BY r.region_name",
+          "fix": "SELECT r.region_name AS region,\n       COUNT(DISTINCT c.customer_id) AS pharmacies,\n       COUNT(DISTINCT f.customer_id) AS bought\nFROM dim_region r\nJOIN dim_customer c ON c.region_id = r.region_id AND c.channel = 'pharmacy'\nLEFT JOIN fact_sellout f ON f.customer_id = c.customer_id\n                        AND f.product_id = 43 -- Vitanor Forte x30\n                        AND f.week_start BETWEEN '2025-09-01' AND '2025-12-31'\nWHERE r.macro_region IN ('Kanto', 'Kansai')\nGROUP BY r.region_name\nORDER BY r.region_name"
+        },
+        "key": [
+          "region"
+        ],
+        "badRows": [
+          [
+            "Ibaraki",
+            1,
+            1
+          ],
+          [
+            "Kanagawa",
+            2,
+            2
+          ],
+          [
+            "Kyoto",
+            1,
+            1
+          ],
+          [
+            "Osaka",
+            1,
+            1
+          ],
+          [
+            "Saitama",
+            1,
+            1
+          ],
+          [
+            "Tokyo",
+            1,
+            1
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT COUNT(*) FROM dim_customer c JOIN dim_region r ON r.region_id = c.region_id WHERE c.channel = 'pharmacy' AND r.macro_region IN ('Kanto', 'Kansai')",
+          "n": 20,
+          "symptom": "Во всех строках «аптек» столько же, сколько «брали»: новинка будто стоит в каждой аптеке. Регионов показано {rows} из {expected}, а аптек в отчёте меньше, чем в справочнике: там их {n}.",
+          "cause": "Условия по fact_sellout стоят в WHERE. У аптеки без продаж новинки колонки f пустые, сравнение NULL с числом не истинно, и WHERE выбрасывает такую строку. LEFT JOIN стал внутренним: остались только купившие, а регионы, где не купил никто, пропали целиком.",
+          "fix": "Перенести условия по fact_sellout в ON. Аптека без покупки останется строкой с NULL справа: COUNT(DISTINCT c.customer_id) посчитает все аптеки, COUNT(DISTINCT f.customer_id) только купивших, а регион без покупок покажет ноль.",
+          "business": "Директор увидит полное покрытие и не отправит представителей туда, где новинки нет: в Chiba и Hyogo её не взяла ни одна аптека, а их в отчёте нет вовсе."
+        }
+      },
+      "hints": [
+        "Может ли новинка за четыре месяца встать в каждую аптеку?",
+        "Где в запросе стоит условие по таблице продаж и что оно делает со строками, где продаж нет?"
+      ],
+      "explain": "LEFT JOIN обещает сохранить все строки слева, но условие по правой таблице в WHERE отменяет обещание: у строки без пары справа NULL, а NULL не проходит ни одно сравнение. Симптом узнаётся по отчёту: доля везде полная, а строк меньше, чем ждали. Условия на правую таблицу пишут в ON, в WHERE только условия на левую."
+    },
+    {
+      "id": "sql-124",
+      "track": "sql",
+      "skill": "sql-group-by",
+      "alsoTrains": [
+        "sql-aggregate"
+      ],
+      "level": 2,
+      "mode": "spot",
+      "title": "Рейтинг брендов Pharma",
+      "brief": "Категорийный менеджер Pharma делит бюджет полки по рейтингу брендов: проданные упаковки за 2025.",
+      "goal": "Отметьте клетки, которые нельзя отправлять.",
+      "orderQuestion": "Какие клетки отчёта неверны?",
+      "spot": {
+        "sql": "SELECT p.brand,\n       SUM(f.units) AS units_sold\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start LIKE '2025%'\n  AND p.division = 'Pharma'\nGROUP BY p.brand\nORDER BY units_sold DESC",
+        "head": [
+          "brand",
+          "units_sold"
+        ],
+        "labels": {
+          "brand": "Бренд",
+          "units_sold": "Продано упаковок, 2025"
+        },
+        "rows": [
+          [
+            "Pyrexan",
+            13273
+          ],
+          [
+            "Vitanor",
+            9419
+          ],
+          [
+            "Rhinolar",
+            6083
+          ],
+          [
+            "Gastrivo",
+            5959
+          ]
+        ],
+        "mutate": [],
+        "decoys": [
+          {
+            "where": {
+              "brand": "Rhinolar"
+            },
+            "column": "units_sold",
+            "why": "Rhinolar не расщеплён: все его товары в миллилитрах, лишняя колонка группировки его не разделила. Число верно; неверно только его место: на экране он второй, а на деле третий."
+          }
+        ],
+        "source": {
+          "lang": "sql",
+          "bad": "SELECT p.brand,\n       SUM(f.units) AS units_sold\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start LIKE '2025%'\n  AND p.division = 'Pharma'\nGROUP BY p.brand, p.unit\nORDER BY units_sold DESC",
+          "fix": "SELECT p.brand,\n       SUM(f.units) AS units_sold\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start LIKE '2025%'\n  AND p.division = 'Pharma'\nGROUP BY p.brand\nORDER BY units_sold DESC"
+        },
+        "key": [
+          "brand"
+        ],
+        "badRows": [
+          [
+            "Pyrexan",
+            10008
+          ],
+          [
+            "Rhinolar",
+            6083
+          ],
+          [
+            "Vitanor",
+            5237
+          ],
+          [
+            "Gastrivo",
+            4787
+          ],
+          [
+            "Vitanor",
+            4182
+          ],
+          [
+            "Pyrexan",
+            1875
+          ],
+          [
+            "Pyrexan",
+            1390
+          ],
+          [
+            "Gastrivo",
+            1172
+          ]
+        ],
+        "trap": {
+          "fmt": "int",
+          "sql": "SELECT SUM(f.units) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE f.week_start LIKE '2025%' AND p.brand = 'Pyrexan'",
+          "n": 13273,
+          "symptom": "Бренды повторяются: Pyrexan в трёх строках, Vitanor и Gastrivo в двух. Каждая строка меньше настоящей продажи бренда (у Pyrexan на деле {n} упаковок), и рейтинг сломан: Rhinolar выглядит вторым.",
+          "cause": "В GROUP BY кроме бренда стоит p.unit, единица упаковки, которой нет в SELECT. Строка стала «бренд и единица», и бренд с таблетками, саше и сиропом разошёлся на три группы. Колонки не видно, поэтому повторы выглядят как сбой данных, а не как запрос.",
+          "fix": "Группировать ровно по тому, на что в отчёте одна строка: GROUP BY p.brand. Каждая колонка в GROUP BY отвечает на вопрос «одна строка на что?»; если ответ не «на бренд», колонка лишняя.",
+          "business": "Бюджет полки уйдёт Rhinolar как второму бренду, а Vitanor, который на деле второй, получит меньше."
+        }
+      },
+      "hints": [
+        "Сколько строк должно быть в отчёте по брендам?",
+        "Найдите в GROUP BY колонку, которой нет в SELECT."
+      ],
+      "explain": "Зерно отчёта задаёт GROUP BY, а не SELECT. Лишняя колонка в группировке тихо дробит строки: запрос работает, суммы правдоподобны, но ключ отчёта перестаёт быть уникальным. Проверка до отправки: ключ повторяется? Если да, ищите в GROUP BY то, чего нет в названии отчёта."
     }
   ]
 }

@@ -1970,6 +1970,97 @@
           "message": "The result is return_later: 46, active: 33, and the segment return_first is missing altogether. The wide condition \"lost\" comes first and takes all the lost outlets, including the nine most valuable ones, so the narrow condition never fires. The narrow condition has to come before the wide one."
         }
       ]
+    },
+    {
+      "id": "py-103",
+      "labels": {
+        "month_start": "Month",
+        "actual": "Actual, packs",
+        "forecast": "Forecast a month ahead, packs"
+      },
+      "title": "Forecast vs actuals: the first half year",
+      "brief": "The demand planner shows the supply director actuals vs the forecast made a month ahead, first half year of snapshots.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "February is right: it is the first month of forecast history, and there is only one snapshot for it, made a month ahead. There was nothing to copy. This is exactly the row that misleads: the top of the table looks correct."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "From March the actuals jump: March is double the real figure ({n} packs were actually sold), from April it is triple, and the forecast trails far behind. February is right.",
+        "cause": "fact_forecast_snapshot holds several snapshots per month and product: made one, two and three months ahead (lag_months). The merge on month and product without picking a snapshot matched each actual row once per horizon, and sum added up the copies of the actuals and the forecasts of different horizons. February had one snapshot, so it survived.",
+        "fix": "Keep one horizon before the merge, lag_months == 1, and add validate='one_to_one': if the key repeats on the right, pandas stops the merge with an error instead of multiplying rows silently.",
+        "business": "The director will see actuals two or three times above the forecast and conclude that planning keeps understating demand: production plans go up and the warehouse fills with stock nobody asked for."
+      },
+      "hints": [
+        "How many times larger is the March actual than February, and April?",
+        "How many rows does fact_forecast_snapshot hold for one product and one month?"
+      ],
+      "explain": "A snapshot table stores the same month several times, once per horizon. Joining on month and product without picking a horizon multiplies the actuals by the number of snapshots, so the error is uneven: where history is short, the row is right. Check before sending: validate in merge and the row count before and after."
+    },
+    {
+      "id": "py-104",
+      "labels": {
+        "region_name": "Region",
+        "outlets": "Chain stores",
+        "promo_units": "Sold on promo, packs"
+      },
+      "title": "Nettora 2+1 promo coverage",
+      "brief": "Trade marketing computes the Nettora 2+1 chain bonus: stores and promo sales in five regions outside the core.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "In Hokkaido both chain stores sold on the promo: there was nobody to lose, so the row is right."
+        },
+        {
+          "why": "Promo sales are right in every row shown: the filter dropped stores with no sales, and they had zero anyway. Okinawa sold {n} packs on the promo, exactly what is shown."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "The report has {rows} regions out of {expected} and {m} stores out of {n}: only those that sold on the promo are left. Miyagi, which has chain stores, vanished entirely.",
+        "cause": "how='left' kept every store, and stores with no promo sales got NaN in promo_id. The next line keeps only promo sales, NaN does not match, and stores without promo sales dropped out: the left join became an inner one.",
+        "fix": "Filter the promo sales before the merge and only then join to the stores with how='left'. A store with no sales stays as a row with NaN: nunique counts every store, and the sum of empty sales gives zero.",
+        "business": "Promo coverage will look complete, the chain bonus will be based on stores that sold anyway, and Miyagi, where the promo worked nowhere, will not come up with the chain."
+      },
+      "hints": [
+        "What does the promo_id filter do to stores whose promo_id is empty after the merge?",
+        "How many rows should a report on five regions have?"
+      ],
+      "explain": "how='left' keeps the left rows only until the first filter on a right column: a row with no match has NaN there, and the comparison drops it. It is the same trap as a right table condition in WHERE in SQL. Filter the right table before the merge, and fill the gaps after the merge on purpose."
+    },
+    {
+      "id": "py-105",
+      "labels": {
+        "macro_region": "Macro region",
+        "regions": "Regions",
+        "outlets": "Outlets",
+        "per_outlet_k": "Revenue per outlet, ¥ thousand"
+      },
+      "title": "Revenue per outlet by macro region",
+      "brief": "The sales director decides where to add a rep: 2025 revenue per outlet by macro region.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "Hokkaido is right: it has one region, and the mean of one number is the number itself. The highest revenue per outlet here is real."
+        },
+        {
+          "why": "The outlets are added correctly: the sum over regions is the macro region's outlet count. The error is not in what was added but in what was averaged."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "Where a macro region has several regions, revenue per outlet does not equal revenue divided by outlets. Chubu is hit hardest: it really makes {n} thousand yen per outlet, and the report understates it by {m} thousand yen. Kanto, Kansai and Kyushu are off by less, but the formula is wrong there too.",
+        "cause": "The mean was taken per region first, then the mean of those means. Every region got the same weight, although Aichi has eleven outlets and Niigata seven, so a small region with low revenue per outlet drags Chubu down. Where there is one region there is nothing to average, so the row is right.",
+        "fix": "Add up revenue and outlets to the macro region and divide sum by sum. A mean of means works only when the groups are the same size.",
+        "business": "The director compares macro regions on this figure: Chubu looks {m} thousand yen weaker per outlet, and the decision on where to add a rep will rest on a number that is not in the data."
+      },
+      "hints": [
+        "In which rows is the average built from several regions?",
+        "Does a region with eleven outlets weigh the same as one with seven?"
+      ],
+      "explain": "A mean of means gives every group the same weight, however many rows it has. The error is quiet: the figures look plausible, and where there is one group the result is even right. Check before sending: a per outlet metric must equal the sum divided by the sum. Build a ratio from sums, not from ratios."
     }
   ]
 }

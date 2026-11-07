@@ -15,10 +15,19 @@ import type { Task } from './types';
 export const MODE_RANK: Record<Task['mode'], number> = { predict: 0, order: 1, waves: 1, relate: 1, spot: -1, fill: 2, write: 3 };
 
 /**
+ * Ранг задания. `spot` с кодом отчёта (`spot.source`, треки SQL и pandas) проверяет приём, который человек
+ * уже прошёл в predict/fill/write, поэтому встаёт после `write` своего уровня; `spot` «Профессии»
+ * (порча руками, навык здравого смысла) остаётся первым.
+ */
+export function rankOf(t: Task): number {
+  return t.mode === 'spot' && t.spot?.source ? MODE_RANK.write + 1 : MODE_RANK[t.mode];
+}
+
+/**
  * Компаратор «образец → достраивание → с нуля»: уровень задаёт трудность
  * задачи, режим — сколько за человека сделали заранее, id — последний
  * тай-брейк ради детерминизма при полном совпадении первых двух ключей.
  */
 export function compareTaskOrder(a: Task, b: Task): number {
-  return a.level - b.level || MODE_RANK[a.mode] - MODE_RANK[b.mode] || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  return a.level - b.level || rankOf(a) - rankOf(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }

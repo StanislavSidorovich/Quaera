@@ -79,6 +79,9 @@ function validate(pack: Pack): Pack {
       if (!t.spot || !t.spot.head?.length || !t.spot.rows?.length) {
         throw new Error(`Пак ${pack.id}: у задания ${t.id} нет таблицы отчёта для поиска ошибок`);
       }
+      if (t.spot.source && (!t.spot.trap || !t.spot.key?.length || !t.spot.badRows?.length)) {
+        throw new Error(`Пак ${pack.id}: у задания ${t.id} с кодом отчёта нет разбора, ключа или показанной таблицы`);
+      }
     } else if (t.mode === 'waves') {
       // Верность задаёт dependsOn; здесь только то, без чего экран упадёт.
       if ((t.waveItems ?? []).length < 3 || !t.waves) {
@@ -129,6 +132,9 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
       throw new Error(
         `Перевод ${tr.id}: у задания ${t.id} ${t.spotMutate.length} переведённых порч вместо ${(orig.spot?.mutate ?? []).length}`
       );
+    }
+    if (t.spotTrap && !orig.spot?.trap) {
+      throw new Error(`Перевод ${tr.id}: у задания ${t.id} переведён разбор, которого нет в оригинале`);
     }
     if (t.spotDecoys && (orig.spot?.decoys ?? []).length !== t.spotDecoys.length) {
       throw new Error(
@@ -205,12 +211,13 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
               }
             : t.relate,
         spot:
-          (tt.spotMutate || tt.spotDecoys || tt.labels) && t.spot
+          (tt.spotMutate || tt.spotDecoys || tt.spotTrap || tt.labels) && t.spot
             ? {
                 ...t.spot,
                 labels: tt.labels ?? t.spot.labels,
                 mutate: tt.spotMutate ? t.spot.mutate.map((o, i) => ({ ...o, ...tt.spotMutate![i] })) : t.spot.mutate,
                 decoys: tt.spotDecoys ? t.spot.decoys.map((o, i) => ({ ...o, ...tt.spotDecoys![i] })) : t.spot.decoys,
+                trap: tt.spotTrap && t.spot.trap ? { ...t.spot.trap, ...tt.spotTrap } : t.spot.trap,
               }
             : t.spot,
         steps:

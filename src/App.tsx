@@ -2153,6 +2153,8 @@ export default function App() {
         : t.home.loadingRuntime;
 
   const step = screen.name === 'session' ? screen.queue[screen.index] : null;
+  /** «Найдите, что не так» не исполняет код: таблицы предрассчитаны, согласие на Pyodide здесь не нужно. */
+  const spotOnScreen = step?.kind === 'task' && step.task.mode === 'spot';
 
   /**
    * Подпись шага занятия. Карточки приёма в счёт задач не входят: они
@@ -2807,7 +2809,7 @@ export default function App() {
            * а не той же карточкой заново. Над шагом, а не внутри задания:
            * у карточки приёма та же кнопка «Выполнить».
            */}
-          {step && load.phase === 'consent' && !consentDeferred && (
+          {step && !spotOnScreen && load.phase === 'consent' && !consentDeferred && (
             <div className="card">
               <h2 style={{ marginTop: 0 }}>{t.consent.title}</h2>
               <p className="brief">{t.consent.body(Math.round(load.bytes / 1e6))}</p>
@@ -2828,7 +2830,7 @@ export default function App() {
               </div>
             </div>
           )}
-          {step && load.phase === 'consent' && consentDeferred && (
+          {step && !spotOnScreen && load.phase === 'consent' && consentDeferred && (
             <div className="card">
               <p className="muted" style={{ margin: '0 0 12px', fontSize: 13 }}>{t.consent.deferredNote}</p>
               <button className="btn secondary" onClick={() => setConsentDeferred(false)}>

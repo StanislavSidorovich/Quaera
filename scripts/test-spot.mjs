@@ -1,5 +1,15 @@
 /**
- * Гейт вида «Найдите, что не так» (`mode: 'spot'`): движок src/engine/spot.ts на всех заданиях пака domain-core.
+ * Гейт вида «Найдите, что не так» (`mode: 'spot'`): движок src/engine/spot.ts на заданиях паков domain-core,
+ * sql-core и python-core.
+ *
+ * Два устройства задания. В domain-core верную таблицу портят руками (`mutate`), см. пункты 1-8. В sql-core и
+ * python-core задание «отчёт плюс код» (`spot.source`): гейт исполняет `source.bad` и `source.fix` настоящим
+ * движком (SQL: sql.js к Kaiyo; pandas: Pyodide тем же путём, что verify-content) и сверяет результаты
+ * с сохранёнными `badRows` и `rows`. В приложении таблицы не считаются, они предрассчитаны здесь и лежат в
+ * задании: рантайм не тащит Pyodide в экран задания, а расхождение кода и таблицы гейт ловит при сборке.
+ * Дополнительно для source: дефекты движка равны независимо найденным (разошедшиеся клетки, расщеплённый ключ,
+ * лишний ключ, пропавшие ключи в «Строк: N»), есть и задетые, и незатронутые строки, приманки вне дефектов,
+ * `trap` (четыре части, плейсхолдеры, запросы n и m) и его перевод.
  *
  * Верную таблицу считает запрос к Kaiyo, дефекты вносятся в неё явной правкой (`mutate`), дефектные клетки
  * движок выводит сам. Такое правило ломается молча четырьмя способами: сохранённые строки разъезжаются с
@@ -28,6 +38,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import initSqlJs from 'sql.js';
+import { runCell } from './lib/pyodide.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,15 +80,25 @@ try {
   const SQL = await initSqlJs({ locateFile: (f) => path.join(path.dirname(require.resolve('sql.js')), f) });
   const db = new SQL.Database(new Uint8Array(readFileSync(path.join(root, '.cache', 'quaera.sqlite'))));
 
-  const pack = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'domain-core.json'), 'utf8'));
-  const en = JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', 'domain-core.en.json'), 'utf8'));
-  const tasks = pack.tasks.filter((x) => x.mode === 'spot');
-  check('в паке есть задания spot', tasks.length > 0, 'нет ни одного');
+  const readPack = (f) => JSON.parse(readFileSync(path.join(root, 'src', 'content', 'packs', f), 'utf8'));
+  const all3 = [];
+  for (const name of ['domain-core', 'sql-core', 'python-core']) {
+    const pk = readPack(`${name}.json`);
+    const enPk = readPack(`${name}.en.json`);
+    for (const x of pk.tasks.filter((q) => q.mode === 'spot')) all3.push({ t: x, en: enPk, pack: name });
+  }
+  const tasks = all3.map((x) => x.t);
+  check('в паках есть задания spot', all3.length > 0, 'нет ни одного');
+  const runPyRows = async (code) => {
+    const out = await runCell(root, code);
+    if (!out.ok) throw new Error(String(out.message));
+    return { columns: out.table.columns, rows: out.table.rows };
+  };
 
   const cellsOfRow = (head, r) => head.map((_, ci) => E.cellKey(r, ci));
   const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
-  for (const t of tasks) {
+  for (const { t, en, pack: packName } of all3) {
     const sp = t.spot;
     const at = t.id;
 
@@ -106,8 +127,10 @@ try {
       const ci = sp.head.indexOf(sp.footer.total);
       check(`${at}: колонка итога числовая`, ci >= 0 && sp.rows.every((r) => typeof r[ci] === 'number'), 'footer.total не числовая колонка');
     }
-    check(`${at}: подвал задан`, !!(sp.footer?.rows || sp.footer?.total) || sp.mutate.every((m) => m.kind === 'scale'), 'порча drop или total без подвала');
+    if (!sp.source) check(`${at}: подвал задан`, !!(sp.footer?.rows || sp.footer?.total) || sp.mutate.every((m) => m.kind === 'scale'), 'порча drop или total без подвала');
+    check(`${at}: пак и вид совпадают (source только в sql-core и python-core)`, !!sp.source === (packName !== 'domain-core'), `${packName}: source ${!!sp.source}`);
 
+    if (!sp.source) {
     // 2. Сборка.
     const built = E.buildSpot(sp);
     check(`${at}: сборка без ошибок`, built.errors.length === 0, built.errors.join('; '));
@@ -187,21 +210,108 @@ try {
       check(`${at}: в таблице без дефектов есть приманка`, sp.decoys.length > 0, 'нет приманки: вид не учит не отмечать верное');
     }
 
+    } else {
+      // ---- Задание «отчёт плюс код» (source) ----
+      const src = sp.source;
+      check(`${at}: source: язык совпадает с треком пака`, src.lang === (packName === 'sql-core' ? 'sql' : 'python'), `lang ${src.lang} в ${packName}`);
+      check(`${at}: source: mutate пустой, есть key, badRows и trap`, sp.mutate.length === 0 && (sp.key ?? []).length > 0 && (sp.badRows ?? []).length > 0 && !!sp.trap, 'не хватает key, badRows или trap, либо mutate не пуст');
+      check(`${at}: source: колонки ключа есть в таблице`, (sp.key ?? []).every((k) => sp.head.includes(k)), `key ${JSON.stringify(sp.key)}`);
+      check(`${at}: source: подвал «Строк: N» без «Итога»`, !sp.footer?.total, 'footer.total при source не поддерживается');
+      check(`${at}: source: код с ошибкой и исправленный не совпадают`, src.bad.trim() !== src.fix.trim(), 'bad равен fix: дефекта нет');
+      check(`${at}: source: код отчёта не длиннее 24 строк (читается на экране)`, src.bad.split('\n').length <= 24 && src.fix.split('\n').length <= 26, `${src.bad.split('\n').length}/${src.fix.split('\n').length}`);
+      if (src.lang === 'sql') check(`${at}: source: fix равен spot.sql`, src.fix.trim() === sp.sql.trim(), 'для SQL исправленный код и spot.sql один запрос');
+
+      // Настоящие результаты обоих кодов.
+      let bad;
+      let fix;
+      try {
+        if (src.lang === 'sql') {
+          const b = db.exec(src.bad)[0];
+          const f = db.exec(src.fix)[0];
+          bad = { columns: b?.columns ?? [], rows: b?.values ?? [] };
+          fix = { columns: f?.columns ?? [], rows: f?.values ?? [] };
+        } else {
+          bad = await runPyRows(src.bad);
+          fix = await runPyRows(src.fix);
+        }
+      } catch (e) {
+        fail(`${at}: source: код исполняется`, String(e.message ?? e).split('\n').slice(-3).join(' | '));
+        continue;
+      }
+      check(`${at}: source: bad исполняется и колонки те же, что у верной таблицы`, JSON.stringify(bad.columns) === JSON.stringify(sp.head), `${JSON.stringify(bad.columns)} вместо ${JSON.stringify(sp.head)}`);
+      check(`${at}: source: badRows равны настоящему результату bad`, JSON.stringify(bad.rows) === JSON.stringify(sp.badRows), `в задании ${JSON.stringify(sp.badRows)}, код даёт ${JSON.stringify(bad.rows)}`);
+      check(`${at}: source: rows равны настоящему результату fix`, JSON.stringify(fix.rows) === JSON.stringify(sp.rows) && JSON.stringify(fix.columns) === JSON.stringify(sp.head), `в задании ${JSON.stringify(sp.rows)}, код даёт ${JSON.stringify(fix.rows)}`);
+
+      const built = E.buildSpot(sp);
+      check(`${at}: сборка без ошибок`, built.errors.length === 0, built.errors.join('; '));
+      const keyIdx = (sp.key ?? []).map((k) => sp.head.indexOf(k));
+      const kOf = (r) => keyIdx.map((i) => String(r[i])).join('|');
+      const goodByKey = new Map(sp.rows.map((r) => [kOf(r), r]));
+      check(`${at}: ключ уникален в верной таблице`, goodByKey.size === sp.rows.length, 'ключ повторяется в rows');
+      const shownCount = new Map();
+      sp.badRows.forEach((r) => shownCount.set(kOf(r), (shownCount.get(kOf(r)) ?? 0) + 1));
+      const missing = [...goodByKey.keys()].filter((k) => !shownCount.has(k));
+      check(`${at}: пропавшие ключи только при footer.rows, и footer.rows только при них`, !!sp.footer?.rows === (missing.length > 0), `пропало ключей ${missing.length}, footer.rows ${!!sp.footer?.rows}`);
+
+      // Независимый поиск дефектных клеток по таблицам.
+      const expectCells = new Set();
+      sp.badRows.forEach((r, ri) => {
+        const right = goodByKey.get(kOf(r));
+        sp.head.forEach((_, ci) => {
+          if (shownCount.get(kOf(r)) > 1 || !right || String(r[ci]) !== String(right[ci])) expectCells.add(E.cellKey(ri, ci));
+        });
+      });
+      if (missing.length) expectCells.add(E.FOOTER_ROWS);
+      const all = built.defects.flatMap((d) => d.cells);
+      check(`${at}: дефектные клетки движка равны найденным независимо (${all.length})`, all.length > 0 && sameSet(all, [...expectCells]), `движок ${all.join(',')}, таблицы ${[...expectCells].join(',')}`);
+      check(`${at}: дефекты не пересекаются`, new Set(all).size === all.length, 'клетка в двух дефектах');
+      const untouchedRows = sp.badRows.filter((_, ri) => !sp.head.some((__, ci) => expectCells.has(E.cellKey(ri, ci))));
+      check(`${at}: есть и задетые, и незатронутые строки (иначе нечего различать)`, untouchedRows.length >= 1 && built.defects.length >= 1, `незатронутых строк ${untouchedRows.length}, дефектов ${built.defects.length}`);
+      check(`${at}: хотя бы одна незатронутая строка верна целиком`, untouchedRows.every((r) => JSON.stringify(r) === JSON.stringify(goodByKey.get(kOf(r)))), 'незатронутая строка расходится');
+
+      sp.decoys.forEach((d, i) => {
+        const key = built.decoyCells[i];
+        check(`${at}/приманка ${i + 1}: клетка найдена`, !!key, 'строка или колонка приманки не найдена');
+        check(`${at}/приманка ${i + 1}: не совпадает с дефектом`, !all.includes(key), 'приманка лежит в дефекте');
+        const [r, c] = key.split(':').map(Number);
+        const right = goodByKey.get(kOf(sp.badRows[r] ?? []));
+        check(`${at}/приманка ${i + 1}: значение верное`, !!right && String(built.rows[r]?.[c]) === String(right[c]), 'приманка показывает неверное значение');
+      });
+      check(`${at}: хотя бы одна приманка`, sp.decoys.length > 0, 'нет приманки: вид не учит не отмечать верное');
+
+      // Проверка «всё или ничего».
+      const g = (marks, allOk = false) => E.gradeSpot(built, marks, allOk);
+      const marksOne = built.defects.map((d) => d.cells[0]);
+      const nonDefect = [...Array(built.rows.length * sp.head.length).keys()].map((i) => E.cellKey(Math.floor(i / sp.head.length), i % sp.head.length)).find((k) => !all.includes(k) && !built.decoyCells.includes(k));
+      check(`${at}: все клетки дефектов принимаются`, g(all).correct, 'не принято');
+      check(`${at}: по одной клетке на дефект принимается`, g(marksOne).correct, 'не принято');
+      check(`${at}: «Всё в порядке» и пустой ответ не принимаются`, !g([], true).correct && !g([]).correct, 'принято');
+      if (built.defects.length > 1) check(`${at}: пропуск одного дефекта не принимается`, !g(marksOne.slice(1)).correct && g(marksOne.slice(1)).missed.length === 1, 'принято');
+      if (nonDefect) check(`${at}: лишняя отметка не принимается`, !g([...marksOne, nonDefect]).correct, 'принято');
+      sp.decoys.forEach((_, i) => {
+        const k = built.decoyCells[i];
+        if (k) check(`${at}: приманка ${i + 1} к верным отметкам не принимается и узнаётся`, !g([...marksOne, k]).correct && g([...marksOne, k]).decoyHits.includes(i), 'принято или не узнана');
+      });
+    }
+
     // 7. Числа разборов.
     const texts = [
       ...sp.mutate.map((m, i) => ({ who: `порча ${m.id}`, src: m, text: m.why, kind: m.kind, i })),
       ...sp.decoys.map((d, i) => ({ who: `приманка ${i + 1}`, src: d, text: d.why, kind: 'decoy', i })),
+      ...(sp.trap ? ['symptom', 'cause', 'fix', 'business'].map((part) => ({ who: `разбор ${part}`, src: sp.trap, text: sp.trap[part], kind: 'trap', part, i: 0 })) : []),
     ];
     for (const x of texts) {
       const ph = placeholdersOf(x.text);
+      // Разбор в четыре части делит одни запросы n и m на всё целое: плейсхолдер может стоять в любой части.
+      const phAny = x.kind === 'trap' ? ['symptom', 'cause', 'fix', 'business'].flatMap((part) => placeholdersOf(x.src[part])) : ph;
       check(`${at}/${x.who}: плейсхолдеры известны`, ph.every((p) => KNOWN.includes(p)), `неизвестный: ${ph.filter((p) => !KNOWN.includes(p)).join(',')}`);
       check(`${at}/${x.who}: в разборе нет набранных руками чисел`, !/\d{2,}/.test(stripPlaceholders(x.text)), 'число в тексте: оно считается, а не набирается');
       check(`${at}/${x.who}: разбор содержательный`, x.text.length >= 60, 'слишком короткий');
-      if (ph.includes('n')) {
+      if (phAny.includes('n')) {
         const val = x.src.sql ? db.exec(x.src.sql)[0]?.values?.[0]?.[0] : undefined;
         check(`${at}/${x.who}: {n} считает запрос и сходится с n (${val})`, typeof val === 'number' && Number.isFinite(val) && val > 0 && val === x.src.n, `n = ${x.src.n}, а Kaiyo даёт ${val}`);
       } else check(`${at}/${x.who}: без {n} нет и запроса`, !x.src.sql, 'sql задан, а {n} в тексте нет');
-      if (ph.includes('m')) {
+      if (phAny.includes('m')) {
         const val = x.src.sql2 ? db.exec(x.src.sql2)[0]?.values?.[0]?.[0] : undefined;
         check(`${at}/${x.who}: {m} считает sql2 и сходится с m (${val})`, typeof val === 'number' && Number.isFinite(val) && val === x.src.m, `m = ${x.src.m}, а Kaiyo даёт ${val}`);
       } else check(`${at}/${x.who}: без {m} нет и sql2`, !x.src.sql2, 'sql2 задан, а {m} в тексте нет');
@@ -217,12 +327,14 @@ try {
     if (!tr) continue;
     check(`${at}: EN порч столько же`, (tr.spotMutate ?? []).length === sp.mutate.length, `${(tr.spotMutate ?? []).length} вместо ${sp.mutate.length}`);
     check(`${at}: EN приманок столько же`, (tr.spotDecoys ?? []).length === sp.decoys.length, `${(tr.spotDecoys ?? []).length} вместо ${sp.decoys.length}`);
+    if (sp.trap) check(`${at}: EN разбор есть, все четыре части`, ['symptom', 'cause', 'fix', 'business'].every((part) => (tr.spotTrap?.[part] ?? '').length >= 60), 'нет переведённого разбора');
     texts.forEach((x) => {
-      const e = (x.kind === 'decoy' ? tr.spotDecoys : tr.spotMutate)?.[x.i];
+      const e = x.kind === 'trap' ? { why: tr.spotTrap?.[x.part] ?? '' } : (x.kind === 'decoy' ? tr.spotDecoys : tr.spotMutate)?.[x.i];
       if (!e) return;
       check(`${at}/${x.who}: EN плейсхолдеры те же`, JSON.stringify(placeholdersOf(e.why).sort()) === JSON.stringify(placeholdersOf(x.text).sort()), 'расходятся с русским');
       check(`${at}/${x.who}: EN без чисел и тире`, !/\d{2,}/.test(stripPlaceholders(e.why)) && !DASH.test(e.why), 'число или тире в английском разборе');
     });
+    check(`${at}: EN постановка короткая`, `${tr.brief} ${tr.goal}`.length <= 160, `${(tr.brief + tr.goal).length} знаков`);
     for (const f of ['title', 'brief', 'goal', 'orderQuestion', 'explain']) {
       check(`${at}: EN ${f} без тире`, !DASH.test(tr[f] ?? ''), 'тире в английском тексте');
     }
@@ -230,9 +342,11 @@ try {
     check(`${at}: в EN разборе нет набранных руками чисел`, !/\d{2,}/.test(tr.explain ?? ''), 'число в разборе');
   }
 
-  // Состав набора: есть задание без порч и задание с двумя дефектами.
-  check('набор: есть отчёт без дефектов', tasks.some((x) => x.spot.mutate.length === 0), 'нет задания «Всё в порядке»');
-  check('набор: есть отчёт с двумя дефектами', tasks.some((x) => x.spot.mutate.length >= 2), 'нет задания с двумя дефектами');
+  // Состав набора (задания с порчами из domain-core): есть задание без порч и задание с двумя дефектами.
+  const handmade = tasks.filter((x) => !x.spot.source);
+  check('набор: есть отчёт без дефектов', handmade.some((x) => x.spot.mutate.length === 0), 'нет задания «Всё в порядке»');
+  check('набор: есть отчёт с двумя дефектами', handmade.some((x) => x.spot.mutate.length >= 2), 'нет задания с двумя дефектами');
+  check('набор: в sql-core и python-core по три задания «отчёт плюс код»', ['sql-core', 'python-core'].every((n) => all3.filter((x) => x.pack === n).length >= 3), 'меньше трёх');
 
   console.log('');
   console.log(`Найдите, что не так: ${tasks.length} заданий проверено на таблицу, дефекты, приманки и числа разборов.`);

@@ -645,17 +645,14 @@ export function DataMapTeaser({
               onBlur={() => setHot(null)}
             >
               <span className="home-map-name">{l.title[locale]}</span>
-              {/* «Вы здесь» в строке с кружками ролей справа: отдельной строкой оно делало ряд слоёв с gold выше соседнего. */}
-              <span className="home-map-roles">
+              {l.id === here && <span className="arch-here">{m.hereBadge}</span>}
+              <span className="home-map-roles" aria-hidden="true">
                 {l.roles.map((id) => (
-                  <span key={id} className="home-map-role" title={roleName(id)} aria-hidden="true">
+                  <span key={id} className="home-map-role" title={roleName(id)}>
                     {id.toUpperCase()}
                   </span>
                 ))}
-                <span className="home-map-roles-text" aria-hidden="true">
-                  {l.roles.map(roleName).join(', ')}
-                </span>
-                {l.id === here && <span className="arch-here">{m.hereBadge}</span>}
+                <span className="home-map-roles-text">{l.roles.map(roleName).join(', ')}</span>
               </span>
             </button>
           </li>

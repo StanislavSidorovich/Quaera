@@ -1434,11 +1434,6 @@ export const ru = {
     retWhere: (week: number, day: number) => `Неделя ${week}, день ${day}`,
     retContinue: 'Продолжить →',
     retStart: 'Пять недель в роли аналитика →',
-    /** Тихая строка о дне под рисунком недели: заголовок первого шага и число заданий берутся из кампании. */
-    retNext: (title: string | null, n: number) =>
-      `Дальше: ${title ? `«${title}» · ` : ''}${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
-    retFirst: (title: string | null, n: number) =>
-      `Первый день: ${title ? `«${title}» · ` : ''}${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
     whereStepsAria: 'Шаги дня',
     whereStepBrief: 'Бриф',
     whereStepTasks: (n: number) => `${n} ${plural(n, 'задание', 'задания', 'заданий')}`,
@@ -1679,6 +1674,10 @@ export const ru = {
     /* Вид «Найдите, что не так» (mode spot): свой блок ключей. */
     modeSpot: 'Найти ошибку',
     spotNote: 'Коснитесь клетки, чтобы отметить её; повторное касание снимает отметку. Если отправлять можно всё, нажмите «Всё в порядке».',
+    spotCodeSql: 'Запрос, который собрал отчёт',
+    spotCodePy: 'Код, который собрал отчёт',
+    spotFixedSql: 'Исправленный запрос',
+    spotFixedPy: 'Исправленный код',
     spotCheck: 'Проверить',
     spotAllOk: 'Всё в порядке',
     spotMarked: (n: number) => (n === 0 ? 'Ничего не отмечено' : `Отмечено: ${n}`),

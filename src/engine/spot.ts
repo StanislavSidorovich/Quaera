@@ -67,7 +67,76 @@ function matches(head: string[], rows: Live[], where: Record<string, string | nu
   );
 }
 
+/**
+ * Сборка в режиме «отчёт плюс код» (`spec.source`): на экране `badRows`, верная таблица `rows`.
+ * Дефект это ключ, а не клетка:
+ *  - ключ показан один раз, значения расходятся с верной строкой: дефектные клетки это разошедшиеся;
+ *  - ключ показан несколько раз (группа расщепилась): дефектные клетки это все клетки всех его строк;
+ *  - ключа нет в верной таблице: вся строка;
+ *  - ключ есть в верной таблице, но не показан: один общий дефект, клетка «Строк: N» в подвале.
+ */
+function buildFromSource(spec: SpotSpec): SpotBuilt {
+  const { head } = spec;
+  const errors: string[] = [];
+  const shown = spec.badRows ?? [];
+  const keyIdx = (spec.key ?? []).map((k) => head.indexOf(k));
+  if (!keyIdx.length || keyIdx.some((i) => i < 0)) errors.push('key: колонки ключа нет в таблице');
+  if (spec.mutate.length) errors.push('mutate при source должен быть пустым');
+  if (spec.footer?.total) errors.push('footer.total при source не поддерживается');
+  const keyOf = (r: SpotValue[]) => keyIdx.map((i) => String(r[i])).join('|');
+
+  const good = new Map<string, SpotValue[]>();
+  for (const r of spec.rows) {
+    if (good.has(keyOf(r))) errors.push(`key: ключ ${keyOf(r)} повторяется в верной таблице`);
+    good.set(keyOf(r), r);
+  }
+  const byKey = new Map<string, number[]>();
+  shown.forEach((r, i) => byKey.set(keyOf(r), [...(byKey.get(keyOf(r)) ?? []), i]));
+
+  const defects: SpotDefect[] = [];
+  for (const [k, idxs] of byKey) {
+    const label = k.split('|').join('/');
+    const right = good.get(k);
+    if (idxs.length > 1 || !right) {
+      defects.push({ id: `key:${label}`, cells: idxs.flatMap((r) => head.map((_, ci) => cellKey(r, ci))) });
+    } else {
+      const cells = head.flatMap((_, ci) => (String(shown[idxs[0]][ci]) !== String(right[ci]) ? [cellKey(idxs[0], ci)] : []));
+      if (cells.length) defects.push({ id: `key:${label}`, cells });
+    }
+  }
+  const missing = [...good.keys()].filter((k) => !byKey.has(k));
+  if (missing.length) {
+    if (!spec.footer?.rows) errors.push('пропавшие ключи без footer.rows');
+    defects.push({ id: 'missing', cells: [FOOTER_ROWS] });
+  }
+
+  const decoyCells = spec.decoys.map((d, i) => {
+    const found = shown
+      .map((r, ri) => ({ r, ri }))
+      .filter(({ r }) => Object.entries(d.where).every(([col, v]) => head.indexOf(col) >= 0 && String(r[head.indexOf(col)]) === String(v)));
+    const ci = head.indexOf(d.column);
+    if (ci < 0) errors.push(`decoys[${i}]: колонки «${d.column}» нет`);
+    if (found.length !== 1) {
+      errors.push(`decoys[${i}]: where подходит строкам: ${found.length}`);
+      return '';
+    }
+    return ci >= 0 ? cellKey(found[0].ri, ci) : '';
+  });
+
+  return {
+    rows: shown.map((r) => [...r]),
+    footerRows: spec.footer?.rows ? shown.length : null,
+    footerTotal: null,
+    sum: null,
+    expectedRows: spec.rows.length,
+    defects,
+    decoyCells,
+    errors,
+  };
+}
+
 export function buildSpot(spec: SpotSpec): SpotBuilt {
+  if (spec.source) return buildFromSource(spec);
   const { head } = spec;
   const errors: string[] = [];
   const clean: Live[] = spec.rows.map((r) => ({ cells: [...r], orig: [...r] }));

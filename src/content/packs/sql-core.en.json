@@ -2666,6 +2666,95 @@
         "There is only one slice here, since the brand is already selected in the template, so PARTITION BY is not needed: the window runs over all months in a row."
       ],
       "explain": "November 2025: 1,825 units after 2,656 in October, down 31%; January: 1,216, the very number from the report. But the neighbouring month carries the season too: the whole market fell 19% from October to November. A one-month shift shows where the number changed, not why, which is why the Nettora case compared the same months of different years."
+    },
+    {
+      "id": "sql-122",
+      "labels": {
+        "region": "Region",
+        "staff": "Sales staff",
+        "revenue_k_yen": "2025 revenue, ¥ thousand"
+      },
+      "title": "Kanto revenue and sales staff",
+      "brief": "The Kanto sales director wants 2025 revenue by region and the sales headcount in each for the planning meeting.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "The staff column is right even in the affected rows: COUNT(DISTINCT) collapses the copies the join created. That is why the fan out does not show there, while SUM adds the copies up."
+        },
+        {
+          "why": "Tokyo has one staff member, so each sale joined to them once. Tokyo revenue without dim_rep is the same: {n} thousand yen. A row where the multiplier is one is correct."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "The five Kanto regions add up to {n} thousand yen, more than the whole company made in the year ({m} thousand yen). Revenue for Chiba, Kanagawa and Saitama grew by the number of staff in the region, while regions with one staff member stayed the same.",
+        "cause": "dim_rep is joined on region, and a region has several staff. Each sale repeated once per staff member, and SUM added all the copies. COUNT(DISTINCT) collapsed the copies, so the neighbouring column looks right and hides the error.",
+        "fix": "Bring each side to the region grain separately (revenue in one CTE, staff in another) and only then join: one row per region on each side, so there is nothing to multiply by.",
+        "business": "The director will see four times more revenue per person in Saitama than there really is, and will split workload and bonuses on figures that do not exist."
+      },
+      "hints": [
+        "Compare the report total with the annual revenue of the whole company.",
+        "Which regions grew and which did not? Look at the neighbouring column."
+      ],
+      "explain": "Joining a second table that has several rows per key multiplies the fact rows. SUM adds the copies, COUNT(DISTINCT) hides them, so one column of the report lies while the next one looks honest. Check before sending: the fact row count must be the same before and after the join. Rule: bring each side to a common grain first, then join."
+    },
+    {
+      "id": "sql-123",
+      "labels": {
+        "region": "Region",
+        "pharmacies": "Pharmacies in region",
+        "bought": "Of them took the new product"
+      },
+      "title": "Where the new product is on shelf",
+      "brief": "The pharmacy channel director expects coverage of the new Vitanor Forte in Kanto and Kansai pharmacies, Sep to Dec 2025.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "In Kanagawa both pharmacies of the region really did take the new product: there was nobody to lose, so the row is right. Pharmacies equal to buyers is not an error by itself; it is one when it happens in every row."
+        },
+        {
+          "why": "The filter does not touch the buyers: the condition is true for them, so their rows stay. The buyer count is right in every region shown; what is wrong is what it is compared with."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "In every row pharmacies equal buyers, as if the new product were in every pharmacy. The report shows {rows} regions out of {expected}, and fewer pharmacies than the reference table, which has {n}.",
+        "cause": "The fact_sellout conditions sit in WHERE. A pharmacy with no sales of the new product has empty f columns, comparing NULL with a number is not true, and WHERE drops that row. The LEFT JOIN turned into an inner one: only buyers remain, and regions where nobody bought vanished entirely.",
+        "fix": "Move the fact_sellout conditions into ON. A pharmacy without a purchase stays as a row with NULL on the right: COUNT(DISTINCT c.customer_id) counts all pharmacies, COUNT(DISTINCT f.customer_id) only the buyers, and a region with no purchases shows zero.",
+        "business": "The director will see full coverage and will not send reps where the product is missing: in Chiba and Hyogo no pharmacy took it, and they are not in the report at all."
+      },
+      "hints": [
+        "Can a new product reach every pharmacy in four months?",
+        "Where does the query put the condition on the sales table, and what does it do to rows with no sales?"
+      ],
+      "explain": "LEFT JOIN promises to keep every row on the left, but a condition on the right table in WHERE breaks the promise: a row with no match has NULL on the right, and NULL passes no comparison. The symptom shows in the report: the share is full everywhere and there are fewer rows than expected. Conditions on the right table go in ON, WHERE keeps only conditions on the left."
+    },
+    {
+      "id": "sql-124",
+      "labels": {
+        "brand": "Brand",
+        "units_sold": "Packs sold, 2025"
+      },
+      "title": "Pharma brand ranking",
+      "brief": "The Pharma category manager splits the shelf budget by brand ranking: packs sold in 2025.",
+      "goal": "Mark the cells that must not be sent.",
+      "orderQuestion": "Which cells of the report are wrong?",
+      "spotDecoys": [
+        {
+          "why": "Rhinolar is not split: all its products are in millilitres, so the extra grouping column did not divide it. The figure is right; only its place is wrong: it shows second but is really third."
+        }
+      ],
+      "spotTrap": {
+        "symptom": "Brands repeat: Pyrexan in three rows, Vitanor and Gastrivo in two. Each row is smaller than the brand's real sales (Pyrexan actually sold {n} packs), and the ranking breaks: Rhinolar looks second.",
+        "cause": "GROUP BY has p.unit, the pack unit, next to the brand, and it is not in SELECT. A row became \"brand and unit\", so a brand with tablets, sachets and syrup split into three groups. The column is not visible, so the repeats look like a data glitch rather than the query.",
+        "fix": "Group by exactly what the report has one row for: GROUP BY p.brand. Each column in GROUP BY answers \"one row per what?\"; if the answer is not \"per brand\", the column is extra.",
+        "business": "The shelf budget will go to Rhinolar as the second brand, and Vitanor, which is really second, will get less."
+      },
+      "hints": [
+        "How many rows should a report by brand have?",
+        "Find the column in GROUP BY that is not in SELECT."
+      ],
+      "explain": "The report grain is set by GROUP BY, not SELECT. An extra grouping column quietly splits rows: the query runs, the sums look plausible, but the report key is no longer unique. Check before sending: does the key repeat? If so, look in GROUP BY for something the report title does not name."
     }
   ]
 }
