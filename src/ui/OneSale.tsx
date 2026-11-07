@@ -86,7 +86,11 @@ export function OneSale() {
     const root = rootRef.current;
     if (!root) return;
     const box = root.getBoundingClientRect();
-    const isWide = box.width >= WIDE;
+    // Крупный шрифт в приложении сделан через CSS zoom: getBoundingClientRect отдаёт
+    // увеличенные координаты, а SVG рисует в неувеличенных. Отношение видимой ширины
+    // контейнера к layout-ширине (offsetWidth) сводит их к одной шкале; без zoom k = 1.
+    const k = root.offsetWidth ? box.width / root.offsetWidth : 1;
+    const isWide = root.offsetWidth >= WIDE;
     setWide(isWide);
     if (!isWide) {
       setPaths([]);
@@ -106,10 +110,10 @@ export function OneSale() {
       // Линия выходит из края таблицы на уровне клетки ключа и входит в край второй таблицы
       // на уровне её клетки: поверх содержимого она не идёт, поворот стоит в промежутке.
       const aLeft = qa.left < qb.left;
-      const x1 = (aLeft ? qa.right : qa.left) - box.left;
-      const x2 = (aLeft ? qb.left : qb.right) - box.left;
-      const y1 = ra.top + ra.height / 2 - box.top;
-      const y2 = rb.top + rb.height / 2 - box.top;
+      const x1 = ((aLeft ? qa.right : qa.left) - box.left) / k;
+      const x2 = ((aLeft ? qb.left : qb.right) - box.left) / k;
+      const y1 = (ra.top + ra.height / 2 - box.top) / k;
+      const y2 = (rb.top + rb.height / 2 - box.top) / k;
       const mx = (x1 + x2) / 2;
       next.push({ key: l.key, d: `M${x1},${y1} H${mx} V${y2} H${x2}`, x1, y1, x2, y2 });
     }
@@ -124,7 +128,11 @@ export function OneSale() {
     ro.observe(root);
     cardRefs.current.forEach((el) => ro.observe(el));
     document.fonts?.ready.then(measure).catch(() => {});
-    return () => ro.disconnect();
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [measure, locale, wide]);
 
   const week = (() => {
