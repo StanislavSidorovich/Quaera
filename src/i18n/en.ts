@@ -190,6 +190,8 @@ export const en = {
     startBtnBegin: 'Start session',
     resumeBtn: 'Back to your session',
     resumeNote: (step: string) => `Left unfinished: ${step.toLowerCase()}. Everything you did is still there.`,
+    newSessionLink: 'or start a new session',
+    newSessionNote: 'it replaces the unfinished one',
     loading: 'Loading data…',
     loadingRuntime: 'Loading Python with pandas…',
     loadingRuntimeNote: 'Downloaded once, then served from device cache and works offline.',
@@ -738,8 +740,11 @@ export const en = {
     whereWeekAria: (n: number, state: 'done' | 'now' | 'ahead') =>
       `Week ${n}, ${state === 'done' ? 'done' : state === 'now' ? 'current' : 'ahead'}`,
     whereNow: (week: number, day: number, days: number) => `Week ${week}, day ${day} of ${days}`,
-    quietStart: 'Story mode: five weeks as an analyst',
-    quietResume: (week: number, day: number) => `Story mode: week ${week}, day ${day} · Continue`,
+    /** См. комментарий в ru.ts. */
+    retTitle: 'Story mode',
+    retWhere: (week: number, day: number) => `Week ${week}, day ${day}`,
+    retContinue: 'Continue →',
+    retStart: 'Five weeks as an analyst →',
     whereStepsAria: 'Steps of the day',
     whereStepBrief: 'Brief',
     whereStepTasks: (n: number) => `${n} task${n === 1 ? '' : 's'}`,

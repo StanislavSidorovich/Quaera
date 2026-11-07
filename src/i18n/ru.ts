@@ -371,6 +371,9 @@ export const ru = {
      * на треке без редактора значило бы соврать на первом же экране.
      */
     resumeNote: (step: string) => `Осталось незаконченным: ${step.toLowerCase()}. Всё, что вы успели, на месте.`,
+    /** Новое занятие под основной кнопкой возврата (десктоп): ссылка и её цена. */
+    newSessionLink: 'или начать новое занятие',
+    newSessionNote: 'оно заменит незаконченное',
     loading: 'Загружаю данные…',
     /**
      * Отдельная подпись там, где грузится не датасет, а рантайм.
@@ -1426,8 +1429,11 @@ export const ru = {
     whereWeekAria: (n: number, state: 'done' | 'now' | 'ahead') =>
       `Неделя ${n}, ${state === 'done' ? 'пройдена' : state === 'now' ? 'текущая' : 'впереди'}`,
     whereNow: (week: number, day: number, days: number) => `Неделя ${week}, день ${day} из ${days}`,
-    quietStart: 'Режим истории: пять недель в роли аналитика',
-    quietResume: (week: number, day: number) => `Режим истории: неделя ${week}, день ${day} · Продолжить`,
+    /** Карточка режима истории в первой полосе главной вернувшегося (десктоп). */
+    retTitle: 'Режим истории',
+    retWhere: (week: number, day: number) => `Неделя ${week}, день ${day}`,
+    retContinue: 'Продолжить →',
+    retStart: 'Пять недель в роли аналитика →',
     whereStepsAria: 'Шаги дня',
     whereStepBrief: 'Бриф',
     whereStepTasks: (n: number) => `${n} ${plural(n, 'задание', 'задания', 'заданий')}`,

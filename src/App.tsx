@@ -34,7 +34,8 @@ import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
 import { TaskShowcase } from './ui/TaskShowcase';
 import { StoryWhereYouAre } from './ui/StoryWhereYouAre';
-import { StoryQuietRow } from './ui/StoryQuietRow';
+import { ReturnStoryCard } from './ui/ReturnStoryCard';
+import { useMinWidth } from './ui/useMinWidth';
 import { StoryWeekArt } from './ui/StoryWeekArt';
 import { DayOnePreview } from './ui/DayOnePreview';
 import { ToolsCompare } from './ui/ToolsCompare';
@@ -3956,6 +3957,145 @@ function Home({
     });
   }, [scrollToChooser, onChooserScrolled]);
 
+  /**
+   * Первая полоса главной вернувшегося на десктопе (вариант B, 2026-11-07).
+   *
+   * Слева карточка занятия, справа сюжет и карта данных. Обзор
+   * research/learning-evidence-2026-11/NOTES.md: сюжет рамка, а не главный путь,
+   * поэтому его карточка тише кнопки занятия, а кнопка на экране одна.
+   * Место карточки выбирает JS (matchMedia), а не CSS: она рендерится один раз,
+   * иначе дважды жили бы ref кнопки и счётчики. На телефоне всё как было:
+   * карточка в .dash-main, карта данных в .dash-side, сюжет строкой наверху.
+   * Пока идёт согласие на рантайм или трек в черновике, полосы нет вовсе.
+   */
+  const wideHome = useMinWidth(1024);
+  const returnBand = !isNewUser && wideHome && ready && consent === null && !!onOpenStoryMode;
+  const loadingLabel = loading
+    ? heavyRuntime
+      ? runtimeCached
+        ? t.home.loadingRuntimeCached
+        : t.home.loadingRuntime
+      : t.home.loading
+    : null;
+  const masteryBlock = (
+    <div className="overall-progress" style={{ marginTop: returnBand ? 0 : 16 }}>
+      {/* Подпись не .muted: рядом серое объяснение, два тусклых абзаца подряд склеились бы в комментарий. */}
+      <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600 }}>{t.home.overallProgressLabel}</p>
+      <p className="muted" style={{ margin: '0 0 10px', fontSize: 12, lineHeight: 1.5 }}>
+        {t.home.overallProgressHint}
+      </p>
+      {masteryByTier.map(({ tier, avg }) => (
+        <div className="overall-progress-row" key={tier}>
+          <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
+          <div
+            className="bar-lg"
+            role="img"
+            aria-label={t.home.masteryAria(Math.round(avg * 100))}
+            title={t.home.masteryAria(Math.round(avg * 100))}
+          >
+            <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
+          </div>
+          <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
+        </div>
+      ))}
+    </div>
+  );
+  const heroBlock =
+    ready && consent === null ? (
+      <div className={returnBand ? 'card return-hero' : 'card'}>
+        {returnBand && <h2 className="return-hero-title">{t.tracks.names[activeTrack]}</h2>}
+        <div className="hero">
+          <div>
+            <div className="big">{dueCount}</div>
+            <div className="muted">{t.home.dueLabel}</div>
+          </div>
+          <div>
+            <div className="big">{solvedCount}</div>
+            <div className="muted">{t.home.solvedLabel}</div>
+          </div>
+          <div>
+            <div className="big">{startedCount}</div>
+            <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
+          </div>
+        </div>
+        {/* Сила памяти в полосе стоит над кнопкой и не дублируется ниже; на телефоне она под кнопкой, как раньше. */}
+        {returnBand && masteryBlock}
+        {resume && returnBand ? (
+          /*
+           * Одна основная кнопка. Новое занятие стирает незаконченное, поэтому оно
+           * ссылкой и с ценой рядом: две кнопки подряд читались как одно и то же.
+           */
+          <>
+            <button ref={startRef} className="btn" onClick={onResume} disabled={loading}>
+              {t.home.resumeBtn}
+            </button>
+            <p className="muted return-resume-note">{t.home.resumeNote(resume)}</p>
+            <p className="return-new">
+              <button type="button" className="return-new-link" onClick={onStart} disabled={loading}>
+                {loadingLabel ?? t.home.newSessionLink}
+              </button>
+              <span className="muted"> · {t.home.newSessionNote}</span>
+            </p>
+          </>
+        ) : (
+          <>
+            {/*
+             * Незаконченное занятие идёт первым и основной кнопкой: вернуться к нему
+             * чаще, чем набрать новое. Новое при этом не прячется, а стирает старое.
+             */}
+            {resume && (
+              <>
+                <button className="btn" onClick={onResume} disabled={loading}>
+                  {t.home.resumeBtn}
+                </button>
+                {/* Отступы неравные: подпись прижата к своей кнопке, а не к «Начать» под ней. */}
+                <p className="muted" style={{ margin: '6px 0 20px', fontSize: 13 }}>
+                  {t.home.resumeNote(resume)}
+                </p>
+              </>
+            )}
+            <button
+              ref={startRef}
+              className={resume ? 'btn secondary' : 'btn'}
+              onClick={onStart}
+              disabled={loading}
+            >
+              {loadingLabel ?? (dueCount > 0 ? t.home.startBtnResume : t.home.startBtnBegin)}
+            </button>
+          </>
+        )}
+        {/*
+         * Загрузка Pyodide (~50 МБ) занимает секунды: без обратной связи disabled-кнопка
+         * читается как «зависло». Полоска не настоящий процент, а время с запасом.
+         */}
+        {loading && (
+          <div className="load-progress" role="presentation">
+            <div className="load-progress-bar" />
+          </div>
+        )}
+        {/* Подпись только у тяжёлого рантайма: десятки секунд без объяснения читаются как «качает заново». */}
+        {loading && heavyRuntime && (
+          <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+            {runtimeCached ? t.home.loadingRuntimeCachedNote : t.home.loadingRuntimeNote}
+          </p>
+        )}
+        <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
+          {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
+        </p>
+        {/* Видна только выбравшему pandas, не тронувшему SQL: ссылка на вводную трека, не пересказ. */}
+        {showPandasSqlHint && onOpenTrackIntro && (
+          <p className="muted track-prereq-hint" style={{ margin: '6px 0 0', fontSize: 13 }}>
+            {t.home.pandasSqlNote}{' '}
+            <button type="button" onClick={onOpenTrackIntro}>
+              {t.trackIntro.entryLink}
+            </button>
+          </p>
+        )}
+        {!returnBand && masteryBlock}
+      </div>
+    ) : null;
+
+
   return (
     <>
       {isOldDomain && (
@@ -4118,6 +4258,16 @@ function Home({
             )}
             </div>
           </div>
+        ) : returnBand ? (
+          <div className="home-return-wrap">
+            <div className="home-return">
+              {heroBlock}
+              <div className="home-return-side">
+                <ReturnStoryCard reachedId={storyReachedId} started={storyStarted} onOpen={onOpenStoryMode} />
+                <DataMapTeaser onOpen={onOpenMap} />
+              </div>
+            </div>
+          </div>
         ) : (
           <>
             <button type="button" className="story-invite-row" data-pair="storymode" data-guide="story" onClick={onOpenStoryMode}>
@@ -4261,156 +4411,7 @@ function Home({
             </div>
           )}
 
-          {ready && consent === null && (
-            <div className="card">
-              <div className="hero">
-                <div>
-                  <div className="big">{dueCount}</div>
-                  <div className="muted">{t.home.dueLabel}</div>
-                </div>
-                <div>
-                  <div className="big">{solvedCount}</div>
-                  <div className="muted">{t.home.solvedLabel}</div>
-                </div>
-                <div>
-                  <div className="big">{startedCount}</div>
-                  <div className="muted">{t.home.startedOf(startedCount, activePack.skills.length)}</div>
-                </div>
-              </div>
-              {/*
-               * Незаконченное занятие идёт первым и основной кнопкой: если оно
-               * есть, вернуться к нему — намерение более частое, чем набрать
-               * новое, и та же расстановка уже стоит на «Занятие закончено».
-               * Кнопка старта при этом не прячется: начать новое занятие
-               * поверх старого — законный выбор, он просто перестаёт быть
-               * единственным (раньше он был единственным и молча стирал очередь).
-               */}
-              {resume && (
-                <>
-                  <button className="btn" onClick={onResume} disabled={loading}>
-                    {t.home.resumeBtn}
-                  </button>
-                  {/*
-                   * Отступы неравные намеренно: подпись стоит между двумя
-                   * кнопками, и при близких зазорах (было 8 сверху, 12 снизу)
-                   * она читалась как пояснение к «Начать занятие» под ней —
-                   * то есть обещала сохранённое ровно тому действию, которое
-                   * сохранённое затирает. Прижата к своей кнопке.
-                   */}
-                  <p className="muted" style={{ margin: '6px 0 20px', fontSize: 13 }}>
-                    {t.home.resumeNote(resume)}
-                  </p>
-                </>
-              )}
-              <button
-                ref={startRef}
-                className={resume ? 'btn secondary' : 'btn'}
-                onClick={onStart}
-                disabled={loading}
-              >
-                {loading
-                  ? heavyRuntime
-                    ? runtimeCached
-                      ? t.home.loadingRuntimeCached
-                      : t.home.loadingRuntime
-                    : t.home.loading
-                  : dueCount > 0
-                    ? t.home.startBtnResume
-                    : t.home.startBtnBegin}
-              </button>
-              {/*
-               * Загрузка Pyodide (~50 МБ) занимает секунды, а не миллисекунды —
-               * без визуальной обратной связи disabled-кнопка с текстом легко
-               * читается как «зависло». Полоска не показывает настоящий процент
-               * (реальный прогресс по байтам разбросан по десяткам файлов внутри
-               * Pyodide и его не свести к одному числу дёшево) — она заполняется
-               * по времени, с запасом не доходя до конца, и просто исчезает вместе
-               * с disabled, когда загрузка правда завершится.
-               */}
-              {loading && (
-                <div className="load-progress" role="presentation">
-                  <div className="load-progress-bar" />
-                </div>
-              )}
-              {/*
-               * Подпись только у тяжёлого рантайма. У датасета в 3.5 МБ
-               * полоска исчезает раньше, чем строку успеют прочитать, —
-               * а вот десятки секунд на 52 МБ без объяснения читаются как
-               * «качает заново каждый раз», и это ровно тот вопрос, который
-               * пришёл от человека, прошедшего тренажёр.
-               */}
-              {loading && heavyRuntime && (
-                <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                  {runtimeCached ? t.home.loadingRuntimeCachedNote : t.home.loadingRuntimeNote}
-                </p>
-              )}
-              <p className="muted" style={{ margin: '10px 0 0', fontSize: 13 }}>
-                {writesCode ? t.home.heroNote : t.home.heroNoteNoCode}
-              </p>
-              {/* Дорога в сюжет вернувшемуся на десктопе: строка под кнопкой, не над ней; довод в ui/StoryQuietRow.tsx. */}
-              {!isNewUser && onOpenStoryMode && <StoryQuietRow reachedId={storyReachedId} onOpen={onOpenStoryMode} />}
-              {/*
-               * Узко и намеренно: видна только тому, кто выбрал pandas
-               * и ещё не тронул SQL (см. showPandasSqlHint выше) — тем,
-               * кому первое же занятие подсунет навык, объясняемый
-               * сопоставлением с треком, которого он не видел. У остальных
-               * довод неверен или не нужен, поэтому шумом для них не станет.
-               * Ссылается на уже написанную вводную трека, а не пересказывает
-               * её — та же вводная, что открывается ссылкой «О треке →» ниже.
-               */}
-              {showPandasSqlHint && onOpenTrackIntro && (
-                <p className="muted track-prereq-hint" style={{ margin: '6px 0 0', fontSize: 13 }}>
-                  {t.home.pandasSqlNote}{' '}
-                  <button type="button" onClick={onOpenTrackIntro}>
-                    {t.trackIntro.entryLink}
-                  </button>
-                </p>
-              )}
-              {/*
-               * Перенесена сюда, под кнопку и её подпись (была сразу под
-               * счётчиками) — замер 2026-08-16 показал, что она отодвигала
-               * кнопку «Начать» на 204px ниже без пользы для решения «нажимать
-               * ли сейчас»: это ретроспектива («как у меня дела вообще»),
-               * а не то, что нужно перед действием («что меня ждёт сейчас»).
-               * Объяснение полосы стоит видимой строкой, а не в `title`.
-               * Раньше оно было только там — и на телефоне не показывалось
-               * никак: `title` не открывается ни по тапу, ни по долгому
-               * нажатию. Получалось, что текст, написанный ровно против
-               * прочтения «приложение оценивает меня на 3%», не доходил
-               * до тех, у кого это прочтение и возникает. Одна тусклая
-               * строка на 12px — не баннер, прятать её под раскрытие
-               * незачем: она объясняет числа, стоящие тут же под ней.
-               */}
-              <div className="overall-progress" style={{ marginTop: 16 }}>
-                {/*
-                 * Подпись не `.muted`, в отличие от прежней версии: рядом
-                 * с ней теперь стоит серое объяснение в две строки, и двумя
-                 * одинаково тусклыми абзацами подряд заголовок блока
-                 * переставал быть заголовком — читалось как один сплошной
-                 * комментарий неизвестно к чему. Порядок должен читаться
-                 * сразу: что это → почему так → сами числа.
-                 */}
-                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600 }}>{t.home.overallProgressLabel}</p>
-                <p className="muted" style={{ margin: '0 0 10px', fontSize: 12, lineHeight: 1.5 }}>
-                  {t.home.overallProgressHint}
-                </p>
-                {masteryByTier.map(({ tier, avg }) => (
-                  <div className="overall-progress-row" key={tier}>
-                    <span className="overall-progress-tier">{activePack.tierNames?.[tier] ?? tier}</span>
-                    <div
-                      className="bar-lg"
-                      role="img"
-                      aria-label={t.home.masteryAria(Math.round(avg * 100))}
-                      title={t.home.masteryAria(Math.round(avg * 100))}
-                    >
-                      <span style={{ width: `${Math.max(avg * 100, avg > 0 ? 3 : 0)}%` }} />
-                    </div>
-                    <span className="overall-progress-pct">{Math.round(avg * 100)}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {!returnBand && heroBlock}
 
           {!ready && (
             <div className="card">
@@ -4473,7 +4474,7 @@ function Home({
            * колонке на чистом профиле он уходил на 1773 px вниз, а здесь стоит вровень с карточкой
            * занятия и виден рядом с ней.
            */}
-          {ready && !(isNewUser && onOpenStoryMode) && <DataMapTeaser onOpen={onOpenMap} />}
+          {ready && !returnBand && !(isNewUser && onOpenStoryMode) && <DataMapTeaser onOpen={onOpenMap} />}
           <div className="card">
             <div className="skill-map-title-row">
               <h2>{t.home.skillMapTitle}</h2>

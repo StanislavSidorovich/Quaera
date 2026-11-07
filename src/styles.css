@@ -5185,6 +5185,117 @@ table.sample td.null {
 }
 
 /*
+ * Первая полоса главной вернувшегося на десктопе (App.tsx, `.home-return`):
+ * слева карточка занятия, справа сюжет и карта данных. Контейнерный запрос, а не
+ * медиазапрос, по тому же доводу, что у `.home-top` (боковое меню и zoom съедают
+ * ширину). Ниже порога колонки друг под другом: занятие первым.
+ */
+.home-return-wrap {
+  container: ret / inline-size;
+}
+
+.home-return {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.home-return > .card,
+.home-return-side > .card {
+  margin: 0;
+}
+
+.home-return-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@container ret (min-width: 720px) {
+  .home-return {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.return-hero-title {
+  margin: 0 0 12px;
+}
+
+.return-resume-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.return-new {
+  margin: 12px 0 0;
+  font-size: var(--fs-small);
+}
+
+/* Ссылка, а не кнопка: новое занятие стирает незаконченное и не должно спорить с кнопкой возврата. */
+.return-new-link,
+.return-story-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.return-new-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.return-new-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Сюжет тише кнопки занятия: свой тон рамкой сверху (как у новичка), без тени и без .btn. */
+.return-story {
+  box-shadow: none;
+}
+
+.return-story h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.return-story .week-art {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+}
+
+/* Одна основная кнопка на экран: кнопка карты данных рядом с занятием набрана как вторичная. */
+.home-return-side .home-map-actions .btn {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.return-story-where {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.return-story-link {
+  display: block;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.return-story-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/*
  * Верх главной в две колонки (App.tsx, `.home-top`): слева компактная карточка
  * кампании, справа карта данных, под ними полоса с примером проверки (только
  * на чистом профиле). Порог 780px контейнера = 2 × 380 + gap 20, тот же, что у
@@ -5491,45 +5602,6 @@ table.sample td.null {
   background: var(--bg-raised);
   border: 1px solid var(--line);
   border-left: 3px solid color-mix(in srgb, var(--accent) 60%, var(--line));
-}
-
-.story-quiet-row {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  /* Ссылка-строка: без рамки и фона, тише кнопки и тише карточки. */
-  .story-quiet-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    margin: 12px 0 0;
-    padding: 4px 2px;
-    min-height: 32px;
-    font-size: var(--fs-label);
-    color: var(--text-dim);
-    text-align: left;
-  }
-
-  .story-quiet-row .week-art {
-    width: 140px;
-  }
-
-  .story-quiet-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .story-quiet-row .pair-ico {
-    display: inline-flex;
-    flex: none;
-  }
-
-  .story-quiet-row:hover {
-    color: var(--accent);
-  }
 }
 
 .story-invite-skip {
@@ -6470,11 +6542,11 @@ details.story-known > summary small {
    * это не касается: у него наверху и должна стоять кампания, а кнопка
    * занятия — не то, ради чего он пришёл.
    *
-   * Довод про сгиб остаётся, но сюжет с главной не пропал: вернувшемуся
-   * на десктопе его зовёт тихая строка `.story-quiet-row` ПОД кнопкой занятия
-   * (ui/StoryQuietRow.tsx), так что кнопка по-прежнему выше сгиба.
+   * Сюжет с главной не пропал: вернувшемуся на десктопе его зовёт карточка
+   * `.return-story` в первой полосе (ui/ReturnStoryCard.tsx) рядом с карточкой
+   * занятия. Строка `.story-invite-row` здесь больше не скрыта: она остаётся
+   * запасной, когда полосы нет (согласие на рантайм, трек в черновике).
    */
-  .story-invite-row,
   .story-invite-skip-row,
   .story-entry-row {
     display: none;
