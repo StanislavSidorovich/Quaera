@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n/context';
+import './oneSale.css';
 import sale from '../content/oneSale.json';
 
 /**
@@ -36,7 +37,8 @@ export function OneSale() {
   const rootRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef(new Map<string, HTMLElement>());
   const [wide, setWide] = useState(false);
-  const [paths, setPaths] = useState<{ key: KeyName; d: string }[]>([]);
+  const cardRefs = useRef(new Map<string, HTMLElement>());
+  const [paths, setPaths] = useState<{ key: KeyName; d: string; x1: number; y1: number; x2: number; y2: number }[]>([]);
 
   const cards: Card[] = [
     {
@@ -90,19 +92,26 @@ export function OneSale() {
       setPaths([]);
       return;
     }
-    const next: { key: KeyName; d: string }[] = [];
+    const next: { key: KeyName; d: string; x1: number; y1: number; x2: number; y2: number }[] = [];
     for (const l of LINKS) {
       const a = cellRefs.current.get(id(l.from, l.fromCol));
       const b = cellRefs.current.get(id(l.to, l.toCol));
-      if (!a || !b) continue;
+      const ca = cardRefs.current.get(l.from);
+      const cb = cardRefs.current.get(l.to);
+      if (!a || !b || !ca || !cb) continue;
       const ra = a.getBoundingClientRect();
       const rb = b.getBoundingClientRect();
-      const x1 = ra.right - box.left;
+      const qa = ca.getBoundingClientRect();
+      const qb = cb.getBoundingClientRect();
+      // Линия выходит из края таблицы на уровне клетки ключа и входит в край второй таблицы
+      // на уровне её клетки: поверх содержимого она не идёт, поворот стоит в промежутке.
+      const aLeft = qa.left < qb.left;
+      const x1 = (aLeft ? qa.right : qa.left) - box.left;
+      const x2 = (aLeft ? qb.left : qb.right) - box.left;
       const y1 = ra.top + ra.height / 2 - box.top;
-      const x2 = rb.left - box.left;
       const y2 = rb.top + rb.height / 2 - box.top;
       const mx = (x1 + x2) / 2;
-      next.push({ key: l.key, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
+      next.push({ key: l.key, d: `M${x1},${y1} H${mx} V${y2} H${x2}`, x1, y1, x2, y2 });
     }
     setPaths(next);
   }, []);
@@ -113,9 +122,10 @@ export function OneSale() {
     if (!root || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(measure);
     ro.observe(root);
+    cardRefs.current.forEach((el) => ro.observe(el));
     document.fonts?.ready.then(measure).catch(() => {});
     return () => ro.disconnect();
-  }, [measure, locale]);
+  }, [measure, locale, wide]);
 
   const week = (() => {
     const d = new Date(`${sale.week_start}T00:00:00Z`);
@@ -143,12 +153,23 @@ export function OneSale() {
         {wide && (
           <svg className="one-sale-lines" aria-hidden="true">
             {paths.map((p) => (
-              <path key={p.key} d={p.d} className={`k-${p.key}${onPath(p.key) ? ' on' : ''}`} />
+              <g key={p.key} className={`k-${p.key}${onPath(p.key) ? ' on' : ''}`}>
+                <path d={p.d} />
+                <circle cx={p.x1} cy={p.y1} r="3.5" />
+                <circle cx={p.x2} cy={p.y2} r="3.5" />
+              </g>
             ))}
           </svg>
         )}
         {cards.map((card) => (
-          <div className={`one-sale-card os-${card.table}`} key={card.table}>
+          <div
+            className={`one-sale-card os-${card.table}`}
+            key={card.table}
+            ref={(el) => {
+              if (el) cardRefs.current.set(card.table, el);
+              else cardRefs.current.delete(card.table);
+            }}
+          >
             <div className="one-sale-name">
               <code>{card.table}</code>
             </div>

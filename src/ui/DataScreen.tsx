@@ -4,6 +4,7 @@ import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { DATASET_CSV_ZIP, LAB_QUAERA, STRATASQL_MODEL, openFamilyLink } from '../links';
 import { OneSale } from './OneSale';
+import './dataStandalone.css';
 import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 

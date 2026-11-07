@@ -1,0 +1,16 @@
+/*
+ * Линии «Одной продажи». Базовые правила блока лежат в styles.css; здесь только то,
+ * что относится к ортогональным линиям с точками на концах. Линия теперь группа
+ * (путь и две точки), поэтому цвет и «затухание» задаются по группе.
+ */
+.one-sale-lines g path { fill: none; stroke-width: 2; opacity: 0.85; }
+.one-sale-lines g circle { stroke: none; opacity: 0.95; }
+.one-sale-lines g.k-product path { stroke: var(--k-product); }
+.one-sale-lines g.k-product circle { fill: var(--k-product); }
+.one-sale-lines g.k-customer path { stroke: var(--k-customer); }
+.one-sale-lines g.k-customer circle { fill: var(--k-customer); }
+.one-sale-lines g.k-region path { stroke: var(--k-region); }
+.one-sale-lines g.k-region circle { fill: var(--k-region); }
+.one-sale-cards.solved .one-sale-lines g { opacity: 0.25; }
+.one-sale-cards.solved .one-sale-lines g.on { opacity: 1; }
+.one-sale-cards.solved .one-sale-lines g.on path { stroke-width: 3.5; }

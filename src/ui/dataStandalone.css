@@ -1,0 +1,14 @@
+/*
+ * Сырой слой: одна колонка. Раньше на широком экране описание стояло слева
+ * узкой колонкой, а таблица справа, и под описанием оставалась пустота.
+ * Теперь текст идёт сверху на всю ширину, таблица под ним. Переопределяет
+ * правила @container в styles.css специфичностью (.card.data-standalone).
+ */
+.card.data-standalone .data-group-grid {
+  display: block;
+}
+
+.card.data-standalone .data-group-grid > div > p {
+  margin-bottom: 12px;
+  max-width: 72ch;
+}
