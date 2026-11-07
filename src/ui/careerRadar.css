@@ -1,0 +1,120 @@
+/*
+ * Паутинка «вы / цель» и полосы по осям. Правила старой паутинки остались
+ * в styles.css, здесь они переопределены (селекторы с .career-radar выше по
+ * специфичности, порядок подключения файлов не важен).
+ */
+.career-radar .career-radar-field {
+  fill: var(--bg-sunken);
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.career-radar .career-radar-ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.career-radar .career-radar-ring.base {
+  stroke-dasharray: 3 3;
+}
+.career-radar .career-radar-you {
+  fill: var(--accent);
+  fill-opacity: 0.4;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.career-radar .career-radar-goal {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  stroke-linejoin: round;
+}
+.career-radar .career-radar-due {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+}
+.career-radar .career-radar-label.off {
+  fill: var(--text-dim);
+  opacity: 0.75;
+}
+.career-radar .career-radar-legend .sw-goal {
+  border-top: 2px dashed var(--text);
+}
+.career-radar-rings {
+  flex-basis: 100%;
+  text-align: center;
+}
+
+.career-bars {
+  list-style: none;
+  margin: 8px 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.career-bars-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 96px) minmax(0, 1fr) minmax(76px, 112px);
+  align-items: center;
+  gap: 4px 10px;
+}
+.career-bars-row.off .career-bars-name,
+.career-bars-row.off .career-bars-level {
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+.career-bars-name {
+  font-weight: 600;
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+.career-bars-level {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  text-align: right;
+}
+.career-bars-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.career-bars-cell {
+  position: relative;
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.career-bars-cell i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.career-bars-cell i.full {
+  background: var(--accent);
+}
+/* Цель роли: рамка потолще цвета текста, читается и на закрашенной клетке. */
+.career-bars-cell.target {
+  border: 2px solid var(--text);
+}
+/* Узкий экран и крупный шрифт: название и уровень в первой строке, три клетки во всю ширину под ними. */
+@media (max-width: 480px) {
+  .career-bars-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .career-bars-cells {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .career-bars-level {
+    grid-row: 1;
+    grid-column: 2;
+  }
+}

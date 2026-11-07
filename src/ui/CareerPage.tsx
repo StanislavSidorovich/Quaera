@@ -25,7 +25,8 @@ import type { AxisLevels, CareerState } from '../career/store';
 import { passedQuizEvidence, quizStatus } from '../career/quiz';
 import { withQuizAttempt } from '../career/store';
 import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
-import { CareerRadar } from './CareerRadar';
+import { CareerAxisBars, CareerRadar } from './CareerRadar';
+import type { RadarAxis } from './CareerRadar';
 import { quizBank } from '../content/careerQuiz';
 import { ArchitectureMap } from './ArchitectureMap';
 import { RoleCompare } from './RoleCompare';
@@ -223,6 +224,14 @@ export function CareerPage({
   const changes = weeklyChanges(state.weekly, levels);
   const axisTitle = (id: AxisId) => careerAxes.find((a) => a.id === id)!.title[locale];
   const levelName = (n: number) => c.levels[n];
+  const radarAxes: RadarAxis[] = readiness.axes.map((a) => ({
+    id: a.axis,
+    label: careerAxes.find((x) => x.id === a.axis)!.short[locale],
+    have: a.level,
+    progress: a.progress,
+    target: a.target,
+    due: dueByAxis[a.axis].length,
+  }));
 
   const toggleEvidence = (id: string) => onCareerChange((s) => withToggledEvidence(s, id, new Date()));
   const chooseRole = (id: string) => onCareerChange((s) => (s.role === id ? s : withRole(s, id, new Date())));
@@ -521,21 +530,17 @@ export function CareerPage({
         <h2>{c.nowTitle}</h2>
         <p className="muted">{c.nowLead}</p>
         <CareerRadar
-          axes={readiness.axes.map((a) => ({
-            id: a.axis,
-            label: careerAxes.find((x) => x.id === a.axis)!.short[locale],
-            have: a.level,
-            target: a.target,
-            due: dueByAxis[a.axis].length,
-          }))}
+          axes={radarAxes}
           ariaLabel={c.radarAria(
             role.title[locale],
             readiness.axes
               .map((a) => c.radarRow(axisTitle(a.axis), levelName(a.level), a.target > 0 ? String(a.target) : c.radarNoGoal, dueByAxis[a.axis].length))
               .join(' ')
           )}
-          legend={{ you: c.radarYou, goal: c.radarGoal, due: c.radarDue }}
+          legend={{ you: c.radarYou, goal: c.radarGoal, due: c.radarDue, rings: c.radarRings }}
+          ringNames={[c.levels[1], c.levels[2], c.levels[3]]}
         />
+        <CareerAxisBars axes={radarAxes} fullLabel={axisTitle} levelName={levelName} cellAria={c.radarCellAria} ariaLabel={c.radarBarsAria} />
         <ul className="career-axes">
           {readiness.axes.map((a) => {
             const def = careerAxes.find((x) => x.id === a.axis)!;
@@ -545,11 +550,6 @@ export function CareerPage({
                 <div className="career-axis-head">
                   <strong>{def.title[locale]}</strong>
                   <span className="muted">{c.axisLevel(levelName(a.level), a.target > 0 ? levelName(a.target) : null)}</span>
-                </div>
-                <div className="career-level-bar" aria-hidden>
-                  {[1, 2, 3].map((n) => (
-                    <span key={n} className={`${a.level >= n ? 'on' : ''}${a.target === n ? ' target' : ''}`} />
-                  ))}
                 </div>
                 <p className="muted career-axis-count">{c.axisCount(a.atLeast1, a.total, a.atLeast2)}</p>
                 {dueByAxis[a.axis].length > 0 && (

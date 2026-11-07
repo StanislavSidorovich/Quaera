@@ -104,6 +104,13 @@ export interface AxisReading {
   /** Отмеченные доказательства, которые засчитались, и те, что упёрлись в потолок. */
   evidenceCounted: string[];
   evidenceCapped: string[];
+  /**
+   * Доля пути к следующему уровню, 0..0.95: сколько навыков оси уже дошли до
+   * порога следующей ступени из нужных (`AXIS_SHARE`). Только для рисунка:
+   * уровень от неё не зависит. Ноль, если уровень оси поднят отметкой выше
+   * замера тренажёра или следующую ступень тренажёр засчитать не может.
+   */
+  progress: number;
 }
 
 function trainerAxisLevel(def: AxisDef, signals: Record<string, SkillSignal | undefined>) {
@@ -113,7 +120,11 @@ function trainerAxisLevel(def: AxisDef, signals: Record<string, SkillSignal | un
   const atLeast2 = levels.filter((l) => l >= 2).length;
   const need = Math.ceil(total * AXIS_SHARE);
   const raw: Level = total > 0 && atLeast2 >= need ? 2 : total > 0 && atLeast1 >= need ? 1 : 0;
-  return { level: Math.min(raw, def.trainerMax) as Level, atLeast1, atLeast2, total };
+  const level = Math.min(raw, def.trainerMax) as Level;
+  const next = level + 1;
+  const done = next === 1 ? atLeast1 : next === 2 ? atLeast2 : 0;
+  const progress = total > 0 && next <= Math.min(2, def.trainerMax) ? Math.min(0.95, done / need) : 0;
+  return { level, atLeast1, atLeast2, total, progress };
 }
 
 /**
@@ -143,7 +154,17 @@ export function axisReading(
     else evidenceCounted.push(e.id);
     level = Math.max(level, Math.min(e.level, cap)) as Level;
   }
-  return { axis: def.id, level, trainerLevel: t.level, atLeast1: t.atLeast1, atLeast2: t.atLeast2, total: t.total, evidenceCounted, evidenceCapped };
+  return {
+    axis: def.id,
+    level,
+    trainerLevel: t.level,
+    atLeast1: t.atLeast1,
+    atLeast2: t.atLeast2,
+    total: t.total,
+    evidenceCounted,
+    evidenceCapped,
+    progress: level === t.level ? t.progress : 0,
+  };
 }
 
 /**
