@@ -4372,7 +4372,7 @@ function Home({
        * получая ширину, при которой описание темы перестаёт обрезаться
        * многоточием.
        */}
-      <div className="dashboard">
+      <div className={returnBand ? "dashboard dashboard-return" : "dashboard"}>
         <div className="dash-main">
           {/*
            * Согласие — приоритетнее обычного hero-блока: пока исполнитель ждёт
@@ -4533,7 +4533,7 @@ function Home({
                 </button>
                 <MilestoneNote stage={stages.find((x) => x.stage === tier)} isNext={nextMilestone?.stage === tier} />
                 {open && (
-                <div id={groupId}>
+                <div id={groupId} className="skill-map-skills">
                 {list.map((s) => {
                   const st = progress.skills[s.id];
                   // Уже начатая тема не может быть «закрытой», даже если предпосылка

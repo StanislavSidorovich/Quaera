@@ -5185,6 +5185,34 @@ table.sample td.null {
 }
 
 /*
+ * Нижняя часть главной вернувшегося на десктопе (`.dashboard-return`): слева от карты навыков
+ * осталась бы пустая колонка с одной ссылкой, поэтому колонка одна на всю ширину, ссылка над
+ * картой, темы уровня в две колонки, ряд кнопок растянут. Потолок высоты и прокрутка не нужны:
+ * липкой колонки, которую они берегли, здесь нет.
+ */
+.dashboard.dashboard-return {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dashboard-return .dash-main {
+  position: static;
+}
+
+.dashboard-return .skill-map-list {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+@container (min-width: 700px) {
+  .dashboard-return .skill-map-skills {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+}
+
+/*
  * Первая полоса главной вернувшегося на десктопе (App.tsx, `.home-return`):
  * слева карточка занятия, справа сюжет и карта данных. Контейнерный запрос, а не
  * медиазапрос, по тому же доводу, что у `.home-top` (боковое меню и zoom съедают
