@@ -3,6 +3,7 @@ import { GROUP_ORDER, groupTables, keyColumns, type GroupedTables } from '../eng
 import type { SchemaDoc } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { DATASET_CSV_ZIP, LAB_QUAERA, STRATASQL_MODEL, openFamilyLink } from '../links';
+import { OneSale } from './OneSale';
 import { SchemaMap } from './SchemaMap';
 import { TableDoc } from './TableDoc';
 
@@ -195,6 +196,8 @@ export function DataScreen({ doc }: { doc: SchemaDoc | null }) {
        * экрана, который должен оставаться на одном месте, и схема,
        * исчезающая над ним, каждый раз сдвигала бы его вверх.
        */}
+      {!searching && <OneSale />}
+
       {!searching && (
         <div className="card">
           <h2>{t.data.mapTitle}</h2>

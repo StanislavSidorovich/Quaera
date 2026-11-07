@@ -11722,3 +11722,165 @@ button.after-table:hover {
 .story-after-fold > summary .muted {
   font-weight: 400;
 }
+
+/*
+ * «Одна продажа насквозь» (OneSale.tsx). Цвет пары ключей берётся из цветов
+ * треков: они уже разведены для обеих тем и не спорят с акцентом. Цвет несёт
+ * рамка и заливка, текст остаётся --text, поэтому контраст не зависит от темы.
+ */
+.one-sale {
+  --k-product: var(--track-domain);
+  --k-customer: var(--track-python);
+  --k-region: var(--track-model);
+}
+
+.one-sale-lead {
+  margin: 0 0 12px;
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+.one-sale-report {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-sunken);
+  border-radius: 0 10px 10px 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.one-sale-q {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.one-sale-cards {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.one-sale-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.one-sale-lines path {
+  fill: none;
+  stroke-width: 2;
+  opacity: 0.75;
+}
+
+.one-sale-lines path.k-product { stroke: var(--k-product); }
+.one-sale-lines path.k-customer { stroke: var(--k-customer); }
+.one-sale-lines path.k-region { stroke: var(--k-region); }
+.one-sale-cards.solved .one-sale-lines path { opacity: 0.25; }
+.one-sale-cards.solved .one-sale-lines path.on { opacity: 1; stroke-width: 3.5; }
+
+.one-sale-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  padding: 8px 10px 6px;
+}
+
+.one-sale-name {
+  margin-bottom: 6px;
+  font-size: var(--fs-micro);
+}
+
+.one-sale-row {
+  padding: 4px 0 4px 8px;
+  border-left: 4px solid transparent;
+  border-radius: 4px;
+}
+
+.one-sale-row.key.k-product { border-left-color: var(--k-product); background: color-mix(in srgb, var(--k-product) 14%, transparent); }
+.one-sale-row.key.k-customer { border-left-color: var(--k-customer); background: color-mix(in srgb, var(--k-customer) 14%, transparent); }
+.one-sale-row.key.k-region { border-left-color: var(--k-region); background: color-mix(in srgb, var(--k-region) 14%, transparent); }
+.one-sale-cards.solved .one-sale-row.key:not(.on) { opacity: 0.6; }
+
+.one-sale-col {
+  display: block;
+  color: var(--text-dim);
+  font-family: var(--q-mono, ui-monospace, monospace);
+  font-size: var(--fs-micro);
+}
+
+.one-sale-val {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.one-sale-val:hover:not(:disabled) { border-color: var(--accent); }
+.one-sale-val:disabled { cursor: default; color: var(--text); opacity: 1; }
+.one-sale-val.wrong { border-color: var(--err); box-shadow: 0 0 0 1px var(--err); }
+.one-sale-val.right { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok); font-weight: 600; }
+
+.one-sale-ref {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+}
+
+.one-sale-more {
+  padding: 0 0 0 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.one-sale-feedback {
+  margin-top: 12px;
+  min-height: 1.5em;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.one-sale-feedback p { margin: 0 0 6px; }
+.one-sale-ok { color: var(--ok); font-weight: 600; }
+.one-sale-bad { color: var(--text); padding-left: 10px; border-left: 3px solid var(--err); }
+
+.one-sale-reset {
+  min-height: 36px;
+  padding: 4px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Ширина решается в OneSale.tsx (класс wide) по тем же 760px, что и линии: один порог, а не два. */
+.one-sale-cards.wide .one-sale-ref { display: none; }
+
+.one-sale-cards.wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 40px;
+  align-items: start;
+}
+.one-sale-cards.wide .os-dim_product { grid-column: 1; grid-row: 1; }
+.one-sale-cards.wide .os-fact_sellout { grid-column: 2; grid-row: 1; }
+.one-sale-cards.wide .os-dim_customer { grid-column: 3; grid-row: 1; }
+.one-sale-cards.wide .os-dim_region { grid-column: 4; grid-row: 1; }

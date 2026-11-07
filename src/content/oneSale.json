@@ -1,0 +1,10 @@
+{
+  "_comment": "Строка fact_sellout для блока «Одна продажа насквозь» на экране «Данные». Выбрана запросом (см. коммит); значения сверяет scripts/test-one-sale.mjs с датасетом.",
+  "sellout_id": 2055,
+  "week_start": "2025-10-06",
+  "units": 12,
+  "revenue": 912,
+  "product": { "product_id": 24, "product_name": "Milvara Strawberry 290 g", "category": "Dairy" },
+  "customer": { "customer_id": 15, "customer_name": "Minori #1015", "city": "Himeji", "region_id": 9 },
+  "region": { "region_id": 9, "region_name": "Hyogo", "macro_region": "Kansai" }
+}
