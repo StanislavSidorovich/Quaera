@@ -1,0 +1,152 @@
+/*
+ * Обзор «Пути к роли»: строка выбранной оси, плитки ролей, нажимаемые подписи
+ * паутинки и полосы. Цвета только токенами темы. Правила паутинки и полос
+ * остались в careerRadar.css, здесь только то, что добавил обзор.
+ */
+.career-radar .career-radar-label.clickable {
+  cursor: pointer;
+}
+.career-radar .career-radar-label.clickable:hover,
+.career-radar .career-radar-label.active {
+  font-weight: 700;
+  text-decoration: underline;
+}
+.career-radar .career-radar-label.clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Строка полосы нажимается целиком: прозрачная кнопка поверх ряда. */
+.career-bars-row {
+  position: relative;
+}
+.career-bars-hit {
+  position: absolute;
+  inset: -4px -6px;
+  z-index: 1;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.career-bars-hit:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.career-bars-hit:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.career-bars-row.active .career-bars-hit {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.co-hint {
+  margin: 0 0 10px;
+  font-size: var(--fs-small);
+}
+
+.co-axis {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+.co-axis p {
+  margin: 6px 0;
+}
+.co-axis-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.co-axis-head h3 {
+  margin: 0;
+}
+.co-h4 {
+  margin: 14px 0 4px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-transform: none;
+}
+.co-counted {
+  font-size: var(--fs-small);
+}
+
+.co-goal-role {
+  margin: 0 0 8px;
+}
+
+/* Плитки ролей: одна колонка на телефоне, две от 700 px. */
+.co-tiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+@media (min-width: 700px) {
+  .co-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.co-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+.co-tile.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-raised));
+}
+.co-tile h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+}
+.co-tile-pill {
+  font-size: var(--fs-small);
+}
+.co-tile-body {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.career-radar-mini {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+.co-tile-left {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.co-tile-does,
+.co-tile-asked,
+.co-tile-low {
+  margin: 0;
+  font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+.co-tile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+.co-tile-actions .btn {
+  min-height: var(--tap);
+  white-space: normal;
+}
+.career-radar.career-radar-mini-wrap {
+  display: block;
+  margin: 0;
+}

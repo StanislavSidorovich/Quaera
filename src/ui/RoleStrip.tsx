@@ -13,8 +13,9 @@ import './roleStrip.css';
  * числа совпадают. Без выбранной роли (`roleAt === null`, стоит роль по
  * умолчанию) числа не показываем: цель, которую человек не выбирал, звучала
  * бы как оценка, — вместо них тихое приглашение выбрать.
+ * Ссылка ведёт на страницу выбранной роли; пока роль не выбрана, на обзор.
  */
-export function RoleStrip({ progress, onOpen }: { progress: Progress; onOpen: () => void }) {
+export function RoleStrip({ progress, onOpen }: { progress: Progress; onOpen: (roleId: string | null) => void }) {
   const { t, locale } = useI18n();
   const c = t.career;
   const state = progress.career ?? emptyCareerState();
@@ -28,7 +29,7 @@ export function RoleStrip({ progress, onOpen }: { progress: Progress; onOpen: ()
   return (
     <p className="role-strip">
       <span>{text}</span>
-      <button type="button" className="role-strip-link" onClick={onOpen}>
+      <button type="button" className="role-strip-link" onClick={() => onOpen(chosen ? role.id : null)}>
         {chosen ? c.stripLink : c.stripPickLink} →
       </button>
     </p>

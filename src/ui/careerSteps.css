@@ -1,0 +1,23 @@
+/* Шаги «как дойти до уровня»: список с текстом и кнопками под ним. */
+.career-steps {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.career-step p {
+  margin: 0 0 6px;
+  font-size: var(--fs-small);
+}
+.career-step .career-step-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  text-decoration: none;
+  white-space: normal;
+  text-align: left;
+}
+.career-step .career-evidence {
+  margin-top: 0;
+}

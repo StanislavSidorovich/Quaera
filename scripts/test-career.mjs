@@ -141,6 +141,29 @@ try {
       if (r.outside && !(r.outside[k] >= 0 && r.outside[k] <= r.ads)) fail(`роль ${r.id}`, `outside.${k}=${r.outside[k]} вне 0..${r.ads}`);
     }
   }
+  // Спрос по ролям и грейдам: ссылки на подписи существуют, счётчики не больше выборки, малая группа без навыков.
+  const askProblems = [];
+  for (const r of career.roles) {
+    if (!roleIds.includes(r.neighbor) || r.neighbor === r.id) askProblems.push(`${r.id}: соседняя роль ${r.neighbor}`);
+    if (r.ask.length < 2 || r.ask.length > 3) askProblems.push(`${r.id}: ask ${r.ask.length}, нужно 2-3`);
+    for (const [id, n] of r.ask) {
+      if (!vac.skillLabels[id]?.ru || !vac.skillLabels[id]?.en) askProblems.push(`${r.id}: нет подписи ${id}`);
+      if (!(n >= 1 && n <= r.ads)) askProblems.push(`${r.id}: ${id}=${n} вне 1..${r.ads}`);
+    }
+    let sum = 0;
+    for (const g of ['entry', 'mid', 'senior']) {
+      const cell = r.grades[g];
+      if (!cell) { askProblems.push(`${r.id}: нет группы ${g}`); continue; }
+      sum += cell.n;
+      if (cell.n < vac.minRoleAds && cell.top.length) askProblems.push(`${r.id}/${g}: N=${cell.n} меньше порога, а навыки показаны`);
+      for (const [id, n] of cell.top) {
+        if (!vac.skillLabels[id]) askProblems.push(`${r.id}/${g}: нет подписи ${id}`);
+        if (!(n >= 1 && n <= cell.n)) askProblems.push(`${r.id}/${g}: ${id}=${n} вне 1..${cell.n}`);
+      }
+    }
+    if (sum > r.ads) askProblems.push(`${r.id}: грейды ${sum} больше вакансий роли ${r.ads}`);
+  }
+  assertEq('вакансии: спрос по ролям и грейдам согласован', askProblems, []);
   assertEq('вакансии: источники складываются в общее число', vac.linkedin + vac.boards, vac.total);
   assertEq('вакансии: подпись источника 142 = 83 + 59', [vac.total, vac.linkedin, vac.boards], [142, 83, 59]);
   assertTrue('вакансии: сумма по ролям не больше общего числа', career.roles.reduce((n, r) => n + r.ads, 0) <= vac.total);

@@ -16,10 +16,10 @@ import { useI18n } from '../i18n/context';
 const MARKS = { you: '●', target: '▲', other: '■' } as const;
 type Who = keyof typeof MARKS;
 
-export function RoleCompare({ roleId, levels }: { roleId: string; levels: Record<AxisId, number> }) {
+export function RoleCompare({ roleId, levels, defaultOther = '', open = false }: { roleId: string; levels: Record<AxisId, number>; defaultOther?: string; open?: boolean }) {
   const { t, locale } = useI18n();
   const m = t.career.compare;
-  const [otherId, setOtherId] = useState('');
+  const [otherId, setOtherId] = useState(defaultOther);
 
   const target = careerRole(roleId);
   const other = otherId && otherId !== roleId ? careerRole(otherId) : undefined;
@@ -39,7 +39,7 @@ export function RoleCompare({ roleId, levels }: { roleId: string; levels: Record
       .join('; ');
 
   return (
-    <details className="career-compare">
+    <details className="career-compare" open={open || undefined}>
       <summary>{m.summary}</summary>
       <p className="muted career-compare-lead">{m.lead}</p>
       <label className="career-compare-pick">

@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { careerRole } from './content/career';
 import { isTrackTranslated, lessonBySkill, lessonBySkillFor, packForTrack, packs, trackBySkill } from './content';
 import { panelWordsIn } from './content/panelKeywords';
 import type { Lesson, Pack, Skill, Task, Track } from './content/types';
@@ -322,10 +323,11 @@ const GUIDE_ON_BOOT = readGuideOnBoot();
 /**
  * `?roles` — прямая ссылка на экран «Путь к роли», `?roles=map` — сразу
  * на его вкладку «Карта данных», `?roles=project` — на первую станцию маршрута
- * «Проект от и до» (для ссылок в постах и сообщениях).
+ * «Проект от и до», `?roles=bi` (id роли: da, bi, ae, de, ds, ba, gov) — на страницу
+ * этой роли (для ссылок в постах и сообщениях).
  * Параметр стирается из адреса по той же причине, что у `?intro`.
  */
-function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | 'last' | null {
+function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | 'last' | `role:${string}` | null {
   try {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('roles')) {
@@ -353,9 +355,10 @@ function readRolesOpenOnBoot(): 'path' | 'map' | 'project' | 'last' | null {
 const ROLES_PENDING_KEY = 'quaera-roles-pending';
 const SW_RELOAD_KEY = 'quaera-sw-reload';
 /* Голый `?roles` открывает ту вкладку, где человек был (при первом входе карту); `?roles=path` ставит путь к роли явно. */
-function rolesTarget(value: string | null): 'path' | 'map' | 'project' | 'last' | null {
+function rolesTarget(value: string | null): 'path' | 'map' | 'project' | 'last' | `role:${string}` | null {
   if (value === '0') return null;
   if (value === 'map' || value === 'project' || value === 'path') return value;
+  if (value && careerRole(value)) return `role:${value}`;
   return 'last';
 }
 const ROLES_OPEN_ON_BOOT = readRolesOpenOnBoot();
@@ -630,7 +633,7 @@ type Screen =
    */
   | { name: 'overview' }
   /** «Путь к роли»: цель, разрывы, этапы задачи, оси. */
-  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean }; restore?: boolean; fromMap?: boolean; path?: boolean; nonce?: number }
+  | { name: 'career'; map?: { layer?: string; trace?: boolean; project?: boolean }; restore?: boolean; fromMap?: boolean; path?: boolean; role?: string; nonce?: number }
   | { name: 'account' }
   | { name: 'onboarding' }
   | { name: 'trackIntro'; track: Track };
@@ -838,6 +841,8 @@ function initialBoot(locale: Locale): Boot {
           ? { name: 'career' }
           : ROLES_OPEN_ON_BOOT === 'path'
           ? { name: 'career', path: true }
+          : ROLES_OPEN_ON_BOOT.startsWith('role:')
+          ? { name: 'career', path: true, role: ROLES_OPEN_ON_BOOT.slice(5) }
           : { name: 'career', map: ROLES_OPEN_ON_BOOT === 'project' ? { project: true } : {} }, ...empty };
   if (OVERVIEW_OPEN_ON_BOOT) return { screen: { name: 'overview' }, ...empty };
   if (STORY_OPEN_ON_BOOT) {
@@ -2655,8 +2660,8 @@ export default function App() {
               onOpenReference={() => setScreen({ name: 'reference' })}
               onOpenSandbox={() => setScreen({ name: 'sandbox' })}
               /* Обе кнопки стоят внизу главной: без сброса экран открывался бы прокрученным. */
-              onOpenCareer={() => {
-                setScreen({ name: 'career' });
+              onOpenCareer={(role) => {
+                setScreen(role ? { name: 'career', path: true, role } : { name: 'career' });
                 window.scrollTo({ top: 0 });
               }}
               onOpenMap={(map) => {
@@ -2720,8 +2725,10 @@ export default function App() {
           {screen.name === 'career' && (
             <CareerPage
               /* Новый вход на карту (другой слой, маршрут) ставит экран заново. */
-              key={JSON.stringify([screen.map ?? null, screen.restore ?? false, screen.nonce ?? 0])}
+              key={JSON.stringify([screen.map ?? null, screen.restore ?? false, screen.nonce ?? 0, screen.role ?? null])}
               openMap={screen.map}
+              openRole={screen.role}
+              onOpenStory={storyMissionTrack ? openStoryMode : undefined}
               restore={screen.restore}
               forcePath={screen.path}
               fromMap={screen.fromMap}
@@ -3668,7 +3675,8 @@ function Home({
   onOpenData: () => void;
   onOpenReference: () => void;
   onOpenSandbox: () => void;
-  onOpenCareer: () => void;
+  /** Строка «до роли»: id выбранной роли ведёт на её страницу, null (роль не выбрана) на обзор. */
+  onOpenCareer: (role?: string | null) => void;
   /** Карта данных на экране «Путь к роли»: слой или сразу маршрут. */
   onOpenMap: (map: { layer?: string; trace?: boolean }) => void;
   onOpenAbout: () => void;
@@ -4649,7 +4657,7 @@ function Home({
                * стоит в боковом меню, а его видно только от 1024px, и на
                * телефоне и планшете экран открывался лишь адресом ?roles.
                */}
-              <button className="btn secondary" data-pair="career" onClick={onOpenCareer}>
+              <button className="btn secondary" data-pair="career" onClick={() => onOpenCareer()}>
                 <span className="pair-ico" aria-hidden>
                   <IconCompass />
                 </span>

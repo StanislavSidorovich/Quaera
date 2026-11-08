@@ -1,0 +1,114 @@
+/*
+ * Страница роли: шапка с маленькой паутинкой, спрос по вакансиям, разрыв по осям.
+ * Цвета токенами темы; статус передаётся ещё и словом, не только цветом.
+ */
+.crp-head {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0 12px;
+}
+.crp-head .career-radar-mini {
+  width: 120px;
+  height: 120px;
+}
+@media (max-width: 480px) {
+  .crp-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.crp-legend {
+  margin: 0 0 8px;
+  font-size: var(--fs-small);
+}
+
+.crp-asks {
+  margin: 6px 0 12px;
+  padding-left: 20px;
+}
+
+/* Три группы грейда: колонками на широком экране, столбиком на узком. */
+.crp-grades {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.crp-grade {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+  font-size: var(--fs-small);
+}
+.crp-grade ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.crp-grade.thin {
+  border-style: dashed;
+  color: var(--text-dim);
+}
+.crp-low {
+  font-style: normal;
+  font-weight: 600;
+}
+
+.crp-axes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.crp-axis + .crp-axis {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.crp-ok {
+  font-weight: 600;
+  color: var(--ok, var(--text));
+}
+.crp-levels {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.crp-level {
+  padding: 8px 12px;
+  border-left: 3px solid var(--line);
+}
+.crp-level p {
+  margin: 0 0 4px;
+}
+.crp-level.target {
+  border-left-color: var(--text);
+}
+.crp-level.reached {
+  border-left-color: var(--accent);
+}
+.crp-level-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.crp-tag {
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+.crp-tag.done {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.crp-tag.goal {
+  color: var(--text);
+  border-color: var(--text);
+}

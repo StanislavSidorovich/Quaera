@@ -67,6 +67,9 @@ export interface CareerAxis extends AxisDef {
   market: Text;
 }
 
+export type GradeGroup = 'entry' | 'mid' | 'senior';
+export const GRADE_GROUPS: GradeGroup[] = ['entry', 'mid', 'senior'];
+
 export interface CareerRole extends RoleDef {
   title: Text;
   does: Text;
@@ -78,6 +81,12 @@ export interface CareerRole extends RoleDef {
   ads: number;
   /** Сколько из них называют Excel, английский и коммуникацию; у ролей с малой выборкой поля нет. */
   outside?: Outside;
+  /** Соседняя роль для сравнения на странице роли. */
+  neighbor: string;
+  /** Навыки, которые чаще всего называют обязательными: [id из `vacancies.skillLabels`, сколько из `ads` вакансий]. */
+  ask: [string, number][];
+  /** По грейдам (вход = intern и junior): N вакансий группы и до трёх частых навыков. Группа меньше `minRoleAds` показывается как «мало данных», навыков в ней нет. */
+  grades: Record<GradeGroup, { n: number; top: [string, number][] }>;
   /** Выборка роли мала (Data Scientist: 8): цели заданы по смыслу, и экран говорит «мало данных». */
   lowData?: boolean;
 }
@@ -115,7 +124,7 @@ interface CareerData {
    * Выборка вакансий, на которой стоят цели ролей. Число одно: хаб обновляет
    * его вместе с `ads` и `outside` ролей, когда разбирает новую партию.
    */
-  vacancies: { total: number; linkedin: number; boards: number; outsideTotal: Outside; minRoleAds: number };
+  vacancies: { total: number; linkedin: number; boards: number; outsideTotal: Outside; minRoleAds: number; skillLabels: Record<string, Text> };
   axes: CareerAxis[];
   roles: CareerRole[];
   stages: CareerStage[];

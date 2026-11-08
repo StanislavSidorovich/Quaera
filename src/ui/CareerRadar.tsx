@@ -50,20 +50,45 @@ export function CareerRadar({
   ariaLabel,
   legend,
   ringNames,
+  mini = false,
+  hideGoal = false,
+  onAxis,
+  activeAxis = null,
 }: {
   axes: RadarAxis[];
   ariaLabel: string;
   legend: { you: string; goal: string; due: string; rings: string };
   /** Названия колец 1..3 для подписи под рисунком. */
   ringNames: [string, string, string];
+  /** Маленький рисунок для плитки роли: без подписей, колец и легенды, для скринридера скрыт (текст рядом). */
+  mini?: boolean;
+  /** Без контура цели: обзор «вы сейчас», пока роль не выбрана. */
+  hideGoal?: boolean;
+  /** Подпись и точка оси нажимаются: обзор раскрывает под рисунком строку оси. */
+  onAxis?: (id: AxisId) => void;
+  activeAxis?: AxisId | null;
 }) {
   const n = axes.length;
   const anyDue = axes.some((a) => a.due > 0);
   const ring = (v: number) =>
     axes.map((_, i) => point(i, n, v)).map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  if (mini) {
+    return (
+      <span className="career-radar career-radar-mini-wrap">
+      <svg viewBox="92 54 216 216" aria-hidden="true" focusable="false" className="career-radar-mini">
+        <polygon points={ring(3)} className="career-radar-field" />
+        {[1, 2].map((l) => (
+          <polygon key={l} points={ring(l)} className="career-radar-ring" />
+        ))}
+        <polygon points={poly(axes, value)} className="career-radar-you" />
+        <polygon points={poly(axes, (a) => a.target)} className="career-radar-goal" />
+      </svg>
+      </span>
+    );
+  }
   return (
     <figure className="career-radar">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={ariaLabel} className="career-radar-svg">
+      <svg viewBox={`0 0 ${W} ${H}`} role={onAxis ? 'group' : 'img'} aria-label={ariaLabel} className="career-radar-svg">
         <polygon points={ring(3)} className="career-radar-field" />
         {[0, 1, 2, 3].map((l) => (
           <polygon key={l} points={ring(l)} className={l === 0 ? 'career-radar-ring base' : 'career-radar-ring'} />
@@ -79,7 +104,7 @@ export function CareerRadar({
           </text>
         ))}
         <polygon points={poly(axes, value)} className="career-radar-you" />
-        <polygon points={poly(axes, (a) => a.target)} className="career-radar-goal" />
+        {!hideGoal && <polygon points={poly(axes, (a) => a.target)} className="career-radar-goal" />}
         {axes.map((a, i) => {
           const p = point(i, n, value(a));
           return (
@@ -92,13 +117,28 @@ export function CareerRadar({
         {axes.map((a, i) => {
           const p = point(i, n, 3, LABEL_R);
           const anchor = Math.abs(p.cos) < 0.2 ? 'middle' : p.cos > 0 ? 'start' : 'end';
+          const click = onAxis
+            ? {
+                role: 'button' as const,
+                tabIndex: 0,
+                'aria-pressed': activeAxis === a.id,
+                onClick: () => onAxis(a.id),
+                onKeyDown: (e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onAxis(a.id);
+                  }
+                },
+              }
+            : {};
           return (
             <text
               key={a.id}
               x={p.x}
               y={p.y + (p.sin > 0.5 ? 12 : p.sin < -0.5 ? -3 : 4)}
               textAnchor={anchor}
-              className={`career-radar-label${a.target === 0 ? ' off' : ''}`}
+              className={`career-radar-label${!hideGoal && a.target === 0 ? ' off' : ''}${onAxis ? ' clickable' : ''}${activeAxis === a.id ? ' active' : ''}`}
+              {...click}
             >
               {a.label}
             </text>
@@ -110,10 +150,12 @@ export function CareerRadar({
           <i className="sw-you" />
           {legend.you}
         </span>
-        <span>
-          <i className="sw-goal" />
-          {legend.goal}
-        </span>
+        {!hideGoal && (
+          <span>
+            <i className="sw-goal" />
+            {legend.goal}
+          </span>
+        )}
         {anyDue && (
           <span>
             <i className="sw-due" />
@@ -139,29 +181,39 @@ export function CareerAxisBars({
   levelName,
   cellAria,
   ariaLabel,
+  hideGoal = false,
+  onSelect,
+  activeAxis = null,
 }: {
   axes: RadarAxis[];
   fullLabel: (id: AxisId) => string;
   levelName: (n: number) => string;
   cellAria: (axis: string, level: string, goal: string | null) => string;
   ariaLabel: string;
+  hideGoal?: boolean;
+  /** Строка оси нажимается и раскрывает панель оси под рисунком. */
+  onSelect?: (id: AxisId) => void;
+  activeAxis?: AxisId | null;
 }) {
   return (
     <ul className="career-bars" aria-label={ariaLabel}>
       {axes.map((a) => {
         const title = fullLabel(a.id);
         return (
-          <li key={a.id} className={`career-bars-row${a.target === 0 ? ' off' : ''}`}>
+          <li key={a.id} className={`career-bars-row${!hideGoal && a.target === 0 ? ' off' : ''}${activeAxis === a.id ? ' active' : ''}`}>
+            {onSelect && (
+              <button type="button" className="career-bars-hit" aria-pressed={activeAxis === a.id} aria-label={title} onClick={() => onSelect(a.id)} />
+            )}
             <span className="career-bars-name">{a.label}</span>
             <span
               className="career-bars-cells"
               role="img"
-              aria-label={cellAria(title, levelName(a.have), a.target > 0 ? levelName(a.target) : null)}
+              aria-label={cellAria(title, levelName(a.have), !hideGoal && a.target > 0 ? levelName(a.target) : null)}
             >
               {[1, 2, 3].map((k) => {
                 const fill = a.have >= k ? 100 : a.have === k - 1 ? Math.round(a.progress * 100) : 0;
                 return (
-                  <span key={k} className={`career-bars-cell${a.target === k ? ' target' : ''}`}>
+                  <span key={k} className={`career-bars-cell${!hideGoal && a.target === k ? ' target' : ''}`}>
                     <i style={{ width: `${fill}%` }} className={fill === 100 ? 'full' : ''} />
                   </span>
                 );
