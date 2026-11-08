@@ -25,12 +25,46 @@ type Text = Record<Locale, string>;
 /** Приложения семейства, куда этап ведёт наружу (id из family/family.json). */
 export type FamilyApp = 'lab' | 'model' | 'flow' | 'pandas';
 
+/** Один шаг к уровню оси: что сделать и куда нажать. */
+export interface AxisStep {
+  /** Что сделать, одной строкой без тире. */
+  text: Text;
+  /**
+   * skills: кнопки «потренировать» по этим навыкам;
+   * tasks: ссылка `?task=` на эти задания;
+   * app: ссылка `href` в приложение семейства (`app`);
+   * quiz: кнопка самопроверки оси;
+   * story: вход в режим истории;
+   * evidence: строка отметки по id, без ссылки;
+   * outside: только текст.
+   */
+  kind: 'skills' | 'tasks' | 'app' | 'story' | 'quiz' | 'evidence' | 'outside';
+  skills?: string[];
+  tasks?: string[];
+  app?: FamilyApp;
+  href?: string;
+  evidence?: string;
+}
+
+/** Что значит уровень оси и как до него дойти с предыдущего. */
+export interface AxisLevel {
+  level: 1 | 2 | 3;
+  /** Что человек делает на этом уровне, наблюдаемо; второе лицо. */
+  does: Text;
+  /** Шаги, чтобы дойти до этого уровня с предыдущего: 1-3 штуки. */
+  steps: AxisStep[];
+}
+
 export interface CareerAxis extends AxisDef {
   title: Text;
   /** Чем тренажёр покрывает ось и чем нет, одной фразой. */
   note: Text;
   /** Короткое имя для подписи на паутинке. */
   short: Text;
+  /** Критерии уровней 1, 2, 3 по порядку (источник: docs/career-axis-levels-2026-11.md). */
+  levels: AxisLevel[];
+  /** Как ось видна в вакансиях, одной фразой с долей. */
+  market: Text;
 }
 
 export interface CareerRole extends RoleDef {
@@ -44,6 +78,8 @@ export interface CareerRole extends RoleDef {
   ads: number;
   /** Сколько из них называют Excel, английский и коммуникацию; у ролей с малой выборкой поля нет. */
   outside?: Outside;
+  /** Выборка роли мала (Data Scientist: 8): цели заданы по смыслу, и экран говорит «мало данных». */
+  lowData?: boolean;
 }
 
 export interface Outside {
@@ -66,13 +102,12 @@ export interface CareerStage {
   ai: Text;
 }
 
+/**
+ * Отметка-доказательство. `source: 'quiz'` — её ставит самопроверка (`career/quiz.ts`),
+ * `source: 'labDone'` — возврат из Lab (`labKey` в `quaera.labDone`): галочки у таких нет.
+ */
 export interface CareerEvidence extends EvidenceDef {
   title: Text;
-  /**
-   * `quiz` — отметку ставит самопроверка (`career/quiz.ts`), а не человек:
-   * галочки у неё нет, засчитана она, когда сдан тест оси.
-   */
-  source?: 'quiz';
 }
 
 interface CareerData {
@@ -80,7 +115,7 @@ interface CareerData {
    * Выборка вакансий, на которой стоят цели ролей. Число одно: хаб обновляет
    * его вместе с `ads` и `outside` ролей, когда разбирает новую партию.
    */
-  vacancies: { total: number; outsideTotal: Outside; minRoleAds: number };
+  vacancies: { total: number; linkedin: number; boards: number; outsideTotal: Outside; minRoleAds: number };
   axes: CareerAxis[];
   roles: CareerRole[];
   stages: CareerStage[];

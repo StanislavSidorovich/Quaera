@@ -8,7 +8,7 @@ import { useI18n } from '../i18n/context';
 import { FAMILY, openFamilyLink } from '../links';
 import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
-import { AXES, overdueSkills, pacePlan, roleReadiness, skillLevel } from '../career/readiness';
+import { AXES, labDoneEvidence, overdueSkills, pacePlan, roleReadiness, skillLevel } from '../career/readiness';
 import type { AxisId, Band, Level } from '../career/readiness';
 import {
   DEFAULT_ROLE,
@@ -25,6 +25,7 @@ import type { AxisLevels, CareerState } from '../career/store';
 import { passedQuizEvidence, quizStatus } from '../career/quiz';
 import { withQuizAttempt } from '../career/store';
 import { CareerQuiz, useQuizStatusText } from './CareerQuiz';
+import { useLabDone } from './LabDoneToast';
 import { CareerAxisBars, CareerRadar } from './CareerRadar';
 import type { RadarAxis } from './CareerRadar';
 import { quizBank } from '../content/careerQuiz';
@@ -156,9 +157,10 @@ export function CareerPage({
    * Засчитанные самопроверки входят в формулу как отметки, но выводятся
    * из истории подходов, а не из галочек: поставить их руками нельзя.
    */
+  const labDone = useLabDone();
   const checked = useMemo(
-    () => new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date())]),
-    [state]
+    () => new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date()), ...labDoneEvidence(careerEvidence, labDone)]),
+    [state, labDone]
   );
   /* Отметка-тест оси и непустой банк: цель роли может быть выше единицы, и тогда в разрыве самой отметки нет, а первая ступень всё равно за тестом. */
   const hasQuiz = (axis: AxisId) => careerEvidence.some((e) => e.axis === axis && e.source === 'quiz') && quizBank(axis).length > 0;
@@ -357,7 +359,7 @@ export function CareerPage({
 
       <section className="card career-target">
         <h2 id="career-target-label">{c.targetLabel}</h2>
-        <p className="muted career-source">{c.sourceNote(vacancies.total)}</p>
+        <p className="muted career-source">{c.sourceNote(vacancies.total, vacancies.linkedin, vacancies.boards)}</p>
         <div className="career-roles-pick" role="radiogroup" aria-labelledby="career-target-label">
           {careerRoles.map((r) => (
             <button
@@ -376,6 +378,7 @@ export function CareerPage({
         <p className="muted career-source">
           {c.roleTargets}: {c.sourceRole(role.ads)}.
         </p>
+        {role.lowData && <p className="muted career-source">{c.lowDataNote(role.ads)}</p>}
         <RoleCompare roleId={role.id} levels={levels} />
         {ROLE_INSET[role.id] && (
           <div className="career-inset">
@@ -511,6 +514,7 @@ export function CareerPage({
                   </>
                 )}
                 {g.evidence.filter((id) => !isQuiz(id)).length > 0 && (
+                  /* Ближайшая ступень, не сразу цель: см. Gap.step. */
                   <>
                     <p className="muted career-gap-note">{g.skills.length ? c.evidenceToCheck : c.beyondTrainer}</p>
                     <ul className="career-gap-evidence">
@@ -564,7 +568,12 @@ export function CareerPage({
                 {evs.length > 0 && (
                   <ul className="career-evidence">
                     {evs.map((e) =>
-                      e.source === 'quiz' ? (
+                      e.source === 'labDone' ? (
+                        <li key={e.id} className="career-quiz-row">
+                          <span>{e.title[locale]}</span>
+                          <small className="muted">{checked.has(e.id) ? c.labMark.done : c.labMark.todo}</small>
+                        </li>
+                      ) : e.source === 'quiz' ? (
                         <li key={e.id} className="career-quiz-row">
                           <span>{e.title[locale]}</span>
                           {quizStatusText(state.quiz, e.axis, new Date()).map((line) => (
@@ -589,7 +598,12 @@ export function CareerPage({
                             <input type="checkbox" checked={checked.has(e.id)} onChange={() => toggleEvidence(e.id)} />
                             <span>
                               {e.title[locale]}
-                              {a.evidenceCapped.includes(e.id) && <small className="career-capped"> {c.evidenceCapped}</small>}
+                              {a.evidenceCapped.includes(e.id) && (
+                                <small className="career-capped">
+                                  {' '}
+                                  {c.evidenceCapped} {c.evidenceCappedWhy(levelName(e.level - 1))}
+                                </small>
+                              )}
                             </span>
                           </label>
                         </li>

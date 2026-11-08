@@ -61,7 +61,7 @@ try {
       `--rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
   );
-  const { AXES, skillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, RETAINED_INTERVAL_DAYS } = await import(
+  const { AXES, skillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, RETAINED_INTERVAL_DAYS } = await import(
     pathToFileURL(path.join(outDir, 'career', 'readiness.js')).href
   );
 
@@ -123,6 +123,13 @@ try {
   assertEq('цели: AE bi 2, business 2', [tg('ae').bi, tg('ae').business], [2, 2]);
   assertEq('цели: BA process остаётся 2', tg('ba').process, 2);
   assertEq('цели: sql у AE остаётся 3 (глубину вакансии не меряют)', tg('ae').sql, 3);
+  // Решения хаба 2026-11-08 по 142 вакансиям (ROLE-TARGETS, разделы 10-12).
+  assertEq('цели: DA python остаётся 2, stats 1', [tg('da').python, tg('da').stats], [2, 1]);
+  assertEq('цели: DE business 1', tg('de').business, 1);
+  assertEq('цели: gov modeling 1, bi 1', [tg('gov').modeling, tg('gov').bi], [1, 1]);
+  assertEq('цели: BA modeling 0', tg('ba').modeling, 0);
+  assertEq('цели: DS не тронуты', tg('ds'), { sql: 2, modeling: 0, bi: 0, python: 3, stats: 3, engineering: 1, business: 1, process: 0 });
+  assertEq('роли: «мало данных» только у DS', career.roles.filter((r) => r.lowData).map((r) => r.id), ['ds']);
 
   // Выборка вакансий: число одно, у роли доли, где выборки хватает.
   const vac = career.vacancies;
@@ -134,6 +141,8 @@ try {
       if (r.outside && !(r.outside[k] >= 0 && r.outside[k] <= r.ads)) fail(`роль ${r.id}`, `outside.${k}=${r.outside[k]} вне 0..${r.ads}`);
     }
   }
+  assertEq('вакансии: источники складываются в общее число', vac.linkedin + vac.boards, vac.total);
+  assertEq('вакансии: подпись источника 142 = 83 + 59', [vac.total, vac.linkedin, vac.boards], [142, 83, 59]);
   assertTrue('вакансии: сумма по ролям не больше общего числа', career.roles.reduce((n, r) => n + r.ads, 0) <= vac.total);
   for (const a of career.axes) if (!a.short?.ru || !a.short?.en) fail(`ось ${a.id}`, 'нет короткого имени для паутинки');
   ok('вакансии и короткие имена осей');
@@ -149,6 +158,56 @@ try {
   assertEq(
     'этапы: у каждой роли есть хотя бы один этап',
     roleIds.filter((id) => !career.stages.some((s) => s.who.includes(id))),
+    []
+  );
+
+  // ── Критерии уровней по осям (docs/career-axis-levels-2026-11.md, раздел 11) ──
+  const packTasks = new Set();
+  for (const track of ['sql', 'model', 'python', 'domain']) {
+    for (const tk of readJson(`src/content/packs/${track}-core.json`).tasks) packTasks.add(tk.id);
+  }
+  const familyUrls = readJson('family/family.json').apps.map((a) => a.url);
+  const KINDS = ['skills', 'tasks', 'app', 'story', 'quiz', 'evidence', 'outside'];
+  const levelProblems = [];
+  for (const a of career.axes) {
+    if (!a.market?.ru || !a.market?.en) levelProblems.push(`${a.id}: нет market`);
+    if (!Array.isArray(a.levels) || a.levels.length !== 3 || a.levels.some((l, i) => l.level !== i + 1)) {
+      levelProblems.push(`${a.id}: уровни должны идти 1, 2, 3`);
+      continue;
+    }
+    for (const l of a.levels) {
+      const where = `${a.id} L${l.level}`;
+      if (!l.does?.ru?.trim() || !l.does?.en?.trim()) levelProblems.push(`${where}: нет does`);
+      if (!Array.isArray(l.steps) || l.steps.length < 1 || l.steps.length > 3) levelProblems.push(`${where}: шагов ${l.steps?.length}, нужно 1-3`);
+      for (const s of l.steps ?? []) {
+        if (!KINDS.includes(s.kind)) levelProblems.push(`${where}: kind ${s.kind}`);
+        if (!s.text?.ru?.trim() || !s.text?.en?.trim()) levelProblems.push(`${where}: шаг без текста`);
+        if (s.kind === 'skills') {
+          if (!s.skills?.length) levelProblems.push(`${where}: skills пуст`);
+          for (const id of s.skills ?? []) if (!packSkills.has(id)) levelProblems.push(`${where}: навык ${id} не существует`);
+        }
+        if (s.kind === 'tasks') {
+          if (!s.tasks?.length) levelProblems.push(`${where}: tasks пуст`);
+          for (const id of s.tasks ?? []) if (!packTasks.has(id)) levelProblems.push(`${where}: задание ${id} не существует`);
+        }
+        if (s.kind === 'evidence') {
+          const ev = evidence.find((e) => e.id === s.evidence);
+          if (!ev) levelProblems.push(`${where}: отметка ${s.evidence} не существует`);
+          else if (ev.axis !== a.id) levelProblems.push(`${where}: отметка ${s.evidence} стоит на оси ${ev.axis}`);
+        }
+        if (s.kind === 'app') {
+          if (!familyApps.has(s.app) || s.app === 'quaera') levelProblems.push(`${where}: app ${s.app}`);
+          if (!s.href || !(familyUrls.some((u) => s.href.startsWith(u)) || s.href.startsWith('https://quaera.app/'))) levelProblems.push(`${where}: href ${s.href}`);
+        }
+      }
+    }
+  }
+  assertEq('уровни осей: три уровня, шаги и ссылки существуют', levelProblems, []);
+  // Каждая отметка оси названа хотя бы в одном шаге этой оси или стоит у самопроверки/Lab: иначе человек не узнает, что она есть.
+  const namedEvidence = new Set(career.axes.flatMap((a) => a.levels.flatMap((l) => l.steps.filter((s) => s.kind === 'evidence').map((s) => s.evidence))));
+  assertEq(
+    'уровни осей: отметки-тройки названы в шагах',
+    evidence.filter((e) => e.level === 3 && !namedEvidence.has(e.id)).map((e) => e.id),
     []
   );
 
@@ -269,6 +328,29 @@ try {
   assertEq('темп: прошедшая дата → нет плана', pacePlan(3, '2026-11-01', NOW), null);
   assertEq('темп: нечего закрывать → 0 в неделю', pacePlan(0, '2026-12-01', NOW).perWeek, 0);
 
+  // ── Лестница отметок: «где подтянуть» показывает ближайшую ступень ────────
+  const evE = [
+    { id: 'q', axis: 'engineering', level: 1, source: 'quiz' },
+    { id: 'lab', axis: 'engineering', level: 1, source: 'labDone', labKey: 'pipeline:x' },
+    { id: 'pipe', axis: 'engineering', level: 2 },
+    { id: 'dbt', axis: 'engineering', level: 3 },
+  ];
+  const roleDe = { id: 'de', targets: { sql: 0, modeling: 0, bi: 0, python: 0, stats: 0, engineering: 3, business: 0, process: 0 }, core: ['engineering'] };
+  const gE = roleReadiness(roleDe, [axis('engineering', 1)], {}, evE, none).gaps[0];
+  assertEq('разрыв: при нуле первой идёт нижняя ступень, dbt последним', gE.evidence, ['q', 'lab', 'pipe', 'dbt']);
+  assertEq('разрыв: ближайшая ступень = имею + 1', gE.step, 1);
+  const gE2 = roleReadiness(roleDe, [axis('engineering', 1)], {}, evE, new Set(['q'])).gaps[0];
+  assertEq('разрыв: на единице нижние отметки уходят, ближайшая — двойка', [gE2.evidence, gE2.step], [['pipe', 'dbt'], 2]);
+  const roleMid = { ...roleDe, targets: { ...roleDe.targets, engineering: 1 } };
+  assertEq('разрыв: отметки выше цели не предлагаются', roleReadiness(roleMid, [axis('engineering', 1)], {}, evE, none).gaps[0].evidence, ['q', 'lab']);
+
+  // ── Отметка Lab: приходит из quaera.labDone, галочки нет ─────────────────
+  assertEq('Lab: ключ в хранилище → отметка засчитана', labDoneEvidence(evE, { 'pipeline:x': '2026-11-08T00:00:00Z' }), ['lab']);
+  assertEq('Lab: пустое хранилище → не засчитана', labDoneEvidence(evE, {}), []);
+  assertEq('Lab: чужой ключ → не засчитана', labDoneEvidence(evE, { 'pipeline:y': 'z' }), []);
+  assertEq('Lab: отметка без source не берётся по случайному ключу', labDoneEvidence([{ id: 'p', axis: 'engineering', level: 1, labKey: 'pipeline:x' }], { 'pipeline:x': 'z' }), []);
+  assertEq('Lab: засчитанная отметка поднимает инженерию до единицы', axisReading(axis('engineering', 1), {}, evE, new Set(labDoneEvidence(evE, { 'pipeline:x': 'z' }))).level, 1);
+
   // Настоящие данные на пустом прогрессе: ни одна роль не готова.
   const real = career.roles.map((r) => roleReadiness(r, career.axes, {}, evidence, none).band);
   assertEq('настоящие роли на пустом прогрессе → start', [...new Set(real)], ['start']);
@@ -290,7 +372,14 @@ try {
     if (e.level !== 1) fail(`отметка ${e.id}`, `тест засчитывает уровень 1, а не ${e.level}`);
     if (career.axes.find((a) => a.id === e.axis).trainerMax !== 1) fail(`отметка ${e.id}`, 'тест только для осей, которые тренажёр не меряет выше единицы');
   }
-  for (const e of evidence) if (e.source !== undefined && e.source !== 'quiz') fail(`отметка ${e.id}`, `source ${e.source}`);
+  for (const e of evidence) {
+    if (e.source !== undefined && !['quiz', 'labDone'].includes(e.source)) fail(`отметка ${e.id}`, `source ${e.source}`);
+    if (e.source === 'labDone' && !/^pipeline:[a-z0-9-]+$/.test(e.labKey ?? '')) fail(`отметка ${e.id}`, 'labDone без labKey по формату lab-done');
+    if (e.labKey && e.source !== 'labDone') fail(`отметка ${e.id}`, 'labKey без source labDone');
+  }
+  const labMark = evidence.find((e) => e.id === 'eng-lab-pipeline');
+  assertEq('отметка конвейера Lab: инженерия, уровень 1, ключ возврата', labMark && [labMark.axis, labMark.level, labMark.source, labMark.labKey], ['engineering', 1, 'labDone', 'pipeline:kaiyo-sellout']);
+  assertEq('отметки-тройки добавлены: biz-requirements и gov-catalog', ['biz-requirements', 'gov-catalog'].map((id) => evidence.find((e) => e.id === id)?.level), [3, 3]);
 
   assertTrue('банк: id уникальны', new Set(bank.map((q) => q.id)).size === bank.length);
   const loc = ['ru', 'en'];

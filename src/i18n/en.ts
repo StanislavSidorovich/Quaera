@@ -1254,7 +1254,11 @@ export const en = {
     evidenceNote: 'You tick these yourself, so a tick raises an axis at most one step above the tasks.',
     evidenceCapped: 'Not counted yet: raise the axis with tasks first.',
     storageNote: 'Ticks and weekly snapshots are stored only on this device.',
-    sourceNote: (n: number) => `Based on ${n} LinkedIn job ads in Portugal (Lisbon area), November 2026. The ads were picked by hand, not at random, so treat this as a guide, not market statistics.`,
+    sourceNote: (n: number, linkedin: number, boards: number) =>
+      `Based on ${n} job ads from Portugal: ${linkedin} from LinkedIn picked by hand and ${boards} from Portuguese job boards collected by a script with BI and data analyst searches. Ads posted from early 2026, collected in November 2026. Not a random sample of the market: a guide, not statistics.`,
+    lowDataNote: (n: number) => `Little data: ${n} ads for this role in the sample, so the targets are set with care.`,
+    evidenceCappedWhy: (level: string) => `It counts in full once the trainer raises this axis to "${level}".`,
+    labMark: { done: 'Counted: the pipeline is built in Lab', todo: 'This mark arrives on its own once you pass the three pipeline checks in Lab.', open: 'Build it in Lab' },
     sourceRole: (n: number) => (n === 0 ? 'no ads for this role in the sample, the targets are set by judgement' : `from ${n} ${n === 1 ? 'ad' : 'ads'} for this role`),
     outsideTitle: 'Also needed outside Quaera',
     outsideLead: 'These are not axes but requirements the trainer does not teach. The share of ads that list them as required.',

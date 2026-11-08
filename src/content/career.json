@@ -1,5 +1,5 @@
 {
-  "vacancies": { "total": 43, "outsideTotal": { "excel": 15, "english": 28, "comms": 38 }, "minRoleAds": 3 },
+  "vacancies": { "total": 142, "linkedin": 83, "boards": 59, "outsideTotal": { "excel": 41, "english": 86, "comms": 114 }, "minRoleAds": 3 },
   "axes": [
     {
       "id": "sql",
@@ -7,6 +7,100 @@
       "short": { "ru": "SQL", "en": "SQL" },
       "note": { "ru": "Трек SQL целиком.", "en": "The whole SQL track." },
       "trainerMax": 2,
+        "market": {
+          "ru": "SQL назван примерно в 6 из 10 вакансий выборки и обязателен у DA, BI, AE и DE.",
+          "en": "SQL appears in about 6 of 10 ads in the sample and is required for DA, BI, AE and DE."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Пишете SELECT с фильтром, группировкой и JOIN на учебных таблицах, подглядывая в подсказку.",
+              "en": "You write SELECT with filters, grouping and JOIN on training tables, peeking at hints."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "sql-select",
+                  "sql-where",
+                  "sql-group-by",
+                  "sql-join-inner"
+                ],
+                "text": {
+                  "ru": "Трек SQL, первые две ступени.",
+                  "en": "SQL track, the first two tiers."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Без подсказки пишете запрос с LEFT JOIN, GROUP BY, CTE и оконной функцией, замечаете размножение строк и через неделю повторяете без ошибок.",
+              "en": "Without hints you write a query with LEFT JOIN, GROUP BY, a CTE and a window function, spot duplicated rows, and a week later do it again without mistakes."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "sql-join-left",
+                  "sql-fanout",
+                  "sql-cte",
+                  "sql-window-rank"
+                ],
+                "text": {
+                  "ru": "Повторы в треке без подсказки.",
+                  "en": "Repeat in the track without hints."
+                }
+              },
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#practice=sql&at=left-join",
+                "text": {
+                  "ru": "Те же темы руками в Lab: LEFT JOIN, CTE, окна.",
+                  "en": "The same topics by hand in Lab: LEFT JOIN, CTE, windows."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Решаете незнакомые задачи на чужих таблицах без подсказок.",
+              "en": "You solve unfamiliar problems on someone else's tables without hints."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#practice=sql&at=free",
+                "text": {
+                  "ru": "Свободные задачи в Lab.",
+                  "en": "Free tasks in Lab."
+                }
+              },
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#ds=northwind",
+                "text": {
+                  "ru": "Своими вопросами к незнакомой схеме Northwind.",
+                  "en": "Your own questions to the unfamiliar Northwind schema."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "sql-medium",
+                "text": {
+                  "ru": "10 задач medium на внешнем сайте задач.",
+                  "en": "10 medium problems on an outside practice site."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["sql-schema", "sql-select", "sql-where", "sql-order-limit", "sql-null", "sql-aggregate", "sql-group-by", "sql-having", "sql-join-inner", "sql-join-left", "sql-fanout", "sql-case", "sql-cte", "sql-promo-lift", "sql-window-rank", "sql-window-frame", "sql-data-quality", "sql-price-realization", "sql-forecast-accuracy", "sql-business-case"]
     },
     {
@@ -15,6 +109,101 @@
       "short": { "ru": "Модель", "en": "Model" },
       "note": { "ru": "Звезда, зерно и связи из трека «Модель и BI». Проект в Quaera Model засчитывается отметкой.", "en": "Star schema, grain and relationships from the Model and BI track. A project in Quaera Model counts as a check mark." },
       "trainerMax": 2,
+        "market": {
+          "ru": "Моделирование данных обязательно примерно в каждой третьей вакансии, у BI и AE почти во всех.",
+          "en": "Data modelling is required in about one ad in three, and in almost all BI and AE ads."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "На готовой схеме называете зерно факта, отличаете факт от справочника и проводите связи, с подсказкой.",
+              "en": "On a given schema you name the fact grain, tell facts from dimensions and draw the relationships, with hints."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "model-grain",
+                  "model-star",
+                  "model-relationships"
+                ],
+                "text": {
+                  "ru": "Трек «Модель и BI», первая ступень.",
+                  "en": "Model and BI track, the first tier."
+                }
+              },
+              {
+                "kind": "tasks",
+                "tasks": [
+                  "mdl-093",
+                  "mdl-094",
+                  "mdl-095"
+                ],
+                "text": {
+                  "ru": "Проведите связи руками.",
+                  "en": "Draw the relationships by hand."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Сами собираете звезду под вопрос: зерно, факт, измерения, роль даты, мост для многие-ко-многим; через неделю повторяете.",
+              "en": "You build a star schema for a question yourself: grain, fact, dimensions, date roles, a bridge for many-to-many; a week later you do it again."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "model-role-playing",
+                  "model-many-to-many",
+                  "model-scd2"
+                ],
+                "text": {
+                  "ru": "Третья и четвёртая ступени трека без подсказки.",
+                  "en": "Tiers three and four of the track without hints."
+                }
+              },
+              {
+                "kind": "app",
+                "app": "model",
+                "href": "https://model.quaera.app/#example=quaera",
+                "text": {
+                  "ru": "Звезда Kaiyo в Quaera Model: от концептуальной модели до SQL.",
+                  "en": "The Kaiyo star in Quaera Model: from conceptual model to SQL."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Собрали звезду для чужого датасета и объясняете, почему зерно такое.",
+              "en": "You built a star schema for someone else's dataset and can explain why the grain is what it is."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#ds=adventureworks",
+                "text": {
+                  "ru": "Незнакомый датасет в Lab, схема в Quaera Model.",
+                  "en": "An unfamiliar dataset in Lab, the schema in Quaera Model."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "model-star-project",
+                "text": {
+                  "ru": "Звезда в проекте, которую можно показать.",
+                  "en": "A star schema in a project you can show."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["model-oltp-olap", "model-grain", "model-star", "model-relationships", "model-ambiguity", "model-role-playing", "model-many-to-many", "model-scd2", "model-date-table"]
     },
     {
@@ -23,6 +212,86 @@
       "short": { "ru": "BI и DAX", "en": "BI, DAX" },
       "note": { "ru": "Меры, контексты и CALCULATE из трека «Модель и BI», выбор графика.", "en": "Measures, contexts and CALCULATE from the Model and BI track, plus chart choice." },
       "trainerMax": 2,
+        "market": {
+          "ru": "Самая частая ось вместе с SQL: BI-инструмент назван в 6 из 10 вакансий, DAX в каждой шестой.",
+          "en": "The most common axis alongside SQL: a BI tool appears in 6 of 10 ads, DAX in one in six."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Отличаете меру от вычисляемой колонки и предсказываете, что покажет мера под фильтром, с подсказкой.",
+              "en": "You tell a measure from a calculated column and predict what a measure shows under a filter, with hints."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "model-measure-vs-column",
+                  "model-filter-context",
+                  "model-additivity"
+                ],
+                "text": {
+                  "ru": "Трек «Модель и BI», вторая ступень.",
+                  "en": "Model and BI track, the second tier."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Без подсказки пишете меру с CALCULATE и сравнением периодов, объясняете, почему итог не равен сумме строк; через неделю повторяете.",
+              "en": "Without hints you write a measure with CALCULATE and period comparison and explain why a total is not the sum of rows; a week later you do it again."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "model-calculate",
+                  "model-context-transition",
+                  "model-time-intelligence"
+                ],
+                "text": {
+                  "ru": "Третья ступень трека.",
+                  "en": "The third tier of the track."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "pl300-practice",
+                "text": {
+                  "ru": "Practice Assessment PL-300 на Microsoft Learn.",
+                  "en": "PL-300 Practice Assessment on Microsoft Learn."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Сделали отчёт Power BI с мерами DAX на данных, которых не было в заданиях, и показываете его.",
+              "en": "You built a Power BI report with DAX measures on data that was not in the tasks, and you can show it."
+            },
+            "steps": [
+              {
+                "kind": "outside",
+                "text": {
+                  "ru": "Разминка в Power BI Desktop на CSV Kaiyo, затем отчёт на открытом датасете: три меры и один вывод.",
+                  "en": "Warm up in Power BI Desktop on the Kaiyo CSV, then a report on an open dataset: three measures and one conclusion."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "bi-report",
+                "text": {
+                  "ru": "Отчёт, который можно показать.",
+                  "en": "A report you can show."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["model-measure-vs-column", "model-filter-context", "model-row-context", "model-additivity", "model-calculate", "model-context-transition", "model-time-intelligence", "model-power-query", "model-performance", "model-incremental-refresh", "dom-chart-choice"]
     },
     {
@@ -31,6 +300,86 @@
       "short": { "ru": "Python", "en": "Python" },
       "note": { "ru": "Трек pandas целиком.", "en": "The whole pandas track." },
       "trainerMax": 2,
+        "market": {
+          "ru": "Python назван в каждой третьей вакансии; у DA обязателен в 4 из 10, у DE почти всегда.",
+          "en": "Python appears in about one ad in three; required in 4 of 10 DA ads and in almost every DE ad."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Загружаете таблицу в pandas, фильтруете, группируете и соединяете две таблицы, с подсказкой.",
+              "en": "You load a table into pandas, filter, group and merge two tables, with hints."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "py-select-filter",
+                  "py-groupby",
+                  "py-merge"
+                ],
+                "text": {
+                  "ru": "Трек pandas, первые две ступени.",
+                  "en": "pandas track, the first two tiers."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Без подсказки чистите выгрузку: типы, пропуски, повторы; собираете groupby и merge без размножения строк; через неделю повторяете.",
+              "en": "Without hints you clean an export: types, missing values, duplicates; you build groupby and merge without duplicated rows; a week later you do it again."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#practice=python&at=clean-export",
+                "text": {
+                  "ru": "Руками в Lab: чистка выгрузки, merge, группировка.",
+                  "en": "By hand in Lab: cleaning an export, merge, grouping."
+                }
+              },
+              {
+                "kind": "app",
+                "app": "pandas",
+                "href": "https://pandas.quaera.app",
+                "text": {
+                  "ru": "Тетрадь Quaera Pandas на другом датасете; последние две части без hint().",
+                  "en": "The Quaera Pandas notebook on another dataset; the last two parts without hint()."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Разобрали незнакомый датасет от загрузки до вывода и выложили тетрадь.",
+              "en": "You analysed an unfamiliar dataset from loading to conclusion and published the notebook."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#ds=chinook",
+                "text": {
+                  "ru": "Тетрадь .ipynb из Python-вкладки Lab на незнакомом датасете или своём CSV.",
+                  "en": "An .ipynb notebook from the Lab Python tab on an unfamiliar dataset or your own CSV."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "pandas-own-data",
+                "text": {
+                  "ru": "Тетрадь с выводом, выложенная на GitHub или Kaggle.",
+                  "en": "A notebook with a conclusion, published on GitHub or Kaggle."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["py-dataframe", "py-select-filter", "py-dtypes", "py-explore", "py-index", "py-groupby", "py-tidy", "py-transform", "py-nan", "py-merge", "py-timeseries", "py-reshape", "py-chaining", "py-performance", "py-duplicates", "py-conditions", "py-binning", "py-outliers", "py-rfm"]
     },
     {
@@ -39,6 +388,83 @@
       "short": { "ru": "Статистика", "en": "Stats" },
       "note": { "ru": "Тренажёр видит её краешком: сезонность, причинность, точность прогноза. Выше единицы ось поднимают только отметки.", "en": "The trainer sees only the edge of it: seasonality, causality, forecast accuracy. Above level 1 only check marks raise this axis." },
       "trainerMax": 1,
+        "market": {
+          "ru": "Статистику обязательной называет примерно каждая третья вакансия DA, у BI почти никто; A/B-тесты редки.",
+          "en": "About one DA ad in three requires statistics, almost no BI ads do; A/B tests are rare."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Отличаете корреляцию от причины, сравниваете период с тем же периодом года назад, считаете ошибку прогноза и помечаете выбросы.",
+              "en": "You tell correlation from cause, compare a period with the same period a year earlier, measure forecast error and flag outliers."
+            },
+            "steps": [
+              {
+                "kind": "quiz",
+                "text": {
+                  "ru": "Самопроверка по статистике.",
+                  "en": "Statistics self-check."
+                }
+              },
+              {
+                "kind": "skills",
+                "skills": [
+                  "dom-causality",
+                  "dom-seasonality",
+                  "sql-forecast-accuracy"
+                ],
+                "text": {
+                  "ru": "Навыки оси в треках.",
+                  "en": "The axis skills in the tracks."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Посчитали A/B-тест или доверительный интервал на данных вне заданий и письменно объяснили, что вывод значит для решения.",
+              "en": "You ran an A/B test or a confidence interval on data outside the tasks and explained in writing what the result means for the decision."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#practice=python",
+                "text": {
+                  "ru": "Тетрадь .ipynb из Lab на данных Kaiyo: интервал для лифта промо.",
+                  "en": "An .ipynb notebook from Lab on Kaiyo data: a confidence interval for promo lift."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "stats-test",
+                "text": {
+                  "ru": "То же на открытом A/B-датасете, с выводом.",
+                  "en": "The same on an open A/B dataset, with a conclusion."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Построили и проверили прогнозную модель: разбиение train/test и метрика ошибки.",
+              "en": "You built and validated a predictive model: a train/test split and an error metric."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "stats-model",
+                "text": {
+                  "ru": "Прогноз продаж Kaiyo с train/test и MAPE, затем незнакомый ряд.",
+                  "en": "A Kaiyo sales forecast with train/test and MAPE, then an unfamiliar series."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["dom-causality", "dom-seasonality", "sql-forecast-accuracy", "sql-promo-lift", "py-outliers", "py-binning"]
     },
     {
@@ -47,6 +473,82 @@
       "short": { "ru": "Инженерия", "en": "Engineering" },
       "note": { "ru": "Пайплайны, облако, git и dbt в браузере не живут. Тренажёр даёт здесь только единицу за качество данных и обновление.", "en": "Pipelines, cloud, git and dbt do not live in a browser. The trainer gives at most level 1 here, for data quality and refresh." },
       "trainerMax": 1,
+        "market": {
+          "ru": "Качество данных обязательно в половине вакансий (у DA, AE, DE чаще); пайплайны и облако чаще у AE и DE, dbt и git как обязательные редки.",
+          "en": "Data quality is required in half of the ads (more often for DA, AE, DE); pipelines and cloud are more common for AE and DE, dbt and git are rarely required."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Находите проблемы качества в сырой выгрузке и объясняете, как данные доезжают до модели и как обновляются.",
+              "en": "You find quality problems in a raw export and explain how data reaches the model and how it is refreshed."
+            },
+            "steps": [
+              {
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#pipeline=kaiyo-sellout",
+                "text": {
+                  "ru": "Конвейер в Lab: bronze, silver, gold и три проверки.",
+                  "en": "The pipeline in Lab: bronze, silver, gold and three checks."
+                }
+              },
+              {
+                "kind": "quiz",
+                "text": {
+                  "ru": "Самопроверка по инженерии данных.",
+                  "en": "Data engineering self-check."
+                }
+              },
+              {
+                "kind": "skills",
+                "skills": [
+                  "sql-data-quality",
+                  "model-data-loading"
+                ],
+                "text": {
+                  "ru": "Навыки оси в треках.",
+                  "en": "The axis skills in the tracks."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Загрузили данные пайплайном в lakehouse или хранилище, с расписанием и проверкой.",
+              "en": "You loaded data with a pipeline into a lakehouse or warehouse, on a schedule and with a check."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "eng-pipeline",
+                "text": {
+                  "ru": "Пробная Fabric: пайплайн грузит CSV Kaiyo в lakehouse по расписанию.",
+                  "en": "A Fabric trial: a pipeline loads the Kaiyo CSV into a lakehouse on a schedule."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Сделали проект dbt с тестами данных в git.",
+              "en": "You built a dbt project with data tests, kept in git."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "eng-dbt",
+                "text": {
+                  "ru": "dbt Core на DuckDB с CSV Kaiyo: модели silver и gold, тесты unique, not_null, relationships, README.",
+                  "en": "dbt Core on DuckDB with the Kaiyo CSV: silver and gold models, unique, not_null and relationships tests, a README."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["sql-data-quality", "model-incremental-refresh", "model-power-query", "model-data-loading", "py-performance"]
     },
     {
@@ -55,6 +557,100 @@
       "short": { "ru": "Бизнес", "en": "Business" },
       "note": { "ru": "Трек «Профессия»: постановка, метрики, домен, вывод вперёд.", "en": "The Profession track: framing, metrics, domain, conclusion first." },
       "trainerMax": 2,
+        "market": {
+          "ru": "Коммуникацию называют 8 из 10 вакансий, требования и KPI примерно половина; ось нужна всем ролям, включая DE.",
+          "en": "Communication is named in 8 of 10 ads, requirements and KPIs in about half; every role needs this axis, DE included."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Превращаете просьбу «сделай дашборд» в постановку: кто решает, какое решение, какая метрика; с подсказкой.",
+              "en": "You turn \"make a dashboard\" into a brief: who decides, what decision, which metric; with hints."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "dom-roles",
+                  "dom-requirements",
+                  "dom-metric-definition",
+                  "dom-sanity-check"
+                ],
+                "text": {
+                  "ru": "Трек «Профессия», первая ступень.",
+                  "en": "Profession track, the first tier."
+                }
+              },
+              {
+                "kind": "story",
+                "text": {
+                  "ru": "Или режим истории: пять недель в роли аналитика.",
+                  "en": "Or story mode: five weeks as an analyst."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Без подсказки пишете определение метрики, проверяете число перед отправкой, раскладываете «почему упало» на причины и ставите вывод первой фразой.",
+              "en": "Without hints you define a metric, check a number before sending it, break \"why did it drop\" into causes and put the conclusion first."
+            },
+            "steps": [
+              {
+                "kind": "skills",
+                "skills": [
+                  "dom-decomposition",
+                  "dom-storytelling",
+                  "sql-business-case"
+                ],
+                "text": {
+                  "ru": "Третья и четвёртая ступени трека.",
+                  "en": "Tiers three and four of the track."
+                }
+              },
+              {
+                "kind": "tasks",
+                "tasks": [
+                  "dom-080",
+                  "dom-081",
+                  "dom-082",
+                  "dom-083"
+                ],
+                "text": {
+                  "ru": "Найдите, что не так в отчёте.",
+                  "en": "Spot what is wrong in the report."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Разобрали бизнес-кейс перед живым человеком: вывод первой фразой, ответы на вопросы.",
+              "en": "You walked a live person through a business case: conclusion first, then their questions."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "biz-case",
+                "text": {
+                  "ru": "Взять готовый разбор из трека и рассказать за три минуты на пробном интервью.",
+                  "en": "Take a finished case from the track and present it in three minutes in a mock interview."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "biz-requirements",
+                "text": {
+                  "ru": "Требования к отчёту для живого заказчика: user stories и критерии приёмки, их приняли.",
+                  "en": "Requirements for a report for a real stakeholder: user stories and acceptance criteria, accepted."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["dom-roles", "dom-requirements", "dom-metric-definition", "dom-sanity-check", "dom-sellin-sellout", "dom-fmcg-distribution", "dom-fmcg-consumer", "dom-fmcg-promo", "dom-pharma-rx", "dom-pharma-data", "dom-decomposition", "dom-abc-xyz", "dom-storytelling", "dom-chart-choice", "sql-business-case"]
     },
     {
@@ -63,6 +659,91 @@
       "short": { "ru": "Процессы", "en": "Process" },
       "note": { "ru": "Цепочка стоимости, order-to-cash, владелец данных. Модель процесса в Quaera Flow засчитывается отметкой.", "en": "Value chain, order to cash, data ownership. A process model in Quaera Flow counts as a check mark." },
       "trainerMax": 1,
+        "market": {
+          "ru": "В вакансиях ось держится на управлении данными (у gov почти везде); BPMN называют единицы, в основном BA.",
+          "en": "In the ads this axis is mostly data governance (almost every gov ad); few name BPMN, mostly BA."
+        },
+        "levels": [
+          {
+            "level": 1,
+            "does": {
+              "ru": "Описываете путь заказа от заявки до оплаты, называете владельца данных и место, где рождается ошибка в отчёте.",
+              "en": "You describe an order from request to payment, name the data owner and the step where a report error is born."
+            },
+            "steps": [
+              {
+                "kind": "quiz",
+                "text": {
+                  "ru": "Самопроверка по процессам и управлению данными.",
+                  "en": "Processes and data governance self-check."
+                }
+              },
+              {
+                "kind": "skills",
+                "skills": [
+                  "dom-order-to-cash",
+                  "dom-governance",
+                  "dom-value-chain"
+                ],
+                "text": {
+                  "ru": "Навыки оси в треке «Профессия».",
+                  "en": "The axis skills in the Profession track."
+                }
+              }
+            ]
+          },
+          {
+            "level": 2,
+            "does": {
+              "ru": "Записали метрику с определением, владельцем и проверками качества; или смоделировали процесс в BPMN со слов того, кто его ведёт.",
+              "en": "You documented a metric with a definition, owner and quality checks; or modelled a process in BPMN from talking to the person who runs it."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "gov-metric",
+                "text": {
+                  "ru": "Карточка одной метрики Kaiyo: определение, владелец, проверки.",
+                  "en": "A card for one Kaiyo metric: definition, owner, checks."
+                }
+              },
+              {
+                "kind": "app",
+                "app": "flow",
+                "href": "https://flow.quaera.app/#example=kaiyo",
+                "text": {
+                  "ru": "Процесс заказа в Quaera Flow, затем тот же процесс со слов живого участника.",
+                  "en": "The order process in Quaera Flow, then the same process from a real participant."
+                }
+              }
+            ]
+          },
+          {
+            "level": 3,
+            "does": {
+              "ru": "Сделали process mining по журналу событий и нашли узкое место.",
+              "en": "You did process mining on an event log and found a bottleneck."
+            },
+            "steps": [
+              {
+                "kind": "evidence",
+                "evidence": "process-mining",
+                "text": {
+                  "ru": "pm4py на открытом журнале событий: карта процесса и одно узкое место.",
+                  "en": "pm4py on an open event log: a process map and one bottleneck."
+                }
+              },
+              {
+                "kind": "evidence",
+                "evidence": "gov-catalog",
+                "text": {
+                  "ru": "Словарь данных или правила качества для чужого набора данных: определения, владельцы, проверки.",
+                  "en": "A data dictionary or quality rules for someone else's dataset: definitions, owners, checks."
+                }
+              }
+            ]
+          }
+        ],
       "skills": ["dom-value-chain", "dom-order-to-cash", "dom-planning", "dom-governance", "sql-data-quality"]
     }
   ],
@@ -70,19 +751,19 @@
   "roles": [
     {
       "id": "da",
-      "ads": 11,
-      "outside": { "excel": 5, "english": 9, "comms": 9 },
+      "ads": 42,
+      "outside": { "excel": 20, "english": 28, "comms": 31 },
       "title": { "ru": "Data Analyst", "en": "Data Analyst" },
       "does": { "ru": "Превращает вопрос бизнеса в метрики, считает и защищает вывод.", "en": "Turns a business question into metrics, does the numbers and defends the conclusion." },
-      "targets": { "sql": 2, "modeling": 1, "bi": 2, "python": 2, "stats": 2, "engineering": 1, "business": 2, "process": 1 },
+      "targets": { "sql": 2, "modeling": 1, "bi": 2, "python": 2, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
       "core": ["sql", "python", "stats", "business"],
       "hybrid": { "ru": "В небольшой компании аналитик сам собирает модель и отчёт, то есть совмещает DA, AE и BI.", "en": "In a small company the analyst also builds the model and the report, covering DA, AE and BI at once." },
       "ai": { "ru": "ИИ быстро пишет запросы и строит графики. Ценность смещается к выбору вопроса, проверке числа и выводу.", "en": "AI writes queries and charts quickly. The value moves to choosing the question, checking the number and the conclusion." }
     },
     {
       "id": "bi",
-      "ads": 10,
-      "outside": { "excel": 2, "english": 4, "comms": 8 },
+      "ads": 29,
+      "outside": { "excel": 6, "english": 12, "comms": 19 },
       "title": { "ru": "BI Analyst / Developer", "en": "BI Analyst / Developer" },
       "does": { "ru": "Строит семантическую модель и отчёт, который обновляется сам и нужен не одному вопросу.", "en": "Builds the semantic model and a report that refreshes itself and serves more than one question." },
       "targets": { "sql": 2, "modeling": 2, "bi": 2, "python": 1, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
@@ -92,8 +773,8 @@
     },
     {
       "id": "ae",
-      "ads": 7,
-      "outside": { "excel": 1, "english": 5, "comms": 7 },
+      "ads": 12,
+      "outside": { "excel": 1, "english": 9, "comms": 11 },
       "title": { "ru": "Analytics Engineer", "en": "Analytics Engineer" },
       "does": { "ru": "Чистит данные и собирает из них звезду с тестами, на которой работают аналитики и BI.", "en": "Cleans the data and builds a tested star schema that analysts and BI work on." },
       "targets": { "sql": 3, "modeling": 2, "bi": 2, "python": 1, "stats": 0, "engineering": 2, "business": 2, "process": 1 },
@@ -103,18 +784,20 @@
     },
     {
       "id": "de",
-      "ads": 3,
-      "outside": { "excel": 0, "english": 2, "comms": 3 },
+      "ads": 12,
+      "outside": { "excel": 0, "english": 9, "comms": 12 },
       "title": { "ru": "Data Engineer", "en": "Data Engineer" },
       "does": { "ru": "Подключает источники и держит регулярную загрузку данных.", "en": "Connects sources and keeps data loading on schedule." },
-      "targets": { "sql": 2, "modeling": 2, "bi": 0, "python": 2, "stats": 0, "engineering": 3, "business": 0, "process": 1 },
+      "targets": { "sql": 2, "modeling": 2, "bi": 0, "python": 2, "stats": 0, "engineering": 3, "business": 1, "process": 1 },
       "core": ["sql", "python", "engineering"],
       "hybrid": { "ru": "В небольшой команде инженер данных заодно собирает модель, как Analytics Engineer.", "en": "In a small team the data engineer also builds the model, like an analytics engineer." },
       "ai": { "ru": "ИИ пишет шаблоны пайплайнов и разбирает ошибки загрузки. Доступы, расписание и ответственность за источник остаются на людях.", "en": "AI writes pipeline templates and reads load errors. Access, schedules and owning the source stay with people." }
     },
     {
       "id": "ds",
-      "ads": 0,
+      "ads": 8,
+      "outside": { "excel": 0, "english": 3, "comms": 7 },
+      "lowData": true,
       "title": { "ru": "Data Scientist", "en": "Data Scientist" },
       "does": { "ru": "Строит модели прогноза и эффекта и называет их ограничения.", "en": "Builds forecast and effect models and states their limits." },
       "targets": { "sql": 2, "modeling": 0, "bi": 0, "python": 3, "stats": 3, "engineering": 1, "business": 1, "process": 0 },
@@ -124,21 +807,22 @@
     },
     {
       "id": "ba",
-      "ads": 8,
-      "outside": { "excel": 3, "english": 6, "comms": 7 },
+      "ads": 19,
+      "outside": { "excel": 5, "english": 14, "comms": 16 },
       "title": { "ru": "Business / Process Analyst", "en": "Business / Process Analyst" },
       "does": { "ru": "Выясняет, как на самом деле идёт процесс и что нужно бизнесу, и записывает это в требования.", "en": "Finds out how the process really runs and what the business needs, and writes it down as requirements." },
-      "targets": { "sql": 1, "modeling": 1, "bi": 1, "python": 0, "stats": 0, "engineering": 0, "business": 3, "process": 2 },
+      "targets": { "sql": 1, "modeling": 0, "bi": 1, "python": 0, "stats": 0, "engineering": 0, "business": 3, "process": 2 },
       "core": ["business", "process"],
       "hybrid": { "ru": "Ближе всех к роли руководителя проектов: интервью, требования, согласования.", "en": "Closest to project management: interviews, requirements, sign-offs." },
       "ai": { "ru": "ИИ сделает черновик BPMN и требований из текста. Что происходит на самом деле, узнают только на интервью с участниками.", "en": "AI drafts BPMN and requirements from text. What really happens is learned only by interviewing the people involved." }
     },
     {
       "id": "gov",
-      "ads": 1,
+      "ads": 12,
+      "outside": { "excel": 3, "english": 7, "comms": 12 },
       "title": { "ru": "Data Governance / Steward", "en": "Data Governance / Steward" },
       "does": { "ru": "Записывает определения метрик, назначает владельцев и следит за качеством и доступом.", "en": "Records metric definitions, assigns owners and looks after quality and access." },
-      "targets": { "sql": 1, "modeling": 2, "bi": 0, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
+      "targets": { "sql": 1, "modeling": 1, "bi": 1, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
       "core": ["modeling", "business", "process"],
       "hybrid": { "ru": "Часто это не отдельная должность, а часть работы аналитика или BI-команды.", "en": "Often not a separate job but part of the analyst's or BI team's work." },
       "ai": { "ru": "ИИ описывает таблицы и находит аномалии. Назначить владельца и решить, кому что видеть, могут только люди.", "en": "AI describes tables and spots anomalies. Assigning an owner and deciding who sees what is up to people." }
@@ -253,20 +937,23 @@
     { "id": "model-cdm-pdm", "axis": "modeling", "level": 2, "title": { "ru": "Довёл модель от концептуальной до SQL в Quaera Model или PowerDesigner", "en": "Took a model from conceptual to SQL in Quaera Model or PowerDesigner" } },
     { "id": "model-star-project", "axis": "modeling", "level": 3, "title": { "ru": "Собрал звезду для чужого датасета в проекте (Fabric, Power BI или SQL)", "en": "Built a star schema for someone else's dataset in a project (Fabric, Power BI or SQL)" } },
     { "id": "pl300-practice", "axis": "bi", "level": 2, "title": { "ru": "Practice Assessment PL-300 на Microsoft Learn: 80% или больше", "en": "PL-300 Practice Assessment on Microsoft Learn: 80% or more" } },
-    { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт Power BI с мерами DAX на реальных данных и могу его показать", "en": "Built a Power BI report with DAX measures on real data and can show it" } },
-    { "id": "pandas-notebook", "axis": "python", "level": 2, "title": { "ru": "Прошёл тетрадь Quaera Pandas до конца", "en": "Finished the Quaera Pandas notebook" } },
+    { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт Power BI с мерами DAX на данных, которых не было в заданиях, и могу его показать", "en": "Built a Power BI report with DAX measures on data that was not in the tasks and can show it" } },
+    { "id": "pandas-notebook", "axis": "python", "level": 2, "title": { "ru": "Прошёл тетрадь Quaera Pandas до конца, последние две части без hint()", "en": "Finished the Quaera Pandas notebook, the last two parts without hint()" } },
     { "id": "pandas-own-data", "axis": "python", "level": 3, "title": { "ru": "Разобрал незнакомый датасет в pandas от загрузки до вывода", "en": "Analysed an unfamiliar dataset in pandas from loading to conclusion" } },
     { "id": "stats-quiz", "axis": "stats", "level": 1, "source": "quiz", "title": { "ru": "Самопроверка по статистике: 8 из 10 дважды, с паузой от трёх дней", "en": "Statistics self-check: 8 of 10 twice, at least three days apart" } },
-    { "id": "stats-test", "axis": "stats", "level": 2, "title": { "ru": "Посчитал A/B-тест или доверительный интервал на реальных данных и объяснил вывод", "en": "Ran an A/B test or a confidence interval on real data and explained the result" } },
+    { "id": "stats-test", "axis": "stats", "level": 2, "title": { "ru": "Посчитал A/B-тест или доверительный интервал на данных, которых не было в заданиях, и объяснил вывод", "en": "Ran an A/B test or a confidence interval on data that was not in the tasks and explained the result" } },
     { "id": "stats-model", "axis": "stats", "level": 3, "title": { "ru": "Построил и проверил прогнозную модель: train/test и метрика ошибки", "en": "Built and validated a predictive model: train/test split and an error metric" } },
     { "id": "eng-quiz", "axis": "engineering", "level": 1, "source": "quiz", "title": { "ru": "Самопроверка по инженерии данных: 8 из 10 дважды, с паузой от трёх дней", "en": "Data engineering self-check: 8 of 10 twice, at least three days apart" } },
     { "id": "eng-git","axis": "engineering", "level": 1, "title": { "ru": "Веду свой проект в git: коммиты и README", "en": "Keep my own project in git: commits and a README" } },
+    { "id": "eng-lab-pipeline", "axis": "engineering", "level": 1, "source": "labDone", "labKey": "pipeline:kaiyo-sellout", "title": { "ru": "Собрал конвейер в Quaera Lab: три проверки пройдены", "en": "Built the pipeline in Quaera Lab: all three checks passed" } },
     { "id": "eng-pipeline", "axis": "engineering", "level": 2, "title": { "ru": "Загрузил данные пайплайном в Lakehouse или Warehouse (Fabric, ADF)", "en": "Loaded data with a pipeline into a lakehouse or warehouse (Fabric, ADF)" } },
     { "id": "eng-dbt", "axis": "engineering", "level": 3, "title": { "ru": "Сделал проект dbt с тестами данных", "en": "Built a dbt project with data tests" } },
     { "id": "biz-case", "axis": "business", "level": 3, "title": { "ru": "Разобрал бизнес-кейс с выводом в первой фразе на пробном интервью или защите", "en": "Worked through a business case with the conclusion first, in a mock interview or a presentation" } },
+    { "id": "biz-requirements", "axis": "business", "level": 3, "title": { "ru": "Записал требования к отчёту для живого заказчика: user stories и критерии приёмки, их приняли", "en": "Wrote requirements for a report for a real stakeholder: user stories and acceptance criteria, accepted" } },
     { "id": "process-quiz", "axis": "process", "level": 1, "source": "quiz", "title": { "ru": "Самопроверка по процессам и управлению данными: 8 из 10 дважды, с паузой от трёх дней", "en": "Processes and data governance self-check: 8 of 10 twice, at least three days apart" } },
     { "id": "process-bpmn","axis": "process", "level": 2, "title": { "ru": "Смоделировал процесс в BPMN (Quaera Flow или Bizagi) по разговору с участником", "en": "Modelled a process in BPMN (Quaera Flow or Bizagi) after talking to someone who runs it" } },
     { "id": "gov-metric", "axis": "process", "level": 2, "title": { "ru": "Записал метрику: определение, владелец, проверки качества", "en": "Documented a metric: definition, owner, quality checks" } },
+    { "id": "gov-catalog", "axis": "process", "level": 3, "title": { "ru": "Вёл словарь данных или правила качества для чужого набора данных: определения, владельцы, проверки, и ими пользовались", "en": "Kept a data dictionary or quality rules for someone else's dataset: definitions, owners, checks, and people used them" } },
     { "id": "process-mining", "axis": "process", "level": 3, "title": { "ru": "Сделал process mining по журналу событий (Celonis или pm4py)", "en": "Did process mining on an event log (Celonis or pm4py)" } }
   ]
 }

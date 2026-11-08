@@ -50,6 +50,18 @@ export interface EvidenceDef {
   axis: AxisId;
   /** Какой уровень оси засчитывает отметка. */
   level: 1 | 2 | 3;
+  /**
+   * Кто ставит отметку, если не человек. `quiz` — самопроверка (`career/quiz.ts`);
+   * `labDone` — возврат из Quaera Lab (`quaera.labDone`, ключ в `labKey`).
+   * Галочки у таких отметок нет: засчитаны они, когда есть след.
+   */
+  source?: 'quiz' | 'labDone';
+  labKey?: string;
+}
+
+/** Отметки, которые поставил Lab: те, чей `labKey` лежит в `quaera.labDone`. */
+export function labDoneEvidence(evidence: EvidenceDef[], done: Record<string, unknown>): string[] {
+  return evidence.filter((e) => e.source === 'labDone' && !!e.labKey && !!done[e.labKey]).map((e) => e.id);
 }
 
 export interface RoleDef {
@@ -189,8 +201,14 @@ export interface Gap {
    * Пусто, если нужный уровень выше того, что тренажёр способен засчитать.
    */
   skills: string[];
-  /** Неотмеченные доказательства этой оси, которые закрыли бы разрыв. */
+  /**
+   * Неотмеченные доказательства этой оси на ступенях выше нынешнего уровня и не выше цели,
+   * от нижней ступени к верхней. Экран показывает ближайшую (`step`), а не сразу цель:
+   * тому, у кого инженерия 0 при цели 3, нужна самопроверка и конвейер, а не dbt.
+   */
   evidence: string[];
+  /** Ближайшая ступень, которую ещё предстоит взять: `have + 1`. */
+  step: 1 | 2 | 3;
   /** Сколько навыков не хватает до нужного уровня: ceil(доля × число навыков) минус уже достигшие. 0, если нужный уровень выше потолка тренажёра. */
   skillsLeft: number;
 }
@@ -243,12 +261,15 @@ export function roleReadiness(
             .slice(0, 3)
             .map((s) => s.id)
         : [];
-    const ev = evidence.filter((e) => e.axis === r.axis && !checked.has(e.id) && e.level >= r.target).map((e) => e.id);
+    const ev = evidence
+      .filter((e) => e.axis === r.axis && !checked.has(e.id) && e.level > r.level && e.level <= r.target)
+      .sort((a, b) => a.level - b.level)
+      .map((e) => e.id);
     const skillsLeft =
       r.trainerLevel < trainerNeed
         ? Math.max(0, Math.ceil(def.skills.length * AXIS_SHARE) - def.skills.filter((id) => skillLevel(signals[id]) >= trainerNeed).length)
         : 0;
-    gaps.push({ axis: r.axis, have: r.level, need: r.target, skills, evidence: ev, skillsLeft });
+    gaps.push({ axis: r.axis, have: r.level, need: r.target, skills, evidence: ev, step: (r.level + 1) as 1 | 2 | 3, skillsLeft });
   }
   // Сначала ядро роли, потом остальное; внутри — по величине разрыва.
   const isCore = (a: AxisId) => (role.core.includes(a) ? 0 : 1);
