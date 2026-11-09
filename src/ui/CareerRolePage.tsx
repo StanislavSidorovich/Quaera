@@ -118,7 +118,7 @@ export function CareerRolePage({
               <strong>{c.bands[readiness.band]}</strong>
               <span className="muted">{c.bandCaption(readiness.met, readiness.total)}</span>
             </p>
-            <p className="muted crp-legend">{c.ov.stepsLeft(readiness.total - readiness.met)}. {c.ov.miniLegend}</p>
+            <p className="muted crp-legend">{c.ov.stepsLeft(readiness.total - readiness.met)}.</p>
             <button type="button" className="btn" disabled={isGoal} onClick={onChoose}>
               {isGoal ? c.roleChosen : c.rp.choose}
             </button>
