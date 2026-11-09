@@ -113,7 +113,7 @@ export interface CareerStage {
 
 /**
  * Отметка-доказательство. `source: 'quiz'` — её ставит самопроверка (`career/quiz.ts`),
- * `source: 'labDone'` — возврат из Lab (`labKey` в `quaera.labDone`): галочки у таких нет.
+ * `source: 'labDone'` — возврат из Lab (`labKeys` в `quaera.labDone`, хватает любого): галочки у таких нет.
  */
 export interface CareerEvidence extends EvidenceDef {
   title: Text;

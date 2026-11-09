@@ -354,7 +354,7 @@ try {
   // ── Лестница отметок: «где подтянуть» показывает ближайшую ступень ────────
   const evE = [
     { id: 'q', axis: 'engineering', level: 1, source: 'quiz' },
-    { id: 'lab', axis: 'engineering', level: 1, source: 'labDone', labKey: 'pipeline:x' },
+    { id: 'lab', axis: 'engineering', level: 1, source: 'labDone', labKeys: ['pipeline:x', 'build:x'] },
     { id: 'pipe', axis: 'engineering', level: 2 },
     { id: 'dbt', axis: 'engineering', level: 3 },
   ];
@@ -370,8 +370,9 @@ try {
   // ── Отметка Lab: приходит из quaera.labDone, галочки нет ─────────────────
   assertEq('Lab: ключ в хранилище → отметка засчитана', labDoneEvidence(evE, { 'pipeline:x': '2026-11-08T00:00:00Z' }), ['lab']);
   assertEq('Lab: пустое хранилище → не засчитана', labDoneEvidence(evE, {}), []);
+  assertEq('Lab: второй ключ той же отметки тоже засчитывает', labDoneEvidence(evE, { 'build:x': '2026-11-09T00:00:00Z' }), ['lab']);
   assertEq('Lab: чужой ключ → не засчитана', labDoneEvidence(evE, { 'pipeline:y': 'z' }), []);
-  assertEq('Lab: отметка без source не берётся по случайному ключу', labDoneEvidence([{ id: 'p', axis: 'engineering', level: 1, labKey: 'pipeline:x' }], { 'pipeline:x': 'z' }), []);
+  assertEq('Lab: отметка без source не берётся по случайному ключу', labDoneEvidence([{ id: 'p', axis: 'engineering', level: 1, labKeys: ['pipeline:x'] }], { 'pipeline:x': 'z' }), []);
   assertEq('Lab: засчитанная отметка поднимает инженерию до единицы', axisReading(axis('engineering', 1), {}, evE, new Set(labDoneEvidence(evE, { 'pipeline:x': 'z' }))).level, 1);
 
   // Настоящие данные на пустом прогрессе: ни одна роль не готова.
@@ -397,11 +398,15 @@ try {
   }
   for (const e of evidence) {
     if (e.source !== undefined && !['quiz', 'labDone'].includes(e.source)) fail(`отметка ${e.id}`, `source ${e.source}`);
-    if (e.source === 'labDone' && !/^pipeline:[a-z0-9-]+$/.test(e.labKey ?? '')) fail(`отметка ${e.id}`, 'labDone без labKey по формату lab-done');
-    if (e.labKey && e.source !== 'labDone') fail(`отметка ${e.id}`, 'labKey без source labDone');
+    if (e.source === 'labDone' && !(e.labKeys?.length > 0 && e.labKeys.every((k) => /^(pipeline|build|practice):[a-z0-9-]+$/.test(k)))) fail(`отметка ${e.id}`, 'labDone без labKeys по формату lab-done');
+    if (e.labKeys && e.source !== 'labDone') fail(`отметка ${e.id}`, 'labKeys без source labDone');
   }
   const labMark = evidence.find((e) => e.id === 'eng-lab-pipeline');
-  assertEq('отметка конвейера Lab: инженерия, уровень 1, ключ возврата', labMark && [labMark.axis, labMark.level, labMark.source, labMark.labKey], ['engineering', 1, 'labDone', 'pipeline:kaiyo-sellout']);
+  assertEq('отметка конвейера Lab: инженерия, уровень 1, ключ возврата', labMark && [labMark.axis, labMark.level, labMark.source, labMark.labKeys], ['engineering', 1, 'labDone', ['pipeline:kaiyo-sellout', 'build:kaiyo-sales']]);
+  for (const [id, axisId, key] of [['sql-lab-practice', 'sql', 'practice:sql'], ['py-lab-practice', 'python', 'practice:python']]) {
+    const m = evidence.find((e) => e.id === id);
+    assertEq(`отметка практики Lab ${id}: ось, уровень 2, ключ возврата`, m && [m.axis, m.level, m.source, m.labKeys], [axisId, 2, 'labDone', [key]]);
+  }
   assertEq('отметки-тройки добавлены: biz-requirements и gov-catalog', ['biz-requirements', 'gov-catalog'].map((id) => evidence.find((e) => e.id === id)?.level), [3, 3]);
 
   assertTrue('банк: id уникальны', new Set(bank.map((q) => q.id)).size === bank.length);

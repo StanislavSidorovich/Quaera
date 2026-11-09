@@ -1,7 +1,8 @@
 /**
  * Отметка «собрано в Lab»: Lab (lab.quaera.app) отправляет человека обратно сюда
- * ссылкой `https://quaera.app/#lab-done=pipeline:kaiyo-sellout`, когда все три
- * проверки конвейера пройдены. Фрагмент, а не запрос: после `#` на сервер не
+ * ссылкой `https://quaera.app/#lab-done=pipeline:kaiyo-sellout` (все три проверки
+ * конвейера пройдены), `build:kaiyo-sales` (сборка руками пройдена) или
+ * `practice:sql` / `practice:python` (практика Lab пройдена на пороге Lab). Фрагмент, а не запрос: после `#` на сервер не
  * уходит ничего, и открытое окно тренажёра принимает ссылку без перезагрузки.
  *
  * Отметка на доверии, без отпечатка (решение хозяина 2026-11-04): это не
@@ -24,8 +25,14 @@
 export const LAB_DONE_KEY = 'quaera.labDone';
 export const LAB_DONE_EVENT = 'quaera:lab-done';
 
-/** Что Lab может прислать: вид и id, оба из `[a-z0-9-]`. Пока вид один. */
-const KEY_RE = /^pipeline:[a-z0-9-]+$/;
+/** Что Lab может прислать: вид (`pipeline`, `build`, `practice`) и id, оба из `[a-z0-9-]`. Чужой вид отбрасывается. */
+const KEY_RE = /^(pipeline|build|practice):[a-z0-9-]+$/;
+
+/** Вид отметки по ключу (для текста тоста); null, если ключ не по формату. */
+export function labDoneKind(key: string): 'pipeline' | 'build' | 'practice' | null {
+  const m = /^(pipeline|build|practice):/.exec(key);
+  return m ? (m[1] as 'pipeline' | 'build' | 'practice') : null;
+}
 
 /** Отметка из фрагмента адреса и сам фрагмент без неё; null, если отметки нет или она не по формату. */
 export function parseLabDone(hash: string): { key: string; rest: string } | null {

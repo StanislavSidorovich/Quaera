@@ -3,7 +3,7 @@ import type { AxisReading, AxisId } from '../career/readiness';
 import { careerAxis, careerEvidence } from '../content/career';
 import type { AxisStep } from '../content/career';
 import { useI18n } from '../i18n/context';
-import { FAMILY, openFamilyLink } from '../links';
+import { FAMILY, LAB_BUILD, LAB_PRACTICE_PYTHON, LAB_PRACTICE_SQL, openFamilyLink } from '../links';
 import type { QuizAttempt } from '../career/quiz';
 import { quizStatus } from '../career/quiz';
 import { quizBank } from '../content/careerQuiz';
@@ -27,6 +27,13 @@ export interface StepCtx {
   toggleEvidence: (id: string) => void;
 }
 
+/** Куда вести за отметкой, которую ставит Lab: адрес в Lab по id отметки. */
+const LAB_EVIDENCE_LINK: Record<string, string> = {
+  'eng-lab-pipeline': LAB_BUILD,
+  'sql-lab-practice': LAB_PRACTICE_SQL,
+  'py-lab-practice': LAB_PRACTICE_PYTHON,
+};
+
 const evidenceById = (id: string) => careerEvidence.find((e) => e.id === id);
 
 /** Строка отметки оси: галочка, самопроверка с кнопкой или метка «придёт из Lab». */
@@ -40,7 +47,17 @@ export function EvidenceRow({ id, ctx, capped }: { id: string; ctx: StepCtx; cap
     return (
       <li className="career-quiz-row">
         <span>{e.title[locale]}</span>
-        <small className="muted">{ctx.checked.has(e.id) ? c.labMark.done : c.labMark.todo}</small>
+        <small className="muted">{ctx.checked.has(e.id) ? (capped ? c.labMark.got : c.labMark.done) : c.labMark.todo}</small>
+        {capped && ctx.checked.has(e.id) && (
+          <small className="career-capped">
+            {c.evidenceCapped} {c.evidenceCappedWhy(c.levels[e.level - 1])}
+          </small>
+        )}
+        {!ctx.checked.has(e.id) && LAB_EVIDENCE_LINK[e.id] && (
+          <a className="btn secondary career-step-link" href={LAB_EVIDENCE_LINK[e.id]} target="_blank" rel="noreferrer" onClick={(ev) => openFamilyLink(ev.currentTarget, ev.nativeEvent, 'lab')}>
+            {c.labMark.open} ↗
+          </a>
+        )}
       </li>
     );
   }

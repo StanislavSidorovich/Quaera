@@ -15,6 +15,7 @@ import { LayerArtifact } from './LayerArtifact';
 import { RoleNote } from './RoleNote';
 import { ToolNote } from './ToolNote';
 import { IconCompass } from './Sidebar';
+import { LabBuildCard } from './LabBuildCard';
 import { PipelinePreview } from './PipelinePreview';
 
 const DEFAULT_LAYER = architecture.layers.find((l) => l.here)?.id ?? architecture.layers[0].id;
@@ -588,6 +589,7 @@ export function ArchitectureMap({
       </div>
 
       {!routing && <PipelinePreview />}
+      {!routing && <LabBuildCard />}
     </div>
   );
 }

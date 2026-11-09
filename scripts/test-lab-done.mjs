@@ -1,5 +1,5 @@
 /**
- * Гейт приёма отметки из Lab (src/labDone.ts): `#lab-done=pipeline:<id>`.
+ * Гейт приёма отметки из Lab (src/labDone.ts): `#lab-done=pipeline:<id>`, `build:<id>`, `practice:<id>`.
  *
  * Отправляющая сторона (lab.quaera.app, src/ui/PipelinePage.tsx в StrataLab) отсюда
  * не видна, а разошедшийся формат молчит до клика живого человека: Lab отправит
@@ -20,7 +20,7 @@ const outDir = mkdtempSync(path.join(tmpdir(), 'quaera-lab-done-'));
 
 execSync(`npx tsc "${path.join(root, 'src/labDone.ts')}" --target ES2022 --module CommonJS --lib ES2022,DOM --outDir "${outDir}" --skipLibCheck`, { cwd: root, stdio: 'inherit' });
 writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
-const { parseLabDone, readLabDoneMap, mergeLabDone, acceptLabDone, LAB_DONE_KEY } = await import(pathToFileURL(path.join(outDir, 'labDone.js')).href);
+const { labDoneKind, parseLabDone, readLabDoneMap, mergeLabDone, acceptLabDone, LAB_DONE_KEY } = await import(pathToFileURL(path.join(outDir, 'labDone.js')).href);
 
 let failed = 0;
 const eq = (name, got, want) => {
@@ -38,13 +38,23 @@ eq('rest of the fragment stays', parseLabDone('#a=1&lab-done=pipeline:kaiyo-sell
 eq('upper case', parseLabDone('#LAB-DONE=Pipeline:Kaiyo-Sellout')?.key, 'pipeline:kaiyo-sellout');
 eq('no mark', parseLabDone('#story=1'), null);
 eq('empty hash', parseLabDone(''), null);
-eq('other kind', parseLabDone('#lab-done=practice:sql'), null);
+eq('build link', parseLabDone('#lab-done=build:kaiyo-sales'), { key: 'build:kaiyo-sales', rest: '' });
+eq('practice sql', parseLabDone('#lab-done=practice:sql'), { key: 'practice:sql', rest: '' });
+eq('practice python', parseLabDone('#lab-done=practice:python'), { key: 'practice:python', rest: '' });
+eq('mixed fragment keeps the rest', parseLabDone('#lab-done=build:kaiyo-sales&x=1'), { key: 'build:kaiyo-sales', rest: '#x=1' });
+eq('encoded colon, build', parseLabDone('#lab-done=build%3Akaiyo-sales'), { key: 'build:kaiyo-sales', rest: '' });
+eq('other kind', parseLabDone('#lab-done=quiz:sql'), null);
+eq('other kind, plural', parseLabDone('#lab-done=builds:kaiyo-sales'), null);
+eq('bad id, build', parseLabDone('#lab-done=build:kaiyo_sales'), null);
+eq('empty id, practice', parseLabDone('#lab-done=practice:'), null);
+eq('kind of key', [labDoneKind('pipeline:a'), labDoneKind('build:a'), labDoneKind('practice:a'), labDoneKind('x:a')], ['pipeline', 'build', 'practice', null]);
 eq('bad id', parseLabDone('#lab-done=pipeline:kaiyo_sellout'), null);
 eq('empty id', parseLabDone('#lab-done=pipeline:'), null);
 eq('broken escape', parseLabDone('#lab-done=%E0%A4%A'), null);
 
 // хранилище: свои записи остаются, мусор не мешает
 eq('read map', readLabDoneMap('{"pipeline:a":"2026-01-01","x":"y","pipeline:b":5}'), { 'pipeline:a': '2026-01-01' });
+eq('read map, new kinds', readLabDoneMap('{"build:kaiyo-sales":"d","practice:sql":"e","quiz:sql":"f"}'), { 'build:kaiyo-sales': 'd', 'practice:sql': 'e' });
 eq('read garbage', readLabDoneMap('{oops'), {});
 eq('read array', readLabDoneMap('[1]'), {});
 eq('read null', readLabDoneMap(null), {});
@@ -59,6 +69,14 @@ const key = acceptLabDone(storage, { pathname: '/', search: '?roles=map', hash: 
 eq('accepted key', key, 'pipeline:kaiyo-sellout');
 eq('url cleaned', replaced, '/?roles=map#x=1');
 eq('stored', JSON.parse(store.get(LAB_DONE_KEY)), { 'pipeline:a': '2026-01-01', 'pipeline:kaiyo-sellout': '2026-11-05T10:00:00.000Z' });
+replaced = null;
+replaced = null;
+eq('accepted build', acceptLabDone(storage, { pathname: '/', search: '', hash: '#lab-done=build:kaiyo-sales&x=1' }, (u) => (replaced = u), new Date('2026-11-09T10:00:00Z')), 'build:kaiyo-sales');
+eq('build: url keeps the rest', replaced, '/#x=1');
+eq('build: stored beside the old ones', JSON.parse(store.get(LAB_DONE_KEY)), { 'pipeline:a': '2026-01-01', 'pipeline:kaiyo-sellout': '2026-11-05T10:00:00.000Z', 'build:kaiyo-sales': '2026-11-09T10:00:00.000Z' });
+replaced = null;
+eq('foreign kind is not accepted', acceptLabDone(storage, { pathname: '/', search: '', hash: '#lab-done=quiz:sql' }, (u) => (replaced = u)), null);
+eq('foreign kind: address untouched', replaced, null);
 replaced = null;
 eq('nothing to accept', acceptLabDone(storage, { pathname: '/', search: '', hash: '#x=1' }, (u) => (replaced = u)), null);
 eq('address untouched', replaced, null);

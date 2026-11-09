@@ -48,6 +48,9 @@ export const LAB_PRACTICE_PYTHON = 'https://lab.quaera.app/#practice=python';
 /** Конвейер на Kaiyo в Quaera Lab (src/core/pipeline.ts там); назад Lab шлёт #lab-done= (src/labDone.ts), см. таблицу переходов в корневом CLAUDE.md. */
 export const LAB_PIPELINE = 'https://lab.quaera.app/#pipeline=kaiyo-sellout';
 
+/** Сборка руками на Kaiyo в Quaera Lab: файл, чистка, модель, дашборд, ответ (`#build=` там). Назад Lab шлёт #lab-done=build:kaiyo-sales. */
+export const LAB_BUILD = 'https://lab.quaera.app/#build=kaiyo-sales';
+
 /**
  * Заказ дистрибьютора Kaiyo в Quaera Flow: все основные элементы BPMN и шаг, на
  * котором рождается строка `fact_sellin`. `#example=kaiyo` принимает Flow

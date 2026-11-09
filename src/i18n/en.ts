@@ -1322,7 +1322,7 @@ export const en = {
     },
     lowDataNote: (n: number) => `Little data: ${n} ads for this role in the sample, so the targets are set with care.`,
     evidenceCappedWhy: (level: string) => `It counts in full once the trainer raises this axis to "${level}".`,
-    labMark: { done: 'Counted: the pipeline is built in Lab', todo: 'This mark arrives on its own once you pass the three pipeline checks in Lab.', open: 'Build it in Lab' },
+    labMark: { done: 'Counted: passed in Lab', got: 'Lab has sent the mark', todo: 'This mark arrives on its own once Lab confirms it is passed.', open: 'Open in Lab' },
     sourceRole: (n: number) => (n === 0 ? 'no ads for this role in the sample, the targets are set by judgement' : `from ${n} ${n === 1 ? 'ad' : 'ads'} for this role`),
     outsideTitle: 'Also needed outside Quaera',
     outsideLead: 'These are not axes but requirements the trainer does not teach. The share of ads that list them as required.',
@@ -1517,8 +1517,17 @@ export const en = {
   },
   /* Return from Lab (#lab-done=...): a toast and a mark on the pipeline card. */
   labDone: {
-    toast: 'Pipeline built in Lab.',
+    toast: {
+      pipeline: 'Pipeline built in Lab.',
+      build: 'The hands-on build in Lab is passed.',
+      practiceSql: 'The SQL practice in Lab is counted.',
+      practicePython: 'The Python practice in Lab is counted.',
+    },
     mark: 'Built in Lab ✓',
+    buildTitle: 'Build it by hand in Lab: from a file to a dashboard',
+    buildLead: 'The same path with no scaffolding: a file, cleaning, a model, a dashboard and an answer to the stakeholder question.',
+    buildOpen: 'Open the build in Lab',
+    buildDone: 'Passed ✓',
     build: 'Build it in Lab',
     buildNote: 'The same scenario by hand: blocks, a run, a journal and three checks.',
     open: 'Open the pipeline in Lab',

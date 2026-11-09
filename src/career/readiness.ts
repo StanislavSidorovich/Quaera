@@ -52,16 +52,17 @@ export interface EvidenceDef {
   level: 1 | 2 | 3;
   /**
    * Кто ставит отметку, если не человек. `quiz` — самопроверка (`career/quiz.ts`);
-   * `labDone` — возврат из Quaera Lab (`quaera.labDone`, ключ в `labKey`).
+   * `labDone` — возврат из Quaera Lab (`quaera.labDone`, ключи в `labKeys`: отметка
+   * закрывается любым из них).
    * Галочки у таких отметок нет: засчитаны они, когда есть след.
    */
   source?: 'quiz' | 'labDone';
-  labKey?: string;
+  labKeys?: string[];
 }
 
 /** Отметки, которые поставил Lab: те, чей `labKey` лежит в `quaera.labDone`. */
 export function labDoneEvidence(evidence: EvidenceDef[], done: Record<string, unknown>): string[] {
-  return evidence.filter((e) => e.source === 'labDone' && !!e.labKey && !!done[e.labKey]).map((e) => e.id);
+  return evidence.filter((e) => e.source === 'labDone' && !!e.labKeys?.some((k) => !!done[k])).map((e) => e.id);
 }
 
 export interface RoleDef {
