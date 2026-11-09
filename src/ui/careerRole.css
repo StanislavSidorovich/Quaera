@@ -3,20 +3,7 @@
  * Цвета токенами темы; статус передаётся ещё и словом, не только цветом.
  */
 .crp-head {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
   margin: 10px 0 12px;
-}
-.crp-head .career-radar-mini {
-  width: 120px;
-  height: 120px;
-}
-@media (max-width: 480px) {
-  .crp-head {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 .crp-legend {
   margin: 0 0 8px;

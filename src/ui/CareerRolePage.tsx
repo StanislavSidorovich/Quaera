@@ -108,13 +108,6 @@ export function CareerRolePage({
         <h2>{role.title[locale]}</h2>
         <p className="career-does">{role.does[locale]}</p>
         <div className="crp-head">
-          <CareerRadar
-            mini
-            axes={radar}
-            ariaLabel=""
-            legend={{ you: '', goal: '', due: '', rings: '' }}
-            ringNames={['', '', '']}
-          />
           <div>
             <div className="career-band" role="img" aria-label={c.bandAria(c.bands[readiness.band], bandStep)}>
               {BANDS.map((b, i) => (
@@ -131,6 +124,12 @@ export function CareerRolePage({
             </button>
           </div>
         </div>
+        <CareerRadar
+          axes={radar}
+          ariaLabel={c.radarAria(role.title[locale], AXES.map((id) => c.ov.axisRow(careerAxis(id).title[locale], levelName(readings[id].level))).join(' '))}
+          legend={{ you: c.radarYou, goal: c.ov.goalLegend(role.title[locale]), due: c.radarDue, rings: c.radarRings }}
+          ringNames={[c.levels[1], c.levels[2], c.levels[3]]}
+        />
         <dl className="career-dl">
           <dt>{c.roleStages}</dt>
           <dd>{stagesOfRole(role.id).map((s) => s.title[locale]).join(', ')}</dd>

@@ -14,6 +14,7 @@ import type { StepCtx } from './careerSteps';
 import { CareerStages } from './CareerStages';
 import type { Progress } from '../srs/store';
 import './careerOverview.css';
+import './careerPick.css';
 
 /**
  * Обзор «Пути к роли»: вы сейчас (паутинка и строка выбранной оси), плитки
@@ -69,7 +70,7 @@ export function CareerOverview({
       target: (role ? role.targets[id] : 0) as Level,
       due: role ? 0 : dueByAxis[id].length,
     }));
-  const youAxes = radarAxes();
+  const youAxes = chosen ? radarAxes(chosenRole).map((a) => ({ ...a, due: dueByAxis[a.id].length })) : radarAxes();
   const toggle = (id: AxisId) => setActive((cur) => (cur === id ? null : id));
 
   const mine = readinessByRole[chosenRole.id];
@@ -88,18 +89,28 @@ export function CareerOverview({
       <section className="card">
         <h2>{c.nowTitle}</h2>
         <p className="muted">{c.ov.nowLead}</p>
+        <div className="cp-pick" role="group" aria-label={c.ov.pickGoal}>
+          <span className="cp-pick-label">{c.ov.pickGoal}</span>
+          <div className="cp-pick-chips">
+            {careerRoles.map((r) => (
+              <button key={r.id} type="button" className="cp-chip" aria-pressed={chosen && r.id === chosenRole.id} onClick={() => onChooseRole(r.id)}>
+                {r.title[locale]}
+              </button>
+            ))}
+          </div>
+        </div>
         <CareerRadar
           axes={youAxes}
-          hideGoal
+          hideGoal={!chosen}
           onAxis={toggle}
           activeAxis={active}
           ariaLabel={c.ov.radarAria(AXES.map((id) => c.ov.axisRow(axisTitle(id), levelName(readings[id].level))).join(' '))}
-          legend={{ you: c.radarYou, goal: c.radarGoal, due: c.radarDue, rings: c.radarRings }}
+          legend={{ you: c.radarYou, goal: chosen ? c.ov.goalLegend(chosenRole.title[locale]) : c.radarGoal, due: c.radarDue, rings: c.radarRings }}
           ringNames={[c.levels[1], c.levels[2], c.levels[3]]}
         />
         <CareerAxisBars
           axes={youAxes}
-          hideGoal
+          hideGoal={!chosen}
           onSelect={toggle}
           activeAxis={active}
           fullLabel={axisTitle}

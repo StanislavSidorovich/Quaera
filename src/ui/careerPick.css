@@ -1,0 +1,38 @@
+/* Выбор цели чипами над паутинкой обзора. Переносятся строками, без горизонтальной прокрутки. */
+.cp-pick {
+  margin: 10px 0 12px;
+}
+.cp-pick-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.cp-pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cp-chip {
+  min-height: var(--tap);
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.cp-chip:hover {
+  border-color: var(--accent);
+}
+.cp-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-raised));
+  font-weight: 700;
+}
+.cp-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

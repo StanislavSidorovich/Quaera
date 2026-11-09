@@ -1264,6 +1264,8 @@ export const en = {
       miniLegend: 'Fill: you. Dashed line: the role target.',
       nowLead: 'The eight axes are the same for every role. Your level comes from solved tasks; where the trainer barely sees an axis, check marks raise it.',
       pickAxis: 'Tap an axis, in the radar or in the bars below: what your level means and what to do next.',
+      pickGoal: 'Know your role? Pick a goal',
+      goalLegend: (role: string) => `Target: ${role}`,
       axisPanel: (axis: string) => `Axis: ${axis}`,
       close: 'Collapse',
       nowLevel: (level: string) => `Now: ${level}`,
