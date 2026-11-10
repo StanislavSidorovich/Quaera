@@ -1,10 +1,11 @@
 import { useI18n } from '../i18n/context';
 import { LAB_BUILD, openFamilyLink } from '../links';
 import { useLabDone } from './LabDoneToast';
+import { PipelinePreview } from './PipelinePreview';
 import './pipelinePreview.css';
 import './labBuildCard.css';
 
-/** Карточка «собрать руками в Lab» рядом с анонсом конвейера на карте данных; «Пройдено ✓», когда Lab вернул `build:kaiyo-sales`. */
+/** Карточка «собрать руками в Lab» главная карточка конвейера на карте данных, под ней тихая строка про обзор; «Пройдено ✓», когда Lab вернул `build:kaiyo-sales`. */
 export function LabBuildCard() {
   const { t } = useI18n();
   const done = Boolean(useLabDone()['build:kaiyo-sales']);
@@ -20,6 +21,7 @@ export function LabBuildCard() {
           {t.labDone.buildOpen} ↗
         </a>
       </p>
+      <PipelinePreview />
     </section>
   );
 }
