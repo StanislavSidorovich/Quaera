@@ -35,3 +35,40 @@ export function followLaunchLinks(): void {
     }
   });
 }
+
+/** Приложения семьи, которым тренажёр отвечает на «ты тренажёр?» и чьи «перейди» принимает. */
+const FAMILY_ORIGINS = [
+  'https://lab.quaera.app',
+  'https://model.quaera.app',
+  'https://flow.quaera.app',
+  'https://pandas.quaera.app',
+  'http://localhost:5180',
+  'http://localhost:5181',
+];
+
+/**
+ * Возврат из Lab в эту же вкладку (lab `src/core/quaeraLink.ts`). По имени окна
+ * Lab сюда не попадёт: по правилам HTML открытое окно не «знакомо» с открывшим.
+ * Узнать, что его открыл тренажёр, по referrer Lab тоже не может: у тренажёра
+ * `Referrer-Policy: no-referrer`. Поэтому рукопожатие: Lab при загрузке шлёт
+ * opener-у `quaera:hello` (доходит, только если там quaera.app), тренажёр отвечает
+ * `quaera:here`. По клику Lab шлёт `quaera:go` с адресом и фокусирует вкладку;
+ * тренажёр применяет только фрагмент (`#lab-done=…`), экран не перезагружается.
+ */
+export function answerFamilyWindows(): void {
+  window.addEventListener('message', (e: MessageEvent) => {
+    if (!FAMILY_ORIGINS.includes(e.origin)) return;
+    const data = e.data as { type?: string; url?: string } | null;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'quaera:hello') {
+      (e.source as Window | null)?.postMessage({ type: 'quaera:here' }, e.origin);
+    } else if (data.type === 'quaera:go' && typeof data.url === 'string') {
+      try {
+        const u = new URL(data.url);
+        if (u.origin === location.origin && u.hash && u.hash !== location.hash) location.hash = u.hash;
+      } catch {
+        /* не адрес: пропускаем */
+      }
+    }
+  });
+}

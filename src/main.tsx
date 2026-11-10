@@ -12,12 +12,13 @@ import '../family/tokens.css';
 import '../family/switcher.js';
 import './styles.css';
 import { trackRegistration } from './pwa/updates';
-import { followLaunchLinks, nameTrainerWindow } from './pwa/windowLinks';
+import { answerFamilyWindows, followLaunchLinks, nameTrainerWindow } from './pwa/windowLinks';
 import { auditionRequested } from './voice';
 
-// Имя окна `quaera` и приём ссылок в открытое окно: см. pwa/windowLinks.ts.
+// Имя окна `quaera-quaera`, приём ссылок в открытое окно и возврат из Lab: см. pwa/windowLinks.ts.
 nameTrainerWindow();
 followLaunchLinks();
+answerFamilyWindows();
 
 // ?voice=audition: страница прослушки голосов (инструмент хозяина) вместо приложения.
 const VoiceAudition = lazy(() => import('./ui/VoiceAudition'));
