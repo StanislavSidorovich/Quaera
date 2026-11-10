@@ -2,9 +2,9 @@
  * Одно окно тренажёра для ссылок из Lab, Model и Flow.
  *
  * Обратное направление описано в `src/labLink.ts` (`openInApp`): приложения
- * семьи открывают друг друга по имени окна. Lab зовёт `window.open(url, 'quaera')`
+ * семьи открывают друг друга по имени окна. Lab зовёт `window.open(url, 'quaera-quaera')`
  * (возврат «Count it in Quaera», `#lab-done=…`), поэтому тренажёр называет своё
- * окно `quaera`, и уже открытая вкладка берёт ссылку вместо новой.
+ * окно `quaera-quaera` (то же имя даёт ему переключатель семьи), и уже открытая вкладка берёт ссылку вместо новой.
  *
  * Имя ставится только пустое: осмысленное чужое имя не трогаем (так же делает
  * переключатель семьи, family/switcher.js). Установленное окно (PWA) по имени не
@@ -12,7 +12,7 @@
  * в манифесте (Chrome 139+), а `launchQueue` ниже применяет фрагмент, если сам
  * Chrome его не сменил.
  */
-export const TRAINER_WINDOW = 'quaera';
+export const TRAINER_WINDOW = 'quaera-quaera';
 
 export function nameTrainerWindow(): void {
   try {
