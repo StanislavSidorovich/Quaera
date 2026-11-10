@@ -1,0 +1,36 @@
+.route-icons {
+  display: inline-flex;
+  gap: 4px;
+  flex: none;
+  color: var(--arch-tier, var(--accent));
+}
+
+.route-icons svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+/* Значок слева от названия; название переносится внутри своей колонки, значок не уходит на отдельную строку. */
+.route-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.route-head > .route-icons {
+  margin-top: 1px;
+}
+
+/* В ряду из шести узких узлов значок стоит над названием: рядом он отнимает ширину и название переносится по слову. */
+@media (min-width: 1240px) {
+  .route-head {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .route-head > .route-icons {
+    margin-top: 0;
+  }
+}

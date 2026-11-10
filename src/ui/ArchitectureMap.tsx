@@ -1,3 +1,4 @@
+import { RouteIcons } from './routeIcons';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { architecture } from '../content/architecture';
@@ -532,7 +533,10 @@ export function ArchitectureMap({
           onClick={() => pickLayer(l.id)}
         >
           <span className="arch-layer-title">
-            {l.title[locale]}
+            <span className="route-head">
+              <RouteIcons layer={l.id} />
+              <span>{l.title[locale]}</span>
+            </span>
             {l.here && <span className="arch-here">{m.hereBadge}</span>}
           </span>
           <span className="arch-layer-caption">{nodeBody(l)}</span>
