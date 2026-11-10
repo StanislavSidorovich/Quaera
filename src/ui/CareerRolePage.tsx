@@ -119,7 +119,7 @@ export function CareerRolePage({
               <span className="muted">{c.bandCaption(readiness.met, readiness.total)}</span>
             </p>
             <p className="muted crp-legend">{c.ov.stepsLeft(readiness.total - readiness.met)}.</p>
-            <button type="button" className="btn" disabled={isGoal} onClick={onChoose}>
+            <button type="button" className={isGoal ? "btn crp-chosen" : "btn"} disabled={isGoal} onClick={onChoose}>
               {isGoal ? c.roleChosen : c.rp.choose}
             </button>
           </div>

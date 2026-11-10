@@ -252,7 +252,7 @@ export function CareerOverview({
                   <button type="button" className="btn" onClick={() => onOpenRole(r.id)}>
                     {c.ov.openRole} →
                   </button>
-                  <button type="button" className="btn secondary" disabled={isGoal} onClick={() => onChooseRole(r.id)}>
+                  <button type="button" className={isGoal ? "btn secondary co-chosen" : "btn secondary"} disabled={isGoal} onClick={() => onChooseRole(r.id)}>
                     {isGoal ? c.roleChosen : c.roleChoose}
                   </button>
                 </div>

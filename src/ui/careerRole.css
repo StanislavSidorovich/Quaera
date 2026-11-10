@@ -103,3 +103,12 @@
 .crp-head .btn {
   width: auto;
 }
+
+/* Роль уже выбрана целью: кнопка не нажимается, но читается как состояние, а не как «недоступно»
+   (общие 45% непрозрачности превращали тёмный текст на синем в тусклое пятно в тёмной теме). */
+.btn.crp-chosen:disabled {
+  opacity: 1;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}

@@ -150,3 +150,10 @@
   display: block;
   margin: 0;
 }
+
+/* Цель уже эта роль: кнопка не нажимается, но читается как состояние, а не как «недоступно». */
+.btn.co-chosen:disabled {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+}
