@@ -217,14 +217,10 @@ export function openInApp(
     w = null;
   }
   if (!w) return false;
-  let fresh = false;
   try {
-    fresh = w.location.href === 'about:blank';
-  } catch {
-    fresh = false;
-  }
-  try {
-    if (fresh) w.opener = null;
+    // opener остаётся: по нему Lab возвращает «Count it in Quaera» в эту же вкладку
+    // (lab `src/core/quaeraLink.ts`); по имени окна из Lab сюда не попасть, по правилам
+    // HTML открытое окно не «знакомо» с открывшим. Окно своё, семейное: тот же владелец.
     w.location.href = url;
   } catch {
     return false;
