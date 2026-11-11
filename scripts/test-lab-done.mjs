@@ -20,7 +20,7 @@ const outDir = mkdtempSync(path.join(tmpdir(), 'quaera-lab-done-'));
 
 execSync(`npx tsc "${path.join(root, 'src/labDone.ts')}" --target ES2022 --module CommonJS --lib ES2022,DOM --outDir "${outDir}" --skipLibCheck`, { cwd: root, stdio: 'inherit' });
 writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
-const { labDoneKind, parseLabDone, readLabDoneMap, mergeLabDone, acceptLabDone, LAB_DONE_KEY } = await import(pathToFileURL(path.join(outDir, 'labDone.js')).href);
+const { labDoneKind, parseLabDone, readLabDoneMap, acceptLabDone, isLabDoneKey } = await import(pathToFileURL(path.join(outDir, 'labDone.js')).href);
 
 let failed = 0;
 const eq = (name, got, want) => {
@@ -58,32 +58,34 @@ eq('read map, new kinds', readLabDoneMap('{"build:kaiyo-sales":"d","practice:sql
 eq('read garbage', readLabDoneMap('{oops'), {});
 eq('read array', readLabDoneMap('[1]'), {});
 eq('read null', readLabDoneMap(null), {});
-eq('merge keeps others', JSON.parse(mergeLabDone('{"pipeline:a":"2026-01-01"}', 'pipeline:kaiyo-sellout', '2026-11-05T00:00:00.000Z')), { 'pipeline:a': '2026-01-01', 'pipeline:kaiyo-sellout': '2026-11-05T00:00:00.000Z' });
-eq('merge updates the date', JSON.parse(mergeLabDone('{"pipeline:kaiyo-sellout":"old"}', 'pipeline:kaiyo-sellout', 'new')), { 'pipeline:kaiyo-sellout': 'new' });
+// новые ключи сборки: дефис в id проходит (Lab шлёт `-more` и `-refresh`)
+eq('more key', parseLabDone('#lab-done=build:kaiyo-sales-more'), { key: 'build:kaiyo-sales-more', rest: '' });
+eq('refresh key', parseLabDone('#lab-done=build%3Akaiyo-sales-refresh&x=1'), { key: 'build:kaiyo-sales-refresh', rest: '#x=1' });
+eq('isLabDoneKey', [isLabDoneKey('build:kaiyo-sales-more'), isLabDoneKey('build:kaiyo-sales-refresh'), isLabDoneKey('build:Kaiyo'), isLabDoneKey('x')], [true, true, false, false]);
 
-// приём: записано, адрес очищен, путь и запрос на месте
-const store = new Map([[LAB_DONE_KEY, '{"pipeline:a":"2026-01-01"}']]);
-const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => void store.set(k, v) };
+// приём: отдан хранилищу прогресса, адрес очищен, путь и запрос на месте
+const stored = [];
+const store = (k, iso) => stored.push([k, iso]);
 let replaced = null;
-const key = acceptLabDone(storage, { pathname: '/', search: '?roles=map', hash: '#x=1&lab-done=pipeline:kaiyo-sellout' }, (u) => (replaced = u), new Date('2026-11-05T10:00:00Z'));
+const key = acceptLabDone({ pathname: '/', search: '?roles=map', hash: '#x=1&lab-done=pipeline:kaiyo-sellout' }, (u) => (replaced = u), store, new Date('2026-11-05T10:00:00Z'));
 eq('accepted key', key, 'pipeline:kaiyo-sellout');
 eq('url cleaned', replaced, '/?roles=map#x=1');
-eq('stored', JSON.parse(store.get(LAB_DONE_KEY)), { 'pipeline:a': '2026-01-01', 'pipeline:kaiyo-sellout': '2026-11-05T10:00:00.000Z' });
+eq('stored', stored, [['pipeline:kaiyo-sellout', '2026-11-05T10:00:00.000Z']]);
 replaced = null;
-replaced = null;
-eq('accepted build', acceptLabDone(storage, { pathname: '/', search: '', hash: '#lab-done=build:kaiyo-sales&x=1' }, (u) => (replaced = u), new Date('2026-11-09T10:00:00Z')), 'build:kaiyo-sales');
+eq('accepted build', acceptLabDone({ pathname: '/', search: '', hash: '#lab-done=build:kaiyo-sales&x=1' }, (u) => (replaced = u), store, new Date('2026-11-09T10:00:00Z')), 'build:kaiyo-sales');
 eq('build: url keeps the rest', replaced, '/#x=1');
-eq('build: stored beside the old ones', JSON.parse(store.get(LAB_DONE_KEY)), { 'pipeline:a': '2026-01-01', 'pipeline:kaiyo-sellout': '2026-11-05T10:00:00.000Z', 'build:kaiyo-sales': '2026-11-09T10:00:00.000Z' });
+eq('build: stored', stored[1], ['build:kaiyo-sales', '2026-11-09T10:00:00.000Z']);
 replaced = null;
-eq('foreign kind is not accepted', acceptLabDone(storage, { pathname: '/', search: '', hash: '#lab-done=quiz:sql' }, (u) => (replaced = u)), null);
+eq('foreign kind is not accepted', acceptLabDone({ pathname: '/', search: '', hash: '#lab-done=quiz:sql' }, (u) => (replaced = u), store), null);
 eq('foreign kind: address untouched', replaced, null);
+eq('foreign kind: nothing stored', stored.length, 2);
 replaced = null;
-eq('nothing to accept', acceptLabDone(storage, { pathname: '/', search: '', hash: '#x=1' }, (u) => (replaced = u)), null);
+eq('nothing to accept', acceptLabDone({ pathname: '/', search: '', hash: '#x=1' }, (u) => (replaced = u), store), null);
 eq('address untouched', replaced, null);
 // хранилище, которое бросает: ключ всё равно принят, адрес очищен
 let cleaned = null;
-eq('broken storage', acceptLabDone({ getItem: () => { throw new Error('no'); }, setItem: () => { throw new Error('no'); } }, { pathname: '/', search: '', hash: '#lab-done=pipeline:kaiyo-sellout' }, (u) => (cleaned = u)), 'pipeline:kaiyo-sellout');
-eq('broken storage, url cleaned', cleaned, '/');
+eq('broken store', acceptLabDone({ pathname: '/', search: '', hash: '#lab-done=pipeline:kaiyo-sellout' }, (u) => (cleaned = u), () => { throw new Error('no'); }), 'pipeline:kaiyo-sellout');
+eq('broken store, url cleaned', cleaned, '/');
 
 if (failed) {
   console.error(`\n${failed} проверок не прошли`);

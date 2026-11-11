@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../i18n/context';
+import { LAB_BUILD } from '../links';
+import { openInApp } from '../labLink';
 import { IconBook, IconCompass, IconStory } from './Sidebar';
 import markLab from '../../family/marks/lab.svg';
 import './startGuide.css';
 
 /**
- * Гид новичка «Как здесь всё устроено»: четыре двери и показ по шагам.
+ * Гид новичка «Как здесь всё устроено»: пять дверей и показ по шагам.
  * Карточка видна новичку (нет решённых заданий, кампания не начата), закрывается
  * крестиком (запоминается), вернуть её можно из бокового меню и по `?guide=1`.
  * Подсветку частей приложения даёт тот же `data-pair`, что у пар меню и блоков (pairHighlight.ts):
@@ -74,12 +76,14 @@ function inviteDone() {
   }
 }
 
-type DoorKey = 'map' | 'story' | 'tracks' | 'family';
+type DoorKey = 'map' | 'story' | 'tracks' | 'family' | 'build';
+/* `build` показывается на блоке «семья» (в нём Lab): своего блока на главной у сборки нет. */
 const DOORS: { key: DoorKey; pair: string }[] = [
   { key: 'map', pair: 'career' },
   { key: 'story', pair: 'storymode' },
   { key: 'tracks', pair: 'tracks' },
   { key: 'family', pair: 'family' },
+  { key: 'build', pair: 'family' },
 ];
 
 function visible(el: Element | null): el is HTMLElement {
@@ -88,7 +92,7 @@ function visible(el: Element | null): el is HTMLElement {
 
 /** Блок главной и парный пункт бокового меню (любой из двух может отсутствовать на экране). */
 function findTargets(d: { key: DoorKey; pair: string }): { main: HTMLElement | null; side: HTMLElement | null } {
-  const main = [...document.querySelectorAll(`[data-guide="${d.key}"]`)].find(visible) as HTMLElement | undefined;
+  const main = [...document.querySelectorAll(`[data-guide="${d.key === 'build' ? 'family' : d.key}"]`)].find(visible) as HTMLElement | undefined;
   const side = [...document.querySelectorAll(`.sidebar [data-pair="${d.pair}"]`)].find(visible) as HTMLElement | undefined;
   return { main: main ?? null, side: side ?? null };
 }
@@ -127,6 +131,7 @@ function DoorIcon({ k }: { k: DoorKey }) {
   if (k === 'map') return <IconCompass />;
   if (k === 'story') return <IconStory />;
   if (k === 'tracks') return <IconBook />;
+  if (k === 'build') return <img src={markLab} alt="" width={16} height={16} style={{ borderRadius: 4 }} />;
   return <img src={markLab} alt="" width={16} height={16} style={{ borderRadius: 4 }} />;
 }
 
@@ -173,11 +178,16 @@ export function StartGuide({
     const el = [...document.querySelectorAll(`[data-guide="${k}"]`)].find(visible);
     if (el) revealSection(el);
   };
+  /* Кнопка, а не ссылка: открытое окно Lab берёт адрес, иначе новая вкладка (как у `openFamilyLink`). */
+  const openBuild = () => {
+    if (!openInApp(LAB_BUILD, 'lab')) window.open(LAB_BUILD, '_blank', 'noreferrer');
+  };
   const go: Record<DoorKey, (() => void) | null> = {
     map: onOpenMap,
     story: onOpenStoryMode,
     tracks: () => scrollTo('tracks'),
     family: () => scrollTo('family'),
+    build: openBuild,
   };
 
   if (!shown && step === null && !invite) return null;
@@ -239,7 +249,6 @@ export function StartGuide({
               );
             })}
           </ol>
-          <p className="muted start-guide-soon">{g.soon}</p>
           <button type="button" className="btn start-guide-tour" onClick={() => setStep(0)}>
             {g.tourBtn}
           </button>

@@ -47,7 +47,7 @@ try {
   const { applyAttempt, emptyProgress, clearedProgress, withParsedCareer } = await import(
     pathToFileURL(path.join(outDir, 'srs', 'store.js')).href
   );
-  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, withQuizAttempt, withNote, noteText, checkedIds, weeklyChanges } = await import(
+  const { parseCareer, emptyCareerState, withRole, withToggledEvidence, withQuizAttempt, withNote, noteText, checkedIds, weeklyChanges, withLabDone, withLabDoneMap } = await import(
     pathToFileURL(path.join(outDir, 'career', 'store.js')).href
   );
   const { quizStatus } = await import(pathToFileURL(path.join(outDir, 'career', 'quiz.js')).href);
@@ -153,6 +153,7 @@ try {
    */
   const ROLES = ['bi', 'da', 'ae', 'de'];
   const EVIDENCE = ['sql-medium', 'bi-report', 'py-notebook', 'stats-ab', 'process-bpmn'];
+  const LAB_KEYS = ['build:kaiyo-sales', 'build:kaiyo-sales-more', 'practice:sql'];
   const QUIZ_AXES = ['stats', 'engineering', 'process'];
   const LEVELS0 = { sql: 0, modeling: 0, bi: 0, python: 0, stats: 0, engineering: 0, business: 0, process: 0 };
   function career(r) {
@@ -181,6 +182,8 @@ try {
       goal: r() < 0.4 ? { text: r() < 0.5 ? '2027-03-01' : '', at: at() } : null,
       why: r() < 0.5 ? { text: r() < 0.5 ? 'a' : 'b', at: at() } : null,
       obstacle: r() < 0.5 ? { text: r() < 0.5 ? 'x' : 'y', at: at() } : null,
+      // Отметки Lab: общие ключи с разными датами проверяют «побеждает ранняя».
+      labDone: Object.fromEntries(LAB_KEYS.filter(() => r() < 0.5).map((k) => [k, at()])),
     });
   }
   const withCareer = (p, c) => (c ? { ...p, career: c } : p);
@@ -384,6 +387,26 @@ try {
     const t = (d) => new Date(base0 + d * DAY_MS);
     const on = (s, id) => checkedIds(s).includes(id);
     const both = (a, b) => [mergeProgress(a, b), mergeProgress(b, a)];
+
+    // Отметки Lab (Progress.career.labDone): объединение, у общего ключа ранняя дата, в обе стороны.
+    {
+      const early = withLabDone(emptyCareerState(), 'build:kaiyo-sales', t(1).toISOString());
+      const late = withLabDone(withLabDone(emptyCareerState(), 'build:kaiyo-sales', t(5).toISOString()), 'practice:sql', t(6).toISOString());
+      const [l1, l2] = both(withCareer(emptyProgress(), early), withCareer(emptyProgress(), late));
+      const want = { 'build:kaiyo-sales': t(1).toISOString(), 'practice:sql': t(6).toISOString() };
+      assertTrue('Lab: объединение ключей, ранняя дата побеждает (A, B)', JSON.stringify(l1.career.labDone) === JSON.stringify(want));
+      assertTrue('Lab: объединение ключей, ранняя дата побеждает (B, A)', JSON.stringify(l2.career.labDone) === JSON.stringify(want));
+      assertTrue('Lab: повторный приход не сдвигает дату', withLabDone(early, 'build:kaiyo-sales', t(9).toISOString()) === early);
+      assertTrue('Lab: более ранний приход сдвигает дату назад', withLabDone(late, 'build:kaiyo-sales', t(2).toISOString()).labDone['build:kaiyo-sales'] === t(2).toISOString());
+      assertTrue('Lab: чужой ключ не принимается', withLabDone(early, 'quiz:sql', t(1).toISOString()) === early);
+      // Перенос старого ключа quaera.labDone: вливается тем же правилом
+      const migrated = withLabDoneMap(late, { 'build:kaiyo-sales': t(3).toISOString(), 'pipeline:kaiyo-sellout': t(4).toISOString() });
+      assertTrue('Lab: перенос старого ключа, ранняя дата и новые ключи', migrated.labDone['build:kaiyo-sales'] === t(3).toISOString() && migrated.labDone['pipeline:kaiyo-sellout'] === t(4).toISOString() && migrated.labDone['practice:sql'] === t(6).toISOString());
+      // Выгрузка и чтение прогресса переносят поле, мусор отбрасывается
+      const roundTrip = withParsedCareer(JSON.parse(JSON.stringify({ ...emptyProgress(), career: { ...late, labDone: { ...late.labDone, 'bad key': 'x', 'build:x': 5 } } })));
+      assertTrue('Lab: загрузка и восстановление прогресса несут отметки, мусор выброшен', JSON.stringify(roundTrip.career.labDone) === JSON.stringify({ 'build:kaiyo-sales': t(5).toISOString(), 'practice:sql': t(6).toISOString() }));
+      assertTrue('Lab: запись без поля читается как пустая', Object.keys(parseCareer({ role: 'bi' }).labDone).length === 0);
+    }
 
     // Ловушка, ради которой у отметки метка времени: снятая галочка
     // не должна возвращаться с устройства, где она стояла раньше.

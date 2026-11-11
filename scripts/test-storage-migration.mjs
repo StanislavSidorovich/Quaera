@@ -58,7 +58,7 @@ try {
   );
   writeFileSync(path.join(outDir, 'package.json'), '{"type":"commonjs"}');
 
-  const { migrateStorageKeys, STORAGE_RENAMES } = await import(
+  const { migrateStorageKeys, STORAGE_RENAMES, readLegacyLabDone, dropLegacyLabDone } = await import(
     pathToFileURL(path.join(outDir, 'migrateStorage.js')).href
   );
 
@@ -95,6 +95,17 @@ try {
     }).code
   );
   const { fromStoredDraft } = createRequire(import.meta.url)(storePath);
+
+  // --- отметки Lab: старый ключ quaera.labDone читается и убирается (переезд в Progress.career.labDone) ---
+  {
+    const store = fakeStore({ 'quaera.labDone': JSON.stringify({ 'build:kaiyo-sales': '2026-11-09T10:00:00.000Z', 'practice:sql': '2026-11-10T10:00:00.000Z', 'quiz:x': 'z', 'pipeline:a': 5 }) });
+    const got = readLegacyLabDone(store);
+    check(JSON.stringify(got) === JSON.stringify({ 'build:kaiyo-sales': '2026-11-09T10:00:00.000Z', 'practice:sql': '2026-11-10T10:00:00.000Z' }), 'старые отметки Lab читаются неверно');
+    dropLegacyLabDone(store);
+    check(store.getItem('quaera.labDone') === null, 'старый ключ quaera.labDone остался после переноса');
+    check(Object.keys(readLegacyLabDone(store)).length === 0, 'без ключа отметок быть не должно');
+    check(Object.keys(readLegacyLabDone(fakeStore({ 'quaera.labDone': '{oops' }))).length === 0, 'повреждённый ключ должен читаться как пустой');
+  }
 
   // --- список пар ---
   check(STORAGE_RENAMES.length > 0, 'список переименований пуст');

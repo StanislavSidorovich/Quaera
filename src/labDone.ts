@@ -1,17 +1,19 @@
 /**
  * Отметка «собрано в Lab»: Lab (lab.quaera.app) отправляет человека обратно сюда
- * ссылкой `https://quaera.app/#lab-done=pipeline:kaiyo-sellout` (все три проверки
- * конвейера пройдены), `build:kaiyo-sales` (сборка руками пройдена) или
+ * ссылкой `https://quaera.app/#lab-done=build:kaiyo-sales` (сборка руками пройдена),
+ * `build:kaiyo-sales-more` (пройден More), `build:kaiyo-sales-refresh` (зелёный Refresh),
+ * `pipeline:kaiyo-sellout` (конвейер на готовых блоках, старый вид) или
  * `practice:sql` / `practice:python` (практика Lab пройдена на пороге Lab). Фрагмент, а не запрос: после `#` на сервер не
  * уходит ничего, и открытое окно тренажёра принимает ссылку без перезагрузки.
  *
  * Отметка на доверии, без отпечатка (решение хозяина 2026-11-04): это не
  * сертификат, а след «я это прошёл», и подделка вредит только самому себе.
  *
- * Читаем один раз при загрузке и на hashchange, кладём в localStorage
- * `quaera.labDone` как `{ "pipeline:kaiyo-sellout": "<ISO-дата>" }` (с тем,
- * что там уже есть) и стираем из адреса, не трогая остальной фрагмент и запрос:
- * иначе каждое обновление страницы показывало бы тост заново.
+ * Читаем один раз при загрузке и на hashchange, кладём в `Progress.career.labDone`
+ * (`{ "<ключ>": "<ISO-дата>" }`, `career/store.ts`: едет с прогрессом в синхронизацию и
+ * в резервную копию; до 2026-11-11 жили отдельным ключом localStorage `quaera.labDone`,
+ * его читает только одноразовый перенос `career/legacy.ts`) и стираем из адреса, не трогая остальной
+ * фрагмент и запрос: иначе каждое обновление страницы показывало бы тост заново.
  *
  * Читать надо ПОСЛЕ того, как StartGuide посчитал DEEP_LINK (он на импорте
  * считает любой `#...` глубокой ссылкой и не зовёт гид-приглашение; для этой
@@ -22,11 +24,15 @@
  * Чистый модуль без импортов: гейт `npm run test:lab-done` собирает его одним файлом.
  */
 
+/** Старый ключ localStorage: только для одноразового переноса в прогресс. Больше не пишется. */
 export const LAB_DONE_KEY = 'quaera.labDone';
 export const LAB_DONE_EVENT = 'quaera:lab-done';
 
 /** Что Lab может прислать: вид (`pipeline`, `build`, `practice`) и id, оба из `[a-z0-9-]`. Чужой вид отбрасывается. */
-const KEY_RE = /^(pipeline|build|practice):[a-z0-9-]+$/;
+const KEY_RE = /^(pipeline|build|practice):[a-z0-9-]+$/; // `build:kaiyo-sales-more` и `-refresh` проходят: дефис в id разрешён
+
+/** Ключ по формату Lab. */
+export const isLabDoneKey = (key: string): boolean => KEY_RE.test(key);
 
 /** Вид отметки по ключу (для текста тоста); null, если ключ не по формату. */
 export function labDoneKind(key: string): 'pipeline' | 'build' | 'practice' | null {
@@ -65,11 +71,6 @@ export function readLabDoneMap(raw: string | null): Record<string, string> {
   return out;
 }
 
-/** Хранилище после новой отметки: старые записи остаются, повторный приход обновляет дату. */
-export function mergeLabDone(raw: string | null, key: string, iso: string): string {
-  return JSON.stringify({ ...readLabDoneMap(raw), [key]: iso });
-}
-
 interface Loc {
   pathname: string;
   search: string;
@@ -77,21 +78,21 @@ interface Loc {
 }
 
 /**
- * Принять отметку из адреса: записать и стереть из строки. Возвращает ключ или null.
- * `replace` получает новый адрес (путь, запрос, остаток фрагмента); хранилище может не работать.
+ * Принять отметку из адреса: отдать её `store` (кладёт в прогресс) и стереть из строки.
+ * Возвращает ключ или null. `replace` получает новый адрес (путь, запрос, остаток фрагмента).
  */
 export function acceptLabDone(
-  storage: Pick<Storage, 'getItem' | 'setItem'>,
   loc: Loc,
   replace: (url: string) => void,
+  store: (key: string, iso: string) => void,
   now: Date = new Date()
 ): string | null {
   const found = parseLabDone(loc.hash);
   if (!found) return null;
   try {
-    storage.setItem(LAB_DONE_KEY, mergeLabDone(storage.getItem(LAB_DONE_KEY), found.key, now.toISOString()));
+    store(found.key, now.toISOString());
   } catch {
-    /* приватный режим: отметка живёт до закрытия вкладки, то есть вовсе не живёт; тост всё равно скажет спасибо */
+    /* отметка не легла: тост всё равно скажет спасибо, повторный приход попробует снова */
   }
   try {
     replace(loc.pathname + loc.search + found.rest);

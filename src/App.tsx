@@ -28,8 +28,9 @@ import { CodeBlock } from './ui/CodeBlock';
 import { IntroPage } from './ui/IntroPage';
 import { CareerPage } from './ui/CareerPage';
 import { DataMapTeaser } from './ui/ArchitectureMap';
-import { withLegacyCareer } from './career/legacy';
-import { emptyCareerState, type CareerState } from './career/store';
+import { withLegacyCareer, withLegacyLabDone } from './career/legacy';
+import { emptyCareerState, withLabDone, type CareerState } from './career/store';
+import { skillLevel } from './career/readiness';
 import { PageToc } from './ui/PageToc';
 import { OverviewPage } from './ui/OverviewPage';
 import { LessonCard } from './ui/LessonCard';
@@ -49,7 +50,8 @@ import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
 import { Sidebar, IconAccount, IconStory, IconBook, IconFlask, IconTable, IconCompass, type SidebarSection } from './ui/Sidebar';
 import { usePairHighlight } from './ui/pairHighlight';
 import { StartGuide } from './ui/StartGuide';
-import { LabDoneToast } from './ui/LabDoneToast';
+import { LabDoneContext, LabDoneToast } from './ui/LabDoneToast';
+
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
 import { StoryLine } from './ui/StoryLine';
 import { storyFingerprint } from './content/story';
@@ -917,12 +919,14 @@ function initialBoot(locale: Locale): Boot {
   }
 }
 
+const NO_LAB_MARKS: Record<string, string> = {};
+
 export default function App() {
   const { t, locale, setLocale } = useI18n();
   usePairHighlight();
   const [guide, setGuide] = useState({ n: GUIDE_ON_BOOT ? 1 : 0, tour: GUIDE_ON_BOOT });
   /* withLegacyCareer: одноразовый перенос «Пути к роли» из quaera.career.v1 в progress.career. */
-  const [progress, setProgress] = useState<Progress>(() => withLegacyCareer(loadProgress()));
+  const [progress, setProgress] = useState<Progress>(() => withLegacyLabDone(withLegacyCareer(loadProgress())));
   /**
    * Снимок хранилища на момент открытия вкладки — читается ровно один раз
    * (см. initialBoot). Дальше не обновляется и обновляться не должен: это
@@ -2234,9 +2238,15 @@ export default function App() {
   const streakDays = streak(progress.activeDays);
 
   return (
+    <LabDoneContext.Provider value={progress.career?.labDone ?? NO_LAB_MARKS}>
     <div className={`app${fontSize !== 'md' ? ` font-${fontSize}` : ''}`}>
       {/* Возврат из Lab (#lab-done=…): принимается на любом экране, не только на главной. */}
-      <LabDoneToast />
+      <LabDoneToast
+        onAccept={(key, iso) => updateCareer((s) => withLabDone(s, key, iso))}
+        sqlSkill={skillLevel(progress.skills['sql-group-by']) >= 1 ? 'sql-join-inner' : 'sql-group-by'}
+        onStartSkill={(id) => startSkillSession(id)}
+        onOpenPath={() => setScreen({ name: 'career', path: true })}
+      />
       {/*
        * Постоянная боковая навигация — только от 1024px, на телефоне её нет
        * вовсе (см. Sidebar.tsx). Рендерится всегда: скрывает её CSS, а не
@@ -3114,6 +3124,7 @@ export default function App() {
 
       {showExitHint && <div className="exit-hint">{t.app.exitHint}</div>}
     </div>
+    </LabDoneContext.Provider>
   );
 }
 

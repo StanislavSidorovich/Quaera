@@ -119,7 +119,7 @@ export function CareerPage({
   const chosenRole = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
   /*
    * Засчитанные самопроверки и отметка Lab входят в формулу как отметки, но
-   * выводятся из истории подходов и из `quaera.labDone`, а не из галочек:
+   * выводятся из истории подходов и из `progress.career.labDone`, а не из галочек:
    * поставить их руками нельзя.
    */
   const labDone = useLabDone();

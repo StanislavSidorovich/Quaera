@@ -113,18 +113,17 @@ export const en = {
   },
   guide: {
     title: 'How Quaera works',
-    lead: 'Four doors: pick the one that fits you',
+    lead: 'Five doors: pick the one that fits you',
     close: 'Close',
     show: 'Show me',
     later: 'Not now',
     never: 'Do not show again',
-    inviteLine: 'Four ways in: roles, a live case, theory, practice. A 30-second tour.',
+    inviteLine: 'Five ways in: roles, a live case, theory, practice, a hands-on build. A 30-second tour.',
     tourBtn: 'Show me step by step',
     stepOf: (n: number, total: number) => `${n} of ${total}`,
     next: 'Next',
     skip: 'Skip',
     done: 'Done',
-    soon: 'Coming soon: a pipeline in Lab, so you build a load from file to dashboard yourself',
     doors: {
       map: {
         situation: 'I do not get what an analyst does',
@@ -140,6 +139,11 @@ export const en = {
         situation: 'I want to brush up on theory',
         where: 'SQL, Python (pandas), data modeling and BI, the profession: short lessons and tasks',
         btn: 'Go to tracks',
+      },
+      build: {
+        situation: 'I want to build it all myself',
+        where: 'From a file to a dashboard in Lab: cleaning, a model, tiles and an answer to the stakeholder',
+        btn: 'Build it in Lab',
       },
       family: {
         situation: 'I want hands-on practice',
@@ -1195,13 +1199,13 @@ export const en = {
   career: {
     lessonLink: 'Path to a role: who does what and what you are missing →',
     title: 'Path to a role',
-    lead: 'From a business question to a decision: who does what, and what you are missing for the role you picked. Readiness is counted from what you solved in the trainer, not from self-assessment.',
+    lead: 'From a business question to a decision: who does what, and what you are missing for the role you picked. Levels are counted from what you solved in the trainer and built by hand, not from self-assessment. Meeting the role targets does not yet mean you are ready for an interview.',
     targetLabel: 'Target role',
     bands: {
       start: 'Getting to know it',
       prejunior: 'On the way to junior',
       nearly: 'Nearly there',
-      ready: 'Ready for interviews',
+      ready: 'Targets met',
     },
     bandAria: (label: string, step: number) => `${label}, step ${step} of 4`,
     bandCaption: (met: number, total: number) => `${met} of ${total} role targets met`,
@@ -1489,7 +1493,6 @@ export const en = {
   labDone: {
     toast: {
       pipeline: 'Pipeline built in Lab.',
-      build: 'The hands-on build in Lab is passed.',
       practiceSql: 'The SQL practice in Lab is counted.',
       practicePython: 'The Python practice in Lab is counted.',
     },
@@ -1498,8 +1501,19 @@ export const en = {
     buildLead: 'The same path with no scaffolding: a file, cleaning, a model, a dashboard and an answer to the stakeholder question.',
     buildOpen: 'Open the build in Lab',
     buildDone: 'Passed ✓',
-    build: 'Build it in Lab',
-    buildNote: 'The same scenario by hand: blocks, a run, a journal and three checks.',
+    card: {
+      buildTitle: 'The hands-on build is counted',
+      moreTitle: 'More is counted',
+      refreshTitle: 'Refresh is counted',
+      moved: 'On Path to a role these axes moved:',
+      nextBuild: 'SQL is next: More needs JOIN and GROUP BY. Practise them here, then go back to Lab.',
+      nextPath: 'See how far you are from your role.',
+      startGroupBy: 'Practise GROUP BY',
+      startJoin: 'Practise JOIN',
+      openPath: 'Path to a role',
+      close: 'Close',
+    },
+    mdlBuild: 'Build it by hand in Lab: file, cleaning, model, dashboard, answer',
     open: 'Open the pipeline in Lab',
   },
   trackShort: {

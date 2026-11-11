@@ -1,5 +1,6 @@
 import { AXES, type AxisId, type Level } from './readiness';
 import { isQuizAttempt, normalizeQuiz, type QuizAttempt } from './quiz';
+import { isLabDoneKey } from '../labDone';
 
 /**
  * Состояние экрана «Путь к роли»: выбранная роль, отметки-доказательства
@@ -75,9 +76,17 @@ export interface CareerState {
   why: Note | null;
   /** «Что может помешать и что я тогда сделаю». */
   obstacle: Note | null;
+  /**
+   * Отметки, которые прислал Lab (`#lab-done=<ключ>`, `src/labDone.ts`): ключ → дата прихода, ISO.
+   * Жили в своём ключе `quaera.labDone`, вне прогресса, и пропадали при синхронизации и из резервной
+   * копии; теперь едут вместе с прогрессом. Слияние: объединение, у каждого ключа побеждает ранняя
+   * дата (отметку нельзя «снять», раннее прохождение не перебивается повторным). В записях
+   * до переноса поля нет, читается как {}.
+   */
+  labDone: Record<string, string>;
 }
 
-export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [], quiz: [], goal: null, why: null, obstacle: null });
+export const emptyCareerState = (): CareerState => ({ role: DEFAULT_ROLE, roleAt: null, checks: {}, weekly: [], quiz: [], goal: null, why: null, obstacle: null, labDone: {} });
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -102,6 +111,19 @@ function parseNote(v: unknown, kind: 'goal' | 'text'): Note | null {
 function laterNote(a: Note | null, b: Note | null): Note | null {
   if (!a || !b) return a ?? b;
   return a.at !== b.at ? (a.at > b.at ? a : b) : a.text >= b.text ? a : b;
+}
+
+/** Отметка Lab записана: ключ остаётся с самой ранней из дат (повторный приход ничего не меняет). Тот же объект, если менять нечего. */
+export function withLabDone(s: CareerState, key: string, iso: string): CareerState {
+  if (!isLabDoneKey(key)) return s;
+  const cur = s.labDone[key];
+  if (cur !== undefined && cur <= iso) return s;
+  return { ...s, labDone: { ...s.labDone, [key]: iso } };
+}
+
+/** Старые отметки из `quaera.labDone` вливаются тем же правилом: самая ранняя дата. */
+export function withLabDoneMap(s: CareerState, map: Record<string, string>): CareerState {
+  return Object.entries(map).reduce((acc, [k, v]) => withLabDone(acc, k, v), s);
 }
 
 /** Идентификаторы поставленных отметок — то, что нужно формуле готовности. */
@@ -160,7 +182,16 @@ export function parseCareer(v: unknown): CareerState | undefined {
     goal: parseNote(p.goal, 'goal'),
     why: parseNote(p.why, 'text'),
     obstacle: parseNote(p.obstacle, 'text'),
+    labDone: parseLabDoneField(p.labDone),
   });
+}
+
+/** Поле `labDone` из хранилища или с сервера: только ключи по формату Lab с датой-строкой. */
+function parseLabDoneField(v: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+  for (const [k, d] of Object.entries(v)) if (isLabDoneKey(k) && typeof d === 'string') out[k] = d;
+  return out;
 }
 
 /**
@@ -177,6 +208,7 @@ export function parseCareer(v: unknown): CareerState | undefined {
  *   активности в прогрессе.
  * - *Подходы самопроверки* — объединение по (ось, время), не больше
  *   двадцати последних на ось (`normalizeQuiz`).
+ * - *Отметки Lab* — объединение ключей, у общего побеждает ранняя дата.
  * - *Дата цели и два поля* — на каждое побеждает более поздняя правка (`laterNote`). Список только дописывается,
  *   удалять в нём нечего, поэтому меток «снято» ему не нужно.
  *
@@ -209,7 +241,15 @@ export function mergeCareer(a: CareerState, b: CareerState): CareerState {
     goal: laterNote(a.goal, b.goal),
     why: laterNote(a.why, b.why),
     obstacle: laterNote(a.obstacle, b.obstacle),
+    labDone: mergeLabDoneMaps(a.labDone, b.labDone),
   });
+}
+
+/** Объединение отметок Lab; у общего ключа остаётся ранняя дата. */
+function mergeLabDoneMaps(a: Record<string, string>, b: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = { ...a };
+  for (const [k, d] of Object.entries(b)) if (out[k] === undefined || d < out[k]) out[k] = d;
+  return out;
 }
 
 const markKey = (m: EvidenceMark) => `${m.at}|${m.on ? 1 : 0}`;
@@ -233,7 +273,10 @@ function normalizeCareer(s: CareerState): CareerState {
   }
   const weekly = [...byDate.values()].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)).slice(-SNAPSHOT_LIMIT);
 
-  return { role: s.role, roleAt: s.roleAt, checks, weekly, quiz: normalizeQuiz(s.quiz), goal: s.goal, why: s.why, obstacle: s.obstacle };
+  const labDone: Record<string, string> = {};
+  for (const k of Object.keys(s.labDone ?? {}).sort()) labDone[k] = s.labDone[k];
+
+  return { role: s.role, roleAt: s.roleAt, checks, weekly, quiz: normalizeQuiz(s.quiz), goal: s.goal, why: s.why, obstacle: s.obstacle, labDone };
 }
 
 /**

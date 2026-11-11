@@ -32,6 +32,8 @@
  * Под гейтом `npm run test:storage-migration` (входит в `npm run verify`).
  */
 
+import { LAB_DONE_KEY, readLabDoneMap } from './labDone';
+
 /** Пары «старый ключ → новый». Полный список ключей приложения: другого хранилища нет. */
 export const STORAGE_RENAMES: ReadonlyArray<readonly [string, string]> = [
   ['querium-font-size', 'quaera-font-size'],
@@ -79,6 +81,29 @@ export function migrateStorageKeys(store: KeyValueStore): string[] {
     }
   }
   return moved;
+}
+
+/**
+ * Отметки Lab до 2026-11-11 лежали отдельным ключом `quaera.labDone` вне прогресса (их терял
+ * экспорт, синхронизация и перенос на другое устройство). Теперь они в `Progress.career.labDone`.
+ * Читает старый ключ: только записи по формату Lab, с датой-строкой; пусто, если ключа нет.
+ * Вливает и сохраняет прогресс `career/legacy.ts`, ключ удаляется после сохранения (`dropLegacyLabDone`).
+ */
+export function readLegacyLabDone(store: Pick<KeyValueStore, 'getItem'>): Record<string, string> {
+  try {
+    return readLabDoneMap(store.getItem(LAB_DONE_KEY));
+  } catch {
+    return {};
+  }
+}
+
+/** Убрать старый ключ после того, как отметки легли в прогресс: иначе сброс прогресса вернул бы их при следующей загрузке. */
+export function dropLegacyLabDone(store: Pick<KeyValueStore, 'removeItem'>): void {
+  try {
+    store.removeItem(LAB_DONE_KEY);
+  } catch {
+    /* ключ останется: перенос повторится, вливание идемпотентно */
+  }
 }
 
 try {

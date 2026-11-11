@@ -1,34 +1,24 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { appStorage } from '../guestMode';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useI18n } from '../i18n/context';
-import { LAB_DONE_EVENT, LAB_DONE_KEY, acceptLabDone, labDoneKind, readLabDoneMap } from '../labDone';
+import { LAB_DONE_EVENT, acceptLabDone, labDoneKind } from '../labDone';
+import { ackLabDone } from '../pwa/windowLinks';
+import { LabDoneCard } from './LabDoneCard';
 
-/** Что Lab уже отметил: `{ "pipeline:kaiyo-sellout": "<ISO-дата>", "build:kaiyo-sales": …, "practice:sql": … }`. Обновляется в этой вкладке и в других. */
+const NO_MARKS: Record<string, string> = {};
+export const LabDoneContext = createContext<Record<string, string>>(NO_MARKS);
+
+/**
+ * Что Lab уже отметил: `{ "build:kaiyo-sales": "<ISO-дата>", "practice:sql": …, … }`. Лежит в
+ * `progress.career.labDone` (едет с синхронизацией и резервной копией); App отдаёт его через контекст.
+ */
 export function useLabDone(): Record<string, string> {
-  const raw = useSyncExternalStore(
-    (cb) => {
-      window.addEventListener(LAB_DONE_EVENT, cb);
-      window.addEventListener('storage', cb);
-      return () => {
-        window.removeEventListener(LAB_DONE_EVENT, cb);
-        window.removeEventListener('storage', cb);
-      };
-    },
-    () => {
-      try {
-        return appStorage().getItem(LAB_DONE_KEY) ?? '';
-      } catch {
-        return '';
-      }
-    },
-    () => ''
-  );
-  return readLabDoneMap(raw || null);
+  return useContext(LabDoneContext);
 }
 
 /**
- * Принимает `#lab-done=…` (при загрузке и на hashchange) и коротко говорит спасибо.
- * Монтируется один раз в App; сам ничего не рисует, пока отметки нет.
+ * Принимает `#lab-done=…` (при загрузке и на hashchange): кладёт отметку в прогресс (`onAccept`),
+ * отвечает Lab подтверждением и говорит спасибо: тостом, а на сборку руками (`build:`) карточкой
+ * «что дальше». Монтируется один раз в App; сам ничего не рисует, пока отметки нет.
  */
 const PENDING_KEY = 'quaera-lab-done-toast';
 /** Флаг хранит ключ принятой отметки (старый флаг '1' от прежней сборки читается как конвейер). */
@@ -42,15 +32,37 @@ const pendingKey = (): string | null => {
 };
 const pendingToast = () => pendingKey() !== null;
 
-export function LabDoneToast() {
+export function LabDoneToast({
+  onAccept,
+  sqlSkill,
+  onStartSkill,
+  onOpenPath,
+}: {
+  /** Положить отметку в прогресс (App: `updateCareer(withLabDone)`). */
+  onAccept: (key: string, iso: string) => void;
+  /** Навык SQL, с которого начать после сборки (`sql-group-by`, а когда он пройден, `sql-join-inner`). */
+  sqlSkill: string;
+  onStartSkill: (skillId: string) => void;
+  onOpenPath: () => void;
+}) {
   const { t } = useI18n();
   /* Флаг в sessionStorage переживает перезагрузку, которую делает первый заход со старой сборкой в service worker: иначе тост пропадает вместе со страницей (замер на живом quaera.app, 2026-11-05). */
   const [shown, setShown] = useState(pendingToast);
   const [key, setKey] = useState<string | null>(pendingKey);
+  const isCard = labDoneKind(key ?? '') === 'build';
+
+  const hide = () => {
+    try {
+      sessionStorage.removeItem(PENDING_KEY);
+    } catch {
+      /* нечего убирать */
+    }
+    setShown(false);
+  };
 
   useEffect(() => {
     const take = () => {
-      const got = acceptLabDone(appStorage(), window.location, (url) => window.history.replaceState(null, '', url));
+      const got = acceptLabDone(window.location, (url) => window.history.replaceState(null, '', url), onAccept);
       if (!got) return;
       setKey(got);
       window.dispatchEvent(new Event(LAB_DONE_EVENT));
@@ -60,26 +72,40 @@ export function LabDoneToast() {
         /* без флага тост просто не переживёт перезагрузку */
       }
       setShown(true);
+      ackLabDone(got);
     };
     take();
     window.addEventListener('hashchange', take);
     return () => window.removeEventListener('hashchange', take);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* Тост гаснет сам; карточка «что дальше» остаётся, пока её не закроют: на ней кнопки. */
   useEffect(() => {
-    if (!shown) return;
-    const id = window.setTimeout(() => {
-      try {
-        sessionStorage.removeItem(PENDING_KEY);
-      } catch {
-        /* нечего убирать */
-      }
-      setShown(false);
-    }, 7000);
+    if (!shown || isCard) return;
+    const id = window.setTimeout(hide, 7000);
     return () => window.clearTimeout(id);
-  }, [shown]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown, isCard]);
 
-  if (!shown) return null;
+  if (!shown || !key) return null;
+  if (isCard) {
+    return (
+      <LabDoneCard
+        markKey={key}
+        sqlSkill={sqlSkill}
+        onClose={hide}
+        onStartSkill={(id) => {
+          hide();
+          onStartSkill(id);
+        }}
+        onOpenPath={() => {
+          hide();
+          onOpenPath();
+        }}
+      />
+    );
+  }
   return (
     <div className="lab-done-toast" role="status">
       {toastText(t.labDone.toast, key)}
@@ -87,11 +113,9 @@ export function LabDoneToast() {
   );
 }
 
-/** Текст тоста по ключу отметки: свой на конвейер, сборку руками и каждую практику. */
-function toastText(toast: { pipeline: string; build: string; practiceSql: string; practicePython: string }, key: string | null): string {
+/** Текст тоста по ключу отметки: свой на конвейер и каждую практику (сборка руками идёт карточкой). */
+function toastText(toast: { pipeline: string; practiceSql: string; practicePython: string }, key: string | null): string {
   switch (labDoneKind(key ?? '')) {
-    case 'build':
-      return toast.build;
     case 'practice':
       return key === 'practice:python' ? toast.practicePython : toast.practiceSql;
     default:

@@ -12,6 +12,8 @@
  * в манифесте (Chrome 139+), а `launchQueue` ниже применяет фрагмент, если сам
  * Chrome его не сменил.
  */
+import { parseLabDone } from '../labDone';
+
 export const TRAINER_WINDOW = 'quaera-quaera';
 
 export function nameTrainerWindow(): void {
@@ -55,6 +57,26 @@ const FAMILY_ORIGINS = [
  * `quaera:here`. По клику Lab шлёт `quaera:go` с адресом и фокусирует вкладку;
  * тренажёр применяет только фрагмент (`#lab-done=…`), экран не перезагружается.
  */
+/**
+ * Подтверждение приёма. Lab после `quaera:go` с `#lab-done=<ключ>` ждёт ответ (около 400 мс):
+ * молчание он читает как «вкладка не приняла» и открывает ссылку заново. Ответ уходит
+ * только окну и origin, чьё сообщение принято, и только когда отметка уже принята и
+ * записана в прогресс (зовёт `ackLabDone` из LabDoneToast); до этого запись ждёт здесь.
+ */
+let pendingAck: { source: Window; origin: string; key: string } | null = null;
+
+/** Ответить `{ type: 'quaera:done', key }` тому, кто прислал эту отметку; без ожидающего — ничего. */
+export function ackLabDone(key: string): void {
+  const p = pendingAck;
+  if (!p || p.key !== key) return;
+  pendingAck = null;
+  try {
+    p.source.postMessage({ type: 'quaera:done', key }, p.origin);
+  } catch {
+    /* окно закрыто: Lab сам откроет ссылку */
+  }
+}
+
 export function answerFamilyWindows(): void {
   window.addEventListener('message', (e: MessageEvent) => {
     if (!FAMILY_ORIGINS.includes(e.origin)) return;
@@ -65,7 +87,11 @@ export function answerFamilyWindows(): void {
     } else if (data.type === 'quaera:go' && typeof data.url === 'string') {
       try {
         const u = new URL(data.url);
-        if (u.origin === location.origin && u.hash && u.hash !== location.hash) location.hash = u.hash;
+        if (u.origin === location.origin && u.hash && u.hash !== location.hash) {
+          const mark = parseLabDone(u.hash);
+          if (mark && e.source) pendingAck = { source: e.source as Window, origin: e.origin, key: mark.key };
+          location.hash = u.hash;
+        }
       } catch {
         /* не адрес: пропускаем */
       }

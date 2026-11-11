@@ -1,6 +1,7 @@
 import { appStorage } from '../guestMode';
 import { saveProgress, type Progress } from '../srs/store';
-import { DEFAULT_ROLE, parseCareer, type CareerState } from './store';
+import { dropLegacyLabDone, readLegacyLabDone } from '../migrateStorage';
+import { DEFAULT_ROLE, emptyCareerState, parseCareer, withLabDoneMap, type CareerState } from './store';
 
 /**
  * Одноразовый перенос состояния экрана «Путь к роли» из `quaera.career.v1`
@@ -72,5 +73,25 @@ export function withLegacyCareer(p: Progress, now = new Date()): Progress {
   const next = { ...p, career };
   saveProgress(next);
   dropLegacyCareer();
+  return next;
+}
+
+/**
+ * Одноразовый перенос отметок Lab из `quaera.labDone` в `progress.career.labDone`
+ * (2026-11-11). Порядок тот же, что выше: сначала прогресс на диск, потом удаление ключа.
+ * Если отметки уже лежат в прогрессе, дата у каждого ключа остаётся ранней, повтор безвреден.
+ */
+export function withLegacyLabDone(p: Progress): Progress {
+  const store = appStorage();
+  const legacy = readLegacyLabDone(store);
+  if (Object.keys(legacy).length === 0) {
+    dropLegacyLabDone(store);
+    return p;
+  }
+  const cur = p.career ?? emptyCareerState();
+  const career = withLabDoneMap(cur, legacy);
+  const next = career === cur && p.career ? p : { ...p, career };
+  saveProgress(next);
+  dropLegacyLabDone(store);
   return next;
 }
