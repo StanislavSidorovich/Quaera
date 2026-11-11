@@ -402,7 +402,19 @@ try {
     if (e.labKeys && e.source !== 'labDone') fail(`отметка ${e.id}`, 'labKeys без source labDone');
   }
   const labMark = evidence.find((e) => e.id === 'eng-lab-pipeline');
-  assertEq('отметка конвейера Lab: инженерия, уровень 1, ключ возврата', labMark && [labMark.axis, labMark.level, labMark.source, labMark.labKeys], ['engineering', 1, 'labDone', ['pipeline:kaiyo-sellout', 'build:kaiyo-sales']]);
+  assertEq('отметка сборки Lab: инженерия, уровень 1, один ключ (блоки на готовом не считаются сборкой)', labMark && [labMark.axis, labMark.level, labMark.source, labMark.labKeys], ['engineering', 1, 'labDone', ['build:kaiyo-sales']]);
+  // Сборка платит за то, что собрано: каждая отметка платит своей осью (обзор Fable 2026-11-11, п. 2).
+  for (const [id, axisId, level, key] of [
+    ['model-lab-build', 'modeling', 1, 'build:kaiyo-sales'],
+    ['bi-lab-build', 'bi', 1, 'build:kaiyo-sales'],
+    ['sql-lab-more', 'sql', 2, 'build:kaiyo-sales-more'],
+    ['eng-lab-refresh', 'engineering', 2, 'build:kaiyo-sales-refresh'],
+  ]) {
+    const m = evidence.find((e) => e.id === id);
+    assertEq(`отметка сборки Lab ${id}: ось, уровень, ключ возврата`, m && [m.axis, m.level, m.source, m.labKeys], [axisId, level, 'labDone', [key]]);
+  }
+  assertTrue('самоотметка eng-pipeline заменена отметкой Lab', !evidence.some((e) => e.id === 'eng-pipeline'));
+  assertEq('SQL-отметка More весит как практика SQL', evidence.find((e) => e.id === 'sql-lab-more').level, evidence.find((e) => e.id === 'sql-lab-practice').level);
   for (const [id, axisId, key] of [['sql-lab-practice', 'sql', 'practice:sql'], ['py-lab-practice', 'python', 'practice:python']]) {
     const m = evidence.find((e) => e.id === id);
     assertEq(`отметка практики Lab ${id}: ось, уровень 2, ключ возврата`, m && [m.axis, m.level, m.source, m.labKeys], [axisId, 2, 'labDone', [key]]);

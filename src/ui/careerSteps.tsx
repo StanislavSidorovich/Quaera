@@ -30,6 +30,10 @@ export interface StepCtx {
 /** Куда вести за отметкой, которую ставит Lab: адрес в Lab по id отметки. */
 const LAB_EVIDENCE_LINK: Record<string, string> = {
   'eng-lab-pipeline': LAB_BUILD,
+  'model-lab-build': LAB_BUILD,
+  'bi-lab-build': LAB_BUILD,
+  'sql-lab-more': LAB_BUILD,
+  'eng-lab-refresh': LAB_BUILD,
   'sql-lab-practice': LAB_PRACTICE_SQL,
   'py-lab-practice': LAB_PRACTICE_PYTHON,
 };

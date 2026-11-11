@@ -523,10 +523,10 @@
             "steps": [
               {
                 "kind": "evidence",
-                "evidence": "eng-pipeline",
+                "evidence": "eng-lab-refresh",
                 "text": {
-                  "ru": "Пробная Fabric: пайплайн грузит CSV Kaiyo в lakehouse по расписанию.",
-                  "en": "A Fabric trial: a pipeline loads the Kaiyo CSV into a lakehouse on a schedule."
+                  "ru": "Refresh в Lab: новый файл идёт через вашу сборку, сбой даты чинится, запуск зелёный.",
+                  "en": "Refresh in Lab: a new file goes through your build, the date failure is fixed, the run is green."
                 }
               }
             ]
@@ -955,9 +955,12 @@
 
   "evidence": [
     { "id": "sql-lab-practice", "axis": "sql", "level": 2, "source": "labDone", "labKeys": ["practice:sql"], "title": { "ru": "Прошёл практику Lab на Kaiyo без подсказок: 70% разделов", "en": "Passed the Lab practice on Kaiyo without hints: 70% of the sections" } },
+    { "id": "sql-lab-more", "axis": "sql", "level": 2, "source": "labDone", "labKeys": ["build:kaiyo-sales-more"], "title": { "ru": "Написал в Lab пять запросов к своей модели по строке-комментарию (More): JOIN и GROUP BY", "en": "Wrote five queries in Lab on my own model from a comment line (More): JOIN and GROUP BY" } },
     { "id": "sql-medium", "axis": "sql", "level": 3, "title": { "ru": "Решил 10 задач уровня medium на DataLemur или StrataScratch без подсказок", "en": "Solved 10 medium problems on DataLemur or StrataScratch without hints" } },
+    { "id": "model-lab-build", "axis": "modeling", "level": 1, "source": "labDone", "labKeys": ["build:kaiyo-sales"], "title": { "ru": "Собрал модель данных в Lab руками: ключи и связи таблиц продаж", "en": "Built a data model in Lab by hand: the keys and links of the sales tables" } },
     { "id": "model-cdm-pdm", "axis": "modeling", "level": 2, "title": { "ru": "Довёл модель от концептуальной до SQL в Quaera Model или PowerDesigner", "en": "Took a model from conceptual to SQL in Quaera Model or PowerDesigner" } },
     { "id": "model-star-project", "axis": "modeling", "level": 3, "title": { "ru": "Собрал звезду для чужого датасета в проекте (Fabric, Power BI или SQL)", "en": "Built a star schema for someone else's dataset in a project (Fabric, Power BI or SQL)" } },
+    { "id": "bi-lab-build", "axis": "bi", "level": 1, "source": "labDone", "labKeys": ["build:kaiyo-sales"], "title": { "ru": "Собрал дашборд в Lab руками: плитки и срез на своей модели", "en": "Built a dashboard in Lab by hand: tiles and a slicer on my own model" } },
     { "id": "pl300-practice", "axis": "bi", "level": 2, "title": { "ru": "Practice Assessment PL-300 на Microsoft Learn: 80% или больше", "en": "PL-300 Practice Assessment on Microsoft Learn: 80% or more" } },
     { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт Power BI с мерами DAX на данных, которых не было в заданиях, и могу его показать", "en": "Built a Power BI report with DAX measures on data that was not in the tasks and can show it" } },
     { "id": "pandas-notebook", "axis": "python", "level": 2, "title": { "ru": "Прошёл тетрадь Quaera Pandas до конца, последние две части без hint()", "en": "Finished the Quaera Pandas notebook, the last two parts without hint()" } },
@@ -968,8 +971,8 @@
     { "id": "stats-model", "axis": "stats", "level": 3, "title": { "ru": "Построил и проверил прогнозную модель: train/test и метрика ошибки", "en": "Built and validated a predictive model: train/test split and an error metric" } },
     { "id": "eng-quiz", "axis": "engineering", "level": 1, "source": "quiz", "title": { "ru": "Самопроверка по инженерии данных: 8 из 10 дважды, с паузой от трёх дней", "en": "Data engineering self-check: 8 of 10 twice, at least three days apart" } },
     { "id": "eng-git","axis": "engineering", "level": 1, "title": { "ru": "Веду свой проект в git: коммиты и README", "en": "Keep my own project in git: commits and a README" } },
-    { "id": "eng-lab-pipeline", "axis": "engineering", "level": 1, "source": "labDone", "labKeys": ["pipeline:kaiyo-sellout", "build:kaiyo-sales"], "title": { "ru": "Собрал конвейер в Lab: по шагам или руками от файла до дашборда", "en": "Built the pipeline in Lab: step by step, or by hand from a file to a dashboard" } },
-    { "id": "eng-pipeline", "axis": "engineering", "level": 2, "title": { "ru": "Загрузил данные пайплайном в Lakehouse или Warehouse (Fabric, ADF)", "en": "Loaded data with a pipeline into a lakehouse or warehouse (Fabric, ADF)" } },
+    { "id": "eng-lab-pipeline", "axis": "engineering", "level": 1, "source": "labDone", "labKeys": ["build:kaiyo-sales"], "title": { "ru": "Собрал конвейер в Lab руками: файл, чистка, модель, дашборд, ответ", "en": "Built the pipeline in Lab by hand: file, cleaning, model, dashboard, answer" } },
+    { "id": "eng-lab-refresh", "axis": "engineering", "level": 2, "source": "labDone", "labKeys": ["build:kaiyo-sales-refresh"], "title": { "ru": "Прогнал в Lab новый файл через свою сборку: нашёл сбой даты, починил, запуск зелёный", "en": "Ran a new file through my own build in Lab: found the date failure, fixed it, the run is green" } },
     { "id": "eng-dbt", "axis": "engineering", "level": 3, "title": { "ru": "Сделал проект dbt с тестами данных", "en": "Built a dbt project with data tests" } },
     { "id": "biz-case", "axis": "business", "level": 3, "title": { "ru": "Разобрал бизнес-кейс с выводом в первой фразе на пробном интервью или защите", "en": "Worked through a business case with the conclusion first, in a mock interview or a presentation" } },
     { "id": "biz-requirements", "axis": "business", "level": 3, "title": { "ru": "Записал требования к отчёту для живого заказчика: user stories и критерии приёмки, их приняли", "en": "Wrote requirements for a report for a real stakeholder: user stories and acceptance criteria, accepted" } },
