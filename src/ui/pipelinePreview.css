@@ -30,10 +30,3 @@
   border-color: var(--ok);
   color: var(--ok);
 }
-
-/* Строка под карточкой сборки: тише основной ссылки. */
-.pp-overview {
-  margin: 12px 0 0;
-  font-size: var(--fs-small);
-  color: var(--text-dim);
-}

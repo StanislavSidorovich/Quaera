@@ -1501,7 +1501,6 @@ export const en = {
     build: 'Build it in Lab',
     buildNote: 'The same scenario by hand: blocks, a run, a journal and three checks.',
     open: 'Open the pipeline in Lab',
-    overview: 'A 5-minute overview: a pipeline from ready-made blocks',
   },
   trackShort: {
     domain: 'Career',
