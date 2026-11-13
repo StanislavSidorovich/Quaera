@@ -2210,32 +2210,32 @@
     {
       "id": "sql-091",
       "title": "In what order to load reference tables",
-      "brief": "You are moving part of the database into a new one where foreign keys are enforced: a sales rep points to a region, an outlet points to a region and to a rep, a sale points to an outlet. That database will reject a row that points to one not loaded yet.",
-      "goal": "Arrange the loading of tables so that no insert fails.",
-      "orderQuestion": "In what order should the tables be loaded?",
+      "brief": "You are moving data into a new database that checks foreign keys: a row that references one not yet loaded is rejected.",
+      "goal": "Put the table loads in order.",
+      "orderQuestion": "In what order do you load the tables?",
       "items": [
         {
           "label": "Regions (dim_region)",
-          "why": "First, because both reps and outlets point to a region, while the region table points to nothing. Loading it later means the very first rep insert fails."
+          "why": "First: reps and outlets both reference region, and region references nothing. Load it later and the first rep insert fails."
         },
         {
           "label": "Sales reps (dim_rep)",
-          "why": "Second: every rep is assigned to a region, and the region has to be in the database by then. They cannot come after the outlets either, because an outlet points to its rep."
+          "why": "Second: each rep is assigned to a region, which must already be in the database. They cannot go after outlets either: an outlet references its rep."
         },
         {
           "label": "Outlets (dim_customer)",
-          "why": "Third, because an outlet has two references, to a region and to a rep, and both targets are loaded above. This is where people slip most often: it seems an outlet only needs its region, and the rep gets forgotten."
+          "why": "Third: an outlet has two references, to region and to rep. The rep is the one most often forgotten."
         },
         {
           "label": "Sales at outlets (fact_sellout)",
-          "why": "Last: every sales row points to an outlet, and loading the fact before the reference table gets every row refused. For fact tables the rule has no exceptions: first everything they point to."
+          "why": "Last: every sales row references an outlet, and loading the fact before the lookup fails on every row. Load everything they reference first."
         }
       ],
       "hints": [
         "Start with the table that points to no other table.",
         "An outlet has two references, not one. Both targets have to be in the database before it."
       ],
-      "explain": "Loading order follows from the references, not from how important the tables are: first what is pointed to, then what points. There is a single chain here: region, rep, outlet, sale, and each link points to the one before it, so no pair can be swapped. In this app's database foreign keys are not declared at all, and SQLite does not enforce even declared ones by default, so here a load in any order would go through without an error. The relationship does not disappear because of that: it is described in the data schema and rests on the load being honest. That is why later in the track rows without a match are found with a join rather than assumed impossible."
+      "explain": "Load order follows the references: what is referenced goes first. There is one chain: region, rep, outlet, sale, and no pair can be swapped. In the trainer's database foreign keys are not declared and SQLite does not check them, so any order would pass here. The link does not vanish, which is why rows without a match are later found with a join."
     },
     {
       "id": "sql-092",

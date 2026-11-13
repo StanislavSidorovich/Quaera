@@ -1,5 +1,6 @@
 import type { FigureStatus, FigureTone, TaskFigure } from '../content/types';
 import './runLogFigure.css';
+import './runLogFigureWrap.css';
 
 /**
  * Рисунок задания по данным (см. TaskFigure в content/types.ts): журнал запуска,
@@ -10,6 +11,9 @@ import './runLogFigure.css';
  * и люди с цветовой слепотой. Цвета только токенами темы (runLogFigure.css).
  * Тот же `StatusChip` проигрывает журнал запуска в виде задания `waves`.
  */
+
+/** Ячейка длиннее этого числа знаков переносится по словам, а не держится в одну строку. */
+const WRAP_FROM = 24;
 
 const GLYPH: Record<FigureStatus, string> = {
   succeeded: '✓',
@@ -89,7 +93,7 @@ export function RunLogFigure({ figure }: { figure: TaskFigure }) {
 
       {figure.kind === 'table' && (
         <div className="rl-scroll">
-          <table className={`rl-table${figure.mono ? ' rl-table--mono' : ''}`}>
+          <table className={`rl-table${figure.mono ? ' rl-table--mono' : ''}${figure.rows.some((r) => r.some((c) => c.length > WRAP_FROM)) ? ' rl-table--wrap' : ''}`}>
             <thead>
               <tr>
                 {figure.head.map((h, i) => (

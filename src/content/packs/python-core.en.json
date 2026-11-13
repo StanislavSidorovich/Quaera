@@ -1519,29 +1519,29 @@
     {
       "id": "py-081",
       "title": "The order of working with repeats",
-      "brief": "The export is accepted, but sales may be doubled in it. All five steps below are needed, yet deleting cannot be undone without reloading the table, so the order is not free.",
-      "goal": "Arrange the steps so that each one builds on the result of the previous one.",
-      "orderQuestion": "In what order do you work with repeats in an export?",
+      "brief": "The extract may hold duplicated sales. A deletion cannot be undone without reloading the table, so the order is not free.",
+      "goal": "Put the duplicate-handling steps in order.",
+      "orderQuestion": "In what order do you do them?",
       "items": [
         {
-          "label": "Name the key: which columns make two rows the same sale (all except the service raw_id)",
-          "why": "First, because both finding and deleting work on the key. Without it you are left comparing the whole row, where raw_id tells every pair apart and there are \"no\" repeats."
+          "label": "Name the duplicate key: all columns except raw_id",
+          "why": "First: finding and deleting both work by key. Without it you compare whole rows, where raw_id makes every pair differ and there are no duplicates."
         },
         {
-          "label": "Look at the repeats by eye: select rows with keep=False and sort by the key so pairs sit side by side",
-          "why": "Second: before deleting, make sure what was found really is one sale twice, not two different sales with similar values. A number will not show that, a pair of rows side by side shows it at once."
+          "label": "Look at the pairs: keep=False, sorted by key",
+          "why": "Second: confirm it is one sale twice, not two similar ones. A number will not show that; two rows side by side will."
         },
         {
-          "label": "Estimate the scale: how many rows and how much revenue fall on the repeated copies",
-          "why": "Third, and strictly before deleting: afterwards the extra rows cannot be found any more. The scale decides whether to clean the table yourself or send the export back to the source."
+          "label": "Gauge the scale: rows and revenue in the copies",
+          "why": "Third, before deletion: afterwards the extra rows cannot be found. The scale decides whether to clean yourself or return the extract to the source."
         },
         {
-          "label": "Remove the repeats: drop_duplicates on the same key, keeping the first copy",
-          "why": "Fourth: this action cannot be undone for the working table. The key is the same as for finding and looking, otherwise something other than what you inspected gets deleted."
+          "label": "Remove duplicates: drop_duplicates on the same key",
+          "why": "Fourth: the action is irreversible for the working table. The key is the same, or you delete something other than what you looked at."
         },
         {
-          "label": "Check the count: there were 3,110 rows, 110 extra, exactly 3,000 should remain",
-          "why": "Last: the check verifies the deletion itself. If the result is not 3,000, the key was different from the one used for finding, and it is better to catch that at once than in a report."
+          "label": "Reconcile the count: 3,110 minus 110 is 3,000",
+          "why": "Last: the check tests the deletion itself. Not 3,000 rows means the key differed from the search, and it is better caught at once."
         }
       ],
       "hints": [
@@ -1549,7 +1549,7 @@
         "You can only delete what you have already looked at and sized up. A check of the result is possible once there is something to check.",
         "The estimate comes before the deletion: afterwards there are no repeated rows left in the table."
       ],
-      "explain": "The order rests on two rules. Decisions first, actions after: the key defines what a repeat is, and every later step depends on it. Reversible first, irreversible after: looking and estimating change nothing, deleting does. The final check uses the arithmetic from the third step: 3,110 minus 110 is 3,000. If the export arrives from the source with 3.7% of extra revenue, that is a reason to go back to the source, not only to clean a copy."
+      "explain": "Two rules: decisions before actions (the key defines a duplicate) and reversible before irreversible. The final check uses the arithmetic of step three: 3,110 minus 110 is 3,000."
     },
     {
       "id": "py-082",
@@ -1628,36 +1628,36 @@
     {
       "id": "py-086",
       "title": "How to build np.select",
-      "brief": "Rows have to be labeled by three rules with adjacent thresholds. All five steps are sensible, but if one is skipped or put in the wrong place, the labels come out wrong while the code runs without a single error.",
-      "goal": "Arrange the steps so that the labels come out right and it is possible to check them.",
-      "orderQuestion": "In what order do you build a labeling with np.select?",
+      "brief": "Rows are labelled by three rules with adjacent thresholds. A wrong step order gives wrong labels with no error.",
+      "goal": "Put the labelling steps in order.",
+      "orderQuestion": "In what order do you build np.select?",
       "items": [
         {
-          "label": "Write in words which label each group of rows should get",
-          "why": "First: without the rules in words the conditions have to be invented along the way, and overlaps show up only in finished code. This is also where you see which groups lie inside others."
+          "label": "Write in words the label for each group",
+          "why": "First: without rules in words, conditions get invented on the fly and overlaps show only in finished code. It shows which groups sit inside others."
         },
         {
-          "label": "Arrange the conditions from the narrowest to the widest",
-          "why": "Second, because np.select takes the first condition that fires. If a wide one stands before a narrow one, the narrow one never fires, and there is no error."
+          "label": "Order conditions from narrowest to widest",
+          "why": "Second: np.select takes the first condition that fires. A wide one before a narrow one means the narrow never fires, and there is no error."
         },
         {
-          "label": "Decide which label rows that pass no condition get, and pass it as default",
-          "why": "Third: this is also a decision about meaning, not a technical detail. Without default such rows get 0, and a label \"0\" appears in a column of text labels."
+          "label": "Decide the label for the rest and pass it as default",
+          "why": "Third: this is a decision about meaning. Without default such rows get 0, and a \"0\" label appears in a text column."
         },
         {
-          "label": "Call np.select and put the result into a column or a Series",
-          "why": "Fourth, when the conditions and the default are settled. The call collects everything said above into an array of labels as long as the table."
+          "label": "Call np.select, result into a column",
+          "why": "Fourth, once conditions and default are defined. The call assembles all of it into a label array as long as the table."
         },
         {
-          "label": "Check the result: the counts by label add up to the table size and there is no label \"0\"",
-          "why": "Last: the check compares the result with what was intended. A mismatched total or a \"0\" label shows that default was forgotten, and a missing group shows that the conditions are in the wrong order."
+          "label": "Check: row counts by label, no label \"0\"",
+          "why": "Last: a sum mismatch or a \"0\" label shows a forgotten default, and a missing group shows conditions in the wrong order."
         }
       ],
       "hints": [
         "Two steps decide what the code should do and come before the call itself. One step settles only the order inside the list.",
         "There is nothing to check until the call has happened."
       ],
-      "explain": "The order is the same as for any code built on rules: rules first, then writing them down, then checking. Two np.select mistakes are silent: a condition that never fired because of the order, and a label \"0\" because of a missing default. Both are visible only in the resulting table, so the last step is not a formality: the counts by label must add up to the number of rows, and the set of labels must match the intended one."
+      "explain": "The order is the same as for any rule-based code: rules, their notation, a check. Two np.select errors are silent: a condition that never fired because of order, and a \"0\" label from a missing default. Both show only in the final table, so the sum by label must equal the row count."
     },
     {
       "id": "py-087",
@@ -1734,36 +1734,36 @@
     {
       "id": "py-091",
       "title": "How to split a number into groups",
-      "brief": "Outlets have to be split into groups by revenue and the result shown to a manager. Each of the five steps is needed, but the order decides what ends up in the report: edges picked to fit the data, or edges that can be explained.",
-      "goal": "Arrange the steps from getting to know the data to checking the result.",
+      "brief": "Outlets are split into revenue groups for a manager. The order decides whether cut points are fitted or explainable.",
+      "goal": "Put the steps from data to check in order.",
       "orderQuestion": "In what order do you split a number into groups?",
       "items": [
         {
-          "label": "Look at the distribution: describe() or quantiles, the minimum and the maximum",
-          "why": "First, because everything else depends on the shape of the distribution. One outlier shifts the mean and stretches the range, and without this look the edges are chosen blindly."
+          "label": "Look at the distribution: describe() or quantiles",
+          "why": "First: everything else depends on the shape of the distribution. One outlier stretches the range, and bounds get chosen blind."
         },
         {
-          "label": "Decide where the edges come from: the business (cut) or shares (qcut)",
-          "why": "Second: this is a decision about meaning. cut gives clear thresholds and groups of different sizes, qcut gives groups of equal size and unclear thresholds. The choice determines what the next step looks like."
+          "label": "Decide where the bounds come from: cut or qcut",
+          "why": "Second: a decision about meaning. cut gives clear thresholds and uneven groups, qcut gives equal groups and unclear thresholds."
         },
         {
-          "label": "Write the edges and group names, decide where a value on an edge goes and what to do about the minimum",
-          "why": "Third: bins, labels and right are set together. A lower edge below the minimum and the side of closing decide whether some rows get lost and which group the boundary values land in."
+          "label": "Write the bounds, names and which side closes",
+          "why": "Third: bins, labels and right are set together. A lower bound below the minimum and the closing side decide whether rows are lost."
         },
         {
-          "label": "Call pd.cut or pd.qcut and save the result into a column",
-          "why": "Fourth, when the edges and labels are settled. The call only carries out decisions already made."
+          "label": "Call pd.cut or pd.qcut, save to a column",
+          "why": "Fourth, once bounds and labels are defined. The call only executes the decisions already taken."
         },
         {
-          "label": "Check the result: the counts by group add up to the table size and there are no missing values (NaN)",
-          "why": "Last: a missing value in the new column means a value outside the edges, that is, a lost row. A sum over the groups equal to the table size catches this in a second."
+          "label": "Check: group sum equals table size, no NaN",
+          "why": "Last: a NaN in the new column is a value outside the bounds, a lost row. A group sum equal to table size catches it in a second."
         }
       ],
       "hints": [
         "There is a step after which the edges are chosen meaningfully, and before which they are chosen blindly.",
         "The choice between cut and qcut comes before writing the edges themselves: qcut takes a number of groups instead of a list of edges."
       ],
-      "explain": "The order is the same as for any decision about data: look first, then decide, then carry out, then check. The choice between cut and qcut answers the question of what you want: clear edges or equal groups. Two mistakes are silent: a value on an edge goes to the wrong group, and the minimum becomes NaN. A sum over the groups checked against the table size catches the second at once, while the first is caught only by reading the condition of the task."
+      "explain": "As with any data decision: look, decide, execute, check. cut versus qcut is a choice between clear bounds and equal groups. Two errors are silent: a boundary value lands in the wrong group and the minimum becomes NaN; the group sum catches the second at once."
     },
     {
       "id": "py-092",
@@ -1839,36 +1839,36 @@
     {
       "id": "py-096",
       "title": "What to do with unusually large values",
-      "brief": "Weekly sales have rows that stand far out upward. The manager asks to \"remove the outliers so the average does not lie\". Each of the five steps is sensible, but the order separates careful analysis from losing real data.",
-      "goal": "Arrange the steps so that the decision to exclude rests on what you have seen.",
-      "orderQuestion": "In what order do you work with unusually large values?",
+      "brief": "The manager asks to remove outliers from weekly sales. The order separates careful analysis from losing real data.",
+      "goal": "Put the large-value steps in order.",
+      "orderQuestion": "In what order do you do them?",
       "items": [
         {
-          "label": "Calculate the edge by the IQR rule: the quartiles and the upper threshold",
-          "why": "First: without an edge there is no definition of \"unusually large\" and nothing to discuss. This is also where you decide within which group the edge is calculated."
+          "label": "Compute the IQR bound: quartiles, upper threshold",
+          "why": "First: without a bound there is no definition of \"unusually large\". It also decides which group the bound is computed within."
         },
         {
-          "label": "Mark values above the edge in a separate flag column, keep the rows",
-          "why": "Second: a flag changes nothing in the data and is undone with one line. Deleting is irreversible, and the decision has not been made yet."
+          "label": "Flag values above the bound, keep the rows",
+          "why": "Second: a flag changes nothing and is undone in one line. Deletion is irreversible and no decision has been made."
         },
         {
-          "label": "Look at what was marked: which products, which weeks, whether there is a promotion",
-          "why": "Third: the rule answers only \"is it unusually large\". Whether it is an error or a real event is visible only from the content of the marked rows."
+          "label": "Look at what is flagged: products, weeks, promos",
+          "why": "Third: the rule only answers \"is it unusually large\". Error or real event shows only in the content of the flagged rows."
         },
         {
-          "label": "Decide by cause: fix or remove an error, keep and explain an event",
-          "why": "Fourth: the decision rests on what was seen. Promotions and stock-ups are real sales, and deleting them understates the total."
+          "label": "Decide per cause: fix, remove or keep",
+          "why": "Fourth: the decision rests on what you saw. Promos and stock-ups are real sales, and deleting them understates the total."
         },
         {
-          "label": "Record what was excluded and why, and only then recalculate the metric",
-          "why": "Last: an exclusion without a record cannot be checked or repeated. A metric recalculated before the decision gets fitted to the wanted answer."
+          "label": "Record exclusions and reasons, then recompute",
+          "why": "Last: an exclusion without a record cannot be checked. A metric recomputed before the decision gets fitted to the wanted answer."
         }
       ],
       "hints": [
         "One step turns the edge into a visible result without changing the data. It comes before all the steps that decide something.",
         "You can decide whether to keep or remove a value only after finding out what caused it."
       ],
-      "explain": "The order rests on two rules: reversible first, irreversible after, and understand first, decide after. The IQR rule gives suspects, not culprits. In this data the largest rows (232, 194 and 185 units) are all promotions: they are real sales, and \"removing the outliers\" would understate demand exactly where it is highest."
+      "explain": "Reversible before irreversible; understand before deciding. IQR gives suspects, not culprits. Here the largest rows (232, 194 and 185 units) are all promos: \"removing outliers\" would understate demand exactly where it is highest."
     },
     {
       "id": "py-097",
@@ -1900,29 +1900,29 @@
     {
       "id": "py-099",
       "title": "How to build RFM segments",
-      "brief": "A brand is losing outlets, and the win-back team needs a list of where to start: bringing everyone back at once is impossible. The list is built from recency, frequency and money, and every step relies on the previous one.",
-      "goal": "Arrange the steps from choosing the unit of analysis to checking the segments.",
+      "brief": "A brand is losing outlets; the win-back team needs a list of whom to start with. Basis: recency, frequency, money.",
+      "goal": "Put the build steps in order.",
       "orderQuestion": "In what order do you build RFM segments?",
       "items": [
         {
-          "label": "Choose the unit of analysis and the reference date: a customer (outlet) and the last week of data as \"today\"",
-          "why": "First: \"has not bought for a long time\" makes sense only from a reference date. Take the real \"today\" while the data ends earlier, and every customer turns out to be lost."
+          "label": "Pick the unit of analysis and the as-of date",
+          "why": "First: \"has not bought for a long time\" only makes sense from an as-of date. Use the real \"today\" when data ends earlier and everyone looks lost."
         },
         {
-          "label": "Collapse sales to one row per customer: last purchase, number of weeks with a purchase, revenue",
-          "why": "Second: scores are given to customers, not to sales. If they are calculated on sales rows, a customer with a hundred purchases lands in several segments at once."
+          "label": "Collapse sales to one row per customer",
+          "why": "Second: scores go to customers, not sales. Otherwise a customer with a hundred purchases lands in several segments."
         },
         {
-          "label": "Split the measures into scores: recency by a named threshold, revenue and frequency by shares (qcut)",
-          "why": "Third, because qcut on the per-customer table, not on raw sales, computes the quartiles of customers. Recency is more often split by a threshold the business names."
+          "label": "Turn measures into scores: recency by threshold, the rest qcut",
+          "why": "Third: on the per-customer collapse qcut computes customer quartiles, not sales quartiles. Recency is usually cut at a business threshold."
         },
         {
-          "label": "Build the segment with conditions through np.select, narrowest conditions first",
-          "why": "Fourth: the segment is built from ready scores. The order of the conditions decides which segment a customer fitting two of them lands in."
+          "label": "Build the segment with np.select, narrow conditions first",
+          "why": "Fourth: the segment is built from finished scores. Condition order decides where a customer matching two of them lands."
         },
         {
-          "label": "Check: the segments hold as many customers as the collapsed table has rows, and revenue across segments adds up to the total",
-          "why": "Last: the check catches a lost customer (an empty score), overlapping conditions and a wrong unit of analysis, that is, everything above passes without errors."
+          "label": "Reconcile customers and revenue with the source",
+          "why": "Last: the check catches a lost customer, overlapping conditions and a wrong unit of analysis, all of which pass silently above."
         }
       ],
       "hints": [
@@ -1930,7 +1930,7 @@
         "Scores cannot be calculated before collapsing: raw sales and customers have different quartiles.",
         "The segment is built from scores, not the other way round, so it comes after them."
       ],
-      "explain": "RFM comes down to three decisions, and each is made in its own place. The reference date and the unit of analysis decide what is counted at all; collapsing to the customer decides who gets scores; the order of the conditions decides which segment a customer on an overlap lands in. A mistake in any of them gives no error message, so the last step, checking the result against the source numbers, is mandatory."
+      "explain": "Three decisions, each in its place: the as-of date and unit decide what is counted; the collapse to customers decides who gets scores; condition order decides where a customer on an overlap lands. An error in any is silent, so the final reconciliation is mandatory."
     },
     {
       "id": "py-100",
