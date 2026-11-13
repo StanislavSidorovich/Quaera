@@ -60,6 +60,14 @@
 
 ## 1. Где мы сейчас
 
+### 2026-11-13: CI с гейтами (пачка В-1, Sonnet, не запушено)
+
+`.github/workflows/verify.yml`: на push в `main` и на pull_request идут `npm ci`, `npm run prepare:assets`, `npm run verify` (27 проверок: verify:data, verify:content и 25 тестов) и `npm run build` (tsc + vite, не деплой). Node из `.node-version` (22), кеш npm. Деплой Cloudflare не тронут.
+- **Что понадобилось сверх verify.** `public/pyodide` и `public/data` в .gitignore, поэтому нужен `prepare:assets`: он докачивает pandas/numpy для Pyodide с cdn.jsdelivr.net (сеть) и собирает датасет. Без них не стартуют `verify:content` и `test:spot`. `public/pyodide` в `actions/cache` с ключом по lock-файлу и sync-pyodide.mjs. Браузер гейтам не нужен.
+- **Замер в чистом клоне** (Windows, Node 24): npm ci 9 с, prepare:assets 16 с, verify 4м45с, build 51 с. На ubuntu ожидаем быстрее.
+- **Может упасть только в CI:** CDN jsdelivr недоступен при первом прогоне без кеша; расхождение окончаний строк (`.gitattributes` есть, на Linux CRLF не мешает); версия Node 22 вместо локальной 24; лимит 20 минут. Первый прогон смотрит хаб.
+- Хвост: если verify на Linux окажется долгим, разнести на параллельные job по группам тестов.
+
 ### 2026-11-11: хаб: срез и Refresh в сборке, разбор Fable, честный зачёт (пачка А)
 
 Хаб на Opus раздал четыре сессии Sonnet в общей папке, принимал по коду, проверял вживую (Playwright, prod-сборка Lab) и пушил сам.

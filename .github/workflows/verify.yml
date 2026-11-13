@@ -1,0 +1,49 @@
+# Гейты качества без нас: npm run verify (27 проверок данных, контента и логики) и сборка.
+# Деплой отсюда не идёт: Cloudflare Pages собирает main сам по пушу.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # public/pyodide и public/data не лежат в репозитории (в .gitignore): их собирает prepare:assets.
+      # Пакеты pandas/numpy для Pyodide докачиваются с cdn.jsdelivr.net (сеть), поэтому кеш;
+      # ключ по версии pyodide из lock-файла. Без этих файлов verify:content и test:spot не запустятся.
+      - name: Cache Pyodide runtime
+        uses: actions/cache@v4
+        with:
+          path: public/pyodide
+          key: pyodide-${{ runner.os }}-${{ hashFiles('package-lock.json', 'scripts/sync-pyodide.mjs') }}
+
+      - name: Prepare assets (sql.js, Pyodide, icons, dataset)
+        run: npm run prepare:assets
+
+      - name: Verify (all quality gates)
+        run: npm run verify
+
+      # Тип-проверка и сборка: ловит то, чего не видят гейты. Не деплой.
+      - name: Build (tsc + vite build)
+        run: npm run build
