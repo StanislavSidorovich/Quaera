@@ -1,0 +1,547 @@
+/*
+ * Главная с одним хребтом (docs/home-spine-design-2026-11.md, схема A).
+ * Рамка недели с главной кнопкой, слева карта пути данных и статус, справа
+ * треки плиткой 2×2 высотой с левую колонку, ниже письмо, ссылки и семейство.
+ * Порог двух колонок 1180px: на этой ширине контент рядом с боковым меню
+ * ещё вмещает 60/40 без ужатия плиток.
+ */
+.hs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hs > * {
+  min-width: 0;
+}
+
+/* Рамка недели. */
+.hs-frame {
+  display: grid;
+  gap: 16px;
+}
+
+.hs-kicker {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.hs-question {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.hs-asker {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.hs-days {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hs-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.hs-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: transparent;
+}
+
+.hs-day.done .hs-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.hs-day.now .hs-dot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.hs-day.now {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hs-frame-act {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.btn.hs-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 16px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.hs-main-min {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.btn.hs-main:disabled {
+  opacity: 0.6;
+}
+
+.hs-quiet {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hs-intro {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.hs-textlink {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  font-size: inherit;
+  color: var(--accent);
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hs-entry {
+  margin: 0;
+}
+
+@media (min-width: 760px) {
+  .hs-frame {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    align-items: center;
+  }
+}
+
+/* Две колонки: слева карта и статус, справа треки. */
+.hs-cols {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hs-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 1180px) {
+  .hs-cols {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: stretch;
+  }
+  .hs-tracks {
+    grid-template-rows: 1fr 1fr;
+  }
+}
+
+/* Карта. */
+.hs-map h2,
+.hs-status p {
+  margin-top: 0;
+}
+
+.hs-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hs-layer {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+
+.hs-layer.here {
+  border-color: var(--accent);
+  background: var(--bg-raised);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.hs-layer-head {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-areas: 'n name state' '. roles roles';
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border-radius: 10px;
+}
+
+.hs-layer-n {
+  grid-area: n;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+}
+
+.hs-layer.done .hs-layer-n {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.hs-layer.here .hs-layer-n {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hs-layer-name {
+  grid-area: name;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.hs-layer-roles {
+  grid-area: roles;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.hs-layer-state {
+  grid-area: state;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.hs-layer.here .hs-layer-state {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hs-layer.ahead:not(.here) .hs-layer-name {
+  font-weight: 500;
+}
+
+.hs-layer-body {
+  padding: 0 12px 12px 46px;
+}
+
+.hs-layer-what {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.hs-acts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hs-act {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+.hs-act:hover {
+  border-color: var(--accent);
+}
+
+.hs-act-label {
+  min-width: 0;
+}
+
+/* Круг: учиться, закреплять, применять. Одно слово-метка, не отдельный блок. */
+.hs-circle {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text);
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.hs-circle-learn {
+  background: color-mix(in srgb, var(--track-sql) 16%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--track-sql) 50%, var(--line));
+}
+
+.hs-circle-practice {
+  background: color-mix(in srgb, var(--track-domain) 16%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--track-domain) 50%, var(--line));
+}
+
+.hs-circle-apply {
+  background: color-mix(in srgb, var(--track-model) 18%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--track-model) 55%, var(--line));
+}
+
+.hs-map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 12px 0 0;
+}
+
+/* Статус. */
+.hs-status {
+  padding: 12px 16px;
+}
+
+.hs-status p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.hs-status p + p {
+  border-top: 1px solid var(--line);
+}
+
+.hs-k {
+  color: var(--text-dim);
+}
+
+.hs-v {
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+}
+
+.hs-strength {
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Треки 2×2. */
+.hs-tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hs-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  text-align: left;
+  color: var(--text);
+  border-top: 3px solid var(--tile-color, var(--line));
+}
+
+.hs-tile.track-domain { --tile-color: var(--track-domain); }
+.hs-tile.track-sql { --tile-color: var(--track-sql); }
+.hs-tile.track-python { --tile-color: var(--track-python); }
+.hs-tile.track-model { --tile-color: var(--track-model); }
+
+.hs-tile.active {
+  border-color: var(--tile-color);
+  box-shadow: 0 0 0 1px var(--tile-color);
+}
+
+.hs-tile-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.hs-tile-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hs-tile-stage {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.hs-tile-count {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.hs-tile-cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+@media (min-width: 1180px) {
+  .hs-tile {
+    padding: 16px;
+  }
+  .hs-tile-name {
+    font-size: 17px;
+  }
+}
+
+/* Письмо руководителю. */
+.hs-letter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hs-letter h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
+.hs-letter p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.hs-letter:not(.open) {
+  background: var(--bg-sunken);
+}
+
+.hs-letter-btn {
+  width: auto;
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+/* Ссылки на справочники. */
+.hs-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hs-links .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 15px;
+}
+
+@media (min-width: 760px) {
+  .hs-links {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Телефон: у не текущих слоёв скрыты роли, раскрыт только текущий. */
+@media (max-width: 759px) {
+  .hs-layer:not(.here) .hs-layer-roles {
+    display: none;
+  }
+  .hs-layer-body {
+    padding-left: 12px;
+  }
+  .hs-question {
+    font-size: 16px;
+  }
+  .hs-tile {
+    padding: 10px;
+  }
+  .hs-tile-name {
+    font-size: 14px;
+  }
+  .hs-tile-cta {
+    font-size: 12px;
+  }
+}
+
+/* Вид трека: возврат на главную. */
+.hs-back {
+  align-self: flex-start;
+  margin: 0 0 12px;
+}
+
+.hs-about {
+  margin: 12px 0 0;
+}
+
+.hs-track-title {
+  margin: 0 0 12px;
+  font-size: var(--fs-h2);
+}
+
+/* Боковое меню от 1024px уже ведёт в «О тренажёре». */
+@media (min-width: 1024px) {
+  .hs-about {
+    display: none;
+  }
+}
+
+@media (max-width: 759px) {
+  .hs-tile-stage {
+    display: none;
+  }
+}

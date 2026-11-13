@@ -2603,7 +2603,6 @@ export default function App() {
               onOpenAbout={() => setScreen({ name: 'about' })}
               guide={guide}
               onOpenIntro={() => setScreen({ name: 'intro' })}
-              onOpenOnboarding={() => setScreen({ name: 'onboarding' })}
               onSwitchTrack={switchTrack}
               onStartSkill={startSkillSession}
               onOpenAllTasks={() => setAllTasksOpen(true)}
