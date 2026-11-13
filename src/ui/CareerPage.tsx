@@ -5,6 +5,7 @@ import type { Track } from '../content/types';
 import { useI18n } from '../i18n/context';
 import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
+import { careerSignals } from '../career/signals';
 import { AXES, axisReading, labDoneEvidence, overdueSkills, roleReadiness } from '../career/readiness';
 import type { AxisId, AxisReading } from '../career/readiness';
 import { DEFAULT_ROLE, checkedIds, emptyCareerState, withRole, withToggledEvidence, withWeeklySnapshot, withQuizAttempt } from '../career/store';
@@ -139,21 +140,22 @@ export function CareerPage({
   const skillTitle = (id: string) => skillInfo.get(id)?.title ?? id;
 
   /* Ваши уровни по осям не зависят от роли; готовность считается по каждой из семи ролей (плитки и страница). */
+  const signals = useMemo(() => careerSignals(progress), [progress.skills, progress.taskRecords]);
   const readings = useMemo(
-    () => Object.fromEntries(careerAxes.map((a) => [a.id, axisReading(a, progress.skills, careerEvidence, checked)])) as Record<AxisId, AxisReading>,
-    [progress.skills, checked]
+    () => Object.fromEntries(careerAxes.map((a) => [a.id, axisReading(a, signals, careerEvidence, checked)])) as Record<AxisId, AxisReading>,
+    [signals, checked]
   );
   const readinessByRole = useMemo(
     () =>
       Object.fromEntries(
-        careerRoles.map((r) => [r.id, roleReadiness(r, careerAxes, progress.skills, careerEvidence, checked, (id) => skillInfo.get(id)?.tier ?? 1)])
+        careerRoles.map((r) => [r.id, roleReadiness(r, careerAxes, signals, careerEvidence, checked, (id) => skillInfo.get(id)?.tier ?? 1)])
       ),
-    [progress.skills, checked, skillInfo]
+    [signals, checked, skillInfo]
   );
   const levels = useMemo(() => Object.fromEntries(AXES.map((a) => [a, readings[a].level])) as AxisLevels, [readings]);
   const dueByAxis = useMemo(
-    () => Object.fromEntries(careerAxes.map((a) => [a.id, overdueSkills(a, progress.skills, new Date())])) as Record<AxisId, string[]>,
-    [progress.skills]
+    () => Object.fromEntries(careerAxes.map((a) => [a.id, overdueSkills(a, signals, new Date())])) as Record<AxisId, string[]>,
+    [signals]
   );
 
   /* Снимок раз в неделю: при открытии, не при каждой отметке. */
@@ -211,7 +213,7 @@ export function CareerPage({
           startTrace={openMap?.trace}
           startProject={openMap?.project}
           restore={restore}
-          skills={progress.skills}
+          skills={signals}
           skillTitle={skillTitle}
           onStartSkill={onStartSkill}
           onOpenRole={(id) => {

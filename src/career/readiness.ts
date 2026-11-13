@@ -28,6 +28,11 @@ export interface SkillSignal {
   intervalDays: number;
   /** Когда навык придёт на повторение; нужен только для пометки «ждёт повторения». */
   dueAt?: string;
+  /**
+   * Решал ли человек этот навык заданием, где код набирают с нуля (`career/wrote.ts`).
+   * Без этого навык выше уровня 1 не поднимается: выбор из вариантов знакомство, не умение.
+   */
+  wrote?: boolean;
 }
 
 export interface AxisDef {
@@ -43,6 +48,11 @@ export interface AxisDef {
    * ограничен единицей, а дальше ось поднимают только доказательства.
    */
   trainerMax: Level;
+  /**
+   * Потолок тренажёра по правилам до Г1 (2026-11-13), если он был выше нынешнего.
+   * Нужен только для пометки «по старым правилам здесь был уровень выше»: уровень от него не зависит.
+   */
+  legacyMax?: Level;
 }
 
 export interface EvidenceDef {
@@ -101,6 +111,17 @@ export const RETAINED_INTERVAL_DAYS = 5;
  */
 export function skillLevel(s: SkillSignal | undefined): 0 | 1 | 2 {
   if (!s || s.reps - s.lapses < 1) return 0;
+  if (s.wrote === true && s.lastGrade === 4 && s.intervalDays >= RETAINED_INTERVAL_DAYS) return 2;
+  return 1;
+}
+
+/**
+ * Уровень навыка по правилам до Г1: двойку давал и выбор из вариантов.
+ * Остался только затем, чтобы показать человеку, что у него «было засчитано
+ * по старым правилам», а не отнимать уровень молча. В формулу не входит.
+ */
+export function legacySkillLevel(s: SkillSignal | undefined): 0 | 1 | 2 {
+  if (!s || s.reps - s.lapses < 1) return 0;
   if (s.lastGrade === 4 && s.intervalDays >= RETAINED_INTERVAL_DAYS) return 2;
   return 1;
 }
@@ -118,6 +139,11 @@ export interface AxisReading {
   evidenceCounted: string[];
   evidenceCapped: string[];
   /**
+   * Уровень по тренажёру на старых правилах (до Г1), если он выше нынешнего итога оси;
+   * иначе не задан. Экран говорит: «раньше засчитывалось, теперь нужен код или Lab».
+   */
+  legacyLevel?: 1 | 2;
+  /**
    * Доля пути к следующему уровню, 0..0.95: сколько навыков оси уже дошли до
    * порога следующей ступени из нужных (`AXIS_SHARE`). Только для рисунка:
    * уровень от неё не зависит. Ноль, если уровень оси поднят отметкой выше
@@ -134,10 +160,13 @@ function trainerAxisLevel(def: AxisDef, signals: Record<string, SkillSignal | un
   const need = Math.ceil(total * AXIS_SHARE);
   const raw: Level = total > 0 && atLeast2 >= need ? 2 : total > 0 && atLeast1 >= need ? 1 : 0;
   const level = Math.min(raw, def.trainerMax) as Level;
+  const legacyLevels = def.skills.map((id) => legacySkillLevel(signals[id]));
+  const legacyRaw: Level = total > 0 && legacyLevels.filter((l) => l >= 2).length >= need ? 2 : total > 0 && legacyLevels.filter((l) => l >= 1).length >= need ? 1 : 0;
+  const legacy = Math.min(legacyRaw, def.legacyMax ?? def.trainerMax) as Level;
   const next = level + 1;
   const done = next === 1 ? atLeast1 : next === 2 ? atLeast2 : 0;
   const progress = total > 0 && next <= Math.min(2, def.trainerMax) ? Math.min(0.95, done / need) : 0;
-  return { level, atLeast1, atLeast2, total, progress };
+  return { level, atLeast1, atLeast2, total, progress, legacy };
 }
 
 /**
@@ -163,9 +192,11 @@ export function axisReading(
   const evidenceCapped: string[] = [];
   for (const e of evidence) {
     if (e.axis !== def.id || !checked.has(e.id)) continue;
-    if (e.level > cap) evidenceCapped.push(e.id);
+    /* Возврат из Lab — сделанная вещь, а не галочка: потолок «тренажёр + ступень» его не режет (Г1). */
+    const eCap: Level = e.source === 'labDone' ? 3 : cap;
+    if (e.level > eCap) evidenceCapped.push(e.id);
     else evidenceCounted.push(e.id);
-    level = Math.max(level, Math.min(e.level, cap)) as Level;
+    level = Math.max(level, Math.min(e.level, eCap)) as Level;
   }
   return {
     axis: def.id,
@@ -176,6 +207,7 @@ export function axisReading(
     total: t.total,
     evidenceCounted,
     evidenceCapped,
+    ...(t.legacy > level ? { legacyLevel: t.legacy as 1 | 2 } : {}),
     progress: level === t.level ? t.progress : 0,
   };
 }

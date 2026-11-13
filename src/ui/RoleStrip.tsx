@@ -3,6 +3,7 @@ import { careerAxes, careerEvidence, careerRole } from '../content/career';
 import { passedQuizEvidence } from '../career/quiz';
 import { DEFAULT_ROLE, checkedIds, emptyCareerState } from '../career/store';
 import { roleReadiness } from '../career/readiness';
+import { careerSignals } from '../career/signals';
 import { useI18n } from '../i18n/context';
 import type { Progress } from '../srs/store';
 import './roleStrip.css';
@@ -23,8 +24,8 @@ export function RoleStrip({ progress, onOpen }: { progress: Progress; onOpen: (r
   const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
   const r = useMemo(() => {
     const checked = new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date())]);
-    return roleReadiness(role, careerAxes, progress.skills, careerEvidence, checked);
-  }, [role, state, progress.skills]);
+    return roleReadiness(role, careerAxes, careerSignals(progress), careerEvidence, checked);
+  }, [role, state, progress.skills, progress.taskRecords]);
   const text = !chosen ? c.stripPick : r.met >= r.total ? c.stripAllMet(role.title[locale]) : c.stripGoal(role.title[locale], r.met, r.total);
   return (
     <p className="role-strip">

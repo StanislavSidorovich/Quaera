@@ -9,6 +9,7 @@ import { quizStatus } from '../career/quiz';
 import { quizBank } from '../content/careerQuiz';
 import { useQuizStatusText } from './CareerQuiz';
 import './careerSteps.css';
+import './careerCeiling.css';
 
 /**
  * Общие куски обзора и страницы роли: шаги «как дойти до уровня» и строки
@@ -214,6 +215,31 @@ export function StepList({ steps, axis, ctx }: { steps: AxisStep[]; axis: AxisId
       ))}
     </ul>
   );
+}
+
+/**
+ * Одна строка там, где ось упёрлась в потолок тренажёра (`ceilingLab`): дальше растёт сборка в Lab.
+ * Ссылка идёт через `openFamilyLink`, как остальные переходы в Lab.
+ */
+export function CeilingNote({ axis, level }: { axis: AxisId; level: number }) {
+  const { t } = useI18n();
+  const def = careerAxis(axis);
+  if (!def.ceilingLab || level <= def.trainerMax) return null;
+  return (
+    <p className="career-ceiling">
+      <span>{t.career.ceilingLab.text}</span>{' '}
+      <a className="career-ceiling-link" href={LAB_BUILD} target="_blank" rel="noreferrer" onClick={(ev) => openFamilyLink(ev.currentTarget, ev.nativeEvent, 'lab')}>
+        {t.career.ceilingLab.link} ↗
+      </a>
+    </p>
+  );
+}
+
+/** Пометка «по старым правилам было засчитано»: уровень не отнимаем молча. */
+export function LegacyNote({ reading }: { reading: AxisReading }) {
+  const { t } = useI18n();
+  if (!reading.legacyLevel) return null;
+  return <p className="muted career-legacy">{t.career.legacyNote(t.career.levels[reading.legacyLevel])}</p>;
 }
 
 /** Строка «засчитывается»: считается из формулы, а не хранится, чтобы числа не разошлись с ней. */

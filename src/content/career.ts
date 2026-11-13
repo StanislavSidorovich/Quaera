@@ -65,6 +65,8 @@ export interface CareerAxis extends AxisDef {
   levels: AxisLevel[];
   /** Как ось видна в вакансиях, одной фразой с долей. */
   market: Text;
+  /** Потолок тренажёра здесь 1, а уровень 2 даёт сборка в Lab: экран говорит это строкой со ссылкой. */
+  ceilingLab?: boolean;
 }
 
 export type GradeGroup = 'entry' | 'mid' | 'senior';

@@ -5,6 +5,7 @@ import { lessonBySkill } from '../content';
 import { useI18n } from '../i18n/context';
 import { FAMILY, openFamilyLink } from '../links';
 import { skillLevel } from '../career/readiness';
+import type { SkillSignal } from '../career/readiness';
 import type { Progress } from '../srs/store';
 
 /**
@@ -18,7 +19,7 @@ export function CareerStages({
   onStartSkill,
   onOpenSkill,
 }: {
-  skills: Progress['skills'];
+  skills: Record<string, SkillSignal>;
   skillTitle: (id: string) => string;
   onStartSkill: (id: string) => void;
   onOpenSkill: (id: string) => void;

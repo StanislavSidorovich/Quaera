@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { careerAxes, careerAxis, careerRoles, vacancies } from '../content/career';
 import type { CareerRole } from '../content/career';
 import { AXES } from '../career/readiness';
@@ -9,9 +9,10 @@ import { pacePlan } from '../career/readiness';
 import { useI18n } from '../i18n/context';
 import { CareerAxisBars, CareerRadar } from './CareerRadar';
 import type { RadarAxis } from './CareerRadar';
-import { EvidenceList, StepList, useCountedLine } from './careerSteps';
+import { CeilingNote, EvidenceList, LegacyNote, StepList, useCountedLine } from './careerSteps';
 import type { StepCtx } from './careerSteps';
 import { CareerStages } from './CareerStages';
+import { careerSignals } from '../career/signals';
 import type { Progress } from '../srs/store';
 import './careerOverview.css';
 import './careerPick.css';
@@ -55,6 +56,7 @@ export function CareerOverview({
   const levelName = (n: number) => c.levels[n];
   const axisTitle = (id: AxisId) => careerAxis(id).title[locale];
   const chosen = state.roleAt !== null;
+  const signals = useMemo(() => careerSignals(progress), [progress.skills, progress.taskRecords]);
 
   /* Панель оси стоит под рисунком: на узком экране без прокрутки она осталась бы за краем. */
   useEffect(() => {
@@ -263,7 +265,7 @@ export function CareerOverview({
         <p className="muted career-foot">{c.ov.stepsNote}</p>
       </section>
 
-      <CareerStages skills={progress.skills} skillTitle={ctx.skillTitle} onStartSkill={ctx.onStartSkill} onOpenSkill={onOpenSkill} />
+      <CareerStages skills={signals} skillTitle={ctx.skillTitle} onStartSkill={ctx.onStartSkill} onOpenSkill={onOpenSkill} />
     </>
   );
 }
@@ -284,6 +286,7 @@ function AxisPanel({ axis, reading, due, ctx, onClose }: { axis: AxisId; reading
           {c.ov.close}
         </button>
       </div>
+      <LegacyNote reading={reading} />
       <p className="muted career-axis-count">{c.axisCount(reading.atLeast1, reading.total, reading.atLeast2)}</p>
       <p>
         <strong>{c.ov.nowLevel(c.levels[have])}.</strong> {have === 0 ? c.ov.notStarted : def.levels[have - 1].does[locale]}
@@ -296,6 +299,7 @@ function AxisPanel({ axis, reading, due, ctx, onClose }: { axis: AxisId; reading
           <p className="muted co-counted">
             {c.rp.counted}: {counted(axis, next.level)}.
           </p>
+          <CeilingNote axis={axis} level={next.level} />
           <h4 className="co-h4">{c.ov.stepsHeading}</h4>
           <StepList steps={next.steps} axis={axis} ctx={ctx} />
         </>

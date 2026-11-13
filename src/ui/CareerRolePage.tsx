@@ -6,7 +6,7 @@ import { useI18n } from '../i18n/context';
 import { architecture } from '../content/architecture';
 import { CareerRadar } from './CareerRadar';
 import { RoleCompare } from './RoleCompare';
-import { StepList, useCountedLine } from './careerSteps';
+import { CeilingNote, LegacyNote, StepList, useCountedLine } from './careerSteps';
 import type { StepCtx } from './careerSteps';
 import { ProcessFigure } from './ProcessFigure';
 import { IngestFigure } from './IngestFigure';
@@ -209,6 +209,7 @@ export function CareerRolePage({
                   <strong>{def.title[locale]}</strong>
                   <span className={a.met ? 'crp-ok' : 'muted'}>{a.met ? c.rp.axisMet(levelName(a.level)) : c.rp.axisGap(levelName(a.level), levelName(a.target))}</span>
                 </div>
+                <LegacyNote reading={a} />
                 <ol className="crp-levels">
                   {def.levels.map((l) => {
                     const reached = a.level >= l.level;
@@ -228,6 +229,7 @@ export function CareerRolePage({
                             <p className="muted co-counted">
                               {c.rp.counted}: {counted(a.axis, l.level)}.
                             </p>
+                            <CeilingNote axis={a.axis} level={l.level} />
                             <StepList steps={l.steps} axis={a.axis} ctx={ctx} />
                           </>
                         )}

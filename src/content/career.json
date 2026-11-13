@@ -107,8 +107,10 @@
       "id": "modeling",
       "title": { "ru": "Модель данных", "en": "Data modelling" },
       "short": { "ru": "Модель", "en": "Model" },
-      "note": { "ru": "Звезда, зерно и связи из трека «Модель и BI». Проект в Quaera Model засчитывается отметкой.", "en": "Star schema, grain and relationships from the Model and BI track. A project in Quaera Model counts as a check mark." },
-      "trainerMax": 2,
+      "note": { "ru": "Звезда, зерно и связи из трека «Модель и BI»: задания с выбором, поэтому тренажёр даёт знакомство. Выше единицы ось поднимают сборка в Lab и проект в Quaera Model.", "en": "Star schema, grain and relationships from the Model and BI track. Its tasks are choices, so the trainer gives familiarity. Building in Lab and a project in Quaera Model lift the axis higher." },
+      "trainerMax": 1,
+      "legacyMax": 2,
+      "ceilingLab": true,
         "market": {
           "ru": "Моделирование данных обязательно примерно в каждой третьей вакансии, у BI и AE почти во всех.",
           "en": "Data modelling is required in about one ad in three, and in almost all BI and AE ads."
@@ -155,15 +157,12 @@
             },
             "steps": [
               {
-                "kind": "skills",
-                "skills": [
-                  "model-role-playing",
-                  "model-many-to-many",
-                  "model-scd2"
-                ],
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#build=kaiyo-sales",
                 "text": {
-                  "ru": "Третья и четвёртая ступени трека без подсказки.",
-                  "en": "Tiers three and four of the track without hints."
+                  "ru": "Соберите модель продаж руками в Lab: зерно, факт, измерения, роль даты.",
+                  "en": "Build the sales model by hand in Lab: grain, fact, dimensions, date roles."
                 }
               },
               {
@@ -210,8 +209,10 @@
       "id": "bi",
       "title": { "ru": "BI и DAX", "en": "BI and DAX" },
       "short": { "ru": "BI и DAX", "en": "BI, DAX" },
-      "note": { "ru": "Меры, контексты и CALCULATE из трека «Модель и BI», выбор графика.", "en": "Measures, contexts and CALCULATE from the Model and BI track, plus chart choice." },
-      "trainerMax": 2,
+      "note": { "ru": "Меры, контексты и CALCULATE из трека «Модель и BI», выбор графика: задания с выбором, поэтому тренажёр даёт знакомство. Выше единицы ось поднимает сборка в Lab.", "en": "Measures, contexts and CALCULATE from the Model and BI track, plus chart choice. Its tasks are choices, so the trainer gives familiarity. Building in Lab lifts the axis higher." },
+      "trainerMax": 1,
+      "legacyMax": 2,
+      "ceilingLab": true,
         "market": {
           "ru": "Самая частая ось вместе с SQL: BI-инструмент назван в 6 из 10 вакансий, DAX в каждой шестой.",
           "en": "The most common axis alongside SQL: a BI tool appears in 6 of 10 ads, DAX in one in six."
@@ -246,15 +247,12 @@
             },
             "steps": [
               {
-                "kind": "skills",
-                "skills": [
-                  "model-calculate",
-                  "model-context-transition",
-                  "model-time-intelligence"
-                ],
+                "kind": "app",
+                "app": "lab",
+                "href": "https://lab.quaera.app/#build=kaiyo-sales",
                 "text": {
-                  "ru": "Третья ступень трека.",
-                  "en": "The third tier of the track."
+                  "ru": "Соберите меры и отчёт руками в Lab на данных Kaiyo.",
+                  "en": "Build the measures and the report by hand in Lab on Kaiyo data."
                 }
               },
               {
@@ -555,8 +553,9 @@
       "id": "business",
       "title": { "ru": "Бизнес и коммуникация", "en": "Business and communication" },
       "short": { "ru": "Бизнес", "en": "Business" },
-      "note": { "ru": "Трек «Профессия»: постановка, метрики, домен, вывод вперёд.", "en": "The Profession track: framing, metrics, domain, conclusion first." },
-      "trainerMax": 2,
+      "note": { "ru": "Трек «Профессия»: постановка, метрики, домен, вывод вперёд. Задания с выбором, поэтому тренажёр даёт знакомство; выше поднимают отметки.", "en": "The Profession track: framing, metrics, domain, conclusion first. Its tasks are choices, so the trainer gives familiarity; higher levels come from marks." },
+      "trainerMax": 1,
+      "legacyMax": 2,
         "market": {
           "ru": "Коммуникацию называют 8 из 10 вакансий, требования и KPI примерно половина; ось нужна всем ролям, включая DE.",
           "en": "Communication is named in 8 of 10 ads, requirements and KPIs in about half; every role needs this axis, DE included."

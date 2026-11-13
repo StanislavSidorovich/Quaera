@@ -56,12 +56,13 @@ const assertTrue = (name, cond, detail = '') => {
 
 try {
   execSync(
-    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" "${path.join(root, 'src/career/quiz.ts')}" ` +
+    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" "${path.join(root, 'src/career/quiz.ts')}" "${path.join(root, 'src/career/wrote.ts')}" ` +
       `--target ES2020 --module ES2020 --moduleResolution bundler ` +
       `--rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
   );
-  const { AXES, skillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, RETAINED_INTERVAL_DAYS } = await import(
+  const { isCodeTask, wroteSkills } = await import(pathToFileURL(path.join(outDir, 'career', 'wrote.js')).href);
+  const { AXES, skillLevel, legacySkillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, RETAINED_INTERVAL_DAYS } = await import(
     pathToFileURL(path.join(outDir, 'career', 'readiness.js')).href
   );
 
@@ -86,6 +87,36 @@ try {
     if (![1, 2].includes(a.trainerMax)) fail(`ось ${a.id}`, `trainerMax ${a.trainerMax}: тренажёр засчитывает 1 или 2`);
   }
   assertEq('оси: все навыки существуют в паках', unknown, []);
+
+  // Г1 (2026-11-13): уровень 2 по тренажёру только с кодом. Ось может иметь trainerMax 2,
+  // лишь если 70% её навыков закрываются заданием, где код набирают (write); иначе двойка недостижима.
+  const writeSkillIds = new Set();
+  for (const track of ['sql', 'model', 'python', 'domain']) {
+    for (const tk of readJson(`src/content/packs/${track}-core.json`).tasks) {
+      if (!isCodeTask(tk)) continue;
+      writeSkillIds.add(tk.skill);
+      for (const s of tk.alsoTrains ?? []) writeSkillIds.add(s);
+    }
+  }
+  const unreachable2 = career.axes
+    .filter((a) => a.trainerMax >= 2 && a.skills.filter((id) => writeSkillIds.has(id)).length < Math.ceil(a.skills.length * 0.7))
+    .map((a) => a.id);
+  assertEq('оси: trainerMax 2 только там, где хватает навыков с write-заданиями', unreachable2, []);
+  assertEq('оси: у BI и моделирования потолок тренажёра 1 (Г1)', [career.axes.find((a) => a.id === 'bi').trainerMax, career.axes.find((a) => a.id === 'modeling').trainerMax], [1, 1]);
+  assertEq(
+    'оси: строка «сборка в Lab» (ceilingLab) стоит только у осей с потолком 1',
+    career.axes.filter((a) => a.ceilingLab && a.trainerMax >= 2).map((a) => a.id),
+    []
+  );
+  assertEq('оси: ceilingLab у BI и моделирования', career.axes.filter((a) => a.ceilingLab).map((a) => a.id), ['modeling', 'bi']);
+  assertEq('оси: legacyMax не ниже trainerMax', career.axes.filter((a) => a.legacyMax !== undefined && a.legacyMax < a.trainerMax).map((a) => a.id), []);
+  // Какие виды заданий считаются «написал сам».
+  assertEq('wrote: write считается', isCodeTask({ id: 'a', skill: 's', mode: 'write' }), true);
+  for (const m of ['fill', 'predict', 'order', 'spot', 'waves', 'relate']) assertEq(`wrote: ${m} не считается`, isCodeTask({ id: 'a', skill: 's', mode: m }), false);
+  assertEq('wrote: многошаг с расчётом write считается', isCodeTask({ id: 'a', skill: 's', mode: 'write', steps: [{ kind: 'compute', mode: 'write' }, { kind: 'interpret' }] }), true);
+  assertEq('wrote: расчётный шаг fill не считается', isCodeTask({ id: 'a', skill: 's', mode: 'fill', steps: [{ kind: 'compute', mode: 'fill' }, { kind: 'interpret' }] }), false);
+  const wt = [{ id: 't1', skill: 'a', alsoTrains: ['b'], mode: 'write' }, { id: 't2', skill: 'c', mode: 'predict' }, { id: 't3', skill: 'd', mode: 'write' }];
+  assertEq('wrote: навык с решённым write и его alsoTrains; нерешённое и выбор не считаются', [...wroteSkills(wt, (id) => id !== 't3')].sort(), ['a', 'b']);
   assertEq(
     'оси: каждый навык паков стоит хотя бы в одной оси',
     [...packSkills.keys()].filter((id) => !used.has(id)),
@@ -251,7 +282,7 @@ try {
   assertTrue('текст: имени школы нет', !/nova|ims/i.test(allStrings));
 
   // ── Формула: навык ──────────────────────────────────────────────────────
-  const sig = (reps, lapses, lastGrade, intervalDays) => ({ reps, lapses, lastGrade, intervalDays });
+  const sig = (reps, lapses, lastGrade, intervalDays, wrote = true) => ({ reps, lapses, lastGrade, intervalDays, wrote });
   assertEq('навык: нет состояния → 0', skillLevel(undefined), 0);
   assertEq('навык: одна попытка, провал → 0', skillLevel(sig(1, 1, 1, 0)), 0);
   assertEq('навык: решён с подсказкой → 1', skillLevel(sig(1, 0, 3, 2)), 1);
@@ -259,6 +290,10 @@ try {
   assertEq('навык: без подсказки и после паузы → 2', skillLevel(sig(2, 0, 4, RETAINED_INTERVAL_DAYS)), 2);
   assertEq('навык: интервал есть, но последняя с подсказкой → 1', skillLevel(sig(3, 0, 3, 13)), 1);
   assertEq('навык: провал после успехов держит единицу', skillLevel(sig(4, 1, 1, 0)), 1);
+  // Г1: выбор из вариантов выше единицы не поднимает, как бы уверенно ни держался навык.
+  assertEq('навык: «уверенно» без решённого write → 1, не 2', skillLevel(sig(2, 0, 4, RETAINED_INTERVAL_DAYS, false)), 1);
+  assertEq('навык: поле wrote не задано → 1', skillLevel({ reps: 2, lapses: 0, lastGrade: 4, intervalDays: 13 }), 1);
+  assertEq('навык: по старым правилам такой навык был 2', legacySkillLevel(sig(2, 0, 4, RETAINED_INTERVAL_DAYS, false)), 2);
 
   // ── Формула: ось ────────────────────────────────────────────────────────
   const ten = Array.from({ length: 10 }, (_, i) => `s${i}`);
@@ -276,6 +311,18 @@ try {
   assertEq('ось: 6 из 10 на двойке → 1, не 2', axisReading(axis('sql', 2), signals(6, 4), [], none).level, 1);
   assertEq('ось: 6 из 10 тронуты → 0', axisReading(axis('sql', 2), signals(0, 6), [], none).level, 0);
   assertEq('ось: потолок тренажёра режет двойку до единицы', axisReading(axis('stats', 1), signals(10, 0), [], none).level, 1);
+  const noWrote = Object.fromEntries(Object.entries(signals(10, 0)).map(([k, v]) => [k, { ...v, wrote: false }]));
+  const choiceOnly = axisReading(axis('sql', 2), noWrote, [], none);
+  assertEq('ось: все навыки «уверенно» по выбору без кода → 1, не 2', choiceOnly.level, 1);
+  assertEq('ось: старые правила дали бы 2, экран пометит', choiceOnly.legacyLevel, 2);
+  assertEq('ось: с кодом пометки «было по-старому» нет', axisReading(axis('sql', 2), signals(10, 0), [], none).legacyLevel, undefined);
+  assertEq('ось: потолок 1 при старом потолке 2 помечает потерю', axisReading({ ...axis('bi', 1), legacyMax: 2 }, signals(10, 0), [], none).legacyLevel, 2);
+  assertEq('ось: потолок 1 без старого потолка метку не ставит', axisReading(axis('stats', 1), signals(10, 0), [], none).legacyLevel, undefined);
+  const biReal = career.axes.find((a) => a.id === 'bi');
+  const biAllChoice = Object.fromEntries(biReal.skills.map((id) => [id, sig(3, 0, 4, 13, false)]));
+  assertEq('BI: все навыки на «уверенно» без кода → потолок 1 (настоящая ось)', axisReading(biReal, biAllChoice, [], none).level, 1);
+  const labEv = [{ id: 'lb', axis: 'sql', level: 2, source: 'labDone', labKeys: ['build:x'] }, { id: 'tick', axis: 'sql', level: 2 }];
+  assertEq('Lab: возврат даёт 2 при нуле в тренажёре, галочка нет', [axisReading(axis('sql', 2), {}, labEv, new Set(['lb'])).level, axisReading(axis('sql', 2), {}, labEv, new Set(['tick'])).level], [2, 1]);
 
   const evSql = [{ id: 'm', axis: 'sql', level: 3 }];
   const capped = axisReading(axis('sql', 2), {}, evSql, new Set(['m']));

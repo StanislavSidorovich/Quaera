@@ -4,6 +4,7 @@ import { architecture } from '../content/architecture';
 import type { ProjectExternal, ProjectQuery, ProjectStation } from '../content/architecture';
 import { careerRole } from '../content/career';
 import { skillLevel } from '../career/readiness';
+import type { SkillSignal } from '../career/readiness';
 import type { Progress } from '../srs/store';
 import { Chart } from './Chart';
 import type { ChartSpec } from './chartSpec';
@@ -159,7 +160,7 @@ export function ProjectStationCard({
   onClose,
 }: {
   index: number;
-  skills: Progress['skills'];
+  skills: Record<string, SkillSignal>;
   skillTitle: (id: string) => string;
   onStartSkill: (skillId: string) => void;
   onOpenRole: (roleId: string) => void;

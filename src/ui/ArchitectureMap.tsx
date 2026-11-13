@@ -5,6 +5,7 @@ import { architecture } from '../content/architecture';
 import type { ArchLayer, ArchStepExample, LensId } from '../content/architecture';
 import { careerRole, careerStages } from '../content/career';
 import { skillLevel } from '../career/readiness';
+import type { SkillSignal } from '../career/readiness';
 import type { Progress } from '../srs/store';
 import { TraceFigure } from './TraceFigure';
 import { useI18n } from '../i18n/context';
@@ -126,7 +127,7 @@ export function ArchitectureMap({
   restore = false,
 }: {
   /** Прогресс по навыкам: тот же `progress.skills`, что считает вкладка «Путь к роли». */
-  skills: Progress['skills'];
+  skills: Record<string, SkillSignal>;
   skillTitle: (id: string) => string;
   onStartSkill: (skillId: string) => void;
   /** Роль на том же экране: вкладка «Путь к роли», карточка роли. */
