@@ -1258,8 +1258,8 @@ export const en = {
     evidenceNote: 'You tick these yourself, so a tick raises an axis at most one step above the tasks.',
     evidenceCapped: 'Not counted yet: raise the axis with tasks first.',
     storageNote: 'Ticks and weekly snapshots are stored only on this device.',
-    sourceNote: (n: number, linkedin: number, boards: number) =>
-      `Based on ${n} job ads from Portugal: ${linkedin} from LinkedIn picked by hand and ${boards} from Portuguese job boards collected by a script with BI and data analyst searches. Ads posted from early 2026, collected in November 2026. Not a random sample of the market: a guide, not statistics.`,
+    sourceNote: (n: number, linkedin: number, boards: number, roleTotal: number) =>
+      `Role targets come from the ${roleTotal} of ${n} ads that map to the seven roles. Based on ${n} job ads from Portugal: ${linkedin} from LinkedIn picked by hand and ${boards} from Portuguese job boards collected by a script with BI and data analyst searches. Ads posted from early 2026, collected in November 2026. Not a random sample of the market: a guide, not statistics.`,
     /* Career overview: radar, role tiles, your goal. */
     ov: {
       radarAria: (rows: string) => `Radar of the eight axes, your level. ${rows}`,
@@ -1335,6 +1335,11 @@ export const en = {
     outsideItems: { excel: 'Excel', english: 'English', comms: 'Stakeholder communication' },
     outsideShare: (n: number, total: number) => `${n} of ${total}`,
     outsideBasisRole: (n: number) => `Ads for this role: ${n}.`,
+    learnPrefix: 'Where to build this:',
+    plannedPrefix: 'In the works in Quaera:',
+    excelNote: (hit: number, of: number) => `Excel is named in about half of Data Analyst ads and in ${hit} of ${of} entry DA and BI ads. It is the family's biggest gap: nothing here teaches Excel, Lab only reads xlsx files.`,
+    excelLearn: 'Microsoft Learn, Excel courses',
+    targetNote: (axis: string, text: string) => `${axis}: ${text}`,
     outsideBasisAll: (n: number) => `This role has few ads in the sample, so the shares use all ${n} ads.`,
     radarTitle: 'Target and you',
     radarYou: 'You now',

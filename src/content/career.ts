@@ -36,9 +36,11 @@ export interface AxisStep {
    * quiz: кнопка самопроверки оси;
    * story: вход в режим истории;
    * evidence: строка отметки по id, без ссылки;
-   * outside: только текст.
+   * outside: только текст;
+   * learn: семья этот шаг дать не может, строка «Где прокачать»: `text` называет официальный бесплатный ресурс, `href` ведёт на него;
+   * planned: строка «В проработке в Quaera», только там, где у семьи записан план.
    */
-  kind: 'skills' | 'tasks' | 'app' | 'story' | 'quiz' | 'evidence' | 'outside';
+  kind: 'skills' | 'tasks' | 'app' | 'story' | 'quiz' | 'evidence' | 'outside' | 'learn' | 'planned';
   skills?: string[];
   tasks?: string[];
   app?: FamilyApp;
@@ -53,6 +55,14 @@ export interface AxisLevel {
   does: Text;
   /** Шаги, чтобы дойти до этого уровня с предыдущего: 1-3 штуки. */
   steps: AxisStep[];
+  /** Для отдельной роли у уровня другой текст и шаги (например, у DA уровень 2 BI без DAX). */
+  forRole?: Record<string, { does?: Text; steps?: AxisStep[] }>;
+}
+
+/** Уровень оси так, как его видит роль: с её подменой текста и шагов, если она есть. */
+export function levelFor(level: AxisLevel, roleId: string): { does: Text; steps: AxisStep[] } {
+  const o = level.forRole?.[roleId];
+  return { does: o?.does ?? level.does, steps: o?.steps ?? level.steps };
 }
 
 export interface CareerAxis extends AxisDef {
@@ -83,6 +93,8 @@ export interface CareerRole extends RoleDef {
   ads: number;
   /** Сколько из них называют Excel, английский и коммуникацию; у ролей с малой выборкой поля нет. */
   outside?: Outside;
+  /** Пометка к цели оси, когда цель и вакансии расходятся (например, Python у BI: на входе встречается, обязательным называют редко). */
+  targetNotes?: Record<string, Text>;
   /** Соседняя роль для сравнения на странице роли. */
   neighbor: string;
   /** Навыки, которые чаще всего называют обязательными: [id из `vacancies.skillLabels`, сколько из `ads` вакансий]. */
@@ -125,8 +137,10 @@ interface CareerData {
   /**
    * Выборка вакансий, на которой стоят цели ролей. Число одно: хаб обновляет
    * его вместе с `ads` и `outside` ролей, когда разбирает новую партию.
+   * `roleTotal` — сколько из `total` отнесено к семи ролям (сумма `ads`), цели считаны по ним;
+   * `excelEntry` — Excel в вакансиях входного уровня DA и BI.
    */
-  vacancies: { total: number; linkedin: number; boards: number; outsideTotal: Outside; minRoleAds: number; skillLabels: Record<string, Text> };
+  vacancies: { total: number; roleTotal: number; excelEntry: { hit: number; of: number }; linkedin: number; boards: number; outsideTotal: Outside; minRoleAds: number; skillLabels: Record<string, Text> };
   axes: CareerAxis[];
   roles: CareerRole[];
   stages: CareerStage[];

@@ -151,15 +151,18 @@ try {
   // чтобы случайная правка career.json не откатила разбор молча.
   const tg = (id) => career.roles.find((r) => r.id === id).targets;
   assertEq('цели: DA bi 2, engineering 1', [tg('da').bi, tg('da').engineering], [2, 1]);
-  assertEq('цели: AE bi 2, business 2', [tg('ae').bi, tg('ae').business], [2, 2]);
+  assertEq('цели: AE bi 1 (матрица 134: Power BI обязателен у 42%), business 2', [tg('ae').bi, tg('ae').business], [1, 2]);
   assertEq('цели: BA process остаётся 2', tg('ba').process, 2);
   assertEq('цели: sql у AE остаётся 3 (глубину вакансии не меряют)', tg('ae').sql, 3);
   // Решения хаба 2026-11-08 по 142 вакансиям (ROLE-TARGETS, разделы 10-12).
-  assertEq('цели: DA python остаётся 2, stats 1', [tg('da').python, tg('da').stats], [2, 1]);
+  // Решения хозяина 2026-11-13 по матрице «инструмент × роль» (134 вакансии с ролью): цели отвечают рынку.
+  assertEq('цели: DA python 1 (обязателен у 36%), stats 1', [tg('da').python, tg('da').stats], [1, 1]);
+  assertEq('цели: BI python 0 и stats 0, с пометкой про Python', [tg('bi').python, tg('bi').stats, !!career.roles.find((r) => r.id === 'bi').targetNotes?.python], [0, 0, true]);
+  assertEq('цели: DS sql 0', tg('ds').sql, 0);
   assertEq('цели: DE business 1', tg('de').business, 1);
-  assertEq('цели: gov modeling 1, bi 1', [tg('gov').modeling, tg('gov').bi], [1, 1]);
+  assertEq('цели: gov modeling 1, bi 0', [tg('gov').modeling, tg('gov').bi], [1, 0]);
   assertEq('цели: BA modeling 0', tg('ba').modeling, 0);
-  assertEq('цели: DS не тронуты', tg('ds'), { sql: 2, modeling: 0, bi: 0, python: 3, stats: 3, engineering: 1, business: 1, process: 0 });
+  assertEq('цели: DS без sql', tg('ds'), { sql: 0, modeling: 0, bi: 0, python: 3, stats: 3, engineering: 1, business: 1, process: 0 });
   assertEq('роли: «мало данных» только у DS', career.roles.filter((r) => r.lowData).map((r) => r.id), ['ds']);
 
   // Выборка вакансий: число одно, у роли доли, где выборки хватает.
@@ -197,6 +200,7 @@ try {
   assertEq('вакансии: спрос по ролям и грейдам согласован', askProblems, []);
   assertEq('вакансии: источники складываются в общее число', vac.linkedin + vac.boards, vac.total);
   assertEq('вакансии: подпись источника 142 = 83 + 59', [vac.total, vac.linkedin, vac.boards], [142, 83, 59]);
+  assertEq('вакансии: roleTotal равен сумме ads по ролям (134)', [vac.roleTotal, career.roles.reduce((n, r) => n + r.ads, 0)], [134, 134]);
   assertTrue('вакансии: сумма по ролям не больше общего числа', career.roles.reduce((n, r) => n + r.ads, 0) <= vac.total);
   for (const a of career.axes) if (!a.short?.ru || !a.short?.en) fail(`ось ${a.id}`, 'нет короткого имени для паутинки');
   ok('вакансии и короткие имена осей');
@@ -221,7 +225,7 @@ try {
     for (const tk of readJson(`src/content/packs/${track}-core.json`).tasks) packTasks.add(tk.id);
   }
   const familyUrls = readJson('family/family.json').apps.map((a) => a.url);
-  const KINDS = ['skills', 'tasks', 'app', 'story', 'quiz', 'evidence', 'outside'];
+  const KINDS = ['skills', 'tasks', 'app', 'story', 'quiz', 'evidence', 'outside', 'learn', 'planned'];
   const levelProblems = [];
   for (const a of career.axes) {
     if (!a.market?.ru || !a.market?.en) levelProblems.push(`${a.id}: нет market`);
@@ -232,31 +236,52 @@ try {
     for (const l of a.levels) {
       const where = `${a.id} L${l.level}`;
       if (!l.does?.ru?.trim() || !l.does?.en?.trim()) levelProblems.push(`${where}: нет does`);
-      if (!Array.isArray(l.steps) || l.steps.length < 1 || l.steps.length > 3) levelProblems.push(`${where}: шагов ${l.steps?.length}, нужно 1-3`);
-      for (const s of l.steps ?? []) {
-        if (!KINDS.includes(s.kind)) levelProblems.push(`${where}: kind ${s.kind}`);
-        if (!s.text?.ru?.trim() || !s.text?.en?.trim()) levelProblems.push(`${where}: шаг без текста`);
-        if (s.kind === 'skills') {
-          if (!s.skills?.length) levelProblems.push(`${where}: skills пуст`);
-          for (const id of s.skills ?? []) if (!packSkills.has(id)) levelProblems.push(`${where}: навык ${id} не существует`);
-        }
-        if (s.kind === 'tasks') {
-          if (!s.tasks?.length) levelProblems.push(`${where}: tasks пуст`);
-          for (const id of s.tasks ?? []) if (!packTasks.has(id)) levelProblems.push(`${where}: задание ${id} не существует`);
-        }
-        if (s.kind === 'evidence') {
-          const ev = evidence.find((e) => e.id === s.evidence);
-          if (!ev) levelProblems.push(`${where}: отметка ${s.evidence} не существует`);
-          else if (ev.axis !== a.id) levelProblems.push(`${where}: отметка ${s.evidence} стоит на оси ${ev.axis}`);
-        }
-        if (s.kind === 'app') {
-          if (!familyApps.has(s.app) || s.app === 'quaera') levelProblems.push(`${where}: app ${s.app}`);
-          if (!s.href || !(familyUrls.some((u) => s.href.startsWith(u)) || s.href.startsWith('https://quaera.app/'))) levelProblems.push(`${where}: href ${s.href}`);
-        }
+      const gapRows = (l.steps ?? []).filter((s) => s.kind === 'learn' || s.kind === 'planned').length;
+      if (!Array.isArray(l.steps) || l.steps.length - gapRows < 1 || l.steps.length - gapRows > 3 || gapRows > 2) levelProblems.push(`${where}: шагов ${l.steps?.length}, нужно 1-3 и до двух строк «где прокачать / в проработке»`);
+      for (const [rid, o] of Object.entries(l.forRole ?? {})) {
+        if (!career.roles.some((r) => r.id === rid)) levelProblems.push(`${where}: forRole ${rid} не роль`);
+        for (const s of o.steps ?? []) checkStep(a, `${where} (${rid})`, s);
       }
+      for (const s of l.steps ?? []) checkStep(a, where, s);
+    }
+  }
+  function checkStep(a, where, s) {
+    if (!KINDS.includes(s.kind)) levelProblems.push(`${where}: kind ${s.kind}`);
+    if (!s.text?.ru?.trim() || !s.text?.en?.trim()) levelProblems.push(`${where}: шаг без текста`);
+    if (s.kind === 'skills') {
+      if (!s.skills?.length) levelProblems.push(`${where}: skills пуст`);
+      for (const id of s.skills ?? []) if (!packSkills.has(id)) levelProblems.push(`${where}: навык ${id} не существует`);
+    }
+    if (s.kind === 'tasks') {
+      if (!s.tasks?.length) levelProblems.push(`${where}: tasks пуст`);
+      for (const id of s.tasks ?? []) if (!packTasks.has(id)) levelProblems.push(`${where}: задание ${id} не существует`);
+    }
+    if (s.kind === 'evidence') {
+      const ev = evidence.find((e) => e.id === s.evidence);
+      if (!ev) levelProblems.push(`${where}: отметка ${s.evidence} не существует`);
+      else if (ev.axis !== a.id) levelProblems.push(`${where}: отметка ${s.evidence} стоит на оси ${ev.axis}`);
+    }
+    if (s.kind === 'app') {
+      if (!familyApps.has(s.app) || s.app === 'quaera') levelProblems.push(`${where}: app ${s.app}`);
+      if (!s.href || !(familyUrls.some((u) => s.href.startsWith(u)) || s.href.startsWith('https://quaera.app/'))) levelProblems.push(`${where}: href ${s.href}`);
+    }
+    if (s.kind === 'learn') {
+      // Только официальные бесплатные сайты, без партнёрских ссылок.
+      const okHost = /^https:\/\/(learn\.microsoft\.com|support\.microsoft\.com|www\.tableau\.com|public\.tableau\.com|www\.databricks\.com)\//.test(s.href ?? '');
+      if (!okHost || /[?&](ref|aff|utm_|partner)/i.test(s.href)) levelProblems.push(`${where}: learn href ${s.href}`);
     }
   }
   assertEq('уровни осей: три уровня, шаги и ссылки существуют', levelProblems, []);
+  // Шаги, которые семья дать не может (инструмент рынка вне семьи): у каждого строка «где прокачать» или «в проработке» (решение хозяина 2026-11-13).
+  const gapKinds = (axisId, level, roleId) => {
+    const l = career.axes.find((a) => a.id === axisId).levels[level - 1];
+    return (roleId ? l.forRole?.[roleId]?.steps ?? l.steps : l.steps).filter((s) => s.kind === 'learn' || s.kind === 'planned').map((s) => s.kind);
+  };
+  const needGap = [['bi', 2, null], ['bi', 2, 'da'], ['bi', 3, null], ['engineering', 2, null], ['engineering', 3, null]];
+  assertEq('недостижимые в семье шаги: у каждого есть «где прокачать» или «в проработке»', needGap.filter(([a, l, r]) => gapKinds(a, l, r).length === 0).map((x) => x.join('.')), []);
+  assertEq('BI 2: мост в Power BI записан как «в проработке», для DA тоже', [gapKinds('bi', 2, null).includes('planned'), gapKinds('bi', 2, 'da').includes('planned')], [true, true]);
+  assertTrue('DA bi 2: текст шага про Power BI или Tableau без DAX', /Power BI или Tableau/.test(career.axes.find((a) => a.id === 'bi').levels[1].forRole.da.does.ru));
+  assertTrue('engineering 3: есть альтернатива PySpark или Databricks', /Databricks/.test(JSON.stringify(career.axes.find((a) => a.id === 'engineering').levels[2].steps)));
   // Каждая отметка оси названа хотя бы в одном шаге этой оси или стоит у самопроверки/Lab: иначе человек не узнает, что она есть.
   const namedEvidence = new Set(career.axes.flatMap((a) => a.levels.flatMap((l) => l.steps.filter((s) => s.kind === 'evidence').map((s) => s.evidence))));
   assertEq(

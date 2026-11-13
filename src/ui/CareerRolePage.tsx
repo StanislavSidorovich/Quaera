@@ -1,4 +1,4 @@
-import { careerAxis, stagesOfRole, vacancies, GRADE_GROUPS } from '../content/career';
+import { careerAxis, stagesOfRole, vacancies, GRADE_GROUPS, levelFor } from '../content/career';
 import type { CareerRole } from '../content/career';
 import { AXES } from '../career/readiness';
 import type { AxisId, AxisReading, Level, RoleReadiness } from '../career/readiness';
@@ -191,9 +191,15 @@ export function CareerRolePage({
               </li>
             ))}
           </ul>
+          <p className="career-excel">
+            {c.excelNote(vacancies.excelEntry.hit, vacancies.excelEntry.of)}{' '}
+            <a href="https://learn.microsoft.com/training/browse/?products=excel" target="_blank" rel="noreferrer">
+              {c.learnPrefix} {c.excelLearn} ↗
+            </a>
+          </p>
           <p className="muted career-outside-basis">{ownOutside ? c.outsideBasisRole(role.ads) : c.outsideBasisAll(vacancies.total)}</p>
         </div>
-        <p className="muted career-source">{c.sourceNote(vacancies.total, vacancies.linkedin, vacancies.boards)}</p>
+        <p className="muted career-source">{c.sourceNote(vacancies.total, vacancies.linkedin, vacancies.boards, vacancies.roleTotal)}</p>
       </section>
 
       <section className="card">
@@ -223,14 +229,14 @@ export function CareerRolePage({
                           {reached && <span className="crp-tag done">{c.rp.reached}</span>}
                           {isTarget && <span className="crp-tag goal">{c.rp.goalHere}</span>}
                         </p>
-                        <p>{l.does[locale]}</p>
+                        <p>{levelFor(l, role.id).does[locale]}</p>
                         {inGap && (
                           <>
                             <p className="muted co-counted">
                               {c.rp.counted}: {counted(a.axis, l.level)}.
                             </p>
                             <CeilingNote axis={a.axis} level={l.level} />
-                            <StepList steps={l.steps} axis={a.axis} ctx={ctx} />
+                            <StepList steps={levelFor(l, role.id).steps} axis={a.axis} ctx={ctx} />
                           </>
                         )}
                       </li>
@@ -241,6 +247,11 @@ export function CareerRolePage({
             );
           })}
         </ul>
+        {Object.entries(role.targetNotes ?? {}).map(([ax, note]) => (
+          <p key={ax} className="muted career-target-notes">
+            {c.targetNote(careerAxis(ax as AxisId).title[locale], note[locale])}
+          </p>
+        ))}
         {unneeded.length > 0 && <p className="muted career-foot">{c.rp.notNeededList(unneeded.join(', '))}</p>}
       </section>
 

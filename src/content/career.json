@@ -1,5 +1,5 @@
 {
-  "vacancies": { "total": 142, "linkedin": 83, "boards": 59, "outsideTotal": { "excel": 41, "english": 86, "comms": 114 }, "minRoleAds": 3, "skillLabels": { "sql": { "ru": "SQL", "en": "SQL" }, "bi": { "ru": "BI-инструмент", "en": "BI tool" }, "powerbi": { "ru": "Power BI", "en": "Power BI" }, "dax": { "ru": "DAX", "en": "DAX" }, "python": { "ru": "Python", "en": "Python" }, "stats": { "ru": "Статистика", "en": "Statistics" }, "ml": { "ru": "ML и прогнозирование", "en": "ML and forecasting" }, "genai": { "ru": "GenAI и LLM", "en": "GenAI and LLMs" }, "quality": { "ru": "Качество данных", "en": "Data quality" }, "etl": { "ru": "ETL и ELT", "en": "ETL and ELT" }, "cloud": { "ru": "Облако", "en": "Cloud" }, "model": { "ru": "Модель данных", "en": "Data model" }, "kpi": { "ru": "KPI и отчётность", "en": "KPIs and reporting" }, "req": { "ru": "Требования и воркшопы", "en": "Requirements and workshops" }, "bpmn": { "ru": "BPMN и картирование процессов", "en": "BPMN and process mapping" }, "doc": { "ru": "Документирование", "en": "Documentation" }, "gov": { "ru": "Governance и безопасность данных", "en": "Data governance and security" }, "agile": { "ru": "Agile и управление проектами", "en": "Agile and project management" }, "test": { "ru": "Тестирование и UAT", "en": "Testing and UAT" }, "viz": { "ru": "Визуализация", "en": "Visualisation" } } },
+  "vacancies": { "total": 142, "roleTotal": 134, "excelEntry": { "hit": 8, "of": 15 }, "linkedin": 83, "boards": 59, "outsideTotal": { "excel": 41, "english": 86, "comms": 114 }, "minRoleAds": 3, "skillLabels": { "sql": { "ru": "SQL", "en": "SQL" }, "bi": { "ru": "BI-инструмент", "en": "BI tool" }, "powerbi": { "ru": "Power BI", "en": "Power BI" }, "dax": { "ru": "DAX", "en": "DAX" }, "python": { "ru": "Python", "en": "Python" }, "stats": { "ru": "Статистика", "en": "Statistics" }, "ml": { "ru": "ML и прогнозирование", "en": "ML and forecasting" }, "genai": { "ru": "GenAI и LLM", "en": "GenAI and LLMs" }, "quality": { "ru": "Качество данных", "en": "Data quality" }, "etl": { "ru": "ETL и ELT", "en": "ETL and ELT" }, "cloud": { "ru": "Облако", "en": "Cloud" }, "model": { "ru": "Модель данных", "en": "Data model" }, "kpi": { "ru": "KPI и отчётность", "en": "KPIs and reporting" }, "req": { "ru": "Требования и воркшопы", "en": "Requirements and workshops" }, "bpmn": { "ru": "BPMN и картирование процессов", "en": "BPMN and process mapping" }, "doc": { "ru": "Документирование", "en": "Documentation" }, "gov": { "ru": "Governance и безопасность данных", "en": "Data governance and security" }, "agile": { "ru": "Agile и управление проектами", "en": "Agile and project management" }, "test": { "ru": "Тестирование и UAT", "en": "Testing and UAT" }, "viz": { "ru": "Визуализация", "en": "Visualisation" } } },
   "axes": [
     {
       "id": "sql",
@@ -262,21 +262,45 @@
                   "ru": "Practice Assessment PL-300 на Microsoft Learn.",
                   "en": "PL-300 Practice Assessment on Microsoft Learn."
                 }
+              },
+              { "kind": "learn", "href": "https://learn.microsoft.com/training/browse/?products=power-bi", "text": { "ru": "Microsoft Learn, курсы Power BI", "en": "Microsoft Learn, Power BI courses" } },
+              { "kind": "planned", "text": { "ru": "мост в Power BI Desktop: экспорт вашей сборки из Lab в файлы для Power BI.", "en": "a bridge to Power BI Desktop: export your Lab build as files for Power BI." } }
+            ],
+            "forRole": {
+              "da": {
+                "does": {
+                  "ru": "Собрали отчёт в Power BI или Tableau на своих данных: меры, срезы, понятные подписи. DAX не обязателен.",
+                  "en": "You built a report in Power BI or Tableau on your own data: measures, slicers, clear labels. DAX is not required."
+                },
+                "steps": [
+                  {
+                    "kind": "app",
+                    "app": "lab",
+                    "href": "https://lab.quaera.app/#build=kaiyo-sales",
+                    "text": {
+                      "ru": "Разминка руками в Lab: плитки и срез на данных Kaiyo.",
+                      "en": "Warm up by hand in Lab: tiles and a slicer on Kaiyo data."
+                    }
+                  },
+                  { "kind": "learn", "href": "https://learn.microsoft.com/training/browse/?products=power-bi", "text": { "ru": "Microsoft Learn, курсы Power BI", "en": "Microsoft Learn, Power BI courses" } },
+                  { "kind": "learn", "href": "https://www.tableau.com/learn/training", "text": { "ru": "Tableau, бесплатное обучение", "en": "Tableau free training" } },
+                  { "kind": "planned", "text": { "ru": "мост в Power BI Desktop: экспорт вашей сборки из Lab в файлы для Power BI.", "en": "a bridge to Power BI Desktop: export your Lab build as files for Power BI." } }
+                ]
               }
-            ]
+            }
           },
           {
             "level": 3,
             "does": {
-              "ru": "Сделали отчёт Power BI с мерами DAX на данных, которых не было в заданиях, и показываете его.",
-              "en": "You built a Power BI report with DAX measures on data that was not in the tasks, and you can show it."
+              "ru": "Сделали отчёт в Power BI или Tableau с мерами на данных, которых не было в заданиях, и показываете его.",
+              "en": "You built a report in Power BI or Tableau with measures on data that was not in the tasks, and you can show it."
             },
             "steps": [
               {
                 "kind": "outside",
                 "text": {
-                  "ru": "Разминка в Power BI Desktop на CSV Kaiyo, затем отчёт на открытом датасете: три меры и один вывод.",
-                  "en": "Warm up in Power BI Desktop on the Kaiyo CSV, then a report on an open dataset: three measures and one conclusion."
+                  "ru": "Разминка в Power BI Desktop или Tableau Public на CSV Kaiyo, затем отчёт на открытом датасете: три меры и один вывод.",
+                  "en": "Warm up in Power BI Desktop or Tableau Public on the Kaiyo CSV, then a report on an open dataset: three measures and one conclusion."
                 }
               },
               {
@@ -286,7 +310,8 @@
                   "ru": "Отчёт, который можно показать.",
                   "en": "A report you can show."
                 }
-              }
+              },
+              { "kind": "learn", "href": "https://www.tableau.com/learn/training", "text": { "ru": "Tableau, бесплатное обучение", "en": "Tableau free training" } }
             ]
           }
         ],
@@ -526,14 +551,15 @@
                   "ru": "Refresh в Lab: новый файл идёт через вашу сборку, сбой даты чинится, запуск зелёный.",
                   "en": "Refresh in Lab: a new file goes through your build, the date failure is fixed, the run is green."
                 }
-              }
+              },
+              { "kind": "learn", "href": "https://learn.microsoft.com/training/fabric/", "text": { "ru": "Microsoft Learn, курсы Fabric", "en": "Microsoft Learn, Fabric courses" } }
             ]
           },
           {
             "level": 3,
             "does": {
-              "ru": "Сделали проект dbt с тестами данных в git.",
-              "en": "You built a dbt project with data tests, kept in git."
+              "ru": "Сделали проект dbt с тестами данных в git или конвейер на PySpark или Databricks.",
+              "en": "You built a dbt project with data tests, kept in git, or a pipeline on PySpark or Databricks."
             },
             "steps": [
               {
@@ -543,7 +569,15 @@
                   "ru": "dbt Core на DuckDB с CSV Kaiyo: модели silver и gold, тесты unique, not_null, relationships, README.",
                   "en": "dbt Core on DuckDB with the Kaiyo CSV: silver and gold models, unique, not_null and relationships tests, a README."
                 }
-              }
+              },
+              {
+                "kind": "outside",
+                "text": {
+                  "ru": "Или конвейер на PySpark или Databricks: загрузка, чистка, таблица gold.",
+                  "en": "Or a pipeline on PySpark or Databricks: load, clean, a gold table."
+                }
+              },
+              { "kind": "learn", "href": "https://www.databricks.com/learn/free-edition", "text": { "ru": "Databricks Free Edition", "en": "Databricks Free Edition" } }
             ]
           }
         ],
@@ -757,7 +791,7 @@
       "grades": { "entry": { "n": 9, "top": [["bi", 7], ["viz", 7], ["sql", 6]] }, "mid": { "n": 6, "top": [["kpi", 6], ["bi", 5], ["powerbi", 5]] }, "senior": { "n": 9, "top": [["bi", 8], ["powerbi", 8], ["sql", 7]] } },
       "title": { "ru": "Data Analyst", "en": "Data Analyst" },
       "does": { "ru": "Превращает вопрос бизнеса в метрики, считает и защищает вывод.", "en": "Turns a business question into metrics, does the numbers and defends the conclusion." },
-      "targets": { "sql": 2, "modeling": 1, "bi": 2, "python": 2, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
+      "targets": { "sql": 2, "modeling": 1, "bi": 2, "python": 1, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
       "core": ["sql", "python", "stats", "business"],
       "hybrid": { "ru": "В небольшой компании аналитик сам собирает модель и отчёт, то есть совмещает DA, AE и BI.", "en": "In a small company the analyst also builds the model and the report, covering DA, AE and BI at once." },
       "ai": { "ru": "ИИ быстро пишет запросы и строит графики. Ценность смещается к выбору вопроса, проверке числа и выводу.", "en": "AI writes queries and charts quickly. The value moves to choosing the question, checking the number and the conclusion." }
@@ -771,7 +805,8 @@
       "grades": { "entry": { "n": 6, "top": [["viz", 6], ["bi", 5], ["req", 5]] }, "mid": { "n": 6, "top": [["sql", 5], ["bi", 4], ["etl", 4]] }, "senior": { "n": 12, "top": [["bi", 12], ["powerbi", 11], ["model", 11]] } },
       "title": { "ru": "BI Analyst / Developer", "en": "BI Analyst / Developer" },
       "does": { "ru": "Строит семантическую модель и отчёт, который обновляется сам и нужен не одному вопросу.", "en": "Builds the semantic model and a report that refreshes itself and serves more than one question." },
-      "targets": { "sql": 2, "modeling": 2, "bi": 2, "python": 1, "stats": 1, "engineering": 1, "business": 2, "process": 1 },
+      "targets": { "sql": 2, "modeling": 2, "bi": 2, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 1 },
+      "targetNotes": { "python": { "ru": "Python у BI на входе встречается (2 из 6 вакансий), но обязательным его называют 3 из 29: цель 0, держите как плюс.", "en": "Python shows up in entry BI ads (2 of 6), but only 3 of 29 require it: the target is 0, keep it as a plus." } },
       "core": ["sql", "modeling", "bi", "business"],
       "hybrid": { "ru": "BI-аналитик часто ещё и аналитик: сам отвечает на вопросы по своему отчёту.", "en": "A BI analyst is often an analyst too, answering questions from their own report." },
       "ai": { "ru": "Copilot пишет черновики мер и раскладывает визуалы. Остаются модель, права доступа и понятные определения.", "en": "Copilot drafts measures and lays out visuals. The model, access rights and clear definitions stay with you." }
@@ -785,7 +820,7 @@
       "grades": { "entry": { "n": 0, "top": [] }, "mid": { "n": 6, "top": [["quality", 6], ["model", 6], ["sql", 5]] }, "senior": { "n": 4, "top": [["quality", 3], ["req", 3], ["doc", 3]] } },
       "title": { "ru": "Analytics Engineer", "en": "Analytics Engineer" },
       "does": { "ru": "Чистит данные и собирает из них звезду с тестами, на которой работают аналитики и BI.", "en": "Cleans the data and builds a tested star schema that analysts and BI work on." },
-      "targets": { "sql": 3, "modeling": 2, "bi": 2, "python": 1, "stats": 0, "engineering": 2, "business": 2, "process": 1 },
+      "targets": { "sql": 3, "modeling": 2, "bi": 1, "python": 1, "stats": 0, "engineering": 2, "business": 2, "process": 1 },
       "core": ["sql", "modeling", "engineering"],
       "hybrid": { "ru": "Роль появилась между аналитиком и инженером данных; в технологичных компаниях её часто совмещают с аналитиком.", "en": "The role grew between analyst and data engineer; at tech companies it is often combined with the analyst." },
       "ai": { "ru": "SQL ИИ пишет хорошо. Гранулярность, тесты и то, что соединение не размножило строки, проверяет человек.", "en": "AI writes SQL well. Grain, tests and making sure a join did not multiply rows are on a person." }
@@ -814,7 +849,7 @@
       "grades": { "entry": { "n": 2, "top": [] }, "mid": { "n": 1, "top": [] }, "senior": { "n": 2, "top": [] } },
       "title": { "ru": "Data Scientist", "en": "Data Scientist" },
       "does": { "ru": "Строит модели прогноза и эффекта и называет их ограничения.", "en": "Builds forecast and effect models and states their limits." },
-      "targets": { "sql": 2, "modeling": 0, "bi": 0, "python": 3, "stats": 3, "engineering": 1, "business": 1, "process": 0 },
+      "targets": { "sql": 0, "modeling": 0, "bi": 0, "python": 3, "stats": 3, "engineering": 1, "business": 1, "process": 0 },
       "core": ["python", "stats"],
       "hybrid": { "ru": "Во многих компаниях этой роли нет, и её задачи берёт аналитик.", "en": "Many companies do not have this role, and the analyst takes its tasks." },
       "ai": { "ru": "ИИ подберёт модель и напишет код. Понять, где модель ошибается и что нельзя обещать бизнесу, должен человек.", "en": "AI picks a model and writes the code. Seeing where the model is wrong and what not to promise the business is a person's job." }
@@ -842,7 +877,7 @@
       "grades": { "entry": { "n": 4, "top": [["gov", 4], ["quality", 2], ["doc", 2]] }, "mid": { "n": 2, "top": [] }, "senior": { "n": 3, "top": [["quality", 3], ["kpi", 3], ["gov", 3]] } },
       "title": { "ru": "Data Governance / Steward", "en": "Data Governance / Steward" },
       "does": { "ru": "Записывает определения метрик, назначает владельцев и следит за качеством и доступом.", "en": "Records metric definitions, assigns owners and looks after quality and access." },
-      "targets": { "sql": 1, "modeling": 1, "bi": 1, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
+      "targets": { "sql": 1, "modeling": 1, "bi": 0, "python": 0, "stats": 0, "engineering": 1, "business": 2, "process": 2 },
       "core": ["modeling", "business", "process"],
       "hybrid": { "ru": "Часто это не отдельная должность, а часть работы аналитика или BI-команды.", "en": "Often not a separate job but part of the analyst's or BI team's work." },
       "ai": { "ru": "ИИ описывает таблицы и находит аномалии. Назначить владельца и решить, кому что видеть, могут только люди.", "en": "AI describes tables and spots anomalies. Assigning an owner and deciding who sees what is up to people." }
@@ -961,7 +996,7 @@
     { "id": "model-star-project", "axis": "modeling", "level": 3, "title": { "ru": "Собрал звезду для чужого датасета в проекте (Fabric, Power BI или SQL)", "en": "Built a star schema for someone else's dataset in a project (Fabric, Power BI or SQL)" } },
     { "id": "bi-lab-build", "axis": "bi", "level": 1, "source": "labDone", "labKeys": ["build:kaiyo-sales"], "title": { "ru": "Собрал дашборд в Lab руками: плитки и срез на своей модели", "en": "Built a dashboard in Lab by hand: tiles and a slicer on my own model" } },
     { "id": "pl300-practice", "axis": "bi", "level": 2, "title": { "ru": "Practice Assessment PL-300 на Microsoft Learn: 80% или больше", "en": "PL-300 Practice Assessment on Microsoft Learn: 80% or more" } },
-    { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт Power BI с мерами DAX на данных, которых не было в заданиях, и могу его показать", "en": "Built a Power BI report with DAX measures on data that was not in the tasks and can show it" } },
+    { "id": "bi-report", "axis": "bi", "level": 3, "title": { "ru": "Сделал отчёт в Power BI или Tableau с мерами на данных, которых не было в заданиях, и могу его показать", "en": "Built a report in Power BI or Tableau with measures on data that was not in the tasks and can show it" } },
     { "id": "pandas-notebook", "axis": "python", "level": 2, "title": { "ru": "Прошёл тетрадь Quaera Pandas до конца, последние две части без hint()", "en": "Finished the Quaera Pandas notebook, the last two parts without hint()" } },
     { "id": "py-lab-practice", "axis": "python", "level": 2, "source": "labDone", "labKeys": ["practice:python"], "title": { "ru": "Прошёл практику Lab на Kaiyo без подсказок: 70% разделов", "en": "Passed the Lab practice on Kaiyo without hints: 70% of the sections" } },
     { "id": "pandas-own-data", "axis": "python", "level": 3, "title": { "ru": "Разобрал незнакомый датасет в pandas от загрузки до вывода", "en": "Analysed an unfamiliar dataset in pandas from loading to conclusion" } },

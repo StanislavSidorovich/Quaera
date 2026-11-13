@@ -10,6 +10,7 @@ import { quizBank } from '../content/careerQuiz';
 import { useQuizStatusText } from './CareerQuiz';
 import './careerSteps.css';
 import './careerCeiling.css';
+import './careerLearn.css';
 
 /**
  * Общие куски обзора и страницы роли: шаги «как дойти до уровня» и строки
@@ -196,6 +197,25 @@ export function StepItem({ step, axis, ctx }: { step: AxisStep; axis: AxisId; ct
               <EvidenceRow id={step.evidence} ctx={ctx} />
             </ul>
           )}
+        </li>
+      );
+    case 'learn':
+      return (
+        <li className="career-step career-learn">
+          <p>
+            <strong>{c.learnPrefix}</strong>{' '}
+            <a href={step.href} target="_blank" rel="noreferrer">
+              {text} ↗
+            </a>
+          </p>
+        </li>
+      );
+    case 'planned':
+      return (
+        <li className="career-step career-learn">
+          <p>
+            <strong>{c.plannedPrefix}</strong> {text}
+          </p>
         </li>
       );
     default:

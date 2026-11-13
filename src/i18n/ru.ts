@@ -2121,8 +2121,8 @@ export const ru = {
     evidenceNote: 'Отметку ставите вы сами, поэтому она поднимает ось не выше чем на ступень над заданиями.',
     evidenceCapped: 'Пока не засчитана: сначала поднимите ось заданиями.',
     storageNote: 'Отметки и недельные снимки хранятся только на этом устройстве.',
-    sourceNote: (n: number, linkedin: number, boards: number) =>
-      `По ${n} вакансиям из Португалии: ${linkedin} с LinkedIn, отобранные вручную, и ${boards} с португальских досок вакансий, собранные скриптом по запросам BI и аналитик данных. Объявления с начала 2026 года, сбор в ноябре 2026. Это не случайная выборка рынка: ориентир, а не статистика.`,
+    sourceNote: (n: number, linkedin: number, boards: number, roleTotal: number) =>
+      `Цели ролей выведены из ${roleTotal} вакансий, отнесённых к семи ролям из ${n}. По ${n} вакансиям из Португалии: ${linkedin} с LinkedIn, отобранные вручную, и ${boards} с португальских досок вакансий, собранные скриптом по запросам BI и аналитик данных. Объявления с начала 2026 года, сбор в ноябре 2026. Это не случайная выборка рынка: ориентир, а не статистика.`,
     /* Обзор «Пути к роли»: паутинка, плитки ролей, ваша цель. */
     ov: {
       radarAria: (rows: string) => `Паутинка по восьми осям, ваш уровень. ${rows}`,
@@ -2198,6 +2198,11 @@ export const ru = {
     outsideItems: { excel: 'Excel', english: 'Английский', comms: 'Коммуникация со стейкхолдерами' },
     outsideShare: (n: number, total: number) => `${n} из ${total}`,
     outsideBasisRole: (n: number) => `Вакансии роли: ${n}.`,
+    learnPrefix: 'Где прокачать:',
+    plannedPrefix: 'В проработке в Quaera:',
+    excelNote: (hit: number, of: number) => `Excel называют в каждой второй вакансии Data Analyst и в ${hit} из ${of} входных вакансий DA и BI. Это самая большая дыра семьи: Excel тут не учат, только Lab читает файлы xlsx.`,
+    excelLearn: 'Microsoft Learn, курсы Excel',
+    targetNote: (axis: string, text: string) => `${axis}: ${text}`,
     outsideBasisAll: (n: number) => `У роли мало вакансий в выборке, поэтому доли по всем ${n} вакансиям.`,
     radarTitle: 'Цель и вы',
     radarYou: 'Вы сейчас',

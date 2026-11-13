@@ -227,7 +227,7 @@ export function CareerOverview({
       <section className="card">
         <h2>{c.rolesTitle}</h2>
         <p className="muted">{c.ov.rolesLead}</p>
-        <p className="muted career-source">{c.sourceNote(vacancies.total, vacancies.linkedin, vacancies.boards)}</p>
+        <p className="muted career-source">{c.sourceNote(vacancies.total, vacancies.linkedin, vacancies.boards, vacancies.roleTotal)}</p>
         <div className="co-tiles">
           {careerRoles.map((r) => {
             const rr = readinessByRole[r.id];
