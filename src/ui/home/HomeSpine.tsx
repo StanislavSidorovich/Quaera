@@ -258,9 +258,11 @@ export function HomeSpine(p: HomeSpineProps) {
                     </button>
                   ) : (
                     <>
-                      <span className="hs-dot" aria-hidden />
+                      <span className="hs-lock" aria-hidden>
+                        🔒
+                      </span>
                       <span className="hs-day-name" aria-hidden>
-                        {s.letterShort} 🔒
+                        {s.letterShort}
                       </span>
                     </>
                   )}

@@ -273,7 +273,7 @@ export const en = {
       tileStart: (topic: string) => `Start: ${topic}`,
       tileContinue: (topic: string) => `Next: ${topic}`,
       tileOpen: 'Open the track',
-      tileLearn: { domain: 'Read business and metrics', sql: 'Query data with SQL', python: 'Analyze data in pandas', model: 'Data models and BI' } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+      tileLearn: { domain: 'Read business and metrics', sql: 'SELECT, JOIN, window functions', python: 'Tables, grouping, pivots', model: 'Star schema, measures, report' } as Record<'sql' | 'model' | 'python' | 'domain', string>,
       letterTitle: 'Letter to your manager',
       letterShort: 'Letter',
       letterLocked: 'locked',

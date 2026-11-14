@@ -530,7 +530,7 @@ export const ru = {
       tileStart: (topic: string) => `Начать: ${topic}`,
       tileContinue: (topic: string) => `Дальше: ${topic}`,
       tileOpen: 'Открыть трек',
-      tileLearn: { domain: 'Читать бизнес и метрики', sql: 'Запросы к данным на SQL', python: 'Анализ данных в pandas', model: 'Модель данных и BI' } as Record<'sql' | 'model' | 'python' | 'domain', string>,
+      tileLearn: { domain: 'Читать бизнес и метрики', sql: 'SELECT, JOIN, оконные функции', python: 'Таблицы, группировки, сводные', model: 'Звезда, меры, отчёт' } as Record<'sql' | 'model' | 'python' | 'domain', string>,
       letterTitle: 'Письмо руководителю',
       letterShort: 'Письмо',
       letterLocked: 'закрыто',
