@@ -1,0 +1,201 @@
+/*
+ * Главная, правая колонка и рамка режима истории (схема A, правка 2026-11-14):
+ * «Где вы сейчас» с акцентом сверху, под ним треки 2×2 высотой по содержимому.
+ * Токены темы (--accent, --bg-raised, --line), в тёмной теме работают как есть.
+ */
+.hs-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hs-frame .hs-kicker,
+.hs-frame .hs-question {
+  margin: 0;
+}
+
+.hs-what {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.hs-days {
+  flex-wrap: wrap;
+  margin: 2px 0;
+}
+
+.hs-letterbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  min-height: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.hs-letterday.locked {
+  opacity: 0.75;
+}
+
+.hs-letterday {
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+}
+
+.hs-letterday.open .hs-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.hs-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hs-k {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.hs-v {
+  font-weight: 600;
+  min-width: 0;
+}
+
+/* Где вы сейчас: акцентная полоса слева и подкрашенный фон. */
+.card.hs-now {
+  border-left: 5px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-raised));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hs-now h2 {
+  margin: 0;
+}
+
+.hs-now p {
+  margin: 0;
+}
+
+.hs-now-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hs-now-topic .hs-v {
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.hs-now-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.hs-now-bar {
+  display: grid;
+  grid-template-columns: auto minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.hs-now-bar .bar {
+  display: block;
+}
+
+.hs-now-goal {
+  font-size: 14px;
+}
+
+.hs-now-review {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.hs-now-review .btn {
+  width: auto;
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+/* Треки 2×2: высота по содержимому, без растяжения и пустот. */
+.hs-tracks {
+  align-items: start;
+}
+
+.hs-tile {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 14px;
+}
+
+.hs-tile-stage {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.hs-tile-cta {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--accent);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 1180px) {
+  .hs-tile {
+    padding: 16px;
+    gap: 10px;
+  }
+}
+
+/* Телефон: рамка и «Продолжить», затем «Где вы сейчас», карта, треки. Порядок в DOM: рамка, карта, правая колонка, поэтому на узком экране правая колонка поднимается выше карты. */
+@media (max-width: 1179px) {
+  .hs-cols {
+    display: flex;
+    flex-direction: column;
+  }
+  .hs-left,
+  .hs-right {
+    display: contents;
+  }
+  .hs-frame { order: 1; }
+  .hs-now { order: 2; }
+  .hs-map { order: 3; }
+  .hs-tracks { order: 4; }
+}
+
+@media (max-width: 759px) {
+  .hs-tile-stage {
+    display: block;
+    font-size: 12px;
+  }
+  .hs-tile-cta {
+    font-size: 12px;
+  }
+  .hs-now-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .hs-now-bar .hs-k {
+    grid-column: 1 / -1;
+  }
+}

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { careerAxes, careerEvidence, careerRole } from '../content/career';
 import { passedQuizEvidence } from '../career/quiz';
 import { DEFAULT_ROLE, checkedIds, emptyCareerState } from '../career/store';
-import { roleReadiness } from '../career/readiness';
+import { closedEvidence, roleReadiness } from '../career/readiness';
 import { careerSignals } from '../career/signals';
 import { useI18n } from '../i18n/context';
 import type { Progress } from '../srs/store';
@@ -16,16 +16,20 @@ import './roleStrip.css';
  * бы как оценка, — вместо них тихое приглашение выбрать.
  * Ссылка ведёт на страницу выбранной роли; пока роль не выбрана, на обзор.
  */
+/** Цели выбранной роли: сколько закрыто. Те же числа, что на экране «Путь к роли» (галочки, тесты, отметки Lab). */
+export function roleGoal(progress: Progress, now: Date = new Date()) {
+  const state = progress.career ?? emptyCareerState();
+  const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
+  const checked = closedEvidence(checkedIds(state), passedQuizEvidence(careerEvidence, state.quiz, now), careerEvidence, state.labDone ?? {});
+  const r = roleReadiness(role, careerAxes, careerSignals(progress), careerEvidence, checked);
+  return { chosen: state.roleAt !== null, role, met: r.met, total: r.total };
+}
+
 export function RoleStrip({ progress, onOpen }: { progress: Progress; onOpen: (roleId: string | null) => void }) {
   const { t, locale } = useI18n();
   const c = t.career;
-  const state = progress.career ?? emptyCareerState();
-  const chosen = state.roleAt !== null;
-  const role = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
-  const r = useMemo(() => {
-    const checked = new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date())]);
-    return roleReadiness(role, careerAxes, careerSignals(progress), careerEvidence, checked);
-  }, [role, state, progress.skills, progress.taskRecords]);
+  const r = useMemo(() => roleGoal(progress), [progress.career, progress.skills, progress.taskRecords]);
+  const { chosen, role } = r;
   const text = !chosen ? c.stripPick : r.met >= r.total ? c.stripAllMet(role.title[locale]) : c.stripGoal(role.title[locale], r.met, r.total);
   return (
     <p className="role-strip">

@@ -62,7 +62,7 @@ try {
     { cwd: root, stdio: 'inherit' }
   );
   const { isCodeTask, wroteSkills } = await import(pathToFileURL(path.join(outDir, 'career', 'wrote.js')).href);
-  const { AXES, skillLevel, legacySkillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, RETAINED_INTERVAL_DAYS } = await import(
+  const { AXES, skillLevel, legacySkillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, closedEvidence, RETAINED_INTERVAL_DAYS } = await import(
     pathToFileURL(path.join(outDir, 'career', 'readiness.js')).href
   );
 
@@ -611,6 +611,17 @@ try {
   const A1 = [att('stats', 1, 1), att('process', 2, 0)];
   const B1 = [att('stats', 3, 0), att('process', 2, 0)];
   assertEq('хранение: слияние не зависит от порядка', Q.normalizeQuiz([...A1, ...B1]), Q.normalizeQuiz([...B1, ...A1]));
+  // ── Цели на главной: отметки Lab входят в счёт ──────────────────────────
+  {
+    const evG = [
+      { id: 'lab', axis: 'engineering', level: 1, source: 'labDone', labKeys: ['build:x'] },
+      { id: 'tick', axis: 'sql', level: 2 },
+    ];
+    const now = (checks, labDone) => [...closedEvidence(checks, [], evG, labDone)].sort();
+    assertEq('цели: отметка Lab засчитана', now([], { 'build:x': '2026-11-10T00:00:00Z' }), ['lab']);
+    assertEq('цели: без отметки Lab пусто', now([], {}), []);
+    assertEq('цели: галочка и Lab складываются', now(['tick'], { 'build:x': 'z' }), ['lab', 'tick']);
+  }
 } finally {
   rmSync(outDir, { recursive: true, force: true });
 }

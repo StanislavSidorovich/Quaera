@@ -436,6 +436,7 @@ export function Home({
             storyStarted={storyStarted}
             storyReachedId={storyReachedId}
             onResume={onResume}
+            onReview={onStart}
             onStartSkill={onStartSkill}
             onOpenStoryMode={onOpenStoryMode}
             onOpenStoryPart={onOpenStoryPart}

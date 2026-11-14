@@ -75,6 +75,20 @@ export function labDoneEvidence(evidence: EvidenceDef[], done: Record<string, un
   return evidence.filter((e) => e.source === 'labDone' && !!e.labKeys?.some((k) => !!done[k])).map((e) => e.id);
 }
 
+/**
+ * Закрытые отметки-доказательства: галочки, засчитанные тесты самопроверки и отметки Lab
+ * (`Progress.career.labDone`). Один набор для экрана «Путь к роли» и для строки целей
+ * на главной, иначе числа на них разойдутся.
+ */
+export function closedEvidence(
+  checks: string[],
+  quizPassed: string[],
+  evidence: EvidenceDef[],
+  labDone: Record<string, unknown>
+): Set<string> {
+  return new Set([...checks, ...quizPassed, ...labDoneEvidence(evidence, labDone)]);
+}
+
 export interface RoleDef {
   id: string;
   /** Целевой уровень junior по каждой из восьми осей; 0 — ось роли не нужна. */

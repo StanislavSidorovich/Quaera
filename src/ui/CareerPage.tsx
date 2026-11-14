@@ -6,7 +6,7 @@ import { useI18n } from '../i18n/context';
 import { appStorage } from '../guestMode';
 import type { Progress } from '../srs/store';
 import { careerSignals } from '../career/signals';
-import { AXES, axisReading, labDoneEvidence, overdueSkills, roleReadiness } from '../career/readiness';
+import { AXES, axisReading, closedEvidence, overdueSkills, roleReadiness } from '../career/readiness';
 import type { AxisId, AxisReading } from '../career/readiness';
 import { DEFAULT_ROLE, checkedIds, emptyCareerState, withRole, withToggledEvidence, withWeeklySnapshot, withQuizAttempt } from '../career/store';
 import type { AxisLevels, CareerState } from '../career/store';
@@ -125,7 +125,7 @@ export function CareerPage({
    */
   const labDone = useLabDone();
   const checked = useMemo(
-    () => new Set([...checkedIds(state), ...passedQuizEvidence(careerEvidence, state.quiz, new Date()), ...labDoneEvidence(careerEvidence, labDone)]),
+    () => closedEvidence(checkedIds(state), passedQuizEvidence(careerEvidence, state.quiz, new Date()), careerEvidence, labDone),
     [state, labDone]
   );
 

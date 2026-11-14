@@ -12,7 +12,9 @@ import { mastery } from '../../srs/scheduler';
 import type { Progress } from '../../srs/store';
 import { IconBook, IconCompass, IconFlask, IconTable } from '../Sidebar';
 import { TRACK_ORDER } from './HomeParts';
+import { roleGoal } from '../RoleStrip';
 import './homeSpine.css';
+import './homeStatus.css';
 
 import markLab from '../../../family/marks/lab.svg';
 import markModel from '../../../family/marks/model.svg';
@@ -56,6 +58,8 @@ export interface HomeSpineProps {
   storyStarted: boolean;
   storyReachedId: string | null;
   onResume: () => void;
+  /** Занятие на повторение (то же, что «Начать» в виде трека). */
+  onReview: () => void;
   onStartSkill: (skillId: string) => void;
   onOpenStoryMode: (() => void) | null;
   onOpenStoryPart: ((partId: string) => void) | null;
@@ -181,19 +185,26 @@ export function HomeSpine(p: HomeSpineProps) {
   };
   const circleText: Record<Circle, string> = { learn: s.circleLearn, practice: s.circlePractice, apply: s.circleApply };
 
-  /* Статус: текущая тема, повторение, прочность трека. */
-  const topic = useMemo(() => {
+  /* Текущая тема трека: начатая и не доведённая (самая свежая), иначе первая нетронутая. */
+  const topicOf = (pack: Pack): { title: string; started: boolean } | null => {
     let best: { id: string; at: string } | null = null;
-    for (const sk of p.activePack.skills) {
+    for (const sk of pack.skills) {
       const st = p.progress.skills[sk.id];
       if (!st || st.reps === 0 || mastery(st) >= 1 || !st.lastReviewedAt) continue;
       if (!best || st.lastReviewedAt > best.at) best = { id: sk.id, at: st.lastReviewedAt };
     }
-    return best ? p.activePack.skills.find((x) => x.id === best!.id)?.title ?? null : null;
-  }, [p.activePack, p.progress]);
+    const cur = best ? pack.skills.find((x) => x.id === best!.id) : null;
+    if (cur) return { title: cur.title, started: true };
+    const fresh = pack.skills.find((x) => (p.progress.skills[x.id]?.reps ?? 0) === 0);
+    return fresh ? { title: fresh.title, started: false } : null;
+  };
+  const here = topicOf(p.activePack);
+  const topic = here?.started ? here.title : null;
   const strength = Math.round(
     (p.activePack.skills.reduce((n, sk) => n + mastery(p.progress.skills[sk.id]), 0) / Math.max(1, p.activePack.skills.length)) * 100,
   );
+  const activeSolved = p.activePack.tasks.filter((x) => p.progress.taskRecords[x.id]?.solved).length;
+  const goal = useMemo(() => roleGoal(p.progress), [p.progress]);
 
   const link = (a: LayerAction) => (
     <a
@@ -210,62 +221,76 @@ export function HomeSpine(p: HomeSpineProps) {
 
   return (
     <div className="hs">
-      {/* Рамка недели: вопрос заказчика, дни, одна главная кнопка. */}
-      <section className="card hs-frame" data-guide="story" aria-label={s.frameKicker}>
-        <div className="hs-frame-text">
-          <p className="hs-kicker">
-            {s.frameKicker}
-            {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
-          </p>
-          {week && (
-            <p className="hs-question">
-              {asker && <span className="hs-asker">{s.asks(asker)}: </span>}«{week.question}»
-            </p>
-          )}
-          {days.length > 0 && (
-            <ol className="hs-days">
-              {days.map((m, i) => {
-                const state = reachedDay < 0 ? (i === 0 ? 'now' : 'ahead') : i < reachedDay ? 'done' : i === reachedDay ? 'now' : 'ahead';
-                return (
-                  <li key={m.id} className={`hs-day ${state}`} aria-label={s.dayAria(i + 1, state)} aria-current={state === 'now' ? 'step' : undefined}>
-                    <span className="hs-dot" aria-hidden />
-                    <span className="hs-day-name" aria-hidden>
-                      {m.short}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </div>
-        <div className="hs-frame-act">
-          <button type="button" className="btn hs-main" onClick={onMain} disabled={p.loading && step.kind === 'resume'}>
-            <span className="hs-main-text">{mainLabel}</span>
-            {minutes !== null && <span className="hs-main-min">{s.minutes(minutes)}</span>}
-          </button>
-          <div className="hs-quiet">
-            {p.isNewUser && (
-              <p className="hs-intro">
-                {s.introLead}{' '}
-                <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
-                  {s.introLink}
-                </button>
-              </p>
-            )}
-            {!p.isNewUser && p.onOpenStoryMode && (
-              <p className="hs-intro">
-                <button type="button" className="hs-textlink" data-pair="storymode" onClick={p.onOpenStoryMode}>
-                  {p.storyStarted ? s.storyContinue : s.storyStart} →
-                </button>
-              </p>
-            )}
-            {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
-          </div>
-        </div>
-      </section>
-
       <div className="hs-cols">
         <div className="hs-left">
+          {/* Режим истории: вопрос заказчика, пять дней и письмо, одна главная кнопка. */}
+          <section className="card hs-frame" data-guide="story" aria-labelledby="hs-frame-title">
+            <p className="hs-kicker" id="hs-frame-title">
+              {s.frameKicker}
+              {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
+            </p>
+            {week && (
+              <p className="hs-question">
+                {asker && <span className="hs-asker">{s.asks(asker)}: </span>}«{week.question}»
+              </p>
+            )}
+            <p className="hs-what">{s.frameWhat}</p>
+            {days.length > 0 && (
+              <ol className="hs-days">
+                {days.map((m, i) => {
+                  const state = reachedDay < 0 ? (i === 0 ? 'now' : 'ahead') : i < reachedDay ? 'done' : i === reachedDay ? 'now' : 'ahead';
+                  return (
+                    <li key={m.id} className={`hs-day ${state}`} aria-label={s.dayAria(i + 1, state)} aria-current={state === 'now' ? 'step' : undefined}>
+                      <span className="hs-dot" aria-hidden />
+                      <span className="hs-day-name" aria-hidden>
+                        {m.short}
+                      </span>
+                    </li>
+                  );
+                })}
+                <li className={`hs-day hs-letterday ${letterOpen ? 'open' : 'locked'}`} aria-label={s.letterAria(letterOpen)}>
+                  {letterOpen && p.onOpenStoryMode ? (
+                    <button type="button" className="hs-letterbtn" onClick={p.onOpenStoryMode}>
+                      <span className="hs-dot" aria-hidden />
+                      <span className="hs-day-name" aria-hidden>
+                        {s.letterShort}
+                      </span>
+                    </button>
+                  ) : (
+                    <>
+                      <span className="hs-dot" aria-hidden />
+                      <span className="hs-day-name" aria-hidden>
+                        {s.letterShort} 🔒
+                      </span>
+                    </>
+                  )}
+                </li>
+              </ol>
+            )}
+            <button type="button" className="btn hs-main" onClick={onMain} disabled={p.loading && step.kind === 'resume'}>
+              <span className="hs-main-text">{mainLabel}</span>
+              {minutes !== null && <span className="hs-main-min">{s.minutes(minutes)}</span>}
+            </button>
+            <div className="hs-quiet">
+              {p.isNewUser && (
+                <p className="hs-intro">
+                  {s.introLead}{' '}
+                  <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
+                    {s.introLink}
+                  </button>
+                </p>
+              )}
+              {!p.isNewUser && p.onOpenStoryMode && (
+                <p className="hs-intro">
+                  <button type="button" className="hs-textlink" data-pair="storymode" onClick={p.onOpenStoryMode}>
+                    {p.storyStarted ? s.storyContinue : s.storyStart} →
+                  </button>
+                </p>
+              )}
+              {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
+            </div>
+          </section>
+
           {/* Карта пути данных: «вы здесь» по прогрессу, действия только у текущего слоя. */}
           <section className="card hs-map" data-pair="career" data-guide="map" aria-labelledby="hs-map-title">
             <h2 id="hs-map-title">
@@ -329,72 +354,75 @@ export function HomeSpine(p: HomeSpineProps) {
               </button>
             </p>
           </section>
+        </div>
 
-          {/* Статус одной строкой на показатель. */}
-          <section className="card hs-status" aria-label={s.statusTitle}>
-            <p>
-              <span className="hs-k">{s.statusTopic}</span>
-              <span className="hs-v">{topic ?? s.statusTopicNone}</span>
+        {/* Правая колонка: где вы сейчас и треки 2×2 высотой по содержимому. */}
+        <div className="hs-right">
+          <section className="card hs-now" aria-labelledby="hs-now-title">
+            <h2 id="hs-now-title">{s.nowTitle}</h2>
+            <p className="hs-now-topic">
+              <span className="hs-k">{s.nowTopic}</span>
+              <span className="hs-v">{topic ?? s.nowTopicNone}</span>
             </p>
-            <p>
-              <span className="hs-k">{s.statusDue}</span>
-              <span className="hs-v">{p.dueCount}</span>
+            <p className="hs-now-sub">{topic ? s.nowOf(activeSolved, p.activePack.tasks.length) : s.nowNoneHint}</p>
+            <div className="hs-now-bar">
+              <span className="hs-k">{s.nowStrength(t.trackShort[p.activeTrack], strength)}</span>
+              <span className="bar" role="img" aria-label={`${strength}%`}>
+                <span style={{ width: `${strength}%` }} />
+              </span>
+              <span className="hs-v">{strength}%</span>
+            </div>
+            <p className="hs-now-goal">
+              <button type="button" className="hs-textlink" onClick={() => p.onOpenCareer(goal.chosen ? goal.role.id : null)}>
+                {goal.chosen ? s.nowGoal(goal.role.title[locale], goal.met, goal.total) : s.nowPickRole} →
+              </button>
             </p>
-            <p>
-              <span className="hs-v hs-strength">{s.statusStrength(t.trackShort[p.activeTrack], strength)}</span>
-            </p>
+            {p.dueCount > 0 && (
+              <div className="hs-now-review">
+                <button type="button" className="btn secondary" onClick={p.onReview} disabled={p.loading}>
+                  {s.reviewBtn(p.dueCount)}
+                </button>
+                <span className="hs-k">{s.reviewHint}</span>
+              </div>
+            )}
+          </section>
+
+          <section className="hs-tracks" data-pair="tracks" data-guide="tracks" aria-label={s.tracksTitle}>
+            {TRACK_ORDER.map((track) => {
+              const pack = packForTrack(track, locale);
+              if (!pack) return null;
+              const total = pack.tasks.length;
+              const ready = pack.status !== 'draft' && total > 0;
+              const solved = ready ? pack.tasks.filter((x) => p.progress.taskRecords[x.id]?.solved).length : 0;
+              const nextTopic = ready ? topicOf(pack) : null;
+              const circle: Circle = track === 'domain' ? 'apply' : 'learn';
+              return (
+                <button
+                  key={track}
+                  type="button"
+                  className={`card hs-tile track-${track}${track === p.activeTrack ? ' active' : ''}${ready ? '' : ' draft'}`}
+                  onClick={() => p.onOpenTrack(track)}
+                >
+                  <span className="hs-tile-head">
+                    <span className="hs-tile-name">{t.tracks.names[track]}</span>
+                    <span className={`hs-circle hs-circle-${circle}`}>{circleText[circle]}</span>
+                  </span>
+                  <span className="hs-tile-stage">{s.tileLearn[track]}</span>
+                  {ready && (
+                    <span className="bar" aria-hidden>
+                      <span style={{ width: `${total ? Math.round((solved / total) * 100) : 0}%` }} />
+                    </span>
+                  )}
+                  <span className="hs-tile-count">{ready ? s.tileOf(solved, total) : t.tracks.draftBadge}</span>
+                  <span className="hs-tile-cta">
+                    {nextTopic ? (nextTopic.started ? s.tileContinue(nextTopic.title) : s.tileStart(nextTopic.title)) : s.tileOpen}
+                  </span>
+                </button>
+              );
+            })}
           </section>
         </div>
-
-        {/* Треки плиткой 2×2: высота блока равна левой колонке (CSS). */}
-        <section className="hs-tracks" data-pair="tracks" data-guide="tracks" aria-label={s.tracksTitle}>
-          {TRACK_ORDER.map((track) => {
-            const pack = packForTrack(track, locale);
-            if (!pack) return null;
-            const total = pack.tasks.length;
-            const ready = pack.status !== 'draft' && total > 0;
-            const solved = ready ? pack.tasks.filter((x) => p.progress.taskRecords[x.id]?.solved).length : 0;
-            const circle: Circle = track === 'domain' ? 'apply' : 'learn';
-            return (
-              <button
-                key={track}
-                type="button"
-                className={`card hs-tile track-${track}${track === p.activeTrack ? ' active' : ''}${ready ? '' : ' draft'}`}
-                onClick={() => p.onOpenTrack(track)}
-              >
-                <span className="hs-tile-head">
-                  <span className="hs-tile-name">{t.tracks.names[track]}</span>
-                  <span className={`hs-circle hs-circle-${circle}`}>{circleText[circle]}</span>
-                </span>
-                <span className="hs-tile-stage">{t.tracks.chainStage[track]}</span>
-                <span className="hs-tile-count">{ready ? s.tileOf(solved, total) : t.tracks.draftBadge}</span>
-                {ready && (
-                  <span className="bar" aria-hidden>
-                    <span style={{ width: `${total ? Math.round((solved / total) * 100) : 0}%` }} />
-                  </span>
-                )}
-                <span className="hs-tile-cta">{solved > 0 ? s.tileContinue : s.tileOpen} →</span>
-              </button>
-            );
-          })}
-        </section>
       </div>
-
-      {/* Письмо руководителю: закрыто до ответа в сборке или дня, закрывающего неделю. */}
-      <section className={`card hs-letter${letterOpen ? ' open' : ''}`} aria-labelledby="hs-letter-title">
-        <div>
-          <h2 id="hs-letter-title">
-            {s.letterTitle}
-            {!letterOpen && <span className="pill hs-lock">{s.letterLocked}</span>}
-          </h2>
-          <p className="muted">{letterOpen ? s.letterOpen : s.letterClosed}</p>
-        </div>
-        {letterOpen && p.onOpenStoryMode && (
-          <button type="button" className="btn secondary hs-letter-btn" onClick={p.onOpenStoryMode}>
-            {s.letterBtn}
-          </button>
-        )}
-      </section>
 
       <nav className="hs-links" aria-label={s.linksLabel}>
         <button type="button" className="btn secondary" data-pair="reference" onClick={p.onOpenReference}>
