@@ -203,6 +203,7 @@ export function HomeSpine(p: HomeSpineProps) {
   const strength = Math.round(
     (p.activePack.skills.reduce((n, sk) => n + mastery(p.progress.skills[sk.id]), 0) / Math.max(1, p.activePack.skills.length)) * 100,
   );
+  const upNext = p.activePack.skills.find((x) => (p.progress.skills[x.id]?.reps ?? 0) === 0 && x.title !== topic)?.title ?? null;
   const activeSolved = p.activePack.tasks.filter((x) => p.progress.taskRecords[x.id]?.solved).length;
   const goal = useMemo(() => roleGoal(p.progress), [p.progress]);
 
@@ -367,6 +368,11 @@ export function HomeSpine(p: HomeSpineProps) {
               <span className="hs-v">{topic ?? s.nowTopicNone}</span>
             </p>
             <p className="hs-now-sub">{topic ? s.nowOf(activeSolved, p.activePack.tasks.length) : s.nowNoneHint}</p>
+            {topic && upNext && (
+              <p className="hs-now-sub">
+                {s.nowNext}: <strong>{upNext}</strong>
+              </p>
+            )}
             <div className="hs-now-bar">
               <span className="hs-k">{s.nowStrength(t.trackShort[p.activeTrack], strength)}</span>
               <span className="bar" role="img" aria-label={`${strength}%`}>
@@ -397,6 +403,9 @@ export function HomeSpine(p: HomeSpineProps) {
               const ready = pack.status !== 'draft' && total > 0;
               const solved = ready ? pack.tasks.filter((x) => p.progress.taskRecords[x.id]?.solved).length : 0;
               const nextTopic = ready ? topicOf(pack) : null;
+              const tiers = [...new Set(pack.skills.map((x) => x.tier))]
+                .sort((a, b) => a - b)
+                .map((tier) => ({ tier, name: pack.tierNames?.[tier] ?? t.task.levelLabel(tier), n: pack.skills.filter((x) => x.tier === tier).length }));
               const circle: Circle = track === 'domain' ? 'apply' : 'learn';
               return (
                 <button
@@ -410,6 +419,16 @@ export function HomeSpine(p: HomeSpineProps) {
                     <span className={`hs-circle hs-circle-${circle}`}>{circleText[circle]}</span>
                   </span>
                   <span className="hs-tile-stage">{s.tileLearn[track]}</span>
+                  {tiers.length > 0 && (
+                    <span className="hs-tile-tiers">
+                      {tiers.map((x) => (
+                        <span key={x.tier} className="hs-tile-tier">
+                          <span>{x.name}</span>
+                          <span className="hs-tile-tier-n">{s.tileTopics(x.n)}</span>
+                        </span>
+                      ))}
+                    </span>
+                  )}
                   {ready && (
                     <span className="bar" aria-hidden>
                       <span style={{ width: `${total ? Math.round((solved / total) * 100) : 0}%` }} />

@@ -143,9 +143,35 @@
   padding: 0 16px;
 }
 
-/* Треки 2×2: высота по содержимому, без растяжения и пустот. */
+/* Треки 2×2. На телефоне и планшете высота по содержимому, на десктопе плитки растянуты до высоты карты слева. */
 .hs-tracks {
   align-items: start;
+}
+
+.hs-tile-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.hs-tile-tier {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hs-tile-tier-n {
+  flex: none;
+  color: var(--text-dim);
+}
+
+.hs-tile-cta {
+  margin-top: auto;
 }
 
 .hs-tile {
@@ -177,6 +203,26 @@
     padding: 16px;
     gap: 10px;
   }
+  /* Две строки сетки: рамка и «Где вы сейчас» одной высоты, карта и треки одной высоты. */
+  .hs-left,
+  .hs-right {
+    display: contents;
+  }
+  .hs-frame { grid-area: 1 / 1; }
+  .hs-now { grid-area: 1 / 2; }
+  .hs-map { grid-area: 2 / 1; }
+  .hs-tracks {
+    grid-area: 2 / 2;
+    grid-template-rows: 1fr 1fr;
+    align-items: stretch;
+  }
+  .hs-now-review,
+  .hs-now-goal {
+    margin-top: auto;
+  }
+  .hs-now-goal + .hs-now-review {
+    margin-top: 0;
+  }
 }
 
 /* Телефон: рамка и «Продолжить», затем «Где вы сейчас», карта, треки. Порядок в DOM: рамка, карта, правая колонка, поэтому на узком экране правая колонка поднимается выше карты. */
@@ -196,6 +242,9 @@
 }
 
 @media (max-width: 759px) {
+  .hs-tile-tiers {
+    display: none;
+  }
   .hs-tile-stage {
     display: block;
     font-size: 12px;
