@@ -13,6 +13,7 @@ import type { Progress } from '../../srs/store';
 import { IconBook, IconCompass, IconFlask, IconTable } from '../Sidebar';
 import { TRACK_ORDER } from './HomeParts';
 import { roleGoal } from '../RoleStrip';
+import { RouteIcons } from '../routeIcons';
 import './homeSpine.css';
 import './homeStatus.css';
 
@@ -319,7 +320,10 @@ export function HomeSpine(p: HomeSpineProps) {
                       <span className="hs-layer-n" aria-hidden>
                         {st === 'done' ? '✓' : i + 1}
                       </span>
-                      <span className="hs-layer-name">{layerTitle(l)}</span>
+                      <span className="hs-layer-name">
+                        <RouteIcons layer={l.id} />
+                        <span>{layerTitle(l)}</span>
+                      </span>
                       <span className="hs-layer-roles">{l.roles.map(roleName).join(', ')}</span>
                       <span className="hs-layer-state">{here ? s.mapHere : s.layerState[st]}</span>
                     </button>
