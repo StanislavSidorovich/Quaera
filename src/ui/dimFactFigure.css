@@ -1,0 +1,32 @@
+/* Рисунок «справочник и факты» (DimFactFigure.tsx). Только токены темы. */
+.dimfact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  font-size: var(--fs-small);
+  min-width: 0;
+}
+.dimfact-side { min-width: 0; flex: 1 1 220px; }
+.dimfact-table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 12px; line-height: 1.4; }
+.dimfact-table caption { text-align: left; font-weight: 600; padding-bottom: 4px; }
+.dimfact-table caption span { font-weight: 400; color: var(--text-muted, inherit); }
+.dimfact-table th, .dimfact-table td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; white-space: normal; }
+.dimfact-table th { font-weight: 600; }
+.dimfact-key { background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 600; }
+.dimfact-link { display: flex; flex-direction: column; align-items: center; color: var(--accent); font-size: 12px; flex: 0 0 auto; }
+.dimfact-arrow { font-size: 20px; line-height: 1; }
+@media (max-width: 640px) {
+  .dimfact-table { font-size: 11px; table-layout: auto; }
+  .dimfact-table th { overflow-wrap: normal; white-space: nowrap; }
+  .dimfact-table th, .dimfact-table td { padding: 2px 3px; }
+  .dimfact-side { flex-basis: 100%; }
+  .dimfact-link { flex-direction: row; gap: 6px; flex-basis: 100%; justify-content: center; }
+  .dimfact-arrow { transform: rotate(90deg); }
+}

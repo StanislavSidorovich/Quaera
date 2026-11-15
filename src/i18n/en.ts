@@ -834,6 +834,7 @@ export const en = {
     clipStop: 'Stop',
     playAll: '▶ Play all',
     playAllStop: '■ Stop',
+    dimFact: { aria: 'Two tables linked by product_id', dimCap: 'directory: what we have', factCap: 'facts: what happened' },
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */
