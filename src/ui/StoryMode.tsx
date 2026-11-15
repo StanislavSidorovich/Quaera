@@ -6,6 +6,7 @@ import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
 import { StoryArt, StoryPhoto } from './StoryArt';
+import { Avatar } from './Avatar';
 import { SchemaMap } from './SchemaMap';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
@@ -722,9 +723,12 @@ export function StoryMode({
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
-                <div className={'story-mode-msg' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
-                  <p className="story-mode-from">{m.from}</p>
-                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                <div className={'story-mode-msg avatar-row' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
+                  <Avatar from={m.from} speaker={m.speaker} />
+                  <div className="avatar-body">
+                    <p className="story-mode-from">{m.from}</p>
+                    <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -744,9 +748,12 @@ export function StoryMode({
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {interlude.messages.map((m, i) => (
-                <div className={'story-mode-msg' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
-                  <p className="story-mode-from">{m.from}</p>
-                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                <div className={'story-mode-msg avatar-row' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
+                  <Avatar from={m.from} speaker={m.speaker} />
+                  <div className="avatar-body">
+                    <p className="story-mode-from">{m.from}</p>
+                    <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                  </div>
                 </div>
               ))}
             </div>

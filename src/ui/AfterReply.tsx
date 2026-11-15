@@ -3,6 +3,7 @@ import type { Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { echoHits, splitTables } from './afterEcho';
 import { ResultTable } from './ResultTable';
+import { Avatar } from './Avatar';
 
 /** Ширина, с которой результат встаёт рядом с репликой; ниже — сворачивается над ней. */
 const WIDE = '(min-width: 1024px)';
@@ -57,6 +58,9 @@ export function AfterReply({
   const card = (
     <div className={'card story-after' + (speaking ? ' story-after--speaking' : '')}>
       {voice}
+      <div className="avatar-row">
+        <Avatar from={note.from} />
+        <div className="avatar-body">
       <p className="story-mode-from">{note.from}</p>
       <p className="story-mode-text">
         {parts.map((p, i) => {
@@ -69,6 +73,8 @@ export function AfterReply({
           );
         })}
       </p>
+        </div>
+      </div>
     </div>
   );
   if (!result || !result.columns.length) return card;

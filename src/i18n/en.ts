@@ -779,6 +779,17 @@ export const en = {
     endingTitle: 'Line complete',
     emptyTrack: 'This track has no tasks yet, so it has no line either. The skill map is worth a look: the graph is already designed.',
   },
+  avatar: {
+    names: {
+      aoki: 'Aoki-san',
+      manager: 'Your manager',
+      mori: 'Mori-san',
+      ito: 'Ito-san',
+      tanaka: 'Tanaka-san',
+      narrator: 'Narrator',
+    },
+    initials: { aoki: 'A', manager: 'Mgr', mori: 'M', ito: 'I', tanaka: 'T', narrator: '' },
+  },
   storyMode: {
     headerTitle: 'Story mode',
     badge: 'Beta',

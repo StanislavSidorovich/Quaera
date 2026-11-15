@@ -1461,6 +1461,17 @@ export const ru = {
    * принижал работу в посте для найма; «бета» честно говорит, что режим
    * ещё растёт, и не больше.
    */
+  avatar: {
+    names: {
+      aoki: 'Аоки-сан',
+      manager: 'Ваш руководитель',
+      mori: 'Мори-сан',
+      ito: 'Ито-сан',
+      tanaka: 'Танака-сан',
+      narrator: 'Рассказчик',
+    },
+    initials: { aoki: 'А', manager: 'Рук', mori: 'М', ito: 'И', tanaka: 'Т', narrator: '' },
+  },
   storyMode: {
     headerTitle: 'Режим истории',
     badge: 'Бета',
