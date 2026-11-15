@@ -832,6 +832,8 @@ export const en = {
     /** Кнопка записанной реплики (только английская локаль, пока записей на русском нет). */
     clipPlay: 'Play this line',
     clipStop: 'Stop',
+    playAll: '▶ Play all',
+    playAllStop: '■ Stop',
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */

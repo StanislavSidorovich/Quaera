@@ -18,3 +18,7 @@
 .clip-btn:hover { border-color: var(--accent); color: var(--accent); }
 .clip-btn[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); }
 .clip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* «Играть всё» (PlayAllButton.tsx): над перепиской брифа. */
+.play-all { margin-bottom: 12px; }
+.story-mode-msg--speaking .clip-btn { border-color: var(--accent); color: var(--accent); }

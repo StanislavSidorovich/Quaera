@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import { CodeBlock } from './CodeBlock';
@@ -23,6 +23,7 @@ import {
 import type { Progress } from '../srs/store';
 import type { PushState } from '../push/client';
 import { ClipButton } from './ClipButton';
+import { PlayAllButton } from './PlayAllButton';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -30,7 +31,10 @@ import { storyCampaign } from '../content/storymode';
 import {
   clipsFor,
   loadVoiceManifest,
+  getClipVersion,
+  playAllIndex,
   playClips,
+  subscribeClips,
   speakLines,
   stopClips,
   stopSpeaking,
@@ -251,7 +255,7 @@ function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undef
  * Речь обрывается при уходе с экрана (смена фазы/дня размонтирует кнопку).
  */
 function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: number | null) => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const on = useMemo(() => voiceFlagOn(), []);
   const voices = useVoiceSet(on);
   const [manifest, setManifest] = useState<Awaited<ReturnType<typeof loadVoiceManifest>> | null>(null);
@@ -272,7 +276,8 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   const clips = clipsFor(lines, manifest);
-  if (!on || (!clips && !voices) || lines.length === 0) return null;
+  /* В английской локали записи берёт «Играть всё» (PlayAllButton); пробная кнопка нужна без записей. */
+  if (!on || (!clips && !voices) || lines.length === 0 || (locale === 'en' && clips)) return null;
   const end = () => {
     setPlaying(false);
     onActive(null);
@@ -292,6 +297,7 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
           stopClips();
           end();
         } else {
+          stopClips();
           setPlaying(true);
           if (clips) playClips(lines, clips, onActive, end, speak);
           else speak();
@@ -451,6 +457,8 @@ export function StoryMode({
   const recorded = useRef(new Set<string>());
   /** Реплика, которая звучит сейчас (проба озвучки), для подсветки. */
   const [voiceIdx, setVoiceIdx] = useState<number | null>(null);
+  useSyncExternalStore(subscribeClips, getClipVersion, getClipVersion);
+  const allIdx = playAllIndex();
 
   const after = storyPhaseAfter(campaign, mission, phase);
 
@@ -721,10 +729,11 @@ export function StoryMode({
                 )}
               </details>
             )}
+            <PlayAllButton lines={voiceLines} />
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
-                <div className={'story-mode-msg avatar-row' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
+                <div className={'story-mode-msg avatar-row' + (voiceIdx === i || allIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
                   <Avatar from={m.from} speaker={m.speaker} />
                   <div className="avatar-body">
                     <p className="story-mode-from">{m.from}</p>
@@ -747,10 +756,11 @@ export function StoryMode({
           */}
         {phase.kind === 'interlude' && interlude && (
           <>
+            <PlayAllButton lines={voiceLines} />
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {interlude.messages.map((m, i) => (
-                <div className={'story-mode-msg avatar-row' + (voiceIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
+                <div className={'story-mode-msg avatar-row' + (voiceIdx === i || allIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
                   <Avatar from={m.from} speaker={m.speaker} />
                   <div className="avatar-body">
                     <p className="story-mode-from">{m.from}</p>

@@ -330,6 +330,10 @@ let current: HTMLAudioElement | null = null;
  * failedClips, и её кнопка тихо исчезает до перезагрузки страницы.
  */
 let activeClip: string | null = null;
+/* «Играть всё»: токен запуска (обрывает старую очередь) и номер реплики, которая звучит сейчас. */
+let allRun = 0;
+let allIdx: number | null = null;
+let allOn = false;
 const failedClips = new Set<string>();
 const clipListeners = new Set<() => void>();
 let clipVersion = 0;
@@ -388,6 +392,7 @@ export function toggleClip(key: string, clip: VoiceClip): void {
 export function stopClips(): void {
   const a = current;
   current = null;
+  endPlayAll();
   setActiveClip(null);
   if (a) {
     a.onended = null;
@@ -435,6 +440,72 @@ export function playClips(
         onFail();
       }
     });
+  };
+  step(0);
+}
+
+function notifyClips(): void {
+  clipVersion++;
+  clipListeners.forEach((f) => f());
+}
+
+function endPlayAll(): void {
+  if (!allOn && allIdx === null) return;
+  allRun++;
+  allOn = false;
+  allIdx = null;
+  notifyClips();
+}
+
+export const playAllActive = (): boolean => allOn;
+/** Номер реплики (в списке строк экрана), которую «Играть всё» читает сейчас. */
+export const playAllIndex = (): number | null => allIdx;
+
+export interface PlayAllItem {
+  /** Номер реплики на экране: по нему подсвечивается строка. */
+  line: number;
+  key: string;
+  clip: VoiceClip;
+}
+
+/**
+ * «Играть всё»: записи экрана по очереди. Повторный вызов во время игры ничего
+ * не делает (двойной щелчок). Запись, которая не загрузилась, тихо пропускается
+ * (и помечается сбойной: её кнопка исчезает), без сообщений в консоль.
+ */
+export function startPlayAll(items: PlayAllItem[]): void {
+  if (allOn || items.length === 0) return;
+  stopClips();
+  stopSpeaking();
+  const run = ++allRun;
+  allOn = true;
+  const step = (n: number) => {
+    if (run !== allRun) return;
+    if (n >= items.length) return endPlayAll();
+    const it = items[n];
+    if (failedClips.has(it.key)) return step(n + 1);
+    let a: HTMLAudioElement;
+    try {
+      a = new Audio('/voice/' + it.clip.file);
+    } catch {
+      failedClips.add(it.key);
+      return step(n + 1);
+    }
+    current = a;
+    allIdx = it.line;
+    notifyClips();
+    const skip = () => {
+      if (run !== allRun || current !== a) return;
+      a.onended = null;
+      a.onerror = null;
+      failedClips.add(it.key);
+      step(n + 1);
+    };
+    a.onended = () => {
+      if (run === allRun && current === a) step(n + 1);
+    };
+    a.onerror = skip;
+    a.play().catch(skip);
   };
   step(0);
 }
