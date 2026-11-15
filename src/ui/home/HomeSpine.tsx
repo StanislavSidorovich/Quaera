@@ -16,6 +16,7 @@ import { roleGoal } from '../RoleStrip';
 import { RouteIcons } from '../routeIcons';
 import './homeSpine.css';
 import './homeStatus.css';
+import './homeEyebrow.css';
 
 import markLab from '../../../family/marks/lab.svg';
 import markModel from '../../../family/marks/model.svg';
@@ -227,7 +228,7 @@ export function HomeSpine(p: HomeSpineProps) {
         <div className="hs-left">
           {/* Режим истории: вопрос заказчика, пять дней и письмо, одна главная кнопка. */}
           <section className="card hs-frame" data-guide="story" aria-labelledby="hs-frame-title">
-            <p className="hs-kicker" id="hs-frame-title">
+            <p className="hs-kicker hs-eyebrow" id="hs-frame-title">
               {s.frameKicker}
               {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
             </p>
@@ -297,7 +298,7 @@ export function HomeSpine(p: HomeSpineProps) {
 
           {/* Карта пути данных: «вы здесь» по прогрессу, действия только у текущего слоя. */}
           <section className="card hs-map" data-pair="career" data-guide="map" aria-labelledby="hs-map-title">
-            <h2 id="hs-map-title">
+            <h2 className="hs-eyebrow" id="hs-map-title">
               <span className="pair-ico" aria-hidden>
                 <IconCompass />
               </span>
@@ -366,7 +367,7 @@ export function HomeSpine(p: HomeSpineProps) {
         {/* Правая колонка: где вы сейчас и треки 2×2 высотой по содержимому. */}
         <div className="hs-right">
           <section className="card hs-now" aria-labelledby="hs-now-title">
-            <h2 id="hs-now-title">{s.nowTitle}</h2>
+            <h2 className="hs-eyebrow" id="hs-now-title">{s.nowTitle}</h2>
             <p className="hs-now-topic">
               <span className="hs-k">{s.nowTopic}</span>
               <span className="hs-v">{topic ?? s.nowTopicNone}</span>
@@ -399,7 +400,10 @@ export function HomeSpine(p: HomeSpineProps) {
             )}
           </section>
 
-          <section className="hs-tracks" data-pair="tracks" data-guide="tracks" aria-label={s.tracksTitle}>
+          <section className="hs-tracks" data-pair="tracks" data-guide="tracks" aria-labelledby="hs-tracks-title">
+            <h2 className="hs-eyebrow hs-tracks-title" id="hs-tracks-title">
+              {s.tracksTitle}
+            </h2>
             {TRACK_ORDER.map((track) => {
               const pack = packForTrack(track, locale);
               if (!pack) return null;

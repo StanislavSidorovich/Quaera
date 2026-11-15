@@ -1,0 +1,59 @@
+/*
+ * Главная: четыре блока читаются как четыре. У каждого одна подпись-эбрау
+ * (мелкие капсы акцентным цветом и тонкая черта до края) и одинаковый отступ под ней.
+ * Подключается последним в HomeSpine.tsx, чтобы переопределить `.card h2` и `.hs-kicker`.
+ */
+.hs .hs-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 70%, var(--text));
+}
+
+.hs .hs-eyebrow::after {
+  content: '';
+  flex: 1 1 auto;
+  min-width: 12px;
+  height: 1px;
+  background: var(--line);
+}
+
+.hs .hs-frame .hs-eyebrow {
+  margin-bottom: 2px;
+}
+
+.hs .hs-eyebrow .pair-ico {
+  display: inline-flex;
+}
+
+/* Треки не в карточке: подпись той же высоты, что у соседней карты слева. */
+.hs .hs-tracks-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 16px 2px 0;
+}
+
+@media (min-width: 1180px) {
+  .hs .hs-tracks {
+    grid-template-rows: auto 1fr 1fr;
+  }
+}
+
+/*
+ * Главная кнопка недели: тот же акцент, но спокойнее. Тон смешан с --q-muted:
+ * в светлой теме он темнее, в тёмной светлее, поэтому насыщенность падает,
+ * а контраст с --accent-ink остаётся выше AA. Глобальный --accent не тронут.
+ */
+.btn.hs-main {
+  background: color-mix(in srgb, var(--accent) 68%, var(--q-muted));
+}
+
+.btn.hs-main:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 78%, var(--q-muted));
+}
