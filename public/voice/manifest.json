@@ -20,6 +20,708 @@
       "file": "en/day-1-first-day/m1.7ed35598b9.m4a",
       "bytes": 185990,
       "duration": 39.7
+    },
+    "day-10-supply-chain/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "69dc301fa4",
+      "chars": 354,
+      "file": "en/day-10-supply-chain/m0.69dc301fa4.m4a",
+      "bytes": 117914,
+      "duration": 25
+    },
+    "day-10-supply-chain/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "cc037415a6",
+      "chars": 195,
+      "file": "en/day-10-supply-chain/m1.cc037415a6.m4a",
+      "bytes": 60788,
+      "duration": 12.9
+    },
+    "day-11-what-they-decide/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "e294eb417e",
+      "chars": 350,
+      "file": "en/day-11-what-they-decide/m0.e294eb417e.m4a",
+      "bytes": 107014,
+      "duration": 22.8
+    },
+    "day-11-what-they-decide/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "c9eabd3191",
+      "chars": 396,
+      "file": "en/day-11-what-they-decide/m1.c9eabd3191.m4a",
+      "bytes": 126145,
+      "duration": 26.8
+    },
+    "day-12-three-answers/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "0ef4850181",
+      "chars": 250,
+      "file": "en/day-12-three-answers/m0.0ef4850181.m4a",
+      "bytes": 73895,
+      "duration": 15.5
+    },
+    "day-12-three-answers/m1": {
+      "speaker": "tanaka",
+      "voice": "gemini",
+      "hash": "b12d481337",
+      "chars": 150,
+      "file": "en/day-12-three-answers/m1.b12d481337.m4a",
+      "bytes": 47999,
+      "duration": 10.1
+    },
+    "day-12-three-answers/m2": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "71a1749db0",
+      "chars": 162,
+      "file": "en/day-12-three-answers/m2.71a1749db0.m4a",
+      "bytes": 51511,
+      "duration": 10.9
+    },
+    "day-13-against-what/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "f16d017a9c",
+      "chars": 293,
+      "file": "en/day-13-against-what/m0.f16d017a9c.m4a",
+      "bytes": 95599,
+      "duration": 20.3
+    },
+    "day-13-against-what/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "a26c0179ee",
+      "chars": 122,
+      "file": "en/day-13-against-what/m1.a26c0179ee.m4a",
+      "bytes": 36767,
+      "duration": 7.7
+    },
+    "day-14-raw-layer/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "223d21af18",
+      "chars": 357,
+      "file": "en/day-14-raw-layer/m0.223d21af18.m4a",
+      "bytes": 126998,
+      "duration": 27
+    },
+    "day-14-raw-layer/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "fdb7c1962a",
+      "chars": 156,
+      "file": "en/day-14-raw-layer/m1.fdb7c1962a.m4a",
+      "bytes": 50162,
+      "duration": 10.6
+    },
+    "day-15-conclusion-first/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "989d856818",
+      "chars": 263,
+      "file": "en/day-15-conclusion-first/m0.989d856818.m4a",
+      "bytes": 81046,
+      "duration": 17.2
+    },
+    "day-15-conclusion-first/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "f1c7aa73ed",
+      "chars": 239,
+      "file": "en/day-15-conclusion-first/m1.f1c7aa73ed.m4a",
+      "bytes": 77792,
+      "duration": 16.5
+    },
+    "day-16-another-tool/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "5a89bae7a9",
+      "chars": 376,
+      "file": "en/day-16-another-tool/m0.5a89bae7a9.m4a",
+      "bytes": 124685,
+      "duration": 26.6
+    },
+    "day-16-another-tool/m1": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "e38e2b36f2",
+      "chars": 260,
+      "file": "en/day-16-another-tool/m1.e38e2b36f2.m4a",
+      "bytes": 73092,
+      "duration": 15.5
+    },
+    "day-17-masks/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "22d3c1e288",
+      "chars": 241,
+      "file": "en/day-17-masks/m0.22d3c1e288.m4a",
+      "bytes": 80157,
+      "duration": 17
+    },
+    "day-17-masks/m1": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "98bbefd3a1",
+      "chars": 214,
+      "file": "en/day-17-masks/m1.98bbefd3a1.m4a",
+      "bytes": 58865,
+      "duration": 12.4
+    },
+    "day-18-groups/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "1621350efb",
+      "chars": 228,
+      "file": "en/day-18-groups/m0.1621350efb.m4a",
+      "bytes": 73729,
+      "duration": 15.6
+    },
+    "day-18-groups/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "30f54d3fce",
+      "chars": 177,
+      "file": "en/day-18-groups/m1.30f54d3fce.m4a",
+      "bytes": 59628,
+      "duration": 12.5
+    },
+    "day-19-measures/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "049c9aad64",
+      "chars": 259,
+      "file": "en/day-19-measures/m0.049c9aad64.m4a",
+      "bytes": 78371,
+      "duration": 16.6
+    },
+    "day-19-measures/m1": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "9902752a5b",
+      "chars": 79,
+      "file": "en/day-19-measures/m1.9902752a5b.m4a",
+      "bytes": 26381,
+      "duration": 5.4
+    },
+    "day-2-counting/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "3b6d0441b4",
+      "chars": 237,
+      "file": "en/day-2-counting/m0.3b6d0441b4.m4a",
+      "bytes": 79756,
+      "duration": 16.9
+    },
+    "day-2-counting/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "4ab2de9471",
+      "chars": 266,
+      "file": "en/day-2-counting/m1.4ab2de9471.m4a",
+      "bytes": 90947,
+      "duration": 19.3
+    },
+    "day-20-whose-spike/m0": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "6c3bf9f87c",
+      "chars": 246,
+      "file": "en/day-20-whose-spike/m0.6c3bf9f87c.m4a",
+      "bytes": 66435,
+      "duration": 14
+    },
+    "day-20-whose-spike/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "dda3d7fa52",
+      "chars": 310,
+      "file": "en/day-20-whose-spike/m1.dda3d7fa52.m4a",
+      "bytes": 94920,
+      "duration": 20
+    },
+    "day-21-series/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "0494d2f9d4",
+      "chars": 348,
+      "file": "en/day-21-series/m0.0494d2f9d4.m4a",
+      "bytes": 114555,
+      "duration": 24.3
+    },
+    "day-21-series/m1": {
+      "speaker": "ito",
+      "voice": "gemini",
+      "hash": "d55abe6268",
+      "chars": 163,
+      "file": "en/day-21-series/m1.d55abe6268.m4a",
+      "bytes": 53893,
+      "duration": 11.4
+    },
+    "day-22-background/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "f91a4379f8",
+      "chars": 215,
+      "file": "en/day-22-background/m0.f91a4379f8.m4a",
+      "bytes": 61329,
+      "duration": 12.9
+    },
+    "day-22-background/m1": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "7a84e2186e",
+      "chars": 68,
+      "file": "en/day-22-background/m1.7a84e2186e.m4a",
+      "bytes": 25164,
+      "duration": 5.2
+    },
+    "day-23-two-tables/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "74f22da0f1",
+      "chars": 205,
+      "file": "en/day-23-two-tables/m0.74f22da0f1.m4a",
+      "bytes": 73370,
+      "duration": 15.6
+    },
+    "day-23-two-tables/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "fb878c0fa1",
+      "chars": 131,
+      "file": "en/day-23-two-tables/m1.fb878c0fa1.m4a",
+      "bytes": 41495,
+      "duration": 8.7
+    },
+    "day-24-ratio/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "75c1b3976b",
+      "chars": 241,
+      "file": "en/day-24-ratio/m0.75c1b3976b.m4a",
+      "bytes": 77352,
+      "duration": 16.3
+    },
+    "day-24-ratio/m1": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "78049c4915",
+      "chars": 87,
+      "file": "en/day-24-ratio/m1.78049c4915.m4a",
+      "bytes": 30338,
+      "duration": 6.3
+    },
+    "day-25-flow-and-level/m0": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "84e390a798",
+      "chars": 127,
+      "file": "en/day-25-flow-and-level/m0.84e390a798.m4a",
+      "bytes": 39541,
+      "duration": 8.2
+    },
+    "day-25-flow-and-level/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "2b39c3bd5b",
+      "chars": 219,
+      "file": "en/day-25-flow-and-level/m1.2b39c3bd5b.m4a",
+      "bytes": 66519,
+      "duration": 14
+    },
+    "day-3-shape-of-the-year/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "a7794dfe06",
+      "chars": 147,
+      "file": "en/day-3-shape-of-the-year/m0.a7794dfe06.m4a",
+      "bytes": 49710,
+      "duration": 10.6
+    },
+    "day-3-shape-of-the-year/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "6a105f79d3",
+      "chars": 268,
+      "file": "en/day-3-shape-of-the-year/m1.6a105f79d3.m4a",
+      "bytes": 78238,
+      "duration": 16.5
+    },
+    "day-4-join/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "f44070178a",
+      "chars": 272,
+      "file": "en/day-4-join/m0.f44070178a.m4a",
+      "bytes": 93799,
+      "duration": 19.8
+    },
+    "day-4-join/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "accd176b0e",
+      "chars": 101,
+      "file": "en/day-4-join/m1.accd176b0e.m4a",
+      "bytes": 34034,
+      "duration": 7.1
+    },
+    "day-5-shelf-or-demand/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "caeb3009c1",
+      "chars": 275,
+      "file": "en/day-5-shelf-or-demand/m0.caeb3009c1.m4a",
+      "bytes": 92748,
+      "duration": 19.6
+    },
+    "day-5-shelf-or-demand/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "6787b916c0",
+      "chars": 505,
+      "file": "en/day-5-shelf-or-demand/m1.6787b916c0.m4a",
+      "bytes": 149319,
+      "duration": 31.8
+    },
+    "day-6-who-is-missing/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "60eba4b6e2",
+      "chars": 264,
+      "file": "en/day-6-who-is-missing/m0.60eba4b6e2.m4a",
+      "bytes": 82869,
+      "duration": 17.4
+    },
+    "day-6-who-is-missing/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "936f411369",
+      "chars": 377,
+      "file": "en/day-6-who-is-missing/m1.936f411369.m4a",
+      "bytes": 128135,
+      "duration": 27.2
+    },
+    "day-7-promo-or-price/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "f037c807c5",
+      "chars": 328,
+      "file": "en/day-7-promo-or-price/m0.f037c807c5.m4a",
+      "bytes": 105569,
+      "duration": 22.6
+    },
+    "day-7-promo-or-price/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "9abf542f69",
+      "chars": 142,
+      "file": "en/day-7-promo-or-price/m1.9abf542f69.m4a",
+      "bytes": 46534,
+      "duration": 9.8
+    },
+    "day-8-two-steps/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "4a65437ae7",
+      "chars": 200,
+      "file": "en/day-8-two-steps/m0.4a65437ae7.m4a",
+      "bytes": 66168,
+      "duration": 13.9
+    },
+    "day-8-two-steps/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "57a89d5272",
+      "chars": 357,
+      "file": "en/day-8-two-steps/m1.57a89d5272.m4a",
+      "bytes": 133193,
+      "duration": 28.4
+    },
+    "day-9-two-facts/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "a45f6ad628",
+      "chars": 323,
+      "file": "en/day-9-two-facts/m0.a45f6ad628.m4a",
+      "bytes": 106364,
+      "duration": 22.5
+    },
+    "day-9-two-facts/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "e42992bd70",
+      "chars": 157,
+      "file": "en/day-9-two-facts/m1.e42992bd70.m4a",
+      "bytes": 54357,
+      "duration": 11.3
+    },
+    "p1-day-filter/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "e6549965b5",
+      "chars": 275,
+      "file": "en/p1-day-filter/m0.e6549965b5.m4a",
+      "bytes": 87323,
+      "duration": 18.4
+    },
+    "p1-day-outlets/m0": {
+      "speaker": "ito",
+      "voice": "gemini",
+      "hash": "c81465fd3c",
+      "chars": 149,
+      "file": "en/p1-day-outlets/m0.c81465fd3c.m4a",
+      "bytes": 48855,
+      "duration": 10.2
+    },
+    "p1-day-outlets/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "4a7059a0a1",
+      "chars": 250,
+      "file": "en/p1-day-outlets/m1.4a7059a0a1.m4a",
+      "bytes": 80623,
+      "duration": 17.2
+    },
+    "p1-day-per-outlet/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "9cf96ac559",
+      "chars": 257,
+      "file": "en/p1-day-per-outlet/m0.9cf96ac559.m4a",
+      "bytes": 90636,
+      "duration": 19.2
+    },
+    "p1-day-per-outlet/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "090a36aa1b",
+      "chars": 109,
+      "file": "en/p1-day-per-outlet/m1.090a36aa1b.m4a",
+      "bytes": 39717,
+      "duration": 8.3
+    },
+    "p1-day-same-months/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "ee8323d203",
+      "chars": 178,
+      "file": "en/p1-day-same-months/m0.ee8323d203.m4a",
+      "bytes": 66546,
+      "duration": 14.1
+    },
+    "p1-day-same-months/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "d67e3538e0",
+      "chars": 217,
+      "file": "en/p1-day-same-months/m1.d67e3538e0.m4a",
+      "bytes": 72182,
+      "duration": 15.3
+    },
+    "p1-day-wide-shelf/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "e460377834",
+      "chars": 128,
+      "file": "en/p1-day-wide-shelf/m0.e460377834.m4a",
+      "bytes": 36837,
+      "duration": 7.8
+    },
+    "p1-day-wide-shelf/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "95a9d4affe",
+      "chars": 183,
+      "file": "en/p1-day-wide-shelf/m1.95a9d4affe.m4a",
+      "bytes": 73890,
+      "duration": 15.7
+    },
+    "p1-w1-sat-market/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "5848e90e7e",
+      "chars": 285,
+      "file": "en/p1-w1-sat-market/m0.5848e90e7e.m4a",
+      "bytes": 85637,
+      "duration": 18.1
+    },
+    "p2-day-alive/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "540c1c0863",
+      "chars": 132,
+      "file": "en/p2-day-alive/m0.540c1c0863.m4a",
+      "bytes": 38467,
+      "duration": 8
+    },
+    "p2-day-alive/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "42883c4cac",
+      "chars": 223,
+      "file": "en/p2-day-alive/m1.42883c4cac.m4a",
+      "bytes": 74346,
+      "duration": 15.7
+    },
+    "p2-day-by-key/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "35aedfd53f",
+      "chars": 255,
+      "file": "en/p2-day-by-key/m0.35aedfd53f.m4a",
+      "bytes": 96649,
+      "duration": 20.5
+    },
+    "p2-day-by-key/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "b3efa2b04b",
+      "chars": 117,
+      "file": "en/p2-day-by-key/m1.b3efa2b04b.m4a",
+      "bytes": 38879,
+      "duration": 8.2
+    },
+    "p2-day-channels/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "c55a2d0e0d",
+      "chars": 180,
+      "file": "en/p2-day-channels/m0.c55a2d0e0d.m4a",
+      "bytes": 50137,
+      "duration": 10.5
+    },
+    "p2-day-channels/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "c8fe10867f",
+      "chars": 273,
+      "file": "en/p2-day-channels/m1.c8fe10867f.m4a",
+      "bytes": 87944,
+      "duration": 18.7
+    },
+    "p2-day-empty/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "25c794d462",
+      "chars": 365,
+      "file": "en/p2-day-empty/m0.25c794d462.m4a",
+      "bytes": 119980,
+      "duration": 25.4
+    },
+    "p2-day-empty/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "6d3aa24987",
+      "chars": 72,
+      "file": "en/p2-day-empty/m1.6d3aa24987.m4a",
+      "bytes": 23689,
+      "duration": 4.9
+    },
+    "p2-day-two-ctes/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "8771a36778",
+      "chars": 228,
+      "file": "en/p2-day-two-ctes/m0.8771a36778.m4a",
+      "bytes": 80999,
+      "duration": 17.1
+    },
+    "p2-day-two-ctes/m1": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "effd98083d",
+      "chars": 142,
+      "file": "en/p2-day-two-ctes/m1.effd98083d.m4a",
+      "bytes": 42147,
+      "duration": 8.8
+    },
+    "p2-w2b-sat-stock/m0": {
+      "speaker": "ito",
+      "voice": "gemini",
+      "hash": "9c89092728",
+      "chars": 148,
+      "file": "en/p2-w2b-sat-stock/m0.9c89092728.m4a",
+      "bytes": 41663,
+      "duration": 8.8
+    },
+    "p2-w2b-sat-stock/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "3e46a26b80",
+      "chars": 115,
+      "file": "en/p2-w2b-sat-stock/m1.3e46a26b80.m4a",
+      "bytes": 50559,
+      "duration": 10.6
+    },
+    "w1-sat-everyone-or-us/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "e6af400ff3",
+      "chars": 405,
+      "file": "en/w1-sat-everyone-or-us/m0.e6af400ff3.m4a",
+      "bytes": 107239,
+      "duration": 22.8
+    },
+    "w2-sat-list-for-ito/m0": {
+      "speaker": "ito",
+      "voice": "gemini",
+      "hash": "7c9a315552",
+      "chars": 290,
+      "file": "en/w2-sat-list-for-ito/m0.7c9a315552.m4a",
+      "bytes": 86385,
+      "duration": 18.3
+    },
+    "w2-sat-list-for-ito/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "ed8a5c961a",
+      "chars": 230,
+      "file": "en/w2-sat-list-for-ito/m1.ed8a5c961a.m4a",
+      "bytes": 73423,
+      "duration": 15.5
+    },
+    "w3-sat-names-nobody-knows/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "fa4a3a1a00",
+      "chars": 337,
+      "file": "en/w3-sat-names-nobody-knows/m0.fa4a3a1a00.m4a",
+      "bytes": 109314,
+      "duration": 23.1
+    },
+    "w4-sat-who-paid/m0": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "3ddf377bc6",
+      "chars": 316,
+      "file": "en/w4-sat-who-paid/m0.3ddf377bc6.m4a",
+      "bytes": 104936,
+      "duration": 22.3
+    },
+    "w5-sat-five-months-of-what/m0": {
+      "speaker": "mori",
+      "voice": "gemini",
+      "hash": "dbb956ba0a",
+      "chars": 179,
+      "file": "en/w5-sat-five-months-of-what/m0.dbb956ba0a.m4a",
+      "bytes": 51291,
+      "duration": 10.8
+    },
+    "w5-sat-five-months-of-what/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "d669a0fa99",
+      "chars": 268,
+      "file": "en/w5-sat-five-months-of-what/m1.d669a0fa99.m4a",
+      "bytes": 87402,
+      "duration": 18.7
     }
   }
 }
