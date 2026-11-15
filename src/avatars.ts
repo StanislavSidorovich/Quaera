@@ -8,7 +8,7 @@ import type { SpeakerId } from './speakers';
  * файл: добавьте id сюда, и он показывается вместо кружка с инициалами.
  * Рассказчик без лица: для него кружка нет.
  */
-export const AVATAR_IMAGES: ReadonlySet<SpeakerId> = new Set<SpeakerId>([]);
+export const AVATAR_IMAGES: ReadonlySet<SpeakerId> = new Set<SpeakerId>(['aoki', 'manager', 'mori', 'ito', 'tanaka']);
 
 export const avatarUrl = (id: SpeakerId): string | null =>
   AVATAR_IMAGES.has(id) ? `${import.meta.env.BASE_URL}avatars/${id}.webp` : null;
