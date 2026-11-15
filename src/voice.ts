@@ -323,9 +323,72 @@ export function clipsFor(lines: SpokenLine[], manifest: VoiceManifest | null): V
 
 let current: HTMLAudioElement | null = null;
 
+/*
+ * ОДНА РЕПЛИКА ПО КНОПКЕ (ClipButton). Состояние общее на модуль: играет не
+ * больше одна запись, кнопки читают его через useSyncExternalStore. Запись,
+ * которая не загрузилась (нет файла, нет сети, HTML вместо аудио), попадает в
+ * failedClips, и её кнопка тихо исчезает до перезагрузки страницы.
+ */
+let activeClip: string | null = null;
+const failedClips = new Set<string>();
+const clipListeners = new Set<() => void>();
+let clipVersion = 0;
+
+function setActiveClip(key: string | null): void {
+  if (activeClip === key) return;
+  activeClip = key;
+  clipVersion++;
+  clipListeners.forEach((f) => f());
+}
+
+export const subscribeClips = (f: () => void): (() => void) => {
+  clipListeners.add(f);
+  return () => {
+    clipListeners.delete(f);
+  };
+};
+export const getClipVersion = (): number => clipVersion;
+export const activeClipKey = (): string | null => activeClip;
+export const clipFailed = (key: string): boolean => failedClips.has(key);
+
+/** Нажатие кнопки реплики: играет запись (грузится только сейчас), повторное нажатие или любая другая запись останавливает. */
+export function toggleClip(key: string, clip: VoiceClip): void {
+  if (failedClips.has(key)) return;
+  if (activeClip === key) return stopClips();
+  stopClips();
+  stopSpeaking();
+  let a: HTMLAudioElement;
+  try {
+    a = new Audio('/voice/' + clip.file);
+  } catch {
+    failedClips.add(key);
+    clipVersion++;
+    clipListeners.forEach((f) => f());
+    return;
+  }
+  current = a;
+  setActiveClip(key);
+  const fail = () => {
+    if (current !== a) return;
+    stopClips();
+    failedClips.add(key);
+    clipVersion++;
+    clipListeners.forEach((f) => f());
+  };
+  a.onended = () => {
+    if (current === a) {
+      current = null;
+      setActiveClip(null);
+    }
+  };
+  a.onerror = fail;
+  a.play().catch(fail);
+}
+
 export function stopClips(): void {
   const a = current;
   current = null;
+  setActiveClip(null);
   if (a) {
     a.onended = null;
     a.onerror = null;

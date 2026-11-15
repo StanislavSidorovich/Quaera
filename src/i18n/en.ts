@@ -829,6 +829,9 @@ export const en = {
     /** Voice trial (?voice=1): the browser voice reads the English lines. */
     voiceListen: '▶ Listen',
     voiceStop: '■ Stop',
+    /** Кнопка записанной реплики (только английская локаль, пока записей на русском нет). */
+    clipPlay: 'Play this line',
+    clipStop: 'Stop',
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */

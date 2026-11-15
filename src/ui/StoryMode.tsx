@@ -22,6 +22,7 @@ import {
 } from '../content/storymode';
 import type { Progress } from '../srs/store';
 import type { PushState } from '../push/client';
+import { ClipButton } from './ClipButton';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -728,6 +729,7 @@ export function StoryMode({
                   <div className="avatar-body">
                     <p className="story-mode-from">{m.from}</p>
                     <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                    <ClipButton id={`${mission.id}/m${i}`} />
                   </div>
                 </div>
               ))}
@@ -753,6 +755,7 @@ export function StoryMode({
                   <div className="avatar-body">
                     <p className="story-mode-from">{m.from}</p>
                     <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                    <ClipButton id={`${mission.id}/i${phase.step}.${i}`} />
                   </div>
                 </div>
               ))}

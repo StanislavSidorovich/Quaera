@@ -1,6 +1,25 @@
 {
   "version": 1,
   "locale": "en",
-  "provider": null,
-  "clips": {}
+  "provider": "gemini",
+  "clips": {
+    "day-1-first-day/m0": {
+      "speaker": "aoki",
+      "voice": "gemini",
+      "hash": "2711a77ab1",
+      "chars": 421,
+      "file": "en/day-1-first-day/m0.2711a77ab1.m4a",
+      "bytes": 121776,
+      "duration": 26
+    },
+    "day-1-first-day/m1": {
+      "speaker": "manager",
+      "voice": "gemini",
+      "hash": "7ed35598b9",
+      "chars": 619,
+      "file": "en/day-1-first-day/m1.7ed35598b9.m4a",
+      "bytes": 185990,
+      "duration": 39.7
+    }
+  }
 }
