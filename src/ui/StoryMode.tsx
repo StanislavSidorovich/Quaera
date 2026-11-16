@@ -24,6 +24,7 @@ import type { PushState } from '../push/client';
 import { StoryMsg } from './StoryMsg';
 import { PlayAllButton } from './PlayAllButton';
 import { DimFactFigure } from './DimFactFigure';
+import { SellFigure } from './SellFigure';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -736,6 +737,7 @@ export function StoryMode({
                 <StoryMsg key={i} from={m.from} speaker={m.speaker} clipId={`${mission.id}/m${i}`} speaking={voiceIdx === i || allIdx === i}>
                   <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                   {mission.id === 'day-1-first-day' && i === 1 && <DimFactFigure />}
+                  {mission.id === 'p2-day-by-key' && i === 1 && <SellFigure />}
                 </StoryMsg>
               ))}
             </div>

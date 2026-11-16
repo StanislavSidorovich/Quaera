@@ -836,6 +836,10 @@ export const en = {
     playAll: '▶ Play all',
     playAllStop: '■ Stop',
     dimFact: { aria: 'Two tables linked by product_id', dimCap: 'directory: what we have', factCap: 'facts: what happened' },
+    sellFigure: {
+      alt: 'Left: a distributor warehouse and a truck delivering boxes to a shop. Right: the shop back room full of boxes and a customer taking a product from the shelf.',
+      caption: 'Left, sell-in: the distributor sells to the shop. Right, sell-out: the shop sells to the customer. The boxes in the back room are shipped but not yet sold.',
+    },
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */

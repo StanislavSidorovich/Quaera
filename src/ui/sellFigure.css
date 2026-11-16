@@ -1,0 +1,28 @@
+/* Рисунок «sell-in против sell-out» (SellFigure.tsx). Только токены темы. */
+.sellfig {
+  margin: 10px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+  min-width: 0;
+}
+.sellfig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1376 / 768;
+  object-fit: cover;
+  font-size: var(--fs-small);
+  filter: brightness(0.86);
+}
+.sellfig figcaption {
+  padding: 8px 12px;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  border-top: 1px solid var(--line);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark) .sellfig img { filter: none; }
+}
+:root.theme-light .sellfig img { filter: none; }
