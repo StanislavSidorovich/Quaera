@@ -6,7 +6,6 @@ import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
 import { annotateSequence } from './GlossaryText';
 import { StoryArt, StoryPhoto } from './StoryArt';
-import { Avatar } from './Avatar';
 import { SchemaMap } from './SchemaMap';
 import { TaskView, type TaskDraftStore, type TaskOutcome } from './TaskView';
 import {
@@ -22,7 +21,7 @@ import {
 } from '../content/storymode';
 import type { Progress } from '../srs/store';
 import type { PushState } from '../push/client';
-import { ClipButton } from './ClipButton';
+import { StoryMsg } from './StoryMsg';
 import { PlayAllButton } from './PlayAllButton';
 import { DimFactFigure } from './DimFactFigure';
 import { StoryProgress } from './StoryProgress';
@@ -734,15 +733,10 @@ export function StoryMode({
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {mission.messages.map((m, i) => (
-                <div className={'story-mode-msg avatar-row' + (voiceIdx === i || allIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
-                  <Avatar from={m.from} speaker={m.speaker} />
-                  <div className="avatar-body">
-                    <p className="story-mode-from">{m.from}</p>
-                    <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
-                    {mission.id === 'day-1-first-day' && i === 1 && <DimFactFigure />}
-                    <ClipButton id={`${mission.id}/m${i}`} />
-                  </div>
-                </div>
+                <StoryMsg key={i} from={m.from} speaker={m.speaker} clipId={`${mission.id}/m${i}`} speaking={voiceIdx === i || allIdx === i}>
+                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                  {mission.id === 'day-1-first-day' && i === 1 && <DimFactFigure />}
+                </StoryMsg>
               ))}
             </div>
             <button type="button" className="btn" onClick={goNext}>
@@ -762,14 +756,9 @@ export function StoryMode({
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
               {interlude.messages.map((m, i) => (
-                <div className={'story-mode-msg avatar-row' + (voiceIdx === i || allIdx === i ? ' story-mode-msg--speaking' : '')} key={i}>
-                  <Avatar from={m.from} speaker={m.speaker} />
-                  <div className="avatar-body">
-                    <p className="story-mode-from">{m.from}</p>
-                    <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
-                    <ClipButton id={`${mission.id}/i${phase.step}.${i}`} />
-                  </div>
-                </div>
+                <StoryMsg key={i} from={m.from} speaker={m.speaker} clipId={`${mission.id}/i${phase.step}.${i}`} speaking={voiceIdx === i || allIdx === i}>
+                  <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
+                </StoryMsg>
               ))}
             </div>
             <button type="button" className="btn" onClick={goNext}>

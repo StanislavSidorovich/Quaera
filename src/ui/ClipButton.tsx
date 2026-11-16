@@ -39,7 +39,7 @@ export function ClipButton({ id }: { id: string }) {
   return (
     <button type="button" className="clip-btn" aria-pressed={playing} aria-label={playing ? t.storyMode.clipStop : t.storyMode.clipPlay} onClick={() => toggleClip(id, clip)}>
       <span aria-hidden="true">{playing ? '■' : '▶'}</span>
-      <span aria-hidden="true">{playing ? t.storyMode.clipStop : dur.trim()}</span>
+      {!playing && dur.trim() && <span aria-hidden="true">{dur.trim()}</span>}
     </button>
   );
 }

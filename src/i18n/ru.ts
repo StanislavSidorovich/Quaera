@@ -1538,7 +1538,7 @@ export const ru = {
     voiceStop: '■ Stop',
     /** Кнопка записанной реплики (только английская локаль, пока записей на русском нет). */
     clipPlay: 'Play this line (EN)',
-    clipStop: 'Stop',
+    clipStop: 'Остановить',
     playAll: '▶ Играть всё',
     playAllStop: '■ Стоп',
     dimFact: { aria: 'Две таблицы, связанные по product_id', dimCap: 'справочник: что у нас есть', factCap: 'факты: что случилось' },
@@ -2132,6 +2132,7 @@ export const ru = {
     bordersStrong: 'Чёткие',
     reset: 'Сбросить',
     searchAria: 'Поиск по справочнику приёмов',
+    moreAria: 'Ещё: справка, размер шрифта, тема, язык',
     helpAria: 'Справка: что такое тренажёр',
   },
   /**
