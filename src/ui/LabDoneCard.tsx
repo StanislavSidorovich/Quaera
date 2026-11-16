@@ -9,8 +9,8 @@ const REFRESH = 'build:kaiyo-sales-refresh';
 
 /**
  * Карточка «что дальше» на возврат из Lab с отметкой сборки (`#lab-done=build:…`), вместо тоста:
- * на ней видно, какая ось сдвинулась (по отметкам `career.json`, у которых этот ключ), и одна
- * кнопка дальше. После основной сборки это SQL (JOIN и GROUP BY нужны для More), после More
+ * на ней видно, какая ось сдвинулась (по отметкам `career.json`, у которых этот ключ), и кнопки
+ * дальше. После основной сборки две: «Путь к роли» и SQL (JOIN и GROUP BY нужны для More), после More
  * и Refresh «Путь к роли». Обзор Fable 2026-11-11, п. 3.
  */
 export function LabDoneCard({
@@ -52,9 +52,14 @@ export function LabDoneCard({
       <p className="ldc-next">{markKey === BUILD ? c.nextBuild : c.nextPath}</p>
       <div className="ldc-actions">
         {markKey === BUILD ? (
-          <button type="button" className="btn" onClick={() => onStartSkill(sqlSkill)}>
-            {sqlSkill === 'sql-join-inner' ? c.startJoin : c.startGroupBy}
-          </button>
+          <>
+            <button type="button" className="btn" onClick={onOpenPath}>
+              {c.openPathFull}
+            </button>
+            <button type="button" className="btn secondary" onClick={() => onStartSkill(sqlSkill)}>
+              {sqlSkill === 'sql-join-inner' ? c.startJoin : c.startGroupBy}
+            </button>
+          </>
         ) : (
           <button type="button" className="btn" onClick={onOpenPath}>
             {c.openPath}
