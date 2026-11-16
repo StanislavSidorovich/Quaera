@@ -127,10 +127,15 @@ export function HomeSpine(p: HomeSpineProps) {
     const track = trackBySkill.get(id);
     return packForTrack(track ?? p.activeTrack, locale)?.skills.find((x) => x.id === id)?.title ?? id;
   };
+  /*
+   * Главная кнопка рамки ведёт в сюжет (если он доступен), а следующее занятие трека
+   * живёт в блоке «Где вы сейчас». Без сюжета главной остаётся шаг трека, как раньше.
+   */
+  const storyMain = Boolean(p.onOpenStoryMode && dayOne);
   const step: NextStep = nextStep({
     resume: p.resume,
     isNewUser: p.isNewUser,
-    dayOne: p.onOpenStoryMode && dayOne ? { title: s.stepDayOne, tasks: dayOne.steps.length } : null,
+    dayOne: !storyMain && p.onOpenStoryMode && dayOne ? { title: s.stepDayOne, tasks: dayOne.steps.length } : null,
     layers: layers.map((l) => ({ id: l.id, skills: l.practice.skills })),
     isStarted,
   });
@@ -151,13 +156,24 @@ export function HomeSpine(p: HomeSpineProps) {
       minutes = estimateMinutes(Math.min(3, open || pool.length));
     }
   }
-  const onMain = () => {
+  const trackMain = () => {
     if (step.kind === 'resume') p.onResume();
     else if (step.kind === 'day-one') p.onOpenStoryMode?.();
     else if (step.skillId) p.onStartSkill(step.skillId);
     else p.onOpenMap({ layer: step.layerId });
   };
-  const mainLabel = step.kind === 'day-one' ? s.startBtn(stepText) : s.continueBtn(stepText);
+  const trackLabel = s.continueBtn(stepText);
+  /* Кнопка сюжета: новичку — начать неделю, дальше — текущий день, в конце кампании — письмо. */
+  const storyFinished = reachedMissionIdx >= 0 && reachedMissionIdx === camp.missions.length - 1;
+  const storyLabel = !p.storyStarted
+    ? s.startBtn(s.stepDayOne)
+    : storyFinished
+      ? s.storyDone
+      : s.storyContinueDay(Math.max(0, reachedDay) + 1);
+  const storyMinutes = !p.storyStarted && dayOne ? estimateMinutes(dayOne.steps.length) : null;
+  const onMain = storyMain ? () => p.onOpenStoryMode?.() : trackMain;
+  const mainLabel = storyMain ? storyLabel : step.kind === 'day-one' ? s.startBtn(stepText) : trackLabel;
+  const mainMinutes = storyMain ? storyMinutes : minutes;
 
   /* Карта: состояния слоёв и действия текущего. */
   const states = layerStatuses(layers.map((l) => ({ id: l.id, skills: l.practice.skills })), isStarted);
@@ -272,9 +288,9 @@ export function HomeSpine(p: HomeSpineProps) {
                 </li>
               </ol>
             )}
-            <button type="button" className="btn hs-main" onClick={onMain} disabled={p.loading && step.kind === 'resume'}>
+            <button type="button" className="btn hs-main" onClick={onMain} disabled={!storyMain && p.loading && step.kind === 'resume'}>
               <span className="hs-main-text">{mainLabel}</span>
-              {minutes !== null && <span className="hs-main-min">{s.minutes(minutes)}</span>}
+              {mainMinutes !== null && <span className="hs-main-min">{s.minutes(mainMinutes)}</span>}
             </button>
             <div className="hs-quiet">
               {p.isNewUser && (
@@ -282,13 +298,6 @@ export function HomeSpine(p: HomeSpineProps) {
                   {s.introLead}{' '}
                   <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
                     {s.introLink}
-                  </button>
-                </p>
-              )}
-              {!p.isNewUser && p.onOpenStoryMode && (
-                <p className="hs-intro">
-                  <button type="button" className="hs-textlink" data-pair="storymode" onClick={p.onOpenStoryMode}>
-                    {p.storyStarted ? s.storyContinue : s.storyStart} →
                   </button>
                 </p>
               )}
@@ -385,6 +394,13 @@ export function HomeSpine(p: HomeSpineProps) {
               </span>
               <span className="hs-v">{strength}%</span>
             </div>
+            {storyMain && (
+              <div className="hs-now-go">
+                <button type="button" className="btn secondary" onClick={trackMain} disabled={p.loading && step.kind === 'resume'}>
+                  {trackLabel}
+                </button>
+              </div>
+            )}
             <p className="hs-now-goal">
               <button type="button" className="hs-textlink" onClick={() => p.onOpenCareer(goal.chosen ? goal.role.id : null)}>
                 {goal.chosen ? s.nowGoal(goal.role.title[locale], goal.met, goal.total) : s.nowPickRole} →

@@ -500,6 +500,8 @@ export const ru = {
       stepLayer: (layer: string, skill: string | null) => (skill ? `${layer}, ${skill}` : layer),
       introLead: 'Не работаете с данными?',
       introLink: 'Что это → 3 мин',
+      storyContinueDay: (day: number) => `Продолжить дело: день ${day}`,
+      storyDone: 'Открыть письмо руководителю',
       storyContinue: 'Продолжить дело',
       storyStart: 'Рабочая неделя с первого дня',
       mapKicker: 'Путь данных',

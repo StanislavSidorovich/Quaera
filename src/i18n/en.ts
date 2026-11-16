@@ -243,6 +243,8 @@ export const en = {
       stepLayer: (layer: string, skill: string | null) => (skill ? `${layer}, ${skill}` : layer),
       introLead: 'New to data work?',
       introLink: 'What the job is → 3 min',
+      storyContinueDay: (day: number) => `Resume the case: day ${day}`,
+      storyDone: 'Open the letter to your manager',
       storyContinue: 'Resume the case',
       storyStart: 'The work week from day one',
       mapKicker: 'Data path',

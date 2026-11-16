@@ -271,3 +271,16 @@
 .hs-layer.ahead:not(.here) .hs-layer-name .route-icons {
   opacity: 0.7;
 }
+
+/* Следующее занятие трека: главная кнопка рамки теперь ведёт в сюжет, занятие живёт здесь. */
+.hs-now-go {
+  display: flex;
+}
+
+.hs-now-go .btn {
+  width: auto;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 8px 16px;
+  text-align: left;
+}
