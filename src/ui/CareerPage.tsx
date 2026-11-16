@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { careerAxes, careerEvidence, careerRole, careerRoles } from '../content/career';
 import { packForTrack } from '../content';
 import type { Track } from '../content/types';
@@ -39,6 +39,20 @@ const TRACKS: Track[] = ['sql', 'model', 'python', 'domain'];
  * возвращался бы на «Путь к роли», потеряв карту. Страница роли помнится так же.
  */
 const TAB_KEY = 'quaera-career-tab';
+
+/** Ставит или убирает `?roles=` в адресе без новой записи истории; хэш (`#lab-done=`) и прочие параметры не трогает. */
+function writeRolesParam(value: string | null): void {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (value === null) params.delete('roles');
+    else params.set('roles', value);
+    const rest = params.toString();
+    window.history.replaceState(window.history.state, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+  } catch {
+    // адрес недоступен для записи — экран работает и без него
+  }
+}
+
 function readTab(): 'path' | 'map' {
   try {
     return appStorage().getItem(TAB_KEY) === 'path' ? 'path' : 'map';
@@ -116,6 +130,22 @@ export function CareerPage({
     if (fromMap) onFromMap(false);
     setTabState(next);
   };
+
+  /*
+   * Вкладка и роль отражаются в адресе (`?roles=map|path|<id роли>`), только replaceState:
+   * записи в истории не плодятся, «Назад» ведёт туда же, куда вёл. Ссылка из адресной строки
+   * открывает тот же экран. Уход с экрана убирает параметр. Станция «Проект от и до»
+   * живёт внутри карты: пока её не закрыли переключением вкладки, адрес держит `project`.
+   */
+  const projectAtOpen = useRef(!!openMap?.project);
+  useEffect(() => {
+    const value = tab === 'map' ? (projectAtOpen.current ? 'project' : 'map') : view && careerRole(view) ? view : 'path';
+    writeRolesParam(value);
+    return () => writeRolesParam(null);
+  }, [tab, view]);
+  useEffect(() => {
+    projectAtOpen.current = false;
+  }, [tab, view]);
 
   const chosenRole = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
   /*
