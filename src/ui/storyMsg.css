@@ -11,3 +11,9 @@
 .story-msg-head > .clip-btn { margin: 0 0 0 auto; flex: none; }
 .story-msg-head > .avatar { margin: 0; }
 .story-msg--figure { margin-top: 8px; }
+
+/* Звучащая реплика: полоса и фон из токенов темы (контраст текста не меняется, фон 10% акцента). */
+.story-msg.story-mode-msg--speaking { scroll-margin-block: 72px 16px; }
+@media (prefers-reduced-motion: no-preference) {
+  .story-msg { transition: background-color 0.2s ease; }
+}
