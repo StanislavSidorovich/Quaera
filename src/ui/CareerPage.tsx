@@ -137,14 +137,13 @@ export function CareerPage({
    * открывает тот же экран. Уход с экрана убирает параметр. Станция «Проект от и до»
    * живёт внутри карты: пока её не закрыли переключением вкладки, адрес держит `project`.
    */
-  const projectAtOpen = useRef(!!openMap?.project);
+  const opened = useRef({ project: !!openMap?.project, tab, view });
   useEffect(() => {
-    const value = tab === 'map' ? (projectAtOpen.current ? 'project' : 'map') : view && careerRole(view) ? view : 'path';
+    /* StrictMode гоняет эффект дважды: «станция открыта» гасим сравнением с вкладкой при открытии, а не флагом */
+    const stillOnStation = opened.current.project && tab === opened.current.tab && view === opened.current.view;
+    const value = tab === 'map' ? (stillOnStation ? 'project' : 'map') : view && careerRole(view) ? view : 'path';
     writeRolesParam(value);
     return () => writeRolesParam(null);
-  }, [tab, view]);
-  useEffect(() => {
-    projectAtOpen.current = false;
   }, [tab, view]);
 
   const chosenRole = careerRole(state.role) ?? careerRole(DEFAULT_ROLE)!;
