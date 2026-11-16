@@ -333,6 +333,7 @@ let activeClip: string | null = null;
 /* «Играть всё»: токен запуска (обрывает старую очередь) и номер реплики, которая звучит сейчас. */
 let allRun = 0;
 let allIdx: number | null = null;
+let allKey: string | null = null;
 let allOn = false;
 const failedClips = new Set<string>();
 const clipListeners = new Set<() => void>();
@@ -454,12 +455,15 @@ function endPlayAll(): void {
   allRun++;
   allOn = false;
   allIdx = null;
+  allKey = null;
   notifyClips();
 }
 
 export const playAllActive = (): boolean => allOn;
 /** Номер реплики (в списке строк экрана), которую «Играть всё» читает сейчас. */
 export const playAllIndex = (): number | null => allIdx;
+/** Ключ записи, которую «Играть всё» читает сейчас: у её кнопки ■, клик останавливает игру целиком. */
+export const playAllKey = (): string | null => allKey;
 
 export interface PlayAllItem {
   /** Номер реплики на экране: по нему подсвечивается строка. */
@@ -493,6 +497,7 @@ export function startPlayAll(items: PlayAllItem[]): void {
     }
     current = a;
     allIdx = it.line;
+    allKey = it.key;
     notifyClips();
     const skip = () => {
       if (run !== allRun || current !== a) return;
