@@ -265,7 +265,7 @@ export const en = {
       nowTitle: 'Where you are now',
       nowTopic: 'Topic now',
       nowTopicNone: 'not started yet',
-      nowNoneHint: 'Pick a track on the right or press Continue.',
+      nowNoneHint: 'Pick a track or press Continue.',
       nowNext: 'Up next',
       nowOf: (done: number, total: number) => `${done} of ${total} tasks`,
       nowStrength: (track: string, pct: number) => `Retention, ${track}`,

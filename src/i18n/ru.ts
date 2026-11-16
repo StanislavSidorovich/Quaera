@@ -522,7 +522,7 @@ export const ru = {
       nowTitle: 'Где вы сейчас',
       nowTopic: 'Тема сейчас',
       nowTopicNone: 'пока не начата',
-      nowNoneHint: 'Выберите трек справа или нажмите «Продолжить».',
+      nowNoneHint: 'Выберите трек или нажмите «Продолжить».',
       nowNext: 'Следом',
       nowOf: (done: number, total: number) => `${done} из ${total} заданий`,
       nowStrength: (track: string, pct: number) => `Прочность, ${track}`,
