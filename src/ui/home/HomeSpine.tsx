@@ -17,6 +17,7 @@ import { RouteIcons } from '../routeIcons';
 import './homeSpine.css';
 import './homeStatus.css';
 import './homeEyebrow.css';
+import './homeFamily.css';
 
 import markLab from '../../../family/marks/lab.svg';
 import markModel from '../../../family/marks/model.svg';
