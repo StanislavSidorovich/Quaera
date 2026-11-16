@@ -1,0 +1,149 @@
+/*
+ * Шапка главной на телефоне (<768px): одна строка «знак · Quaera · профиль,
+ * поиск, ···». От 768px кнопка «···» скрыта, а «?» и «Aa» стоят в шапке
+ * по-старому. Селекторы с .topbar-home перебивают сетку 2×2 из styles.css.
+ */
+.topbar-menu {
+  display: none;
+  position: relative;
+}
+
+.topbar-menu-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  width: min(19rem, calc((100vw - 32px) / var(--zoom, 1)));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  color: var(--text);
+}
+
+.topbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 8px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--text);
+}
+
+.topbar-menu-mark {
+  flex: none;
+  width: 28px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Группы вида внутри меню: без своей рамки и тени, меню уже одно */
+.appearance-pop.appearance-inline {
+  position: static;
+  width: auto;
+  padding: 8px 8px 4px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.topbar-menu-btn {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.topbar-menu-btn[aria-expanded='true'] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+
+@media (max-width: 767px) {
+  .topbar.topbar-home {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'mark title tools'
+      'strip strip strip'
+      'streak streak streak';
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 6px;
+  }
+
+  .topbar.topbar-home .topbar-tools {
+    grid-area: tools;
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    order: 0;
+    flex-basis: auto;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .topbar-home .topbar-tools .icon-btn {
+    min-width: 36px;
+    width: 36px;
+    min-height: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* «?» и «Aa» уехали в меню «···» */
+  .topbar-home .topbar-tools .topbar-help,
+  .topbar-home .topbar-tools .appearance {
+    display: none;
+  }
+
+  .topbar-home .topbar-tools .topbar-menu {
+    display: block;
+  }
+
+  /* Название активного трека подписано в полоске ниже: подзаголовок лишний */
+  .topbar.topbar-home h1 .sub {
+    display: none;
+  }
+
+  .app.font-xl .topbar.topbar-home {
+    grid-template-areas:
+      'mark title tools'
+      'strip strip strip'
+      'streak streak streak';
+  }
+}
+
+/* Крупный шрифт (zoom 1.3) на самых узких экранах: иначе «Quaera» обрезается */
+@media (max-width: 359px) {
+  .app.font-xl .topbar.topbar-home {
+    column-gap: 8px;
+  }
+
+  .app.font-xl .topbar.topbar-home h1.brand {
+    font-size: 18px;
+  }
+
+  .app.font-xl .topbar-home .topbar-tools {
+    gap: 4px;
+  }
+
+  .app.font-xl .topbar-home .topbar-tools .icon-btn {
+    min-width: 32px;
+    width: 32px;
+    min-height: 32px;
+    height: 32px;
+  }
+}

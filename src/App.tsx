@@ -36,6 +36,7 @@ import { usePairHighlight } from './ui/pairHighlight';
 import { LabDoneContext, LabDoneToast } from './ui/LabDoneToast';
 import { CodeBlock } from './ui/CodeBlock';
 import { Home, SHOW_STORY_LINE } from './ui/home/Home';
+import { TopbarMenu } from './ui/TopbarMenu';
 import { TRACK_ORDER, WelcomeIntroBody, WelcomeProofBody } from './ui/home/HomeParts';
 
 import { QuaeraMark, TrackGlyph } from './ui/Marks';
@@ -2546,6 +2547,13 @@ export default function App() {
               borders={borders}
               onBorders={chooseBorders}
             />
+            {/* Только на главной и только на телефоне (CSS): «?» и «Aa» внутри меню */}
+            {screen.name === 'home' && (
+              <TopbarMenu
+                onHelp={() => setScreen({ name: 'about' })}
+                appearance={{ fontSize, onFontSize: chooseFontSize, theme, onTheme: chooseTheme, locale, onLocale: setLocale, borders, onBorders: chooseBorders }}
+              />
+            )}
           </div>
         </header>
 

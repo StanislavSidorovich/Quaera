@@ -24,6 +24,7 @@ export function AppearanceMenu({
   onLocale,
   borders,
   onBorders,
+  inline = false,
 }: {
   fontSize: FontSize;
   onFontSize: (v: FontSize) => void;
@@ -33,6 +34,8 @@ export function AppearanceMenu({
   onLocale: (v: Locale) => void;
   borders: Borders;
   onBorders: (v: Borders) => void;
+  /** Без кнопки «Aa»: те же группы выложены сразу, внутри чужого меню (TopbarMenu). */
+  inline?: boolean;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -75,21 +78,8 @@ export function AppearanceMenu({
     </div>
   );
 
-  return (
-    <div className="appearance" ref={root}>
-      <button
-        type="button"
-        className="icon-btn appearance-btn"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-label={a.buttonAria}
-        title={a.buttonAria}
-        onClick={() => setOpen((o) => !o)}
-      >
-        {a.button}
-      </button>
-      {open && (
-        <div className="appearance-pop" role="dialog" aria-label={a.dialogAria}>
+  const pop = (
+        <div className={inline ? 'appearance-pop appearance-inline' : 'appearance-pop'} role={inline ? 'group' : 'dialog'} aria-label={a.dialogAria}>
           {group(a.size, FONT_ORDER, fontSize, (v) => FONT_LABEL[v], onFontSize)}
           {group(a.theme, THEME_ORDER, theme, (v) => themeLabel[v], onTheme)}
           {group(a.language, ['ru', 'en'] as const, locale, (v) => v.toUpperCase(), onLocale)}
@@ -112,7 +102,24 @@ export function AppearanceMenu({
             {a.reset}
           </button>
         </div>
-      )}
+  );
+
+  if (inline) return pop;
+
+  return (
+    <div className="appearance" ref={root}>
+      <button
+        type="button"
+        className="icon-btn appearance-btn"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={a.buttonAria}
+        title={a.buttonAria}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {a.button}
+      </button>
+      {open && pop}
     </div>
   );
 }

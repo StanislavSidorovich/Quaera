@@ -1269,6 +1269,7 @@ export const en = {
     bordersStrong: 'Strong',
     reset: 'Reset',
     searchAria: 'Search the reference',
+    moreAria: 'More: help, text size, theme, language',
     helpAria: 'Help: about the trainer',
   },
   career: {
