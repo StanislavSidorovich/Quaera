@@ -245,8 +245,6 @@ export const en = {
       introLink: 'What the job is → 3 min',
       storyContinueDay: (day: number) => `Resume the case: day ${day}`,
       storyDone: 'Open the letter to your manager',
-      storyContinue: 'Resume the case',
-      storyStart: 'The work week from day one',
       mapKicker: 'Data path',
       mapHere: 'you are here',
       layerState: { done: 'done', next: 'next', ahead: 'later' } as Record<'done' | 'next' | 'ahead', string>,
@@ -804,7 +802,6 @@ export const en = {
     /** См. комментарий в ru.ts. */
     weekShort: (n: number) => `Week ${n}`,
     homeStartBtn: 'Start day one',
-    homeResumeBtn: 'Resume the case',
     /** См. комментарий в ru.ts. */
     dayOneTitle: 'Your first day',
     dayOneDay: 'day',

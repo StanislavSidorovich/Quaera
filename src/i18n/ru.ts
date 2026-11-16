@@ -502,8 +502,6 @@ export const ru = {
       introLink: 'Что это → 3 мин',
       storyContinueDay: (day: number) => `Продолжить дело: день ${day}`,
       storyDone: 'Открыть письмо руководителю',
-      storyContinue: 'Продолжить дело',
-      storyStart: 'Рабочая неделя с первого дня',
       mapKicker: 'Путь данных',
       mapHere: 'вы здесь',
       layerState: { done: 'пройден', next: 'следующий', ahead: 'дальше' } as Record<'done' | 'next' | 'ahead', string>,
@@ -1491,7 +1489,6 @@ export const ru = {
     /** Короткая метка недели в обзоре прогресса кампании (см. StoryProgress). */
     weekShort: (n: number) => `Неделя ${n}`,
     homeStartBtn: 'Начать первый день',
-    homeResumeBtn: 'Продолжить дело',
     /**
      * Первый день кампании тремя строками под кнопкой (ui/DayOnePreview.tsx).
      * Время утренней строки, вопрос, задания и находка берутся из самой
