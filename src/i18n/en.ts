@@ -73,6 +73,8 @@ export const en = {
     ariaLabel: 'Sections',
     sectionsLabel: 'Learning',
     tracksLabel: 'Tracks',
+    mapChip: 'Map',
+    mapChipAria: 'Data map: the process from start to finish, roles on each layer',
     home: 'Home',
     /** См. комментарий в ru.ts: порядок пунктов повторяет порядок намерений. */
     story: 'Story line',

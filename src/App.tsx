@@ -36,6 +36,8 @@ import { usePairHighlight } from './ui/pairHighlight';
 import { LabDoneContext, LabDoneToast } from './ui/LabDoneToast';
 import { CodeBlock } from './ui/CodeBlock';
 import { Home, SHOW_STORY_LINE } from './ui/home/Home';
+import { RouteIcons } from './ui/routeIcons';
+import './ui/trackStrip.css';
 import { TopbarMenu } from './ui/TopbarMenu';
 import { TRACK_ORDER, WelcomeIntroBody, WelcomeProofBody } from './ui/home/HomeParts';
 
@@ -2385,6 +2387,18 @@ export default function App() {
                   {track === activeTrack && <span className="track-chip-label">{t.trackShort[track]}</span>}
                 </button>
               ))}
+              {/* Не трек (нет role=tab, нет активного состояния): карта данных, процесс от и до */}
+              <span className="track-strip-sep" aria-hidden />
+              <button
+                type="button"
+                className="track-chip track-map"
+                aria-label={t.nav.mapChipAria}
+                title={t.nav.mapChipAria}
+                onClick={() => setScreen({ name: 'career', map: {} })}
+              >
+                <RouteIcons layer="sources" />
+                <span className="track-chip-label">{t.nav.mapChip}</span>
+              </button>
             </nav>
           )}
           {/*

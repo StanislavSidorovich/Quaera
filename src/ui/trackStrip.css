@@ -1,0 +1,49 @@
+/*
+ * Полоса треков в шапке главной (.track-strip): плотнее прежней и с пятой
+ * кнопкой «Карта». Селекторы на один класс длиннее, чем в styles.css:
+ * этот файл подключается раньше него и иначе проигрывал бы по порядку.
+ */
+.topbar .track-strip {
+  gap: 6px;
+  align-items: center;
+}
+
+.track-strip .track-chip {
+  min-height: 32px;
+  border-radius: 9px;
+}
+
+.track-strip .track-chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Тонкий разделитель: слева четыре трека, справа карта (не трек) */
+.track-strip-sep {
+  flex: none;
+  align-self: stretch;
+  width: 1px;
+  margin: 4px 1px;
+  background: var(--line);
+}
+
+/* Карта: значок и подпись, без заливки активного состояния */
+.track-strip .track-chip.track-map {
+  flex: 0 0 auto;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.track-strip .track-chip.track-map .route-icons {
+  display: inline-flex;
+}
+
+/* Крупный шрифт: подпись «Карта» не помещается, остаётся значок (имя есть у aria-label) */
+.app.font-xl .track-strip .track-chip.track-map {
+  flex: 0 0 auto;
+}
+
+.app.font-xl .track-strip .track-chip.track-map .track-chip-label {
+  display: none;
+}

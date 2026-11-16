@@ -76,7 +76,8 @@
       'streak streak streak';
     align-items: center;
     column-gap: 10px;
-    row-gap: 6px;
+    row-gap: 4px;
+    padding-bottom: 4px;
   }
 
   .topbar.topbar-home .topbar-tools {
