@@ -840,6 +840,12 @@ export const en = {
       alt: 'Left: a distributor warehouse and a truck delivering boxes to a shop. Right: the shop back room full of boxes and a customer taking a product from the shelf.',
       caption: 'Left, sell-in: the distributor sells to the shop. Right, sell-out: the shop sells to the customer. The boxes in the back room are shipped but not yet sold.',
     },
+    weekScene: {
+      w2: 'An empty office desk: a switched-off monitor, printouts with charts and colored sticky notes, a coffee cup; rain and Tokyo Tower outside the window.',
+      w3: 'Two colleagues at one desk looking at a laptop with a rising chart; evening light, the city and Tokyo Tower outside.',
+      w4: 'An analyst at two monitors with a table and charts in the evening, a desk lamp and a badge on a lanyard; dusk and Tokyo Tower outside.',
+      w5: 'A quiet morning office: a closed laptop, a sheet of text and a badge on the desk; a clear day and Tokyo Tower outside.',
+    } as Record<string, string>,
     toTask: 'Take on the task',
     backToTask: 'Back to the task',
     /** См. комментарий в ru.ts: слово принадлежит сюжету, а не интерфейсу. */

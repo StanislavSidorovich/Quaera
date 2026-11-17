@@ -25,6 +25,7 @@ import { StoryMsg } from './StoryMsg';
 import { PlayAllButton } from './PlayAllButton';
 import { DimFactFigure } from './DimFactFigure';
 import { SellFigure } from './SellFigure';
+import { StoryWeekScene } from './StoryWeekScene';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -730,6 +731,7 @@ export function StoryMode({
                 )}
               </details>
             )}
+            {firstDayOfWeek && <StoryWeekScene week={mission.week} />}
             <PlayAllButton lines={voiceLines} />
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">

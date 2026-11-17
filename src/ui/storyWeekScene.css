@@ -1,0 +1,29 @@
+/* Сцена первого дня недели (StoryWeekScene.tsx). Только токены темы. */
+.weekscene {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+  min-width: 0;
+}
+.weekscene img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1376 / 768;
+  object-fit: cover;
+  filter: brightness(0.86);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark) .weekscene img { filter: none; }
+}
+:root.theme-light .weekscene img { filter: none; }
+/*
+ * На широком экране кадр обрезан по высоте (16:6): иначе картинка в 490 px
+ * уводит первую реплику брифа за сгиб экрана 768. Обрезка по центру
+ * оставляет и стол, и башню.
+ */
+@media (min-width: 900px) {
+  .weekscene img { aspect-ratio: 16 / 6; }
+}
