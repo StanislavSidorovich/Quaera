@@ -253,6 +253,17 @@
   line-height: 1.5;
 }
 
+.hs-layer-tools {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.hs-layer-tools span {
+  font-weight: 600;
+}
+
 .hs-acts {
   display: flex;
   flex-direction: column;
@@ -447,3 +458,8 @@
   }
 }
 
+
+/* Ссылка в Lab стоит рядом с кнопками-ссылками и выглядит так же, без подчёркивания. */
+.hs-map-links a.link-row {
+  text-decoration: none;
+}

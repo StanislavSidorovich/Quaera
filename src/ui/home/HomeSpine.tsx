@@ -341,6 +341,11 @@ export function HomeSpine(p: HomeSpineProps) {
                     {here && (
                       <div className="hs-layer-body">
                         <p className="hs-layer-what">{firstSentence(l.what[locale])}</p>
+                        {s.layerTools[l.id] && (
+                          <p className="hs-layer-tools">
+                            <span>{s.toolsLabel}</span> {s.layerTools[l.id]}
+                          </p>
+                        )}
                         {acts.length > 0 && (
                           <ul className="hs-acts" aria-label={s.actionsLabel}>
                             {acts.map((a) => (
@@ -370,6 +375,15 @@ export function HomeSpine(p: HomeSpineProps) {
               <button type="button" className="link-row" onClick={() => p.onOpenMap({ trace: true })}>
                 {s.mapTrace}
               </button>
+              <a
+                className="link-row"
+                href={LAB_BUILD}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => openFamilyLink(e.currentTarget, e.nativeEvent, 'lab')}
+              >
+                {s.mapBuild} ↗
+              </a>
             </p>
           </section>
         </div>
