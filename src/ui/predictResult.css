@@ -1,0 +1,47 @@
+/*
+ * Экран ответа у interpret: слева запрос, вставка с результатом и разбор,
+ * справа варианты и вердикт (PredictResult.tsx, TaskView.tsx).
+ */
+.predict-result h3 {
+  margin: 0 0 8px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.predict-result .table-wrap {
+  max-width: 100%;
+}
+
+/*
+ * interpret: на ноутбуке две колонки с явным размещением, чтобы блок под
+ * ответом (.task-after: вставка и разбор) встал в левую колонку прямо под
+ * запросом, а не уехал под обе колонки. Ряд 1 = ситуация, ряд 2 = остаток;
+ * правая колонка тянется через оба. Ниже 1024 колонка одна и порядок
+ * прежний: задача, варианты, вердикт, результат, разбор.
+ */
+@media (max-width: 1023px) {
+  .task-work--after {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .task-work--after {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr;
+  }
+  .task-work--after > .task-situation {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .task-work--after > .task-answer {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .task-work--after > .task-after {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+.task-after:empty {
+  display: none;
+}

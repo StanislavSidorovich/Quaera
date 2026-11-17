@@ -1088,6 +1088,8 @@ export const en = {
     trapTitle: "A familiar mistake",
     giveUpBtn: "Stuck? Show the breakdown",
     explainTitle: 'Breakdown',
+    resultInsetTitle: 'What the query returns',
+    resultInsetEmpty: 'No rows.',
     solutionSummary: 'Show reference solution',
     nextBtn: 'Next',
     /** См. комментарии в ru.ts. */

@@ -11,6 +11,7 @@ import { renderFeedback, type FeedbackSource } from './feedback';
 import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTarget';
 import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
+import { PredictResult } from './PredictResult';
 import { AfterReply } from './AfterReply';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
@@ -450,6 +451,13 @@ export function TaskView({
    * догоняет эффект ниже, выполняя эталон один раз.
    */
   const schemaTableNames = useMemo(() => schema?.tables.map((s) => s.table) ?? [], [schema]);
+  /** Разбор целиком. У interpret его рисует сам StepView в левой колонке под вставкой результата. */
+  const explainCard = (
+    <div className="card">
+      <h2>{t.task.explainTitle}</h2>
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{task.explain}</p>
+    </div>
+  );
   const lastIdx = steps.length - 1;
   const lastStep = steps[lastIdx];
   const pinSrc = lastStep.kind === 'compute' ? draft.steps[lastIdx] : undefined;
@@ -634,6 +642,7 @@ export function TaskView({
 
       <StepView
         key={index}
+        explainCard={last ? explainCard : null}
         task={task}
         step={step}
         workGoal={workGoal}
@@ -653,12 +662,7 @@ export function TaskView({
       {stepDraft.solved && (
         <>
           {/* Разбор — про задание целиком, поэтому только после последнего шага. */}
-          {last && (
-            <div className="card">
-              <h2>{t.task.explainTitle}</h2>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{task.explain}</p>
-            </div>
-          )}
+          {last && step.kind !== 'interpret' && explainCard}
           {last && afterNote && (
             <AfterReply
               note={afterNote}
@@ -719,9 +723,12 @@ function StepView({
   tables,
   onOpenSchema,
   notReadyNote,
+  explainCard,
 }: {
   task: Task;
   step: TaskStep;
+  /** Разбор для последнего шага; у interpret встаёт в левую колонку под запросом. */
+  explainCard: ReactNode;
   /** Постановка задачи над редактором — см. довод у workGoal в TaskView. */
   workGoal: ReactNode;
   draft: StepDraft;
@@ -1191,7 +1198,7 @@ function StepView({
          * тот случай, где рабочая ситуация и решение по ней должны стоять
          * рядом. На телефоне колонка снова одна, порядок прежний.
          */
-        <div className="task-work">
+        <div className="task-work task-work--after">
           <div className="task-situation">
             <div className="card">
               {step.figure ? (
@@ -1262,6 +1269,17 @@ function StepView({
               )}
             </div>
             {feedbackBlock}
+          </div>
+          {/*
+            * Под запросом слева, после проверки: вставка с настоящим
+            * результатом (только если запрос можно выполнить: sql со своим
+            * predictSql) и разбор. До проверки блок пуст и скрыт (:empty).
+            */}
+          <div className="task-after">
+            {draft.solved && step.predictSql && task.track === 'sql' && runsCode && (
+              <PredictResult executor={executor} sql={step.predictSql} />
+            )}
+            {draft.solved && explainCard}
           </div>
         </div>
       ) : step.kind === 'relate' ? (

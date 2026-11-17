@@ -1880,6 +1880,8 @@ export const ru = {
     trapTitle: 'Знакомая ошибка',
     giveUpBtn: 'Не получается — показать разбор',
     explainTitle: 'Разбор',
+    resultInsetTitle: 'Что вернёт запрос',
+    resultInsetEmpty: 'Нет строк.',
     solutionSummary: 'Показать эталонное решение',
     nextBtn: 'Дальше',
     /** Счётчик шагов многошагового задания. У одношагового пилюли нет вовсе. */
