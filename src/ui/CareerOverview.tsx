@@ -14,6 +14,7 @@ import type { StepCtx } from './careerSteps';
 import { CareerStages } from './CareerStages';
 import { careerSignals } from '../career/signals';
 import type { Progress } from '../srs/store';
+import { RoleScene } from './RoleScene';
 import './careerOverview.css';
 import './careerPick.css';
 
@@ -235,10 +236,13 @@ export function CareerOverview({
             const isGoal = chosen && r.id === chosenRole.id;
             return (
               <article key={r.id} className={`co-tile${isGoal ? ' on' : ''}`} aria-label={c.ov.tileAria(r.title[locale], left)}>
-                <h3>
-                  {r.title[locale]}
-                  {isGoal && <span className="pill co-tile-pill">{c.roleChosen}</span>}
-                </h3>
+                <div className="co-tile-head">
+                  <RoleScene id={r.id} variant="thumb" />
+                  <h3>
+                    {r.title[locale]}
+                    {isGoal && <span className="pill co-tile-pill">{c.roleChosen}</span>}
+                  </h3>
+                </div>
                 <div className="co-tile-body">
                   <CareerRadar mini axes={radarAxes(r)} ariaLabel="" legend={{ you: '', goal: '', due: '', rings: '' }} ringNames={['', '', '']} />
                   <div>

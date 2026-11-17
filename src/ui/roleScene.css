@@ -1,0 +1,44 @@
+/* Сцена роли (RoleScene.tsx). Только токены темы. */
+.rolescene {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+  min-width: 0;
+}
+.rolescene img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  filter: brightness(0.86);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark) .rolescene img { filter: none; }
+}
+:root.theme-light .rolescene img { filter: none; }
+
+.rolescene-hero { margin: 0 0 14px; }
+.rolescene-hero img { aspect-ratio: 1200 / 670; }
+/* Широкий экран: кадр ниже, чтобы заголовок и полоска готовности не уезжали за сгиб. */
+@media (min-width: 900px) {
+  .rolescene-hero img { aspect-ratio: 16 / 6; }
+}
+
+.rolescene-thumb {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+}
+.rolescene-thumb img { width: 72px; height: 72px; aspect-ratio: 1; }
+
+/* Плитка обзора: миниатюра слева от названия роли. */
+.co-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.co-tile-head h3 { flex: 1; min-width: 0; }

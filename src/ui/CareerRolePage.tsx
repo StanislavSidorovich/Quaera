@@ -16,6 +16,7 @@ import { ForecastFigure } from './ForecastFigure';
 import { MetricCard } from './MetricCard';
 import type { ReactNode } from 'react';
 import type { Locale } from '../i18n/context';
+import { RoleScene } from './RoleScene';
 import './careerRole.css';
 
 type Text = Record<Locale, string>;
@@ -105,6 +106,7 @@ export function CareerRolePage({
       </button>
 
       <section className="card career-target">
+        <RoleScene id={role.id} variant="hero" />
         <h2>{role.title[locale]}</h2>
         <p className="career-does">{role.does[locale]}</p>
         <div className="crp-head">
