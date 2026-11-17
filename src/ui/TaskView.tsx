@@ -284,6 +284,8 @@ interface Props {
   /** Кнопка озвучки реплики после задания (проба ?voice=1) и подсветка, пока она звучит. */
   afterVoice?: ReactNode;
   afterSpeaking?: boolean;
+  /** Слот записи реплики после задания в манифесте озвучки. */
+  afterClipId?: string;
   /**
    * Не показывать метку уровня. В кампании ступень задаёт день, а не уровень
    * трека: L5 на пятнице новичка пугает, L2 на субботе после него читается
@@ -330,6 +332,7 @@ export function TaskView({
   afterNote,
   afterVoice,
   afterSpeaking,
+  afterClipId,
   hideLevel,
   panelWords,
   isRest,
@@ -668,6 +671,7 @@ export function TaskView({
               note={afterNote}
               voice={afterVoice}
               speaking={afterSpeaking}
+              clipId={afterClipId}
               result={pinned}
               schemaTables={schemaTableNames}
               onOpenSchema={onOpenSchema}

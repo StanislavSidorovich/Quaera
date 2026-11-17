@@ -538,6 +538,7 @@ export function StoryMode({
           afterNote={mission.steps[phase.step]?.after}
           afterVoice={<VoiceButton lines={afterLines} onActive={setVoiceIdx} />}
           afterSpeaking={voiceIdx === 0}
+          afterClipId={`${mission.id}/a${phase.step}`}
           hideLevel
           panelWords={step.panelWords}
           onDone={(outcome) => handleTaskDone(step.task, outcome)}

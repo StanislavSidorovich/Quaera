@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { echoHits, splitTables } from './afterEcho';
 import { ResultTable } from './ResultTable';
 import { Avatar } from './Avatar';
+import { ClipButton } from './ClipButton';
+import { activeClipKey, getClipVersion, subscribeClips } from '../voice';
 
 /** Ширина, с которой результат встаёт рядом с репликой; ниже — сворачивается над ней. */
 const WIDE = '(min-width: 1024px)';
@@ -36,6 +38,7 @@ export function AfterReply({
   note,
   voice,
   speaking,
+  clipId,
   result,
   schemaTables,
   onOpenSchema,
@@ -43,11 +46,15 @@ export function AfterReply({
   note: { from: string; text: string };
   voice?: ReactNode;
   speaking?: boolean;
+  /** Слот записи в манифесте (`<миссия>/a<шаг>`): под текстом кнопка ▶, если запись есть. */
+  clipId?: string;
   result: Preview | null;
   schemaTables: string[];
   onOpenSchema: (table?: string) => void;
 }) {
   const { t } = useI18n();
+  useSyncExternalStore(subscribeClips, getClipVersion, getClipVersion);
+  const clipSpeaking = !!clipId && activeClipKey() === clipId;
   const wide = useWide();
   const parts = useMemo(() => splitTables(note.text, schemaTables), [note.text, schemaTables]);
   const hits = useMemo(
@@ -56,7 +63,7 @@ export function AfterReply({
   );
 
   const card = (
-    <div className={'card story-after' + (speaking ? ' story-after--speaking' : '')}>
+    <div className={'card story-after' + (speaking || clipSpeaking ? ' story-after--speaking' : '')}>
       {voice}
       <div className="avatar-row">
         <Avatar from={note.from} />
@@ -73,6 +80,7 @@ export function AfterReply({
           );
         })}
       </p>
+      {clipId && <ClipButton id={clipId} />}
         </div>
       </div>
     </div>
