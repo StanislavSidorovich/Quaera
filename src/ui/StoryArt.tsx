@@ -80,14 +80,10 @@ interface DeskSetup {
 }
 
 const DESK_SCENES: Partial<Record<StoryScene, DeskSetup>> = {
-  // Пн: новый инструмент — ячейки блокнота, и под каждой остаётся таблица. Мори-сан пишет впервые.
-  'desk-frames': { screen: ScreenNotebook, ping: true },
   // Вт: отбор строк маской; распечатка на столе — фактура Мори-сан «из первых рук».
   'desk-mask': { screen: ScreenMask, papers: true },
   // Ср: ключ группировки ушёл в индекс; стикер — напоминание Аоки-сан про месячный отчёт.
   'desk-index': { screen: ScreenIndex, note: true },
-  // Чт: зубцы недельного ряда и сглаженная линия; пишет Ито-сан, на столе понедельные распечатки.
-  'desk-series': { screen: ScreenSeries, papers: true, note: true, ping: true },
 
   /*
    * Недели 1–3, перерисовка по правилам пилота (2026-09-13, второй заход).
@@ -147,8 +143,6 @@ const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
   'boardroom-nettora': { bars: [34, 29, 16], accent: [2] },
   // Пт w2: отношение отгрузок к продажам по двенадцати дистрибьюторам — один выше остальных.
   'boardroom-supply': { bars: [15, 16, 14, 15, 17, 14, 16, 15, 14, 17, 15, 32], accent: [11] },
-  // Пн w3: то, что Аоки-сан только что показала бренду — точки, которые остались, и точки, которые ушли.
-  'boardroom-dashboard': { bars: [37, 42], accent: [1] },
   // Пт w4: ряд отгрузок Setouchi — всплеск на три месяца (пилот, перенесено из прежней константы).
   'boardroom-setouchi': { bars: [14, 16, 12, 15, 32, 27, 31, 15, 13], accent: [4, 5, 6] },
   // Пт w5: отношение Setouchi по кварталам — горб и снова единица. У Мори-сан и Аоки-сан на руках
@@ -210,7 +204,6 @@ export function StoryArt({ scene, moment }: { scene: StoryScene; moment?: StoryM
         {scene === 'factors' && <Factors />}
         {scene === 'outlets' && <Outlets />}
         {scene === 'rival' && <Rival />}
-        {scene === 'request' && <Request />}
         {scene === 'scope' && <Scope />}
         {scene === 'dispute' && <Dispute />}
         {scene === 'contract' && <Contract />}
@@ -370,25 +363,6 @@ function Ping() {
  * монитора DeskStill. Акцентная деталь на каждом одна.
  */
 
-/** Пн: блокнот — строка кода, под ней таблица, и так ячейка за ячейкой: таблица остаётся в руках. */
-function ScreenNotebook() {
-  return (
-    <g fill="none" stroke="currentColor" strokeLinecap="butt">
-      <path className="art-far" d="M127 37v15M127 56v20" strokeWidth="1.2" />
-      <path className="art-line" d="M131 39h34" strokeWidth="2" />
-      <g className="art-mid" strokeWidth="0.8">
-        <rect x="131" y="43" width="42" height="9" />
-        <path d="M131 46.5h42M145 43v9M159 43v9" />
-      </g>
-      <path className="art-mid" d="M131 58h26" strokeWidth="2" />
-      <g className="art-mid" strokeWidth="0.8">
-        <rect x="131" y="62" width="56" height="13" />
-        <path d="M131 65.5h56M131 70h56M145 62v13M159 62v13M173 62v13" />
-      </g>
-    </g>
-  );
-}
-
 /** Вт: таблица, в которой маска отобрала две строки из семи. */
 function ScreenMask() {
   const rows = [38, 44, 50, 56, 62, 68, 74];
@@ -438,21 +412,6 @@ function ScreenIndex() {
         ))}
       </g>
       <path className="art-line" d="M143.5 36v40" strokeWidth="1.2" />
-    </g>
-  );
-}
-
-/** Чт: недельный ряд с зубцами и сглаженная линия поверх него — ровно то, о чём просит Ито-сан. */
-function ScreenSeries() {
-  return (
-    <g fill="none" stroke="currentColor" strokeLinejoin="round">
-      <path className="art-far" d="M128 74h80" strokeWidth="0.8" />
-      <path
-        className="art-mid"
-        d="M128 58 133 50 138 62 143 47 148 60 153 52 158 64 163 49 168 58 173 44 178 55 183 46 188 57 193 42 198 53 203 45 208 50"
-        strokeWidth="1"
-      />
-      <path className="art-line" d="M128 57C140 56 150 55 160 55S185 51 208 48" strokeWidth="2" />
     </g>
   );
 }
@@ -1571,38 +1530,6 @@ function Corridor() {
       <path d="M192 75c4 0 4 6 0 6" style={{ stroke: 'var(--art-mug)' }} strokeWidth="1.3" fill="none" />
 
       <path className="art-line" d="M142 60c-6-6 6-10 0-16M186 60c-6-6 6-10 0-16" strokeWidth="2.2" fill="none" />
-    </g>
-  );
-}
-
-/*
- * Размытая просьба: слева пузырь сообщения с двумя строками, справа три
- * одинаково пустые рамки — три отчёта, каждый из которых честно называется
- * «дашборд по продажам». Акцентом выделены расходящиеся линии, а не рамки:
- * беда понедельника не в том, что вариантов три, а в том, что просьба ведёт
- * ко всем трём сразу и выбрать по ней нельзя.
- */
-function Request() {
-  const rows = [24, 54, 84];
-  return (
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      <g className="art-mid">
-        <rect x="18" y="38" width="96" height="44" rx="4" strokeWidth="1.8" />
-        <path d="M34 54h64M34 66h40" strokeWidth="1.6" strokeLinecap="butt" />
-        <path d="M30 82v12l14-12" strokeWidth="1.8" />
-      </g>
-
-      <g className="art-far">
-        {rows.map((y) => (
-          <rect key={y} x="234" y={y} width="68" height="26" rx="3" strokeWidth="1.5" strokeDasharray="4 4" />
-        ))}
-      </g>
-
-      <path
-        className="art-line"
-        d="M120 60c40 0 44-23 108-23M120 60h108M120 60c40 0 44 23 108 23"
-        strokeWidth="2.2"
-      />
     </g>
   );
 }

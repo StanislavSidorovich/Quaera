@@ -73,10 +73,8 @@ export type StoryScene =
   // натюрморты утра: стол со своими предметами дня (пилот — неделя 4,
   // 2026-09-13; недели 1–3 перерисованы по тем же правилам вторым заходом
   // того же дня)
-  | 'desk-frames'
   | 'desk-mask'
   | 'desk-index'
-  | 'desk-series'
   | 'desk-price'
   | 'desk-tally'
   | 'desk-wave'
@@ -92,7 +90,6 @@ export type StoryScene =
   // переговорная, параметризованная доска (см. BoardSetup в StoryArt.tsx)
   | 'boardroom-nettora'
   | 'boardroom-supply'
-  | 'boardroom-dashboard'
   | 'boardroom-setouchi'
   // приёмы, которые вводит подводка
   | 'catalog'
@@ -115,7 +112,6 @@ export type StoryScene =
   // разговоры между делом
   | 'corridor'
   // постановка задачи: размытая просьба, граница готового, спор о метрике
-  | 'request'
   | 'scope'
   | 'dispute'
   | 'contract'
@@ -1212,7 +1208,6 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-023',
           intro: {
-            scene: 'factors',
             title: 'Прежде чем судить — одна идея',
             paras: [
               'Любое падение раскладывается на множители, и это единственный способ спорить о причинах не наугад. Штуки = число точек × продажи на точку. Выручка = штуки × цена. Пока число целое, версий у него столько же, сколько людей в переговорной; как только оно разложено, вопрос сводится к одному: какой множитель поехал.',
@@ -1321,7 +1316,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:05',
       short: 'Пн',
       found: 'Обычное соединение показывает только тех, у кого продажи были. LEFT JOIN показывает всех: у новинки пять регионов из шестнадцати — нули.',
-      scenes: { brief: 'desk-gap', reflection: 'dropped', hook: 'split' },
+      scenes: { reflection: 'dropped', hook: 'split' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -1570,7 +1565,6 @@ const ru: StoryCampaign = {
         },
         {
           interlude: {
-            scene: 'corridor',
             messages: [
               {
                 from: 'Ито-сан, руководитель полевой команды',
@@ -1891,7 +1885,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Четверг, 9:10',
       short: 'Чт',
       found: 'Отгрузки Nettora идут вровень с продажами: 1.04, 1.06, 1.04 по годам. Товар до точек доезжал.',
-      scenes: { brief: 'desk-link', reflection: 'counts', hook: 'meeting' },
+      scenes: { reflection: 'counts', hook: 'meeting' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -2066,7 +2060,7 @@ const ru: StoryCampaign = {
        * начинается экраном ниже. У крючка своя, третья: он не про просьбу,
        * а про развилку определений, в которую день упирается.
        */
-      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'definitions' },
+      scenes: { reflection: 'scope', hook: 'definitions' },
       messages: [
         {
           from: 'Аоки-сан, директор по продажам',
@@ -2081,7 +2075,6 @@ const ru: StoryCampaign = {
         {
           taskId: 'dom-004',
           intro: {
-            scene: 'request',
             title: 'Просьба — это ещё не задача',
             paras: [
               'За две недели ты ни разу не выбирал, что считать: вопрос приносили готовым. Так работа устроена редко. Обычная просьба выглядит как эта — «нужно видеть картину», — и она описывает ощущение, а не задачу.',
@@ -2601,7 +2594,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:05',
       short: 'Пн',
       found: 'Таблица в pandas лежит в переменной: одна скобка даёт колонку, две — таблицу.',
-      scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
+      scenes: { reflection: 'notebook', hook: 'filter' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -2993,7 +2986,7 @@ const ru: StoryCampaign = {
       place: 'Kaiyo Trading · Коммерческая аналитика · Понедельник, 9:10',
       short: 'Пн',
       found: 'С января 2026 года отгрузки Setouchi снова в обычных пределах: поток вернулся.',
-      scenes: { brief: 'desk-series', reflection: 'flow', hook: 'smooth' },
+      scenes: { reflection: 'flow', hook: 'smooth' },
       messages: [
         {
           from: 'Ваш руководитель',
@@ -4126,7 +4119,6 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-023',
           intro: {
-            scene: 'factors',
             title: 'One idea before you judge',
             paras: [
               'Any decline breaks into factors, and that is the only way to argue about causes without guessing. Units = outlets × sales per outlet. Revenue = units × price. While the number stays whole it carries as many theories as there are people in the room; once it is broken apart the question narrows to one: which factor moved.',
@@ -4193,7 +4185,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:05',
       short: 'Mon',
       found: 'An ordinary join shows only those with sales. LEFT JOIN shows everyone: for the new SKU, five regions out of sixteen come back as zeros.',
-      scenes: { brief: 'desk-gap', reflection: 'dropped', hook: 'split' },
+      scenes: { reflection: 'dropped', hook: 'split' },
       messages: [
         {
           from: 'Aoki-san, sales director',
@@ -4433,7 +4425,6 @@ const en: StoryCampaign = {
         },
         {
           interlude: {
-            scene: 'corridor',
             messages: [
               {
                 from: 'Ito-san, field team lead',
@@ -4742,7 +4733,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Thursday, 9:10',
       short: 'Thu',
       found: 'Shipments of Nettora run level with sales: 1.04, 1.06, 1.04 by year. The goods did reach the outlets.',
-      scenes: { brief: 'desk-link', reflection: 'counts', hook: 'meeting' },
+      scenes: { reflection: 'counts', hook: 'meeting' },
       messages: [
         {
           from: 'Your manager',
@@ -4888,7 +4879,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:40',
       short: 'Mon',
       found: 'Behind "a sales dashboard" sits a decision: where to send the field team. Done means a list agreed in advance.',
-      scenes: { brief: 'boardroom-dashboard', reflection: 'scope', hook: 'definitions' },
+      scenes: { reflection: 'scope', hook: 'definitions' },
       messages: [
         {
           from: 'Aoki san, sales director',
@@ -4903,7 +4894,6 @@ const en: StoryCampaign = {
         {
           taskId: 'dom-004',
           intro: {
-            scene: 'request',
             title: 'A request is not yet a task',
             paras: [
               'For two weeks you never chose what to count: the question arrived fully formed. Work is rarely built that way. The ordinary request looks like this one, "we need to see the picture", and it describes a feeling rather than a task.',
@@ -5308,7 +5298,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:05',
       short: 'Mon',
       found: 'A pandas table stays in a variable: one bracket gives a column, two give a table.',
-      scenes: { brief: 'desk-frames', reflection: 'notebook', hook: 'filter' },
+      scenes: { reflection: 'notebook', hook: 'filter' },
       messages: [
         {
           from: 'Your manager',
@@ -5681,7 +5671,7 @@ const en: StoryCampaign = {
       place: 'Kaiyo Trading · Commercial Analytics · Monday, 9:10',
       short: 'Mon',
       found: 'Since January 2026 Setouchi shipments are back within the usual range: the flow has returned.',
-      scenes: { brief: 'desk-series', reflection: 'flow', hook: 'smooth' },
+      scenes: { reflection: 'flow', hook: 'smooth' },
       messages: [
         {
           from: 'Your manager',

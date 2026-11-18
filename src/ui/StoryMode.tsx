@@ -25,7 +25,7 @@ import { StoryMsg } from './StoryMsg';
 import { PlayAllButton } from './PlayAllButton';
 import { DimFactFigure } from './DimFactFigure';
 import { SellFigure } from './SellFigure';
-import { StoryWeekScene } from './StoryWeekScene';
+import { StoryWeekScene, hasWeekScene } from './StoryWeekScene';
 import { StoryScenePhoto, hasStepScene } from './StoryScenePhoto';
 import { stepSceneKey } from '../storyScenes';
 import { StoryProgress } from './StoryProgress';
@@ -597,6 +597,13 @@ export function StoryMode({
    * в субботу называют приёмы одинаково.
    */
   const firstDayOfWeek = weekDays[0]?.id === mission.id;
+  /*
+   * Бриф первого дня недели 2-5 открывает сцена Gemini (StoryWeekScene), а бриф
+   * дня «отгрузки против продаж» несёт рисунок SellFigure. Старая SVG-обстановка
+   * (стол, монитор) рядом с ними не рисуется: на экране одна картинка.
+   */
+  const weekPhoto = phase.kind === 'brief' && firstDayOfWeek && hasWeekScene(mission.week);
+  const briefHasFigure = phase.kind === 'brief' && mission.id === 'p2-day-by-key';
   const previewSkills = firstDayOfWeek ? weekSkillLines(summaryDays, lessonBySkill) : [];
   const inPart = storyPartOf(campaign, mission.id);
   const partLeft = storyWeeksLeftInPart(campaign, mission.id);
@@ -640,8 +647,9 @@ export function StoryMode({
           * а не из описания сцены — иначе одно и то же «9:10» жило бы в двух
           * местах и однажды разошлось.
           */}
+        {weekPhoto && <StoryWeekScene week={mission.week} />}
         {stepPhoto && <StoryScenePhoto sceneKey={stepPhotoKey} />}
-        {scene && !stepPhoto && (
+        {scene && !weekPhoto && !stepPhoto && !briefHasFigure && (
           <StoryArt
             scene={scene}
             moment={{
@@ -743,7 +751,6 @@ export function StoryMode({
                 )}
               </details>
             )}
-            {firstDayOfWeek && <StoryWeekScene week={mission.week} />}
             <PlayAllButton lines={voiceLines} />
             <VoiceButton lines={voiceLines} onActive={setVoiceIdx} />
             <div className="story-mode-thread">
