@@ -746,7 +746,6 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-010',
           intro: {
-            scene: 'calendar',
             title: 'Группировать по тому, чего в таблице нет',
             paras: [
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7), то есть «с первого символа взять семь», даёт 2025-03.',
@@ -1331,7 +1330,6 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-086',
           intro: {
-            scene: 'join',
             title: 'Соединение, которое никого не теряет',
             paras: [
               'Обычный JOIN оставляет только совпавшие пары. Если в каком-то канале новинку не продали ни разу, канала в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
@@ -1726,7 +1724,6 @@ const ru: StoryCampaign = {
         {
           taskId: 'sql-118',
           intro: {
-            scene: 'fold',
             title: 'Промежуточный результат, у которого есть имя',
             paras: [
               'WITH заводит временную таблицу на время одного запроса. Она считается один раз, у неё есть имя и колонки, и дальше с ней работают как с настоящей:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',
@@ -3702,7 +3699,6 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-010',
           intro: {
-            scene: 'calendar',
             title: 'Grouping by something the table does not hold',
             paras: [
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7), meaning "from the first character take seven", gives 2025-03.',
@@ -4200,7 +4196,6 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-086',
           intro: {
-            scene: 'join',
             title: 'A join that loses nobody',
             paras: [
               'A plain JOIN keeps matched pairs only. If the new SKU never sold in some channel, that channel is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
@@ -4582,7 +4577,6 @@ const en: StoryCampaign = {
         {
           taskId: 'sql-118',
           intro: {
-            scene: 'fold',
             title: 'An intermediate result with a name',
             paras: [
               'WITH creates a temporary table for the duration of one query. It is computed once, it has a name and columns, and from there it is used like a real one:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',

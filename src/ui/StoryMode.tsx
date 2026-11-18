@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Task } from '../content/types';
 import { CodeBlock } from './CodeBlock';
@@ -28,6 +28,7 @@ import { SellFigure } from './SellFigure';
 import { StoryWeekScene, hasWeekScene } from './StoryWeekScene';
 import { StoryScenePhoto, hasStepScene } from './StoryScenePhoto';
 import { stepSceneKey } from '../storyScenes';
+import { STORY_FIGURES } from './StoryFigures';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -578,6 +579,7 @@ export function StoryMode({
    */
   const stepPhotoKey =
     phase.kind === 'intro' || phase.kind === 'interlude' ? stepSceneKey(mission.id, phase.kind, phase.step) : '';
+  const figure = phase.kind === 'intro' ? STORY_FIGURES[stepPhotoKey] : undefined;
   const stepPhoto = stepPhotoKey !== '' && hasStepScene(stepPhotoKey);
 
   /*
@@ -649,7 +651,7 @@ export function StoryMode({
           */}
         {weekPhoto && <StoryWeekScene week={mission.week} />}
         {stepPhoto && <StoryScenePhoto sceneKey={stepPhotoKey} />}
-        {scene && !weekPhoto && !stepPhoto && !briefHasFigure && (
+        {scene && !weekPhoto && !stepPhoto && !figure && !briefHasFigure && (
           <StoryArt
             scene={scene}
             moment={{
@@ -794,7 +796,10 @@ export function StoryMode({
           <>
             {intro.title && <h2>{intro.title}</h2>}
             {intro.paras.map((p, i) => (
-              <StoryPara key={i} text={p} pieces={glossaryRendered[i]} />
+              <Fragment key={i}>
+                <StoryPara text={p} pieces={glossaryRendered[i]} />
+                {figure && figure.after === i && <figure.Figure />}
+              </Fragment>
             ))}
             <button type="button" className="btn" onClick={goNext}>
               {nextLabel}

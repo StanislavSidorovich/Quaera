@@ -1,0 +1,42 @@
+/* Схемы со строками данных в разговоре сюжета (StoryFigures.tsx). Только токены темы. */
+.sfig {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+  font-size: var(--fs-small);
+  min-width: 0;
+}
+.sfig-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sfig-side { min-width: 0; flex: 1 1 200px; }
+.sfig-narrow { flex: 0 1 150px; }
+.sfig-table { border-collapse: collapse; width: 100%; font-size: 12px; line-height: 1.4; }
+.sfig-table caption { text-align: left; font-weight: 600; padding-bottom: 4px; }
+.sfig-table th, .sfig-table td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); }
+.sfig-table th { font-weight: 600; }
+.sfig-table caption code { font-size: 12px; }
+.sfig-table .sfig-num { text-align: right; font-variant-numeric: tabular-nums; }
+.sfig-key { background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 600; border-radius: 3px; padding: 0 2px; }
+.sfig-dim { color: var(--text-muted, inherit); opacity: 0.75; }
+.sfig-null { color: var(--text-muted, inherit); font-style: italic; }
+.sfig-nan { color: color-mix(in srgb, var(--warn) 70%, var(--text)); font-style: italic; }
+.sfig-more td { color: var(--text-muted, inherit); }
+.sfig-note { margin: 6px 0 0; color: var(--text-muted, inherit); font-size: 12px; line-height: 1.45; }
+.sfig-arrow { display: flex; flex-direction: column; align-items: center; color: var(--accent); flex: 0 0 auto; max-width: 130px; text-align: center; font-size: 11px; }
+.sfig-arrow-mark { font-size: 20px; line-height: 1; }
+.sfig-arrow-text { overflow-wrap: anywhere; }
+.sfig-box { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+.sfig-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 8px; font-size: 12px; }
+.sfig-sub code { overflow-wrap: anywhere; white-space: normal; }
+.sfig-sub-note { color: var(--text-muted, inherit); }
+@media (max-width: 640px) {
+  .sfig { padding: 8px 10px; }
+  .sfig-table { font-size: 11px; }
+  .sfig-table th, .sfig-table td { padding: 2px 3px; }
+  .sfig-table th { overflow-wrap: anywhere; }
+  .sfig-side, .sfig-narrow { flex-basis: 100%; }
+  .sfig-arrow { flex-direction: row; gap: 6px; flex-basis: 100%; max-width: none; justify-content: center; }
+  .sfig-arrow-mark { transform: rotate(90deg); }
+}
