@@ -44,16 +44,3 @@
     grid-template-rows: auto 1fr 1fr;
   }
 }
-
-/*
- * Главная кнопка недели: тот же акцент, но спокойнее. Тон смешан с --q-muted:
- * в светлой теме он темнее, в тёмной светлее, поэтому насыщенность падает,
- * а контраст с --accent-ink остаётся выше AA. Глобальный --accent не тронут.
- */
-.btn.hs-main {
-  background: color-mix(in srgb, var(--accent) 68%, var(--q-muted));
-}
-
-.btn.hs-main:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 78%, var(--q-muted));
-}

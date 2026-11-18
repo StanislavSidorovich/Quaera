@@ -11,6 +11,7 @@ import '../family/fonts.css';
 import '../family/tokens.css';
 import '../family/switcher.js';
 import './styles.css';
+import './accentCalm.css';
 import { trackRegistration } from './pwa/updates';
 import { answerFamilyWindows, followLaunchLinks, nameTrainerWindow } from './pwa/windowLinks';
 import { auditionRequested } from './voice';
