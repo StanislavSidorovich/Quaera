@@ -26,6 +26,8 @@ import { PlayAllButton } from './PlayAllButton';
 import { DimFactFigure } from './DimFactFigure';
 import { SellFigure } from './SellFigure';
 import { StoryWeekScene } from './StoryWeekScene';
+import { StoryScenePhoto, hasStepScene } from './StoryScenePhoto';
+import { stepSceneKey } from '../storyScenes';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -571,6 +573,14 @@ export function StoryMode({
             : intro?.scene;
 
   /*
+   * Сцена Gemini на этом шаге (манифест storyScenes.ts) заменяет старую
+   * SVG-сцену шага: на шаге всегда одна сцена.
+   */
+  const stepPhotoKey =
+    phase.kind === 'intro' || phase.kind === 'interlude' ? stepSceneKey(mission.id, phase.kind, phase.step) : '';
+  const stepPhoto = stepPhotoKey !== '' && hasStepScene(stepPhotoKey);
+
+  /*
    * Находки прошлых дней — папка дела, которая растёт. Показывается только
    * на брифе: утро начинается с того, что уже известно, а дальше по дню
    * это был бы шум над каждым экраном.
@@ -630,7 +640,8 @@ export function StoryMode({
           * а не из описания сцены — иначе одно и то же «9:10» жило бы в двух
           * местах и однажды разошлось.
           */}
-        {scene && (
+        {stepPhoto && <StoryScenePhoto sceneKey={stepPhotoKey} />}
+        {scene && !stepPhoto && (
           <StoryArt
             scene={scene}
             moment={{

@@ -12,6 +12,8 @@ import './storyWeekScene.css';
  */
 const SCENE_WEEKS = new Set(['w2', 'w3', 'w4', 'w5']);
 
+export const hasWeekScene = (week: string): boolean => SCENE_WEEKS.has(week);
+
 export function StoryWeekScene({ week }: { week: string }) {
   const { t } = useI18n();
   const [failed, setFailed] = useState(false);

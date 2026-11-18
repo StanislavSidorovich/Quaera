@@ -6,7 +6,6 @@ import type { Locale } from './i18n/context';
  * Манифест в коде, а не проба сети: офлайн-PWA не должна дёргать 404 на роль
  * без картинки. Файл лежит в `public/roles/<id>.webp` (1200×670), попадает в
  * precache service worker (postbuild-sw.mjs). Положили файл: добавьте id сюда.
- * ds: картинка в работе, id `ds` добавить, когда файл придёт.
  * `x` для миниатюры: куда смотрит кадрирование по горизонтали (лицо героя).
  */
 export const ROLE_SCENES: Readonly<Record<string, { x: number; alt: Record<Locale, string> }>> = {
@@ -43,6 +42,13 @@ export const ROLE_SCENES: Readonly<Record<string, { x: number; alt: Record<Local
     alt: {
       ru: 'Аналитик показывает коллеге на ноутбуке таблицу и график, рядом стикеры с вопросами',
       en: 'An analyst shows a colleague a table and a chart on a laptop, sticky notes with questions beside it',
+    },
+  },
+  ds: {
+    x: 40,
+    alt: {
+      ru: 'Специалист по данным за монитором с графиком прогноза: линия уходит в расширяющийся коридор, за окном Токийская башня',
+      en: 'A data scientist at a monitor with a forecast chart: the line fans out into a widening band, Tokyo Tower in the window',
     },
   },
   gov: {
