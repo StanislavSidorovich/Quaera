@@ -12,12 +12,14 @@ import { mastery } from '../../srs/scheduler';
 import type { Progress } from '../../srs/store';
 import { IconBook, IconCompass, IconFlask, IconTable } from '../Sidebar';
 import { TRACK_ORDER } from './HomeParts';
+import { HomeStoryScene } from './HomeStoryScene';
 import { roleGoal } from '../RoleStrip';
 import { RouteIcons } from '../routeIcons';
 import './homeSpine.css';
 import './homeStatus.css';
 import './homeEyebrow.css';
 import './homeFamily.css';
+import './homeHover.css';
 
 import markLab from '../../../family/marks/lab.svg';
 import markModel from '../../../family/marks/model.svg';
@@ -304,6 +306,7 @@ export function HomeSpine(p: HomeSpineProps) {
               )}
               {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
             </div>
+            <HomeStoryScene weekId={week?.id} />
           </section>
 
           {/* Карта пути данных: «вы здесь» по прогрессу, действия только у текущего слоя. */}

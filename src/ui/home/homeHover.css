@@ -1,0 +1,39 @@
+/*
+ * Блоки главной: у всех четырёх один спокойный фон, лёгкий тон только под мышью и при
+ * фокусе внутри (клавиатура). На касаниях hover нет: блоки нейтральные, :focus-within
+ * остаётся. Постоянной подсветки «Где вы сейчас» нет, акцентом остаётся главная кнопка.
+ * Подключается последним в HomeSpine.tsx.
+ */
+.hs .hs-frame,
+.hs .hs-now,
+.hs .hs-map,
+.hs .hs-tile {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.hs .hs-frame:focus-within,
+.hs .hs-now:focus-within,
+.hs .hs-map:focus-within,
+.hs .hs-tile:focus-visible {
+  background-color: color-mix(in srgb, var(--accent) 5%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+}
+
+@media (hover: hover) {
+  .hs .hs-frame:hover,
+  .hs .hs-now:hover,
+  .hs .hs-map:hover,
+  .hs .hs-tile:hover {
+    background-color: color-mix(in srgb, var(--accent) 5%, var(--bg-raised));
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs .hs-frame,
+  .hs .hs-now,
+  .hs .hs-map,
+  .hs .hs-tile {
+    transition: none;
+  }
+}

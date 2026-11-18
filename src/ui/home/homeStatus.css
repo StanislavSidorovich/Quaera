@@ -82,10 +82,8 @@
   min-width: 0;
 }
 
-/* Где вы сейчас: акцентная полоса слева и подкрашенный фон. */
+/* Где вы сейчас: тот же спокойный фон, что у соседних блоков (тон только при наведении, homeHover.css). */
 .card.hs-now {
-  border-left: 5px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-raised));
   display: flex;
   flex-direction: column;
   gap: 8px;

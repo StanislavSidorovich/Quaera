@@ -1,0 +1,46 @@
+/*
+ * Картинка недели в рамке режима истории (HomeStoryScene.tsx).
+ * От 1180px блок стоит в одной строке с «Где вы сейчас» и растягивается до его высоты:
+ * картинка берёт остаток (flex 1 1 0 не прибавляет рамке высоты) и кадрируется cover.
+ * 760-1179px рамка не растянута: картинка полосой 120px. Телефон (до 759px): без картинки,
+ * она съедала бы первый экран и сдвигала главную кнопку вниз.
+ */
+.hs-scene {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+
+.hs-scene img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 45%;
+}
+
+.hs-scene.thin img {
+  visibility: hidden;
+}
+
+@media (min-width: 760px) {
+  .hs-scene {
+    display: block;
+    flex: none;
+    height: 120px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .hs-scene {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+  }
+  .hs-scene img {
+    position: absolute;
+    inset: 0;
+  }
+}

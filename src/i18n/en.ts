@@ -292,6 +292,8 @@ export const en = {
       letterShort: 'Letter',
       letterLocked: 'locked',
       letterAria: (open: boolean): string => (open ? 'Letter to your manager, open' : 'Letter to your manager, locked: opens after the Lab answer or day five'),
+      /** Week 1 picture on the home frame (weeks 2-5: storyMode.weekScene). */
+      sceneDesk: 'A morning office: a dark monitor, a notebook, a badge on a lanyard and a coffee cup on the desk; a city and Tokyo Tower outside the window.',
       linksLabel: 'Reference and tools',
       backToHome: '← Back to home',
       trackScreenKicker: 'Track',
