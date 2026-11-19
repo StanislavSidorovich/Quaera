@@ -1,13 +1,31 @@
 /*
  * Картинка недели в рамке режима истории (HomeStoryScene.tsx).
- * От 1180px блок стоит в одной строке с «Где вы сейчас» и растягивается до его высоты:
- * картинка берёт остаток (flex 1 1 0 не прибавляет рамке высоты) и кадрируется cover.
- * 760-1179px рамка не растянута: картинка полосой 120px. Телефон (до 759px): без картинки,
- * она съедала бы первый экран и сдвигала главную кнопку вниз.
+ * Рамка (.hs-frame) задаёт контейнер по ширине, тело рамки (.hs-frame-body) в нём решает, сколько колонок.
+ *  - до 759px: картинки нет (съедала бы первый экран);
+ *  - 760px и выше: полоса 120px под текстом;
+ *  - от 1180px и если телу рамки хватает 520px: две колонки, слева текст и кнопка,
+ *    справа картинка в своей пропорции 16:9 (cover, углы скруглены, как у рамки).
+ * Нет картинки: .hs-scene не рендерится, текст на всю ширину, пустой плашки нет.
  */
+.hs-frame {
+  container-type: inline-size;
+}
+
+.hs-frame-body {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hs-frame-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
 .hs-scene {
   display: none;
-  position: relative;
   overflow: hidden;
   border-radius: 10px;
   background: var(--bg-sunken);
@@ -21,26 +39,23 @@
   object-position: center 45%;
 }
 
-.hs-scene.thin img {
-  visibility: hidden;
-}
-
 @media (min-width: 760px) {
   .hs-scene {
     display: block;
-    flex: none;
     height: 120px;
   }
 }
 
 @media (min-width: 1180px) {
-  .hs-scene {
-    flex: 1 1 0;
-    height: auto;
-    min-height: 0;
-  }
-  .hs-scene img {
-    position: absolute;
-    inset: 0;
+  @container (min-width: 520px) {
+    .hs-frame-body:has(.hs-scene) {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 20px;
+    }
+    .hs-scene {
+      height: auto;
+      aspect-ratio: 16 / 9;
+    }
   }
 }

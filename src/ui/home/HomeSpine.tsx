@@ -247,66 +247,70 @@ export function HomeSpine(p: HomeSpineProps) {
         <div className="hs-left">
           {/* Режим истории: вопрос заказчика, пять дней и письмо, одна главная кнопка. */}
           <section className="card hs-frame" data-guide="story" aria-labelledby="hs-frame-title">
-            <p className="hs-kicker hs-eyebrow" id="hs-frame-title">
-              {s.frameKicker}
-              {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
-            </p>
-            {week && (
-              <p className="hs-question">
-                {asker && <span className="hs-asker">{s.asks(asker)}: </span>}«{week.question}»
-              </p>
-            )}
-            <p className="hs-what">{s.frameWhat}</p>
-            {days.length > 0 && (
-              <ol className="hs-days">
-                {days.map((m, i) => {
-                  const state = reachedDay < 0 ? (i === 0 ? 'now' : 'ahead') : i < reachedDay ? 'done' : i === reachedDay ? 'now' : 'ahead';
-                  return (
-                    <li key={m.id} className={`hs-day ${state}`} aria-label={s.dayAria(i + 1, state)} aria-current={state === 'now' ? 'step' : undefined}>
-                      <span className="hs-dot" aria-hidden />
-                      <span className="hs-day-name" aria-hidden>
-                        {m.short}
-                      </span>
-                    </li>
-                  );
-                })}
-                <li className={`hs-day hs-letterday ${letterOpen ? 'open' : 'locked'}`} aria-label={s.letterAria(letterOpen)}>
-                  {letterOpen && p.onOpenStoryMode ? (
-                    <button type="button" className="hs-letterbtn" onClick={p.onOpenStoryMode}>
-                      <span className="hs-dot" aria-hidden />
-                      <span className="hs-day-name" aria-hidden>
-                        {s.letterShort}
-                      </span>
-                    </button>
-                  ) : (
-                    <>
-                      <span className="hs-lock" aria-hidden>
-                        🔒
-                      </span>
-                      <span className="hs-day-name" aria-hidden>
-                        {s.letterShort}
-                      </span>
-                    </>
-                  )}
-                </li>
-              </ol>
-            )}
-            <button type="button" className="btn hs-main" onClick={onMain} disabled={!storyMain && p.loading && step.kind === 'resume'}>
-              <span className="hs-main-text">{mainLabel}</span>
-              {mainMinutes !== null && <span className="hs-main-min">{s.minutes(mainMinutes)}</span>}
-            </button>
-            <div className="hs-quiet">
-              {p.isNewUser && (
-                <p className="hs-intro">
-                  {s.introLead}{' '}
-                  <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
-                    {s.introLink}
-                  </button>
+            <div className="hs-frame-body">
+              <div className="hs-frame-text">
+                <p className="hs-kicker hs-eyebrow" id="hs-frame-title">
+                  {s.frameKicker}
+                  {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
                 </p>
-              )}
-              {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
+                {week && (
+                  <p className="hs-question">
+                    {asker && <span className="hs-asker">{s.asks(asker)}: </span>}«{week.question}»
+                  </p>
+                )}
+                <p className="hs-what">{s.frameWhat}</p>
+                {days.length > 0 && (
+                  <ol className="hs-days">
+                    {days.map((m, i) => {
+                      const state = reachedDay < 0 ? (i === 0 ? 'now' : 'ahead') : i < reachedDay ? 'done' : i === reachedDay ? 'now' : 'ahead';
+                      return (
+                        <li key={m.id} className={`hs-day ${state}`} aria-label={s.dayAria(i + 1, state)} aria-current={state === 'now' ? 'step' : undefined}>
+                          <span className="hs-dot" aria-hidden />
+                          <span className="hs-day-name" aria-hidden>
+                            {m.short}
+                          </span>
+                        </li>
+                      );
+                    })}
+                    <li className={`hs-day hs-letterday ${letterOpen ? 'open' : 'locked'}`} aria-label={s.letterAria(letterOpen)}>
+                      {letterOpen && p.onOpenStoryMode ? (
+                        <button type="button" className="hs-letterbtn" onClick={p.onOpenStoryMode}>
+                          <span className="hs-dot" aria-hidden />
+                          <span className="hs-day-name" aria-hidden>
+                            {s.letterShort}
+                          </span>
+                        </button>
+                      ) : (
+                        <>
+                          <span className="hs-lock" aria-hidden>
+                            🔒
+                          </span>
+                          <span className="hs-day-name" aria-hidden>
+                            {s.letterShort}
+                          </span>
+                        </>
+                      )}
+                    </li>
+                  </ol>
+                )}
+                <button type="button" className="btn hs-main" onClick={onMain} disabled={!storyMain && p.loading && step.kind === 'resume'}>
+                  <span className="hs-main-text">{mainLabel}</span>
+                  {mainMinutes !== null && <span className="hs-main-min">{s.minutes(mainMinutes)}</span>}
+                </button>
+                <div className="hs-quiet">
+                  {p.isNewUser && (
+                    <p className="hs-intro">
+                      {s.introLead}{' '}
+                      <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
+                        {s.introLink}
+                      </button>
+                    </p>
+                  )}
+                  {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
+                </div>
+              </div>
+              <HomeStoryScene weekId={week?.id} />
             </div>
-            <HomeStoryScene weekId={week?.id} />
           </section>
 
           {/* Карта пути данных: «вы здесь» по прогрессу, действия только у текущего слоя. */}
