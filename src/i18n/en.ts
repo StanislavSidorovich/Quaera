@@ -1469,6 +1469,7 @@ export const en = {
       `${weeks} ${weeks === 1 ? 'week' : 'weeks'} to the date. To close the gap, about ${perWeek} ${perWeek === 1 ? 'skill' : 'skills'} a week.`,
     goalNoSkills: 'No gaps the trainer can close are left: what remains lives outside it.',
     goalPast: 'This date has passed. Pick a new one.',
+    goalMore: 'Add a reason and a plan (optional)',
     whyLabel: 'Why I want this',
     whyHint: 'One sentence: what you are going to this role for.',
     obstacleLabel: 'What might get in the way and what I will do then',

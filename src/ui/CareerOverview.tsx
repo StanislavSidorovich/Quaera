@@ -132,6 +132,12 @@ export function CareerOverview({
   const whyText = noteText(state.why);
   const obstacleText = noteText(state.obstacle);
   const changes = weeklyChanges(state.weekly, levels);
+  /* Причина и план свёрнуты, пока пусты; заполнены хоть одно: открыты сразу, и текст не прячется. */
+  const hasNotes = Boolean(whyText || obstacleText);
+  const [notesOpen, setNotesOpen] = useState(hasNotes);
+  useEffect(() => {
+    if (hasNotes) setNotesOpen(true);
+  }, [hasNotes]);
   const BANDS = ['start', 'prejunior', 'nearly', 'ready'] as const;
   const bandStep = BANDS.indexOf(mine.band) + 1;
 
@@ -224,7 +230,9 @@ export function CareerOverview({
           )}
         </div>
 
-        <div className="career-notes">
+        <details className="career-notes-more" open={notesOpen} onToggle={(e) => setNotesOpen(e.currentTarget.open)}>
+          <summary>{c.goalMore}</summary>
+          <div className="career-notes">
           <label className="career-field-label" htmlFor="career-why">
             {c.whyLabel} <span className="muted">({c.goalOptional})</span>
           </label>
@@ -251,14 +259,15 @@ export function CareerOverview({
             defaultValue={obstacleText}
             onBlur={(e) => setNote('obstacle', e.target.value)}
           />
-        </div>
+          </div>
+        </details>
 
         {changes && (
           <p className="career-week muted">
             <strong>{c.weekTitle}.</strong> {changes.length ? changes.map((ch) => c.weekChange(axisTitle(ch.axis), ch.from, ch.to)).join('; ') : c.weekNone}
           </p>
         )}
-        {(whyText || obstacleText) && (
+        {hasNotes && !notesOpen && (
           <ul className="career-week-notes" aria-label={c.notesTitle}>
             {whyText && (
               <li>
