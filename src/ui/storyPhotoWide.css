@@ -1,0 +1,14 @@
+/*
+ * Широкие кадры StoryPhoto (desk-morning-wide / desk-evening-wide, 21:9, флаг в
+ * src/storyScenes.ts). <picture> не должна влиять на раскладку: img стоит как раньше.
+ * От 1024px размытое продолжение за кадром берётся из той же широкой версии.
+ */
+.story-photo picture {
+  display: contents;
+}
+
+@media (min-width: 1024px) {
+  .story-photo.has-wide::before {
+    background-image: var(--story-photo-wide);
+  }
+}

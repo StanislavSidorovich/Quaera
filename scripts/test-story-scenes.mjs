@@ -64,6 +64,15 @@ for (const m of roles.matchAll(/\n {2}(\w+): \{\n {4}x: \d+/g)) {
   check(`роль ${m[1]}`, existsSync(f), 'файла нет');
 }
 
+/* Широкие кадры: флаг true обязан иметь файл (иначе 404 в консоли у каждого посетителя ПК). */
+const wideBlock = /STORY_PHOTO_WIDE[^=]*=\s*\{([^}]*)\}/.exec(scenes);
+check('флаги широких кадров найдены', Boolean(wideBlock), 'нет STORY_PHOTO_WIDE в storyScenes.ts');
+for (const m of (wideBlock?.[1] ?? '').matchAll(/(morning|evening):\s*(true|false)/g)) {
+  if (m[2] !== 'true') continue;
+  const f = path.join(root, 'public/story', `desk-${m[1]}-wide.webp`);
+  check(`широкий кадр ${m[1]}`, existsSync(f) && statSync(f).size > 5000, 'флаг true, а файла desk-' + m[1] + '-wide.webp нет');
+}
+
 if (failed) {
   console.log(`\nпровалено: ${failed}`);
   process.exit(1);

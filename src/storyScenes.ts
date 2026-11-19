@@ -57,4 +57,16 @@ export const STORY_STEP_SCENES: Readonly<Record<string, { file: string; alt: Rec
   },
 };
 
+/**
+ * Широкие версии двух растровых кадров (StoryPhoto): `desk-morning-wide.webp` и
+ * `desk-evening-wide.webp` в `public/story/`, 21:9. От 1024px браузер берёт их через
+ * `<picture>`, на телефоне всегда обычный 16:9. Включается флагом, а не пробой сети:
+ * пока файла нет, флаг false, запроса и 404 нет, края кадра размыты, как раньше.
+ * Положил файл, поставил true: гейт test:story-scenes проверяет, что файл на месте.
+ */
+export const STORY_PHOTO_WIDE: Readonly<Record<'morning' | 'evening', boolean>> = {
+  morning: false,
+  evening: false,
+};
+
 export const stepSceneKey = (missionId: string, kind: string, step: number): string => `${missionId}/${kind}/${step}`;

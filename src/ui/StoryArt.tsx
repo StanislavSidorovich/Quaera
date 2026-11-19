@@ -28,6 +28,8 @@
  */
 import type { ReactNode } from 'react';
 import type { StoryScene } from '../content/storymode';
+import { STORY_PHOTO_WIDE } from '../storyScenes';
+import './storyPhotoWide.css';
 
 /*
  * Список сцен объявлен в контенте (content/storymode.ts), а не здесь: какие
@@ -160,11 +162,18 @@ const BOARD_SCENES: Partial<Record<StoryScene, BoardSetup>> = {
  */
 export function StoryPhoto({ frame }: { frame: 'morning' | 'evening' }) {
   const src = `/story/desk-${frame}.webp`;
+  // Широкая версия (21:9) от 1024px, если включена флагом в манифесте; файла нет: флаг false.
+  const wide = STORY_PHOTO_WIDE[frame] ? `/story/desk-${frame}-wide.webp` : null;
   // Тот же файл уходит вторым слоем в фон: на широком экране кадр стоит целиком,
   // а поля по бокам заполняет его же размытое продолжение, а не обрезка.
+  const vars: Record<string, string> = { '--story-photo': `url(${src})` };
+  if (wide) vars['--story-photo-wide'] = `url(${wide})`;
   return (
-    <div className="story-art story-photo" style={{ ['--story-photo' as string]: `url(${src})` }} aria-hidden>
-      <img src={src} alt="" width={1024} height={572} loading="lazy" decoding="async" />
+    <div className={`story-art story-photo${wide ? ' has-wide' : ''}`} style={vars} aria-hidden>
+      <picture>
+        {wide && <source media="(min-width: 1024px)" srcSet={wide} />}
+        <img src={src} alt="" width={1024} height={572} loading="lazy" decoding="async" />
+      </picture>
     </div>
   );
 }
