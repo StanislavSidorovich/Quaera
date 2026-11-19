@@ -65,8 +65,8 @@ export const STORY_STEP_SCENES: Readonly<Record<string, { file: string; alt: Rec
  * Положил файл, поставил true: гейт test:story-scenes проверяет, что файл на месте.
  */
 export const STORY_PHOTO_WIDE: Readonly<Record<'morning' | 'evening', boolean>> = {
-  morning: false,
-  evening: false,
+  morning: true,
+  evening: true,
 };
 
 export const stepSceneKey = (missionId: string, kind: string, step: number): string => `${missionId}/${kind}/${step}`;

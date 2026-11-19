@@ -1,14 +1,26 @@
 /*
- * Широкие кадры StoryPhoto (desk-morning-wide / desk-evening-wide, 21:9, флаг в
+ * Широкие кадры StoryPhoto (desk-morning-wide / desk-evening-wide, отодвинутый 16:9, флаг в
  * src/storyScenes.ts). <picture> не должна влиять на раскладку: img стоит как раньше.
- * От 1024px размытое продолжение за кадром берётся из той же широкой версии.
  */
 .story-photo picture {
   display: contents;
 }
 
+/*
+ * Широкий источник (отодвинутый кадр 16:9): на ПК кадрируется cover под рамку,
+ * размытые поля не нужны. object-position держит стол, монитор и окно с башней.
+ */
 @media (min-width: 1024px) {
   .story-photo.has-wide::before {
-    background-image: var(--story-photo-wide);
+    display: none;
+  }
+  .story-photo.has-wide img {
+    object-fit: cover;
+    object-position: 50% 45%;
+  }
+  /* Рамка 2.4:1 вместо ~3:1: при 3:1 вечерний кадр терял вершину башни и лампу. */
+  .story-column .story-photo.has-wide {
+    aspect-ratio: 12 / 5;
+    height: auto;
   }
 }
