@@ -72,7 +72,7 @@ export function MonthSliceFigure() {
     <Frame aria={x.aria}>
       <div className="sfig-row">
         <div className="sfig-side">
-          <table className="sfig-table">
+          <div className="sfig-scroll"><table className="sfig-table">
             <caption><code>{x.weeks}</code></caption>
             <thead><tr><th>week_start</th><th className="sfig-num">units</th></tr></thead>
             <tbody>
@@ -83,17 +83,17 @@ export function MonthSliceFigure() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
         <Arrow text={x.fold} />
         <div className="sfig-side">
-          <table className="sfig-table">
+          <div className="sfig-scroll"><table className="sfig-table">
             <caption><code>{x.month}</code></caption>
             <thead><tr><th>month</th><th className="sfig-num">units</th></tr></thead>
             <tbody>
               <tr><td><span className="sfig-key">2025-03</span></td><td className="sfig-num">{fmt(36831, locale)}</td></tr>
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
       <p className="sfig-note">{x.note}</p>
@@ -138,14 +138,14 @@ export function LeftJoinFigure() {
         <span className="sfig-key">43</span>
         <span className="sfig-sub-note">{x.sub}</span>
       </div>
-      <table className="sfig-table">
+      <div className="sfig-scroll"><table className="sfig-table">
         <caption><code>{x.cap}</code></caption>
         <thead>
           <tr>
             <th>channel</th>
             <th className="sfig-num">{x.outlets}</th>
-            <th className="sfig-num">SUM(f.units)</th>
-            <th className="sfig-num">COALESCE</th>
+            <th className="sfig-num">units</th>
+            <th className="sfig-num">→ 0</th>
           </tr>
         </thead>
         <tbody>
@@ -158,7 +158,7 @@ export function LeftJoinFigure() {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
       <p className="sfig-note">{x.note}</p>
     </Frame>
   );
@@ -206,7 +206,7 @@ export function TwoStepFigure() {
         </div>
         <Arrow text={x.a1} />
         <div className="sfig-side">
-          <table className="sfig-table">
+          <div className="sfig-scroll"><table className="sfig-table">
             <caption><code>{x.s2}</code></caption>
             <thead><tr><th>customer_id</th><th className="sfig-num">units</th></tr></thead>
             <tbody>
@@ -215,18 +215,18 @@ export function TwoStepFigure() {
               <tr><td>15</td><td className="sfig-num">191</td></tr>
               <tr className="sfig-more"><td colSpan={2}>… 79 {x.rows}</td></tr>
             </tbody>
-          </table>
+          </table></div>
         </div>
         <Arrow text={x.a2} />
         <div className="sfig-side">
-          <table className="sfig-table">
+          <div className="sfig-scroll"><table className="sfig-table">
             <caption><code>{x.s3}</code></caption>
             <thead><tr><th>stayed</th><th className="sfig-num">{x.outlets}</th><th className="sfig-num">avg_units</th></tr></thead>
             <tbody>
               <tr><td>0</td><td className="sfig-num">42</td><td className="sfig-num sfig-key">388</td></tr>
               <tr><td>1</td><td className="sfig-num">37</td><td className="sfig-num sfig-key">598</td></tr>
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </Frame>
@@ -268,7 +268,7 @@ const SHUFFLED: Array<[string, number, string]> = [
 
 function RollTable({ rows, caption, locale }: { rows: Array<[string, number, string]>; caption: string; locale: Locale }) {
   return (
-    <table className="sfig-table">
+    <div className="sfig-scroll"><table className="sfig-table">
       <caption><code>{caption}</code></caption>
       <thead><tr><th>week_start</th><th className="sfig-num">units</th><th className="sfig-num">rolling(4).mean()</th></tr></thead>
       <tbody>
@@ -280,7 +280,7 @@ function RollTable({ rows, caption, locale }: { rows: Array<[string, number, str
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   );
 }
 

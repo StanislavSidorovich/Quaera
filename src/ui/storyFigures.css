@@ -16,7 +16,9 @@
 .sfig-table caption { text-align: left; font-weight: 600; padding-bottom: 4px; }
 .sfig-table th, .sfig-table td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); }
 .sfig-table th { font-weight: 600; }
-.sfig-table caption code { font-size: 12px; }
+.sfig-table caption code { font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+/* Запасной путь: таблица шире рамки прокручивается внутри рамки, а не вылезает за неё. */
+.sfig-scroll { max-width: 100%; overflow-x: auto; }
 .sfig-table .sfig-num { text-align: right; font-variant-numeric: tabular-nums; }
 .sfig-key { background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 600; border-radius: 3px; padding: 0 2px; }
 .sfig-dim { color: var(--text-muted, inherit); opacity: 0.75; }
