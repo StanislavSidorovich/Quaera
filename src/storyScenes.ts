@@ -9,8 +9,8 @@ import type { Locale } from './i18n/context';
  *
  * Картинка на шаге заменяет старую SVG-сцену этого шага (если она была),
  * поэтому на шаге всегда одна сцена. Выбор шагов: аудит
- * `shots/gemini/2026-11-17-b2/story-image-audit.md`, пункты 2, 4, 7, 8, 9.
- * Пункт 12 (день 25, вступление py-046) ждёт файла.
+ * `shots/gemini/2026-11-17-b2/story-image-audit.md`, пункты 2, 4, 7, 8, 9, 12
+ * (пункт 12: день 25, вступление py-046, вариант v2 выбран хозяином 2026-11-19).
  */
 export const STORY_STEP_SCENES: Readonly<Record<string, { file: string; alt: Record<Locale, string> }>> = {
   'day-5-shelf-or-demand/intro/0': {
@@ -46,6 +46,13 @@ export const STORY_STEP_SCENES: Readonly<Record<string, { file: string; alt: Rec
     alt: {
       ru: 'Руководитель на заднем сиденье машины между встречами смотрит на экран телефона; за окном размытый город.',
       en: 'A director in the back seat of a car between meetings looks at a phone screen; a blurred city outside the window.',
+    },
+  },
+  'day-25-flow-and-level/intro/0': {
+    file: 'scene-flow-vs-level',
+    alt: {
+      ru: 'Склад дистрибьютора: слева рабочий вкатывает на тележке небольшую стопку коробок, справа другой вывозит такую же к фургону, а посреди склада стоят высокие паллеты с нетронутым запасом.',
+      en: 'A distributor warehouse: on the left a worker wheels in a small stack of cases, on the right another wheels out an equal stack to a van, and in the middle stand tall pallets of untouched stock.',
     },
   },
 };
