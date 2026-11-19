@@ -1,0 +1,63 @@
+/*
+ * Контраст текста (2026-11-19): три уровня, атрибут data-contrast ставит src/contrast.ts.
+ * Меняются только --text и --text-dim (вторичный и третичный серый). Акцент не трогаем:
+ * accentCalm.css считает его от --q-accent и --q-muted, а эти токены здесь не задеты.
+ * Подключается после styles.css: у блоков темы там та же специфичность, у нас она выше
+ * из-за атрибута. Светлая тема: .theme-light или системная светлая без .theme-dark;
+ * тёмная: .theme-dark или системная тёмная без .theme-light.
+ *
+ * Контраст --text-dim (замер 2026-11-19, худший и лучший из фонов страницы, карточки и поля):
+ *   светлая: обычный 4.88-5.42, темнее 8.80-9.78, максимум 17.38-19.32
+ *   тёмная:  обычный 5.86-7.10, темнее 9.44-11.43, максимум 14.44-17.48
+ */
+:root[data-contrast='darker'].theme-light {
+  --text: #0f1420;
+  --text-dim: #3c4454;
+}
+:root[data-contrast='max'].theme-light {
+  --text: #05070b;
+  --text-dim: #0b0e14;
+}
+:root[data-contrast='darker'].theme-dark {
+  --text: #f2f4f8;
+  --text-dim: #c5cbd8;
+}
+:root[data-contrast='max'].theme-dark {
+  --text: #ffffff;
+  --text-dim: #f6f8fb;
+}
+@media (prefers-color-scheme: light) {
+  :root[data-contrast='darker']:not(.theme-dark) {
+    --text: #0f1420;
+    --text-dim: #3c4454;
+  }
+  :root[data-contrast='max']:not(.theme-dark) {
+    --text: #05070b;
+    --text-dim: #0b0e14;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-contrast='darker']:not(.theme-light) {
+    --text: #f2f4f8;
+    --text-dim: #c5cbd8;
+  }
+  :root[data-contrast='max']:not(.theme-light) {
+    --text: #ffffff;
+    --text-dim: #f6f8fb;
+  }
+}
+
+/* Выше «Обычного» бледность не добавляем прозрачностью: подписи осей «не нужна роли», плейсхолдеры. */
+:root[data-contrast='darker'] .career-radar .career-radar-label.off,
+:root[data-contrast='max'] .career-radar .career-radar-label.off,
+:root[data-contrast='darker'] .career-bars-row.off .career-bars-name,
+:root[data-contrast='darker'] .career-bars-row.off .career-bars-level,
+:root[data-contrast='max'] .career-bars-row.off .career-bars-name,
+:root[data-contrast='max'] .career-bars-row.off .career-bars-level {
+  opacity: 1;
+}
+:root[data-contrast='darker'] ::placeholder,
+:root[data-contrast='max'] ::placeholder {
+  color: var(--text-dim);
+  opacity: 1;
+}

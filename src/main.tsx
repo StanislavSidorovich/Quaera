@@ -12,11 +12,15 @@ import '../family/tokens.css';
 import '../family/switcher.js';
 import './styles.css';
 import './accentCalm.css';
+import './contrast.css';
+import { applyContrast, initialContrast } from './contrast';
 import { trackRegistration } from './pwa/updates';
 import { answerFamilyWindows, followLaunchLinks, nameTrainerWindow } from './pwa/windowLinks';
 import { auditionRequested } from './voice';
 
 // Имя окна `quaera-quaera`, приём ссылок в открытое окно и возврат из Lab: см. pwa/windowLinks.ts.
+// Контраст текста ставится до первой отрисовки, чтобы не мигнуть обычным серым.
+applyContrast(initialContrast());
 nameTrainerWindow();
 followLaunchLinks();
 answerFamilyWindows();

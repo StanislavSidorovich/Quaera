@@ -1292,6 +1292,8 @@ export const en = {
     borders: 'Borders',
     bordersSoft: 'Soft',
     bordersStrong: 'Strong',
+    contrast: 'Text contrast',
+    contrastNames: { standard: 'Standard', darker: 'Darker', max: 'Maximum' } as Record<'standard' | 'darker' | 'max', string>,
     reset: 'Reset',
     searchAria: 'Search the reference',
     moreAria: 'More: help, text size, theme, language',

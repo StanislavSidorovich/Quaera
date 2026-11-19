@@ -31,6 +31,7 @@ import { Sandbox } from './ui/Sandbox';
 import { SchemaSheet, useSchema } from './ui/SchemaSheet';
 import { AllTasksSheet, taskIdsFrom } from './ui/AllTasksSheet';
 import { AppearanceMenu, type Borders } from './ui/AppearanceMenu';
+import { applyContrast, initialContrast, storeContrast, type Contrast } from './contrast';
 import { Sidebar, IconAccount, type SidebarSection } from './ui/Sidebar';
 import { usePairHighlight } from './ui/pairHighlight';
 import { LabDoneContext, LabDoneToast } from './ui/LabDoneToast';
@@ -884,6 +885,7 @@ export default function App() {
   const [showExitHint, setShowExitHint] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>(initialFontSize);
   const [borders, setBorders] = useState<Borders>(initialBorders);
+  const [contrast, setContrast] = useState<Contrast>(initialContrast);
   const [focusReferenceSearch, setFocusReferenceSearch] = useState(false);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   /**
@@ -983,6 +985,14 @@ export default function App() {
     } catch {
       // см. initialTheme
     }
+  };
+
+  const chooseContrast = (next: Contrast | null) => {
+    /* null: сброс, выбор забывается и снова действует умолчание (prefers-contrast). */
+    storeContrast(next);
+    const value = next ?? initialContrast();
+    setContrast(value);
+    applyContrast(value);
   };
 
   const chooseBorders = (next: Borders) => {
@@ -2560,12 +2570,14 @@ export default function App() {
               onLocale={setLocale}
               borders={borders}
               onBorders={chooseBorders}
+              contrast={contrast}
+              onContrast={chooseContrast}
             />
             {/* Только на главной и только на телефоне (CSS): «?» и «Aa» внутри меню */}
             {screen.name === 'home' && (
               <TopbarMenu
                 onHelp={() => setScreen({ name: 'about' })}
-                appearance={{ fontSize, onFontSize: chooseFontSize, theme, onTheme: chooseTheme, locale, onLocale: setLocale, borders, onBorders: chooseBorders }}
+                appearance={{ fontSize, onFontSize: chooseFontSize, theme, onTheme: chooseTheme, locale, onLocale: setLocale, borders, onBorders: chooseBorders, contrast, onContrast: chooseContrast }}
               />
             )}
           </div>

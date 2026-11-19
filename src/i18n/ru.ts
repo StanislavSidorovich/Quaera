@@ -2155,6 +2155,8 @@ export const ru = {
     language: 'Язык',
     borders: 'Границы',
     bordersSoft: 'Мягкие',
+    contrast: 'Контраст текста',
+    contrastNames: { standard: 'Обычный', darker: 'Темнее', max: 'Максимум' } as Record<'standard' | 'darker' | 'max', string>,
     bordersStrong: 'Чёткие',
     reset: 'Сбросить',
     searchAria: 'Поиск по справочнику приёмов',

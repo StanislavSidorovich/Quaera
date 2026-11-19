@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n/context';
+import { CONTRASTS, type Contrast } from '../contrast';
 
 export type Borders = 'soft' | 'strong';
 type FontSize = 'md' | 'lg' | 'xl';
@@ -24,6 +25,8 @@ export function AppearanceMenu({
   onLocale,
   borders,
   onBorders,
+  contrast,
+  onContrast,
   inline = false,
 }: {
   fontSize: FontSize;
@@ -34,6 +37,9 @@ export function AppearanceMenu({
   onLocale: (v: Locale) => void;
   borders: Borders;
   onBorders: (v: Borders) => void;
+  contrast: Contrast;
+  /** null: сброс выбора, снова действует умолчание (prefers-contrast). */
+  onContrast: (v: Contrast | null) => void;
   /** Без кнопки «Aa»: те же группы выложены сразу, внутри чужого меню (TopbarMenu). */
   inline?: boolean;
 }) {
@@ -90,6 +96,7 @@ export function AppearanceMenu({
             (v) => (v === 'strong' ? a.bordersStrong : a.bordersSoft),
             onBorders,
           )}
+          {group(a.contrast, CONTRASTS, contrast, (v) => a.contrastNames[v], onContrast)}
           <button
             type="button"
             className="btn secondary appearance-reset"
@@ -97,6 +104,7 @@ export function AppearanceMenu({
               onFontSize('md');
               onTheme('system');
               onBorders('strong');
+              onContrast(null);
             }}
           >
             {a.reset}
