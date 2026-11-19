@@ -1389,6 +1389,9 @@ export const en = {
       goalTitle: 'Your goal',
       goalNone: 'No goal chosen yet. Pick a role on a tile below: the gap and the date are counted from it.',
       goalOpen: 'What to catch up on for this role',
+      focusNote: 'The three axes with the biggest gap to the role target. The rest are folded below.',
+      focusClosed: 'Role targets met',
+      allAxes: 'All 8 axes',
     },
     /* Role page. */
     rp: {

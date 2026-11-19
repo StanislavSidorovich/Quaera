@@ -1,0 +1,38 @@
+/* Оси под паутиной: три с самым большим разрывом видны сразу, остальные в раскрывашке. */
+.co-focus-note {
+  margin: 4px 0 0;
+}
+.co-focus-closed {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+.co-all-axes {
+  margin: 4px 0 12px;
+}
+.co-all-axes > summary {
+  cursor: pointer;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+.co-all-axes > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.co-all-axes > summary {
+  list-style: none;
+  gap: 8px;
+}
+.co-all-axes > summary::-webkit-details-marker {
+  display: none;
+}
+.co-all-axes > summary::before {
+  content: '▸';
+  color: var(--text-dim);
+}
+.co-all-axes[open] > summary::before {
+  content: '▾';
+}

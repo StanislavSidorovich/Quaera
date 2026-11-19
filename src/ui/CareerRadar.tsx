@@ -200,7 +200,7 @@ export function CareerAxisBars({
       {axes.map((a) => {
         const title = fullLabel(a.id);
         return (
-          <li key={a.id} className={`career-bars-row${!hideGoal && a.target === 0 ? ' off' : ''}${activeAxis === a.id ? ' active' : ''}`}>
+          <li key={a.id} data-axis={a.id} className={`career-bars-row${!hideGoal && a.target === 0 ? ' off' : ''}${activeAxis === a.id ? ' active' : ''}`}>
             {onSelect && (
               <button type="button" className="career-bars-hit" aria-pressed={activeAxis === a.id} aria-label={title} onClick={() => onSelect(a.id)} />
             )}

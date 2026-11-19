@@ -56,12 +56,13 @@ const assertTrue = (name, cond, detail = '') => {
 
 try {
   execSync(
-    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" "${path.join(root, 'src/career/quiz.ts')}" "${path.join(root, 'src/career/wrote.ts')}" ` +
+    `npx tsc "${path.join(root, 'src/career/readiness.ts')}" "${path.join(root, 'src/career/quiz.ts')}" "${path.join(root, 'src/career/wrote.ts')}" "${path.join(root, 'src/career/axisFocus.ts')}" ` +
       `--target ES2020 --module ES2020 --moduleResolution bundler ` +
       `--rootDir "${path.join(root, 'src')}" --outDir "${outDir}" --skipLibCheck`,
     { cwd: root, stdio: 'inherit' }
   );
   const { isCodeTask, wroteSkills } = await import(pathToFileURL(path.join(outDir, 'career', 'wrote.js')).href);
+  const { focusAxes } = await import(pathToFileURL(path.join(outDir, 'career', 'axisFocus.js')).href);
   const { AXES, skillLevel, legacySkillLevel, axisReading, roleReadiness, overdueSkills, pacePlan, labDoneEvidence, closedEvidence, RETAINED_INTERVAL_DAYS } = await import(
     pathToFileURL(path.join(outDir, 'career', 'readiness.js')).href
   );
@@ -611,6 +612,20 @@ try {
   const A1 = [att('stats', 1, 1), att('process', 2, 0)];
   const B1 = [att('stats', 3, 0), att('process', 2, 0)];
   assertEq('хранение: слияние не зависит от порядка', Q.normalizeQuiz([...A1, ...B1]), Q.normalizeQuiz([...B1, ...A1]));
+  // ── Оси под паутиной: три с самым большим разрывом ──────────────────────
+  {
+    const zero = Object.fromEntries(AXES.map((a) => [a, 0]));
+    const withT = (t) => ({ ...zero, ...t });
+    assertEq('оси: роль не выбрана → все восемь, раскрывашки нет', focusAxes(AXES, false, zero, withT({ sql: 3 })), { top: [...AXES], rest: [], allClosed: false });
+    const f1 = focusAxes(AXES, true, zero, withT({ sql: 1, modeling: 3, bi: 2, python: 2, stats: 1 }));
+    assertEq('оси: берутся три самых больших разрыва', f1.top, ['modeling', 'bi', 'python']);
+    assertEq('оси: остальные пять в раскрывашке', f1.rest.length, 5);
+    assertEq('оси: при равенстве порядок осей', focusAxes(AXES, true, zero, withT({ python: 2, sql: 2, bi: 2, stats: 2 })).top, ['sql', 'bi', 'python']);
+    assertEq('оси: разрыв у меньше чем трёх осей → только они', focusAxes(AXES, true, zero, withT({ bi: 1, stats: 2 })).top, ['stats', 'bi']);
+    const f0 = focusAxes(AXES, true, withT({ sql: 2 }), withT({ sql: 2 }));
+    assertEq('оси: разрывов нет → строка «закрыты», все восемь в раскрывашке', [f0.top.length, f0.rest.length, f0.allClosed], [0, 8, true]);
+    assertEq('оси: ось выше цели не даёт разрыва', focusAxes(AXES, true, withT({ sql: 3 }), withT({ sql: 1 })).top, []);
+  }
   // ── Цели на главной: отметки Lab входят в счёт ──────────────────────────
   {
     const evG = [

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { appStorage } from '../guestMode';
+import { focusAxes } from '../career/axisFocus';
 import { careerAxes, careerAxis, careerRoles, vacancies } from '../content/career';
 import type { CareerRole } from '../content/career';
 import { AXES } from '../career/readiness';
@@ -17,6 +19,17 @@ import type { Progress } from '../srs/store';
 import { RoleScene } from './RoleScene';
 import './careerOverview.css';
 import './careerPick.css';
+import './careerAxesFocus.css';
+
+const AXES_ALL_KEY = 'quaera.axesAll';
+/** Раскрывашка «Все 8 осей»: без хранилища (приватный режим, запрет) остаётся свёрнутой. */
+function initialAxesOpen(): boolean {
+  try {
+    return appStorage().getItem(AXES_ALL_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Обзор «Пути к роли»: вы сейчас (паутинка и строка выбранной оси), плитки
@@ -54,6 +67,17 @@ export function CareerOverview({
   const c = t.career;
   const [active, setActive] = useState<AxisId | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const barsRef = useRef<HTMLDivElement | null>(null);
+  const [axesOpen, setAxesOpen] = useState(initialAxesOpen);
+  const chooseAxesOpen = (open: boolean) => {
+    setAxesOpen(open);
+    try {
+      if (open) appStorage().setItem(AXES_ALL_KEY, '1');
+      else appStorage().removeItem(AXES_ALL_KEY);
+    } catch {
+      // без хранилища раскрывашка просто не запоминается
+    }
+  };
   const levelName = (n: number) => c.levels[n];
   const axisTitle = (id: AxisId) => careerAxis(id).title[locale];
   const chosen = state.roleAt !== null;
@@ -61,7 +85,11 @@ export function CareerOverview({
 
   /* Панель оси стоит под рисунком: на узком экране без прокрутки она осталась бы за краем. */
   useEffect(() => {
-    if (active) panelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!active) return;
+    /* Ось из раскрывашки: сначала к её строке, панель стоит сразу под полосами. */
+    const row = focus.rest.includes(active) ? barsRef.current?.querySelector(`[data-axis="${active}"]`) : null;
+    (row ?? panelRef.current)?.scrollIntoView({ block: row ? 'center' : 'nearest', behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   const radarAxes = (role?: CareerRole): RadarAxis[] =>
@@ -74,7 +102,27 @@ export function CareerOverview({
       due: role ? 0 : dueByAxis[id].length,
     }));
   const youAxes = chosen ? radarAxes(chosenRole).map((a) => ({ ...a, due: dueByAxis[a.id].length })) : radarAxes();
-  const toggle = (id: AxisId) => setActive((cur) => (cur === id ? null : id));
+  const focus = focusAxes(
+    AXES,
+    chosen,
+    Object.fromEntries(AXES.map((id) => [id, readings[id].level])) as Record<AxisId, number>,
+    Object.fromEntries(AXES.map((id) => [id, chosenRole.targets[id]])) as Record<AxisId, number>,
+  );
+  const toggle = (id: AxisId) => {
+    /* Клик по скрытой оси в паутине раскрывает список. */
+    if (focus.rest.includes(id) && !axesOpen) chooseAxesOpen(true);
+    setActive((cur) => (cur === id ? null : id));
+  };
+  const barsProps = {
+    hideGoal: !chosen,
+    onSelect: toggle,
+    activeAxis: active,
+    fullLabel: axisTitle,
+    levelName,
+    cellAria: (axis: string, level: string) => c.ov.barCell(axis, level),
+    ariaLabel: c.radarBarsAria,
+  };
+  const barsOf = (ids: AxisId[]) => youAxes.filter((a) => ids.includes(a.id));
 
   const mine = readinessByRole[chosenRole.id];
   const skillsLeft = mine.gaps.reduce((n, g) => n + g.skillsLeft, 0);
@@ -111,16 +159,17 @@ export function CareerOverview({
           legend={{ you: c.radarYou, goal: chosen ? c.ov.goalLegend(chosenRole.title[locale]) : c.radarGoal, due: c.radarDue, rings: c.radarRings }}
           ringNames={[c.levels[1], c.levels[2], c.levels[3]]}
         />
-        <CareerAxisBars
-          axes={youAxes}
-          hideGoal={!chosen}
-          onSelect={toggle}
-          activeAxis={active}
-          fullLabel={axisTitle}
-          levelName={levelName}
-          cellAria={(axis, level) => c.ov.barCell(axis, level)}
-          ariaLabel={c.radarBarsAria}
-        />
+        <div ref={barsRef}>
+          {chosen && !focus.allClosed && <p className="muted co-focus-note">{c.ov.focusNote}</p>}
+          {focus.top.length > 0 && <CareerAxisBars axes={barsOf(focus.top)} {...barsProps} />}
+          {focus.allClosed && <p className="co-focus-closed">{c.ov.focusClosed}</p>}
+          {focus.rest.length > 0 && (
+            <details className="co-all-axes" open={axesOpen} onToggle={(e) => chooseAxesOpen(e.currentTarget.open)}>
+              <summary>{c.ov.allAxes}</summary>
+              <CareerAxisBars axes={barsOf(focus.rest)} {...barsProps} />
+            </details>
+          )}
+        </div>
         <p className="muted co-hint">{c.ov.pickAxis}</p>
         {active && (
           <div ref={panelRef} className="co-axis" role="region" aria-label={c.ov.axisPanel(axisTitle(active))}>
