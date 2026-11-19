@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
+import { ProseText } from './ProseOps';
 import { echoHits, splitTables } from './afterEcho';
 import { ResultTable } from './ResultTable';
 import { Avatar } from './Avatar';
@@ -71,7 +72,7 @@ export function AfterReply({
       <p className="story-mode-from">{note.from}</p>
       <p className="story-mode-text">
         {parts.map((p, i) => {
-          if (p.kind === 'text') return p.text;
+          if (p.kind === 'text') return <ProseText key={i} text={p.text} />;
           const real = schemaTables.find((n) => n.toLowerCase() === p.text.toLowerCase()) ?? p.text;
           return (
             <button key={i} type="button" className="after-table" onClick={() => onOpenSchema(real)}>

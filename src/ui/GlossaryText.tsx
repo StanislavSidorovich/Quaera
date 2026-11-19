@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { GLOSSARY, type GlossaryTerm } from '../content/glossary';
 import { fencedCodeRanges } from '../content/proseCode';
+import { inlineCodeRanges } from '../content/proseOps';
+import { markCode } from './ProseOps';
 import { useI18n, type Locale } from '../i18n/context';
 
 /**
@@ -69,7 +71,7 @@ export function annotateGlossary(
   locale: Locale
 ): { pieces: ReactNode[]; used: string[] } {
   const { byLower, regex } = matcherFor(locale);
-  const code = fencedCodeRanges(text);
+  const code = [...fencedCodeRanges(text), ...inlineCodeRanges(text)];
   const pieces: ReactNode[] = [];
   const used: string[] = [];
   const usedHere = new Set<string>();
@@ -111,10 +113,12 @@ export function annotateSequence(
   locale: Locale
 ): { rendered: ReactNode[][]; newlyShown: string[] } {
   const shown = new Set(shownAlready);
-  const rendered = texts.map((text) => {
+  /* Операторы в плашках кода: «первое появление» считается на экран, как и у глоссария (см. proseOps.ts). */
+  const seenOps = new Set<string>();
+  const rendered = texts.map((text, ti) => {
     const { pieces, used } = annotateGlossary(text, shown, locale);
     used.forEach((id) => shown.add(id));
-    return pieces;
+    return pieces.flatMap((piece, pi) => (typeof piece === 'string' ? markCode(piece, seenOps, locale, `op${ti}-${pi}`) : [piece]));
   });
   const newlyShown = [...shown].filter((id) => !shownAlready.has(id));
   return { rendered, newlyShown };

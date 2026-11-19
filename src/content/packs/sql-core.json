@@ -284,7 +284,7 @@
       ],
       "hints": [
         "Значения в колонке начинаются с заглавной буквы.",
-        "Оператор = не то же самое, что LIKE."
+        "Оператор `=` не то же самое, что `LIKE`."
       ],
       "explain": "Самые дорогие ошибки в аналитике — те, что не падают. Запрос отработал, вернул число, число попало в презентацию. Отсюда рабочая привычка: получив подозрительно круглый или подозрительно маленький результат, сначала проверьте, какие значения реально лежат в колонке — SELECT DISTINCT division FROM dim_product занимает пять секунд."
     },
@@ -303,8 +303,8 @@
       "starter": "SELECT sku_code, product_name, brand, list_price\nFROM dim_product\n",
       "solution": "SELECT sku_code, product_name, brand, list_price FROM dim_product WHERE brand IN ('Aqualis', 'Fruvia') AND list_price > 100",
       "hints": [
-        "Перечисление значений одной колонки короче писать через IN, чем через OR.",
-        "«Строго больше» — это >, а не >=."
+        "Перечисление значений одной колонки короче писать через `IN`, чем через `OR`.",
+        "«Строго больше» — это `>`, а не `>=`."
       ],
       "explain": "IN ('A', 'B') читается лучше, чем brand = 'A' OR brand = 'B', и не даст ошибиться с приоритетом операторов: условие brand = 'A' OR brand = 'B' AND price > 100 сработает совсем не так, как ожидается, потому что AND связывает сильнее OR.",
       "traps": [
@@ -522,7 +522,7 @@
       "solution": "SELECT brand, COUNT(*) AS sku_count, ROUND(AVG(list_price), 2) AS avg_price FROM dim_product GROUP BY brand HAVING COUNT(*) >= 4 AND AVG(list_price) > 300",
       "hints": [
         "Условие накладывается на характеристику группы, а не отдельной строки.",
-        "«Не меньше 4» — это >=."
+        "«Не меньше 4» — это `>=`."
       ],
       "explain": "Запрос выполняется в порядке FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Отсюда всё и следует: WHERE не видит агрегатов, потому что групп ещё нет, а HAVING не видит алиасов из SELECT в некоторых СУБД, потому что SELECT ещё не выполнялся. Помня этот порядок, вы перестаёте гадать, куда класть условие.",
       "traps": [
@@ -640,7 +640,7 @@
       "solution": "SELECT product_name, brand, list_price FROM dim_product WHERE product_name LIKE '%Forte%'",
       "hints": [
         "Точное совпадение (=) здесь не подходит: названия целиком разные, общее — только слово внутри строки.",
-        "Поиск по подстроке делает LIKE с шаблоном '%текст%' — проценты означают «что угодно до и после»."
+        "Поиск по подстроке делает `LIKE` с шаблоном '%текст%' — проценты означают «что угодно до и после»."
       ],
       "explain": "LIKE ищет по шаблону, а не по точному совпадению: символ '%' заменяет любую последовательность символов, включая пустую. Такой поиск полезен, когда общий признак — часть названия, а не значение колонки целиком. Обратная сторона: '%Forte%' не может воспользоваться обычным индексом по этой колонке и на большой таблице будет медленнее, чем WHERE brand = '...' — для витрины из полусотни товаров это неважно, а для миллионов строк уже стоит учитывать.",
       "traps": [
@@ -657,7 +657,7 @@
       "level": 2,
       "mode": "predict",
       "title": "LIKE и регистр",
-      "brief": "Коллега сверяет объём по артикулу AQUA001 в сыром выгрузе. Он знает, что источник отдаёт часть строк строчными буквами, и хочет захватить оба написания разом — поэтому пишет условие через LIKE, а не через =.",
+      "brief": "Коллега сверяет объём по артикулу AQUA001 в сыром выгрузе. Он знает, что источник отдаёт часть строк строчными буквами, и хочет захватить оба написания разом — поэтому пишет условие через `LIKE`, а не через `=`.",
       "goal": "Определить, сколько строк вернёт запрос.",
       "predictSql": "SELECT COUNT(*) AS n\nFROM staging_raw_sellout\nWHERE sku_code LIKE 'AQUA001'",
       "predictQuestion": "По этому артикулу в staging_raw_sellout 163 строки: 107 записаны как AQUA001 и 56 — как aqua001. Что вернёт запрос?",
@@ -681,8 +681,8 @@
         }
       ],
       "hints": [
-        "Разница между = и LIKE здесь не в подстановке, а в правиле сравнения символов.",
-        "Регистронезависимость LIKE в SQLite распространяется только на диапазон ASCII."
+        "Разница между `=` и `LIKE` здесь не в подстановке, а в правиле сравнения символов.",
+        "Регистронезависимость `LIKE` в SQLite распространяется только на диапазон ASCII."
       ],
       "explain": "У = и LIKE разные правила сравнения, и заметно это только на грязных данных. = сравнивает строки побайтово, поэтому sku_code = 'AQUA001' не увидит 56 строк со строчной записью. LIKE по умолчанию считает латинские буквы разного регистра одинаковыми и находит все 163. Отсюда два вывода, и оба про переносимость. Первый: приём работает ровно до границы ASCII. Как только в значениях появляются буквы за её пределами — кириллица, умляуты, диакритика, — LIKE в SQLite снова становится регистрозависимым, и LOWER с UPPER не выручают: они ограничены тем же диапазоном. Второй: в другом движке всё наоборот. В PostgreSQL LIKE регистр учитывает, а для обратного поведения есть отдельный ILIKE — один и тот же запрос молча меняет смысл при переезде. Поэтому на регистронезависимость LIKE не опираются как на правило: регистр нормализуют на входе, тем самым приведением, которым и заняты задания на сырой слой. Ошибка здесь тихая — запрос с = не падает, возвращает 107 строк и выглядит рабочим, а недостача трети объёма всплывает уже в отчёте."
     },
@@ -757,7 +757,7 @@
       "mode": "write",
       "title": "Подпись для несетевых аптек",
       "brief": "Для сводки по аптечному каналу нужен человекочитаемый список точек: у сетевых аптек — название сети, у независимых — понятная метка вместо пустой ячейки.",
-      "goal": "Для customer_type = 'pharmacy' вернуть customer_name и chain_display — chain_name, а если он пуст, текст 'Independent pharmacy'.",
+      "goal": "Для `customer_type = 'pharmacy'` вернуть customer_name и chain_display — chain_name, а если он пуст, текст 'Independent pharmacy'.",
       "starter": "SELECT customer_name\nFROM dim_customer\nWHERE customer_type = 'pharmacy'",
       "solution": "SELECT customer_name, COALESCE(chain_name, 'Independent pharmacy') AS chain_display FROM dim_customer WHERE customer_type = 'pharmacy'",
       "hints": [
@@ -811,7 +811,7 @@
       ],
       "hints": [
         "Тот же принцип, что и в задании про неравенство и пустое значение: NULL не бывает результатом честного сравнения через =.",
-        "Правильная форма условия — promo_id IS NULL, а не promo_id = NULL."
+        "Правильная форма условия — promo_id IS NULL, а не `promo_id = NULL`."
       ],
       "explain": "Это самый дорогой вариант ошибки в этой теме: результат не пустой список и не ошибка выполнения, а правдоподобное число — 0. Аналитик, увидев 0, может решить, что вне акций компания вообще не продаёт, и это войдёт в презентацию как факт. Рефлекс на будущее: любая проверка на пустоту — это IS NULL или IS NOT NULL, знак равенства для NULL не работает никогда, независимо от того, стоит он в WHERE, в HAVING или внутри CASE."
     },
@@ -941,7 +941,7 @@
       "mode": "write",
       "title": "Расшифровка продаж одной точки",
       "brief": "Торговый представитель разбирает недельный отчёт по точке «Minori #1013» и просит расшифровать коды товаров человеческими названиями.",
-      "goal": "Вернуть product_name, units и revenue для точки с customer_id = 13 за неделю 2026-06-15.",
+      "goal": "Вернуть product_name, units и revenue для точки с `customer_id = 13` за неделю 2026-06-15.",
       "starter": "SELECT p.product_name, f.units, f.revenue\nFROM fact_sellout f\nJOIN dim_product p ON \nWHERE ",
       "solution": "SELECT p.product_name, f.units, f.revenue FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE f.customer_id = 13 AND f.week_start = '2026-06-15'",
       "hints": [
@@ -1075,7 +1075,7 @@
       "hints": [
         "Начинать надо от той таблицы, все строки которой должны остаться, — от справочника регионов.",
         "Условие на товар должно стоять в ON, а не в WHERE. В WHERE оно отсечёт регионы, где продаж новинки не было, — то есть ровно те, ради которых строится отчёт.",
-        "Найти ключ товара по названию можно скалярным подзапросом прямо в условии соединения: (SELECT product_id FROM dim_product WHERE product_name = '...'). Пустую сумму превращает в ноль COALESCE."
+        "Найти ключ товара по названию можно скалярным подзапросом прямо в условии соединения: (`SELECT product_id FROM dim_product WHERE product_name = '...'`). Пустую сумму превращает в ноль COALESCE."
       ],
       "explain": "Ключевая идея: WHERE применяется после соединения и не отличает «строки не было» от «строка не подошла» — обе дают NULL, и обе отсеиваются. Поэтому в LEFT JOIN условия на правую таблицу ставятся в ON, а в WHERE остаются только условия на левую. Практическое следствие: LEFT JOIN, у которого в WHERE стоит условие на правую таблицу, работает как INNER JOIN — это самая частая молчаливая ошибка в отчётах о покрытии. И второе: SUM по пустому набору возвращает не 0, а NULL — в отчёте это выглядит как дыра, поэтому нужен COALESCE. Отчёты о том, чего нет, — отдельный жанр: нулевые продажи, точки без визитов, SKU без остатков. Они почти всегда строятся от справочника наружу, а не от факта.",
       "traps": [
@@ -1100,7 +1100,7 @@
       "starter": "SELECT p.brand,\n       ROUND(SUM(CASE WHEN ",
       "solution": "SELECT p.brand, ROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END)) AS promo_revenue, ROUND(SUM(CASE WHEN f.promo_id IS NULL THEN f.revenue ELSE 0 END)) AS base_revenue FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY p.brand",
       "hints": [
-        "Признак акции проверяется через IS NOT NULL, а не через сравнение.",
+        "Признак акции проверяется через `IS NOT NULL`, а не через сравнение.",
         "CASE ставится внутрь SUM: суммируем не все строки, а только подходящие."
       ],
       "explain": "Условная агрегация — рабочая лошадка аналитика. SUM(CASE WHEN условие THEN мера ELSE 0 END) разворачивает показатель в колонки за один проход по данным, вместо того чтобы писать два запроса и потом их соединять. Тот же приём даёт долю: SUM(CASE ...) * 1.0 / SUM(мера). И тот же приём в Power BI называется CALCULATE с фильтром — идея одна, синтаксис разный.",
@@ -1215,7 +1215,7 @@
       "solution": "WITH weekly AS (\n  SELECT f.week_start, SUM(f.units) AS units\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE p.brand = 'Aqualis'\n    AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY f.week_start\n)\nSELECT week_start, units,\n       ROUND(AVG(units) OVER (ORDER BY week_start ROWS BETWEEN 3 PRECEDING AND CURRENT ROW), 1) AS ma4\nFROM weekly\nORDER BY week_start",
       "orderMatters": true,
       "hints": [
-        "Рамка окна задаётся конструкцией ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
+        "Рамка окна задаётся конструкцией `ROWS BETWEEN ... PRECEDING AND CURRENT ROW`.",
         "Три предыдущие недели плюс текущая — это 3 PRECEDING."
       ],
       "explain": "Без явного указания рамки при наличии ORDER BY окно по умолчанию берёт всё от начала до текущей строки — получится не скользящее среднее, а накопительное. Это тихая ошибка: результат выглядит правдоподобно, но означает совсем другое. Правило: если написали ORDER BY внутри OVER, сознательно решите, нужна ли рамка. Кстати, первые три недели ряда усредняются по неполному окну — в отчёте такие значения обычно скрывают.",
@@ -1312,7 +1312,7 @@
       ],
       "hints": [
         "Порядок выполнения запроса: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Но у HAVING в некоторых СУБД есть послабление именно для имён из SELECT.",
-        "Сравните с явным вариантом той же проверки: HAVING COUNT(*) > 5 — оба дают одинаковый ответ."
+        "Сравните с явным вариантом той же проверки: `HAVING COUNT(*) > 5` — оба дают одинаковый ответ."
       ],
       "explain": "Формально стандарт SQL не требует, чтобы HAVING понимал алиасы из SELECT — по строгой логике выполнения запроса этих имён на этапе HAVING ещё не существует. Но SQLite (как и MySQL) эту вольность допускает. Практический вывод: если запрос должен остаться рабочим на другой СУБД, надёжнее продублировать явное выражение в HAVING, как в задании про премиальные бренды, а не полагаться на то, что алиас точно подхватится, — это ровно тот же принцип, что и с неагрегированной колонкой вне GROUP BY (задание про колонку мимо GROUP BY): движок разрешает больше, чем гарантирует стандарт."
     },
@@ -1392,7 +1392,7 @@
       "mode": "write",
       "title": "Доказать размножение цифрами",
       "brief": "Прежде чем включать соединение с dim_promo в постоянный отчёт (как в задании про лишнюю выручку), аналитик хочет формально показать, что оно размножает факты, а не полагаться на интуицию.",
-      "goal": "Для бренда «Nettora» за 2025 год вернуть одну строку: rows_before — число строк fact_sellout после обычного соединения с dim_product, rows_after — число строк, которые получились бы, если дополнительно присоединить dim_promo по бренду (JOIN dim_promo m ON m.brand = p.brand).",
+      "goal": "Для бренда «Nettora» за 2025 год вернуть одну строку: rows_before — число строк fact_sellout после обычного соединения с dim_product, rows_after — число строк, которые получились бы, если дополнительно присоединить dim_promo по бренду (`JOIN dim_promo m ON m.brand = p.brand`).",
       "starter": "SELECT\n  (SELECT COUNT(*) FROM fact_sellout f\n   JOIN dim_product p ON p.product_id = f.product_id\n   WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS rows_before,\n",
       "solution": "SELECT (SELECT COUNT(*) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS rows_before, (SELECT COUNT(*) FROM fact_sellout f JOIN dim_product p ON p.product_id = f.product_id JOIN dim_promo m ON m.brand = p.brand WHERE p.brand = 'Nettora' AND f.week_start BETWEEN '2025-01-01' AND '2025-12-31') AS rows_after",
       "hints": [
@@ -1451,7 +1451,7 @@
       "mode": "write",
       "title": "Ценовые сегменты прайса",
       "brief": "Категорийный менеджер хочет увидеть портфель не по брендам, а по ценовым сегментам — это разговор с закупками о том, где сосредоточена линейка.",
-      "goal": "Вернуть tier — 'Budget' (list_price < 100), 'Mid' (100 ≤ list_price < 300) или 'Premium' (list_price ≥ 300), и sku_count — число товаров в каждом сегменте.",
+      "goal": "Вернуть tier — 'Budget' (`list_price < 100`), 'Mid' (`100 ≤ list_price < 300`) или 'Premium' (list_price ≥ 300), и sku_count — число товаров в каждом сегменте.",
       "starter": "SELECT\n       CASE\n         WHEN list_price < 100 THEN 'Budget'\n         WHEN list_price < 300 THEN 'Mid'\n         ELSE 'Premium'\n       END AS tier,\n       \nFROM dim_product\nGROUP BY ",
       "solution": "SELECT CASE WHEN list_price < 100 THEN 'Budget' WHEN list_price < 300 THEN 'Mid' ELSE 'Premium' END AS tier, COUNT(*) AS sku_count FROM dim_product GROUP BY tier",
       "hints": [
@@ -1546,7 +1546,7 @@
       "starter": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya,\n  \nFROM staging_raw_sellout",
       "solution": "SELECT SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya, SUM(CASE WHEN customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS written_ia, SUM(CASE WHEN customer_name LIKE '%Ichiba%' OR customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS total_chain FROM staging_raw_sellout",
       "hints": [
-        "Два написания различаются первой буквой — Ya против Ia. Ловите оба варианта отдельными LIKE.",
+        "Два написания различаются первой буквой — Ya против Ia. Ловите оба варианта отдельными `LIKE`.",
         "Сумма written_ya и written_ia должна совпасть с total_chain — это и есть проверка, что варианты не пересекаются и ничего не потеряно."
       ],
       "explain": "Разное написание одного и того же значения — рутинная проблема сырых выгрузок, и несогласованная романизация здесь первая по частоте: у одной системы-источника один стандарт, у другой другой, а часть названий вводили руками. Если сгруппировать по customer_name как есть, GROUP BY молча заведёт для одной сети два ряда, и её доля в отчёте окажется заниженной ровно на объём второго написания. По самому отчёту это не увидеть: обе строки выглядят законными названиями. Перед агрегацией такие варианты сводят к одному в начале конвейера — например, REPLACE(customer_name, 'Itiba', 'Ichiba'). Стоит заметить, чем эта чистка отличается от TRIM и приведения регистра: те снимают различия формы записи, а здесь нужно знание, что два разных слова означают одну сеть. В данных такого знания нет — его приносят справочником соответствий.",
@@ -1773,7 +1773,7 @@
       "solution": "WITH div_channel AS (\n  SELECT p.division, c.channel, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_product p ON p.product_id = f.product_id\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY p.division, c.channel\n),\nranked AS (\n  SELECT division, channel, rev,\n         ROW_NUMBER() OVER (PARTITION BY division ORDER BY rev DESC) AS rnk\n  FROM div_channel\n)\nSELECT division, channel, ROUND(rev) AS revenue\nFROM ranked\nWHERE rnk = 1",
       "hints": [
         "ROW_NUMBER здесь партиционируется по дивизиону — вставьте PARTITION BY перед division.",
-        "Фильтр «только первое место» — это rnk = 1, рейтинг внутри своей партиции уже посчитан в CTE ranked."
+        "Фильтр «только первое место» — это `rnk = 1`, рейтинг внутри своей партиции уже посчитан в CTE ranked."
       ],
       "explain": "PARTITION BY division запускает отдельный счётчик ROW_NUMBER для каждого дивизиона: нумерация каналов FMCG не продолжает нумерацию каналов Pharma, а начинается заново с единицы — тот же принцип, что и в задании про топ-3 позиции внутри бренда, разница только в том, что там оставляли три первых места, а здесь достаточно одного. У Pharma в базе всего один канал сбыта — аптека, поэтому для него результат тривиален, но запрос остаётся верным: он ищет лидера, а не подразумевает конкуренцию каналов внутри дивизиона."
     },
@@ -1788,7 +1788,7 @@
       "mode": "write",
       "title": "Рейтинг представителей внутри команды",
       "brief": "Руководитель отдела продаж готовит премирование по итогам 2025 года и хочет видеть место каждого торгового представителя внутри своей команды по выручке обслуживаемых точек — менеджеров в рейтинг включать не нужно.",
-      "goal": "За 2025 год вернуть team, rep_name, revenue — сумму выручки точек представителя, округлённую до целых, и rnk — место представителя внутри своей команды по убыванию выручки. Только role = 'rep'. Отсортировать по команде, затем по месту.",
+      "goal": "За 2025 год вернуть team, rep_name, revenue — сумму выручки точек представителя, округлённую до целых, и rnk — место представителя внутри своей команды по убыванию выручки. Только `role = 'rep'`. Отсортировать по команде, затем по месту.",
       "starter": "WITH rep_rev AS (\n  SELECT c.rep_id, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY c.rep_id\n)\n",
       "solution": "WITH rep_rev AS (\n  SELECT c.rep_id, SUM(f.revenue) AS rev\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  WHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\n  GROUP BY c.rep_id\n)\nSELECT r.team, r.rep_name, ROUND(rr.rev) AS revenue,\n       RANK() OVER (PARTITION BY r.team ORDER BY rr.rev DESC) AS rnk\nFROM rep_rev rr\nJOIN dim_rep r ON r.rep_id = rr.rep_id\nWHERE r.role = 'rep'\nORDER BY r.team, rnk",
       "orderMatters": true,
@@ -1859,8 +1859,8 @@
       "solution": "WITH monthly AS (\n  SELECT month_start, SUM(units) AS units\n  FROM fact_sellin\n  WHERE distributor_id = 1\n    AND month_start BETWEEN '2025-10-01' AND '2025-12-01'\n  GROUP BY month_start\n)\nSELECT month_start, units,\n       SUM(units) OVER (ORDER BY month_start ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_units\nFROM monthly\nORDER BY month_start",
       "orderMatters": true,
       "hints": [
-        "Рамка окна для нарастающего итога — это ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, а не 3 PRECEDING, как в скользящем среднем из задания про сглаживание недельного ряда.",
-        "distributor_id = 1 — это «Setouchi Trading», можно свериться по dim_customer."
+        "Рамка окна для нарастающего итога — это `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, а не 3 PRECEDING, как в скользящем среднем из задания про сглаживание недельного ряда.",
+        "`distributor_id = 1` — это «Setouchi Trading», можно свериться по dim_customer."
       ],
       "explain": "UNBOUNDED PRECEDING значит «от самого начала окна», в отличие от 3 PRECEDING в задании про сглаживание недельного ряда, которое брало фиксированное число предыдущих строк. Разница в один аргумент рамки полностью меняет смысл расчёта: скользящее среднее сглаживает локальный шум, а накопительный итог с UNBOUNDED PRECEDING показывает рост показателя с начала периода — здесь именно то, что нужно для контроля отгрузок нарастающим итогом за квартал."
     },
@@ -1970,7 +1970,7 @@
       "mode": "write",
       "title": "Кто не дотянул до плана в декабре",
       "brief": "В начале января руководитель отдела продаж сверяет факт с планом за декабрь 2025 года и просит список представителей, которые не выполнили план по выручке в своём дивизионе, — только тех, у кого выполнение ниже 100%.",
-      "goal": "За декабрь 2025 вернуть rep_name, target_revenue (округлить до целых), actual_revenue (округлить до целых) — выручка по товарам своего дивизиона в точках представителя, и attainment_pct — процент выполнения плана, округлённый до одного знака. Только role = 'rep' и attainment_pct < 100. По возрастанию attainment_pct.",
+      "goal": "За декабрь 2025 вернуть rep_name, target_revenue (округлить до целых), actual_revenue (округлить до целых) — выручка по товарам своего дивизиона в точках представителя, и attainment_pct — процент выполнения плана, округлённый до одного знака. Только `role = 'rep'` и `attainment_pct < 100`. По возрастанию attainment_pct.",
       "starter": "WITH actual AS (\n  SELECT c.rep_id, p.division, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'\n  GROUP BY c.rep_id, p.division\n)\n",
       "solution": "WITH actual AS (\n  SELECT c.rep_id, p.division, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  JOIN dim_product p ON p.product_id = f.product_id\n  WHERE f.week_start BETWEEN '2025-12-01' AND '2025-12-31'\n  GROUP BY c.rep_id, p.division\n)\nSELECT r.rep_name, ROUND(t.target_revenue) AS target_revenue,\n       ROUND(COALESCE(a.revenue, 0)) AS actual_revenue,\n       ROUND(100.0 * COALESCE(a.revenue, 0) / t.target_revenue, 1) AS attainment_pct\nFROM fact_target t\nJOIN dim_rep r ON r.rep_id = t.rep_id\nLEFT JOIN actual a ON a.rep_id = t.rep_id AND a.division = t.division\nWHERE t.month_start = '2025-12-01' AND r.role = 'rep'\n  AND 100.0 * COALESCE(a.revenue, 0) / t.target_revenue < 100\nORDER BY attainment_pct",
       "orderMatters": true,
@@ -2380,8 +2380,8 @@
       "level": 4,
       "mode": "write",
       "title": "Сколько скидки отдали",
-      "brief": "Финансы готовят разбор промо-бюджета и просят цифру по августовской акции «Milvara: Discount 30%» (promo_id = 47): сколько денег отдали покупателю скидкой. Отданная скидка — разница между тем, сколько проданный объём стоил бы по прайсу, и тем, сколько за него в итоге заплатили. Прайс на август лежит в fact_price с month_start = 2025-08-01.",
-      "goal": "По акции promo_id = 47 вернуть units — проданные штуки, promo_revenue — фактическую выручку, revenue_at_list — стоимость того же объёма по прайсу и discount_given — отданную скидку. Все суммы округлить до целых.",
+      "brief": "Финансы готовят разбор промо-бюджета и просят цифру по августовской акции «Milvara: Discount 30%» (`promo_id = 47`): сколько денег отдали покупателю скидкой. Отданная скидка — разница между тем, сколько проданный объём стоил бы по прайсу, и тем, сколько за него в итоге заплатили. Прайс на август лежит в fact_price с `month_start = 2025-08-01`.",
+      "goal": "По акции `promo_id = 47` вернуть units — проданные штуки, promo_revenue — фактическую выручку, revenue_at_list — стоимость того же объёма по прайсу и discount_given — отданную скидку. Все суммы округлить до целых.",
       "starter": "SELECT SUM(f.units) AS units,\n       ROUND(SUM(f.revenue)) AS promo_revenue\nFROM fact_sellout f\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND pr.month_start = '2025-08-01'\nWHERE f.promo_id = 47",
       "solution": "SELECT SUM(f.units) AS units,\n       ROUND(SUM(f.revenue)) AS promo_revenue,\n       ROUND(SUM(f.units * pr.list_price)) AS revenue_at_list,\n       ROUND(SUM(f.units * pr.list_price) - SUM(f.revenue)) AS discount_given\nFROM fact_sellout f\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND pr.month_start = '2025-08-01'\nWHERE f.promo_id = 47",
       "hints": [
@@ -2538,7 +2538,7 @@
       "solution": "SELECT p.brand,\n       ROUND(100.0 * SUM(f.revenue) / SUM(f.units * pr.list_price), 1) AS realization_pct,\n       ROUND(100.0 * SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.units ELSE 0 END)\n             / SUM(f.units), 1) AS promo_share_units\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN fact_price pr ON pr.product_id = f.product_id\n                  AND substr(pr.month_start, 1, 7) = substr(f.week_start, 1, 7)\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nORDER BY realization_pct",
       "orderMatters": true,
       "hints": [
-        "Доля промо в штуках — это условная сумма, делённая на полную: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) против SUM(units).",
+        "Доля промо в штуках — это условная сумма, делённая на полную: `SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END)` против SUM(units).",
         "Обе доли считаются в одном проходе по тем же строкам, второй запрос не нужен."
       ],
       "explain": "Две колонки идут рядом почти зеркально: «Rhinolar» продаёт в акциях 55.1% штук и доносит до кассы 86.7% прайса, «Nettora» — 23.4% и 96.1%. Это и есть главный рычаг реализации цены: чем больше объёма уходит через промо, тем меньше средняя полученная цена, даже если сам прайс не менялся ни разу. Но зеркальность неполная, и в этом вторая половина ответа: «Aqualis» с долей промо 35.5% отдаёт больше «Vitanor» с долей 46.4%, потому что у «Aqualis» акции глубже. Рычагов два — доля объёма в промо и глубина скидки, — и разговор о цене без обоих превращается в спор о том, кто виноват. Третий рычаг, микс проданных SKU, ждёт в задании про скидку, которой никто не обещал.",
@@ -3222,7 +3222,7 @@
       "orderMatters": true,
       "hints": [
         "Цена лежит в fact_price помесячно (month_start), бренд — в dim_product. Год — первые четыре знака даты: substr(fp.month_start, 1, 4).",
-        "Бренд отбирается условием WHERE p.brand = 'Nettora', группировка — по первой колонке: GROUP BY 1."
+        "Бренд отбирается условием `WHERE p.brand = 'Nettora'`, группировка — по первой колонке: GROUP BY 1."
       ],
       "explain": "Средней цене всё равно, полный ли год: 2026-й в данных только до июня, и 206.5 за полугодие честно сравнивается с 204.8 за весь 2025-й. С суммой так нельзя: выручка за полгода вдвое меньше годовой просто потому, что период вдвое короче. Поэтому, прежде чем сравнивать годы, стоит спросить, мера это уровня или потока: цена — уровень, выручка и штуки — поток.",
       "traps": [
@@ -3381,8 +3381,8 @@
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start >= '2026-01-01'\nGROUP BY p.brand\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
-        "Соединение — JOIN dim_product p ON p.product_id = f.product_id: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
-        "Верхняя граница периода здесь не нужна: подойдёт условие «дата не раньше начала года» — WHERE f.week_start >= '2026-01-01'."
+        "Соединение — `JOIN dim_product p ON p.product_id = f.product_id`: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
+        "Верхняя граница периода здесь не нужна: подойдёт условие «дата не раньше начала года» — `WHERE f.week_start >= '2026-01-01'`."
       ],
       "explain": "BETWEEN удобен, когда период закрыт с обеих сторон, но у отчёта «с начала года по сегодня» такого конца нет — данные просто кончаются там, где кончаются. Условие f.week_start >= '2026-01-01' говорит именно это и не требует поправки каждую неделю, когда приходят новые данные."
     },
@@ -3414,7 +3414,7 @@
       "solution": "SELECT p.brand, ROUND(SUM(f.revenue)) AS revenue, COUNT(DISTINCT f.customer_id) AS outlets\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000 AND COUNT(DISTINCT f.customer_id) >= 80\nORDER BY revenue DESC",
       "orderMatters": true,
       "hints": [
-        "Соединение — JOIN dim_product p ON p.product_id = f.product_id: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
+        "Соединение — `JOIN dim_product p ON p.product_id = f.product_id`: имя таблицы и алиас уже даны, впишите слово JOIN и условие после ON.",
         "Группировка — GROUP BY p.brand, по той же колонке, для которой считаются агрегаты в SELECT и HAVING."
       ],
       "explain": "Одно условие в HAVING проверяет выручку, второе — охват, и оба должны выполниться одновременно, поэтому связаны через AND: бренд с огромной выручкой в трёх крупных сетях эту фильтрацию не пройдёт, как и бренд с сотней точек и копеечными продажами в каждой."
@@ -3437,7 +3437,7 @@
       "orderMatters": true,
       "hints": [
         "Задача похожа на запрос про выручку по брендам с начала года — разница в том, что считаем не выручку, а охват: COUNT(DISTINCT customer_id).",
-        "Дата снова без верхней границы: WHERE f.week_start >= '2026-01-01'."
+        "Дата снова без верхней границы: `WHERE f.week_start >= '2026-01-01'`."
       ],
       "explain": "У Aqualis, Fruvia, Milvara и Krosti охват держится на уровне 2025 года — 88, 86, 84 и 81 точка, ровно как год назад (те же числа считали в среду, только за весь 2025 год). И только у Nettora число точек обрушилось с 79 до 37. Полку теряет не рынок — полку теряет конкретно этот бренд, и следующий вопрос не «что случилось с розницей», а «что случилось с Nettora» в тех точках, где он раньше стоял.\n\nПериоды при этом разной длины: 2026 год здесь неполный (чуть больше двух месяцев), а 2025-й — целый, и охват за часть года строго не может быть больше охвата за весь год. Здесь это не меняет вывод: у всех четырёх брендов числа совпали с точностью до пары точек, значит разная длина периода — не то, что решает исход сравнения.",
       "traps": [
@@ -3466,7 +3466,7 @@
       ],
       "solution": "SELECT p.brand,\n       ROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END)) AS promo_revenue,\n       ROUND(SUM(CASE WHEN f.promo_id IS NULL THEN f.revenue ELSE 0 END)) AS base_revenue\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nWHERE f.week_start BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY p.brand",
       "hints": [
-        "Акция — это непустой promo_id: проверяется через IS NOT NULL, а не через сравнение со значением.",
+        "Акция — это непустой promo_id: проверяется через `IS NOT NULL`, а не через сравнение со значением.",
         "База — обратный случай, где promo_id пуст: IS NULL."
       ],
       "explain": "IS NOT NULL и IS NULL — не пара случайных синонимов «равно» и «не равно»: NULL нельзя сравнить оператором =, для него есть только отдельная проверка на пустоту. CASE WHEN использует её как обычное условие — и это весь приём, который разводит промо-выручку и базовую в один проход по данным."
@@ -3492,7 +3492,7 @@
       "orderMatters": true,
       "hints": [
         "Год — первые четыре знака недели: substr(f.week_start, 1, 4), тот же приём, что и для месяца, только короче.",
-        "Условие акции внутри CASE — то же, что и при делении выручки бренда на промо и базу: f.promo_id IS NOT NULL."
+        "Условие акции внутри CASE — то же, что и при делении выручки бренда на промо и базу: `f.promo_id IS NOT NULL`."
       ],
       "explain": "Версия не подтверждается ни в одном году: доля акций у Nettora — 6.7% в 2024-м, 20.3% в 2025-м и 16.7% в 2026-м, и максимум — ровно пятая часть выручки. Бренд никогда не жил на акциях в том смысле, который предполагала версия, а значит, причину падения нужно искать не в отказе от промо."
     },
@@ -3516,7 +3516,7 @@
       "solution": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nGROUP BY c.channel",
       "hints": [
         "SUM по пустому набору вернёт NULL, а не 0: сделать из пустоты ноль поможет COALESCE(..., 0).",
-        "Список product_id бренда Nettora проверяется через IN — подзапрос в скобках уже стоит рядом."
+        "Список product_id бренда Nettora проверяется через `IN` — подзапрос в скобках уже стоит рядом."
       ],
       "explain": "Ответ разводит версию по каналам: 8016 штук в e-com с начала года, 1539 в сетях, 303 в традиционной рознице и по нулю в аптеках и у дистрибьюторов. Но за то же полугодие 2025-го было 15258, 4432 и 560 — упало действительно везде, и в сетях втрое сильнее, чем в e-com. e-com не держит бренд — он просто падает медленнее остальных, и разница в темпе легко читается как стабильность, если не сравнить оба периода целиком."
     },
@@ -3531,7 +3531,7 @@
       "mode": "write",
       "title": "Список точек без Nettora в сетях",
       "brief": "Менеджер по работе с сетевой розницей просит список точек, которые вообще не берут Nettora, — чтобы начать разговор о возврате бренда на полку, прежде чем строить общий план визитов.",
-      "goal": "Вернуть customer_name и city для точек в сетях (channel = 'modern_trade'), у которых нет ни одной продажи Nettora с 2026-01-01.",
+      "goal": "Вернуть customer_name и city для точек в сетях (`channel = 'modern_trade'`), у которых нет ни одной продажи Nettora с 2026-01-01.",
       "starter": "",
       "solution": "SELECT c.customer_name, c.city\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start >= '2026-01-01'\nWHERE c.channel = 'modern_trade' AND f.sellout_id IS NULL",
       "hints": [
@@ -3569,8 +3569,8 @@
       ],
       "solution": "SELECT\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' THEN 1 ELSE 0 END) AS written_ya,\n  SUM(CASE WHEN customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS written_ia,\n  SUM(CASE WHEN customer_name LIKE '%Ichiba%' OR customer_name LIKE '%Itiba%' THEN 1 ELSE 0 END) AS total_chain\nFROM staging_raw_sellout",
       "hints": [
-        "Второе написание отличается от первого только заменой Ichiba на Itiba внутри того же LIKE '%…%' — written_ia считается тем же способом, что и written_ya.",
-        "total_chain — это «хотя бы одно из двух написаний»: условия внутри одного CASE соединяются через OR, а не AND."
+        "Второе написание отличается от первого только заменой Ichiba на Itiba внутри того же `LIKE '%…%'` — written_ia считается тем же способом, что и written_ya.",
+        "total_chain — это «хотя бы одно из двух написаний»: условия внутри одного CASE соединяются через `OR`, а не `AND`."
       ],
       "explain": "284 строки называют сеть «Ichiba», 261 — «Itiba», вместе — 545: OR гарантирует, что каждая строка учитывается ровно один раз, потому что варианты не пересекаются — имя не может содержать оба написания сразу. Разная транслитерация одного и того же значения — рутинная проблема сырых выгрузок: у одного источника обозначение легло иначе, чем у другого. Пока имя не приведено к одному виду, любой GROUP BY по customer_name молча разрежет сеть на две строки, и обе будут выглядеть законными названиями."
     },
@@ -3590,7 +3590,7 @@
       "solution": "SELECT r.customer_name, COUNT(*) AS rows\nFROM staging_raw_sellout r\nLEFT JOIN dim_customer c ON c.customer_name = r.customer_name\nWHERE c.customer_id IS NULL\nGROUP BY r.customer_name",
       "hints": [
         "Приём поиска недостающего: LEFT JOIN от того, что нужно проверить, к справочнику, а «нет соответствия» — это WHERE по ключевой колонке правой таблицы IS NULL.",
-        "Группировка обычная: GROUP BY по имени, COUNT(*) считает строки в каждой группе. Подстрока (LIKE) здесь не нужна: сравнение точное, по всему имени."
+        "Группировка обычная: GROUP BY по имени, COUNT(*) считает строки в каждой группе. Подстрока (`LIKE`) здесь не нужна: сравнение точное, по всему имени."
       ],
       "explain": "59 разных имён из сырой выгрузки — 1 102 строки из 3 110, больше трети — справочник точек не узнаёт вообще. LEFT JOIN плюс IS NULL по ключу правой таблицы — единственный способ найти то, чего нет, а не то, что есть: INNER JOIN эти строки сразу же вырезал бы вместе с самим вопросом. То, что имя выглядит обычным названием, ничего не говорит о том, узнаёт ли его справочник, — сравнение идёт по точному тексту, и лишний пробел или другая транслитерация делают точку невидимой для отчёта.",
       "traps": [
@@ -3620,7 +3620,7 @@
       "solution": "SELECT product_id, product_name, list_price\nFROM dim_product\nWHERE brand = 'Nettora'\nORDER BY product_id",
       "orderMatters": true,
       "hints": [
-        "Отбор — WHERE brand = 'Nettora': текст в одинарных кавычках, условие стоит после FROM.",
+        "Отбор — `WHERE brand = 'Nettora'`: текст в одинарных кавычках, условие стоит после FROM.",
         "Номера удобнее держать по порядку: ORDER BY product_id в самом конце."
       ],
       "explain": "У Nettora пять позиций, все из Home care, номера с 19 по 23. Таблица продаж знает товар только по этому номеру, поэтому продажи бренда отбираются условием product_id IN (19, 20, 21, 22, 23): ключи человек достаёт из справочника сам. Это обычный шаг аналитика — сначала ключи из справочника, потом факты, — и дальше это возьмёт на себя соединение."
@@ -3642,7 +3642,7 @@
       "solution": "SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2026-01-01' AND '2026-01-31'",
       "hints": [
         "Сумма штук — SUM(units): агрегат, который складывает колонку по всем отобранным строкам.",
-        "Несколько значений одной колонки — IN со списком: product_id IN (19, 20, 21, 22, 23), тот же список, что и при отборе товаров бренда."
+        "Несколько значений одной колонки — `IN` со списком: `product_id IN (19, 20, 21, 22, 23)`, тот же список, что и при отборе товаров бренда."
       ],
       "explain": "В январе 2026-го Nettora продала 1 216 штук. BETWEEN берёт диапазон вместе с обеими границами; даты здесь — текст вида 2026-01-12, и сравниваются они как даты. Суммируются строки сразу по всем пяти позициям бренда: в fact_sellout одна строка — один товар в одной точке за неделю."
     },
@@ -3658,7 +3658,7 @@
       "starter": "SELECT SUM(units) AS units\nFROM fact_sellout\n",
       "solution": "SELECT SUM(units) AS units\nFROM fact_sellout\nWHERE product_id IN (19, 20, 21, 22, 23)\n  AND week_start BETWEEN '2025-06-01' AND '2025-06-30'",
       "hints": [
-        "Условий два, и оба стоят после WHERE: товары — product_id IN (19, 20, 21, 22, 23) и период — week_start BETWEEN '2025-06-01' AND '2025-06-30'; между ними AND.",
+        "Условий два, и оба стоят после WHERE: товары — `product_id IN (19, 20, 21, 22, 23)` и период — `week_start BETWEEN '2025-06-01' AND '2025-06-30'`; между ними `AND`.",
         "Агрегат уже в заготовке — не хватает только строки WHERE."
       ],
       "explain": "4 702 штуки в июне 2025-го против 1 216 в январе 2026-го: почти вчетверо, как и говорил отчёт. Но сравнили лето с зимой, а у рынка волна года есть в любой год. Вывода о бренде из этой разницы пока сделать нельзя — сначала нужно понять, как выглядит обычная зима.",
@@ -3839,7 +3839,7 @@
       "solution": "SELECT c.channel, COALESCE(SUM(f.units), 0) AS units\nFROM dim_customer c\nLEFT JOIN fact_sellout f\n       ON f.customer_id = c.customer_id\n      AND f.product_id IN (SELECT product_id FROM dim_product WHERE brand = 'Nettora')\n      AND f.week_start BETWEEN '2025-01-01' AND '2025-06-30'\nGROUP BY c.channel",
       "hints": [
         "Строим от справочника точек, как в задании про каналы с начала года: LEFT JOIN, а условия на продажи — товар бренда и период — стоят в ON, не в WHERE.",
-        "Товары бренда достают подзапросом по dim_product и сравнивают через IN: их пять, а не один. Пустую сумму превращает в ноль COALESCE."
+        "Товары бренда достают подзапросом по dim_product и сравнивают через `IN`: их пять, а не один. Пустую сумму превращает в ноль COALESCE."
       ],
       "explain": "В 2025-м e-com взял 15 258 штук, сети 4 432, традиционная розница 560, аптеки и дистрибьюторы — ноль. С января этого года те же каналы: 8 016, 1 539 и 303. Упало везде, и «бренд держится на e-com» не подтверждается: там он просто падает медленнее остальных.",
       "traps": [
@@ -3927,7 +3927,7 @@
       "orderMatters": true,
       "hints": [
         "Остатки лежат в fact_stock, колонка units_on_hand; бренд назван в dim_product, поэтому соединение по product_id.",
-        "Июнь отбирает substr(s.month_start, 6, 2) = '06': два знака, начиная с шестого. Группировать надо по самому месяцу, сортировать по нему же."
+        "Июнь отбирает `substr(s.month_start, 6, 2) = '06'`: два знака, начиная с шестого. Группировать надо по самому месяцу, сортировать по нему же."
       ],
       "explain": "1 046, 2 363, 4 224 штуки: запас Nettora у дистрибьюторов на июнь растёт год от года, за два года вчетверо. Товар не пропадал по дороге. Он лежит и копится, потому что точки его не берут.",
       "traps": [

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useI18n } from '../i18n/context';
 import { copyText, useContextMenu } from './ContextMenu';
+import { splitCodeByOps } from '../content/proseOps';
 
 /** На сколько знаков продолжение перенесённой строки уходит правее её начала. */
 const HANG = 3;
@@ -31,10 +32,13 @@ export function CodeBlock({
   code,
   className,
   style,
+  marks,
 }: {
   code: string;
   className?: string;
   style?: CSSProperties;
+  /** Операторы, которые шаг объясняет: в строке кода получают лёгкий фон, цвет текста не меняется. */
+  marks?: string[];
 }) {
   const { t } = useI18n();
   const menu = useContextMenu(() => [{ label: t.ctx.copyCode, run: () => copyText(code) }]);
@@ -43,7 +47,9 @@ export function CodeBlock({
       {code.split('\n').map((line, i) => {
         return (
           <span key={i} className="code-line" style={hangStyle(hangLead(line))}>
-            {line || ' '}
+            {line
+              ? splitCodeByOps(line, marks ?? []).map((p, j) => (p.op ? <mark className="code-op" key={j}>{p.text}</mark> : p.text))
+              : ' '}
           </span>
         );
       })}

@@ -163,7 +163,7 @@
       ],
       "hints": [
         "The values in the column start with a capital letter.",
-        "The = operator isn't the same as LIKE."
+        "The `=` operator isn't the same as `LIKE`."
       ],
       "explain": "The most expensive mistakes in analytics are the ones that don't fail. The query ran, returned a number, the number made it into the deck. Hence the working habit: on a suspiciously round or suspiciously small result, first check what values are actually in the column, SELECT DISTINCT division FROM dim_product takes five seconds."
     },
@@ -178,8 +178,8 @@
       "brief": "Only «Aqualis» and «Fruvia» brand drinks go into the summer catalog, and only items priced above 100 ¥; cheap ones don't work for promo.",
       "goal": "Return sku_code, product_name, brand, list_price for items of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
-        "Listing several values of one column is shorter with IN than with OR.",
-        "\"Strictly above\" is >, not >=."
+        "Listing several values of one column is shorter with `IN` than with `OR`.",
+        "\"Strictly above\" is `>`, not `>=`."
       ],
       "explain": "IN ('A', 'B') reads better than brand = 'A' OR brand = 'B', and it won't let you get tripped up by operator precedence: the condition brand = 'A' OR brand = 'B' AND price > 100 won't behave the way you'd expect, because AND binds tighter than OR."
     },
@@ -260,14 +260,14 @@
       "goal": "Return product_name, brand, list_price for all products whose name contains «Forte».",
       "hints": [
         "An exact match (=) won't work here: the full names differ, the only thing in common is a word inside the string.",
-        "A substring search is LIKE with the pattern '%text%'; the percent signs mean \"anything before and after\"."
+        "A substring search is `LIKE` with the pattern '%text%'; the percent signs mean \"anything before and after\"."
       ],
       "explain": "LIKE searches by pattern, not exact match: the '%' character stands for any sequence of characters, including none at all. This kind of search is useful when the shared trait is part of a name, not the whole column value. The flip side: '%Forte%' can't use a regular index on this column, and on a large table it will be slower than WHERE brand = '...', irrelevant for a fifty-item catalog, worth keeping in mind at millions of rows."
     },
     {
       "id": "sql-027",
       "title": "LIKE and case",
-      "brief": "A colleague is checking volumes for SKU code AQUA001 in the raw export. They know the source sends some rows in lowercase and want to catch both spellings at once, so they write the condition with LIKE rather than =.",
+      "brief": "A colleague is checking volumes for SKU code AQUA001 in the raw export. They know the source sends some rows in lowercase and want to catch both spellings at once, so they write the condition with `LIKE` rather than `=`.",
       "goal": "Determine how many rows the query returns.",
       "predictQuestion": "There are 163 rows for this SKU code in staging_raw_sellout: 107 written as AQUA001 and 56 as aqua001. What does the query return?",
       "options": [
@@ -289,8 +289,8 @@
         }
       ],
       "hints": [
-        "The difference between = and LIKE here isn't the wildcard, it's the character comparison rule.",
-        "LIKE's case-insensitivity in SQLite only covers the ASCII range."
+        "The difference between `=` and `LIKE` here isn't the wildcard, it's the character comparison rule.",
+        "`LIKE`'s case-insensitivity in SQLite only covers the ASCII range."
       ],
       "explain": "= and LIKE use different comparison rules, and it only shows on dirty data. = compares strings byte for byte, so sku_code = 'AQUA001' misses the 56 rows written in lowercase. LIKE treats Latin letters of either case as equal by default and finds all 163. Two lessons follow, both about portability. First: the trick works exactly up to the ASCII boundary. As soon as values carry letters beyond it (Cyrillic, umlauts, diacritics), LIKE in SQLite becomes case-sensitive again, and LOWER and UPPER are no help: they are limited to the same range. Second: another engine flips it. In PostgreSQL, LIKE respects case and there's a separate ILIKE for the other behaviour, the same query silently changes meaning when it moves. So nobody leans on LIKE's case-insensitivity as a rule: case gets normalized on the way in, by the very cleanup the raw-layer tasks are about. The failure here is silent; the query with = doesn't fail, it returns 107 rows and looks like it works, and the missing third of the volume surfaces later, in a report."
     },
@@ -428,7 +428,7 @@
       ],
       "title": "A label for independent pharmacies",
       "brief": "For a pharmacy-channel summary you need a human-readable list of outlets: chain pharmacies show the chain name, independent ones show a clear label instead of a blank cell.",
-      "goal": "For customer_type = 'pharmacy', return customer_name and chain_display (chain_name, or 'Independent pharmacy' if it's empty).",
+      "goal": "For `customer_type = 'pharmacy'`, return customer_name and chain_display (chain_name, or 'Independent pharmacy' if it's empty).",
       "hints": [
         "The function that returns the first non-null value from a list of arguments is COALESCE(column, fallback_value).",
         "This is a display task, not a filtering one: don't touch WHERE. Independent pharmacies should stay in the result."
@@ -461,7 +461,7 @@
       ],
       "hints": [
         "Same principle as in the task about inequality and a null value: NULL is never the result of a genuine comparison via =.",
-        "The correct form of the condition is promo_id IS NULL, not promo_id = NULL."
+        "The correct form of the condition is promo_id IS NULL, not `promo_id = NULL`."
       ],
       "explain": "This is the costliest version of this mistake: the result isn't an empty list or a runtime error, but a plausible-looking number, 0. Seeing 0, an analyst might conclude the company doesn't sell anything outside promotions at all, and that could end up in a presentation as fact. Rule of thumb going forward: any null check is IS NULL or IS NOT NULL; the equals sign never works for NULL, whether it's in WHERE, HAVING, or inside a CASE."
     },
@@ -645,7 +645,7 @@
       "goal": "Return brand, sku_count, and avg_price (rounded to two decimal places) for brands with at least 4 SKUs and an average price above 300.",
       "hints": [
         "The condition applies to a characteristic of the group, not of an individual row.",
-        "\"At least 4\" is >=."
+        "\"At least 4\" is `>=`."
       ],
       "explain": "A query executes in the order FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Everything else follows from that: WHERE can't see aggregates because groups don't exist yet, and in some DBMSes HAVING can't see SELECT aliases because SELECT hasn't run yet. Once you remember this order, you stop guessing where to put a condition."
     },
@@ -675,7 +675,7 @@
       ],
       "hints": [
         "Query execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. But in some DBMSes HAVING gets an exception specifically for names from SELECT.",
-        "Compare with the explicit version of the same check: HAVING COUNT(*) > 5. Both give the same answer."
+        "Compare with the explicit version of the same check: `HAVING COUNT(*) > 5`. Both give the same answer."
       ],
       "explain": "Strictly speaking, the SQL standard doesn't require HAVING to understand SELECT aliases, under strict execution logic, those names don't exist yet at the HAVING stage. But SQLite (like MySQL) allows this liberty. Practical takeaway: if a query needs to keep working on another DBMS, it's safer to duplicate the explicit expression in HAVING, as in the task about premium brands, rather than rely on the alias being picked up, the exact same principle as the non-aggregated column outside GROUP BY (the task about a column outside GROUP BY): the engine allows more than the standard guarantees."
     },
@@ -721,7 +721,7 @@
       ],
       "title": "Breaking down one outlet's sales",
       "brief": "A sales rep is going through the weekly report for the \"Perekrestok #1013\" outlet and asks for the product codes decoded into human-readable names.",
-      "goal": "Return product_name, units, and revenue for the outlet with customer_id = 13 for the week of 2026-06-15.",
+      "goal": "Return product_name, units, and revenue for the outlet with `customer_id = 13` for the week of 2026-06-15.",
       "hints": [
         "The join key is product_id: it exists in both fact_sellout and dim_product, but since the column is named the same in both tables, you need to qualify it with a table alias in ON.",
         "Filters on the outlet and on the week apply to the fact (f.customer_id, f.week_start); they're already available there; the JOIN is only needed to add the product name."
@@ -783,7 +783,7 @@
       "hints": [
         "Start from the table whose rows all need to survive, the region directory.",
         "The product condition belongs in ON, not WHERE. In WHERE it would cut out exactly the regions with no sales of the new product, the ones the report exists to show.",
-        "You can look up the product's key by name with a scalar subquery right inside the join condition: (SELECT product_id FROM dim_product WHERE product_name = '...'). COALESCE turns an empty sum into zero."
+        "You can look up the product's key by name with a scalar subquery right inside the join condition: (`SELECT product_id FROM dim_product WHERE product_name = '...'`). COALESCE turns an empty sum into zero."
       ],
       "explain": "The key idea: WHERE applies after the join and can't tell \"there was no row\" apart from \"the row didn't match\": both produce NULL, and both get filtered out. That's why, in a LEFT JOIN, conditions on the right-hand table go in ON, and only conditions on the left-hand table stay in WHERE. Practical consequence: a LEFT JOIN with a condition on the right-hand table in WHERE behaves like an INNER JOIN, the most common silent bug in coverage reports. And second: SUM over an empty set returns NULL, not 0, in a report that looks like a hole, hence the need for COALESCE. Reports about what's absent (zero sales, unvisited outlets, SKUs with no stock) are their own genre. They're almost always built outward from the dimension table, not from the fact."
     },
@@ -872,7 +872,7 @@
       ],
       "title": "Proving the fan-out with numbers",
       "brief": "Before including the join to dim_promo in a standing report (as in the task about the extra revenue), an analyst wants to formally show that it multiplies facts, rather than rely on intuition.",
-      "goal": "For the «Nettora» brand in 2025, return one row: rows_before (the number of fact_sellout rows after an ordinary join to dim_product) and rows_after (the number of rows that would result from also joining dim_promo on brand, JOIN dim_promo m ON m.brand = p.brand).",
+      "goal": "For the «Nettora» brand in 2025, return one row: rows_before (the number of fact_sellout rows after an ordinary join to dim_product) and rows_after (the number of rows that would result from also joining dim_promo on brand, `JOIN dim_promo m ON m.brand = p.brand`).",
       "hints": [
         "Both counts are essentially the same query, differing by exactly one JOIN. Insert it as a second subquery in SELECT.",
         "No grouping needed: both parts simply count COUNT(*) over the whole selection."
@@ -906,7 +906,7 @@
       "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
       "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue (revenue during promotions and outside them, both rounded to whole numbers).",
       "hints": [
-        "A promo is checked with IS NOT NULL, not with a comparison.",
+        "A promo is checked with `IS NOT NULL`, not with a comparison.",
         "CASE goes inside SUM: you're summing not all rows, but only the matching ones."
       ],
       "explain": "Conditional aggregation is an analyst's workhorse. SUM(CASE WHEN condition THEN measure ELSE 0 END) unfolds a metric into columns in a single pass over the data, instead of writing two queries and then joining them. The same trick gives you a share: SUM(CASE ...) * 1.0 / SUM(measure). And the same idea in Power BI is called CALCULATE with a filter, same concept, different syntax."
@@ -950,7 +950,7 @@
       ],
       "title": "Price-list tiers",
       "brief": "A category manager wants to see the portfolio not by brand but by price tier; this feeds a conversation with procurement about where the lineup is concentrated.",
-      "goal": "Return tier ('Budget' for list_price < 100, 'Mid' for 100 ≤ list_price < 300, 'Premium' for list_price ≥ 300) and sku_count (the number of products in each tier).",
+      "goal": "Return tier ('Budget' for `list_price < 100`, 'Mid' for `100 ≤ list_price < 300`, 'Premium' for list_price ≥ 300) and sku_count (the number of products in each tier).",
       "hints": [
         "You can group directly on the CASE expression's alias, shorter than repeating the whole construct in GROUP BY.",
         "Branch order matters: WHEN conditions are checked in sequence, and once one matches, the rest are never evaluated."
@@ -1049,7 +1049,7 @@
       "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes recorded as «Itiba»: two source systems romanised one name differently. Before normalizing the lookup, you need to gauge the scale of the problem.",
       "goal": "Return one row: written_ya (the number of rows where customer_name contains «Ichiba»), written_ia (where it contains «Itiba») and total_chain (their sum: both groups belong to the same chain).",
       "hints": [
-        "The two spellings differ in their first letter, Ya against Ia. Catch both variants with separate LIKE conditions.",
+        "The two spellings differ in their first letter, Ya against Ia. Catch both variants with separate `LIKE` conditions.",
         "The sum of written_ya and written_ia should match total_chain; that's the check that the variants don't overlap and nothing is lost."
       ],
       "explain": "Inconsistent spelling of the same value is a routine problem in raw extracts, and inconsistent romanisation is the most common kind: one source system is set up with one standard, another with a different one, and some names were typed in by hand. If you group by customer_name as-is, GROUP BY will silently create two rows for one chain, and its share in the report will come out understated by exactly the volume of the second spelling. The report itself won't reveal it: both rows look like legitimate names. Before aggregating, such variants are folded into one at the start of the pipeline, for example, REPLACE(customer_name, 'Itiba', 'Ichiba'). It's worth noticing how this cleanup differs from TRIM and case folding: those remove differences in the form of the record, while here you need the knowledge that two different words mean one chain. That knowledge isn't in the data; it comes from a mapping table."
@@ -1137,7 +1137,7 @@
       "goal": "For 2025, return per division: division, channel, and revenue (rounded to whole numbers) for the channel with the highest revenue within the division.",
       "hints": [
         "ROW_NUMBER here is partitioned by division. Insert PARTITION BY before division.",
-        "The \"top rank only\" filter is rnk = 1, since the rank within its partition is already computed in the ranked CTE."
+        "The \"top rank only\" filter is `rnk = 1`, since the rank within its partition is already computed in the ranked CTE."
       ],
       "explain": "PARTITION BY division starts a separate ROW_NUMBER counter for each division: the numbering of FMCG channels doesn't continue into Pharma channels, it restarts at one, the same principle as the task about the top 3 SKUs within a brand, the only difference being that there we kept the top three ranks, and here one is enough. Pharma has only a single sales channel in the database (pharmacy), so the result for it is trivial, but the query stays correct: it looks for the leader, it doesn't assume competition between channels within a division."
     },
@@ -1145,7 +1145,7 @@
       "id": "sql-052",
       "title": "Rep ranking within a team",
       "brief": "A sales manager is preparing 2025 year-end bonuses and wants to see each rep's rank within their team by the revenue of the outlets they cover; managers shouldn't be included in the ranking.",
-      "goal": "For 2025, return team, rep_name, revenue (the sum of revenue from the rep's outlets, rounded to whole numbers) and rnk (the rep's rank within their team by descending revenue). Only role = 'rep'. Sort by team, then by rank.",
+      "goal": "For 2025, return team, rep_name, revenue (the sum of revenue from the rep's outlets, rounded to whole numbers) and rnk (the rep's rank within their team by descending revenue). Only `role = 'rep'`. Sort by team, then by rank.",
       "hints": [
         "Revenue is tied to outlets through dim_customer.rep_id, not directly to the rep. Aggregate by rep_id first.",
         "\"Rank within the team\" is RANK with PARTITION BY team, not a company-wide overall rank."
@@ -1193,7 +1193,7 @@
       "brief": "Water sales jump around week to week because of promotions and deliveries. For a presentation chart, you need a smoothed series so the seasonal trend shows through instead of the noise.",
       "goal": "For 2025, for the «Aqualis» brand, return week_start, units (sum of units for the week), and ma4 (a moving average over the current and three preceding weeks, rounded to one decimal place). Ordered by week ascending.",
       "hints": [
-        "The window frame is set with ROWS BETWEEN ... PRECEDING AND CURRENT ROW.",
+        "The window frame is set with `ROWS BETWEEN ... PRECEDING AND CURRENT ROW`.",
         "Three preceding weeks plus the current one is 3 PRECEDING."
       ],
       "explain": "Without an explicit frame, when ORDER BY is present the window defaults to everything from the start up to the current row; the result isn't a moving average, it's a cumulative one. This is a silent bug: the result looks plausible but means something entirely different. Rule of thumb: if you wrote ORDER BY inside OVER, consciously decide whether you need a frame. By the way, the first three weeks of the series are averaged over an incomplete window, such values are usually hidden in a report.",
@@ -1225,8 +1225,8 @@
       "brief": "Finance wants to see not just shipments for each month, but the running total for the quarter: how much has been shipped to the «Setouchi Trading» distributor by the end of each month.",
       "goal": "For October–December 2025, return month_start, units (shipped that month) and running_units (the running total since the start of the quarter). Ordered by month ascending.",
       "hints": [
-        "The window frame for a running total is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, not 3 PRECEDING like the moving average in the task about smoothing a weekly series.",
-        "distributor_id = 1 is «Setouchi Trading»; you can check this against dim_customer."
+        "The window frame for a running total is `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, not 3 PRECEDING like the moving average in the task about smoothing a weekly series.",
+        "`distributor_id = 1` is «Setouchi Trading»; you can check this against dim_customer."
       ],
       "explain": "UNBOUNDED PRECEDING means \"from the very start of the window\", unlike 3 PRECEDING in the task about smoothing a weekly series, which took a fixed number of preceding rows. That one-argument difference in the frame completely changes what's being computed: a moving average smooths local noise, while a running total with UNBOUNDED PRECEDING shows a metric's growth since the start of the period, exactly what's needed here to track quarterly running shipments."
     },
@@ -1354,7 +1354,7 @@
       ],
       "title": "Who missed the plan in December",
       "brief": "In early January, the sales manager reconciles actuals against the December 2025 plan and asks for a list of reps who missed their revenue target within their division, only those under 100% attainment.",
-      "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (revenue from the rep's division products at the rep's outlets, rounded to whole numbers) and attainment_pct (the plan attainment percentage, rounded to one decimal place). Only role = 'rep' and attainment_pct < 100. Ordered by attainment_pct ascending.",
+      "goal": "For December 2025, return rep_name, target_revenue (rounded to whole numbers), actual_revenue (revenue from the rep's division products at the rep's outlets, rounded to whole numbers) and attainment_pct (the plan attainment percentage, rounded to one decimal place). Only `role = 'rep'` and `attainment_pct < 100`. Ordered by attainment_pct ascending.",
       "hints": [
         "The plan is tied to a rep and a division at once. Join the fact to the plan on both keys, rep_id and division.",
         "A LEFT JOIN is needed in case a rep had no sales at all in their division in December: then actual should become 0, not vanish from the report, COALESCE(a.revenue, 0), as in the task about the coverage map for a new product."
@@ -1632,8 +1632,8 @@
     {
       "id": "sql-068",
       "title": "How much discount was given away",
-      "brief": "Finance is putting together a promo budget review and wants one figure for the August promotion «Milvara: Discount 30%» (promo_id = 47): how much money was handed to the buyer as discount. Discount given is the difference between what the volume sold would have cost at list price and what was actually paid for it. The August price list sits in fact_price with month_start = 2025-08-01.",
-      "goal": "For promo_id = 47, return units (units sold), promo_revenue (actual revenue), revenue_at_list (the same volume valued at list price) and discount_given (the discount handed over). Round every amount to whole numbers.",
+      "brief": "Finance is putting together a promo budget review and wants one figure for the August promotion «Milvara: Discount 30%» (`promo_id = 47`): how much money was handed to the buyer as discount. Discount given is the difference between what the volume sold would have cost at list price and what was actually paid for it. The August price list sits in fact_price with `month_start = 2025-08-01`.",
+      "goal": "For `promo_id = 47`, return units (units sold), promo_revenue (actual revenue), revenue_at_list (the same volume valued at list price) and discount_given (the discount handed over). Round every amount to whole numbers.",
       "hints": [
         "Value at list price is worked out row by row and only then summed: SUM(f.units * pr.list_price), not the product of two sums.",
         "Discount given is the difference between the two amounts you already have; it needs no third source."
@@ -1747,7 +1747,7 @@
       "brief": "The commercial director wants one page before the budget committee: for every brand, how much of the list price reaches the till and how many units sell on promotion. He wants to see whether the two columns are related.",
       "goal": "For 2025 and every brand, return brand, realization_pct (the percentage of the list price that reached the till) and promo_share_units (the share of promotion in units sold). Round both to one decimal. Sorted by realization_pct ascending.",
       "hints": [
-        "Promo share in units is a conditional sum over the full one: SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END) over SUM(units).",
+        "Promo share in units is a conditional sum over the full one: `SUM(CASE WHEN promo_id IS NOT NULL THEN units ELSE 0 END)` over SUM(units).",
         "Both shares are worked out in a single pass over the same rows; no second query is needed."
       ],
       "explain": "The two columns run almost as mirror images: «Rhinolar» sells 55.1% of its units on promotion and brings 86.7% of the list price to the till, while «Nettora» sells 23.4% and brings 96.1%. That is the main lever of price realization: the more volume goes through promotions, the lower the average price received, even if the list price never moved. But the mirror is imperfect, and that is the other half of the answer: «Aqualis» with a 35.5% promo share gives away more than «Vitanor» at 46.4%, because the «Aqualis» promotions are deeper. There are two levers, share of volume on promotion and depth of discount, and a conversation about price without both turns into an argument about who is to blame. The third lever, the mix of SKUs sold, waits in the task about a discount nobody promised."
@@ -2249,7 +2249,7 @@
       "goal": "Return year (the year as YYYY) and avg_price (the average list price of Nettora products for the year, rounded to one decimal), ordered by year ascending.",
       "hints": [
         "Prices live in fact_price by month (month_start), the brand in dim_product. The year is the first four characters of the date: substr(fp.month_start, 1, 4).",
-        "Filter the brand with WHERE p.brand = 'Nettora' and group by the first column: GROUP BY 1."
+        "Filter the brand with `WHERE p.brand = 'Nettora'` and group by the first column: GROUP BY 1."
       ],
       "explain": "Average price does not care whether the year is complete: 2026 runs only to June in the data, and 206.5 for the half year compares fairly with 204.8 for the whole of 2025. A sum cannot do that: half a year of revenue is half the annual figure simply because the period is half as long. So before comparing years, ask whether the measure is a level or a flow. Price is a level; revenue and units are flows."
     },
@@ -2329,8 +2329,8 @@
       "brief": "The commercial director again wants revenue by brand from the start of 2026, but this time without an upper bound on the period: data updates every week, and they want fresh numbers without editing the range each time.",
       "goal": "Return brand and revenue (the sum of revenue from 2026-01-01 through today, rounded to whole numbers), ordered by revenue descending.",
       "hints": [
-        "The join is JOIN dim_product p ON p.product_id = f.product_id: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
-        "No upper bound needed here; a \"not earlier than the start of the year\" condition works: WHERE f.week_start >= '2026-01-01'."
+        "The join is `JOIN dim_product p ON p.product_id = f.product_id`: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
+        "No upper bound needed here; a \"not earlier than the start of the year\" condition works: `WHERE f.week_start >= '2026-01-01'`."
       ],
       "explain": "BETWEEN is convenient when a period is closed on both ends, but a \"start of the year through today\" report has no such end; the data simply stops where it stops. The condition f.week_start >= '2026-01-01' says exactly that, and it doesn't need fixing every week as new data arrives."
     },
@@ -2346,7 +2346,7 @@
       "brief": "A category manager is expanding shelf space for flagship brands: they need ones that deliver both high revenue and sit in a large number of outlets; either trait alone proves nothing.",
       "goal": "For 2025, return brand, revenue (sum of revenue, rounded to whole numbers) and outlets (the count of distinct outlets with sales), for brands with revenue above 5,000,000 ¥ and present in at least 80 outlets. Ordered by revenue descending.",
       "hints": [
-        "The join is JOIN dim_product p ON p.product_id = f.product_id: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
+        "The join is `JOIN dim_product p ON p.product_id = f.product_id`: the table name and alias are already given, fill in the word JOIN and the condition after ON.",
         "Group by the same column the aggregates in SELECT and HAVING are computed for: GROUP BY p.brand."
       ],
       "explain": "One HAVING condition checks revenue, the other checks coverage, and both must hold at once, so they're joined with AND: a brand with huge revenue concentrated in three big chains won't pass this filter, and neither will a brand with a hundred outlets and pennies of sales in each."
@@ -2363,7 +2363,7 @@
       "goal": "From 2026-01-01 through today, return per brand: brand and outlets (the number of distinct outlets with sales), ordered by coverage descending.",
       "hints": [
         "This is similar to the revenue-by-brand-since-the-start-of-the-year query; the difference is counting coverage instead of revenue: COUNT(DISTINCT customer_id).",
-        "The date again has no upper bound: WHERE f.week_start >= '2026-01-01'."
+        "The date again has no upper bound: `WHERE f.week_start >= '2026-01-01'`."
       ],
       "explain": "Aqualis, Fruvia, Milvara and Krosti hold coverage at 2025 levels, 88, 86, 84 and 81 outlets, exactly like a year ago (the same numbers from Wednesday's query, run over the full 2025 year). Only Nettora's outlet count collapsed, from 79 to 37. The market isn't losing shelf space; this one brand is, and the next question isn't \"what happened to retail\" but \"what happened to Nettora\" in the outlets that used to carry it.\n\nThe two periods aren't the same length, though: 2026 here is still incomplete (a bit over two months), while 2025 is a full year, and coverage over part of a year can't strictly exceed coverage over the whole year. It doesn't change the conclusion here: all four brands land within a couple of outlets of their 2025 number, so the difference in period length isn't what's driving the comparison."
     },
@@ -2373,7 +2373,7 @@
       "brief": "Trade marketing is defending its budget and needs to show what share of each brand's revenue was made during promotions. In the fact table, a promo is marked by a filled-in promo_id.",
       "goal": "For 2025, return per brand: brand, promo_revenue and base_revenue (revenue during promotions and outside them, both rounded to whole numbers).",
       "hints": [
-        "A promo means a non-empty promo_id: checked with IS NOT NULL, not with a comparison to a value.",
+        "A promo means a non-empty promo_id: checked with `IS NOT NULL`, not with a comparison to a value.",
         "The base case is the opposite, where promo_id is empty: IS NULL."
       ],
       "explain": "IS NOT NULL and IS NULL aren't just another pair of \"equals\" and \"not equals\": NULL can't be compared with =, it only has a dedicated emptiness check. CASE WHEN uses it like any other condition, and that's the whole trick that splits promo revenue from base revenue in a single pass over the data."
@@ -2385,7 +2385,7 @@
       "goal": "For the Nettora brand, by year, return year (YYYY), promo_revenue (revenue during promotions, rounded to whole numbers) and revenue (total revenue, rounded to whole numbers), ordered ascending by year.",
       "hints": [
         "The year is the first four characters of the week: substr(f.week_start, 1, 4), the same trick as for month, just shorter.",
-        "The promo condition inside CASE is the same as when splitting a brand's revenue into promo and base: f.promo_id IS NOT NULL."
+        "The promo condition inside CASE is the same as when splitting a brand's revenue into promo and base: `f.promo_id IS NOT NULL`."
       ],
       "explain": "The theory doesn't hold up in any year: Nettora's promo share was 6.7% in 2024, 20.3% in 2025 and 16.7% in 2026, topping out at exactly one fifth of revenue. The brand never lived on promotions in the way the theory assumed, so the cause of the decline has to be found somewhere other than a pullback in promo spend."
     },
@@ -2396,7 +2396,7 @@
       "goal": "From 2026-01-01, return per channel: channel and units (the sum of Nettora units), including channels with zero sales (0, not a missing row).",
       "hints": [
         "SUM over an empty set returns NULL, not 0; turn the emptiness into a zero with COALESCE(..., 0).",
-        "The list of Nettora's product_id values is checked with IN; the subquery is already sitting right there in parentheses."
+        "The list of Nettora's product_id values is checked with `IN`; the subquery is already sitting right there in parentheses."
       ],
       "explain": "The numbers settle the theory by channel: 8,016 units in e-com since the start of the year, 1,539 in chains, 303 in traditional retail, and zero in pharmacies and at distributors. But over the same half of 2025 it was 15,258, 4,432 and 560; it really did fall everywhere, and three times as hard in chains as in e-com. E-com isn't holding the brand up; it's just falling more slowly than the rest, and that gap in pace reads as stability only if you don't compare both periods in full."
     },
@@ -2412,7 +2412,7 @@
       ],
       "title": "Outlets with no Nettora in chains",
       "brief": "The modern trade account manager asks for a list of outlets that don't carry Nettora at all, to start the conversation about winning the brand back onto the shelf before building a general visit plan.",
-      "goal": "Return customer_name and city for outlets in chains (channel = 'modern_trade') with zero Nettora sales since 2026-01-01.",
+      "goal": "Return customer_name and city for outlets in chains (`channel = 'modern_trade'`) with zero Nettora sales since 2026-01-01.",
       "hints": [
         "The period condition is also a condition on LEFT JOIN's right-hand table: like the brand condition, it belongs in ON, not WHERE, or outlets with no sales get filtered out before you can find them (compare with the task about a filter that landed in the wrong place).",
         "\"Zero sales\" after a LEFT JOIN looks like f.sellout_id IS NULL: no match was found."
@@ -2425,8 +2425,8 @@
       "brief": "In staging_raw_sellout the «Ichiba» chain is sometimes spelled «Itiba»: two source systems transliterated the same name differently. Before normalising the directory, it's worth sizing up the problem.",
       "goal": "Return one row: written_ya (the number of rows where customer_name contains «Ichiba»), written_ia (where it contains «Itiba») and total_chain (their sum, since both groups belong to the same chain).",
       "hints": [
-        "The second spelling differs from the first only by Ichiba becoming Itiba inside the same LIKE '%…%'; written_ia is counted the same way written_ya was.",
-        "total_chain means \"at least one of the two spellings\": conditions inside one CASE are joined with OR, not AND."
+        "The second spelling differs from the first only by Ichiba becoming Itiba inside the same `LIKE '%…%'`; written_ia is counted the same way written_ya was.",
+        "total_chain means \"at least one of the two spellings\": conditions inside one CASE are joined with `OR`, not `AND`."
       ],
       "explain": "284 rows name the chain «Ichiba», 261 name it «Itiba», and together, 545: OR guarantees each row is counted exactly once, because the two spellings never overlap: a name can't contain both at once. Different transliterations of the same value are a routine raw-data problem: one source system rendered the name one way, the other rendered it differently. Until the name is normalised to one form, any GROUP BY on customer_name will silently split the chain into two rows, and both will look like legitimate names."
     },
@@ -2445,7 +2445,7 @@
       "goal": "From staging_raw_sellout, return customer_name and rows (the number of rows with that name) only for names missing from the dim_customer directory.",
       "hints": [
         "The usual way to find what is missing: LEFT JOIN from what you're checking to the directory, and \"no match\" is WHERE ... IS NULL on the right table's key column.",
-        "Grouping is the usual kind: GROUP BY the name, COUNT(*) counts rows in each group. No LIKE needed here: the comparison is exact, on the whole name."
+        "Grouping is the usual kind: GROUP BY the name, COUNT(*) counts rows in each group. No `LIKE` needed here: the comparison is exact, on the whole name."
       ],
       "explain": "59 distinct names from the raw feed (1,102 rows out of 3,110, more than a third) go entirely unrecognised by the outlet directory. LEFT JOIN plus IS NULL on the right table's key is the only way to find what's missing rather than what's there: an INNER JOIN would cut those rows, and the question itself, right away. A name looking ordinary says nothing about whether the directory recognises it: the comparison is on exact text, and a stray space or a different transliteration makes an outlet invisible to the report."
     },
@@ -2455,7 +2455,7 @@
       "brief": "The sales report knows a product by its number, product_id, not by its name. Before counting the brand's sales you need to pull its numbers out of the price list.",
       "goal": "Return product_id, product_name and list_price for every Nettora product, ordered by product_id.",
       "hints": [
-        "Filtering is WHERE brand = 'Nettora': text goes in single quotes, and the condition comes after FROM.",
+        "Filtering is `WHERE brand = 'Nettora'`: text goes in single quotes, and the condition comes after FROM.",
         "The numbers are easier to keep in order: ORDER BY product_id at the very end."
       ],
       "explain": "Nettora has five products, all in Home care, numbered 19 to 23. The sales table knows a product only by that number, so the brand's sales are picked out with product_id IN (19, 20, 21, 22, 23): you fetch the keys from the directory yourself. It is an ordinary analyst step, keys from the directory first and facts second, and a join will take over that job later."
@@ -2467,7 +2467,7 @@
       "goal": "Return one row: units, the total units sold across the Nettora products (numbers 19 to 23) in January 2026.",
       "hints": [
         "The total of units is SUM(units): an aggregate that adds up a column across all selected rows.",
-        "Several values of one column go in IN with a list: product_id IN (19, 20, 21, 22, 23), the same list as when filtering the brand's products."
+        "Several values of one column go in `IN` with a list: `product_id IN (19, 20, 21, 22, 23)`, the same list as when filtering the brand's products."
       ],
       "explain": "In January 2026 Nettora sold 1,216 units. BETWEEN takes a range including both ends; dates here are text like 2026-01-12, and they compare as dates. The rows are summed across all five of the brand's products at once: in fact_sellout one row is one product in one outlet for one week."
     },
@@ -2485,7 +2485,7 @@
       "brief": "The sales report claims Nettora's sales fell nearly fourfold: January 2026 gave 1,216 units. You need the other end of the comparison: how much Nettora sold in June 2025.",
       "goal": "Return one row: units, the total units sold across the Nettora products (numbers 19 to 23) in June 2025.",
       "hints": [
-        "There are two conditions, both after WHERE: the products, product_id IN (19, 20, 21, 22, 23), and the period, week_start BETWEEN '2025-06-01' AND '2025-06-30'; AND goes between them.",
+        "There are two conditions, both after WHERE: the products, `product_id IN (19, 20, 21, 22, 23)`, and the period, `week_start BETWEEN '2025-06-01' AND '2025-06-30'`; `AND` goes between them.",
         "The aggregate is already in the starter: only the WHERE line is missing."
       ],
       "explain": "4,702 units in June 2025 against 1,216 in January 2026: nearly fourfold, just as the report said. But that compares summer with winter, and the market has a yearly wave in any year. Nothing can be concluded about the brand from this gap yet: first you need to see what an ordinary winter looks like."
@@ -2596,7 +2596,7 @@
       "goal": "Return channel and units, the Nettora units from January 1 to June 30, 2025 in each of the five channels; a channel with no sales of the brand must stay in the result with a zero.",
       "hints": [
         "Build from the outlet directory, as in the task about channels since the start of the year: LEFT JOIN, and the conditions on sales (the brand's products and the period) go in ON, not in WHERE.",
-        "The brand's products come from a subquery on dim_product and are compared with IN: there are five of them, not one. COALESCE turns an empty sum into zero."
+        "The brand's products come from a subquery on dim_product and are compared with `IN`: there are five of them, not one. COALESCE turns an empty sum into zero."
       ],
       "explain": "In 2025 e-com took 15,258 units, modern trade 4,432, traditional trade 560, pharmacies and distributors zero. Since January of this year the same channels give 8,016, 1,539 and 303. It fell everywhere, and \"the brand rests on e-com\" is not confirmed: it simply falls more slowly there than elsewhere."
     },
@@ -2648,7 +2648,7 @@
       "goal": "Return month_start and units, the Nettora stock at distributors (the sum of units_on_hand) for June of each year, in ascending date order.",
       "hints": [
         "Stock lives in fact_stock, column units_on_hand; the brand is named in dim_product, so join on product_id.",
-        "June is picked by substr(s.month_start, 6, 2) = '06': two characters starting from the sixth. Group by the month itself and sort by it too."
+        "June is picked by `substr(s.month_start, 6, 2) = '06'`: two characters starting from the sixth. Group by the month itself and sort by it too."
       ],
       "explain": "1,046, 2,363, 4,224 units: Nettora stock at distributors in June grows year after year, fourfold in two years. The goods did not vanish on the way. They sit and pile up because the outlets do not take them."
     },

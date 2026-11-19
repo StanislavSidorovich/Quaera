@@ -13,6 +13,7 @@ import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { PredictResult } from './PredictResult';
 import { AfterReply } from './AfterReply';
+import { ProseText } from './ProseOps';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
 import { RunLogFigure } from './RunLogFigure';
 import { WavesStep, blankWavesState, type WavesState } from './WavesStep';
@@ -506,7 +507,7 @@ export function TaskView({
    * не провалился бы к task.goal вовсе.
    */
   const singleStep = steps.length === 1;
-  const workGoal = step.goal || (singleStep ? glossaryGoal ?? task.goal : null);
+  const workGoal = step.goal ? <ProseText text={step.goal} /> : singleStep ? glossaryGoal ?? <ProseText text={task.goal} /> : null;
 
   /**
    * Итог задания — сумма по шагам. Верно только тогда, когда верны все шаги:
@@ -617,8 +618,8 @@ export function TaskView({
           </div>
         )}
         <h2 style={{ fontSize: 17 }}>{task.title}</h2>
-        <p className="brief">{glossaryBrief ?? task.brief}</p>
-        <div className="goal">{glossaryGoal ?? task.goal}</div>
+        <p className="brief">{glossaryBrief ?? <ProseText text={task.brief} />}</p>
+        <div className="goal">{glossaryGoal ?? <ProseText text={task.goal} />}</div>
         {/*
          * Переход к вкладке «Код» — только для `tabbed` (см. выше), то есть
          * только на узком экране и только на шаге `compute`: interpret/order
@@ -1624,7 +1625,7 @@ function StepView({
         <div>
           {step.hints.slice(0, draft.hintsShown).map((h, i) => (
             <div className="hint" key={i}>
-              {h}
+              <ProseText text={h} />
             </div>
           ))}
           {draft.hintsShown < step.hints.length && (

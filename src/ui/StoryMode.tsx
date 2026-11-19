@@ -4,6 +4,7 @@ import type { Task } from '../content/types';
 import { CodeBlock } from './CodeBlock';
 import type { Executor, SchemaDoc } from '../engine/types';
 import { CODE_FENCE, isFencedCode, unfenceCode } from '../content/proseCode';
+import { chipOperators, stripInlineMarks } from '../content/proseOps';
 import { annotateSequence } from './GlossaryText';
 import { StoryArt, StoryPhoto } from './StoryArt';
 import { SchemaMap } from './SchemaMap';
@@ -234,14 +235,14 @@ function splitParaBlocks(pieces: ReactNode[]): ReactNode[][] {
  * одна фраза. Внутри кода глоссарий ничего не размечает, поэтому блок
  * кода — всегда чистая строка.
  */
-function StoryPara({ text, pieces }: { text: string; pieces: ReactNode[] | undefined }) {
+function StoryPara({ text, pieces, marks }: { text: string; pieces: ReactNode[] | undefined; marks?: string[] }) {
   if (!text.includes(CODE_FENCE)) return <p className="story-mode-para">{pieces ?? text}</p>;
   return (
     <>
       {splitParaBlocks(pieces ?? [text]).map((block, j) => {
         const plain = block.every((x) => typeof x === 'string') ? block.join('') : null;
         return plain !== null && isFencedCode(plain) ? (
-          <CodeBlock className="story-mode-code" code={unfenceCode(plain)} key={j} />
+          <CodeBlock className="story-mode-code" code={unfenceCode(plain)} marks={marks} key={j} />
         ) : (
           <p className="story-mode-para" key={j}>
             {block}
@@ -485,7 +486,7 @@ export function StoryMode({
     /* Реплика после задания по-английски (проба озвучки): слот «a<шаг>» в манифесте. */
     const enAfter = storyCampaign('en').missions.find((m) => m.id === mission.id)?.steps[phase.step]?.after;
     const afterLines: SpokenLine[] = enAfter
-      ? [{ text: enAfter.text.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' '), speaker: enAfter.speaker ?? speakerId(enAfter.from), id: `${mission.id}/a${phase.step}` }]
+      ? [{ text: stripInlineMarks(enAfter.text.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ')), speaker: enAfter.speaker ?? speakerId(enAfter.from), id: `${mission.id}/a${phase.step}` }]
       : [];
     /*
      * Карточка приёма поверх задания, а не отдельным экраном: полоса дня
@@ -616,7 +617,7 @@ export function StoryMode({
 
   /* Английская версия реплик той же миссии (проба озвучки). */
   const enMission = storyCampaign('en').missions.find((m) => m.id === mission.id);
-  const stripCode = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ');
+  const stripCode = (x: string) => stripInlineMarks(x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' '));
   /* `slot` — префикс слота в манифесте: «m» для брифа, «i<шаг>.» для разговора между делом. */
   const asLines = (msgs: StoryMessage[] | undefined, slot: string): SpokenLine[] => {
     return (msgs ?? []).map((m, i) => ({
@@ -797,7 +798,7 @@ export function StoryMode({
             {intro.title && <h2>{intro.title}</h2>}
             {intro.paras.map((p, i) => (
               <Fragment key={i}>
-                <StoryPara text={p} pieces={glossaryRendered[i]} />
+                <StoryPara text={p} pieces={glossaryRendered[i]} marks={chipOperators(intro.paras)} />
                 {figure && figure.after === i && <figure.Figure />}
               </Fragment>
             ))}

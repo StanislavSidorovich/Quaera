@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { storyCampaign } from '../content/storymode';
 import { CODE_FENCE } from '../content/proseCode';
+import { stripInlineMarks } from '../content/proseOps';
 import {
   CAST_SPEAKERS,
   SPEAKER_GENDER,
@@ -34,7 +35,7 @@ interface Sample {
 function dialogsBySpeaker(): Record<SpeakerId, Sample[]> {
   const out = {} as Record<SpeakerId, Sample[]>;
   for (const id of CAST_SPEAKERS) out[id] = [];
-  const strip = (x: string) => x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ').replace(/\s+/g, ' ').trim();
+  const strip = (x: string) => stripInlineMarks(x.split(CODE_FENCE).filter((_, i) => i % 2 === 0).join(' ')).replace(/\s+/g, ' ').trim();
   for (const m of storyCampaign('en').missions) {
     const add = (msg: { from: string; speaker?: SpeakerId; text: string }, slot: string) => {
       const id = msg.speaker ?? speakerId(msg.from);

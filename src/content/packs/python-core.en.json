@@ -130,8 +130,8 @@
       "brief": "The summer catalog only takes drinks from the «Aqualis» and «Fruvia» brands, and only items priced above 100 ¥; cheap ones don't go into a promo.",
       "goal": "Return sku_code, product_name, brand, list_price for products of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
-        "A list of values for one column is conveniently checked with .isin([...]), the pandas equivalent of SQL IN.",
-        "\"Strictly above\" is >, not >=. Conditions are combined with & (ampersand), not and — and doesn't work on a pandas column."
+        "A list of values for one column is conveniently checked with .isin([...]), the pandas equivalent of SQL `IN`.",
+        "\"Strictly above\" is `>`, not `>=`. Conditions are combined with & (ampersand), not and — and doesn't work on a pandas column."
       ],
       "explain": "& and | are not and/or: and/or in Python expect a single boolean value, while a column is a Series of thousands of True/False at once, and and has no way to decide what to do with it. & and | compute logic element-wise, and that's the only option that works for a pandas filter. Hence the parentheses around each condition: & binds tighter than ==, so without parentheses Python would first evaluate 'Aqualis' & (list_price > 100) and fail with a TypeError about \"rand_\", a message that gives no hint at the cause unless you remember operator precedence."
     },
@@ -161,7 +161,7 @@
       ],
       "hints": [
         "and is a Python-language operator, not a pandas one. It expects one True/False on each side.",
-        "(dim_product['list_price'] > 100) isn't a single value, it's a column of True/False, one per row."
+        "(`dim_product['list_price'] > 100`) isn't a single value, it's a column of True/False, one per row."
       ],
       "explain": "The message 'The truth value of a Series is ambiguous' is the most common beginner's mistake in pandas, and it's worth seeing consciously once, rather than in a panic in the middle of a real task. The rule is simple: between two conditions on columns it's always & or |, and and/or are only for two already-resolved single values (two numbers, say)."
     },
@@ -169,9 +169,9 @@
       "id": "py-003",
       "title": "E-com customers for the logistics report",
       "brief": "Logistics puts together a separate report for marketplace warehouses (they're serviced differently from retail) and needs a short list of these outlets.",
-      "goal": "Return customer_id, customer_name and city only for customers with channel = 'ecom'.",
+      "goal": "Return customer_id, customer_name and city only for customers with `channel = 'ecom'`.",
       "hints": [
-        "The channel value is a string, compared with ==, like an ordinary text value.",
+        "The channel value is a string, compared with `==`, like an ordinary text value.",
         "The second blank is one more column name in the list passed to .loc."
       ],
       "explain": "loc[mask, column_list] isn't two different techniques, it's one call with two parts: to the left of the comma you decide which rows to take, to the right which columns to keep. In SQL that's WHERE and the SELECT list; here it's one operation, because both are just indexing into the table."
@@ -187,7 +187,7 @@
       "brief": "The category manager is pulling the strengthened «Forte» line into a separate section of the quarterly report; there aren't many of these products, and looking them up one by one in the reference table by hand isn't an option.",
       "goal": "Return sku_code, product_name for products whose product_name contains the substring 'Forte'.",
       "hints": [
-        "Text methods on a string column are called through .str, the pandas equivalent of LIKE '%...%'.",
+        "Text methods on a string column are called through .str, the pandas equivalent of `LIKE '%...%'`.",
         ".str.contains('Forte') returns a boolean column, which you can plug straight into .loc as a mask."
       ],
       "explain": ".str isn't decoration, it's a necessity: without it Python would try to call .contains() on the whole column at once and fail, because a Series as a whole has no such method. .str opens access to string methods element by element, for each value of the column separately, the pandas equivalent of how SQL applies LIKE to every row of a table."
@@ -269,7 +269,7 @@
         }
       ],
       "hints": [
-        "The five managers have role = 'manager', and none of them has their own manager_id, meaning the column contains NaN.",
+        "The five managers have `role = 'manager'`, and none of them has their own manager_id, meaning the column contains NaN.",
         "int64 is a type with no NaN. Since a gap needs to fit somewhere, pandas picks the nearest type that can hold it."
       ],
       "explain": "One and the same cause sits behind two frequent confusions: \"why is the id fractional\" and \"why did the sum of numbers turn into NaN when just one row was missing.\" pandas types a column as a whole, not value by value, and a single gap in an integer column changes the type of every one of its values at once."
@@ -285,7 +285,7 @@
       "brief": "The org chart needs a list of top-level employees, the ones who have no manager of their own.",
       "goal": "Return rep_id, rep_name, team for employees whose manager_id is empty.",
       "hints": [
-        "\"Empty\" in pandas is NaN, and checking for it is a separate method: .isna(), not == None and not == NaN.",
+        "\"Empty\" in pandas is NaN, and checking for it is a separate method: .isna(), not `==` None and not `==` NaN.",
         "The result of .isna() is already a boolean mask, and it can be plugged straight into .loc."
       ],
       "explain": "NaN is the only value in Python that isn't equal to itself, so df['x'] == None or df['x'] == float('nan') don't find gaps at all. .isna() is the only reliable way to check for them, and it's the same gap that prints manager_id as 1.0, 2.0 instead of 1, 2: two problems, one cause."
@@ -335,7 +335,7 @@
       "id": "py-012",
       "title": "Brand by product code",
       "brief": "A merchandiser is reconciling warehouse stock against the shelf and knows only the product_id from the delivery note. They need to quickly check which brand that is.",
-      "goal": "Return product_id and brand for the product with product_id = 5, setting product_id as the table's index and looking up the row with .loc.",
+      "goal": "Return product_id and brand for the product with `product_id = 5`, setting product_id as the table's index and looking up the row with .loc.",
       "hints": [
         "set_index('product_id') makes product_id the index; after that, rows are looked up through it via .loc, not through a mask on a column.",
         "The number in square brackets inside .loc is the index label to look up, not a position."
@@ -906,7 +906,7 @@
       "brief": "The weekly sales series for «Aqualis» swings too hard for a meeting chart. It needs 4-week smoothing next to the source data, in one table, so the chart shows both the level and the raw points.",
       "goal": "Add a rolling4 column to weekly with the rolling mean of units over the last 4 weeks.",
       "hints": [
-        "rolling(4) sets a 4-observation rolling-average window, the same number as ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL.",
+        "rolling(4) sets a 4-observation rolling-average window, the same number as `ROWS BETWEEN 3 PRECEDING AND CURRENT ROW` in SQL.",
         "After .rolling(4) you need .mean(), just as after .groupby(...): rolling() on its own only defines the window, it doesn't compute a statistic."
       ],
       "explain": "rolling(4).mean() is a direct equivalent of the window frame ROWS BETWEEN 3 PRECEDING AND CURRENT ROW in SQL: the window slides over the ordered series, including the current row and the three before it. The difference is in the notation: in SQL the frame is defined inside OVER(...), in pandas it's a separate call, .rolling(window_size), before the aggregating function."
@@ -960,11 +960,11 @@
     {
       "id": "py-040",
       "title": "A flag through .loc, no intermediate object",
-      "brief": "Large sales (revenue > 3000) need a flag right inside fact_sellout, set in one call through .loc, with no intermediate object that can get lost along the way.",
-      "goal": "Set flag=1 directly in fact_sellout for rows with revenue > 3000, modifying the table in a single lookup through .loc.",
+      "brief": "Large sales (`revenue > 3000`) need a flag right inside fact_sellout, set in one call through .loc, with no intermediate object that can get lost along the way.",
+      "goal": "Set flag=1 directly in fact_sellout for rows with `revenue > 3000`, modifying the table in a single lookup through .loc.",
       "hints": [
-        ".loc[mask, 'column'] = value is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
-        ".copy() here is only so that fact_sellout isn't modified directly in this task; the .loc[...] = ... technique itself works without it, if modifying the table is what you actually intend."
+        "`.loc[mask, 'column'] = value` is one lookup into the table instead of two consecutive [][], so pandas knows exactly what you mean and no warning appears.",
+        ".copy() here is only so that fact_sellout isn't modified directly in this task; the `.loc[...] = ...` technique itself works without it, if modifying the table is what you actually intend."
       ],
       "explain": ".loc[mask, 'column'] = value is a single operation instead of the two consecutive index lookups that left pandas unable to tell whether you were working with a view or a copy. The very same flag that failed to appear in the task about the flag that landed nowhere lands reliably here, because there's no intermediate object that can be discarded by accident."
     },
@@ -972,7 +972,7 @@
       "id": "py-041",
       "title": "A region's priority without apply",
       "brief": "A colleague wrote the \"region priority\" column through apply(lambda row: ..., axis=1); on 16 regions that goes unnoticed, but the same technique on fact_sellout (118 thousand rows) will noticeably hang in the browser.",
-      "goal": "Build a priority column for dim_region: 'key' for tier == 1, otherwise 'rest', through vectorized np.where and without apply().",
+      "goal": "Build a priority column for dim_region: 'key' for `tier == 1`, otherwise 'rest', through vectorized np.where and without apply().",
       "hints": [
         "np.where(condition, if_true, if_false) is the vectorized replacement for apply(lambda row: ... if ... else ..., axis=1): the condition is checked for the whole column at once, not row after row.",
         "np is already available in the task's code alongside pd and the tables; you can call it directly as np.where(...)."
@@ -1111,7 +1111,7 @@
       "id": "py-048",
       "title": "Setouchi's October, row by row",
       "brief": "Before computing anything about «Setouchi Trading», your manager wants a look at the raw rows for one month: what October 2025 looks like in the shipment table.",
-      "goal": "Return product_id and units from fact_sellin for distributor 1 with month_start = '2025-10-01'.",
+      "goal": "Return product_id and units from fact_sellin for distributor 1 with `month_start = '2025-10-01'`.",
       "hints": [
         "There are two conditions, one on distributor_id and one on month_start, each in its own brackets with & between them.",
         "month_start is stored as text, so it is compared with a quoted string: '2025-10-01'."
@@ -1234,7 +1234,7 @@
       "goal": "For Q1 2026, return distributor_id, shipped, sold and ratio (shipped / sold, rounded to two decimal places) for each distributor. The collapsed shipped and sold tables are already built in the starter: join them and add ratio.",
       "hints": [
         "The two collapsed tables join on distributor_id, which is present in both and unique in each.",
-        "ratio is a new column: result['ratio'] = (...).round(2)."
+        "ratio is a new column: `result['ratio'] = (...).round(2)`."
       ],
       "explain": "In Q1 2026 Setouchi is back in line: 13,432 shipped against 12,717 sold, 1.06, with the others between 1.02 and 1.05. By the yardstick the spike was found with, it is over. The yardstick is fair but narrow: the ratio compares how much came to the partner and how much left it within the same period, two flows. About what piled up between them earlier it says nothing at all.",
       "traps": [
@@ -1261,7 +1261,7 @@
       "goal": "Return sku_code, product_name, brand, list_price for products of the «Aqualis» and «Fruvia» brands priced strictly above 100.",
       "hints": [
         "Between .isin([...]) and the next condition pandas expects & (an ampersand), not and: and doesn't work on a column of thousands of values.",
-        "The second condition, in its own parentheses, is an ordinary price filter: dim_product['list_price'] > 100."
+        "The second condition, in its own parentheses, is an ordinary price filter: `dim_product['list_price'] > 100`."
       ],
       "explain": ".isin(['Aqualis', 'Fruvia']) is pandas's analogue of SQL's IN, and it's already sitting in the template. What's left by hand is the second condition and the connector between them: & evaluates logic element by element across the whole column at once, the only working option for a pandas filter, since and expects a single True/False but gets a Series of thousands instead. The parentheses around each condition aren't decoration: & binds tighter than >, and without them the expression would group in the wrong order."
     },
@@ -1280,9 +1280,9 @@
       "id": "py-060",
       "title": "Setouchi's discount by month",
       "brief": "The distributor KAM says Setouchi was offered a discount in the autumn to take more stock, \"we offered it ourselves.\" If a discount was offered, it should show up in the shipments, not just in words.",
-      "goal": "For distributor Setouchi (distributor_id = 1), return per month: month_start and discount_amount (the sum of discount given).",
+      "goal": "For distributor Setouchi (`distributor_id = 1`), return per month: month_start and discount_amount (the sum of discount given).",
       "hints": [
-        "Selecting one distributor is the same mask as in the quarterly rollup by distributor: distributor_id == 1.",
+        "Selecting one distributor is the same mask as in the quarterly rollup by distributor: `distributor_id == 1`.",
         "From there it's a familiar chain: group by month, sum the discount, bring the key back as a column: .groupby(...)['...'].sum().reset_index()."
       ],
       "explain": "The discount rose to 76,568 / 61,273 / 76,233 ¥ in October–December 2025, nearly double the usual 21,967–47,358 ¥. But units for those same months (the same quarterly rollup by distributor) also rose, 10,172 / 8,162 / 9,869 against 3,764–5,832 a year earlier, and the discount per unit didn't change: 7.5 ¥, same as any other month. The rise in the total is fully explained by the rise in volume, not by more generous terms: there was no volume discount, and Setouchi paid for the extra quarter itself, 2.29 million ¥ against 1.10 million a year before."
@@ -1302,7 +1302,7 @@
       "id": "py-067",
       "title": "Price with tax in one line",
       "brief": "The price list needs a table with the price including tax, but the dim_product reference has to stay as it is: other calculations expect it without new columns.",
-      "goal": "Build a result table from dim_product with a new column price_with_tax = list_price * 1.1 (a 10% tax, taken as an example), without changing dim_product itself.",
+      "goal": "Build a result table from dim_product with a new column `price_with_tax = list_price * 1.1` (a 10% tax, taken as an example), without changing dim_product itself.",
       "hints": [
         "assign(name=value) returns a new table with the column added and leaves the original alone.",
         "The new column name is passed as a keyword argument, without quotes: price_with_tax=... ."
@@ -1313,7 +1313,7 @@
       "id": "py-068",
       "title": "A \"backup copy\" of the reference",
       "brief": "An analyst makes a \"backup copy\" of the product reference by assignment, adds a column to it and is surprised: the column showed up in the original too.",
-      "goal": "Understand what the assignment backup = dim_product does: copies the table or gives it a second name.",
+      "goal": "Understand what the assignment `backup = dim_product` does: copies the table or gives it a second name.",
       "predictQuestion": "After these two lines: will the archived column appear in dim_product itself?",
       "options": [
         {
@@ -1335,8 +1335,8 @@
         }
       ],
       "hints": [
-        "In Python, a = b does not create a new object: both names point to the same one.",
-        "How would the same pair of lines end if the first were backup = dim_product.copy()?"
+        "In Python, `a = b` does not create a new object: both names point to the same one.",
+        "How would the same pair of lines end if the first were `backup = dim_product.copy()`?"
       ],
       "explain": "backup = dim_product gives the table a second name, not a copy, so backup[\"archived\"] = True changes the one table that is visible under two names. A real copy is dim_product.copy(): a new object with its own data, and a column added to it leaves the original alone. The same .copy() goes after a filter before writing into a slice, for the same reason: it is needed wherever independence from the source table is needed."
     },
@@ -1440,10 +1440,10 @@
         }
       ],
       "title": "Customers served by a distributor",
-      "brief": "A mailing needs a list of customers attached to a distributor. For the rest (the distributors themselves in the reference) served_by_distributor_id is empty, and a comparison with emptiness through == or != will not work.",
+      "brief": "A mailing needs a list of customers attached to a distributor. For the rest (the distributors themselves in the reference) served_by_distributor_id is empty, and a comparison with emptiness through `==` or `!=` will not work.",
       "goal": "Return columns customer_id and served_by_distributor_id for the customers in dim_customer whose served_by_distributor_id is filled in.",
       "hints": [
-        "The condition \"a value is present\" is a column method, the opposite of isna(); comparisons with NaN through == or != find nothing.",
+        "The condition \"a value is present\" is a column method, the opposite of isna(); comparisons with NaN through `==` or `!=` find nothing.",
         "Rows and columns can be selected in one .loc[condition, [columns]]."
       ],
       "explain": "notna() picks 132 customers, and the 12 distributors with an empty field stay out of the frame. The mistake \"!= None\" or \"== np.nan\" is the classic one here: NaN equals nothing, so the condition drops nothing and the result is the same 144 rows. A side effect of gaps is visible too: the distributor id is stored as float (3.0 instead of 3), because an integer column cannot hold NaN."

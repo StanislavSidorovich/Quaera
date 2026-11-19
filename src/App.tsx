@@ -49,6 +49,7 @@ import { buildLine, currentMissionIndex, type Mission } from './story/line';
 import { StoryMode, storyPhaseBefore, storyPhases, samePhase, type StoryPhase, type StoryStepView } from './ui/StoryMode';
 import { storyCampaign, storyClosesCampaign, storyFirstMissionOf, storyWeekOf, type StoryMission } from './content/storymode';
 import { TaskView, type TaskDraft, type TaskDraftStore, type TaskOutcome } from './ui/TaskView';
+import { ProseText } from './ui/ProseOps';
 import { gradeFromAttempt, isDue, review, selectSession } from './srs/scheduler';
 import { applyAttempt, clearedProgress, exportProgress, loadProgress, parseImportedProgress, saveProgress, skillState, streak, today, type Progress } from './srs/store';
 import type { Session } from '@supabase/supabase-js';
@@ -4370,8 +4371,8 @@ function TrackIntroScreen({
           {sample && (
             <div className="track-intro-sample">
               <p className="track-intro-sample-label">{t.trackIntro.sampleTitle}</p>
-              <p className="track-intro-sample-brief">{sample.brief}</p>
-              <p className="track-intro-sample-goal">{sample.goal}</p>
+              <p className="track-intro-sample-brief"><ProseText text={sample.brief} /></p>
+              <p className="track-intro-sample-goal"><ProseText text={sample.goal} /></p>
             </div>
           )}
           <div className="track-intro-stats">

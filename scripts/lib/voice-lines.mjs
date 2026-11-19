@@ -48,7 +48,8 @@ export function spokenText(raw) {
     .split(FENCE)
     .filter((_, i) => i % 2 === 0)
     .join(' ');
-  let t = noCode.replace(/\s+/g, ' ').trim();
+  // Однострочный код в обратных кавычках (proseOps.ts): голос читает слово, не кавычки.
+  let t = noCode.replace(/(?<!`)`([^`\n]+)`(?!`)/g, '$1').replace(/\s+/g, ' ').trim();
   if (t.length > 1 && t.startsWith('"') && t.endsWith('"')) t = t.slice(1, -1).trim();
   return t;
 }

@@ -732,7 +732,7 @@
     {
       "id": "mdl-022",
       "title": "SUM inside a row-level column",
-      "brief": "A new calculated column, RowRevenue, gets added to fact_sellout, to look at each individual sale's revenue right next to the row. In the table's first row, revenue = 398.31.",
+      "brief": "A new calculated column, RowRevenue, gets added to fact_sellout, to look at each individual sale's revenue right next to the row. In the table's first row, `revenue = 398.31`.",
       "goal": "Work out what the column shows in the table's first row.",
       "predictQuestion": "What does this column show in the first row?",
       "hints": [
@@ -1184,7 +1184,7 @@
     {
       "id": "mdl-038",
       "title": "The filter on a different column survives",
-      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand: dim_region[region_name] = «Tokyo». Tokyo's revenue across every brand is ¥8,876,489.",
+      "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand: `dim_region[region_name] = \"Tokyo\"`. Tokyo's revenue across every brand is ¥8,876,489.",
       "goal": "Work out which filters act on the calculation.",
       "predictQuestion": "What does the measure return with a region slicer?",
       "hints": [
@@ -2510,7 +2510,7 @@
     {
       "id": "mdl-088",
       "title": "A key that is declared but stops no one",
-      "brief": "In the customer table the key customer_id is declared but marked NOT ENFORCED: the warehouse does not check it. After the latest load the relationship to sales in the model suddenly became many-to-many and one customer's revenue doubled.",
+      "brief": "In the customer table the key customer_id is declared but marked `NOT ENFORCED`: the warehouse does not check it. After the latest load the relationship to sales in the model suddenly became many-to-many and one customer's revenue doubled.",
       "goal": "Work out where to look for the cause and how to confirm it.",
       "figure": {
         "kind": "table",
@@ -2541,7 +2541,7 @@
       },
       "predictQuestion": "How do you find the cause and what will it show?",
       "hints": [
-        "What does NOT ENFORCED mean: is the key written down, or checked?",
+        "What does `NOT ENFORCED` mean: is the key written down, or checked?",
         "Which selection shows rows with the same customer_id? Think of GROUP BY and a condition on the group."
       ],
       "explain": "A key in a warehouse comes in two states: checked and merely descriptive. A descriptive key is useful: the model picks the relationship type by it and the optimizer builds its plan on it. But it does not protect: a repeat gets through, and the model, seeing it, switches cardinality to many-to-many and slices start counting the customer twice. So for a key without enforcement the uniqueness check goes into the load itself: the same query with GROUP BY and HAVING COUNT(*) > 1 that finds duplicates in the raw export in the SQL track runs after the customer table and must return nothing. The mistake also shows in the model: a relationship that should be one-to-many and turned into something else almost always means a repeat in the lookup key.",

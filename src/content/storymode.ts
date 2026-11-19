@@ -543,7 +543,7 @@ const ru: StoryCampaign = {
             scene: 'filter',
             title: 'Отбор строк',
             paras: [
-              'Строки отбирает WHERE, и стоит он после FROM. Одно условие устроено просто — колонка, знак, значение: WHERE division = \'FMCG\'. Текст обязательно в одинарных кавычках, число — без них: WHERE list_price > 100.',
+              'Строки отбирает WHERE, и стоит он после FROM. Одно условие устроено просто — колонка, знак, значение: `WHERE division = \'FMCG\'`. Текст обязательно в одинарных кавычках, число — без них: `WHERE list_price > 100`.',
               'Начнём с чужого запроса, который «ничего не находит»: WHERE сравнивает текст побуквенно, и решает всё одна буква. COUNT(*) в нём — просто «сколько строк нашлось».',
             ],
           },
@@ -552,8 +552,8 @@ const ru: StoryCampaign = {
           taskId: 'sql-003',
           intro: {
             paras: [
-              'Теперь то же самое рукой, но условий несколько: в каталог берут два бренда и только позиции дороже сотни. «Строго больше» — это >, «не меньше» — >=.',
-              'AND требует, чтобы выполнились оба условия сразу. А когда одна колонка может принимать несколько значений, вместо цепочки OR пишут IN со списком: WHERE brand IN (\'Aqualis\', \'Fruvia\'). Короче — и безопаснее: у AND и OR разный приоритет, и на этом ошибаются чаще, чем на чём-либо ещё.',
+              'Теперь то же самое рукой, но условий несколько: в каталог берут два бренда и только позиции дороже сотни. Для «дороже» нужен `>`, для «не меньше» — `>=`.',
+              '`AND` требует, чтобы выполнились оба условия сразу. А когда одна колонка может принимать несколько значений, вместо цепочки `OR` пишут `IN` со списком: `WHERE brand IN (\'Aqualis\', \'Fruvia\')`. Короче — и безопаснее: у `AND` и `OR` разный приоритет, и на этом ошибаются чаще, чем на чём-либо ещё.',
             ],
           },
           after: {
@@ -667,8 +667,8 @@ const ru: StoryCampaign = {
             scene: 'sellout',
             title: 'Продажи одного бренда за месяц',
             paras: [
-              'Теперь fact_sellout: продажи, одна строка — товар в одной точке за неделю. Бренда в нём нет, только product_id — вчерашние номера для этого и доставались. Несколько значений одной колонки отбирает IN со списком: product_id IN (19, 20, 21, 22, 23).',
-              'Месяц отбирается диапазоном: week_start BETWEEN \'2026-01-01\' AND \'2026-01-31\'. BETWEEN берёт обе границы включительно; даты здесь — текст вида 2026-01-12, и сравниваются они как даты. Сумма штук — SUM(units).',
+              'Теперь fact_sellout: продажи, одна строка — товар в одной точке за неделю. Бренда в нём нет, только product_id — вчерашние номера для этого и доставались. Несколько значений одной колонки отбирает `IN` со списком: `product_id IN (19, 20, 21, 22, 23)`.',
+              'Месяц отбирается диапазоном: `week_start BETWEEN \'2026-01-01\' AND \'2026-01-31\'`. `BETWEEN` берёт обе границы включительно; даты здесь — текст вида 2026-01-12, и сравниваются они как даты. Сумма штук — SUM(units).',
               'В задании два пропуска: функция суммы и слово перед списком номеров.',
             ],
           },
@@ -750,7 +750,7 @@ const ru: StoryCampaign = {
             paras: [
               'Месяца в таблице нет — есть неделя, week_start, вида 2025-03-17. Но первые семь символов этой строки и есть месяц: substr(week_start, 1, 7), то есть «с первого символа взять семь», даёт 2025-03.',
               'Группировать можно не только по колонке, но и по выражению. Чтобы не повторять его дважды, пишут GROUP BY 1 — «по первой колонке в SELECT».',
-              'Год в шаблоне уже отобран: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
+              'Год в шаблоне уже отобран: `week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'`. `BETWEEN` задаёт диапазон вместе с обеими границами, а границы у него текстовые ровно потому, что дата здесь текст.',
               'Как это выглядело минуту назад, на ассортименте по брендам:\n\n```\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n```\n\nАгрегат всегда стоит перед мерой: COUNT(*), AVG(list_price). В твоём задании три пропуска: чем вырезать месяц из даты, чем считать штуки и по чему группировать.',
             ],
           },
@@ -847,7 +847,7 @@ const ru: StoryCampaign = {
             title: 'Один и тот же кусок года',
             paras: [
               'В пятницу нет новых слов: всё нужное ты печатал. Год вырезается тем же substr, что вчера вырезал месяц, только с первого символа и четыре знака: substr(week_start, 1, 4).',
-              'Условие на месяц уже в заготовке: substr(week_start, 6, 2) <= \'06\'. Шестой и седьмой символы даты — номер месяца, строки сравниваются по порядку символов, а месяц не больше шестого — это январь–июнь. Запрос вернёт три строки: по одной на год.',
+              'Условие на месяц уже в заготовке: `substr(week_start, 6, 2) <= \'06\'`. Шестой и седьмой символы даты — номер месяца, строки сравниваются по порядку символов, а месяц не больше шестого — это январь–июнь. Запрос вернёт три строки: по одной на год.',
             ],
           },
           after: {
@@ -1004,7 +1004,7 @@ const ru: StoryCampaign = {
             paras: [
               'Таблицы связаны ключами. В fact_sellout у каждой строки стоит product_id, и ровно такой же product_id есть в dim_product. JOIN подставляет к каждой строке продаж её товар — а вместе с ним бренд, название и цену.',
               'Пишется это так:\n\n```\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n```\n\nУсловие после ON и есть «по какому ключу совпадать». Короткие имена f и p — псевдонимы таблиц: без них пришлось бы писать полное имя перед каждой колонкой.',
-              'И период — с начала года по последнюю неделю в данных. Это одно условие, а не диапазон: WHERE f.week_start >= \'2026-01-01\'. Дата здесь текст вида 2026-03-16, и такой текст сравнивается ровно как дата: всё, что не меньше начала года, и есть «с начала года». Верхняя граница не нужна — данные сами кончаются на последней неделе.',
+              'И период — с начала года по последнюю неделю в данных. Это одно условие, а не диапазон: `WHERE f.week_start >= \'2026-01-01\'`. Дата здесь текст вида 2026-03-16, и такой текст сравнивается ровно как дата: всё, что не меньше начала года, и есть «с начала года». Верхняя граница не нужна — данные сами кончаются на последней неделе.',
               'В задании два пропуска: строка соединения и строка отбора.',
             ],
           },
@@ -1081,7 +1081,7 @@ const ru: StoryCampaign = {
             paras: [
               'И то, о чём просила Аоки-сан: бренды, у которых одновременно большая выручка и широкий охват. Охват — число разных точек, COUNT(DISTINCT customer_id): понедельничная функция.',
               'Фильтровать по агрегату WHERE не умеет — он отбирает строки до группировки, а выручка бренда появляется только после неё. Для этого есть HAVING: тот же фильтр, но после GROUP BY.',
-              'Пишется это так:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через AND, — ровно как в WHERE.',
+              'Пишется это так:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nПосле HAVING стоит тот же агрегат, что и в SELECT, и сравнивается с числом. Условий может быть несколько, через `AND`, — ровно как в WHERE.',
               'HAVING в задании уже написан. Соединение и группировку по бренду допиши сам: первое ты печатал вчера, второе — когда искал форму года.',
             ],
           },
@@ -1269,7 +1269,7 @@ const ru: StoryCampaign = {
             paras: [
               'Вопрос субботы: в скольких разных точках продавался каждый бренд с начала 2026 года. Части все знакомые: соединение продаж со справочником товаров и период без верхней границы — со вторника, счёт разных точек — с понедельника, группировка и сортировка по убыванию — из самых первых дней.',
               'Порядок частей в запросе тоже знакомый: что показать, откуда, какие строки, по чему свернуть, как упорядочить. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
-              'Когда ответ за 2026 год пройдёт проверку, «Выполнить» никуда не денется — поменяй f.week_start >= \'2026-01-01\' на f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\' и нажми его ещё раз. Числа за прошлый год в следующем сообщении будут посчитаны тобой, а не выданы готовыми.',
+              'Когда ответ за 2026 год пройдёт проверку, «Выполнить» никуда не денется — поменяй `f.week_start >= \'2026-01-01\'` на `f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\'` и нажми его ещё раз. Числа за прошлый год в следующем сообщении будут посчитаны тобой, а не выданы готовыми.',
             ],
           },
           after: {
@@ -1334,7 +1334,7 @@ const ru: StoryCampaign = {
             paras: [
               'Обычный JOIN оставляет только совпавшие пары. Если в каком-то канале новинку не продали ни разу, канала в ответе не будет вовсе — и в отчёте появится дыра, которую никто не заметит, потому что пустая строка выглядит так же, как её отсутствие.',
               'LEFT JOIN сохраняет всю левую таблицу и подставляет NULL там, где пары не нашлось. Пишется он так:\n\n```\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n```\n\nТовар, который не продался ни разу, останется в ответе. COALESCE(SUM(f.units), 0) подменяет его пустоту нулём: ноль — это ответ «продаж не было», а NULL в отчёте читается как «не считали».',
-              'Второе, что понадобится, — условие на товар. В fact_sellout товар записан не названием, а номером, поэтому номер сначала достают запросом внутри запроса. Читать его стоит в два хода. Внутренний запрос сам по себе\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nвернёт одно число — 43. Внешний подставит это число на место скобок, как если бы вместо (SELECT …) было написано 43. Сравнить с названием напрямую, f.product_id = \'Vitanor Forte x30\', не выйдет: номер с текстом не совпадёт ни в одной строке, и запрос без единой ошибки покажет ноль везде.',
+              'Второе, что понадобится, — условие на товар. В fact_sellout товар записан не названием, а номером, поэтому номер сначала достают запросом внутри запроса. Читать его стоит в два хода. Внутренний запрос сам по себе\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nвернёт одно число — 43. Внешний подставит это число на место скобок, как если бы вместо (SELECT …) было написано 43. Сравнить с названием напрямую, `f.product_id = \'Vitanor Forte x30\'`, не выйдет: номер с текстом не совпадёт ни в одной строке, и запрос без единой ошибки покажет ноль везде.',
               'Стоит это условие в ON, а не в WHERE, — почему, покажет третье задание дня. Здесь запрос почти собран: подзапрос уже написан, не хватает трёх слов.',
             ],
           },
@@ -1433,9 +1433,9 @@ const ru: StoryCampaign = {
             scene: 'dropped',
             title: 'Признак того, что пары не нашлось',
             paras: [
-              'Теперь по делу: точки, где Nettora не продавалась ни разу. У бренда пять товаров, а не один, поэтому подзапрос в ON вернёт не одно число, а список из пяти, и сравнивают с ним через IN, а не через =: строка продаж подходит, если её товар — любой из пяти.',
+              'Теперь по делу: точки, где Nettora не продавалась ни разу. У бренда пять товаров, а не один, поэтому подзапрос в ON вернёт не одно число, а список из пяти, и сравнивают с ним через `IN`, а не через `=`: строка продаж подходит, если её товар — любой из пяти.',
               'Прежде чем фильтровать, представь, что соберёт такой LEFT JOIN. У точки, где Nettora продавалась, строк много — по одной на каждую неделю и товар, и sellout_id в них заполнен. У точки, где её не было ни разу, строка ровно одна: слева имя и город, справа пусто во всех колонках fact_sellout. Нужны ровно такие строки.',
-              'Спросить «здесь пусто?» нужно тем же словом IS NULL, что в прошлом задании, только теперь про правую таблицу соединения:\n\n```\nf.sellout_id IS NULL\n```\n\nПроверяют колонку, которая у настоящей продажи пустой не бывает, — надёжнее всего ключ. WHERE в заготовке уже стоит, поэтому условие дописывается после AND, второй WHERE не нужен.',
+              'Спросить «здесь пусто?» нужно тем же словом IS NULL, что в прошлом задании, только теперь про правую таблицу соединения:\n\n```\nf.sellout_id IS NULL\n```\n\nПроверяют колонку, которая у настоящей продажи пустой не бывает, — надёжнее всего ключ. WHERE в заготовке уже стоит, поэтому условие дописывается после `AND`, второй WHERE не нужен.',
             ],
           },
           after: {
@@ -1577,7 +1577,7 @@ const ru: StoryCampaign = {
           taskId: 'sql-101',
           intro: {
             paras: [
-              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nПризнак акции — заполненный promo_id, поэтому и проверка через IS NOT NULL. Вне акции он пуст, и это вторничное IS NULL. Две суммы в задании различаются ровно этим словом — его и допиши. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
+              'А теперь то же самое, но внутри агрегата: одна сумма считает выручку в акциях, вторая — вне их.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nПризнак акции — заполненный promo_id, поэтому и проверка через `IS NOT NULL`. Вне акции он пуст, и это вторничное IS NULL. Две суммы в задании различаются ровно этим словом — его и допиши. Ноль в ELSE обязателен: без него в сумму попадёт NULL, и она молча испортится.',
             ],
           },
           after: {
@@ -1683,7 +1683,7 @@ const ru: StoryCampaign = {
           intro: {
             title: 'Свой запрос с чистого листа',
             paras: [
-              'Части знакомы все: LEFT JOIN от справочника точек — с понедельника, IS NULL и подзапрос с товарами бренда через IN — со вторника, период в ON рядом с ним — со среды. Отбор сетей — обычный WHERE: он про левую таблицу, и ему место там.',
+              'Части знакомы все: LEFT JOIN от справочника точек — с понедельника, IS NULL и подзапрос с товарами бренда через `IN` — со вторника, период в ON рядом с ним — со среды. Отбор сетей — обычный WHERE: он про левую таблицу, и ему место там.',
             ],
           },
           after: {
@@ -1728,7 +1728,7 @@ const ru: StoryCampaign = {
             paras: [
               'WITH заводит временную таблицу на время одного запроса. Она считается один раз, у неё есть имя и колонки, и дальше с ней работают как с настоящей:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',
               'Зачем это нужно ровно сегодня: среднее по точке — это AVG от сумм по точкам, а вложить SUM в AVG в одном SELECT нельзя. Свернули один раз — дальше берёте среднее от готовой колонки. В задании WITH и имя промежуточной таблицы — два пропуска, остальное готово: как берётся год, как определяется «потерянная» точка и что сворачивается.',
-              'Статус точки — выражение customer_id IN (подзапрос): оно даёт 1, если точка есть в списке тех, кто продаёт Nettora в 2026-м, и 0, если нет.',
+              'Статус точки — выражение `customer_id IN (подзапрос)`: оно даёт 1, если точка есть в списке тех, кто продаёт Nettora в 2026-м, и 0, если нет.',
             ],
           },
           after: {
@@ -1844,7 +1844,7 @@ const ru: StoryCampaign = {
             title: 'Соединение по неуникальному полю',
             paras: [
               'Соединять таблицы можно по любому общему полю, но осмысленно — только по такому, где значение в правой таблице встречается один раз. Бренд в справочнике акций так не устроен: у одного бренда акций много, и каждая строка продаж совпадёт с каждой из них.',
-              'Признак беды в тексте запроса виден заранее: JOIN dim_promo m ON m.brand = p.brand соединяет по названию, а не по ключу акции.',
+              'Признак беды в тексте запроса виден заранее: `JOIN dim_promo m ON m.brand = p.brand` соединяет по названию, а не по ключу акции.',
             ],
           },
         },
@@ -1957,7 +1957,7 @@ const ru: StoryCampaign = {
             paras: [
               'Отгрузки лежат в fact_sellin помесячно и по дистрибьюторам, продажи — в fact_sellout понедельно и по точкам. Сложить их напрямую нельзя: разная гранулярность, и урок про размножение строк ровно об этом.',
               'Способ единственный и уже знакомый: свернуть каждый факт своим WITH до одной строки на дистрибьютора, а потом соединить два свёрнутых результата. Точка знает своего дистрибьютора — c.served_by_distributor_id, по нему продажи и собираются.',
-              'Нового в этом запросе нет ничего: WITH и соединение двух выражений из вторника и четверга, деление через 1.0 оттуда же, JOIN, BETWEEN и ORDER BY DESC — давно знакомые. Собери и посмотри на числа: тебе нужен не первый в списке, а форма всего списка.',
+              'Нового в этом запросе нет ничего: WITH и соединение двух выражений из вторника и четверга, деление через 1.0 оттуда же, JOIN, `BETWEEN` и ORDER BY DESC — давно знакомые. Собери и посмотри на числа: тебе нужен не первый в списке, а форма всего списка.',
             ],
           },
           after: {
@@ -2357,13 +2357,13 @@ const ru: StoryCampaign = {
           intro: {
             paras: [
               'Первое, чего нет у сырого текста, — гарантий. Одно и то же значение приходит в разном регистре, потому что источников несколько и правила у них свои.',
-              'Отбирать такое равенством нельзя: = сравнивает строки побайтово. Для текста есть LIKE, у него другие правила: % означает «любое число любых знаков», _ — ровно один, а латинские буквы разного регистра LIKE по умолчанию считает одинаковыми. Пишется он на месте равенства: WHERE sku_code LIKE \'AQUA001\'.',
+              'Отбирать такое равенством нельзя: `=` сравнивает строки побайтово. Для текста есть `LIKE`, у него другие правила: % означает «любое число любых знаков», _ — ровно один, а латинские буквы разного регистра `LIKE` по умолчанию считает одинаковыми. Пишется он на месте равенства: `WHERE sku_code LIKE \'AQUA001\'`.',
               'Ниже условие без единого подстановочного знака. Реши, что оно вернёт.',
             ],
           },
           after: {
             from: 'Ваш руководитель',
-            text: '«163 против 107 — то есть каждая третья строка по этому артикулу нашлась бы только одним из двух способов. Запомни это как правило: на сыром слое = и LIKE отвечают на разные вопросы, и выбирать между ними надо осознанно, а не по привычке.»',
+            text: '«163 против 107 — то есть каждая третья строка по этому артикулу нашлась бы только одним из двух способов. Запомни это как правило: на сыром слое `=` и `LIKE` отвечают на разные вопросы, и выбирать между ними надо осознанно, а не по привычке.»',
           },
         },
         {
@@ -2384,7 +2384,7 @@ const ru: StoryCampaign = {
           intro: {
             paras: [
               'И третье — то, ради чего мы сюда пришли. Ито-сан сказал, что сеть записана двумя способами; проверяется это одним запросом, и приём в нём уже знакомый.',
-              'Условная агрегация: SUM(CASE WHEN условие THEN 1 ELSE 0 END) — это «сколько строк подошло». Ты собирал такое, когда делил продажи Nettora на акции и базу, и каркас уже стоит в заготовке. Рукой — условие второй колонки: вместо равенства LIKE с процентами по краям, потому что имя сети — часть названия точки, а не всё оно. И связка третьей: строка идёт в общий счёт, если подходит любое из двух написаний, — два условия через OR.',
+              'Условная агрегация: SUM(CASE WHEN условие THEN 1 ELSE 0 END) — это «сколько строк подошло». Ты собирал такое, когда делил продажи Nettora на акции и базу, и каркас уже стоит в заготовке. Рукой — условие второй колонки: вместо равенства `LIKE` с процентами по краям, потому что имя сети — часть названия точки, а не всё оно. И связка третьей: строка идёт в общий счёт, если подходит любое из двух написаний, — два условия через `OR`.',
             ],
           },
           after: {
@@ -2525,7 +2525,7 @@ const ru: StoryCampaign = {
             title: 'Свой запрос с чистого листа',
             paras: [
               'Вопрос субботы: единственная ли оговорка в письме? Проверить, не осталось ли других, можно только одним способом — сверить всю сырую выгрузку со справочником точек целиком, а не по одному имени.',
-              'Части все знакомые: LEFT JOIN от выгрузки к справочнику и IS NULL — из поиска точек без Nettora, группировка и сортировка по убыванию — из самых первых дней. LIKE сегодня не нужен: сравниваешь имя как есть, равенством. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
+              'Части все знакомые: LEFT JOIN от выгрузки к справочнику и IS NULL — из поиска точек без Nettora, группировка и сортировка по убыванию — из самых первых дней. `LIKE` сегодня не нужен: сравниваешь имя как есть, равенством. Подсказки на месте, но сначала попробуй без них — ради этого суббота и есть.',
             ],
           },
           after: {
@@ -2661,7 +2661,7 @@ const ru: StoryCampaign = {
       messages: [
         {
           from: 'Ваш руководитель',
-          text: '«Вчера доставал колонки, сегодня — строки. Дальше вся неделя упрётся в один отбор: distributor_id = 1, это и есть Setouchi. Научись отбирать строки уверенно, иначе всё, что посчитаешь поверх, будет посчитано не по тем строкам.»',
+          text: '«Вчера доставал колонки, сегодня — строки. Дальше вся неделя упрётся в один отбор: `distributor_id = 1`, это и есть Setouchi. Научись отбирать строки уверенно, иначе всё, что посчитаешь поверх, будет посчитано не по тем строкам.»',
         },
         {
           from: 'Мори-сан, КАМ по дистрибьюторам',
@@ -2675,7 +2675,7 @@ const ru: StoryCampaign = {
             scene: 'filter',
             title: 'Маска вместо WHERE',
             paras: [
-              'Строки в pandas отбирает маска: выражение, посчитанное для каждой строки отдельно. dim_customer[\'channel\'] == \'ecom\' — это не число и не таблица, а колонка из True и False длиной во всю таблицу.',
+              'Строки в pandas отбирает маска: выражение, посчитанное для каждой строки отдельно. `dim_customer[\'channel\'] == \'ecom\'` — это не число и не таблица, а колонка из True и False длиной во всю таблицу.',
               'Дальше маска ставится в .loc, а рядом с ней — список нужных колонок: dim_customer.loc[маска, [\'customer_id\', \'city\']]. Через запятую в .loc стоят два разных вопроса — какие строки и какие колонки. В SQL они разнесены по разным концам запроса, здесь стоят рядом.',
             ],
           },
@@ -2684,7 +2684,7 @@ const ru: StoryCampaign = {
           taskId: 'py-002',
           intro: {
             paras: [
-              'Условий обычно больше одного, и здесь pandas расходится с обычным Python. Слова and и or рассчитаны на одно значение, а у нас их тысячи — по одному на строку. Поэтому маски соединяются знаками: (dim_product[\'list_price\'] > 100) & (dim_product[\'brand\'] == \'Aqualis\'). Скобки вокруг каждой части обязательны — без них приоритет операций разберёт выражение не так.',
+              'Условий обычно больше одного, и здесь pandas расходится с обычным Python. Слова and и or рассчитаны на одно значение, а у нас их тысячи — по одному на строку. Поэтому маски соединяются знаками: (`dim_product[\'list_price\'] > 100`) & (`dim_product[\'brand\'] == \'Aqualis\'`). Скобки вокруг каждой части обязательны — без них приоритет операций разберёт выражение не так.',
               'Ниже то же самое, но написано словом and. Прочитайте и скажите, что произойдёт.',
             ],
           },
@@ -2697,7 +2697,7 @@ const ru: StoryCampaign = {
           taskId: 'py-058',
           intro: {
             paras: [
-              'Теперь снова рукой, но третий сегодняшний приём уже стоит в шаблоне готовым: .isin([\'Aqualis\', \'Fruvia\']) — точный аналог IN из SQL.',
+              'Теперь снова рукой, но третий сегодняшний приём уже стоит в шаблоне готовым: .isin([\'Aqualis\', \'Fruvia\']) — точный аналог `IN` из SQL.',
               'Рукой — вторая половина маски: цена дороже 100, в своих скобках, и знак между половинами. Отдел промо просит прайс-лист по двум брендам, и только по позициям дороже 100.',
             ],
           },
@@ -2735,7 +2735,7 @@ const ru: StoryCampaign = {
           taskId: 'py-048',
           intro: {
             paras: [
-              'Вчерашний отбор, только по делу. Setouchi — это distributor_id = 1, а месяц лежит в колонке month_start текстом: \'2025-10-01\'. Условий два, каждое в своих скобках, между ними &.',
+              'Вчерашний отбор, только по делу. Setouchi — это `distributor_id = 1`, а месяц лежит в колонке month_start текстом: \'2025-10-01\'. Условий два, каждое в своих скобках, между ними &.',
               'Достаньте строки Setouchi за октябрь 2025 года: какой товар и сколько штук.',
             ],
           },
@@ -3017,7 +3017,7 @@ const ru: StoryCampaign = {
           taskId: 'py-035',
           intro: {
             paras: [
-              'Лечится одной строкой до set_index: weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\']). Рядом обычно стоит третий вызов подготовки, .sort_index(), — он выстраивает даты по возрастанию. Для resample он не обязателен, а зачем нужен, станет видно завтра.',
+              'Лечится одной строкой до set_index: `weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\'])`. Рядом обычно стоит третий вызов подготовки, .sort_index(), — он выстраивает даты по возрастанию. Для resample он не обязателен, а зачем нужен, станет видно завтра.',
               'После подготовки частота меняется одним вызовом: .resample(\'MS\') собирает наблюдения по началам месяцев (Month Start). Считать по-прежнему надо явно — .sum() следом. Это тот же GROUP BY по месяцу, только resample знает календарь: месяц, в котором не было ни одной продажи, останется в ряду нулём, а не исчезнет из него.',
               'Заготовка ниже уже собрала понедельный ряд по бренду и подготовила индекс. Ваша часть — последняя строка.',
             ],
@@ -3520,7 +3520,7 @@ const en: StoryCampaign = {
             scene: 'filter',
             title: 'Picking rows',
             paras: [
-              'Rows are picked by WHERE, which comes after FROM. A single condition is column, sign, value: WHERE division = \'FMCG\'. Text always goes in single quotes, numbers go bare: WHERE list_price > 100.',
+              'Rows are picked by WHERE, which comes after FROM. A single condition is column, sign, value: `WHERE division = \'FMCG\'`. Text always goes in single quotes, numbers go bare: `WHERE list_price > 100`.',
               'We start with somebody else\'s query that "finds nothing": WHERE compares text letter by letter, and a single letter decides everything. COUNT(*) in it simply means "how many rows were found".',
             ],
           },
@@ -3529,8 +3529,8 @@ const en: StoryCampaign = {
           taskId: 'sql-003',
           intro: {
             paras: [
-              'Now the same thing by hand, but with several conditions: the catalog takes two brands only, and only items above a hundred. "Strictly above" is >, "no less than" is >=.',
-              'AND demands that both conditions hold at once. And when one column may take several values, a chain of OR gives way to IN with a list: WHERE brand IN (\'Aqualis\', \'Fruvia\'). Shorter, and safer: AND and OR bind with different precedence, and that trips people up more often than anything else.',
+              'Now the same thing by hand, but with several conditions: the catalog takes two brands only, and only items above a hundred. "Above" takes `>`, "no less than" takes `>=`.',
+              '`AND` demands that both conditions hold at once. And when one column may take several values, a chain of `OR` gives way to `IN` with a list: `WHERE brand IN (\'Aqualis\', \'Fruvia\')`. Shorter, and safer: `AND` and `OR` bind with different precedence, and that trips people up more often than anything else.',
             ],
           },
           after: {
@@ -3630,8 +3630,8 @@ const en: StoryCampaign = {
             scene: 'sellout',
             title: 'One brand\'s sales for a month',
             paras: [
-              'Now fact_sellout: sales, one row per product in one outlet for one week. It holds no brand, only product_id, which is what yesterday\'s numbers were for. Several values of one column are picked by IN with a list: product_id IN (19, 20, 21, 22, 23).',
-              'A month is picked by a range: week_start BETWEEN \'2026-01-01\' AND \'2026-01-31\'. BETWEEN takes both ends inclusive; dates here are text like 2026-01-12, and they compare as dates. The total of units is SUM(units).',
+              'Now fact_sellout: sales, one row per product in one outlet for one week. It holds no brand, only product_id, which is what yesterday\'s numbers were for. Several values of one column are picked by `IN` with a list: `product_id IN (19, 20, 21, 22, 23)`.',
+              'A month is picked by a range: `week_start BETWEEN \'2026-01-01\' AND \'2026-01-31\'`. `BETWEEN` takes both ends inclusive; dates here are text like 2026-01-12, and they compare as dates. The total of units is SUM(units).',
               'The task has two blanks: the sum function and the word before the list of numbers.',
             ],
           },
@@ -3703,7 +3703,7 @@ const en: StoryCampaign = {
             paras: [
               'There is no month in the table, only a week, week_start, shaped like 2025-03-17. But the first seven characters of that string are the month: substr(week_start, 1, 7), meaning "from the first character take seven", gives 2025-03.',
               'You can group not only by a column but by an expression. To avoid writing it twice, people write GROUP BY 1, meaning "by the first column in SELECT".',
-              'The year is already picked in the template: week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'. BETWEEN sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
+              'The year is already picked in the template: `week_start BETWEEN \'2025-01-01\' AND \'2025-12-31\'`. `BETWEEN` sets a range including both ends, and its ends are text here for the simple reason that the date itself is text.',
               'Here is how it looked a minute ago, on the assortment by brand:\n\n```\nSELECT brand,\n       COUNT(*) AS sku_count,\n       AVG(list_price) AS avg_price\nFROM dim_product\nGROUP BY brand\n```\n\nThe aggregate always sits in front of the measure: COUNT(*), AVG(list_price). Your task leaves three blanks: what cuts the month out of the date, what computes the units, and what to group by.',
             ],
           },
@@ -3788,7 +3788,7 @@ const en: StoryCampaign = {
             title: 'The same slice of the year',
             paras: [
               'Friday brings no new words: everything you need you have typed before. The year is cut out by the same substr that cut the month yesterday, only from the first character and four long: substr(week_start, 1, 4).',
-              'The month condition is already in the starter: substr(week_start, 6, 2) <= \'06\'. Characters six and seven of the date are the month number, strings compare character by character, and a month no greater than the sixth means January to June. The query returns three rows, one per year.',
+              'The month condition is already in the starter: `substr(week_start, 6, 2) <= \'06\'`. Characters six and seven of the date are the month number, strings compare character by character, and a month no greater than the sixth means January to June. The query returns three rows, one per year.',
             ],
           },
           after: {
@@ -3931,7 +3931,7 @@ const en: StoryCampaign = {
             paras: [
               'Tables are linked by keys. Every row in fact_sellout carries a product_id, and the very same product_id exists in dim_product. JOIN attaches its product to each sales row, and with it the brand, the name and the price.',
               'It is written like this:\n\n```\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\n```\n\nThe condition after ON is the "match on which key" part. The short names f and p are table aliases: without them you would spell the full table name in front of every column.',
-              'And the period, from the start of the year to the final week in the data. That is one condition rather than a range: WHERE f.week_start >= \'2026-01-01\'. The date here is text shaped like 2026-03-16, and such text compares exactly like a date: everything no earlier than the start of the year is "since the start of the year". No upper bound is needed, because the data itself ends at the final week.',
+              'And the period, from the start of the year to the final week in the data. That is one condition rather than a range: `WHERE f.week_start >= \'2026-01-01\'`. The date here is text shaped like 2026-03-16, and such text compares exactly like a date: everything no earlier than the start of the year is "since the start of the year". No upper bound is needed, because the data itself ends at the final week.',
               'The task has two blanks: the join line and the filter line.',
             ],
           },
@@ -4003,7 +4003,7 @@ const en: StoryCampaign = {
             paras: [
               'And here is what Aoki asked for: brands with high revenue and wide coverage at the same time. Coverage is the number of distinct outlets, COUNT(DISTINCT customer_id): Monday\'s function.',
               'WHERE cannot filter by an aggregate. It picks rows before grouping, and a brand revenue only exists after it. That is what HAVING is for: the same filter, but after GROUP BY.',
-              'It is written like this:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by AND, exactly as in WHERE.',
+              'It is written like this:\n\n```\nGROUP BY p.brand\nHAVING SUM(f.revenue) > 5000000\n```\n\nAfter HAVING stands the same aggregate you put in SELECT, compared against a number. There can be several conditions joined by `AND`, exactly as in WHERE.',
               'HAVING is already written in the task. The join and the grouping by brand are yours: the first you typed yesterday, the second when you looked for the shape of the year.',
             ],
           },
@@ -4156,7 +4156,7 @@ const en: StoryCampaign = {
             paras: [
               'Saturday\'s question: in how many distinct outlets did each brand sell since the start of 2026. Every part is familiar: joining sales to the product directory and a period with no upper bound come from Tuesday, counting distinct outlets from Monday, grouping and sorting in descending order from your very first days.',
               'The order of the parts is familiar too: what to show, where from, which rows, what to fold by, how to sort. The hints are in place, but try without them first; that is what Saturday is for.',
-              'Once your 2026 answer passes the check, Execute is still there: swap f.week_start >= \'2026-01-01\' for f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\' and run it again. The numbers for last year in the next message will be ones you counted yourself, not numbers just handed to you.',
+              'Once your 2026 answer passes the check, Execute is still there: swap `f.week_start >= \'2026-01-01\'` for `f.week_start >= \'2025-01-01\' AND f.week_start < \'2026-01-01\'` and run it again. The numbers for last year in the next message will be ones you counted yourself, not numbers just handed to you.',
             ],
           },
           after: {
@@ -4200,7 +4200,7 @@ const en: StoryCampaign = {
             paras: [
               'A plain JOIN keeps matched pairs only. If the new SKU never sold in some channel, that channel is missing from the answer altogether, and the report gets a hole nobody notices, because an empty row looks exactly like no row.',
               'LEFT JOIN keeps the whole left table and puts NULL where no pair was found. It is written like this:\n\n```\nSELECT p.product_name, COALESCE(SUM(f.units), 0) AS units\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nGROUP BY p.product_name\n```\n\nA product that never sold stays in the answer. COALESCE(SUM(f.units), 0) turns its emptiness into a zero. A zero says "there were no sales", while NULL in a report reads as "nobody counted".',
-              'The second thing you will need is a condition on the product. fact_sellout records a product by its number, not its name, so the number is fetched first by a query inside the query. Read it in two moves. On its own, the inner query\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nreturns a single number: 43. The outer query puts that number where the brackets stand, as if 43 were written instead of (SELECT …). Comparing with the name directly, f.product_id = \'Vitanor Forte x30\', gets you nowhere: a number never matches text, and the query shows zero everywhere without a single error.',
+              'The second thing you will need is a condition on the product. fact_sellout records a product by its number, not its name, so the number is fetched first by a query inside the query. Read it in two moves. On its own, the inner query\n\n```\nSELECT product_id FROM dim_product WHERE product_name = \'Vitanor Forte x30\'\n```\n\nreturns a single number: 43. The outer query puts that number where the brackets stand, as if 43 were written instead of (SELECT …). Comparing with the name directly, `f.product_id = \'Vitanor Forte x30\'`, gets you nowhere: a number never matches text, and the query shows zero everywhere without a single error.',
               'This condition sits in ON and not in WHERE; the third task of the day shows why. Here the query is almost complete: the subquery is written for you, and three words are missing.',
             ],
           },
@@ -4294,9 +4294,9 @@ const en: StoryCampaign = {
             scene: 'dropped',
             title: 'The mark of a pair that was never found',
             paras: [
-              'Now to the case: outlets where Nettora never sold at all. The brand has five products, not one, so the subquery in ON returns a list of five numbers rather than one, and it is compared with IN instead of =: a sales row matches if its product is any of the five.',
+              'Now to the case: outlets where Nettora never sold at all. The brand has five products, not one, so the subquery in ON returns a list of five numbers rather than one, and it is compared with `IN` instead of =: a sales row matches if its product is any of the five.',
               'Before filtering, picture what such a LEFT JOIN collects. An outlet that did sell Nettora gets many rows, one per week and product, each with sellout_id filled in. An outlet that never sold it gets exactly one row: name and city on the left, nothing in any fact_sellout column on the right. Those rows are the ones we want.',
-              'Asking "is this empty?" takes the same IS NULL as in the previous task, now about the right table of the join:\n\n```\nf.sellout_id IS NULL\n```\n\nCheck a column that is never empty on a real sale; the key is the safest choice. The starter already has WHERE, so the condition goes after AND, with no second WHERE.',
+              'Asking "is this empty?" takes the same IS NULL as in the previous task, now about the right table of the join:\n\n```\nf.sellout_id IS NULL\n```\n\nCheck a column that is never empty on a real sale; the key is the safest choice. The starter already has WHERE, so the condition goes after `AND`, with no second WHERE.',
             ],
           },
           after: {
@@ -4434,7 +4434,7 @@ const en: StoryCampaign = {
           taskId: 'sql-101',
           intro: {
             paras: [
-              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nA filled promo_id is the mark of a promotion, hence the IS NOT NULL test. Outside a promotion it is empty, which is Tuesday\'s IS NULL. The two sums in the task differ by exactly that word, so that is what you fill in. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
+              'Now the same thing inside an aggregate: one sum counts revenue on promotion, the other counts revenue outside it.\n\n```\nROUND(SUM(CASE WHEN f.promo_id IS NOT NULL THEN f.revenue ELSE 0 END))\n```\n\nA filled promo_id is the mark of a promotion, hence the `IS NOT NULL` test. Outside a promotion it is empty, which is Tuesday\'s IS NULL. The two sums in the task differ by exactly that word, so that is what you fill in. The zero in ELSE is mandatory: without it a NULL joins the sum and quietly spoils it.',
             ],
           },
           after: {
@@ -4536,7 +4536,7 @@ const en: StoryCampaign = {
           intro: {
             title: 'Your own query from a blank page',
             paras: [
-              'Every part is familiar: LEFT JOIN from the outlet directory comes from Monday, IS NULL and the subquery with the brand\'s products through IN from Tuesday, the period in ON next to it from Wednesday. Picking the chains is an ordinary WHERE: it is about the left table, and that is where it belongs.',
+              'Every part is familiar: LEFT JOIN from the outlet directory comes from Monday, IS NULL and the subquery with the brand\'s products through `IN` from Tuesday, the period in ON next to it from Wednesday. Picking the chains is an ordinary WHERE: it is about the left table, and that is where it belongs.',
             ],
           },
           after: {
@@ -4581,7 +4581,7 @@ const en: StoryCampaign = {
             paras: [
               'WITH creates a temporary table for the duration of one query. It is computed once, it has a name and columns, and from there it is used like a real one:\n\n```\nWITH channel_stats AS (\n  SELECT c.channel, SUM(f.revenue) AS revenue\n  FROM fact_sellout f\n  JOIN dim_customer c ON c.customer_id = f.customer_id\n  GROUP BY c.channel\n)\nSELECT channel, ROUND(revenue) AS revenue\nFROM channel_stats\n```',
               'Why it is needed today: the average per outlet is an AVG over sums per outlet, and SUM cannot be nested into AVG in one SELECT. Fold once, then take the average over the ready column. In the task, WITH and the name of the intermediate table are the two blanks; the rest is ready: how the year is cut, how a "lost" outlet is told apart, and what gets folded.',
-              'The outlet\'s status is the expression customer_id IN (subquery): it gives 1 if the outlet is in the list of those selling Nettora in 2026, and 0 if not.',
+              'The outlet\'s status is the expression `customer_id IN (subquery)`: it gives 1 if the outlet is in the list of those selling Nettora in 2026, and 0 if not.',
             ],
           },
           after: {
@@ -4693,7 +4693,7 @@ const en: StoryCampaign = {
             title: 'A join on a field that is not unique',
             paras: [
               'Tables can be joined on any shared field, but it only makes sense on one where the value occurs once on the right hand side. A brand in the promotions directory is not like that: one brand has many promotions, and every sales row will match every one of them.',
-              'The warning sign is visible in the query text in advance: JOIN dim_promo m ON m.brand = p.brand joins on a name rather than on a promotion key.',
+              'The warning sign is visible in the query text in advance: `JOIN dim_promo m ON m.brand = p.brand` joins on a name rather than on a promotion key.',
             ],
           },
         },
@@ -4802,7 +4802,7 @@ const en: StoryCampaign = {
             paras: [
               'Shipments sit in fact_sellin by month and by distributor, sales sit in fact_sellout by week and by outlet. They cannot be added directly: the grain differs, and the lesson about multiplied rows is about exactly that.',
               'The way through is the only one, and it is familiar: fold each fact with its own WITH down to one row per distributor, then join the two folded results. An outlet knows its distributor through c.served_by_distributor_id, and sales are collected by it.',
-              'Nothing in this query is new: WITH and the join of two expressions come from Tuesday and Thursday, division through 1.0 from there as well, and JOIN, BETWEEN and ORDER BY DESC you have known for a while. Assemble it and look at the numbers. What you need is not the first line but the shape of the whole list.',
+              'Nothing in this query is new: WITH and the join of two expressions come from Tuesday and Thursday, division through 1.0 from there as well, and JOIN, `BETWEEN` and ORDER BY DESC you have known for a while. Assemble it and look at the numbers. What you need is not the first line but the shape of the whole list.',
             ],
           },
           after: {
@@ -5125,13 +5125,13 @@ const en: StoryCampaign = {
           intro: {
             paras: [
               'The first thing raw text has none of is guarantees. The same value arrives in different letter cases, because there are several sources and each has its own rules.',
-              'Equality will not select that: = compares strings byte by byte. Text has LIKE instead, with different rules: % stands for any number of any characters, _ for exactly one, and by default LIKE treats upper and lower case latin letters as the same. It goes where equality would: WHERE sku_code LIKE \'AQUA001\'.',
+              'Equality will not select that: `=` compares strings byte by byte. Text has `LIKE` instead, with different rules: % stands for any number of any characters, _ for exactly one, and by default `LIKE` treats upper and lower case latin letters as the same. It goes where equality would: `WHERE sku_code LIKE \'AQUA001\'`.',
               'Below is a condition with no wildcard in it at all. Decide what it returns.',
             ],
           },
           after: {
             from: 'Your manager',
-            text: '"163 against 107, so one row in three for that article would be found by only one of the two methods. Keep it as a rule: on the raw layer = and LIKE answer different questions, and you choose between them deliberately rather than out of habit."',
+            text: '"163 against 107, so one row in three for that article would be found by only one of the two methods. Keep it as a rule: on the raw layer `=` and `LIKE` answer different questions, and you choose between them deliberately rather than out of habit."',
           },
         },
         {
@@ -5152,7 +5152,7 @@ const en: StoryCampaign = {
           intro: {
             paras: [
               'And the third thing, the one we came down here for. Ito san said the chain is written two ways, and one query settles it, with a technique you already have.',
-              'Conditional aggregation: SUM(CASE WHEN condition THEN 1 ELSE 0 END) means "how many rows matched." You built these when you split Nettora sales into promotion and base, and the frame is already in the starter. By hand: the condition for the second column, LIKE with percent signs on both sides instead of equality, because the chain name is part of the outlet name rather than all of it. And the connector for the third: a row counts if either spelling matches, two conditions joined with OR.',
+              'Conditional aggregation: SUM(CASE WHEN condition THEN 1 ELSE 0 END) means "how many rows matched." You built these when you split Nettora sales into promotion and base, and the frame is already in the starter. By hand: the condition for the second column, `LIKE` with percent signs on both sides instead of equality, because the chain name is part of the outlet name rather than all of it. And the connector for the third: a row counts if either spelling matches, two conditions joined with `OR`.',
             ],
           },
           after: {
@@ -5265,7 +5265,7 @@ const en: StoryCampaign = {
             title: 'Your own query, from a blank page',
             paras: [
               'Saturday\'s question: is that the only caveat in the mail? The only way to check whether more are hiding is to reconcile the whole raw export against the outlet reference table, not one name at a time.',
-              'Every part is familiar: LEFT JOIN from the export to the reference table and IS NULL from the search for outlets without Nettora, grouping and sorting by descending count from your very first days. LIKE is not needed today: you are comparing the name as it stands, with equality.',
+              'Every part is familiar: LEFT JOIN from the export to the reference table and IS NULL from the search for outlets without Nettora, grouping and sorting by descending count from your very first days. `LIKE` is not needed today: you are comparing the name as it stands, with equality.',
             ],
           },
           after: {
@@ -5362,7 +5362,7 @@ const en: StoryCampaign = {
       messages: [
         {
           from: 'Your manager',
-          text: '"Yesterday you pulled columns, today rows. The rest of the week comes down to one selection: distributor_id = 1, which is Setouchi. Get confident at selecting rows, otherwise everything you compute on top will be computed over the wrong ones."',
+          text: '"Yesterday you pulled columns, today rows. The rest of the week comes down to one selection: `distributor_id = 1`, which is Setouchi. Get confident at selecting rows, otherwise everything you compute on top will be computed over the wrong ones."',
         },
         {
           from: 'Mori-san, key account manager for distributors',
@@ -5376,7 +5376,7 @@ const en: StoryCampaign = {
             scene: 'filter',
             title: 'A mask instead of WHERE',
             paras: [
-              'Rows in pandas are selected by a mask: an expression evaluated separately for every row. dim_customer[\'channel\'] == \'ecom\' is neither a number nor a table, it is a column of True and False as long as the whole table.',
+              'Rows in pandas are selected by a mask: an expression evaluated separately for every row. `dim_customer[\'channel\'] == \'ecom\'` is neither a number nor a table, it is a column of True and False as long as the whole table.',
               'The mask then goes into .loc, with the list of columns you want beside it: dim_customer.loc[mask, [\'customer_id\', \'city\']]. The comma inside .loc separates two different questions, which rows and which columns. SQL puts them at opposite ends of the query; here they stand next to each other.',
             ],
           },
@@ -5385,7 +5385,7 @@ const en: StoryCampaign = {
           taskId: 'py-002',
           intro: {
             paras: [
-              'There is usually more than one condition, and this is where pandas parts ways with ordinary Python. The words "and" and "or" are built for a single value, and we have thousands of them, one per row. So masks are joined by symbols: (dim_product[\'list_price\'] > 100) & (dim_product[\'brand\'] == \'Aqualis\'). The brackets around each part are mandatory; without them operator precedence parses the expression differently than you meant.',
+              'There is usually more than one condition, and this is where pandas parts ways with ordinary Python. The words "and" and "or" are built for a single value, and we have thousands of them, one per row. So masks are joined by symbols: (`dim_product[\'list_price\'] > 100`) & (`dim_product[\'brand\'] == \'Aqualis\'`). The brackets around each part are mandatory; without them operator precedence parses the expression differently than you meant.',
               'Below is the same thing written with the word "and". Read it and say what happens.',
             ],
           },
@@ -5398,7 +5398,7 @@ const en: StoryCampaign = {
           taskId: 'py-058',
           intro: {
             paras: [
-              'Now by hand again, but today\'s third technique already sits in the starter: .isin([\'Aqualis\', \'Fruvia\']), an exact counterpart of SQL IN.',
+              'Now by hand again, but today\'s third technique already sits in the starter: .isin([\'Aqualis\', \'Fruvia\']), an exact counterpart of SQL `IN`.',
               'By hand: the second half of the mask, price above 100, in its own brackets, and the sign between the two halves. The promo team wants the price list for two brands, and only for items above 100.',
             ],
           },
@@ -5436,7 +5436,7 @@ const en: StoryCampaign = {
           taskId: 'py-048',
           intro: {
             paras: [
-              'Yesterday\'s selection, on the case. Setouchi is distributor_id = 1, and the month sits in the month_start column as text: \'2025-10-01\'. There are two conditions, each in its own brackets, with & between them.',
+              'Yesterday\'s selection, on the case. Setouchi is `distributor_id = 1`, and the month sits in the month_start column as text: \'2025-10-01\'. There are two conditions, each in its own brackets, with & between them.',
               'Get the Setouchi rows for October 2025: which product and how many units.',
             ],
           },
@@ -5693,7 +5693,7 @@ const en: StoryCampaign = {
           taskId: 'py-035',
           intro: {
             paras: [
-              'The fix is one line before set_index: weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\']). A third preparation call usually sits next to it, .sort_index(), which puts the dates in ascending order. resample does not need it; why it matters becomes clear tomorrow.',
+              'The fix is one line before set_index: `weekly[\'week_start\'] = pd.to_datetime(weekly[\'week_start\'])`. A third preparation call usually sits next to it, .sort_index(), which puts the dates in ascending order. resample does not need it; why it matters becomes clear tomorrow.',
               'After the preparation the frequency changes in a single call: .resample(\'MS\') collects observations onto month starts (Month Start). The computing is still explicit, .sum() after it. This is the same GROUP BY by month, except resample knows the calendar: a month with no sales at all stays in the series as a zero instead of vanishing from it.',
               'The starter below already builds a weekly series for a brand and prepares the index. Your part is the last line.',
             ],
