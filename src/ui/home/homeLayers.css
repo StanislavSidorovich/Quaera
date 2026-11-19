@@ -1,0 +1,47 @@
+/*
+ * Карта из пяти слоёв на главной: раскрывается один слой (HomeSpine.tsx).
+ * Слот раскрытого слоя одной высоты у всех слоёв (--hs-body-h = самый длинный, меряет JS),
+ * поэтому сумма высот списка постоянна: сворачивание верхнего слоя и раскрытие нижнего
+ * идут синхронно и слой под курсором остаётся тем же. Анимация только у высоты,
+ * наружу рамки ничего не выходит (overflow: hidden).
+ */
+.hs-layers .hs-layer {
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hs-layers .hs-layer.open:not(.here) {
+  background: var(--bg-raised);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.hs-layers .hs-layer-body {
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: height 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.hs-layers .hs-layer.open .hs-layer-body {
+  height: var(--hs-body-h, 0px);
+  visibility: visible;
+  transition: height 0.25s ease, visibility 0s;
+}
+
+.hs-layers .hs-layer-inner {
+  padding: 0 12px 12px 46px;
+}
+
+@media (max-width: 759px) {
+  .hs-layers .hs-layer-inner {
+    padding-left: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-layers .hs-layer,
+  .hs-layers .hs-layer-body,
+  .hs-layers .hs-layer.open .hs-layer-body {
+    transition: none;
+  }
+}

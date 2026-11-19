@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { packForTrack, trackBySkill } from '../../content';
 import type { Pack, Track } from '../../content/types';
 import { architecture } from '../../content/architecture';
@@ -20,6 +20,7 @@ import './homeStatus.css';
 import './homeEyebrow.css';
 import './homeFamily.css';
 import './homeHover.css';
+import './homeLayers.css';
 
 import markLab from '../../../family/marks/lab.svg';
 import markModel from '../../../family/marks/model.svg';
@@ -108,6 +109,36 @@ export function HomeSpine(p: HomeSpineProps) {
   const labDone = p.progress.career?.labDone ?? {};
   const isStarted = (id: string) => (p.progress.skills[id]?.reps ?? 0) > 0;
   const layers = architecture.layers;
+
+  /*
+   * Раскрытый слой карты: наведение с задержкой, фокус сразу, касание: первое раскрывает, второе ведёт.
+   * null: раскрыт слой «вы здесь». Мышь ушла: раскрытым остаётся последний слой.
+   * Высота раскрытого слота общая (самый длинный слой), поэтому список не прыгает под курсором.
+   */
+  const [openId, setOpenId] = useState<string | null>(null);
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const pointerKind = useRef('');
+  const wasOpen = useRef(false);
+  const listRef = useRef<HTMLOListElement>(null);
+  const cancelHover = useCallback(() => window.clearTimeout(hoverTimer.current), []);
+  useEffect(() => cancelHover, [cancelHover]);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      let max = 0;
+      list.querySelectorAll<HTMLElement>('.hs-layer-inner').forEach((el) => {
+        max = Math.max(max, el.offsetHeight);
+      });
+      list.style.setProperty('--hs-body-h', `${max}px`);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(list);
+    list.querySelectorAll('.hs-layer-inner').forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, [locale, p.progress]);
 
   /* Рабочая неделя: достигнутый день или первая неделя для новичка. */
   const camp = useMemo(() => storyCampaign(locale), [locale]);
@@ -321,19 +352,47 @@ export function HomeSpine(p: HomeSpineProps) {
               </span>
               {t.career.map.teaserTitle}
             </h2>
-            <ol className="hs-layers">
+            <ol className="hs-layers" ref={listRef}>
               {layers.map((l, i) => {
                 const st = states[i].state;
                 const here = l.id === hereId;
-                const acts = here ? actionsFor(l) : [];
+                const open = l.id === (openId ?? hereId);
+                const acts = actionsFor(l);
                 return (
-                  <li key={l.id} className={`hs-layer ${st}${here ? ' here' : ''}`}>
+                  <li
+                    key={l.id}
+                    className={`hs-layer ${st}${here ? ' here' : ''}${open ? ' open' : ''}`}
+                    onPointerEnter={(e) => {
+                      if (e.pointerType === 'touch') return;
+                      cancelHover();
+                      if (!open) hoverTimer.current = window.setTimeout(() => setOpenId(l.id), 200);
+                    }}
+                    onPointerLeave={cancelHover}
+                  >
                     <button
                       type="button"
                       className="hs-layer-head"
                       aria-label={t.career.map.teaserLayer(layerTitle(l))}
                       aria-current={here ? 'step' : undefined}
-                      onClick={() => p.onOpenMap({ layer: l.id })}
+                      aria-expanded={open}
+                      onPointerDown={(e) => {
+                        pointerKind.current = e.pointerType;
+                        wasOpen.current = open;
+                      }}
+                      onFocus={() => {
+                        if (pointerKind.current === 'touch') return;
+                        cancelHover();
+                        setOpenId(l.id);
+                      }}
+                      onClick={() => {
+                        const touch = pointerKind.current === 'touch';
+                        pointerKind.current = '';
+                        if (touch && !wasOpen.current) {
+                          setOpenId(l.id);
+                          return;
+                        }
+                        p.onOpenMap({ layer: l.id });
+                      }}
                     >
                       <span className="hs-layer-n" aria-hidden>
                         {st === 'done' ? '✓' : i + 1}
@@ -345,8 +404,8 @@ export function HomeSpine(p: HomeSpineProps) {
                       <span className="hs-layer-roles">{l.roles.map(roleName).join(', ')}</span>
                       <span className="hs-layer-state">{here ? s.mapHere : s.layerState[st]}</span>
                     </button>
-                    {here && (
-                      <div className="hs-layer-body">
+                    <div className="hs-layer-body">
+                      <div className="hs-layer-inner">
                         <p className="hs-layer-what">{firstSentence(l.what[locale])}</p>
                         {s.layerTools[l.id] && (
                           <p className="hs-layer-tools">
@@ -370,7 +429,7 @@ export function HomeSpine(p: HomeSpineProps) {
                           </ul>
                         )}
                       </div>
-                    )}
+                    </div>
                   </li>
                 );
               })}
