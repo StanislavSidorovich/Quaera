@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useI18n } from '../i18n/context';
-import { getClipVersion, loadVoiceManifest, playAllActive, startPlayAll, stopClips, subscribeClips, type PlayAllItem, type SpokenLine } from '../voice';
+import { getClipVersion, loadVoiceManifest, localeClips, playAllActive, startPlayAll, stopClips, subscribeClips, type PlayAllItem, type SpokenLine } from '../voice';
 import './clipButton.css';
 
 /**
  * «Играть всё» над брифом: записи реплик экрана по очереди (public/voice/).
- * Видна всем без флага, только в английской локали и только если у реплик
- * есть записи. Подсветку строки ведёт StoryMode через playAllIndex().
+ * Видна всем без флага, в локалях с записями (en, ru) и только если у реплик
+ * есть записи этой локали. Подсветку строки ведёт StoryMode через playAllIndex().
  * Уход с экрана или смена реплик обрывает игру.
  */
 export function PlayAllButton({ lines }: { lines: SpokenLine[] }) {
@@ -16,16 +16,13 @@ export function PlayAllButton({ lines }: { lines: SpokenLine[] }) {
   const startedAt = useRef(0);
   const key = lines.map((l) => l.id ?? '').join('|');
   useEffect(() => {
-    if (locale !== 'en') {
-      setItems([]);
-      return;
-    }
+    setItems([]);
     let live = true;
     void loadVoiceManifest().then((m) => {
       if (!live) return;
       const out: PlayAllItem[] = [];
       lines.forEach((l, i) => {
-        const clip = l.id ? m.clips[l.id] : undefined;
+        const clip = l.id ? localeClips(m, locale)[l.id] : undefined;
         if (l.text.trim() && l.id && clip) out.push({ line: i, key: l.id, clip });
       });
       setItems(out);
@@ -34,8 +31,8 @@ export function PlayAllButton({ lines }: { lines: SpokenLine[] }) {
       live = false;
     };
   }, [key, locale]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => stopClips(), [key]);
-  if (locale !== 'en' || items.length === 0) return null;
+  useEffect(() => () => stopClips(), [key, locale]); /* смена языка обрывает игру */
+  if (items.length === 0) return null;
   const playing = playAllActive();
   return (
     <button

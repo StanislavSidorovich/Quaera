@@ -281,9 +281,9 @@ function VoiceButton({ lines, onActive }: { lines: SpokenLine[]; onActive: (i: n
       onActive(null);
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  const clips = clipsFor(lines, manifest);
-  /* В английской локали записи берёт «Играть всё» (PlayAllButton); пробная кнопка нужна без записей. */
-  if (!on || (!clips && !voices) || lines.length === 0 || (locale === 'en' && clips)) return null;
+  const clips = clipsFor(lines, manifest, locale);
+  /* В локалях с записями (en, ru) записи берёт «Играть всё» (PlayAllButton); пробная кнопка нужна без записей. */
+  if (!on || (!clips && !voices) || lines.length === 0 || clips) return null;
   const end = () => {
     setPlaying(false);
     onActive(null);

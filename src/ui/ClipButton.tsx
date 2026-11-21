@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useI18n } from '../i18n/context';
-import { activeClipKey, clipFailed, getClipVersion, loadVoiceManifest, playAllKey, stopClips, subscribeClips, toggleClip, type VoiceClip } from '../voice';
+import { activeClipKey, clipFailed, getClipVersion, loadVoiceManifest, localeClips, playAllKey, stopClips, subscribeClips, toggleClip, type VoiceClip } from '../voice';
 import './clipButton.css';
 
 /**
  * Кнопка записанной реплики (public/voice/, манифест по id «день/слот»).
- * Видна всем без флага, только в английской локали и только если у реплики
- * есть запись в манифесте. Запись грузится по нажатию, не раньше; играет одна
+ * Видна всем без флага, в локалях с записями (en, ru) и только если у реплики
+ * есть запись в манифесте именно этой локали. Запись грузится по нажатию, не раньше; играет одна
  * за раз; при уходе с экрана обрывается. Нет файла, нет сети или манифеста:
  * кнопка тихо не рисуется (ошибок в консоль не пишем).
  */
@@ -16,16 +16,14 @@ export function ClipButton({ id }: { id: string }) {
   useSyncExternalStore(subscribeClips, getClipVersion, getClipVersion);
   const stoppedAt = useRef(0);
   useEffect(() => {
-    if (locale !== 'en') {
-      setClip(null);
-      return;
-    }
+    setClip(null); /* смена языка: запись другой локали не показываем и не играем */
     let live = true;
     void loadVoiceManifest().then((m) => {
-      if (live) setClip(m.clips[id] ?? null);
+      if (live) setClip(localeClips(m, locale)[id] ?? null);
     });
     return () => {
       live = false;
+      if (activeClipKey() === id) stopClips();
     };
   }, [id, locale]);
   useEffect(
@@ -34,7 +32,7 @@ export function ClipButton({ id }: { id: string }) {
     },
     [id],
   );
-  if (locale !== 'en' || !clip || clipFailed(id)) return null;
+  if (!clip || clipFailed(id)) return null;
   const inAll = playAllKey() === id;
   const playing = activeClipKey() === id || inAll;
   const dur = clip.duration ? ` ${Math.floor(clip.duration / 60)}:${String(Math.round(clip.duration % 60)).padStart(2, '0')}` : '';

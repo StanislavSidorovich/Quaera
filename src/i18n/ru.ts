@@ -1549,8 +1549,8 @@ export const ru = {
     /** Проба озвучки (?voice=1): голос браузера читает английскую версию реплик. */
     voiceListen: '▶ Listen (EN)',
     voiceStop: '■ Stop',
-    /** Кнопка записанной реплики (только английская локаль, пока записей на русском нет). */
-    clipPlay: 'Play this line (EN)',
+    /** Кнопка записанной реплики (локали с записями: en, ru; manifest.locales). */
+    clipPlay: 'Слушать реплику',
     clipStop: 'Остановить',
     playAll: '▶ Играть всё',
     playAllStop: '■ Стоп',

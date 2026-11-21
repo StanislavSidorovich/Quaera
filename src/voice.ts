@@ -7,8 +7,8 @@ export type { SpeakerId };
 /**
  * Проба озвучки режима истории голосом браузера (Web Speech API).
  * Видна только по флагу `?voice=1` (или `?voice=audition`), который запоминается в localStorage.
- * Только английский текст и английский голос: записанных голосов нет,
- * решение «оставлять ли» за хозяином (после разговоров с людьми и Ignite).
+ * Голос браузера только английский; записанные голоса есть для en и ru
+ * (манифест, см. ниже).
  */
 
 const FLAG_KEY = 'quaera-voice';
@@ -291,8 +291,23 @@ export interface VoiceClip {
   duration?: number;
 }
 
-interface VoiceManifest {
+export interface VoiceManifest {
+  /** Записи английской локали (так было с пилота). */
   clips: Record<string, VoiceClip>;
+  /** Записи остальных локалей: `locales.ru.clips`; файлы лежат в /voice/<локаль>/. */
+  locales?: Record<string, { clips?: Record<string, VoiceClip> } | undefined>;
+}
+
+/**
+ * Записи одной локали. Чужая локаль не подменяется: нет записей русской
+ * озвучки, значит русский бриф остаётся текстом (английская запись под
+ * русским текстом хуже тишины).
+ */
+export function localeClips(manifest: VoiceManifest | null, locale: string): Record<string, VoiceClip> {
+  if (!manifest) return {};
+  if (locale === 'en') return manifest.clips ?? {};
+  const c = manifest.locales?.[locale]?.clips;
+  return c && typeof c === 'object' ? c : {};
 }
 
 let manifestPromise: Promise<VoiceManifest> | null = null;
@@ -309,12 +324,13 @@ export function loadVoiceManifest(): Promise<VoiceManifest> {
 }
 
 /** Записи для всех реплик или null: тогда вся очередь идёт голосом браузера (микс двух голосов в одной сцене хуже обоих). */
-export function clipsFor(lines: SpokenLine[], manifest: VoiceManifest | null): VoiceClip[] | null {
+export function clipsFor(lines: SpokenLine[], manifest: VoiceManifest | null, locale = 'en'): VoiceClip[] | null {
   if (!manifest) return null;
+  const all = localeClips(manifest, locale);
   const clips: VoiceClip[] = [];
   for (const l of lines) {
     if (!l.text.trim()) continue;
-    const clip = l.id ? manifest.clips[l.id] : undefined;
+    const clip = l.id ? all[l.id] : undefined;
     if (!clip) return null;
     clips.push(clip);
   }

@@ -1506,5 +1506,101 @@
       "bytes": 87402,
       "duration": 18.7
     }
+  },
+  "locales": {
+    "ru": {
+      "clips": {
+        "day-1-first-day/m0": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "0dbd066985",
+          "chars": 409,
+          "file": "ru/day-1-first-day/m0.0dbd066985.m4a",
+          "bytes": 128291,
+          "duration": 27.2
+        },
+        "day-1-first-day/m1": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "560747293d",
+          "chars": 552,
+          "file": "ru/day-1-first-day/m1.560747293d.m4a",
+          "bytes": 170771,
+          "duration": 35.9
+        },
+        "day-2-counting/m0": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "ea919828e7",
+          "chars": 220,
+          "file": "ru/day-2-counting/m0.ea919828e7.m4a",
+          "bytes": 69227,
+          "duration": 14.5
+        },
+        "day-2-counting/m1": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "eaddbbcc2f",
+          "chars": 229,
+          "file": "ru/day-2-counting/m1.eaddbbcc2f.m4a",
+          "bytes": 79440,
+          "duration": 16.8
+        },
+        "day-3-shape-of-the-year/m0": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "e3c7091878",
+          "chars": 162,
+          "file": "ru/day-3-shape-of-the-year/m0.e3c7091878.m4a",
+          "bytes": 48336,
+          "duration": 10.2
+        },
+        "day-3-shape-of-the-year/m1": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "5e51b27c55",
+          "chars": 271,
+          "file": "ru/day-3-shape-of-the-year/m1.5e51b27c55.m4a",
+          "bytes": 88886,
+          "duration": 18.9
+        },
+        "day-4-join/m0": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "d2ee912f93",
+          "chars": 260,
+          "file": "ru/day-4-join/m0.d2ee912f93.m4a",
+          "bytes": 82368,
+          "duration": 17.3
+        },
+        "day-4-join/m1": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "d0473c779c",
+          "chars": 100,
+          "file": "ru/day-4-join/m1.d0473c779c.m4a",
+          "bytes": 30661,
+          "duration": 6.4
+        },
+        "day-5-shelf-or-demand/m0": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "fd718a89db",
+          "chars": 250,
+          "file": "ru/day-5-shelf-or-demand/m0.fd718a89db.m4a",
+          "bytes": 71204,
+          "duration": 15
+        },
+        "day-5-shelf-or-demand/m1": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "0cf94fdb1a",
+          "chars": 448,
+          "file": "ru/day-5-shelf-or-demand/m1.0cf94fdb1a.m4a",
+          "bytes": 135130,
+          "duration": 28.6
+        }
+      }
+    }
   }
 }
