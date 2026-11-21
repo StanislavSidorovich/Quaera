@@ -1,10 +1,13 @@
 /*
  * Картинка недели в рамке режима истории (HomeStoryScene.tsx).
- * Рамка (.hs-frame) задаёт контейнер по ширине, тело рамки (.hs-frame-body) в нём решает, сколько колонок.
- *  - до 759px: картинки нет (съедала бы первый экран);
- *  - 760px и выше: полоса 120px под текстом;
- *  - от 1180px и если телу рамки хватает 520px: две колонки, слева текст и кнопка,
- *    справа картинка в своей пропорции 16:9 (cover, углы скруглены, как у рамки).
+ * Рамка (.hs-frame) задаёт контейнер по ширине, тело рамки (.hs-frame-body) в нём решает раскладку.
+ * Четыре куска тела: шапка (вид, неделя, вопрос директора), текст (что за неделя, дни, кнопка),
+ * картинка, тихая строка (вход в экскурс, части сюжета).
+ *  - до 759px: картинки нет (съедала бы первый экран), куски друг под другом;
+ *  - 760px и выше: полоса 120px под кнопкой, тихая строка под ней;
+ *  - от 1180px и если телу рамки хватает 520px: шапка на всю ширину, ниже две колонки:
+ *    слева текст и кнопка, справа картинка ровно от строки «что за неделя» до низа кнопки
+ *    (тянется по высоте левой колонки, cover, своей пропорции нет); тихая строка под обеими.
  * Нет картинки: .hs-scene не рендерится, текст на всю ширину, пустой плашки нет.
  */
 .hs-frame {
@@ -13,10 +16,17 @@
 
 .hs-frame-body {
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'head'
+    'text'
+    'scene'
+    'quiet';
+  gap: 10px;
   min-width: 0;
 }
 
+.hs-frame-head,
 .hs-frame-text {
   display: flex;
   flex-direction: column;
@@ -24,7 +34,13 @@
   min-width: 0;
 }
 
+.hs-frame-head { grid-area: head; }
+.hs-frame-text { grid-area: text; }
+.hs-frame-body > .hs-quiet { grid-area: quiet; }
+
 .hs-scene {
+  grid-area: scene;
+  position: relative;
   display: none;
   overflow: hidden;
   border-radius: 10px;
@@ -32,6 +48,9 @@
 }
 
 .hs-scene img {
+  /* Абсолютно: картинка не задаёт высоту строки, высоту даёт левая колонка. */
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -43,6 +62,7 @@
   .hs-scene {
     display: block;
     height: 120px;
+    margin-top: 6px;
   }
 }
 
@@ -50,12 +70,17 @@
   @container (min-width: 520px) {
     .hs-frame-body:has(.hs-scene) {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      align-items: center;
-      gap: 20px;
+      grid-template-areas:
+        'head  head'
+        'text  scene'
+        'quiet quiet';
+      column-gap: 20px;
     }
     .hs-scene {
       height: auto;
-      aspect-ratio: 16 / 9;
+      min-height: 160px;
+      margin-top: 0;
+      align-self: stretch;
     }
   }
 }

@@ -279,7 +279,7 @@ export function HomeSpine(p: HomeSpineProps) {
           {/* Режим истории: вопрос заказчика, пять дней и письмо, одна главная кнопка. */}
           <section className="card hs-frame" data-guide="story" aria-labelledby="hs-frame-title">
             <div className="hs-frame-body">
-              <div className="hs-frame-text">
+              <div className="hs-frame-head">
                 <p className="hs-kicker hs-eyebrow" id="hs-frame-title">
                   {s.frameKicker}
                   {week && <span> · {s.weekOf(weekIdx + 1, camp.weeks.length)}</span>}
@@ -289,6 +289,8 @@ export function HomeSpine(p: HomeSpineProps) {
                     {asker && <span className="hs-asker">{s.asks(asker)}: </span>}«{week.question}»
                   </p>
                 )}
+              </div>
+              <div className="hs-frame-text">
                 <p className="hs-what">{s.frameWhat}</p>
                 {days.length > 0 && (
                   <ol className="hs-days">
@@ -328,19 +330,19 @@ export function HomeSpine(p: HomeSpineProps) {
                   <span className="hs-main-text">{mainLabel}</span>
                   {mainMinutes !== null && <span className="hs-main-min">{s.minutes(mainMinutes)}</span>}
                 </button>
-                <div className="hs-quiet">
-                  {p.isNewUser && (
-                    <p className="hs-intro">
-                      {s.introLead}{' '}
-                      <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
-                        {s.introLink}
-                      </button>
-                    </p>
-                  )}
-                  {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
-                </div>
               </div>
               <HomeStoryScene weekId={week?.id} />
+              <div className="hs-quiet">
+                {p.isNewUser && (
+                  <p className="hs-intro">
+                    {s.introLead}{' '}
+                    <button type="button" className="hs-textlink" data-pair="intro" onClick={p.onOpenIntro}>
+                      {s.introLink}
+                    </button>
+                  </p>
+                )}
+                {!p.storyStarted && p.onOpenStoryPart && <StoryEntry onOpenPart={p.onOpenStoryPart} />}
+              </div>
             </div>
           </section>
 
