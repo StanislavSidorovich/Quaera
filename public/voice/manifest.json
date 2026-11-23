@@ -1528,6 +1528,24 @@
           "bytes": 170771,
           "duration": 35.9
         },
+        "day-10-supply-chain/m0": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "ff5b38271e",
+          "chars": 346,
+          "file": "ru/day-10-supply-chain/m0.ff5b38271e.m4a",
+          "bytes": 102524,
+          "duration": 21.6
+        },
+        "day-10-supply-chain/m1": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "34de7e3f61",
+          "chars": 187,
+          "file": "ru/day-10-supply-chain/m1.34de7e3f61.m4a",
+          "bytes": 51376,
+          "duration": 10.7
+        },
         "day-2-counting/m0": {
           "speaker": "manager",
           "voice": "gemini",
@@ -1599,6 +1617,78 @@
           "file": "ru/day-5-shelf-or-demand/m1.0cf94fdb1a.m4a",
           "bytes": 135130,
           "duration": 28.6
+        },
+        "day-6-who-is-missing/m0": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "f1df3fe33e",
+          "chars": 252,
+          "file": "ru/day-6-who-is-missing/m0.f1df3fe33e.m4a",
+          "bytes": 72911,
+          "duration": 15.4
+        },
+        "day-6-who-is-missing/m1": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "9bc8438bcf",
+          "chars": 358,
+          "file": "ru/day-6-who-is-missing/m1.9bc8438bcf.m4a",
+          "bytes": 121212,
+          "duration": 25.7
+        },
+        "day-7-promo-or-price/m0": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "1122582371",
+          "chars": 284,
+          "file": "ru/day-7-promo-or-price/m0.1122582371.m4a",
+          "bytes": 86928,
+          "duration": 18.3
+        },
+        "day-7-promo-or-price/m1": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "9bb4091fa2",
+          "chars": 101,
+          "file": "ru/day-7-promo-or-price/m1.9bb4091fa2.m4a",
+          "bytes": 33032,
+          "duration": 6.9
+        },
+        "day-8-two-steps/m0": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "6daed6741b",
+          "chars": 168,
+          "file": "ru/day-8-two-steps/m0.6daed6741b.m4a",
+          "bytes": 44557,
+          "duration": 9.3
+        },
+        "day-8-two-steps/m1": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "e88230af45",
+          "chars": 320,
+          "file": "ru/day-8-two-steps/m1.e88230af45.m4a",
+          "bytes": 101578,
+          "duration": 21.5
+        },
+        "day-9-two-facts/m0": {
+          "speaker": "manager",
+          "voice": "gemini",
+          "hash": "726191e081",
+          "chars": 339,
+          "file": "ru/day-9-two-facts/m0.726191e081.m4a",
+          "bytes": 105550,
+          "duration": 22.3
+        },
+        "day-9-two-facts/m1": {
+          "speaker": "aoki",
+          "voice": "gemini",
+          "hash": "89897f9b20",
+          "chars": 119,
+          "file": "ru/day-9-two-facts/m1.89897f9b20.m4a",
+          "bytes": 42459,
+          "duration": 8.9
         }
       }
     }
