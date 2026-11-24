@@ -422,6 +422,17 @@
   .hs-layer-body {
     padding-left: 12px;
   }
+  /* Метка круга не растягивается и стоит у первой строки, подпись переносится рядом. */
+  .hs-act {
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 10px;
+    line-height: 1.3;
+  }
+  .hs-act .hs-circle {
+    align-self: flex-start;
+    margin-top: 1px;
+  }
   .hs-question {
     font-size: 16px;
   }

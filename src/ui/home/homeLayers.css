@@ -32,9 +32,13 @@
   padding: 0 12px 12px 46px;
 }
 
+/* Телефон: раскрыт один слой, постоянная высота списка не нужна: слот по своему содержимому. */
 @media (max-width: 759px) {
   .hs-layers .hs-layer-inner {
     padding-left: 12px;
+  }
+  .hs-layers .hs-layer.open .hs-layer-body {
+    height: auto;
   }
 }
 
