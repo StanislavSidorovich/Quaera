@@ -826,6 +826,38 @@
           "why": "Результат совпадёт только в одном частном случае — если отчёт вообще без срезов. Стоит добавить любой фильтр по региону или бренду, и A продолжит показывать число, посчитанное на момент обновления, а B пересчитается."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT r.region_name AS region,\n       ROUND(AVG(t.total / 126911191.0), 4) AS col_a,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END) / NULLIF(SUM(f.revenue), 0), 4) AS measure_b\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nJOIN dim_product p ON p.product_id = f.product_id\nCROSS JOIN (SELECT SUM(revenue) AS total FROM fact_sellout) t\nGROUP BY r.region_name\nORDER BY SUM(f.revenue) DESC, region",
+        "totalSql": "SELECT NULL AS region,\n       ROUND(AVG(t.total / 126911191.0), 4) AS col_a,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END) / NULLIF(SUM(f.revenue), 0), 4) AS measure_b\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nCROSS JOIN (SELECT SUM(revenue) AS total FROM fact_sellout) t",
+        "head": ["region","col_a","measure_b"],
+        "rows": [
+          ["Saitama",1,0.1449],
+          ["Aichi",1,0.1279],
+          ["Miyagi",1,0.1628],
+          ["Hiroshima",1,0.1892],
+          ["Hokkaido",1,0.1014],
+          ["Kanagawa",1,0.1056],
+          ["Chiba",1,0.1587],
+          ["Tokyo",1,0.1906],
+          ["Hyogo",1,0.0591],
+          ["Osaka",1,0.0557],
+          ["Ibaraki",1,0.0358],
+          ["Fukuoka",1,0.0632]
+        ],
+        "rowCount": 16,
+        "total": [null,1,0.1274],
+        "fmt": {
+          "col_a": "pct",
+          "measure_b": "pct"
+        },
+        "labels": {
+          "region": "Регион",
+          "col_a": "A (колонка)",
+          "measure_b": "B (мера)"
+        },
+        "caption": "Матрица по регионам, срезов на странице нет; колонка A показана как среднее"
+      },
       "hints": [
         "Ищите не разницу в DIVIDE, а разницу в том, где стоит формула — в колонке или после «:=» меры.",
         "Задайте вопрос: когда каждая из формул физически вычисляется — один раз или при каждом показе?"
@@ -1021,6 +1053,39 @@
           "why": "Синтаксически формула рабочая, ошибки не будет. SUM внутри вычисляемой колонки — совершенно законная запись, просто результат почти никогда не тот, который ожидают: он равен сумме по всей таблице, а не по текущей строке."
         }
       ],
+      "result": {
+        "visual": "column",
+        "sql": "SELECT f.sellout_id AS sellout_id,\n       ROUND(f.revenue, 2) AS revenue,\n       ROUND(t.total, 0) AS row_revenue\nFROM fact_sellout f\nCROSS JOIN (SELECT SUM(revenue) AS total FROM fact_sellout) t\nORDER BY f.sellout_id",
+        "head": ["sellout_id","revenue","row_revenue"],
+        "rows": [
+          [1,398.31,126911191],
+          [2,399.28,126911191],
+          [3,601.4,126911191],
+          [4,393.76,126911191],
+          [5,392.44,126911191],
+          [6,676.21,126911191],
+          [7,781.35,126911191],
+          [8,397.76,126911191],
+          [9,601.73,126911191],
+          [10,594.05,126911191],
+          [11,394.5,126911191],
+          [12,585.66,126911191]
+        ],
+        "rowCount": 118449,
+        "fmt": {
+          "revenue": "num",
+          "row_revenue": "money"
+        },
+        "focus": {
+          "sellout_id": 1
+        },
+        "labels": {
+          "sellout_id": "Строка",
+          "revenue": "revenue",
+          "row_revenue": "RowRevenue"
+        },
+        "caption": "Первые строки fact_sellout с новой колонкой"
+      },
       "hints": [
         "SUM — агрегирующая функция. Она отвечает на фильтр-контекст, а не на контекст строки.",
         "Сколько строк ограничивает фильтр в момент вычисления новой колонки, если ни один срез ещё не применён?"
@@ -1525,6 +1590,38 @@
           "why": "Объединения тоже не происходит. CALCULATE не комбинирует своё условие с внешним ни через И, ни через ИЛИ — он заменяет фильтр на этой колонке полностью, оставляя фильтры по всем остальным колонкам нетронутыми."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT r.region_name AS region,\n       ROUND(SUM(CASE WHEN p.brand = 'Aqualis' THEN f.revenue END), 0) AS aqualis,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END), 0) AS nettora\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY r.region_name\nHAVING SUM(CASE WHEN p.brand = 'Aqualis' THEN f.revenue END) IS NOT NULL\n    OR SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END) IS NOT NULL\nORDER BY SUM(CASE WHEN p.brand = 'Aqualis' THEN f.revenue END) DESC, region",
+        "totalSql": "SELECT NULL AS region,\n       ROUND(SUM(CASE WHEN p.brand = 'Aqualis' THEN f.revenue END), 0) AS aqualis,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END), 0) AS nettora\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id",
+        "head": ["region","aqualis","nettora"],
+        "rows": [
+          ["Miyagi",2134346,2164131],
+          ["Hokkaido",1975100,1066017],
+          ["Saitama",1897832,2441558],
+          ["Kanagawa",1884468,1001856],
+          ["Hiroshima",1858711,2098844],
+          ["Aichi",1816691,1853110],
+          ["Chiba",1673659,1452173],
+          ["Tokyo",1323959,1691942],
+          ["Hyogo",853433,337107],
+          ["Okinawa",769362,543918],
+          ["Fukuoka",739503,266129],
+          ["Osaka",567758,269935]
+        ],
+        "rowCount": 16,
+        "total": [null,18841733,16165815],
+        "fmt": {
+          "aqualis": "money",
+          "nettora": "money"
+        },
+        "labels": {
+          "region": "Регион",
+          "aqualis": "Aqualis Revenue",
+          "nettora": "Nettora Revenue"
+        },
+        "caption": "Матрица по регионам, на странице срез: бренд Nettora"
+      },
       "hints": [
         "Ключевое слово — «заменяет». Что останется от среза по бренду после того, как CALCULATE наложит своё условие на ту же колонку?",
         "Проверьте на другой колонке: если бы срез был по региону, а условие по бренду, оба остались бы в силе."
@@ -1557,6 +1654,35 @@
           "why": "Условие в формуле применяется поверх внешнего контекста и на своей колонке побеждает. Срез по региону уцелел не потому, что он сильнее, а потому, что он про другую колонку и конфликта с ним просто нет."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT b.brand AS brand,\n       ROUND(SUM(t.revenue), 0) AS total,\n       ROUND(a.aqualis, 0) AS aqualis\nFROM (SELECT DISTINCT brand FROM dim_product) b\nLEFT JOIN (SELECT p.brand AS brand, f.revenue AS revenue\n           FROM fact_sellout f\n           JOIN dim_product p ON p.product_id = f.product_id\n           JOIN dim_customer c ON c.customer_id = f.customer_id\n           JOIN dim_region r ON r.region_id = c.region_id\n           WHERE r.region_name = 'Tokyo') t ON t.brand = b.brand\nCROSS JOIN (SELECT SUM(f.revenue) AS aqualis\n            FROM fact_sellout f\n            JOIN dim_product p ON p.product_id = f.product_id\n            JOIN dim_customer c ON c.customer_id = f.customer_id\n            JOIN dim_region r ON r.region_id = c.region_id\n            WHERE r.region_name = 'Tokyo' AND p.brand = 'Aqualis') a\nGROUP BY b.brand\nORDER BY SUM(t.revenue) DESC, brand",
+        "totalSql": "SELECT NULL AS brand,\n       ROUND(SUM(f.revenue), 0) AS total,\n       ROUND(SUM(CASE WHEN p.brand = 'Aqualis' THEN f.revenue END), 0) AS aqualis\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nWHERE r.region_name = 'Tokyo'",
+        "head": ["brand","total","aqualis"],
+        "rows": [
+          ["Fruvia",1815728,1323959],
+          ["Nettora",1691942,1323959],
+          ["Milvara",1425770,1323959],
+          ["Aqualis",1323959,1323959],
+          ["Krosti",1184661,1323959],
+          ["Vitanor",615089,1323959],
+          ["Pyrexan",392625,1323959],
+          ["Gastrivo",295733,1323959],
+          ["Rhinolar",130982,1323959]
+        ],
+        "rowCount": 9,
+        "total": [null,8876489,1323959],
+        "fmt": {
+          "total": "money",
+          "aqualis": "money"
+        },
+        "labels": {
+          "brand": "Бренд",
+          "total": "Total Revenue",
+          "aqualis": "Aqualis Revenue"
+        },
+        "caption": "Матрица по брендам, на странице срез: регион Tokyo"
+      },
       "hints": [
         "Сравните с заданием, где мера считала один бренд, а срез на странице стоял по другому: там условие и срез были по одной колонке, здесь — по разным.",
         "CALCULATE замещает фильтры выборочно. По каким именно колонкам?"
@@ -1593,6 +1719,40 @@
           "why": "Визуал умеет показывать процент от итога встроенной настройкой, но это решает только частный случай отображения. Мера с ALL даёт величину, которую можно использовать где угодно — в другой мере, в условном форматировании, в фильтре по значению."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT p.brand AS brand,\n       ROUND(SUM(f.revenue), 0) AS total,\n       ROUND(SUM(f.revenue) / NULLIF(SUM(f.revenue), 0), 4) AS share_now,\n       ROUND(SUM(f.revenue) / NULLIF((SELECT SUM(revenue) FROM fact_sellout), 0), 4) AS share_all\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand\nORDER BY SUM(f.revenue) DESC, brand",
+        "totalSql": "SELECT NULL AS brand,\n       ROUND(SUM(f.revenue), 0) AS total,\n       ROUND(SUM(f.revenue) / NULLIF(SUM(f.revenue), 0), 4) AS share_now,\n       ROUND(SUM(f.revenue) / NULLIF((SELECT SUM(revenue) FROM fact_sellout), 0), 4) AS share_all\nFROM fact_sellout f",
+        "head": ["brand","total","share_now","share_all"],
+        "rows": [
+          ["Fruvia",25465980,1,0.2007],
+          ["Aqualis",18841733,1,0.1485],
+          ["Krosti",18253054,1,0.1438],
+          ["Nettora",16165815,1,0.1274],
+          ["Milvara",14455910,1,0.1139],
+          ["Vitanor",13327152,1,0.105],
+          ["Pyrexan",9862223,1,0.0777],
+          ["Gastrivo",6872333,1,0.0542],
+          ["Rhinolar",3666991,1,0.0289]
+        ],
+        "rowCount": 9,
+        "total": [null,126911191,1,1],
+        "fmt": {
+          "total": "money",
+          "share_now": "pct",
+          "share_all": "pct"
+        },
+        "focus": {
+          "brand": "Fruvia"
+        },
+        "labels": {
+          "brand": "Бренд",
+          "total": "Total Revenue",
+          "share_now": "BrandShare",
+          "share_all": "BrandShare через ALL"
+        },
+        "caption": "Матрица по брендам, срезов на странице нет"
+      },
       "hints": [
         "В строке «Fruvia» чему равны числитель и знаменатель по отдельности?",
         "Знаменателю нужен контекст без фильтра по бренду. Какая функция снимает фильтр с колонки?"
@@ -1629,6 +1789,38 @@
           "why": "Ссылаться на другую таблицу колонка может — связь между dim_product и fact_sellout существует и работает. Проблема не в доступности данных, а в том, что SUM без CALCULATE не ограничен ничем, кроме фильтр-контекста, а его в колонке нет."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT p.brand AS brand,\n       ROUND(SUM(f.revenue), 0) AS total_revenue,\n       (SELECT ROUND(SUM(revenue), 0) FROM fact_sellout) AS revcol\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand\nORDER BY SUM(f.revenue) DESC, brand",
+        "totalSql": "SELECT NULL AS brand,\n       ROUND(SUM(revenue), 0) AS total_revenue,\n       ROUND(SUM(revenue), 0) AS revcol\nFROM fact_sellout",
+        "head": ["brand","total_revenue","revcol"],
+        "rows": [
+          ["Fruvia",25465980,126911191],
+          ["Aqualis",18841733,126911191],
+          ["Krosti",18253054,126911191],
+          ["Nettora",16165815,126911191],
+          ["Milvara",14455910,126911191],
+          ["Vitanor",13327152,126911191],
+          ["Pyrexan",9862223,126911191],
+          ["Gastrivo",6872333,126911191],
+          ["Rhinolar",3666991,126911191]
+        ],
+        "rowCount": 9,
+        "total": [null,126911191,126911191],
+        "fmt": {
+          "total_revenue": "money",
+          "revcol": "money"
+        },
+        "focus": {
+          "brand": "Fruvia"
+        },
+        "labels": {
+          "brand": "Бренд",
+          "total_revenue": "Total Revenue",
+          "revcol": "RevCol"
+        },
+        "caption": "Матрица по брендам; RevCol показана как значение колонки, без суммирования"
+      },
       "hints": [
         "Вспомните задание про SUM в колонке строки: SUM внутри вычисляемой колонки агрегирует всю таблицу. Что изменилось для меры?",
         "Вызов меры всегда неявно обёрнут в CALCULATE. Что CALCULATE делает с контекстом строки?"
@@ -1665,6 +1857,35 @@
           "why": "FILTER — итератор, он вычисляет условие заново для каждой строки перебираемой таблицы. Однократное вычисление сделало бы фильтрацию бессмысленной: результат не зависел бы от того, какие строки перебираются."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT p.brand AS brand,\n       ROUND(SUM(f.revenue), 0) AS total_revenue,\n       CASE WHEN SUM(f.revenue) > 10000000 THEN 1 END AS above\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY p.brand\nORDER BY SUM(f.revenue) DESC, brand",
+        "totalSql": "SELECT NULL AS brand,\n       ROUND(SUM(revenue), 0) AS total_revenue,\n       NULLIF((SELECT COUNT(*) FROM (SELECT p.brand\n                                      FROM fact_sellout f\n                                      JOIN dim_product p ON p.product_id = f.product_id\n                                      GROUP BY p.brand\n                                      HAVING SUM(f.revenue) > 10000000)), 0) AS above\nFROM fact_sellout",
+        "head": ["brand","total_revenue","above"],
+        "rows": [
+          ["Fruvia",25465980,1],
+          ["Aqualis",18841733,1],
+          ["Krosti",18253054,1],
+          ["Nettora",16165815,1],
+          ["Milvara",14455910,1],
+          ["Vitanor",13327152,1],
+          ["Pyrexan",9862223,null],
+          ["Gastrivo",6872333,null],
+          ["Rhinolar",3666991,null]
+        ],
+        "rowCount": 9,
+        "total": [null,126911191,6],
+        "fmt": {
+          "total_revenue": "money",
+          "above": "int"
+        },
+        "labels": {
+          "brand": "Бренд",
+          "total_revenue": "Total Revenue",
+          "above": "BrandsAbove10M"
+        },
+        "caption": "Матрица по брендам, срезов на странице нет"
+      },
       "hints": [
         "FILTER — итератор, он создаёт контекст строки. Вызов меры внутри обёрнут в CALCULATE. Что из этого следует?",
         "Если бы мера возвращала общий итог, чему был бы равен результат всей формулы?"
@@ -1697,6 +1918,38 @@
           "why": "SUMX создаст контекст строки для каждой строки fact_sellout, но перебирать он будет всю таблицу целиком: фильтра по текущему товару в нём нет, потому что перехода контекста не произошло. Результат останется тем же общим итогом, только посчитанным дороже."
         }
       ],
+      "result": {
+        "visual": "column",
+        "sql": "SELECT p.product_name AS product,\n       ROUND(t.total, 0) AS revcol,\n       ROUND(SUM(f.revenue), 0) AS variant_a,\n       ROUND(t.total, 0) AS variant_c\nFROM dim_product p\nLEFT JOIN fact_sellout f ON f.product_id = p.product_id\nCROSS JOIN (SELECT SUM(revenue) AS total FROM fact_sellout) t\nGROUP BY p.product_id, p.product_name\nORDER BY p.product_id",
+        "head": ["product","revcol","variant_a","variant_c"],
+        "rows": [
+          ["Aqualis Still 0.5 L",126911191,2508260,126911191],
+          ["Aqualis Still 1.5 L",126911191,4304400,126911191],
+          ["Aqualis Sparkling 0.5 L",126911191,1868671,126911191],
+          ["Aqualis Sparkling 1.5 L",126911191,2556253,126911191],
+          ["Aqualis Still 5 L",126911191,5576665,126911191],
+          ["Aqualis Sport 0.75 L",126911191,2027483,126911191],
+          ["Fruvia Orange 1 L",126911191,7493272,126911191],
+          ["Fruvia Apple 1 L",126911191,5301340,126911191],
+          ["Fruvia Multifruit 1 L",126911191,4314759,126911191],
+          ["Fruvia Tomato 1 L",126911191,3528679,126911191],
+          ["Fruvia Orange 0.2 L",126911191,1205886,126911191],
+          ["Fruvia Cherry 1 L",126911191,3622044,126911191]
+        ],
+        "rowCount": 47,
+        "fmt": {
+          "revcol": "money",
+          "variant_a": "money",
+          "variant_c": "money"
+        },
+        "labels": {
+          "product": "Товар",
+          "revcol": "RevCol сейчас",
+          "variant_a": "A: CALCULATE",
+          "variant_c": "C: SUMX"
+        },
+        "caption": "Первые строки dim_product; вариант B не показан: RELATED с этой стороны связи не работает"
+      },
       "hints": [
         "Переход контекста делает CALCULATE. Обязательно ли ему для этого иметь условия?",
         "Проверьте направление у RELATED: с какой стороны связи на какую он смотрит?"
@@ -1733,6 +1986,41 @@
           "why": "Умножение дало бы 14 082 990 ¥ и не имело бы отношения к реальным данным января и февраля. Накопительный итог — это всегда фактическая сумма за интервал, а не оценка по среднему."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "WITH m AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(revenue) AS r\n  FROM fact_sellout\n  WHERE week_start >= '2025-01-01' AND week_start < '2026-01-01'\n  GROUP BY substr(week_start, 1, 7)\n)\nSELECT month,\n       ROUND(r, 0) AS revenue,\n       ROUND(SUM(r) OVER (ORDER BY month), 0) AS ytd\nFROM m\nORDER BY month",
+        "totalSql": "SELECT NULL AS month,\n       ROUND(SUM(revenue), 0) AS revenue,\n       ROUND(SUM(revenue), 0) AS ytd\nFROM fact_sellout\nWHERE week_start >= '2025-01-01' AND week_start < '2026-01-01'",
+        "head": ["month","revenue","ytd"],
+        "rows": [
+          ["2025-01",3716939,3716939],
+          ["2025-02",4154890,7871829],
+          ["2025-03",4694330,12566159],
+          ["2025-04",4898394,17464553],
+          ["2025-05",3870705,21335258],
+          ["2025-06",5098812,26434070],
+          ["2025-07",3968902,30402972],
+          ["2025-08",4265300,34668272],
+          ["2025-09",5148871,39817143],
+          ["2025-10",3771360,43588503],
+          ["2025-11",3537286,47125789],
+          ["2025-12",4408098,51533887]
+        ],
+        "rowCount": 12,
+        "total": [null,51533887,51533887],
+        "fmt": {
+          "revenue": "money",
+          "ytd": "money"
+        },
+        "focus": {
+          "month": "2025-03"
+        },
+        "labels": {
+          "month": "Месяц",
+          "revenue": "Total Revenue",
+          "ytd": "RevenueYTD"
+        },
+        "caption": "Матрица по месяцам, на странице срез: год 2025"
+      },
       "hints": [
         "Сравните 12 566 159 с суммой выручки января, февраля и марта 2025. Сходится?",
         "Все функции time intelligence — обёртки над CALCULATE. Что CALCULATE делает с фильтром?"
@@ -1769,6 +2057,43 @@
           "why": "Данные начинаются с 1 января 2024 года и покрывают два с половиной года. Пусто было бы для января 2024, где предыдущего года в модели действительно нет, — и это важный краевой случай, который стоит проверять в первой строке любого такого отчёта."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "WITH m AS (\n  SELECT substr(week_start, 1, 7) AS month, SUM(revenue) AS r\n  FROM fact_sellout\n  GROUP BY substr(week_start, 1, 7)\n)\nSELECT a.month AS month,\n       ROUND(a.r, 0) AS revenue,\n       ROUND(b.r, 0) AS revenue_ly,\n       ROUND(a.r / NULLIF(b.r, 0) - 1, 4) AS growth\nFROM m a\nLEFT JOIN m b ON b.month = (CAST(substr(a.month, 1, 4) AS INTEGER) - 1) || substr(a.month, 5)\nWHERE a.month LIKE '2025-%'\nORDER BY a.month",
+        "totalSql": "SELECT NULL AS month,\n       ROUND(SUM(CASE WHEN week_start LIKE '2025-%' THEN revenue END), 0) AS revenue,\n       ROUND(SUM(CASE WHEN week_start LIKE '2024-%' THEN revenue END), 0) AS revenue_ly,\n       ROUND(SUM(CASE WHEN week_start LIKE '2025-%' THEN revenue END)\n             / NULLIF(SUM(CASE WHEN week_start LIKE '2024-%' THEN revenue END), 0) - 1, 4) AS growth\nFROM fact_sellout",
+        "head": ["month","revenue","revenue_ly","growth"],
+        "rows": [
+          ["2025-01",3716939,4028447,-0.0773],
+          ["2025-02",4154890,3506813,0.1848],
+          ["2025-03",4694330,4392846,0.0686],
+          ["2025-04",4898394,4264590,0.1486],
+          ["2025-05",3870705,3604415,0.0739],
+          ["2025-06",5098812,3942153,0.2934],
+          ["2025-07",3968902,4618502,-0.1407],
+          ["2025-08",4265300,4109955,0.0378],
+          ["2025-09",5148871,4660840,0.1047],
+          ["2025-10",3771360,3516198,0.0726],
+          ["2025-11",3537286,3787794,-0.0661],
+          ["2025-12",4408098,5085518,-0.1332]
+        ],
+        "rowCount": 12,
+        "total": [null,51533887,49518071,0.0407],
+        "fmt": {
+          "revenue": "money",
+          "revenue_ly": "money",
+          "growth": "pct"
+        },
+        "focus": {
+          "month": "2025-03"
+        },
+        "labels": {
+          "month": "Месяц",
+          "revenue": "Total Revenue",
+          "revenue_ly": "RevenueLY",
+          "growth": "Рост к прошлому году"
+        },
+        "caption": "Матрица по месяцам, на странице срез: год 2025"
+      },
       "hints": [
         "Функция сдвигает набор дат на год назад, сохраняя длину периода. Что получится из марта 2025?",
         "Проверьте краевой случай: что вернёт эта мера в строке января 2024?"

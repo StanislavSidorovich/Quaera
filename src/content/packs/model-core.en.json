@@ -599,6 +599,12 @@
     {
       "id": "mdl-017",
       "title": "One formula, two ways to set it up",
+      "resultCaption": "Matrix by region, no slicers on the page; column A shown as an average",
+      "resultLabels": {
+        "region": "Region",
+        "col_a": "A (column)",
+        "measure_b": "B (measure)"
+      },
       "brief": "You're shown two formulas for the same brand share: A is set up as a calculated column in fact_sellout, B as a measure. You need to see how they differ in how they compute, not in syntax.",
       "goal": "Work out the difference in when each variant computes.",
       "predictQuestion": "What's the main difference between variant A and variant B in how they compute?",
@@ -738,6 +744,12 @@
     {
       "id": "mdl-022",
       "title": "SUM inside a row-level column",
+      "resultCaption": "First rows of fact_sellout with the new column",
+      "resultLabels": {
+        "sellout_id": "Row",
+        "revenue": "revenue",
+        "row_revenue": "RowRevenue"
+      },
       "brief": "A new calculated column, RowRevenue, gets added to fact_sellout, to look at each individual sale's revenue right next to the row. In the table's first row, `revenue = 398.31`.",
       "goal": "Work out what the column shows in the table's first row.",
       "predictQuestion": "What does this column show in the first row?",
@@ -1160,6 +1172,12 @@
     {
       "id": "mdl-037",
       "title": "CALCULATE isn't WHERE",
+      "resultCaption": "Matrix by region, one slicer on the page: brand Nettora",
+      "resultLabels": {
+        "region": "Region",
+        "aqualis": "Aqualis Revenue",
+        "nettora": "Nettora Revenue"
+      },
       "brief": "A measure computes brand «Aqualis»'s revenue. Someone puts a slicer for brand «Nettora» on the page, two different brands at once.",
       "goal": "Work out what the measure returns.",
       "predictQuestion": "What does the measure return with a slicer on a different brand?",
@@ -1190,6 +1208,12 @@
     {
       "id": "mdl-038",
       "title": "The filter on a different column survives",
+      "resultCaption": "Matrix by brand, one slicer on the page: region Tokyo",
+      "resultLabels": {
+        "brand": "Brand",
+        "total": "Total Revenue",
+        "aqualis": "Aqualis Revenue"
+      },
       "brief": "The same measure with a baked-in brand, but now the page slicer is by region, not brand: `dim_region[region_name] = \"Tokyo\"`. Tokyo's revenue across every brand is ¥8,876,489.",
       "goal": "Work out which filters act on the calculation.",
       "predictQuestion": "What does the measure return with a region slicer?",
@@ -1216,6 +1240,13 @@
     {
       "id": "mdl-039",
       "title": "The share that's always a hundred percent",
+      "resultCaption": "Matrix by brand, no slicers on the page",
+      "resultLabels": {
+        "brand": "Brand",
+        "total": "Total Revenue",
+        "share_now": "BrandShare",
+        "share_all": "BrandShare with ALL"
+      },
       "brief": "A brand-share measure returns 100% in every row of a by-brand matrix. The formula looks correct: revenue divided by revenue.",
       "goal": "Work out the cause and how to fix it.",
       "predictQuestion": "Why is the share 100%, and what needs to change?",
@@ -1246,6 +1277,12 @@
     {
       "id": "mdl-040",
       "title": "The same formula, two different numbers",
+      "resultCaption": "Matrix by brand; RevCol shown as the column value, not summed",
+      "resultLabels": {
+        "brand": "Brand",
+        "total_revenue": "Total Revenue",
+        "revcol": "RevCol"
+      },
       "brief": "The formula SUM(revenue) is written twice: once as the measure Total Revenue, once as the calculated column RevCol in the product lookup dim_product. In the matrix's «Fruvia» row the measure shows 25,465,980 and the column shows 126,911,191.",
       "goal": "Work out why the results diverge.",
       "predictQuestion": "Why do a measure and a column with an identical formula give different numbers?",
@@ -1276,6 +1313,12 @@
     {
       "id": "mdl-041",
       "title": "A measure inside an iterator",
+      "resultCaption": "Matrix by brand, no slicers on the page",
+      "resultLabels": {
+        "brand": "Brand",
+        "total_revenue": "Total Revenue",
+        "above": "BrandsAbove10M"
+      },
       "brief": "You need to count how many brands crossed ten million in revenue. The formula iterates brands and invokes a measure inside the iteration. There are nine brands in the lookup, and Total Revenue across the whole database is ¥126,911,191.",
       "goal": "Work out what the measure sees at each step of the iteration.",
       "predictQuestion": "What does [Total Revenue] compute at each step of FILTER?",
@@ -1306,6 +1349,13 @@
     {
       "id": "mdl-042",
       "title": "A column that behaves like a measure",
+      "resultCaption": "First rows of dim_product; variant B is not shown: RELATED does not work from this side of the relationship",
+      "resultLabels": {
+        "product": "Product",
+        "revcol": "RevCol now",
+        "variant_a": "A: CALCULATE",
+        "variant_c": "C: SUMX"
+      },
       "brief": "A calculated column in the product lookup needs to show its own product's revenue, not the grand total: right now it returns 126,911,191 in all 47 rows. Below are the original formula and three fixes.",
       "goal": "Work out which formula fix solves this.",
       "predictQuestion": "Which variant gives exactly its own product's revenue?",
@@ -1332,6 +1382,12 @@
     {
       "id": "mdl-043",
       "title": "What YTD does to the filter",
+      "resultCaption": "Matrix by month, one slicer on the page: year 2025",
+      "resultLabels": {
+        "month": "Month",
+        "revenue": "Total Revenue",
+        "ytd": "RevenueYTD"
+      },
       "brief": "A by-month matrix has a year-to-date revenue measure. In the March 2025 row, March's own revenue is ¥4,694,330, while RevenueYTD shows ¥12,566,159.",
       "goal": "Work out where the bigger number comes from.",
       "predictQuestion": "What did TOTALYTD do to the date filter?",
@@ -1362,6 +1418,13 @@
     {
       "id": "mdl-044",
       "title": "Comparing to last year",
+      "resultCaption": "Matrix by month, one slicer on the page: year 2025",
+      "resultLabels": {
+        "month": "Month",
+        "revenue": "Total Revenue",
+        "revenue_ly": "RevenueLY",
+        "growth": "Growth vs last year"
+      },
       "brief": "You need month-over-month growth against last year. The measure compares the current period's revenue to the same period a year earlier. In the matrix, March 2025 revenue is ¥4,694,330 and March 2024 is ¥4,392,846.",
       "goal": "Work out what the measure returns in the March 2025 row.",
       "predictQuestion": "What does RevenueLY show in the March 2025 row, and what growth does that imply?",
