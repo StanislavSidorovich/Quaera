@@ -679,6 +679,12 @@
     {
       "id": "mdl-020",
       "title": "A measure with its own filter inside",
+      "resultCaption": "Matrix by region, no slicers on the page",
+      "resultLabels": {
+        "region": "Region",
+        "nettora": "Nettora Revenue",
+        "total": "Total Revenue"
+      },
       "brief": "The \"Nettora Revenue\" measure already has a brand condition baked into its formula. It gets put into a by-region matrix with no slicer on the page at all.",
       "goal": "Work out what the \"Tokyo\" cell shows.",
       "predictQuestion": "What does the \"Tokyo\" row show, if there's no brand slicer on the page at all?",
@@ -1932,6 +1938,12 @@
     {
       "id": "mdl-071",
       "title": "An average price that is not an average of averages",
+      "resultCaption": "Matrix by region: before and after",
+      "resultLabels": {
+        "region": "Region",
+        "avg_of_prices": "AVERAGE(avg_price)",
+        "avg_price": "Avg Price"
+      },
       "brief": "The average selling price in the regional report is computed as the average of the per row price column. In the total row it diverges from revenue divided by units, and the more the regions differ in size, the wider the gap.",
       "goal": "Fill in the whole formula of the measure: price is computed from two additive quantities of the sales table.",
       "hints": [

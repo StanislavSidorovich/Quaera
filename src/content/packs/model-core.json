@@ -922,6 +922,41 @@
           "why": "CALCULATE как раз и существует для того, чтобы задавать условия фильтрации явно, без внешних срезов. Формула здесь полная и рабочая, вычислит своё условие сама — источник фильтра просто другой, не срез страницы, а сама мера."
         }
       ],
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT r.region_name AS region,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END), 0) AS nettora,\n       ROUND(SUM(f.revenue), 0) AS total\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nJOIN dim_product p ON p.product_id = f.product_id\nGROUP BY r.region_name\nORDER BY total DESC, region",
+        "totalSql": "SELECT NULL AS region,\n       ROUND(SUM(CASE WHEN p.brand = 'Nettora' THEN f.revenue END), 0) AS nettora,\n       ROUND(SUM(f.revenue), 0) AS total\nFROM fact_sellout f\nJOIN dim_product p ON p.product_id = f.product_id",
+        "head": ["region","nettora","total"],
+        "rows": [
+          ["Saitama",2441558,16850358],
+          ["Aichi",1853110,14485006],
+          ["Miyagi",2164131,13296462],
+          ["Hiroshima",2098844,11094600],
+          ["Hokkaido",1066017,10510999],
+          ["Kanagawa",1001856,9490486],
+          ["Chiba",1452173,9151278],
+          ["Tokyo",1691942,8876489],
+          ["Hyogo",337107,5705679],
+          ["Osaka",269935,4850189],
+          ["Ibaraki",162743,4540810],
+          ["Fukuoka",266129,4211600]
+        ],
+        "rowCount": 16,
+        "total": [null,16165815,126911191],
+        "fmt": {
+          "nettora": "money",
+          "total": "money"
+        },
+        "focus": {
+          "region": "Tokyo"
+        },
+        "labels": {
+          "region": "Регион",
+          "nettora": "Nettora Revenue",
+          "total": "Total Revenue"
+        },
+        "caption": "Матрица по регионам, срезов на странице нет"
+      },
       "hints": [
         "Условие по бренду стоит внутри CALCULATE, а не снаружи меры. Нужен ли ему внешний срез, чтобы сработать?",
         "Сравните с заданием про то, из чего сложен фильтр ячейки: там условие пришло из среза страницы. Здесь оно откуда?"
@@ -2484,6 +2519,38 @@
         "DIVIDE(SUM(fact_sellout[revenue]), SUM(fact_sellout[units]))"
       ],
       "solution": "Avg Price :=\n    DIVIDE(SUM(fact_sellout[revenue]), SUM(fact_sellout[units]))",
+      "result": {
+        "visual": "matrix",
+        "sql": "SELECT r.region_name AS region,\n       ROUND(AVG(f.avg_price), 2) AS avg_of_prices,\n       ROUND(SUM(f.revenue) / NULLIF(SUM(f.units), 0), 2) AS avg_price\nFROM fact_sellout f\nJOIN dim_customer c ON c.customer_id = f.customer_id\nJOIN dim_region r ON r.region_id = c.region_id\nGROUP BY r.region_name\nORDER BY SUM(f.revenue) DESC, region",
+        "totalSql": "SELECT NULL AS region,\n       ROUND(AVG(f.avg_price), 2) AS avg_of_prices,\n       ROUND(SUM(f.revenue) / NULLIF(SUM(f.units), 0), 2) AS avg_price\nFROM fact_sellout f",
+        "head": ["region","avg_of_prices","avg_price"],
+        "rows": [
+          ["Saitama",203.08,124.78],
+          ["Aichi",186.44,130.09],
+          ["Miyagi",140.1,108.59],
+          ["Hiroshima",133.18,107.27],
+          ["Hokkaido",144.13,102.88],
+          ["Kanagawa",142.46,105.97],
+          ["Chiba",166.9,108.81],
+          ["Tokyo",156.15,110.03],
+          ["Hyogo",167.87,125.16],
+          ["Osaka",176.88,165.02],
+          ["Ibaraki",251.34,239.76],
+          ["Fukuoka",130.72,121.18]
+        ],
+        "rowCount": 16,
+        "total": [null,159.25,117.92],
+        "fmt": {
+          "avg_of_prices": "num",
+          "avg_price": "num"
+        },
+        "labels": {
+          "region": "Регион",
+          "avg_of_prices": "AVERAGE(avg_price)",
+          "avg_price": "Avg Price"
+        },
+        "caption": "Матрица по регионам: было и стало"
+      },
       "hints": [
         "Ни одну цену складывать или усреднять нельзя — вычислять надо отношение того, что складывается.",
         "Обе части лежат в таблице продаж: деньги сверху, штуки снизу."
