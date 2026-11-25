@@ -1894,6 +1894,16 @@ export const ru = {
     explainTitle: 'Разбор',
     resultInsetTitle: 'Что вернёт запрос',
     resultInsetEmpty: 'Нет строк.',
+    /** Таблица визуала у DAX-заданий (ResultInset): заголовок у predict и у fill. */
+    resultVisualTitle: 'Что покажет визуал',
+    resultMeasureTitle: 'Что вернёт мера',
+    resultTotal: 'Итог',
+    resultBlank: '(пусто)',
+    resultVisualEmpty: 'Визуал пуст: ни одной строки с данными.',
+    resultMore: (n: number) => `ещё ${n} ▾`,
+    resultLess: 'свернуть ▴',
+    resultAllRows: (n: number) => `Всего строк: ${n}`,
+    resultNote: 'Power BI в браузере нет: числа посчитаны заранее тем же расчётом на SQL по Kaiyo.',
     solutionSummary: 'Показать эталонное решение',
     nextBtn: 'Дальше',
     /** Счётчик шагов многошагового задания. У одношагового пилюли нет вовсе. */

@@ -12,6 +12,7 @@ import { clearInsertTarget, insertViaTarget, setInsertTarget } from './insertTar
 import { CodeBlock, hangLead, hangStyle } from './CodeBlock';
 import { ResultTable } from './ResultTable';
 import { PredictResult } from './PredictResult';
+import { ResultInset } from './ResultInset';
 import { AfterReply } from './AfterReply';
 import { ProseText } from './ProseOps';
 import { TokenPanel, useKeyboardOpen, useTokensOpen } from './TokenPanel';
@@ -832,6 +833,8 @@ function StepView({
   const relateState: RelateState | undefined = step.kind === 'relate' ? draft.relate ?? blankRelateState(step, schema) : undefined;
   const spotState: SpotState | undefined = step.kind === 'spot' ? draft.spot ?? blankSpotState() : undefined;
   const runsCode = executor.runsCode !== false;
+  /** Таблица визуала задания (Task.result): у многошагового только на последнем шаге. */
+  const storedResult = task.result && (!task.steps?.length || task.steps[task.steps.length - 1] === step) ? task.result : undefined;
   /** Без исполнителя, готового к запуску, расчётный шаг не проверить — см. notReadyNote. */
   const notReady = step.kind === 'compute' && runsCode && notReadyNote !== undefined;
 
@@ -1284,6 +1287,7 @@ function StepView({
             {draft.solved && step.predictSql && task.track === 'sql' && runsCode && (
               <PredictResult executor={executor} sql={step.predictSql} />
             )}
+            {draft.solved && storedResult && !runsCode && <ResultInset result={storedResult} title={t.task.resultVisualTitle} />}
             {draft.solved && explainCard}
           </div>
         </div>
@@ -1535,6 +1539,10 @@ function StepView({
             {feedbackBlock}
             {previewBlock}
             {expectedBlock}
+            {/* Fill без движка (DAX): после верной сборки и после «Покажи разбор»; при неверной таблицы нет, она стала бы подсказкой. */}
+            {draft.solved && storedResult && !runsCode && step.mode === 'fill' && (
+              <ResultInset result={storedResult} title={t.task.resultMeasureTitle} />
+            )}
           </div>
         </div>
         {/*

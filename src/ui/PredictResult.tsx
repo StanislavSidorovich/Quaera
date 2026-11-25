@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Executor, Preview } from '../engine/types';
 import { useI18n } from '../i18n/context';
 import { ResultTable } from './ResultTable';
+import { ResultFrame } from './ResultInset';
 import './predictResult.css';
 
 /** Сколько строк реального результата показываем во вставке. */
@@ -41,13 +42,12 @@ export function PredictResult({ executor, sql }: { executor: Executor; sql: stri
     truncated: cut || data.truncated,
   };
   return (
-    <div className="card predict-result">
-      <h3>{t.task.resultInsetTitle}</h3>
+    <ResultFrame title={t.task.resultInsetTitle}>
       {data.rows.length === 0 ? (
         <p className="muted" style={{ margin: 0 }}>{t.task.resultInsetEmpty}</p>
       ) : (
         <ResultTable data={shown} />
       )}
-    </div>
+    </ResultFrame>
   );
 }

@@ -45,3 +45,86 @@
 .task-after:empty {
   display: none;
 }
+
+/*
+ * Таблица визуала у DAX-заданий (ResultInset.tsx): сохранённые числа, строка вопроса подсвечена,
+ * итог последней строкой. Свой контейнер, а не .table-wrap: на узком экране тот превращает строки
+ * в карточки, а матрице нужны колонки рядом (три колонки помещаются и в 375, дальше скролл по горизонтали).
+ */
+.predict-result .result-caption {
+  margin: 0 0 8px;
+  font-size: var(--fs-small);
+}
+.result-grid {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+.result-grid th.num,
+.result-grid td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.result-grid th {
+  white-space: normal;
+  position: static;
+}
+.result-grid td[data-blank] {
+  color: var(--text-dim);
+  font-style: italic;
+}
+.result-grid tr.result-focus td {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-weight: 600;
+}
+.result-grid tr.result-gap td {
+  color: var(--text-dim);
+  text-align: center;
+  padding-block: 2px;
+}
+.result-grid tr.result-total td {
+  font-weight: 700;
+  border-bottom: none;
+  border-top: 2px solid var(--line);
+}
+.result-mark {
+  color: var(--accent);
+}
+.result-more {
+  margin-top: 6px;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.predict-result .result-count,
+.predict-result .result-note {
+  margin: 6px 0 0;
+  font-size: var(--fs-micro);
+}
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+.result-card-label {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+.result-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.result-card[data-blank] .result-card-value {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 22px;
+}

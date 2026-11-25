@@ -91,6 +91,20 @@ function validate(pack: Pack): Pack {
       throw new Error(`Пак ${pack.id}: у задания ${t.id} нет эталонного решения`);
     }
   }
+  for (const t of pack.tasks) {
+    const r = t.result;
+    if (!r) continue;
+    const bad = (why: string) => {
+      throw new Error(`Пак ${pack.id}: у задания ${t.id} битая таблица результата: ${why}`);
+    };
+    if (!['matrix', 'card', 'column'].includes(r.visual)) bad('visual');
+    if (!Array.isArray(r.head) || !r.head.length) bad('head');
+    if (!Array.isArray(r.rows) || r.rows.some((row) => !Array.isArray(row) || row.length !== r.head.length)) bad('rows');
+    if (typeof r.rowCount !== 'number') bad('rowCount');
+    if (r.total && r.total.length !== r.head.length) bad('total');
+    if (!r.labels || r.head.some((c) => !r.labels[c])) bad('labels');
+    if (typeof r.caption !== 'string') bad('caption');
+  }
   return pack;
 }
 
@@ -140,6 +154,14 @@ function validateTranslation(pack: Pack, tr: PackTranslation): PackTranslation {
       throw new Error(
         `Перевод ${tr.id}: у задания ${t.id} ${t.spotDecoys.length} переведённых приманок вместо ${(orig.spot?.decoys ?? []).length}`
       );
+    }
+    if ((t.resultLabels || t.resultCaption) && !orig.result) {
+      throw new Error(`Перевод ${tr.id}: у задания ${t.id} нет result, а перевод его подписей есть`);
+    }
+    if (t.resultLabels && orig.result) {
+      const a = Object.keys(t.resultLabels).sort().join();
+      const b = Object.keys(orig.result.labels).sort().join();
+      if (a !== b) throw new Error(`Перевод ${tr.id}: у задания ${t.id} ключи resultLabels не совпадают с result.labels`);
     }
     if (t.steps && (orig.steps ?? []).length !== t.steps.length) {
       throw new Error(
@@ -210,6 +232,10 @@ function applyTranslation(pack: Pack, tr: PackTranslation | undefined): Pack {
                     : t.relate.defect,
               }
             : t.relate,
+        result:
+          t.result && (tt.resultLabels || tt.resultCaption)
+            ? { ...t.result, labels: tt.resultLabels ?? t.result.labels, caption: tt.resultCaption ?? t.result.caption }
+            : t.result,
         spot:
           (tt.spotMutate || tt.spotDecoys || tt.spotTrap || tt.labels) && t.spot
             ? {

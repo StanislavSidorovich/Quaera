@@ -202,6 +202,35 @@ export interface SpotDecoy {
 }
 
 /**
+ * Таблица результата у DAX-заданий без движка (predict с `predictSql`, fill): визуал, в котором живёт мера,
+ * с настоящими числами Kaiyo. Показывается только после проверки. `head`, `rows`, `rowCount`, `total`
+ * пишет `npm run result:write` (запросы `sql` / `totalSql` на Kaiyo), гейт test:result сверяет их с запросом.
+ * Дизайн: docs/dax-result-rows-design.md.
+ */
+export interface TaskResult {
+  visual: 'matrix' | 'card' | 'column';
+  /** SQL-эквивалент меры в этом визуале (трек model). Равносильность «мера = запрос» проверяет автор. */
+  sql?: string;
+  /** Итог в своём контексте: одна строка той же ширины, что и `sql`. */
+  totalSql?: string;
+  head: string[];
+  /** Первые 12 строк результата. */
+  rows: (string | number | null)[][];
+  rowCount: number;
+  total?: (string | number | null)[];
+  /** Колонка -> формат: `money`, `int`, `num` (до 2 знаков) или `pct` (доля 0..1). */
+  fmt?: Record<string, 'int' | 'money' | 'num' | 'pct'>;
+  /** Значения колонок строки, о которой вопрос: ровно одна строка из `rows`. */
+  focus?: Record<string, string | number>;
+  /** Подписи колонок: ключи = `head`. Имена мер одинаковы в обеих локалях. */
+  labels: Record<string, string>;
+  /** Контекст визуала: разрез и срезы страницы. */
+  caption: string;
+  /** `true` только у задания про пустой визуал. */
+  empty?: boolean;
+}
+
+/**
  * Состав задания `spot`. Верную таблицу даёт запрос `sql` к Kaiyo; `head` и `rows` хранятся в задании
  * и сверяются с запросом гейтом test:spot (как `report` у relate). Подвал это клетки, которые тоже
  * можно отметить: `rows` показывает «Строк: N», `total` («Итог: сумма колонки X»).
@@ -537,6 +566,8 @@ export interface Task {
   relate?: RelateSpec;
   /** Состав режима `spot` (вопрос в `orderQuestion`). См. SpotSpec. */
   spot?: SpotSpec;
+  /** Таблица результата после проверки (predict с predictSql и fill без движка). См. TaskResult. */
+  result?: TaskResult;
   /** Раскрываются по одной. Первая — направление, последняя — почти решение. */
   hints: string[];
   /** Разбор после решения: не пересказ ответа, а идея, которая переносится на другие задачи. */
@@ -749,6 +780,10 @@ export interface TaskTranslation {
   spotTrap?: RelateTrapTranslation;
   /** Подписи колонок отчёта (`spot.labels` или `relate.defect.report.labels`): те же ключи, что в оригинале. */
   labels?: Record<string, string>;
+  /** Подписи колонок `result`: ключи = `result.head`. */
+  resultLabels?: Record<string, string>;
+  /** Контекст визуала `result`. */
+  resultCaption?: string;
   /** Порядок обязан совпадать с Task.traps — позиционно; код ловушки не переводится, как и эталон. */
   traps?: { message: string }[];
   /** Порядок обязан совпадать с Task.steps — тоже позиционно. */
