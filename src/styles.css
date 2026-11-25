@@ -1909,6 +1909,25 @@ a.btn {
   white-space: nowrap;
 }
 
+.skill-skip-note {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+.skill-skip-note button {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent, inherit);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .skill-row.locked .name {
   color: var(--text-dim);
 }

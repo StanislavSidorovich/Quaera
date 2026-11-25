@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { isTrackTranslated, packForTrack } from '../../content';
 import type { Pack, Track } from '../../content/types';
 import { EXTRA_STAGE, nextStage, stageStates, type StageState } from '../../content/milestones';
@@ -220,6 +220,20 @@ export function Home({
     if (!sqlPack) return false;
     return sqlPack.skills.every((s) => (progress.skills[s.id]?.reps ?? 0) === 0);
   }, [activeTrack, progress, locale]);
+
+  /**
+   * Подсказка «DDL можно пропустить»: под первым навыком SQL-трека, пока не начат ни он,
+   * ни «Выборка». Навыки не запираются (карта открыта для любой темы), но на экране
+   * нигде не было сказано, что чтение CREATE TABLE не обязательно перед SELECT.
+   * Нет навыка в паке или прогресс хоть у одного из двух: подсказки нет.
+   */
+  const skipSchemaTarget = useMemo(() => {
+    const schema = activePack.skills.find((s) => s.id === 'sql-schema');
+    const select = activePack.skills.find((s) => s.id === 'sql-select');
+    if (!schema || !select || !activePack.tasks.some((x) => x.skill === select.id)) return null;
+    if ((progress.skills[schema.id]?.reps ?? 0) > 0 || (progress.skills[select.id]?.reps ?? 0) > 0) return null;
+    return select;
+  }, [activePack, progress]);
 
   /**
    * Мастерство по уровням графа — глубина освоения (интервал и качество
@@ -628,7 +642,7 @@ export function Home({
                                     .map((id) => activePack.skills.find((x) => x.id === id)?.title)
                                     .filter((title): title is string => !!title)
                                     .join(', ');
-                              return (
+                              const row = (
                                 <button
                                   key={s.id}
                                   type="button"
@@ -653,6 +667,19 @@ export function Home({
                                     </div>
                                   )}
                                 </button>
+                              );
+                              return s.id === 'sql-schema' && skipSchemaTarget ? (
+                                <Fragment key={s.id}>
+                                  {row}
+                                  <p className="skill-skip-note">
+                                    {t.home.skipSchemaNote}{' '}
+                                    <button type="button" onClick={() => onStartSkill(skipSchemaTarget.id)}>
+                                      {t.home.skipSchemaBtn(skipSchemaTarget.title)}
+                                    </button>
+                                  </p>
+                                </Fragment>
+                              ) : (
+                                row
                               );
                             })}
                           </div>

@@ -215,6 +215,8 @@ export const en = {
     overallProgressHint:
       'This is not the share of tasks solved: the bar grows as you come back to a topic over days and weeks, so one evening cannot fill it. A low number early on is by design.',
     skillMapTitle: 'Skill map',
+    skipSchemaNote: 'Only reading data, not creating tables? You can skip this topic.',
+    skipSchemaBtn: (title: string) => `Start with "${title}"`,
     /** См. комментарий в ru.ts: пройденные вехи целиком, из будущих только следующая. */
     milestoneNext: (title: string, n: number) => `Next: ${title}, ${n} ${n === 1 ? 'task' : 'tasks'} to go`,
     milestoneTag: 'Milestone',
