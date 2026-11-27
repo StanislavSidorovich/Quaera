@@ -12005,12 +12005,20 @@ figure.arch-figure {
   gap: 16px;
   align-items: start;
 }
-.story-after-grid > .card {
+.story-after-grid > .card,
+.story-after-left > .card {
   margin-bottom: 0;
 }
+/* Левая колонка: разбор, под ним реплика; справа таблица на высоту обеих (у короткой таблицы — пустое поле внутри рамки, у длинной колонка растёт). */
+.story-after-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
 .story-after-result {
-  position: sticky;
-  top: 72px;
+  align-self: stretch;
+  min-width: 0;
 }
 .story-after-fold > summary {
   cursor: pointer;

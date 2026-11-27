@@ -43,6 +43,7 @@ export function AfterReply({
   result,
   schemaTables,
   onOpenSchema,
+  lead,
 }: {
   note: { from: string; text: string };
   voice?: ReactNode;
@@ -52,6 +53,11 @@ export function AfterReply({
   result: Preview | null;
   schemaTables: string[];
   onOpenSchema: (table?: string) => void;
+  /**
+   * Карточка перед репликой (разбор задания). На ноутбуке с таблицей встаёт в левую колонку над репликой,
+   * таблица справа тянется на высоту обеих; иначе идёт перед ними, как и раньше.
+   */
+  lead?: ReactNode;
 }) {
   const { t } = useI18n();
   useSyncExternalStore(subscribeClips, getClipVersion, getClipVersion);
@@ -86,7 +92,7 @@ export function AfterReply({
       </div>
     </div>
   );
-  if (!result || !result.columns.length) return card;
+  if (!result || !result.columns.length) return <>{lead}{card}</>;
 
   const named = hits?.rows.length ?? 0;
   const table = (
@@ -103,7 +109,10 @@ export function AfterReply({
   if (wide) {
     return (
       <div className="story-after-grid">
-        {card}
+        <div className="story-after-left">
+          {lead}
+          {card}
+        </div>
         <aside className="card story-after-result" aria-label={t.task.yourResult}>
           {table}
         </aside>
@@ -112,6 +121,7 @@ export function AfterReply({
   }
   return (
     <>
+      {lead}
       <details className="card story-after-fold">
         <summary>
           {t.task.yourResult}

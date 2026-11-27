@@ -667,9 +667,10 @@ export function TaskView({
       {stepDraft.solved && (
         <>
           {/* Разбор — про задание целиком, поэтому только после последнего шага. */}
-          {last && step.kind !== 'interpret' && explainCard}
+          {last && step.kind !== 'interpret' && !afterNote && explainCard}
           {last && afterNote && (
             <AfterReply
+              lead={step.kind !== 'interpret' ? explainCard : undefined}
               note={afterNote}
               voice={afterVoice}
               speaking={afterSpeaking}
