@@ -42,3 +42,6 @@
   .sfig-arrow { flex-direction: row; gap: 6px; flex-basis: 100%; max-width: none; justify-content: center; }
   .sfig-arrow-mark { transform: rotate(90deg); }
 }
+
+/* Небольшая вставка под репликой: таблица из двух колонок не растягивается на всю ширину. */
+.sfig--narrow { max-width: 440px; }

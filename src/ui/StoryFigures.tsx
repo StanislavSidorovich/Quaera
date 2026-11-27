@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../i18n/context';
 import type { Locale } from '../i18n/context';
+import cte from '../content/cteInset.json';
 import './storyFigures.css';
 
 /*
@@ -22,9 +23,9 @@ type L<T> = Record<Locale, T>;
 
 const fmt = (n: number, locale: Locale) => n.toLocaleString(locale === 'ru' ? 'ru-RU' : 'en-US');
 
-function Frame({ aria, children }: { aria: string; children: ReactNode }) {
+function Frame({ aria, children, narrow }: { aria: string; children: ReactNode; narrow?: boolean }) {
   return (
-    <figure className="sfig" role="group" aria-label={aria}>
+    <figure className={narrow ? 'sfig sfig--narrow' : 'sfig'} role="group" aria-label={aria}>
       {children}
     </figure>
   );
@@ -299,6 +300,46 @@ export function RollingEdgeFigure() {
           <p className="sfig-note">{x.note2}</p>
         </div>
       </div>
+    </Frame>
+  );
+}
+
+/* ------------------------------------------------- вставка к реплике */
+
+const CTE_MEANING_TXT: L<{ aria: string; cap: string; more: (n: string) => string; avg: string; note: string }> = {
+  ru: {
+    aria: 'Промежуточная таблица: сумма штук Nettora за 2024 год по каждой точке, и среднее по этим суммам',
+    cap: 'промежуточная таблица: штуки Nettora за 2024, одна строка на точку',
+    more: (n) => `ещё ${n} строк`,
+    avg: 'среднее по точкам',
+    note: 'Сначала сумма на точку, потом среднее от сумм. Одним SELECT это не написать, поэтому таблицу заводят отдельно.',
+  },
+  en: {
+    aria: 'An intermediate table: Nettora units for 2024 summed per outlet, and the average over those sums',
+    cap: 'intermediate table: Nettora units in 2024, one row per outlet',
+    more: (n) => `${n} more rows`,
+    avg: 'average over outlets',
+    note: 'First a sum per outlet, then the average of the sums. One SELECT cannot write that, so the table is set up separately.',
+  },
+};
+
+export function CteMeaningFigure() {
+  const { locale } = useI18n();
+  const x = CTE_MEANING_TXT[locale];
+  return (
+    <Frame aria={x.aria} narrow>
+      <div className="sfig-scroll"><table className="sfig-table">
+        <caption>{x.cap}</caption>
+        <thead><tr><th>customer_id</th><th className="sfig-num">units</th></tr></thead>
+        <tbody>
+          {cte.rows.map(([id, u]) => (
+            <tr key={id}><td>{id}</td><td className="sfig-num">{fmt(u, locale)}</td></tr>
+          ))}
+          <tr className="sfig-more"><td colSpan={2}>… {x.more(fmt(cte.outlets - cte.rows.length, locale))}</td></tr>
+          <tr><td>{x.avg}</td><td className="sfig-num"><span className="sfig-key">{fmt(cte.average, locale)}</span></td></tr>
+        </tbody>
+      </table></div>
+      <p className="sfig-note">{x.note}</p>
     </Frame>
   );
 }

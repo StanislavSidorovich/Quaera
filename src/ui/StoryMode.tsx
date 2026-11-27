@@ -29,7 +29,7 @@ import { SellFigure } from './SellFigure';
 import { StoryWeekScene, hasWeekScene } from './StoryWeekScene';
 import { StoryScenePhoto, hasStepScene } from './StoryScenePhoto';
 import { stepSceneKey } from '../storyScenes';
-import { STORY_FIGURES } from './StoryFigures';
+import { STORY_FIGURES, CteMeaningFigure } from './StoryFigures';
 import { StoryProgress } from './StoryProgress';
 import { StoryWeekSummary, weekSkillLines, type WeekDay } from './StoryWeekSummary';
 import { lessonBySkillFor } from '../content';
@@ -762,6 +762,7 @@ export function StoryMode({
                   <p className="story-mode-text">{glossaryRendered[i] ?? m.text}</p>
                   {mission.id === 'day-1-first-day' && i === 1 && <DimFactFigure />}
                   {mission.id === 'p2-day-by-key' && i === 1 && <SellFigure />}
+                  {mission.id === 'day-8-two-steps' && i === 1 && <CteMeaningFigure />}
                 </StoryMsg>
               ))}
             </div>

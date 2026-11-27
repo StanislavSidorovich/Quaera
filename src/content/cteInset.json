@@ -1,0 +1,7 @@
+{
+  "note": "Числа вставки «что такое промежуточная таблица» (StoryFigures.tsx, день day-8-two-steps). Nettora, 2024, сумма units по точкам, как в sql-118. Сверяет scripts/test-cte-inset.mjs против .cache/quaera.sqlite.",
+  "rows": [[13, 288], [14, 79], [15, 191]],
+  "outlets": 79,
+  "total": 38413,
+  "average": 486
+}
